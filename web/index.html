@@ -466,50 +466,106 @@
         </div>
       </div>
 
-      <!-- aba APP (100% de altura) -->
+      <!-- ======================================================================
+           ABA APP — DUAS COLUNAS (27/08/2026)
+
+           Antes a macro ocupava a largura inteira e as opções ficavam numa
+           faixa horizontal em cima dela. Com o time do APP a faixa não cabia
+           mais, e faixa que não cabe vira segunda linha: o usuário abre a aba
+           olhando para controles e não para a macro.
+
+           Agora: ESQUERDA a macro (altura toda, rola por dentro), DIREITA uma
+           coluna FIXA com tudo que não é macro. Fixa, e não proporcional,
+           porque nenhum controle dela ganha nada em ficar mais largo — quem
+           ganha com a sobra é a tabela.
+
+           A TABELA CONTINUA SENDO UMA SÓ, com um único `#corpo-app`. Dividir
+           em dois `tbody` quebraria `tests/test_linha_zero_do_app.py`, que
+           conta os seletores de `main.js` justamente para a linha 0 do TAB
+           nunca ser confundida com uma linha da macro.
+           ====================================================================== -->
       <div id="aba-app" class="painel-aba">
-        <div class="mb-3 flex items-center gap-6">
-          <label class="campo-check w-max">
-            <input id="ed-app-ligado" type="checkbox" />
-            <span>Ativar Modo APP (Macro independente)</span>
-          </label>
-          <label class="campo flex-row items-center gap-2"
-                 title="A cada tantas voltas da sequência, o bot abre o inventário (tecla da aba Teclas) e apaga os itens que reconhecer como lixo. 0 = nunca fazer isso.">
-            <span>Limpar a bolsa a cada</span>
-            <!-- ÚNICO campo numérico que aceita 0, e o 0 é um MODO: "nunca apagar".
-                 Apagar item não tem desfazer, então tirar essa saída seria pior
-                 que a inconsistência. Ver docs/decisoes/interface.md. -->
-            <input id="ed-app-limpar" type="number" min="0" max="999" step="1"
-                   class="campo-input" style="width:5rem" />
-            <span>voltas (0 = nunca)</span>
-          </label>
-          <label class="campo flex-row items-center gap-2"
-                 title="Trava o personagem na posição em que o APP foi iniciado. Se ele andar mais de 1 unidade, volta andando (sem montura). A cada 30 voltas sem movimento, dá um passo lateral de 6 pixels e volta — anti-AFK leve.">
-            <input id="ed-app-travar" type="checkbox"
-                   class="checkbox" checked />
-            <span>Travar posição ao iniciar o APP</span>
-          </label>
-          <label class="campo flex-row items-center gap-2"
-                 title="A cada N voltas sem movimento, dá um passo lateral de 6 pixels e volta — anti-AFK leve.">
-            <span>Shuffle a cada</span>
-            <input id="ed-app-shuffle" type="number" min="1" max="999" step="5"
-                   class="campo-input" style="width:5rem" value="30" />
-            <span>voltas sem movimento</span>
-          </label>
-        </div>
-        <!-- Envoltória flex-1 para usar a altura toda -->
-        <div class="tabela-envoltoria flex-1 flex flex-col min-h-0">
-          <table class="tabela tabela-app">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Tecla</th>
-                <th>Delay (ms)</th>
-              </tr>
-            </thead>
-            <!-- Corpo rola internamente mas expande para caber no flex -->
-            <tbody id="corpo-app" class="scroll-thin"></tbody>
-          </table>
+        <div class="app-colunas">
+
+          <!-- ESQUERDA: a macro -->
+          <div class="app-macro">
+            <div class="tabela-envoltoria flex-1 flex flex-col min-h-0">
+              <table class="tabela tabela-app">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Tecla</th>
+                    <th>Delay (ms)</th>
+                  </tr>
+                </thead>
+                <!-- Corpo rola internamente mas expande para caber no flex -->
+                <tbody id="corpo-app" class="scroll-thin"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- DIREITA: tudo que não é a macro -->
+          <aside class="app-lateral scroll-thin">
+
+            <div class="grupo">
+              <div class="grupo-titulo">Modo APP</div>
+              <label class="campo-check w-full">
+                <input id="ed-app-ligado" type="checkbox" class="chk" />
+                <span>Ativar Modo APP (macro independente)</span>
+              </label>
+            </div>
+
+            <div class="grupo">
+              <div class="grupo-titulo">Comportamento</div>
+              <label class="campo linha-opcao mb-1.5"
+                     title="A cada tantas voltas da sequência, o bot abre o inventário (tecla da aba Teclas) e apaga os itens que reconhecer como lixo. 0 = nunca fazer isso.">
+                <span>Limpar a bolsa a cada</span>
+                <!-- ÚNICO campo numérico que aceita 0, e o 0 é um MODO: "nunca apagar".
+                     Apagar item não tem desfazer, então tirar essa saída seria pior
+                     que a inconsistência. Ver docs/decisoes/interface.md. -->
+                <input id="ed-app-limpar" type="number" min="0" max="999" step="1"
+                       class="campo-input campo-num" />
+              </label>
+              <label class="campo-check w-full"
+                     title="Trava o personagem na posição em que o APP foi iniciado. Se ele andar mais de 1 unidade, volta andando (sem montura).">
+                <input id="ed-app-travar" type="checkbox" class="chk" checked />
+                <span>Travar posição ao iniciar o APP</span>
+              </label>
+              <label class="campo linha-opcao mt-1.5"
+                     title="A cada N voltas SEM MOVIMENTO, dá um passo lateral de 6 pixels e volta — anti-AFK leve.">
+                <span>Shuffle a cada (voltas)</span>
+                <input id="ed-app-shuffle" type="number" min="1" max="999" step="5"
+                       class="campo-input campo-num" value="30" />
+              </label>
+            </div>
+
+            <div class="grupo">
+              <div class="grupo-titulo">Time
+                <span class="ajuda" data-ajuda="Faz outras contas rodarem ESTA macro junto com esta conta.&#10;&#10;Quem monta o time é o LÍDER: as contas escolhidas aqui viram seguidoras e usam a macro desta conta enquanto o time estiver rodando — o config delas não é alterado.&#10;&#10;Só a macro é emprestada. Trava de posição, cura e a tecla de próximo alvo continuam sendo as de cada conta.">?</span>
+              </div>
+
+              <label class="campo mb-2">
+                <span>Sincronia</span>
+                <select id="ed-app-time-modo" class="campo-input">
+                  <option value="copiar">Só copiar a macro</option>
+                  <option value="largada">Começar cada volta juntos</option>
+                  <option value="mesmo_alvo">Começar juntos e no mesmo alvo</option>
+                </select>
+              </label>
+              <p id="ed-app-time-explica" class="text-[10.5px] text-dim leading-snug mb-2"></p>
+
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-dim text-[10.5px] font-medium uppercase tracking-wide">Contas do time</span>
+                <span id="ed-app-time-conta" class="text-[10.5px] font-bold text-accent"></span>
+              </div>
+              <!-- Preenchida por `montarListaDoTime` em main.js: uma linha por
+                   conta cadastrada. Conta farmando a cave aparece DESABILITADA
+                   e dizendo por quê -- some da lista seria o usuário procurando
+                   uma conta que ele sabe que existe. -->
+              <div id="ed-app-time-lista" class="flex flex-col gap-0.5"></div>
+            </div>
+
+          </aside>
         </div>
       </div>
 

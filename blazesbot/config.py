@@ -1068,6 +1068,40 @@ class BotConfig:
         return [a for a in self.enabled_accounts()
                 if a.settings.accept_team_invites]
 
+    def lider_do_time_do_app(self, login: str, ignorar: str = "") -> str:
+        """Quem já puxa esta conta como seguidora do time do APP, ou "".
+
+        `ignorar` é o login de um líder que NÃO conta na resposta -- e ele não é
+        conveniência: a tela do editor pergunta isto sobre cada candidata para
+        saber quais desabilitar, e sem ignorar a conta que está sendo editada a
+        pergunta se responde sozinha. Os seguidores do próprio líder apareciam
+        como "já no time de <ele mesmo>", desmarcados e travados: o usuário abria
+        o time que ele montou e via um time vazio.
+
+        UMA CONTA SÓ PODE SEGUIR UM LÍDER, e é esta pergunta que garante isso:
+        a tela usa a resposta para desabilitar a conta na lista de outro líder,
+        e o supervisor vai usá-la para saber que a própria lista dela deve ser
+        ignorada enquanto ela for seguidora. Sem essa regra única, A pode
+        liderar B enquanto B lidera A, e não existe resposta certa para "de quem
+        é a macro".
+
+        Varre TODAS as contas, inclusive as desativadas: uma conta desligada
+        continua sendo a dona daquela vaga, e mostrar a vaga como livre faria o
+        usuário montar um time que muda sozinho quando ele religar a outra.
+
+        Ver `docs/decisoes/time-do-app.md`.
+        """
+        alvo = (login or "").strip()
+        if not alvo:
+            return ""
+        dispensado = (ignorar or "").strip()
+        for conta in self.accounts:
+            if conta.login == alvo or (dispensado and conta.login == dispensado):
+                continue
+            if alvo in conta.settings.app.time_logins:
+                return conta.login
+        return ""
+
     def account_by_nick(self, nick: str) -> Account | None:
         """A conta cujo personagem é este nick, ou `None`.
 

@@ -632,3 +632,34 @@ Suíte: 1149 + 37 testes novos, `ruff` limpo. Os dois índices gerados
 (`INTERRUPTORES.md` e o catálogo de tempos) foram regenerados — o
 `test_indice_de_constantes` e o `test_indice_de_tempos` pegaram a mudança, que é
 exatamente o trabalho deles.
+
+## A PyQt6 foi CONGELADA (27/08/2026)
+
+> *"vamos manter a versão PyQt6 parada no tempo, pode até documentar isso, sem
+> deletar por agora, mas acredito que vou abandonar ela de vez, pois a versão
+> web está ficando muito superior e mais bonita."* — decisão do usuário.
+
+**O que "congelada" significa, exatamente:** ela continua funcionando, continua
+lançada pelo `3-INICIAR.bat`, continua lendo e gravando o mesmo
+`data/config.json` e continua sendo mantida quando algo que ela JÁ mostra muda.
+O que ela não recebe é **função nova**.
+
+**Por que isso precisou virar decisão escrita:** a regra permanente do projeto é
+que mexer em interface é mexer NAS DUAS, e ela não é só uma frase no
+`CLAUDE.md` — é travada por teste. `tests/test_app_config_campo_por_campo.py`
+descobre os campos do `AppConfig` por introspecção e cobra cada um em quatro
+lugares, dois deles no `gui/account_dialog.py`. Um campo que só existe na web
+reprova a suíte por construção.
+
+**Como a exceção foi feita:** uma lista fechada e nomeada,
+`CAMPOS_SO_DA_WEB`, com uma âncora (`test_a_excecao_da_gui_congelada_nao_cresce_sozinha`)
+que reprova se ela crescer. Isso mantém a regra valendo para todos os outros
+campos — o que morreria em silêncio seria a alternativa: afrouxar o teste para
+"a GUI não conta mais".
+
+**O que NÃO se perde com o congelamento:** os campos do time são gravados no
+`config.json` por `asdict` e lidos por `_app_from_dict`, que a GUI também usa.
+Abrir uma conta pela PyQt6 e salvar **não apaga** o time — ela apenas não o
+mostra nem o edita. Quem for descongelar precisa de um widget novo em
+`_aba_app`, leitura em `_carregar` e escrita em `_aplicar`; os três lugares
+estão nomeados no teste.

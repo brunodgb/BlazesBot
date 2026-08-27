@@ -255,6 +255,59 @@ body {
     box-shadow: 0 0 0 2px var(--color-accentsoft);
   }
 
+  /* ABA APP EM DUAS COLUNAS. A esquerda estica, a direita é FIXA: nenhum
+     controle da lateral fica melhor mais largo, então a sobra toda vai para a
+     tabela da macro -- que era o motivo da mudança. */
+  .app-colunas {
+    display: flex;
+    gap: 10px;
+    flex: 1;
+    min-height: 0;
+  }
+
+  .app-macro {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    /* Sem isto a tabela empurra a lateral para fora em vez de rolar por
+       dentro: item de flex tem `min-width: auto` por padrão. */
+    min-width: 0;
+  }
+
+  .app-lateral {
+    width: 340px;
+    flex-shrink: 0;
+    overflow-y: auto;
+  }
+
+  /* Opção da lateral: rótulo à esquerda, campo curto à direita. `.campo` é
+     flex-column, e numa coluna de 340px isso esticava um campo de dois dígitos
+     por toda a largura. */
+  .campo.linha-opcao {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .campo-num {
+    width: 5.5rem;
+    flex-shrink: 0;
+    text-align: right;
+  }
+
+  /* A TECLA não precisa de 380px para um caractere. Limitar aqui, e não no
+     `.captura`, porque a mesma classe é usada na aba Teclas, onde o campo
+     largo é o certo (ela mostra nomes como "PAGE DOWN"). */
+  .tabela-app td:nth-child(2) .captura {
+    max-width: 190px;
+    /* `display: block` NÃO é decoração: input é inline-block, e sem isto o
+       `margin: 0 auto` não centraliza -- o campo encostava à esquerda e a
+       linha ficava com um vão morto até o delay. */
+    display: block;
+    margin: 0 auto;
+  }
+
   /* Tabela APP vira uma flex-column para o tbody ocupar TODA a altura
      disponível e rolar internamente (expande, não fica limitada a 220px). */
   .tabela-app {

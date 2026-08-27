@@ -510,6 +510,13 @@ function trocarAba(aba) {
 $$(".aba").forEach((b) =>
   b.addEventListener("click", () => trocarAba(b.dataset.aba)));
 
+// A explicação do modo do time acompanha a escolha. Sem ela, os três nomes do
+// <select> parecem sinônimos -- e a diferença entre eles é o que o time faz.
+{
+  const selModoTime = $("#ed-app-time-modo");
+  if (selModoTime) selModoTime.addEventListener("change", explicarModoDoTime);
+}
+
 function abrirEditor(id) {
   contaIdEditando = id;
   const sel = contasCache.find((x) => x.id === id);
@@ -548,6 +555,11 @@ function preencherEditor(d) {
   $("#ed-app-limpar").value = String(d.app.apagar_lixo_a_cada ?? 10);
   $("#ed-app-travar").checked = !!d.app.travar_posicao;
   $("#ed-app-shuffle").value = String(d.app.shuffle_apos_n_voltas ?? 30);
+  $("#ed-app-time-modo").value = d.app.time_modo || "largada";
+  explicarModoDoTime();
+  // Como a lista do reseter, as candidatas vêm do EDITOR e não do bloco `app`:
+  // elas são as OUTRAS contas, e `app` só sabe de si mesmo.
+  montarListaDoTime(d.contas_do_time || [], d.app.time_logins || []);
 
   preencherTeclas(d.keys);
   preencherApp(d.app.steps, d.app, d.keys);
@@ -762,6 +774,104 @@ function montarListaDeReset(candidatas, atual) {
   sel.value = gravado;
 }
 
+// ===========================================================================
+// O TIME DO APP — quem roda a macro desta conta junto com ela
+// ===========================================================================
+//
+// Molde: `montarListaDeReset`. A diferença é que aqui a escolha é MÚLTIPLA e
+// tem teto, então não dá para ser um <select>.
+//
+// Conta inelegível aparece DESABILITADA com o motivo escrito, em vez de sumir
+// da lista: some é o usuário procurando uma conta que ele sabe que cadastrou.
+
+// Espelha `MAXIMO_DE_SEGUIDORES_DO_TIME` do config.py. O líder não conta.
+const MAXIMO_DO_TIME = 4;
+
+const EXPLICA_MODO_DO_TIME = {
+  copiar:
+    "As contas rodam a mesma macro, cada uma no seu ritmo. Ninguém espera ninguém.",
+  largada:
+    "Todas dão o TAB e começam cada volta juntas; cada uma bate no alvo dela. " +
+    "Quem se atrasar continua batendo e entra na largada seguinte.",
+  mesmo_alvo:
+    "Como a de cima, e ainda dão TAB até ficarem todas no mesmo alvo do líder " +
+    "antes de começar a bater.",
+};
+
+function atualizarContagemDoTime() {
+  const marcadas = $$("#ed-app-time-lista input:checked");
+  const conta = $("#ed-app-time-conta");
+  if (conta) conta.textContent = `${marcadas.length}/${MAXIMO_DO_TIME}`;
+  // TETO SEM MENSAGEM DE ERRO: ao chegar em 4, o que sobra fica desabilitado.
+  // Deixar clicar e recusar depois é pior -- o usuário clica, nada acontece e
+  // ele não sabe se o clique falhou ou se a regra existe.
+  $$("#ed-app-time-lista input").forEach((el) => {
+    if (el.dataset.bloqueada === "1") return;
+    el.disabled = !el.checked && marcadas.length >= MAXIMO_DO_TIME;
+    el.closest("label").classList.toggle("opacity-40", el.disabled);
+  });
+}
+
+function montarListaDoTime(candidatas, escolhidos) {
+  const caixa = $("#ed-app-time-lista");
+  if (!caixa) return;
+  caixa.innerHTML = "";
+  const marcados = new Set((escolhidos || []).map((x) => String(x)));
+
+  if (!candidatas.length) {
+    const p = document.createElement("p");
+    p.className = "text-[10.5px] text-dim leading-snug";
+    p.textContent = "Nenhuma outra conta cadastrada.";
+    caixa.appendChild(p);
+    return;
+  }
+
+  candidatas.forEach((c) => {
+    const rot = document.createElement("label");
+    rot.className = "campo-check w-full";
+    const cx = document.createElement("input");
+    cx.type = "checkbox";
+    cx.className = "chk";
+    cx.value = c.login;
+    cx.checked = marcados.has(c.login);
+
+    // O motivo de não poder entrar, quando existe. Farmar a cave e rodar o APP
+    // são excludentes: convocar uma conta no meio de uma run da cave perderia
+    // a run (teleporte gasto, boss vivo). Ver docs/INVARIANTES.md, "Time do APP".
+    let motivo = "";
+    if (c.farmando_bc) motivo = "farmando a cave";
+    else if (c.lider_de_outro) motivo = `já no time de ${c.lider_de_outro}`;
+    if (motivo) {
+      cx.checked = false;
+      cx.disabled = true;
+      cx.dataset.bloqueada = "1";
+      rot.classList.add("opacity-40");
+    }
+    cx.addEventListener("change", atualizarContagemDoTime);
+
+    const txt = document.createElement("span");
+    txt.textContent = c.nick ? `${c.nick} — (${c.login})` : `(${c.login})`;
+    if (motivo) txt.textContent += ` — ${motivo}`;
+
+    rot.appendChild(cx);
+    rot.appendChild(txt);
+    caixa.appendChild(rot);
+  });
+  atualizarContagemDoTime();
+}
+
+function explicarModoDoTime() {
+  const sel = $("#ed-app-time-modo");
+  const alvo = $("#ed-app-time-explica");
+  if (sel && alvo) alvo.textContent = EXPLICA_MODO_DO_TIME[sel.value] || "";
+}
+
+function lerTimeDoApp() {
+  return $$("#ed-app-time-lista input:checked")
+    .map((el) => el.value)
+    .slice(0, MAXIMO_DO_TIME);
+}
+
 function preencherBC(bc) {
   $("#ed-boss").value = bc.boss_name || "";
   // TELA EM MS, ARMAZENAMENTO EM SEGUNDOS. `attack_delay` é `float` de segundos
@@ -844,6 +954,8 @@ function salvarEditor() {
       espera_depois_do_tab_ms: Math.max(
         MINIMO_ESPERA_APP,
         Number(($("#ed-app-espera-tab") || {}).value) || 1000),
+      time_modo: $("#ed-app-time-modo").value,
+      time_logins: lerTimeDoApp(),
       steps: appSteps,
     },
     keys: lerTeclas(),

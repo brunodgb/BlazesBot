@@ -275,6 +275,17 @@ class _App:
                  "disponivel": bool(r.last_char_name.strip())}
                 for r in self.config.reset_accounts() if r is not c
             ],
+            # AS CANDIDATAS DO TIME DO APP. Inelegível NÃO some da lista --
+            # vai desabilitada, com o motivo, porque conta que some é o usuário
+            # procurando uma conta que ele sabe que cadastrou.
+            "contas_do_time": [
+                {"login": o.login,
+                 "nick": o.last_char_name.strip(),
+                 "farmando_bc": bool(o.bc_farm),
+                 "lider_de_outro": self.config.lider_do_time_do_app(
+                     o.login, ignorar=c.login)}
+                for o in self.config.accounts if o is not c and o.login
+            ],
             "usar_catador": st.usar_catador,
             "mount_speed_pct": st.mount_speed_pct,
             "farm": c.bc_farm,

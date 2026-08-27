@@ -95,7 +95,7 @@ valor declarado pelo usuário, e entram no `docs/TEMPOS.md` marcados como tal. O
 | # | bloco | estado |
 |---|---|---|
 | 1 | Campos `time_logins` / `time_modo` no `AppConfig`, ponte web, testes | **feito** |
-| 2 | Aba APP em duas colunas + painel do Time na direita + `npm run build` | a fazer |
+| 2 | Aba APP em duas colunas + painel do Time na direita + `npm run build` | **feito** |
 | 3 | Promoção do `team.py`: mural e mecânica do jogo para `bot/`, política do reset fica em `bc/` | a fazer |
 | 4 | As duas ferramentas de medição | a fazer |
 | 5 | Sincronia: mural do time, injeção no supervisor, largada no executor | a fazer |
