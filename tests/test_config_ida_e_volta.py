@@ -76,6 +76,11 @@ def test_o_resto_do_APP_continua_indo_e_voltando(tmp_path):
     # Campos internos (não expostos na UI, mas salvos no config.json)
     ("_base_pos_x", 123),
     ("_base_pos_y", 456),
+    # O TIME DO APP (27/08/2026). A lista é normalizada na leitura (texto, sem
+    # vazio, sem repetido, teto de MAXIMO_DE_SEGUIDORES_DO_TIME), então o valor
+    # de ida já tem de estar na forma normalizada para a comparação valer.
+    ("time_logins", ["outra", "maisoutra"]),
+    ("time_modo", "mesmo_alvo"),
 ])
 def test_todo_campo_do_AppConfig_sobrevive(tmp_path, campo, valor):
     """LISTA VIVA: todo campo novo do `AppConfig` (fora `steps`) entra aqui.
@@ -98,7 +103,10 @@ def test_a_lista_acima_cobre_o_AppConfig_inteiro():
     cobertos = {"enabled", "steps", "apagar_lixo_a_cada", "travar_posicao",
                 "shuffle_apos_n_voltas", "espera_depois_do_tab_ms",
                 # Campos internos: salvos no config.json, não expostos na UI
-                "_base_pos_x", "_base_pos_y"}
+                "_base_pos_x", "_base_pos_y",
+                # O time do APP: quem o líder arrasta junto, e o quanto de
+                # sincronia. Ver `MODOS_DO_TIME` em config.py.
+                "time_logins", "time_modo"}
     faltando = {f.name for f in fields(AppConfig)} - cobertos
     assert not faltando, (
         f"campo(s) novo(s) no AppConfig sem teste de ida e volta: {faltando}")

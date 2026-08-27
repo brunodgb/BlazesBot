@@ -80,6 +80,38 @@ e `docs/decisoes/deletador.md`.
 - **AFERIÇÃO ANTES DE CONFIAR** (`bot/app/afericao.py`): fotografa o que seria
   apagado sem clicar. Deletar não tem desfazer.
 
+## Time do APP — `docs/decisoes/time-do-app.md`
+
+A mesma macro rodando em até cinco contas (um líder + `MAXIMO_DE_SEGUIDORES_DO_TIME`
+seguidores). Pedido do usuário em 27/08/2026.
+
+- **QUEM MONTA O TIME É O LÍDER.** `AppConfig.time_logins` só tem efeito na
+  conta que o preencheu. Conta que aparece na lista de outra é SEGUIDORA, e o
+  time dela própria é ignorado enquanto isso — é essa regra única que impede o
+  nó de A liderar B enquanto B lidera A.
+- **SÓ A MACRO É EMPRESTADA**: as 20 linhas, os delays e
+  `espera_depois_do_tab_ms`. **NUNCA** `_base_pos_x`/`_base_pos_y` (é a
+  coordenada DAQUELE personagem — copiar manda o seguidor andar para o mapa
+  errado) nem `KeyBinds.next_target` (descreve o teclado daquele cliente).
+- **O EMPRÉSTIMO É EM TEMPO DE EXECUÇÃO.** O `config.json` do seguidor não é
+  reescrito. Nenhum caminho do time pode gravar a macro do líder em outra conta.
+- **NINGUÉM FICA PARADO ESPERANDO.** A largada tem TETO: quem não chega a tempo
+  segue batendo sozinho e entra na próxima largada que alcançar. Barreira sem
+  teto é proibida — um seguidor curando deixaria os outros parados.
+- **`bc_farm` E APP NUNCA JUNTOS.** Conta farmando a cave não aparece na escolha
+  do time e não é convocada. Convocar arrancaria a conta do meio de uma run
+  (teleporte gasto, boss vivo) — run perdida em silêncio.
+- **SAIR DO TIME POR `bc_farm` NÃO APAGA O LOGIN** de `time_logins`. O clique é
+  reversível; apagar configuração por causa dele, não.
+- **CAMPO NOVO DO `AppConfig` PRECISA ENTRAR NO `_app_from_dict`** — vale para
+  `time_logins`/`time_modo` como para qualquer outro (travado por
+  `tests/test_config_ida_e_volta.py`).
+- **`time_modo` fora de `MODOS_DO_TIME` nunca entra**: a normalização é feita
+  nos DOIS lados (leitura do config e ponte web), como o piso de 100 ms.
+- **A PyQt6 NÃO conhece o time** (congelada em 27/08/2026). A exceção é uma
+  lista fechada em `tests/test_app_config_campo_por_campo.py`
+  (`CAMPOS_SO_DA_WEB`) — não é permissão para novos campos ficarem fora da GUI.
+
 ## Estado atual relevante — as REGRAS
 
 Cada item é o que **não pode ser violado**. O detalhe de cada área mora em

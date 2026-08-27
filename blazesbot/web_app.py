@@ -57,6 +57,8 @@ from .config import (
     Account,
     BotConfig,
     mount_multiplier,
+    normalizar_time_logins,
+    normalizar_time_modo,
     pet_feed_na_faixa,
 )
 from .core import logmodo, quedas, secrets, stats_diarias
@@ -294,6 +296,8 @@ class _App:
                 "shuffle_apos_n_voltas": st.app.shuffle_apos_n_voltas,
                 # A LINHA 0 da macro: o tempo depois do TAB.
                 "espera_depois_do_tab_ms": st.app.espera_depois_do_tab_ms,
+                "time_logins": st.app.time_logins,
+                "time_modo": st.app.time_modo,
                 "steps": [{"key": p.key, "delay_ms": p.delay_ms}
                           for p in st.app.steps],
             },
@@ -502,6 +506,14 @@ class _App:
         st.app.espera_depois_do_tab_ms = max(
             MINIMO_DE_ESPERA_DO_APP_MS,
             int(app.get("espera_depois_do_tab_ms", 1000) or 0))
+        # O TIME. O padrão do `get` é O VALOR ATUAL, e não o default do
+        # dataclass: enquanto a tela do time não existir, um payload sem a
+        # chave APAGARIA o time já configurado -- em silêncio, que é como este
+        # projeto perde configuração. Chave ausente significa "não mexi nisto".
+        st.app.time_logins = normalizar_time_logins(
+            app.get("time_logins", st.app.time_logins))
+        st.app.time_modo = normalizar_time_modo(
+            app.get("time_modo", st.app.time_modo))
         passos = (app.get("steps") or [])[:PASSOS_DO_APP]
         for i, passo in enumerate(st.app.steps):
             bruto = passos[i] if i < len(passos) else {}

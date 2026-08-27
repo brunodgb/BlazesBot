@@ -514,6 +514,73 @@ class AppStep:
         return bool(self.key)
 
 
+# ---------------------------------------------------------------------------
+# TIME DO APP -- a mesma macro rodando em várias contas ao mesmo tempo
+# ---------------------------------------------------------------------------
+
+# Quantas contas o líder arrasta junto. Pedido do usuário em 27/08/2026:
+# *"eu posso escolher até 4 outras contas cadastradas"*. O líder NÃO entra na
+# conta -- são 4 seguidores, 5 janelas no total.
+MAXIMO_DE_SEGUIDORES_DO_TIME = 4
+
+# Os três modos. A diferença entre eles é O QUE fica sincronizado:
+#
+#   "copiar"      -- só a macro. Cada conta roda no seu ritmo, sem esperar
+#                    ninguém. É o time sem sincronia, para quem só quer a mesma
+#                    sequência em várias contas.
+#   "largada"     -- a macro E o começo de cada volta. Todos dão o TAB e
+#                    começam a sequência juntos; cada um bate no SEU mob. É o
+#                    padrão, e na prática costuma dar no mesmo mob: com a trava
+#                    de posição ligada os personagens ficam quase no mesmo
+#                    ponto, e o TAB deste jogo pega o mais perto.
+#   "mesmo_alvo"  -- a macro, a largada e o ALVO. O líder publica o id do mob e
+#                    os seguidores dão TAB até o próprio alvo bater.
+#
+# NÃO EXISTE TECLA DE ASSIST neste jogo -- conferido campo a campo em
+# `KeyBinds`. Por isso "mesmo_alvo" só tem um caminho possível: comparar o
+# `TARGET_ID` lido da memória de cada conta com o do líder.
+MODOS_DO_TIME = ("copiar", "largada", "mesmo_alvo")
+MODO_PADRAO_DO_TIME = "largada"
+
+
+def normalizar_time_logins(bruto: object) -> list[str]:
+    """A lista de seguidores, sempre limpa: texto, sem vazio, sem repetido, no teto.
+
+    A DEFESA É FEITA DUAS VEZES DE PROPÓSITO -- na leitura do `config.json`
+    (`BotConfig._app_from_dict`) e na ponte web (`Api.salvar_personagem`).
+    São duas portas independentes: o arquivo pode ter sido editado à mão e o
+    JavaScript pode mandar qualquer coisa. É a mesma decisão do piso de 100 ms,
+    que também mora nos dois lados (ver `MINIMO_DE_ESPERA_DO_APP_MS`) -- e o
+    motivo é o mesmo: "a tela impõe" não é garantia, é boa vontade.
+    """
+    if not isinstance(bruto, (list, tuple)):
+        return []
+    limpos: list[str] = []
+    for item in bruto:
+        login = str(item or "").strip()
+        # Login VAZIO é conta recém-criada que ainda não foi cadastrada. Guardar
+        # isso deixaria uma vaga do time apontando para lugar nenhum -- e o time
+        # ficaria esperando a largada de quem nunca vai chegar.
+        if not login or login in limpos:
+            continue
+        limpos.append(login)
+        if len(limpos) >= MAXIMO_DE_SEGUIDORES_DO_TIME:
+            break
+    return limpos
+
+
+def normalizar_time_modo(bruto: object) -> str:
+    """O modo escolhido, ou o padrão. Valor desconhecido NUNCA entra.
+
+    Sem isto, um `config.json` editado à mão (ou um erro de digitação no
+    JavaScript) colocaria uma string qualquer no campo, e quem lê o modo
+    decidiria por comparação de igualdade -- ou seja, cairia silenciosamente no
+    ramo "não é nenhum dos três" e o time não faria nada, sem erro nenhum.
+    """
+    modo = str(bruto or "").strip()
+    return modo if modo in MODOS_DO_TIME else MODO_PADRAO_DO_TIME
+
+
 @dataclass
 class AppConfig:
     """A macro do módulo APP: teclas em laço contínuo, no estilo do UoPilot.
@@ -573,6 +640,30 @@ class AppConfig:
     # o isolamento do executor não quebra.
     travar_posicao: bool = True
     shuffle_apos_n_voltas: int = 30
+    # ==================================================================
+    # O TIME: a mesma macro rodando em várias contas ao mesmo tempo
+    # ==================================================================
+    #
+    # Pedido do usuário em 27/08/2026: *"eu posso escolher até 4 outras contas
+    # cadastradas e todas vão rodar a macro daquela conta, de forma
+    # sincronizada, para que sempre ataquem juntos"*.
+    #
+    # QUEM MONTA O TIME É O LÍDER, e estes dois campos só têm efeito na conta
+    # que os preencheu. A conta que aparece no `time_logins` de outra é
+    # SEGUIDORA, e o time dela própria é ignorado enquanto isso. É uma regra só,
+    # e ela é o que impede o nó de A liderar B enquanto B lidera A.
+    #
+    # O QUE É EMPRESTADO É SÓ A MACRO -- as 20 linhas, os delays e a espera
+    # depois do TAB. Trava de posição, cura e a tecla do TAB continuam de cada
+    # conta: a posição-base é a coordenada DAQUELE personagem (copiar mandaria o
+    # seguidor andar para o mapa errado) e a tecla descreve o teclado daquele
+    # cliente, não a macro.
+    #
+    # GUARDA LOGIN, não nick: é o login que identifica conta na tela do editor.
+    # Login que não existe mais não trava nada -- o time roda sem ele, e nunca
+    # espera por quem não vai chegar.
+    time_logins: list[str] = field(default_factory=list)
+    time_modo: str = MODO_PADRAO_DO_TIME
     # Posição base salva (X, Y) — INTERNA, não aparece na UI.
     # Gravada automaticamente quando o APP inicia com travar_posicao ligado.
     # Usada pelo executor para devolver o personagem ao ponto original.
@@ -1176,6 +1267,8 @@ class BotConfig:
             travar_posicao=bool(dados.get("travar_posicao", True)),
             shuffle_apos_n_voltas=max(
                 1, int(dados.get("shuffle_apos_n_voltas", 30) or 30)),
+            time_logins=normalizar_time_logins(dados.get("time_logins")),
+            time_modo=normalizar_time_modo(dados.get("time_modo")),
             _base_pos_x=int(dados.get("_base_pos_x", 0) or 0),
             _base_pos_y=int(dados.get("_base_pos_y", 0) or 0),
         )

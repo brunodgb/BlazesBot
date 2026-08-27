@@ -23,6 +23,7 @@ medição. Regra sem porquê apodrece; porquê aqui dentro faz o arquivo voltar 
 | **`docs/decisoes/reset-de-time.md`** | **conta de reset: lista fechada, batida, trava na porta** |
 | **`docs/decisoes/comida-do-pet.md`** | **a grade da comida: por que o APP nunca alimentava e por que a bolsa do BC não baixava** |
 | `docs/decisoes/deletador.md` | deletar itens no APP |
+| **`docs/decisoes/time-do-app.md`** | **time do APP: a mesma macro em ate 5 contas, largada junta, mesmo alvo** |
 | `docs/decisoes/ferramentas-temporarias.md` | Testar Venda, Amostrar Cliques, link |
 | **`docs/decisoes/memoria-primeiro.md`** | **o princípio: memória > imagem; o que ainda decide por imagem e como migrar** |
 | `docs/decisoes/transplante-ghostbot.md` | o que veio do GhostBot, rebase +0x60 |
