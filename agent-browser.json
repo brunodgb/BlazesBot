@@ -1,0 +1,8 @@
+{
+  "$schema": "https://agent-browser.dev/schema.json",
+  "headed": true,
+  "profile": "./browser-data",
+  "ignoreHttpsErrors": true,
+  "hideScrollbars": true,
+  "args": "--no-sandbox --disable-gpu --disable-web-security --allow-file-access-from-files"
+}

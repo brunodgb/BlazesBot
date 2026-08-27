@@ -1,0 +1,955 @@
+/* ============================================================
+   BlazesBot — Frontend web (pywebview + WebView2) — Tailwind CSS v4.
+   Refatoração UI/UX: paleta VERMELHA (identidade BlazesBot, igual à
+   GUI PyQt6 em blazesbot/gui/theme.py), alta densidade de informação,
+   scroll interno por painel (o corpo não rola) e modal com
+   cabeçalho/rodapé fixos.
+
+   Edição de UI acontece na pasta web/, mas o Python só enxerga o
+   resultado após `npm run build` (gera o dist/index.html).
+   ============================================================ */
+
+@import "tailwindcss";
+
+/* ---------- Tokens de tema (Tailwind v4) ----------
+   Paleta espelhada em blazesbot/gui/theme.py: o vermelho #541E1B é a
+   IDENTIDADE (fundos, bordas, abas selecionadas); o âmbar #E08A4C é o
+   DESTAQUE (botões primários, foco). O texto é NEUTRO de propósito —
+   quem carrega a identidade é o fundo, não o texto.
+   Escala de fundos (mais profundo → mais claro): cab/deep = BG_DEEP,
+   surface = BG, panel = PANEL, panel2 = PANEL_ALT.
+   ---------- */
+
+@theme {
+  --color-cab: #150807;
+  --color-deep: #150807;
+  --color-surface: #1f0c0b;
+  --color-panel: #2c1311;
+  --color-panel2: #3a1815;
+  --color-line: #4a201c;
+  --color-linesoft: rgba(122, 50, 44, 0.4);
+  --color-accent: #e08a4c;
+  --color-accent2: #f0a063;
+  --color-accentsoft: rgba(224, 138, 76, 0.15);
+  --color-ink: #f7f5f5;
+  --color-dim: #beb7b6;
+  --color-faint: #8e8483;
+  --color-ok: #8fc46a;
+  --color-warn: #f0c24a;
+  --color-err: #ef4444;
+  /* Ajustado para vermelho mais vivo */
+  --color-mana: #3b82f6;
+  /* Azul para Mana */
+
+  --font-ui: "Segoe UI", "Segoe UI Variable", system-ui, sans-serif;
+  --font-mono: "Cascadia Code", Consolas, monospace;
+}
+
+:root[data-tema="claro"] {
+  --color-surface: #faf7f6;
+  --color-panel: #ffffff;
+  --color-panel2: #f5efed;
+  --color-deep: #f5efed;
+  --color-line: rgba(0, 0, 0, 0.12);
+  --color-linesoft: rgba(0, 0, 0, 0.06);
+  --color-ink: #2b1a18;
+  --color-dim: #6d5a56;
+  --color-faint: #9c8a86;
+}
+
+:root {
+  --accent: #e08a4c;
+  --accent-soft: rgba(224, 138, 76, 0.15);
+  --text-faint: #8e8483;
+  --err: #ef4444;
+  /* Cores com ALTO CONTRASTE para estados ativos (WCAG AA 4.5:1) */
+  --accent-fg: #ffebc0;      /* âmbar bem claro para fundo escuro */
+  --accent2-fg: #fff3d6;     /* âmbar2 quase branco */
+  --ok-fg: #d4ffb8;          /* verde bem claro */
+
+  /* ---------- LOG ----------
+     A tela que o usuário leigo mais olha e a que menos entende. Três tons e
+     nenhuma cor nova: a MENSAGEM é o conteúdo (o mais claro dos três), a HORA
+     é referência (apagada), e o fio/realce são neutros para não competir com a
+     etiqueta colorida da conta. */
+  --log-msg: #ded7d6;
+  --log-hora: #8a807f;
+  --log-fio: rgba(255, 255, 255, 0.055);
+  --log-realce: rgba(224, 138, 76, 0.11);
+  --log-selecao: rgba(224, 138, 76, 0.3);
+}
+
+:root[data-tema="claro"] {
+  --text-faint: #9c8a86;
+  /* Tema claro: cores escuras para contraste */
+  --accent-fg: #6b3a00;
+  --accent2-fg: #5a2f00;
+  --ok-fg: #1a5c0a;
+
+  --log-msg: #35201e;
+  --log-hora: #77655f;   /* 4,8:1 sobre o fundo claro -- AA. #9a8884 dava 2,97:1 */
+  --log-fio: rgba(0, 0, 0, 0.07);
+  --log-realce: rgba(224, 138, 76, 0.16);
+  --log-selecao: rgba(224, 138, 76, 0.35);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  /* Fonte base menor */
+  color: var(--color-ink);
+  background: var(--color-surface);
+  display: flex;
+  flex-direction: column;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Scroll fino */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 99px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.35);
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+@utility scroll-thin {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+.titlebar {
+  -webkit-app-region: drag;
+}
+
+.titlebar button {
+  -webkit-app-region: no-drag;
+}
+
+.titlebar button {
+  color: var(--color-ink);
+  opacity: 0.8;
+  transition: opacity 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.titlebar button:hover {
+  opacity: 1;
+  background: var(--color-panel);
+}
+
+#btn-fechar:hover {
+  background: var(--color-err);
+  color: white;
+}
+
+#btn-tema:hover {
+  background: var(--color-panel);
+}
+
+@layer components {
+  .bt {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-full px-3 py-1 text-[11.5px] font-semibold cursor-pointer transition-all duration-150 select-none;
+  }
+
+  .bt:active {
+    transform: scale(0.97);
+  }
+
+  .bt:disabled {
+    @apply opacity-40 cursor-not-allowed grayscale;
+  }
+
+  .bt-primario {
+    @apply bg-accent text-[#16110f] hover:bg-accent2 shadow-sm;
+  }
+
+  .bt-secundario {
+    @apply bg-white/5 text-ink border border-line hover:bg-white/10 hover:border-faint;
+  }
+
+  .bt-perigo {
+    @apply bg-err/10 text-err hover:bg-err hover:text-white;
+  }
+
+  .bt-sucesso {
+    @apply bg-ok/20 text-[var(--ok-fg)] hover:bg-ok hover:text-[#10230b] font-semibold;
+  }
+
+  /* Ação primária disponível no estado atual — anel + brilho âmbar para
+     destacar em qual botão clicar agora (Iniciar quando parado, Parar quando
+     rodando, Retomar quando pausado). */
+  .bt-destaque {
+    box-shadow:
+      0 0 0 2px var(--color-accentsoft),
+      0 0 16px rgba(224, 138, 76, 0.35);
+  }
+
+  .bt-destaque:hover {
+    box-shadow:
+      0 0 0 2px var(--color-accentsoft),
+      0 0 20px rgba(224, 138, 76, 0.5);
+  }
+
+  /* Inputs muito mais compactos */
+  .campo-input {
+    @apply w-full px-2 py-1 rounded border border-line bg-deep text-ink outline-none transition-all duration-150 text-[12px];
+  }
+
+  .campo-input:focus {
+    @apply border-accent;
+    box-shadow: 0 0 0 2px var(--color-accentsoft);
+  }
+
+  .cel-texto,
+  .cel-opt {
+    @apply w-full px-1.5 py-1 text-[12px] text-ink bg-transparent border border-transparent rounded transition-all duration-150;
+  }
+
+  .cel-texto:hover,
+  .cel-opt:hover {
+    @apply bg-white/5;
+  }
+
+  .cel-texto:focus,
+  .cel-opt:focus {
+    @apply outline-none bg-deep border-accent;
+    box-shadow: 0 0 0 2px var(--color-accentsoft);
+  }
+
+  .cel-senha.tem-senha {
+    color: var(--color-ok);
+  }
+
+  .cel-senha.tem-senha:focus {
+    color: var(--color-ink);
+  }
+
+  /* Tabela APP ultra compacta */
+  .tabela input[type="number"] {
+    @apply w-[70px] px-1.5 py-0.5 rounded border border-line bg-deep text-ink text-[11.5px] outline-none text-center;
+  }
+
+  .tabela input[type="number"]:focus {
+    @apply border-accent;
+    box-shadow: 0 0 0 2px var(--color-accentsoft);
+  }
+
+  /* Tabela APP vira uma flex-column para o tbody ocupar TODA a altura
+     disponível e rolar internamente (expande, não fica limitada a 220px). */
+  .tabela-app {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+  }
+
+  .tabela-app thead {
+    display: table;
+    width: 100%;
+    table-layout: fixed;
+    flex-shrink: 0;
+  }
+
+  .tabela-app tbody {
+    display: block;
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
+  }
+
+  .tabela-app tbody tr {
+    display: table;
+    width: 100%;
+    table-layout: fixed;
+  }
+
+  .tabela-app th,
+  .tabela-app td {
+    @apply px-1.5 py-1 text-[11.5px];
+  }
+
+  .tabela-app th:nth-child(1),
+  .tabela-app td:nth-child(1) {
+    width: 30px;
+    text-align: center;
+  }
+
+  .tabela-app th:nth-child(3),
+  .tabela-app td:nth-child(3) {
+    width: 90px;
+    text-align: center;
+  }
+
+  /* Captura de tecla ultra compacta */
+  .captura {
+    @apply w-full px-1.5 py-0.5 rounded border border-line bg-deep text-ink text-center font-bold uppercase outline-none transition-all duration-150 text-[11px] h-6;
+  }
+
+  .captura:focus {
+    @apply border-accent;
+  }
+
+  .captura.capturando {
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 2px var(--color-accentsoft);
+    background: color-mix(in srgb, var(--accent) 12%, var(--color-deep));
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .captura.capturando::placeholder {
+    color: var(--accent);
+    opacity: 0.7;
+  }
+
+  .chk {
+    @apply w-3.5 h-3.5 cursor-pointer rounded;
+    accent-color: var(--color-accent);
+  }
+
+  .tabela-envoltoria {
+    @apply overflow-hidden rounded border border-line bg-panel shadow-sm;
+  }
+
+  .tabela {
+    @apply w-full border-collapse text-[12px];
+  }
+
+  .tabela th {
+    @apply bg-panel2 text-dim text-left px-2 py-1.5 text-[10px] uppercase tracking-wider font-semibold sticky top-0 z-5 border-b border-line;
+  }
+
+  .tabela td {
+    @apply px-2 py-1.5 align-middle border-b border-linesoft;
+  }
+
+  .tabela tbody tr:hover {
+    background: rgba(255, 255, 255, 0.04);
+  }
+
+  .tabela tbody tr.linha-ativa {
+    background: var(--color-accentsoft);
+    box-shadow: inset 3px 0 0 var(--accent);
+  }
+
+  .tabela tbody tr.linha-ativa td:first-child {
+    border-left: 3px solid var(--accent);
+  }
+
+  .tabela .ctr {
+    @apply text-center;
+  }
+
+  .cel-target {
+    @apply font-mono text-[11px] transition-colors duration-200;
+    color: var(--color-dim);
+  }
+
+  .cel-target.target-vivo {
+    color: var(--color-ok);
+    font-weight: 600;
+  }
+
+  /* Ajustes de Grids e Grupos para densidade extrema */
+  .campo {
+    @apply flex flex-col gap-1;
+  }
+
+  .campo>span {
+    @apply text-dim text-[10.5px] font-medium uppercase tracking-wide;
+  }
+
+  .campo-check {
+    @apply inline-flex items-center gap-1.5 cursor-pointer px-1 py-1 rounded transition-colors duration-150 hover:bg-white/5;
+  }
+
+  .campo-check span {
+    @apply text-[12px] text-ink;
+  }
+
+  /* Densidade: apertado de propósito. A aba Teclas tem que caber INTEIRA sem
+     barra de rolagem -- procurar uma tecla rolando a lista é pior que ler
+     campos próximos. Cada folga aqui foi cortada quando a sétima tecla de
+     Interface & Sistema abriu uma segunda linha no grupo. */
+  .grupo {
+    @apply border border-line rounded p-2 bg-panel/50;
+  }
+
+  .grupo+.grupo {
+    @apply mt-1.5;
+  }
+
+  .grupo-titulo {
+    @apply text-[10px] uppercase tracking-wider font-bold mb-1 text-accent border-b border-linesoft pb-0.5;
+  }
+
+  /* Densidade: 6 colunas para telas de teclas em vez de 4 */
+  /* Rótulo de campo que carrega um "?" junto.
+     `.campo` é `flex flex-col`, então texto solto e o ícone virariam DUAS
+     LINHAS -- foi o que aconteceu. Juntar os dois num só filho resolve, e o
+     `font: inherit` é o que mantém este rótulo idêntico aos vizinhos, que são
+     texto puro (sem ele, a regra `.campo>span` deixaria só este em CAIXA
+     ALTA e menor). */
+  .campo>.rotulo {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font: inherit;
+    color: inherit;
+    text-transform: none;
+    letter-spacing: normal;
+  }
+
+  /* "?" ao lado de um campo. A explicação mora aqui, não na tela: texto solto
+     espalhado faz o olho pular os campos, que são o que a pessoa veio fazer. */
+  .ajuda {
+    @apply inline-flex items-center justify-center w-[15px] h-[15px] rounded-full
+           text-[10px] font-bold leading-none cursor-help align-middle
+           text-accent bg-panel2 border border-line select-none;
+  }
+
+  .ajuda:hover {
+    @apply border-accent text-white;
+  }
+
+  /* O BALÃO VIVE NO <body>, e isso não é capricho: os painéis do modal rolam
+     (`overflow-y: auto`), e um balão posicionado dentro deles seria CORTADO na
+     borda -- justamente nos campos de baixo, que são os que mais precisam de
+     explicação. Solto no body com `position: fixed`, ele escapa de qualquer
+     recorte; quem calcula a posição é o JS, que já sabe onde o "?" está. */
+  #balao-ajuda {
+    @apply fixed z-[100] max-w-[320px] px-3 py-2 rounded-md pointer-events-none
+           text-[11.5px] leading-relaxed text-ink bg-panel border border-accent/40;
+    box-shadow: 0 8px 24px rgb(0 0 0 / 55%);
+    white-space: pre-line;
+    opacity: 0;
+    transition: opacity .12s ease;
+  }
+
+  #balao-ajuda.visivel {
+    opacity: 1;
+  }
+
+  /* Highlight de tecla duplicada (conflito) */
+  .conflito-tecla {
+    animation: piscar-conflito 1s ease-in-out 3;
+    outline: 2px solid var(--err, #ef4444);
+    outline-offset: 2px;
+  }
+
+  @keyframes piscar-conflito {
+    0%, 100% { outline-color: var(--err, #ef4444); }
+    50% { outline-color: transparent; }
+  }
+
+  /* Modal Editor — altura máxima e scroll interno para caber em 1200x800 */
+  .modal-mascara > div {
+    max-height: 90vh;
+  }
+
+  .modal-mascara .painel-aba,
+  .modal-mascara .aba-conteudo {
+    max-height: calc(90vh - 160px);
+    overflow-y: auto;
+  }
+
+  /* Preview da sequência APP truncada com tooltip */
+  #lbl-previa-app {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    display: block;
+  }
+
+  /* Cards de estatísticas mais compactos para 1200px */
+  #cards-estatisticas {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 8px;
+  }
+
+  .card-stat {
+    padding: 10px 12px;
+  }
+
+  .card-rotulo {
+    font-size: 11px;
+  }
+
+  .card-valor {
+    font-size: 18px;
+    font-weight: 600;
+  }
+
+  /* Tabelas mais compactas */
+  table td, table th {
+    padding: 6px 8px;
+  }
+
+  input.cel-texto, select.cel-opt {
+    padding: 4px 8px;
+    font-size: 12px;
+  }
+
+  /* Botões mais compactos */
+  .bt {
+    padding: 6px 12px;
+    font-size: 11.5px;
+    gap: 6px;
+  }
+
+  .grade-teclas {
+    @apply grid gap-1.5;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  }
+
+  .grade-form {
+    @apply grid gap-2;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  }
+
+  .abas {
+    @apply flex gap-1 px-2 pt-2 bg-panel border-b border-line;
+  }
+
+  .aba {
+    @apply px-3 py-1.5 bg-transparent text-dim text-[11.5px] font-bold cursor-pointer border-b-2 border-transparent transition-colors hover:text-ink;
+  }
+
+  .aba-ativa {
+    color: var(--color-accent);
+    border-bottom-color: var(--color-accent);
+  }
+
+  .aviso-banner {
+    @apply flex gap-2 items-center border rounded px-2.5 py-1.5 text-ink text-[11.5px] bg-accentsoft border-accentsoft;
+  }
+
+  .aviso-neutro {
+    background: var(--color-panel2);
+    border-color: var(--color-line);
+    color: var(--color-dim);
+  }
+
+  /* Estatísticas de BC — cards gerados pelo JS em main.js (card-stat/rotulo/valor) */
+  .card-stat {
+    @apply bg-panel border border-line rounded-xl p-2 flex flex-col gap-0.5 transition-transform duration-150 hover:-translate-y-0.5 hover:border-linesoft shadow-sm;
+  }
+
+  .card-rotulo {
+    @apply text-[11px] text-dim uppercase tracking-wider font-semibold;
+  }
+
+  .card-valor {
+    @apply text-lg font-bold text-accent;
+  }
+}
+
+.secao {
+  display: none;
+  height: 100%;
+}
+
+.secao.painel-visivel {
+  display: flex;
+  flex-direction: column;
+  animation: fade 0.2s ease;
+}
+
+/* Navegação lateral (sidebar). Classes usadas pelo markup e pelo main.js
+   (toggle nav-ativo) — sem isso os botões ficam sem estilo. */
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--color-dim);
+  cursor: pointer;
+  user-select: none;
+  border: 1px solid transparent;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.nav-item:hover {
+  background: var(--color-panel);
+  color: var(--color-ink);
+}
+
+.nav-item.nav-ativo {
+  background: var(--color-accentsoft);
+  color: var(--accent2-fg);
+  border-color: var(--color-accent);
+  font-weight: 700;
+}
+
+.estado-roda {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--color-dim);
+}
+
+.estado-roda.estado-rodando {
+  color: var(--color-ok);
+}
+
+.estado-roda.estado-pausado {
+  color: var(--color-warn);
+}
+
+.estado-roda.estado-erro {
+  color: var(--color-err);
+}
+
+.painel-aba {
+  display: none;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 10px;
+}
+
+.painel-aba.aba-visivel {
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-mascara {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(2px);
+}
+
+.escondida {
+  display: none !important;
+}
+
+.toast {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 150;
+  padding: 8px 16px;
+  border-radius: 99px;
+  font-size: 11.5px;
+  font-weight: bold;
+  background: var(--color-panel);
+  border: 1px solid var(--color-line);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+  transition: opacity 0.3s, transform 0.3s;
+}
+
+.toast.escondida {
+  opacity: 0;
+  transform: translate(-50%, 20px);
+  pointer-events: none;
+}
+
+/* ============================================================
+   LOG
+   ============================================================
+   O DEFEITO QUE ESTE BLOCO CONSERTA: 11px, `line-height: 1.4`, zero padding e
+   UMA cor só. Trinta e cinco linhas viravam um bloco cinza uniforme -- nada
+   dizia onde uma linha terminava, e a linha longa que quebrava em duas parecia
+   duas linhas diferentes. O usuário leigo não achava nada ali; o programador se
+   perdia junto.
+
+   Quatro decisões, em ordem de importância:
+
+   1. TRÊS COLUNAS -- hora | conta | mensagem -- alinhadas entre TODAS as
+      linhas. É o que conserta a quebra: a continuação de uma linha longa cai
+      sob a própria mensagem, nunca sob a hora, então a linha continua sendo UMA
+      coisa. Só `subgrid` alinha colunas entre irmãos (cada `.linha-log` é seu
+      próprio grid); sem ele cada linha mediria sozinha e nada alinharia -- por
+      isso o `@supports`, com o flex como base que entrega todo o resto.
+   2. HIERARQUIA. A hora é REFERÊNCIA (apagada, menor); a mensagem é CONTEÚDO
+      (o tom mais claro). Antes as duas tinham o mesmo peso e o olho batia na
+      hora primeiro, em toda linha.
+   3. RITMO. Um fio entre linhas e realce sob o cursor. O fio é de propósito, e
+      não faixa alternada (zebra): a poda do cache remove a PRIMEIRA linha da
+      caixa (`podarCache`), então `nth-child` inverteria a paridade de todas as
+      linhas a cada poda -- saturado em LOG_CACHE_MAX isso é uma piscada de tela
+      inteira a cada 300 ms. Fio não tem paridade.
+   4. AR. 12px com `line-height 1.55` e respiro vertical por linha. Log é para
+      ler, não para caber.
+*/
+.caixa-log {
+  background: var(--color-deep);
+  border: 1px solid var(--color-line);
+  border-radius: 8px;
+  padding: 4px 6px 8px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.55;
+  overflow-y: auto;
+  /* O log não empurra a rolagem para a página quando chega no fim. */
+  overscroll-behavior: contain;
+  /* Seleção livre de texto, como no desktop -- vence o `user-select: none`
+     global do app e vale também no WebKit (motor do WebView2). */
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+/* Copiar é a única coisa que se faz com o log; a seleção precisa APARECER. */
+.caixa-log ::selection {
+  background: var(--log-selecao);
+  color: var(--color-ink);
+}
+
+.linha-log {
+  display: flex;
+  column-gap: 12px;
+  align-items: baseline;
+  padding: 3px 8px 4px;
+  border-radius: 5px;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+/* `+` e não `:nth-child`: fio só ENTRE linhas, e sem paridade para a poda
+   inverter (ver o item 3 do comentário do bloco). */
+.linha-log + .linha-log {
+  border-top: 1px solid var(--log-fio);
+}
+
+/* A linha inteira reage: é ela que o clique direito copia. O fio some no
+   realce para a linha apontada virar um bloco só. */
+.linha-log:hover {
+  background: var(--log-realce);
+  border-top-color: transparent;
+}
+
+/* CHEGADA DE LINHA NOVA. A linha desce para o lugar e o realce âmbar desvanece:
+   diz "isto acabou de acontecer" sem escrever nada e sem deixar marca
+   permanente.
+
+   `.log-chegando` só entra em lote PEQUENO e nunca em reconstrução -- quem
+   decide é `renderLog`, e o porquê está lá. Sem `both`: o estado final é o
+   natural da linha, então nada fica pendurado nos milhares de elementos que
+   sobrevivem no DOM.
+
+   AS TRÊS COISAS NÃO ACABAM JUNTAS, e é isso que dá a sensação de entrada em vez
+   de piscada: a opacidade fecha primeiro (45%), o deslocamento assenta depois
+   (70%) e o realce é o último a sumir. Se as três terminassem no mesmo ponto, a
+   linha "aparecia"; escalonadas, ela CHEGA.
+
+   A duração é PREFERÊNCIA DECLARADA do usuário (pediu mais lenta que os 420ms
+   anteriores), não medição -- é a única constante do log nessa condição. */
+@keyframes log-chegando {
+  0% {
+    opacity: 0;
+    transform: translateY(-4px);
+    background-color: var(--log-realce);
+  }
+
+  45% {
+    opacity: 1;
+    background-color: var(--log-realce);
+  }
+
+  70% {
+    transform: none;
+  }
+
+  100% {
+    opacity: 1;
+    transform: none;
+    background-color: transparent;
+  }
+}
+
+.linha-log.log-chegando {
+  /* `ease-out` longo: quase toda a distância é vencida no começo e o fim
+     assenta devagar. Curva simétrica nesta duração pareceria lentidão, não
+     suavidade. */
+  animation: log-chegando 700ms cubic-bezier(0.16, 0.84, 0.3, 1);
+}
+
+/* SEM PORTÃO DE `prefers-reduced-motion` AQUI, DE PROPÓSITO. Quem decide é o
+   interruptor `EFEITOS_DO_LOG` no `main.js`, e o porquê medido está lá: o
+   Windows desta máquina reporta `reduce` (animação de janela desligada), então o
+   portão apagaria os efeitos pedidos. A classe só chega às linhas quando o
+   `main.js` deixa -- um lugar só decide, e é lá. */
+
+/* Colunas alinhadas entre linhas irmãs -- ver o item 1. Fora do `@supports`
+   o flex acima já entrega hierarquia, ritmo e ar; só o alinhamento se perde. */
+@supports (grid-template-columns: subgrid) {
+  .caixa-log {
+    display: grid;
+    grid-template-columns: auto auto minmax(0, 1fr);
+    align-content: start;
+  }
+
+  .linha-log {
+    display: grid;
+    grid-column: 1 / -1;
+    grid-template-columns: subgrid;
+  }
+}
+
+/* A hora é REFERÊNCIA, não conteúdo: apagada e menor, para o olho pular direto
+   na mensagem. `tabular-nums` mantém a coluna reta mesmo na fonte de fallback. */
+.log-hora {
+  flex-shrink: 0;
+  color: var(--log-hora);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+/* Etiqueta da conta. O `color` vem inline (`corConta`), então o fundo é derivado
+   DELE com `color-mix`: uma cor por conta sem tabela de fundos para manter. */
+.log-conta-nick {
+  flex-shrink: 0;
+  max-width: 9rem;
+  overflow: hidden;
+  padding: 0 6px;
+  border-radius: 4px;
+  background: color-mix(in srgb, currentColor 15%, transparent);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* A mensagem é o CONTEÚDO: o tom mais claro dos três. `anywhere` para que
+   coordenada e caminho longo quebrem em vez de esticar a linha para o lado. */
+.log-msg {
+  min-width: 0;
+  color: var(--log-msg);
+  overflow-wrap: anywhere;
+}
+
+kbd {
+  background: var(--color-panel2);
+  border-radius: 3px;
+  padding: 1px 4px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+/* ============================================================
+   HISTÓRICO DE QUEDAS
+   ============================================================ */
+
+/* O cartão de uma queda. A hierarquia é deliberada: a frase do que aconteceu
+   vem em corpo maior que o resto, porque é a única linha que o usuário leigo
+   precisa ler para entender. Coordenada, run e relogin ficam menores e mais
+   apagados -- estão lá para quem for me mandar o relatório, não para ele. */
+.cartao-queda {
+  display: flex;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--color-line);
+  background: var(--color-panel);
+}
+
+.cartao-queda .queda-corpo {
+  flex: 1;
+  min-width: 0;
+}
+
+.cartao-queda .queda-quando {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-accent);
+}
+
+.cartao-queda .queda-conta {
+  font-size: 12px;
+  color: var(--color-dim);
+}
+
+.cartao-queda .queda-motivo {
+  margin-top: 2px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-ink);
+}
+
+.cartao-queda .queda-fazendo {
+  margin-top: 2px;
+  font-size: 13px;
+  color: var(--color-dim);
+}
+
+.cartao-queda .queda-tecnico {
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--color-faint);
+}
+
+/* Miniatura do print. `cursor: zoom-in` é a única dica de que dá para clicar --
+   texto "clique para ampliar" ao lado polui o cartão. */
+.cartao-queda .queda-print {
+  width: 160px;
+  flex-shrink: 0;
+  border-radius: 6px;
+  border: 1px solid var(--color-line);
+  cursor: zoom-in;
+}
+
+/* Print em tamanho grande, por cima de tudo. */
+.lupa-print {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.85);
+  cursor: zoom-out;
+}
+
+.lupa-print img {
+  max-width: 100%;
+  max-height: 100%;
+  border-radius: 8px;
+  border: 1px solid var(--color-line);
+}

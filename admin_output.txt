@@ -1,0 +1,26 @@
+[DEBUG] Script iniciado - PID=27220, loop=False
+
+======================================================================
+TESTE CORRELAÇÃO ALVO - PID 27220
+======================================================================
+[AVISO] EnumWindows falhou (diferença de nível de integridade): (1300, 'EnumWindows', 'Nem todos os privilégios ou grupos mencionados estão atribuídos ao chamador.')
+[GABARITO TELA] vida_tela = 94.8%
+
+[SCAN] Testando 18 slots (fixos + pointer scans)...
+  FIXO RVA 0xc7c714    -> obj 0x3111da90 | ?                    |  100/100  (100.0%) | INIMIGO | [!!] diverge (erro=5.2pp)
+  FIXO RVA 0xc7c718    -> obj 0x356ae720 | ?                    |  243/243  (100.0%) | PET     | [!!] diverge (erro=5.2pp)
+  FIXO RVA 0xc7c79c    -> obj 0x356a1ac0 | X                    |  243/243  (100.0%) | PET     | [!!] diverge (erro=5.2pp)
+  FIXO RVA 0xc7c7c0    -> obj 0x3112fc18 | ?                    |  243/243  (100.0%) | PET     | [!!] diverge (erro=5.2pp)
+  FIXO RVA 0xc7c95c    -> obj 0x31116358 | ?                    |  100/100  (100.0%) | INIMIGO | [!!] diverge (erro=5.2pp)
+  FIXO RVA 0xc7c71c    -> obj 0x3111a778 | ?                    |  100/100  (100.0%) | INIMIGO | [!!] diverge (erro=5.2pp)
+  FIXO RVA 0xc7c758    -> obj 0x35681bd0 | 49&49&49&49&49&49&49&49&49 |  243/243  (100.0%) | PET     | [!!] diverge (erro=5.2pp)
+  FIXO RVA 0xc7c998    -> obj 0x310f8678 | ?                    |  243/243  (100.0%) | PET     | [!!] diverge (erro=5.2pp)
+  SCAN 020900 RVA 0xc7c728 -> obj 0x311284e0 | ?                    |  100/100  (100.0%) | INIMIGO | [!!] diverge (erro=5.2pp)
+  SCAN 020900 RVA 0xc7c754 -> obj 0x35688200 | ?                    |  243/243  (100.0%) | PET     | [!!] diverge (erro=5.2pp)
+  SCAN 014922 RVA 0xc7c8ac -> obj 0x311251c8 | ?                    |  100/100  (100.0%) | INIMIGO | [!!] diverge (erro=5.2pp)
+  SCAN 013249 RVA 0xc7c8d0 -> obj 0x31117460 | ?                    |  100/100  (100.0%) | INIMIGO | [!!] diverge (erro=5.2pp)
+  SCAN 013249 RVA 0xc7c994 -> obj 0x310fca98 | ?                    |  243/243  (100.0%) | PET     | [!!] diverge (erro=5.2pp)
+
+[RESUMO] Inimigos: 6 | Pets: 7 | Jogadores: 0 | Outros: 0
+
+[ELEITO - FALLBACK] ? (100/100 = 100.0%) obj=0x3111da90 FIXO RVA 0xc7c714 erro=5.2pp D=+0

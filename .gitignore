@@ -1,0 +1,31 @@
+# ============================================================================
+# .gitignore — repositório LOCAL, criado em 27/08/2026 para o refactor do
+# "Time do APP". Existe por dois motivos: dar ponto de retorno ao refactor e
+# dar ao Codex um DIFF para revisar (o revisor trabalha em cima de git diff).
+# Não há remote e não deve haver: `data/` fica de fora justamente por isso.
+#
+# ATENÇÃO: comentário em .gitignore só vale no COMEÇO da linha. Comentário no
+# fim da linha do padrão vira parte do padrão e o padrão para de casar.
+# ============================================================================
+
+# --- segredo: NUNCA versionar ---------------------------------------------
+# data/config.json guarda `password_enc` de cada conta. Mesmo cifrado e mesmo
+# num repositório local, versionar segredo cria uma cópia que sobrevive ao
+# `rm`. Antes de qualquer migração de config é feito backup datado à mão.
+data/
+
+# --- gerado: reconstruível, e polui todo diff ------------------------------
+# dist/ = `npm run build` (Vite);  graphify-out/ = `graphify update .`
+dist/
+graphify-out/
+logs/
+node_modules/
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+
+# --- cópias e restos -------------------------------------------------------
+backup-web-*/
+nul

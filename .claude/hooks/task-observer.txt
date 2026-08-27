@@ -1,0 +1,9 @@
+[task-observer] Skill AUTO-INVOCADA neste projeto (pedido do usuário).
+
+Invoque a skill `task-observer` AGORA, antes de começar, se esta sessão for
+de trabalho — qualquer tarefa de múltiplos passos que use ferramentas e
+produza entregável. Conversa curta e pergunta avulsa não contam.
+
+Ela observa a sessão e propõe skills novas ou melhorias, gravando em
+`skill-observations/`. Não substitui o CLAUDE.md nem o graphify: convenção e
+decisão de projeto continuam indo para o CLAUDE.md; arquitetura, para o grafo.

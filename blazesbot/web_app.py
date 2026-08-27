@@ -1,0 +1,1239 @@
+"""
+Ponte Python ⇄ interface web (pywebview + WebView2).
+
+É o análogo web de `blazesbot/gui/main_window.py` + `account_dialog.py`. O
+pywebview abre o frontend em `web/` (HTML/CSS/JS) numa janela do WebView2
+Runtime (embutido no Windows 11 — nada a instalar); este módulo expõe ao
+JavaScript as mesmas operações que a GUI PyQt6 faz, via o objeto `js_api`, usando
+o MESMO backend (`BotConfig`, `Account`, `BotManager`, `stats_diarias`). Nenhuma
+regra de negócio fica no frontend — ele só chama estes métodos.
+
+Nome do módulo (`web_app.py`) é histórico: antes era `eel_app.py` quando a ponte
+usava a biblioteca `Eel`. Hoje a ponte é pywebview; o frontend continua o mesmo.
+
+REGRA DAS DUAS INTERFACES: qualquer funcionalidade acrescentada aqui tem que
+existir igualmente na GUI PyQt6 (`blazesbot/gui/*`), e vice-versa. As duas
+convivem e usam a mesma config (`data/config.json`).
+
+THREADS E LOG
+=============
+O `webview.start()` bloqueia a thread principal. Os supervisores rodam nas
+próprias threads e só enchem o log via `logging`. Para empurrar o log à web SEM
+chamar o bridge de outras threads, este módulo segue o mesmo desenho da GUI: um
+handler enfileira tudo numa `deque` e o JavaScript PUXA as linhas novas a cada
+~300 ms (`puxar_log`). Status e estatísticas também são puxados por poll
+(`estado`, `stats_conta`). Assim não há chamada JS←Python assíncrona de outras
+threads.
+
+Thread-safety da config: as funções de escrita mutam o objeto `Account`/`BotConfig`
+e gravam via `config.save()` (que já é atômico e com lock); o único risco novo é
+gravar da thread do bridge do pywebview enquanto um supervisor lê o mesmo objeto
+na thread dele — o mesmo cenário que a GUI PyQt6 já tinha, e aceitável.
+"""
+from __future__ import annotations
+
+import logging
+from collections import deque
+from datetime import date
+from itertools import islice
+from pathlib import Path
+from typing import Any
+
+import webview
+
+# TEMPORÁRIO: botões "Testar Venda" e "Amostrar Cliques"
+from .bot.app import afericao
+from .bot.bc import amostragem_de_cliques, teste_venda
+from .bot.supervisor import BotManager
+from .config import (
+    DEFAULT_CONFIG_PATH,
+    MAX_BOLSAS,
+    MINIMO_DE_ESPERA_DO_APP_MS,
+    MOUNT_SPEEDS,
+    PASSOS_DO_APP,
+    PET_FEED_MINUTES,
+    SELL_CLICK_OPTIONS,
+    SLOTS_POR_BOLSA,
+    Account,
+    BotConfig,
+    mount_multiplier,
+    pet_feed_na_faixa,
+)
+from .core import logmodo, quedas, secrets, stats_diarias
+from .core.coords import (
+    SUPPORTED_RESOLUTIONS,
+    VALIDATED_RESOLUTION,
+    get_coords,
+)
+
+POSITIONS = ["Left", "Center", "Right"]
+
+# Coords para a lista de servidores e para normalizar o servidor exibido
+# (espelho de como a GUI populará os combos). Calculado uma vez, é barato.
+_COORDS = get_coords(VALIDATED_RESOLUTION)
+
+# Linhas guardadas em memória para permitir refiltrar por conta, espelho do
+# MAX_LINHAS_GUARDADAS da GUI PyQt6.
+MAX_LINHAS_GUARDADAS = 12000
+
+
+def format_duracao(segundos: float) -> str:
+    """Formata segundos como '1d 2h 3m 4s', omitindo o que for zero.
+
+    Espelho de `blazesbot/gui/widgets.formata_duracao` mantido aqui para a
+    interface web não importar PyQt6. As duas precisam ficar iguais (regra das
+    duas interfaces).
+    """
+    total = int(max(0, segundos))
+    dias, resto = divmod(total, 86400)
+    horas, resto = divmod(resto, 3600)
+    minutos, segs = divmod(resto, 60)
+    if dias:
+        return f"{dias}d {horas}h {minutos}m"
+    if horas:
+        return f"{horas}h {minutos}m {segs}s"
+    if minutos:
+        return f"{minutos}m {segs}s"
+    return f"{segs}s"
+
+
+def _nick(conta: Account) -> str:
+    return (conta.last_char_name or "").strip() or conta.login
+
+
+class _LogHandler(logging.Handler):
+    """Enfileira o log para a web, marcando de qual conta veio.
+
+    O nome do logger é sempre `blazes.<login>` (mesmo contrato do `QtLogHandler`
+    da GUI), então dá para separar as linhas por conta. O handler só dá `append`
+    numa `deque` -- operação atômica, sem thread -- e a web puxa em lote.
+    """
+
+    def __init__(self, fila: deque[tuple[str, str]]) -> None:
+        super().__init__()
+        self.fila = fila
+        self.setFormatter(logging.Formatter("%(asctime)s  %(message)s", "%H:%M:%S"))
+
+    def emit(self, record: logging.LogRecord) -> None:
+        try:
+            partes = record.name.split(".", 1)
+            conta = partes[1] if len(partes) > 1 else ""
+            self.fila.append((conta, self.format(record)))
+        except Exception:
+            pass
+
+
+class _App:
+    """Estado da interface web: mesma config e mesma manager da GUI PyQt6."""
+
+    def __init__(self) -> None:
+        self.config = BotConfig.load(DEFAULT_CONFIG_PATH)
+        self.manager: BotManager | None = None
+        # Fila que as threads do bot alimentam, e o histórico completo (para
+        # refiltrar por conta) -- mesmo desenho da GUI.
+        self._fila_log: deque[tuple[str, str]] = deque(maxlen=40000)
+        self._historico: deque[tuple[str, str]] = deque(
+            maxlen=MAX_LINHAS_GUARDADAS)
+        self._contagem_por_conta: dict[str, int] = {}
+        self._total = 0
+
+    # ------------------------------------------------------------------
+    # helpers internos
+    # ------------------------------------------------------------------
+
+    def _conta(self, indice: int) -> Account:
+        """Conta pelo ÍNDICE na lista, espelho da referência de objeto da GUI.
+
+        A web não pode usar o login como chave: contas recém-criadas nascem com
+        login vazio (`nova_conta`) e precisam ser editáveis antes de ter nome.
+        O índice é estável enquanto o editor está aberto (modal bloqueia a
+        tabela), então é seguro usá-lo.
+        """
+        try:
+            return self.config.accounts[int(indice)]
+        except (ValueError, IndexError):
+            raise ValueError(f"conta não encontrada (índice {indice})") from None
+
+    def _por_login(self) -> dict[str, Account]:
+        return {c.login: c for c in self.config.accounts if c.login}
+
+    def _status(self, login: str, mensagem: str) -> None:
+        """Loga uma linha da conta (ou geral), passando pelo handler da web."""
+        nome = f"blazes.{login}" if login else "blazes"
+        logging.getLogger(nome).info(mensagem)
+
+    def _guardar_log(self, conta: str, linha: str) -> None:
+        self._fila_log.append((conta, linha))
+
+    def _aplicar(self) -> None:
+        try:
+            self.config.save()
+        except Exception as exc:
+            self._status("", f"Não foi possível salvar a configuração: {exc}")
+
+    def _sincronizar(self) -> list[str]:
+        """Põe o bot em execução de acordo com as contas ativas agora."""
+        if not (self.manager and self.manager.running()):
+            return []
+        try:
+            return self.manager.sync_accounts()
+        except Exception as exc:
+            self._status("", f"erro ao sincronizar: {exc}")
+            return []
+
+    # ------------------------------------------------------------------
+    # Constantes e leitura
+    # ------------------------------------------------------------------
+
+    def constantes(self) -> dict[str, Any]:
+        coords = get_coords(VALIDATED_RESOLUTION)
+        return {
+            "positions": POSITIONS,
+            "mounts": [
+                {"pct": p, "texto": f"{p}%   ({mount_multiplier(p):.1f}x)"}
+                for p in MOUNT_SPEEDS
+            ],
+            "pet_feed_minutes": PET_FEED_MINUTES,
+            "max_bolsas": MAX_BOLSAS,
+            "slots_por_bolsa": SLOTS_POR_BOLSA,
+            "bolsa_opcoes": [
+                {"n": n, "texto": f"{n} bolsa{'s' if n > 1 else ''}"
+                                  f"   ({n * SLOTS_POR_BOLSA} espaços)"}
+                for n in range(1, MAX_BOLSAS + 1)
+            ],
+            "passos_app": PASSOS_DO_APP,
+            "sell_cliques": list(SELL_CLICK_OPTIONS),
+            "resolucoes": [
+                {"valor": res,
+                 "rotulo": f"{res}   (validada)" if res == VALIDATED_RESOLUTION
+                           else res}
+                for res in SUPPORTED_RESOLUTIONS
+            ],
+            "resolucao_validada": VALIDATED_RESOLUTION,
+            "servidores": list(coords.server_rows),
+            "dpapi": secrets.dpapi_available(),
+        }
+
+    def config_atual(self) -> dict[str, Any]:
+        c = self.config
+        return {
+            "client_bat": c.client_bat,
+            "resolution": c.resolution,
+            "launch_delay": c.launch_delay,
+            "minimize_clients": c.minimize_clients,
+            "reuse_login_screen_clients": c.reuse_login_screen_clients,
+        }
+
+    def contas(self) -> list[dict[str, Any]]:
+        """Lista as contas para a tabela. A senha NUNCA sai daqui.
+
+        `id` é o índice na lista — é a identidade estável que a web usa para
+        todas as operações, porque login ainda pode ser vazio (conta nova).
+        O servidor vem NORMALIZADO (mesma regra dos combos da GUI).
+        """
+        out = []
+        for i, c in enumerate(self.config.accounts):
+            out.append({
+                "id": i,
+                "login": c.login,
+                "enabled": c.enabled,
+                "position": c.position,
+                "server": _COORDS.normalize_server(c.server),
+                "bc_farm": c.bc_farm,
+                "app_enabled": c.settings.app.enabled,
+                "nick": _nick(c),
+                "tem_senha": bool(c.password_enc),
+            })
+        return out
+
+    def conta_editor(self, indice: int) -> dict[str, Any]:
+        c = self._conta(indice)
+        st = c.settings
+        k = st.keys
+        ataques = list(k.attack_skills) + [""] * 4
+        buffs = list(k.buffs) + [""] * 4
+        return {
+            "login": c.login,
+            "tem_senha": bool(c.password_enc),
+            "nick": c.last_char_name,
+            "accept_team_invites": st.accept_team_invites,
+            # AS CANDIDATAS A RESETER. O campo "conta que reseta a cave" deixou
+            # de ser texto livre: o reseter precisa ser uma conta cadastrada
+            # AQUI, porque é isso que permite ao bot perceber que ela caiu e
+            # segurar a entrada em vez de entrar sem reset e perder a run.
+            #
+            # `disponivel=False` é a conta marcada que ainda NÃO LOGOU: sem nick
+            # (ele é lido da memória no primeiro login) selecioná-la gravaria
+            # string vazia, que em `BCConfig.reset_nick` significa exatamente
+            # "não usar reset de time" -- um jeito silencioso de desligar a
+            # função achando que ligou.
+            "contas_de_reset": [
+                {"nick": r.last_char_name.strip(),
+                 "login": r.login,
+                 "disponivel": bool(r.last_char_name.strip())}
+                for r in self.config.reset_accounts() if r is not c
+            ],
+            "usar_catador": st.usar_catador,
+            "mount_speed_pct": st.mount_speed_pct,
+            "farm": c.bc_farm,
+            "pet": {
+                "summon_on_login": st.pet.summon_on_login,
+                "feed_on_start": st.pet.feed_on_start,
+                "feed_every_minutes": st.pet.feed_every_minutes,
+            },
+            "potions": {
+                "hp_pct": st.potions.hp_pct,
+                "battle_hp_pct": st.potions.battle_hp_pct,
+                "emergency_pct": st.potions.emergency_pct,
+            },
+            "bags": {"bolsas": st.bags.bolsas},
+            "app": {
+                "enabled": st.app.enabled,
+                "apagar_lixo_a_cada": st.app.apagar_lixo_a_cada,
+                "travar_posicao": st.app.travar_posicao,
+                "shuffle_apos_n_voltas": st.app.shuffle_apos_n_voltas,
+                # A LINHA 0 da macro: o tempo depois do TAB.
+                "espera_depois_do_tab_ms": st.app.espera_depois_do_tab_ms,
+                "steps": [{"key": p.key, "delay_ms": p.delay_ms}
+                          for p in st.app.steps],
+            },
+            "keys": {
+                "attack_skills": ataques[:4],
+                "aoe_skill": k.aoe_skill,
+                "break_soul": k.break_soul,
+                "super_skill": k.super_skill,
+                "heal_skill": k.heal_skill,
+                "buffs": buffs[:4],
+                "hp_potion": k.hp_potion,
+                "battle_hp_potion": k.battle_hp_potion,
+                "pet_food": k.pet_food,
+                "stone_charm": k.stone_charm,
+                "mount": k.mount,
+                "speed_skill": k.speed_skill,
+                "guild_token": k.guild_token,
+                "pet_summon": k.pet_summon,
+                "next_target": k.next_target,
+                "sit": k.sit,
+                "inventory": k.inventory,
+                "friend_list": k.friend_list,
+                "hotbar_page_1": k.hotbar_page_1,
+                "hide_players": k.hide_players,
+            },
+            "bc": {
+                "boss_name": st.bc.boss_name,
+                "attack_delay": st.bc.attack_delay,
+                "heal_before_second_phase": st.bc.heal_before_second_phase,
+                "aoe_until_mana_pct": st.bc.aoe_until_mana_pct,
+                "usar_skill_de_velocidade": st.bc.usar_skill_de_velocidade,
+                "reset_nick": st.bc.reset_nick,
+                "vendor": {
+                    "runs_before_selling": st.bc.vendor.runs_before_selling,
+                    "sell_start_slot": st.bc.vendor.sell_start_slot,
+                    "sell_clicks": st.bc.vendor.sell_clicks,
+                    "buy_return_charm": st.bc.vendor.buy_return_charm,
+                },
+            },
+        }
+
+    # ------------------------------------------------------------------
+    # escrita (tempo real)
+    # ------------------------------------------------------------------
+
+    def salvar_config(self, dados: dict[str, Any]) -> None:
+        cfg = self.config
+        cfg.client_bat = str(dados.get("client_bat", "")).strip()
+        cfg.resolution = str(dados.get("resolution", "auto") or "auto")
+        cfg.launch_delay = float(dados.get("launch_delay", 8.0) or 8.0)
+        cfg.minimize_clients = bool(dados.get("minimize_clients", False))
+        cfg.reuse_login_screen_clients = bool(
+            dados.get("reuse_login_screen_clients", False))
+        self._aplicar()
+
+    def definir_senha(self, indice: int, nova: str) -> None:
+        c = self._conta(indice)
+        c.set_password(str(nova or ""))
+        self._aplicar()
+
+    def definir_login(self, indice: int, novo: str) -> None:
+        """Login editável direto na tabela (como a célula COL_LOGIN da GUI).
+
+        Vazio NÃO apaga o login atual — mesmo contrato do campo de login do
+        editor (`salvar_personagem`). Um campo em branco na tabela costuma
+        ser clique acidental, e apagar a chave de uma conta ativa derrubaria
+        o vínculo com o supervisor que já está rodando aquela conta.
+        """
+        c = self._conta(indice)
+        novo_login = str(novo or "").strip()
+        if novo_login:
+            c.login = novo_login
+        self._aplicar()
+
+    def definir_posicao(self, indice: int, posicao: str) -> None:
+        """Posição da janela do cliente (Left|Center|Right) — combo da tabela."""
+        c = self._conta(indice)
+        if str(posicao or "") in POSITIONS:
+            c.position = str(posicao)
+        self._aplicar()
+
+    def definir_servidor(self, indice: int, servidor: str) -> None:
+        """Servidor da conta — combo da tabela (nomes canônicos de server_rows)."""
+        c = self._conta(indice)
+        c.server = str(servidor or "").strip()
+        self._aplicar()
+
+    def nova_conta(self) -> None:
+        # Com o bot rodando a conta nasce INATIVA de propósito (mesmo da GUI):
+        # o usuário preenche com calma e, ao marcar "Ativa", entra no ar.
+        rodando = bool(self.manager and self.manager.running())
+        self.config.accounts.append(Account(enabled=not rodando))
+        self._aplicar()
+
+    def bloqueio_de_reseter(self, indice: int, acao: str) -> str | None:
+        """Por que esta conta NÃO pode ser tirada do ar. `None` = pode.
+
+        Espelho de `MainWindow._bloqueado_por_ser_reseter` na GUI: as duas
+        interfaces têm que impedir a mesma coisa, e quem responde é o mesmo
+        `BotConfig.accounts_reset_by`.
+
+        POR QUE IMPEDIR, E NÃO SÓ AVISAR. Sem o reseter, a conta que depende
+        dele não reseta a cave -- e sem reset o boss não renasce e a run é
+        perdida. O sintoma ("o boss parou de nascer") aparece horas depois e
+        não aponta para cá em nada. Aqui o usuário está com a tela na mão:
+        trocar o reset da outra conta primeiro é um clique.
+        """
+        try:
+            conta = self._conta(indice)
+        except Exception:
+            return None
+        dependentes = self.config.accounts_reset_by(conta)
+        if not dependentes:
+            return None
+        quem = ", ".join(f"'{c.login}'" for c in dependentes)
+        return (
+            f"Não dá para {acao} '{conta.login}': ela é a conta de RESET de "
+            f"{quem}. Sem ela essa(s) conta(s) não resetam a Bewitcher Cave, "
+            "o boss não renasce e a run é perdida. Troque o reset na edição "
+            "dessa(s) conta(s) primeiro."
+        )
+
+    def remover_conta(self, indice: int) -> None:
+        try:
+            indice = int(indice)
+            if 0 <= indice < len(self.config.accounts):
+                login = self.config.accounts[indice].login
+                del self.config.accounts[indice]
+                # Limpa o contador de log desta conta — sem isso o dict acumula
+                # entradas órfãs para sempre (vazamento lento, mas real).
+                if login and login in self._contagem_por_conta:
+                    del self._contagem_por_conta[login]
+                self._aplicar()
+        except ValueError:
+            pass
+
+    def alternar(self, indice: int, ativa: bool) -> list[str]:
+        c = self._conta(indice)
+        c.enabled = bool(ativa)
+        self._aplicar()
+        return self._sincronizar()
+
+    def alternar_farm(self, indice: int, ligado: bool) -> None:
+        c = self._conta(indice)
+        c.bc_farm = bool(ligado)
+        if self.manager and self.manager.running():
+            self._status(c.login,
+                         f"BC farm {'LIGADO' if c.bc_farm else 'desligado'} "
+                         "em tempo real")
+        self._aplicar()
+
+    def alternar_app(self, indice: int, ligado: bool) -> None:
+        c = self._conta(indice)
+        c.settings.app.enabled = bool(ligado)
+        if self.manager and self.manager.running():
+            self._status(c.login,
+                         f"modo APP {'LIGADO' if c.settings.app.enabled else 'desligado'} "
+                         "em tempo real")
+        self._aplicar()
+
+    def salvar_personagem(self, indice: int, dados: dict[str, Any]) -> None:
+        """Aplica o editor da conta (espelha `AccountDialog._aplicar`).
+
+        O login é editável AQUI (campo do editor). Vazio não apaga o login
+        atual; diferente, renomeia. É o mesmo efeito do login editável da
+        célula da tabela na GUI.
+        """
+        c = self._conta(indice)
+        st = c.settings
+
+        novo_login = str(dados.get("login", "") or "").strip()
+        if novo_login:
+            c.login = novo_login
+
+        c.last_char_name = str(dados.get("nick", "")).strip()
+        st.accept_team_invites = bool(dados.get("accept_team_invites", False))
+        st.usar_catador = bool(dados.get("usar_catador", False))
+        st.mount_speed_pct = int(dados.get("mount_speed_pct") or MOUNT_SPEEDS[0])
+
+        pet = dados.get("pet", {})
+        st.pet.summon_on_login = bool(pet.get("summon_on_login", True))
+        st.pet.feed_on_start = bool(pet.get("feed_on_start", False))
+        st.pet.feed_every_minutes = pet_feed_na_faixa(
+            pet.get("feed_every_minutes"))
+
+        pot = dados.get("potions", {})
+        st.potions.hp_pct = int(pot.get("hp_pct", 85))
+        # 15 e nao 90: em batalha o bot nao se cura, a pocao de batalha e
+        # reserva. Ver o comentario do campo em `config.py`.
+        st.potions.battle_hp_pct = int(pot.get("battle_hp_pct", 15))
+        st.potions.emergency_pct = int(pot.get("emergency_pct", 25))
+
+        bags = dados.get("bags", {})
+        st.bags.bolsas = int(bags.get("bolsas", 1))
+
+        app = dados.get("app", {})
+        st.app.enabled = bool(app.get("enabled", False))
+        st.app.apagar_lixo_a_cada = max(
+            0, int(app.get("apagar_lixo_a_cada", 10) or 0))
+        st.app.travar_posicao = bool(app.get("travar_posicao", True))
+        st.app.shuffle_apos_n_voltas = max(
+            1, int(app.get("shuffle_apos_n_voltas") or 30) or 30)
+        # O PISO DE 100 ms TAMBÉM AQUI. A tela já o impõe no campo, mas a ponte
+        # aceita o que o JavaScript mandar -- e "a tela impõe" não é garantia,
+        # é boa vontade. Ver `MINIMO_DE_ESPERA_DO_APP_MS`.
+        st.app.espera_depois_do_tab_ms = max(
+            MINIMO_DE_ESPERA_DO_APP_MS,
+            int(app.get("espera_depois_do_tab_ms", 1000) or 0))
+        passos = (app.get("steps") or [])[:PASSOS_DO_APP]
+        for i, passo in enumerate(st.app.steps):
+            bruto = passos[i] if i < len(passos) else {}
+            passo.key = str(bruto.get("key", "") or "").upper()
+            passo.delay_ms = max(MINIMO_DE_ESPERA_DO_APP_MS,
+                                 int(bruto.get("delay_ms", 800) or 0))
+
+        k = dados.get("keys", {})
+        st.keys.attack_skills = [
+            str(x).upper() for x in (k.get("attack_skills") or [])
+            if str(x).strip()
+        ]
+        st.keys.aoe_skill = str(k.get("aoe_skill", "") or "").upper()
+        st.keys.break_soul = str(k.get("break_soul", "") or "").upper()
+        st.keys.super_skill = str(k.get("super_skill", "") or "").upper()
+        st.keys.heal_skill = str(k.get("heal_skill", "") or "").upper()
+        st.keys.buffs = [
+            str(x).upper() for x in (k.get("buffs") or []) if str(x).strip()
+        ]
+        st.keys.hp_potion = str(k.get("hp_potion", "") or "").upper()
+        st.keys.battle_hp_potion = str(
+            k.get("battle_hp_potion", "") or "").upper()
+        st.keys.pet_food = str(k.get("pet_food", "") or "").upper()
+        st.keys.stone_charm = str(k.get("stone_charm", "") or "").upper()
+        st.keys.mount = str(k.get("mount", "") or "").upper()
+        st.keys.speed_skill = str(k.get("speed_skill", "") or "").upper()
+        st.keys.guild_token = str(k.get("guild_token", "") or "").upper()
+        st.keys.pet_summon = str(k.get("pet_summon", "") or "").upper()
+        st.keys.next_target = str(k.get("next_target", "") or "").upper()
+        st.keys.sit = str(k.get("sit", "") or "").upper()
+        st.keys.inventory = str(k.get("inventory", "") or "").upper()
+        st.keys.friend_list = str(k.get("friend_list", "") or "").upper()
+        st.keys.hotbar_page_1 = str(
+            k.get("hotbar_page_1", "") or "").upper()
+        st.keys.hide_players = str(
+            k.get("hide_players", "") or "").upper()
+
+        bc = dados.get("bc", {})
+        st.bc.boss_name = str(bc.get("boss_name", "")).strip()
+        st.bc.attack_delay = float(bc.get("attack_delay", 0.5) or 0.5)
+        st.bc.heal_before_second_phase = bool(
+            bc.get("heal_before_second_phase", True))
+        st.bc.aoe_until_mana_pct = int(bc.get("aoe_until_mana_pct", 30))
+        st.bc.usar_skill_de_velocidade = bool(
+            bc.get("usar_skill_de_velocidade", True))
+        st.bc.reset_nick = str(bc.get("reset_nick", "")).strip()
+
+        V = bc.get("vendor", {})
+        st.bc.vendor.runs_before_selling = int(V.get("runs_before_selling", 5))
+        st.bc.vendor.sell_start_slot = int(V.get("sell_start_slot", 3))
+        st.bc.vendor.sell_clicks = int(V.get("sell_clicks", 24))
+        st.bc.vendor.buy_return_charm = bool(V.get("buy_return_charm", False))
+
+        self._aplicar()
+
+    # ------------------------------------------------------------------
+    # controle do bot
+    # ------------------------------------------------------------------
+
+    def iniciar(self) -> dict[str, Any]:
+        problemas = self.config.validate()
+        if problemas:
+            return {"ok": False, "erros": problemas}
+
+        self.manager = BotManager(self.config, on_status=self._status)
+        erros = self.manager.start()
+        if erros:
+            self.manager = None
+            return {"ok": False, "erros": erros}
+        return {"ok": True, "erros": []}
+
+    def parar(self) -> None:
+        if self.manager:
+            self.manager.stop()
+
+    def pausar(self) -> None:
+        if self.manager:
+            self.manager.pause()
+
+    def retomar(self) -> None:
+        if self.manager:
+            self.manager.resume()
+
+    # TEMPORÁRIO ------------------------------------------------------
+    def testar_venda(self, indice: int) -> dict[str, Any]:
+        """Roda só a venda, na conta selecionada. Bloqueia até terminar.
+
+        Bloquear é seguro: o pywebview atende cada chamada do frontend em uma
+        thread própria, então o poll do log (300 ms) continua correndo e o
+        usuário acompanha o teste ao vivo.
+        """
+        if self.manager and self.manager.running():
+            return {"ok": False, "erro": (
+                "Pare o bot antes de testar a venda — os dois disputariam o "
+                "teclado e o mouse do mesmo cliente.")}
+        try:
+            conta = self._conta(indice)
+        except ValueError as exc:
+            return {"ok": False, "erro": str(exc)}
+        return teste_venda.rodar(self.config, conta, on_status=self._status)
+
+    def cancelar_teste_venda(self) -> None:
+        """Interrompe a venda em andamento.
+
+        Existe porque o botão Parar da barra fica desabilitado com o bot
+        parado -- e o teste roda justamente com o bot parado. Quem cancela é o
+        próprio botão do teste, que troca de papel enquanto a venda corre.
+        """
+        teste_venda.cancelar()
+
+    def amostrar_cliques(self, indice: int) -> dict[str, Any]:
+        """Varre coordenadas de clique DIREITO no ponto onde o personagem está.
+
+        Bloqueia como o teste de venda, e pelo mesmo motivo: cada chamada do
+        frontend já vem em sua própria thread no pywebview.
+        """
+        if self.manager and self.manager.running():
+            return {"ok": False, "erro": (
+                "Pare o bot antes de amostrar — os dois disputariam o teclado "
+                "e o mouse do mesmo cliente.")}
+        try:
+            conta = self._conta(indice)
+        except ValueError as exc:
+            return {"ok": False, "erro": str(exc)}
+        return amostragem_de_cliques.rodar(self.config, conta,
+                                           on_status=self._status)
+
+    def cancelar_amostragem(self) -> None:
+        """Interrompe a amostragem em andamento (o próprio botão cancela)."""
+        amostragem_de_cliques.cancelar()
+
+    def conferir_modelos_de_exclusao(self, indice: int) -> dict[str, Any]:
+        """Fotografa a bolsa e DESENHA o que seria apagado. Não apaga nada."""
+        if self.manager and self.manager.running():
+            return {"ok": False, "erro": (
+                "Pare o bot antes de conferir — os dois disputariam o teclado "
+                "e o mouse do mesmo cliente.")}
+        try:
+            conta = self._conta(indice)
+        except ValueError as exc:
+            return {"ok": False, "erro": str(exc)}
+        return afericao.rodar(self.config, conta, on_status=self._status)
+
+    def abrir_imagem_da_afericao(self, caminho: Any) -> dict[str, Any]:
+        try:
+            import os
+
+            os.startfile(str(Path(str(caminho)).resolve()))
+            return {"ok": True}
+        except Exception as exc:
+            return {"ok": False, "erro": str(exc)}
+    # ------------------------------------------------------- TEMPORÁRIO
+
+    def estado(self) -> dict[str, Any]:
+        rodando = bool(self.manager and self.manager.running())
+        resumo = self.manager.summary() if rodando else {}
+        total = {"runs": 0, "success": 0, "fail": 0, "relogins": 0}
+        por_login = self._por_login()
+        contas = []
+        for login, d in resumo.items():
+            for chave in ("runs", "success", "fail", "relogins"):
+                total[chave] += d[chave]
+            conta = por_login.get(login)
+            contas.append({
+                "login": login,
+                "nick": _nick(conta) if conta else login,
+                "farm": bool(d.get("farm")),
+                "runs": d.get("runs", 0),
+                "success": d.get("success", 0),
+                "fail": d.get("fail", 0),
+                "relogins": d.get("relogins", 0),
+                "uptime": d.get("uptime", 0.0),
+                "last_run": d.get("last_run", 0.0),
+                "total_run": d.get("total_run", 0.0),
+                # Tempo decorrido da run EM ANDAMENTO (cronômetro ao vivo);
+                # 0.0 quando a conta está online parada, entre runs.
+                "run_now": d.get("run_now", 0.0),
+                # Tempo do trajeto até o boss na run atual (congela na chegada)
+                # e se ele já foi alcançado -- alimenta o cronômetro ao vivo.
+                "boss_now": d.get("boss_now", 0.0),
+                "boss_atingido": d.get("boss_atingido", False),
+            })
+        return {
+            "rodando": rodando,
+            "pausado": bool(self.manager.paused) if self.manager else False,
+            "total": total,
+            "contas": sorted(contas, key=lambda x: x["nick"]),
+            # Ambiente de log (dev/prod) e nível atual do logger `blazes`: a
+            # web usa para mostrar/ocultar o toggle "log detalhado".
+            "modo": logmodo.modo_atual(),
+            "dev": logmodo.eh_dev(),
+            "nivel_log": logging.getLevelName(
+                logging.getLogger("blazes").getEffectiveLevel()),
+        }
+
+    # ------------------------------------------------------------------
+    # histórico de quedas
+    # ------------------------------------------------------------------
+
+    def historico_de_quedas(self, conta: Any = None) -> dict[str, Any]:
+        """As quedas dos últimos dias, já traduzidas para português de gente.
+
+        O Python entrega PRONTO: as frases, a lista de contas do seletor e o
+        caminho do print. O JS só desenha -- as duas interfaces mostram a mesma
+        tela, e duas traduções separadas divergiriam na primeira frase que
+        alguém ajustasse.
+        """
+        login = (str(conta) if conta else "").strip() or None
+        return {
+            "quedas": quedas.listar(login),
+            "contas": quedas.contas_com_quedas(),
+            "dias": quedas.DIAS_GUARDADOS,
+        }
+
+    def copiar_relatorio_de_quedas(self, conta: Any = None) -> dict[str, Any]:
+        """O texto do "Copiar relatório" — COM os detalhes técnicos.
+
+        O clipboard em si é feito no JS (o pywebview não expõe API para isso);
+        aqui se monta o texto, que é regra de negócio e mora no Python.
+        """
+        login = (str(conta) if conta else "").strip() or None
+        return {"texto": quedas.relatorio(quedas.listar(login))}
+
+    def print_da_queda(self, nome: Any) -> dict[str, Any]:
+        """O print INTEIRO, embutido, pedido quando o usuário clica na miniatura."""
+        return {"imagem": quedas.imagem_embutida(str(nome) if nome else None)}
+
+    def abrir_pasta_de_quedas(self) -> dict[str, Any]:
+        """Abre `logs/quedas/` no Explorer — onde ficam os prints."""
+        try:
+            import os
+
+            quedas.PASTA.mkdir(parents=True, exist_ok=True)
+            os.startfile(str(quedas.PASTA.resolve()))
+            return {"ok": True}
+        except Exception as exc:
+            return {"ok": False, "erro": str(exc)}
+
+    # ------------------------------------------------------------------
+    # estatísticas (persistidas + sessão)
+    # ------------------------------------------------------------------
+
+    def personagens_com_runs(self) -> list[dict[str, Any]]:
+        resumo = (self.manager.summary()
+                  if (self.manager and self.manager.running()) else {})
+        candidatos = []
+        for c in self.config.accounts:
+            login = c.login
+            if not login:
+                continue
+            dia = stats_diarias.ultimos_dias(login, 1)[0][1]
+            sess = resumo.get(login, {})
+            total = dia.get("runs", 0) + sess.get("runs", 0)
+            if total <= 0:
+                continue
+            candidatos.append({"login": login, "nick": _nick(c),
+                               "total": total})
+        candidatos.sort(key=lambda t: -t["total"])
+        return candidatos
+
+    def stats(self, login: str) -> dict[str, Any]:
+        resumo = (self.manager.summary()
+                  if (self.manager and self.manager.running()) else {})
+        sess = resumo.get(login, {})
+        hoje = stats_diarias.ultimos_dias(login, 1)[0][1]
+        runs = hoje.get("runs", 0)
+
+        cards = {
+            "runs_hoje": {"rotulo": "Runs hoje", "valor": str(runs)},
+            "success_hoje": {"rotulo": "Sucesso hoje",
+                             "valor": str(hoje.get("success", 0))},
+            "fail_hoje": {"rotulo": "Falhas hoje",
+                          "valor": str(hoje.get("fail", 0))},
+            "taxa_hoje": {"rotulo": "Taxa de sucesso",
+                          "valor": "—" if not runs else
+                          f"{100.0 * hoje.get('success', 0) / runs:.0f}%"},
+            "media_hoje": {"rotulo": "T. médio hoje",
+                           "valor": "—" if not runs else format_duracao(
+                               hoje.get("total_run_seconds", 0.0) / runs)},
+            "boss_ult": {"rotulo": "T. até boss (últ.)",
+                         "valor": "—" if not runs else format_duracao(
+                             hoje.get("last_boss_seconds", 0.0))},
+            "total_ult": {"rotulo": "T. total (últ.)",
+                          "valor": "—" if not sess else format_duracao(
+                              sess.get("last_run", 0.0))},
+            "total_hoje": {"rotulo": "T. total das runs hoje",
+                           "valor": "—" if not runs else format_duracao(
+                               hoje.get("total_run_seconds", 0.0))},
+            "sessao_runs": {"rotulo": "Runs na sessão",
+                            "valor": str(sess.get("runs", 0))},
+            "sessao_ok": {"rotulo": "Sessão (ok/falhas)",
+                          "valor": f"{sess.get('success', 0)} ok / "
+                                   f"{sess.get('fail', 0)} falhas"},
+        }
+
+        # Dias anteriores (não inclui hoje) -- espelho de `_preencher_historico`.
+        historico = []
+        hoje_iso = date.today().isoformat()
+        if stats_diarias.conhece(login):
+            for dia, d in stats_diarias.ultimos_dias(login):
+                if dia == hoje_iso:
+                    continue
+                media = d["total_run_seconds"] / d["runs"] if d["runs"] else None
+                boss = (d.get("total_boss_seconds", 0.0) / d["runs"]
+                        if d["runs"] else None)
+                historico.append({
+                    "dia": dia,
+                    "runs": str(d["runs"]),
+                    "success": str(d["success"]),
+                    "fail": str(d["fail"]),
+                    "boss": "—" if boss is None else format_duracao(boss),
+                    "media": "—" if media is None else format_duracao(media),
+                })
+        return {"cards": cards, "historico": historico}
+
+    # ------------------------------------------------------------------
+    # log
+    # ------------------------------------------------------------------
+
+    def puxar_log(self, desde: int) -> dict[str, Any]:
+        """Drena a fila nova e devolve as linhas novas desde o índice pedido.
+
+        Se o histórico já descartou o `desde` (corte de `MAX_LINHAS_GUARDADAS`),
+        devolve tudo o que tem -- o frontend refaz a tela inteira.
+        """
+        while self._fila_log:
+            conta, linha = self._fila_log.popleft()
+            self._historico.append((conta, linha))
+            self._total += 1
+            if conta:
+                self._contagem_por_conta[conta] = (
+                    self._contagem_por_conta.get(conta, 0) + 1
+                )
+
+        try:
+            desde_i = int(desde)
+        except (TypeError, ValueError):
+            desde_i = 0
+        # ================================================================
+        # O CURSOR É ABSOLUTO; A DEQUE É UMA JANELA. TRADUZIR É OBRIGATÓRIO.
+        # ================================================================
+        #
+        # `_total` só cresce (é o número da última linha já enfileirada, de
+        # sempre). `_historico` é uma deque com `maxlen=MAX_LINHAS_GUARDADAS`:
+        # passado esse teto, ela DESCARTA pela frente e o índice 0 dela deixa de
+        # ser a linha 0 da execução.
+        #
+        # A versão anterior comparava o cursor absoluto direto com
+        # `len(self._historico)`:
+        #
+        #     corte = desde_i if 0 <= desde_i <= len(self._historico) else 0
+        #
+        # Enquanto o total era menor que o teto, os dois coincidiam e funcionava.
+        # NA LINHA 12 001 ele quebra PARA SEMPRE: `desde_i` continua subindo,
+        # `len(_historico)` fica preso em 12 000, a condição passa a ser sempre
+        # falsa e `corte` vira 0 -- o histórico INTEIRO é devolvido a cada poll de
+        # 300 ms, indefinidamente.
+        #
+        # ISSO É A CAUSA DO CONGELAMENTO DA INTERFACE APÓS HORAS, e explica o
+        # sintoma exato relatado: o bot continua rodando (as threads dele não
+        # passam por aqui) e só a janela morre. Cada retorno de método `js_api` do
+        # pywebview é embutido num literal JS e executado por `evaluate_js`, que
+        # chama `webview.Invoke(...)` -- ou seja ~2 MB de script na THREAD DE UI
+        # do WebView2, 3,3 vezes por segundo. E o backoff do frontend nunca liga,
+        # porque com linhas voltando sempre ele acha que há novidade sempre.
+        #
+        # A tradução: quantas linhas já saíram pela frente da deque é
+        # `_total - len(_historico)`. O cursor do frontend menos isso é a posição
+        # dentro da janela. `max(0, ...)` cobre o frontend atrasado (as linhas que
+        # ele perdeu não existem mais); `min(..., len)` cobre o cursor à frente do
+        # total, que é o poll ocioso e deve devolver vazio.
+        descartadas = self._total - len(self._historico)
+        corte = max(0, min(desde_i - descartadas, len(self._historico)))
+        # `islice` sobre a deque EVITA a cópia integral que `list(self._historico)`
+        # fazia a cada poll de 300 ms. Com 12 000 linhas acumuladas, aquela cópia
+        # alocava ~3,6 MB por poll x 3,3 polls/s = ~12 MB/s de pressão de GC —
+        # era a causa primária do congelamento progressivo da interface após horas.
+        novas = [{"conta": c, "linha": l}
+                 for c, l in islice(self._historico, corte, None)]
+        return {"linhas": novas, "total": self._total,
+                "por_conta": dict(self._contagem_por_conta)}
+
+    def limpar_log(self) -> None:
+        self._fila_log.clear()
+        self._historico.clear()
+        self._contagem_por_conta.clear()
+        self._total = 0
+
+
+_APP = _App()
+
+# Janela aberta pelo pywebview, preenchida em `run()`. Usada por
+# `minimizar_janela`/`fechar_janela` (os botões da barra customizada).
+_JANELA: Any = None
+
+
+class Api:
+    """Objeto exposto ao frontend como `js_api` do pywebview.
+
+    Métodos públicos viram `window.pywebview.api.<nome>(...)` no JavaScript
+    (cada chamada resolve uma Promise com o retorno). Métodos cujo nome começa
+    com `_` NÃO são expostos (contrato do pywebview) — por isso o `_app` fica
+    privado. São exatamente os `@eel.expose` de antes, só que como métodos de
+    uma instância. Nenhuma regra de negócio nova aqui: só delegam para `_APP`.
+    """
+
+    def __init__(self, app: _App) -> None:
+        self._app = app
+
+    # ---- leitura e constantes ----
+
+    def obter_constantes(self) -> dict[str, Any]:
+        return self._app.constantes()
+
+    def obter_config(self) -> dict[str, Any]:
+        return self._app.config_atual()
+
+    def obter_contas(self) -> list[dict[str, Any]]:
+        return self._app.contas()
+
+    def obter_conta(self, indice: Any) -> dict[str, Any]:
+        return self._app.conta_editor(indice)
+
+    # ---- escrita (tempo real) ----
+
+    def salvar_config_geral(self, dados: Any) -> dict[str, Any]:
+        self._app.salvar_config(dados)
+        return {"ok": True}
+
+    def definir_senha(self, indice: Any, nova: Any) -> dict[str, Any]:
+        self._app.definir_senha(indice, nova)
+        return {"ok": True}
+
+    def definir_login(self, indice: Any, novo: Any) -> dict[str, Any]:
+        self._app.definir_login(indice, novo)
+        return {"ok": True}
+
+    def definir_posicao(self, indice: Any, posicao: Any) -> dict[str, Any]:
+        self._app.definir_posicao(indice, posicao)
+        return {"ok": True}
+
+    def definir_servidor(self, indice: Any, servidor: Any) -> dict[str, Any]:
+        self._app.definir_servidor(indice, servidor)
+        return {"ok": True}
+
+    def nova_conta(self) -> dict[str, Any]:
+        self._app.nova_conta()
+        return {"ok": True}
+
+    def remover_conta(self, indice: Any) -> dict[str, Any]:
+        # O BLOQUEIO É AQUI, NO BACKEND, e não só na tela: o frontend também
+        # avisa, mas quem garante é este ponto -- é por onde toda remoção passa.
+        bloqueio = self._app.bloqueio_de_reseter(indice, "remover")
+        if bloqueio:
+            return {"ok": False, "erro": bloqueio}
+        self._app.remover_conta(indice)
+        return {"ok": True}
+
+    def ativar_conta(self, indice: Any, ativa: Any) -> dict[str, Any]:
+        if not bool(ativa):
+            bloqueio = self._app.bloqueio_de_reseter(indice, "desativar")
+            if bloqueio:
+                return {"ok": False, "erro": bloqueio}
+        return {"ok": True, "iniciadas": self._app.alternar(indice, bool(ativa))}
+
+    def alternar_farm(self, indice: Any, ligado: Any) -> dict[str, Any]:
+        self._app.alternar_farm(indice, bool(ligado))
+        return {"ok": True}
+
+    def alternar_app(self, indice: Any, ligado: Any) -> dict[str, Any]:
+        self._app.alternar_app(indice, bool(ligado))
+        return {"ok": True}
+
+    def salvar_personagem(self, indice: Any, dados: Any) -> dict[str, Any]:
+        # DESMARCAR 'aceitar convites' de um reseter é o mesmo estrago que
+        # deletar ou desativar, por outra porta: a conta fica no ar mas para de
+        # aceitar o convite, e quem depende dela não reseta mais a cave.
+        if not bool((dados or {}).get("accept_team_invites", False)):
+            bloqueio = self._app.bloqueio_de_reseter(
+                indice, "tirar a marca de 'aceitar convites de time' de")
+            if bloqueio:
+                return {"ok": False, "erro": bloqueio}
+        self._app.salvar_personagem(indice, dados)
+        return {"ok": True}
+
+    # ---- controle do bot ----
+
+    def iniciar(self) -> dict[str, Any]:
+        return self._app.iniciar()
+
+    def parar(self) -> dict[str, Any]:
+        self._app.parar()
+        return {"ok": True}
+
+    def pausar(self) -> dict[str, Any]:
+        self._app.pausar()
+        return {"ok": True}
+
+    def retomar(self) -> dict[str, Any]:
+        self._app.retomar()
+        return {"ok": True}
+
+    def estado(self) -> dict[str, Any]:
+        return self._app.estado()
+
+    def personagens_com_runs(self) -> list[dict[str, Any]]:
+        return self._app.personagens_com_runs()
+
+    def historico_de_quedas(self, conta: Any = None) -> dict[str, Any]:
+        return self._app.historico_de_quedas(conta)
+
+    def copiar_relatorio_de_quedas(self, conta: Any = None) -> dict[str, Any]:
+        return self._app.copiar_relatorio_de_quedas(conta)
+
+    def print_da_queda(self, nome: Any) -> dict[str, Any]:
+        return self._app.print_da_queda(nome)
+
+    def abrir_pasta_de_quedas(self) -> dict[str, Any]:
+        return self._app.abrir_pasta_de_quedas()
+
+    def stats_conta(self, login: Any) -> dict[str, Any]:
+        return self._app.stats(login)
+
+    def testar_venda(self, indice: Any) -> dict[str, Any]:
+        return self._app.testar_venda(indice)
+
+    def cancelar_teste_venda(self) -> dict[str, Any]:
+        self._app.cancelar_teste_venda()
+        return {"ok": True}
+
+    def amostrar_cliques(self, indice: Any) -> dict[str, Any]:
+        return self._app.amostrar_cliques(indice)
+
+    def cancelar_amostragem(self) -> dict[str, Any]:
+        self._app.cancelar_amostragem()
+        return {"ok": True}
+
+    def conferir_modelos_de_exclusao(self, indice: Any) -> dict[str, Any]:
+        return self._app.conferir_modelos_de_exclusao(indice)
+
+    def abrir_imagem_da_afericao(self, caminho: Any) -> dict[str, Any]:
+        return self._app.abrir_imagem_da_afericao(caminho)
+
+    # ---- log ----
+
+    def puxar_log(self, desde: Any) -> dict[str, Any]:
+        return self._app.puxar_log(desde)
+
+    def limpar_log(self) -> dict[str, Any]:
+        self._app.limpar_log()
+        return {"ok": True}
+
+    def definir_nivel_log(self, nivel: str) -> dict[str, Any]:
+        """Ajusta o nível do logger `blazes` (paridade com o `ck_debug` da GUI).
+
+        Só vale no ambiente dev (`BLAZES_MODO=dev`): é o toggle "log detalhado"
+        da web. Em prod o nível é sempre INFO+ e a chamada é ignorada -- o
+        usuário não recebe log de desenvolvimento.
+        """
+        blazes = logging.getLogger("blazes")
+        if not logmodo.eh_dev():
+            blazes.setLevel(logging.INFO)
+            return {"ok": True, "nivel": logging.INFO}
+        nome = str(nivel or "").upper()
+        nivel_novo = getattr(logging, nome, None)
+        if not isinstance(nivel_novo, int):
+            return {"ok": False, "erro": f"nível inválido: {nivel}"}
+        blazes.setLevel(nivel_novo)
+        return {"ok": True, "nivel": nivel_novo}
+
+    # ---- janela e utilitários ----
+
+    def procurar_client_bat(self) -> Any:
+        """Seletor nativo do Client.bat.
+
+        O WebView2 não consegue ler o caminho real de um `<input type=file>`
+        (o Chromium devolve só um caminho fictício), então o diálogo fica no
+        Python. Tkinter só é importado aqui, dentro do método — não é a
+        interface, é um utilitário. Se Tkinter faltar, devolve None e o campo
+        mantém o texto digitado.
+        """
+        try:
+            import tkinter as tk
+            from tkinter import filedialog
+
+            root = tk.Tk()
+            root.withdraw()
+            root.attributes("-topmost", True)
+            caminho = filedialog.askopenfilename(
+                title="Escolha o Client.bat do Talisman Online",
+                filetypes=[("Client.bat", "Client.bat"), ("Arquivo BAT", "*.bat"),
+                           ("Todos os arquivos", "*.*")],
+                parent=root,
+            )
+            root.destroy()
+            return caminho or None
+        except Exception:
+            return None
+
+    def minimizar_janela(self) -> bool:
+        """Minimiza a janela da webview (botão da barra customizada)."""
+        try:
+            _JANELA.minimize()
+            return True
+        except Exception:
+            return False
+
+    def fechar_janela(self) -> bool:
+        """Fecha a janela da webview (botão ✕ da barra customizada)."""
+        try:
+            _JANELA.destroy()
+            return True
+        except Exception:
+            return False
+
+    def abrir_pasta_logs(self) -> bool:
+        """Abre a pasta `logs/` no Explorer."""
+        try:
+            import os
+
+            pasta = Path("logs")
+            pasta.mkdir(exist_ok=True)
+            os.startfile(str(pasta.resolve()))
+            return True
+        except Exception:
+            return False
+
+
+def run() -> None:
+    """Sobe a interface web. O lançador já exigiu admin e ligou o logging.
+
+    O WebView2 Runtime usado pelo pywebview já vem embutido no Windows 11 (e é
+    atualizado pelo Windows Update), então NÃO dependemos de navegador externo
+    instalado — diferente do antigo `eel.start(mode=...)`, que exigia Chrome/
+    Edge/Opera na máquina. `private_mode=False` preserva o `localStorage`
+    (tema escuro/claro) entre sessões — mas faz o WebView2 cachear a página
+    file://; por isso a URL do dist ganha `?v=<mtime>` (ver `run()`): só muda
+    quando o `npm run build` regenera o dist, então reabrir depois de um build
+    sempre carrega o frontend novo.
+    """
+    global _JANELA
+
+    logger = logging.getLogger("blazes")
+    if not any(isinstance(h, _LogHandler) for h in logger.handlers):
+        logger.addHandler(_LogHandler(_APP._fila_log))
+    # DEBUG SÓ EM DEV -- paridade com a GUI (`main_window.py`, `nivel_gui`).
+    #
+    # Era `logging.DEBUG` incondicional, e isso DESFAZIA o nível que
+    # `setup_logging` acabara de definir: em prod ele põe `blazes` em INFO, e
+    # esta linha voltava tudo para DEBUG duas linhas depois.
+    #
+    # O custo não era estético. A rotina relê posição a cada 0,12 s por conta;
+    # com 4-5 contas o volume de log sobe ~10x, e o teto de
+    # `MAX_LINHAS_GUARDADAS` era atingido em MINUTOS em vez de horas — o que
+    # antecipava o defeito do cursor de `puxar_log` (o congelamento da janela)
+    # para quase o começo da execução.
+    #
+    # Também contrariava o contrato de `definir_nivel_log`, que já recusa trocar
+    # o nível fora de dev, e a regra do `core/logmodo.py`.
+    logger.setLevel(logging.DEBUG if logmodo.eh_dev() else logging.INFO)
+
+    # Frontend compilado pelo Vite (`npm run build`). A edição da UI acontece
+    # na pasta web/, mas o Python só enxerga as mudanças após o build gerar o
+    # dist/. Se o dist não existir, instrua a rodar `npm run build`.
+    index = Path(__file__).resolve().parent.parent / "dist" / "index.html"
+    if not index.exists():
+        raise FileNotFoundError(
+            f"Não encontrei o frontend compilado:\n  {index}\n"
+            "Rode `npm run build` na raiz do projeto antes de iniciar a web."
+        )
+
+    # Cache-busting do WebView2. Com `private_mode=False` o pywebview serve o
+    # dist pelo server HTTP interno (http://127.0.0.1:<porta>/), preservando o
+    # localStorage (tema) na origem. Só que o WebView2 pode devolver a página
+    # ANTIGA do cache quando o `npm run build` regenera o dist com o MESMO URL.
+    # Fix: anexar `?v=<mtime>` ao CAMINHO local (não converter em file:// — isso
+    # quebra o load). O mtime só muda quando o build regenera o dist, então
+    # reabrir depois de um build pega um URL novo (cache-busting) mantendo a
+    # mesma origem http (tema preservado). pywebview trata `path?v=` como uma
+    # URL local: o relpath vira `index.html?v=...` servido pelo HTTP interno.
+    url = f"{index}?v={int(index.stat().st_mtime)}"
+    _JANELA = webview.create_window(
+        "BlazesBot",
+        url,
+        js_api=Api(_APP),
+        width=1200,
+        height=800,
+        # Sem barra do Windows (frameless): o controle fica 100% na barra
+        # customizada do frontend (`.titlebar`). Sem título nativo também não há
+        # botão de maximizar — só minimizar/fechar, que o frontend já tem. Com o
+        # tamanho travado (`resizable=False`) não existe nem redimensionar pela
+        # borda, então o visual é limpo e não pode "estourar" o layout de alta
+        # densidade.
+        frameless=True,
+        # easy_drag=False: o default do pywebview (True) deixa a janela INTEIRA
+        # arrastável em modo frameless (JS registra mousedown global em qualquer
+        # ponto). Com ele desligado, o arrasto fica restrito à região apontada
+        # por `webview.settings['DRAG_REGION_SELECTOR']` (o `.titlebar`), logo
+        # abaixo do create_window.
+        easy_drag=False,
+        resizable=False,
+    )
+    # O arrasto da janela frameless é 100% JS no pywebview/WebView2 — o CSS
+    # `-webkit-app-region: drag` do frontend NÃO move a janela (ficou claro
+    # quando easy_drag=False deixou o app sem área de arrasto nenhuma). O
+    # seletor abaixo torna o `.titlebar` (barra "BlazesBot" + botões 🌙/—/✕) a
+    # ÚNICA área arrastável; clicar em qualquer outro ponto do app não move a
+    # janela.
+    webview.settings["DRAG_REGION_SELECTOR"] = ".titlebar"
+    try:
+        webview.start(private_mode=False)
+    finally:
+        if _APP.manager:
+            _APP.manager.stop()
+        try:
+            _APP.config.save()
+        except Exception:
+            pass
+
+
+def _main() -> None:
+    """Entrada usada pelo INICIAR-WEB.bat (interface web).
+
+    Reaproveita a exigência de admin e o logging do `main.py` SEM editar o
+    `main.py`. A GUI PyQt6 continua saindo pelo `3-INICIAR.bat`.
+    """
+    from main import require_admin, setup_logging  # raiz do projeto
+
+    require_admin()
+    setup_logging(verbose=True)
+    run()
+
+
+if __name__ == "__main__":
+    _main()

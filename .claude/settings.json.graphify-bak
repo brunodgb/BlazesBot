@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./.venv/Scripts/python.exe -c ' *)",
+      "Bash(./.venv/Scripts/python.exe -m py_compile main.py)",
+      "Bash(timeout 6 ./.venv/Scripts/python.exe -c ' *)",
+      "Bash(timeout 120 python \"C:/Users/bruno/AppData/Local/Temp/claude/d--Versoes-do-Bot-BlazesBot22---Copia/de9e943e-9afc-43be-bc7a-df64571ca084/scratchpad/sim_app.py\")",
+      "Bash(python -c ' *)"
+    ]
+  }
+}

@@ -1,0 +1,30 @@
+# Configuração mínima de ferramentas de qualidade do BlazesBot.
+#
+# pytest: caminho/descoberta dos testes de lógica pura (tests/). `pythonpath`
+# garante que `import blazesbot...` funcione rodando `pytest` da raiz.
+# ruff: versão alvo do Python + conjunto de regras SEGURAS (auto-fix). Ficam de
+# fora as categorias ruidosas/intencionais (S110 try/except pass que silenciam
+# log/EnumWindows, B023 no callback de EnumWindows, DTZ011 date.today() do fuso
+# local) — o `--fix` nunca toca em semântica.
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I", "UP", "RUF"]
+ignore = [
+  "E741",   # variável `l` (web_app.py, puxar_log) — legível; renomear é churn
+  "UP031",  # %-format em prints de diagnóstico (main.py) — lazy %s pedido p/ logging
+  "UP042",  # str+Enum → StrEnum mudaria semântica de runtime (login_states,
+            # watchdog, coords) — não mexer
+  "RUF005", # [""] + erros → ["", *erros] é cosmético (main_window.py)
+  "RUF012", # _HANDLERS é literal de lookup de classe proposital (routine) —
+            # não é bug de "mutable default"
+  "RUF046", # int(round(...)) redundante, mas auto-fix é marcado unsafe
+            # (vision.py) — deixar
+  "RUF059", # variável `f` descartada (account_dialog.py) — renomear p/ `_` é churn
+]

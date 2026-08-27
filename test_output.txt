@@ -1,0 +1,22 @@
+[DEBUG] Script iniciado - PID=29500, loop=False
+
+======================================================================
+TESTE CORRELAÇÃO ALVO - PID 29500
+======================================================================
+[AVISO] EnumWindows falhou (diferença de nível de integridade): (1300, 'EnumWindows', 'Nem todos os privilégios ou grupos mencionados estão atribuídos ao chamador.')
+[GABARITO TELA] vida_tela = 14.2%
+
+[SCAN] Testando 18 slots (fixos + pointer scans)...
+  FIXO RVA 0xc7c714    -> obj 0x3530b0c8 | ?                    |  243/243  (100.0%) | PET     | [!!] diverge (erro=85.8pp)
+  FIXO RVA 0xc7c718    -> obj 0x352fd360 | ?                    |  243/243  (100.0%) | PET     | [!!] diverge (erro=85.8pp)
+  FIXO RVA 0xc7c79c    -> obj 0x3530c1d0 | ?                    |  243/243  (100.0%) | PET     | [!!] diverge (erro=85.8pp)
+  FIXO RVA 0xc7c7c0    -> obj 0x2c97b800 | ?                    |   48/48   (100.0%) | OUTRO(48) | [!!] diverge (erro=85.8pp)
+  FIXO RVA 0xc7c71c    -> obj 0x352e7ec0 | ?                    |  243/243  (100.0%) | PET     | [!!] diverge (erro=85.8pp)
+  FIXO RVA 0xc7c758    -> obj 0x352f1808 | ?                    |  243/243  (100.0%) | PET     | [!!] diverge (erro=85.8pp)
+  SCAN 020900 RVA 0xc7c728 -> obj 0x352dc368 | ?                    |  243/243  (100.0%) | PET     | [!!] diverge (erro=85.8pp)
+  SCAN 020900 RVA 0xc7c754 -> obj 0x3530d2d8 | ?                    |  243/243  (100.0%) | PET     | [!!] diverge (erro=85.8pp)
+  SCAN 014922 RVA 0xc7c730 -> obj 0x35318e30 | ?                    |  243/243  (100.0%) | PET     | [!!] diverge (erro=85.8pp)
+
+[RESUMO] Inimigos: 0 | Pets: 8 | Jogadores: 0 | Outros: 1
+
+[ELEITO - FALLBACK] ? (48/48 = 100.0%) obj=0x2c97b800 FIXO RVA 0xc7c7c0 erro=85.8pp D=+0

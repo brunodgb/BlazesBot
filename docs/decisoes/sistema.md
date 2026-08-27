@@ -1,0 +1,225 @@
+# Sistema: janela, log, hotbar, testes — decisões e medições
+
+> Recortado do `CLAUDE.md` em 14/08/2026, **verbatim**. O
+> `CLAUDE.md` guarda a REGRA em uma ou duas linhas e aponta para cá; aqui
+> fica a MEDIÇÃO que sustenta cada uma. Leia antes de mexer nesta área —
+> quase toda decisão aqui já foi tentada do outro jeito e reprovou.
+
+- **Pino de janela (hwnd, pid) por conta — interno e invisível.** Cada conta
+  guarda no `config.json` o par `(hwnd, pid)` da janela que ela abriu
+  (`last_hwnd`/`last_pid` no `Account`, campo serial — NÃO aparece em nenhuma
+  interface, só existe no arquivo). Ao adotar janela, `_adotar_janela_existente`
+  tenta PRIMEIRO o pino salvo (`_validar_hwnd_salvo`: `IsWindow` + o hwnd
+  pertence ao mesmo pid salvo + pid ∈ `client_pids()` + título começa com
+  "Talisman Online" ou já foi batizado por nós) — roda em QUALQUER sessão,
+  ignorando `_primeira_sessao`, e é o único jeito de reconhecer a janela NO MEIO
+  do login (sem nick legível, título genérico). O pino é gravado (só quando muda,
+  via `remember_window`) nos três caminhos de aquisição — adota existente,
+  reutiliza cliente aberto, lança cliente novo; é APAGADO (`forget_window`)
+  quando a validação falha, quando `_encerrar_caido` mata o cliente, ou quando a
+  memória lê um nick diferente (a janela passou a ser de outra conta — não
+  roubar). Se duas contas tiverem o mesmo pino, a primeira a assumir fica com a
+  janela e a segunda apaga o próprio pino e abre cliente novo. Nick lido na
+  memória vale mais que o pino: bate = assume; difere = não reclama.
+- **Log: dois ambientes, separando o que é do usuário do que é de dev.** A
+  execução se configura por variável de ambiente `BLAZES_MODO` (`dev` | `prod`,
+  default `dev`), resolvida UMA vez por processo em `blazesbot/core/logmodo.py`
+  (cache proposital — o env não muda durante a vida do processo). O nível do
+  logger raiz `blazes` é `DEBUG` em dev (se `verbose`) e `INFO` em prod, setado
+  em `setup_logging()` (`main.py`, usado pela PyQt6; `web_app.py` o importa com
+  `verbose=True`).
+  - **O que o USUÁRIO vê** (todos os ambientes): os arquivos legíveis
+    (`logs/sessao-atual.log`, `logs/blazesbot.log`) e a tela de log na
+    interface — texto simples, leve, sem o detalhe de dev.
+  - **O que é SÓ do DESENVOLVEDOR** (criado por `LogJsonHandler` em
+    `blazesbot/core/log_json.py`, anexado SOMENTE em modo dev): o arquivo
+    estruturado `logs/dev/blazes-dev.jsonl`, uma linha JSON por registro,
+    enriquecido com contexto do `logmodo` (`conta`, `id_run`, `fase` —
+    thread-local) + o que o `LogRecord` carrega (`arquivo`, `linha`, `funcao`,
+    `thread`, `exc` completo). Em prod a pasta `logs/dev/` nem é criada — o
+    detalhe de dev só existe na máquina de quem desenvolve. O sink reusa a
+    poda por linha do `ArquivoDeLogLimitado` (`LOG_JSON_MAXIMO = 4000`).
+  - **Correlação:** em `routine.py`, a cada run o contexto ganha um
+    `id_run` (`uuid.uuid4().hex[:10]`) via `logmodo.contexto(conta, id_run)` e
+    `logmodo.fase(...)` no laço principal, dando um ID único para rastrear uma
+    run inteira pelo JSON (ob. request-ID do DevOps checklist). O contexto é
+    thread-local (cada conta roda na própria thread) e é limpo no `finally` do
+    `run()`.
+  - **Interface:** mudar o nível de DEBUG↔INFO ao vivo só em modo dev. Na web
+    o checkbox "detalhado" no cabeçalho do log (chama
+    `Api.definir_nivel_log`); na GUI o `ck_debug` — em prod o checkbox aparece
+    desmarcado e desabilitado e o nível fica preso em INFO.
+  - **Regra de trabalho (pedido do usuário, valendo sempre):** ao investigar
+    qualquer problema, analisar PRIMEIRO os logs atrás (o `logs/dev/blazes-dev.jsonl`)
+    para ver se há indício que ajude, antes de mexer no código.
+- **A barra de atalhos tem uma TECLA opcional** (`KeyBinds.hotbar_page_1`,
+  rotulada **"Atalho Hotbar 1"** na aba Teclas > Interface & Sistema, nas DUAS
+  interfaces, com um "?" próprio explicando o passo a passo no jogo — ESC >
+  Keys > "Main Hotkey Page 1", e apagar as teclas de Page 2 e 3). O jogo deixa ligar uma
+  tecla a cada página da barra; a da página 1 leva **direto ao destino, com um
+  toque**, enquanto o clique precisa de dois justamente porque só sabe subir um
+  degrau por vez. **Vazia por padrão** — sem ela o bot faz exatamente o que
+  sempre fez. Tendo tecla, ela é usada em TODOS os pontos (os seis momentos do
+  farm e o APP).
+  - **A recarga de 10 s só vale para o CLIQUE.** Ela existe porque os momentos-
+    chave vêm em rajada e dois cliques repetidos custam tempo e ruído; um toque
+    não tem esse custo, e pagar por ele com o risco de a barra ficar na página
+    errada seria trocar o barato pelo caro. Medido: 6 chamadas seguidas dão 2
+    cliques (recarga cortando) ou 6 teclas.
+  - **`ir_para_a_pagina_1(clicar, ponto, esperar, apertar, tecla)`** substituiu o
+    `subir_para_a_pagina_1` e devolve `"tecla"` ou `"clique"` para o log. As duas
+    portas continuam (`garantir_pagina_1(ctx, ...)` para o farm).
+- **No APP a página 1 é garantida na largada E antes de CADA volta.** Uma vez na
+  largada não bastava: a sequência roda em laço por horas, e um clique do usuário
+  na barra estragaria todas as voltas seguintes sem ninguém perceber. O executor
+  recebe `antes_da_volta` como FUNÇÃO, pelo mesmo motivo do pet — `modo_app`
+  importa só `core.inputs` e continua assim; quem monta o clique/tecla é o
+  `supervisor`, dentro de `try/except` (é complemento: sem ele a macro roda como
+  sempre rodou).
+- **A barra de atalhos tem que estar na PÁGINA 1** (`blazesbot/bot/hotbar.py`,
+  módulo independente usado pelo BC e pelo APP). O jogo tem 3 páginas e uma bola
+  verde no rodapé mostra qual; as teclas configuradas apontam para os slots da
+  página 1, e em outra página a MESMA tecla dispara outra coisa — sem o bot
+  perceber.
+  - **Clica, não lê.** O botão de subir (`coords.hotbar_page_up`, medido em
+    (539,733) contra quatro prints, erro máximo de 5 px num botão de 22×22)
+    **sobe e PARA no 1**: 3→2→1, 2→1→1, 1→1→1. Então 2 cliques levam à página 1
+    de qualquer lugar, inclusive já estando nela — não existe reconhecimento que
+    possa errar. Ler o dígito é possível (máscara da tinta azul sobre o verde
+    separa 1/2/3 com margem de 0,60–0,77; casar a bola INTEIRA não serve, a
+    moldura domina e a margem cai para 0,037), mas só economizaria dois cliques.
+  - **Sete momentos-chave**, não a cada tecla: a **entrada na cave**
+    (`routine._do_entrar`, logo depois do `begin_run`, com `forcar=True` — a
+    entrada é a fronteira certa, tudo daí em diante depende das teclas, e a
+    disputa pode ter levado minutos com o usuário mexendo na janela); `_descer_para_lutar` (guardas e
+    boss, com `forcar=True` — ali a tecla errada custa a run), o portão da
+    montaria, `ensure_pet`, `curar_antes_do_boss` (só depois do portão dos 40%) e
+    o início do modo APP. O inventário do package_courage ficou de fora por
+    decisão. Pôr no `ctx.press` custaria ~3 s de captura por luta de boss.
+  - **Recarga de 10 s** no caminho com `ctx` (mesmo desenho do `resetar_visao`):
+    o portão da montaria é chamado por trajeto, e a manobra de destravamento abre
+    até 6 trajetos curtos seguidos — sem recarga seriam 12 cliques em segundos.
+  - **Duas portas, para não quebrar o isolamento do APP:**
+    `garantir_pagina_1(ctx, ...)` para o farm e `subir_para_a_pagina_1(clicar,
+    ponto)` para quem não tem `BotContext`. O executor do APP continua
+    importando só `core.inputs` — quem monta o clique é o `supervisor`, e dentro
+    de `try/except`: é complemento, e sem ele a macro roda como sempre rodou.
+- **Rede de segurança além do `verificar.py`:** `tests/` tem a suíte de
+  **pytest de lógica pura** (`coords`, `logmodo`, `stats_diarias`,
+  `log_limitado`, `mapa_bc`) — rode
+  `./.venv/Scripts/python.exe -m pytest -q` depois de mexer nesses módulos.
+  **ruff** (`./.venv/Scripts/python.exe -m ruff check blazesbot/ main.py --fix`)
+  aplica só correções seguras; as categorias intencionais (S110 try/except pass,
+  UP042 `str+Enum`, B023, DTZ011, UP031...) estão documentadas no `ignore` do
+  `pyproject.toml`, então o `check` fecha em 0 sem refatorar estrutura.
+- **O plugin ECC (hooks) está com escopo `project` apontando para a pasta temp
+  do Claude, não para o repo** — é por isso que o GateGuard ("Fact-Forcing
+  Gate") e afins podem bloquear edits/setup aqui. Se atrapalhar trabalho de
+  manutenção, rode a sessão com `ECC_GATEGUARD=off` (ou remova
+  `gateguard-fact-force` de `ECC_DISABLED_HOOKS`). Reinstalar o plugin em escopo
+  `user` resolve de vez.
+- **Desligar o BC pela interface é IMEDIATO e não derruba a conta:** desmarcar o
+  checkbox (`bc_farm` → False) corta a fase atual NO MEIO (navegação, combate,
+  entrada, venda). O sinal é a exceção `FarmDesligado`, levantada em
+  `BotContext.raise_if_stopped` quando a flag `ctx.farming` está ativa (True
+  SOMENTE durante `routine.run`) e `account.farms` apagou; como navigation e
+  combat não têm `except`, ela sobe limpa até o `routine.run`, que a captura e
+  devolve o controle sem `_fail`. A conta então fica **online, parada, com o
+  relogin ativo** (o `_operate` muda para "Online, sem farmar") — o usuário
+  pode assumir manualmente sem parar o bot inteiro. O `finally` do `run()`
+  derruba `ctx.farming` em qualquer saída, senão o laço "online" seguinte
+  re-detonaria a parada. Retomar (re-marcar) usa o SITUAR atual, que já
+  funciona. Nenhuma mudança de UI: os dois checkboxes já gravam
+  `conta.bc_farm` ao vivo no mesmo objeto de config.
+- **Trava de posição no APP (2026-08-16):** salva `(x, y)` ao iniciar
+  `_rodar_modo_app` e devolve o personagem andando (sem montaria) se ele se
+  afastar mais que `TOLERANCIA_POSICAO = 1` unidade — o mesmo `RUIDO_DA_POSICAO`
+  usado na navegação da cave. O deslocamento é medido no eixo que maior se
+  desviaa: `dx > 1` OU `dy > 1` dispara a devolução. Após
+  `shuffle_apos_n_voltas` (30) voltas sem movimento, dá um shuffle de
+  `SHUFFLE_DEFAULT_PIXELS = 6` unidades no eixo X e volta à base — anti-AFK
+  leve, visível no minimapa como um "tremulação". A base é zerada a cada
+  (re)início do APP: o usuário relociona e clica para voltar. Toda a leitura
+  de posição e o clique no minimapa chegam do `supervisor` como callbacks
+  (`posicao_atual`, `mover_para`), preservando o isolamento do executor
+  (`core.inputs` + `core.pet` só). Sem leitura de memória, os callbacks são
+  `None` e o APP segue exatamente como antes — nada quebra.
+  - **Devolução ao término da macro (2026-08-16):** quando o laço do `rodar()`
+    termina (`continuar()` devolve False), o executor chama `mover_para(base)`
+    uma última vez. Isso cobre o caso em que o usuário para a macro depois de
+    andar — o character volta ao ponto de onde começou. Se a base não foi salva
+    (sem leitura de memória) ou o callback é `None`, nada acontece — o
+    encerramento segue como sempre fez.
+  - **Diagnostic log (2026-08-16):** `_salvar_base`, `_corrigir_posicao` e
+    `mover_para` emitem logs de INFO/DEBUG/WARNING que mostram: `base salva em
+    (x, y)`, `atual=X base=Y dx=N dy=N`, `mover_para: clicando minimapa
+    (px,py)`. Confira `logs/dev/blazes-dev.jsonl` com `BLAZES_MODO=dev`.
+
+---
+
+## A tecla vazando para outra janela no login (25/08/2026)
+
+**O relato:**
+
+> *"no login tem vezes que o clique das teclas está vazando, na verdade parece
+> até ser outras teclas bem aleatórias... por exemplo `rggddwlqrjcrw` digitou
+> isso no bloco de notas enquanto abria o jogo e foi sozinho, eu percebi isso
+> pois teve vezes que do nada no jogo começou a abrir janelas aleatórias e
+> quando cliquei em outro lugar começou a digitar e quando a conta logava
+> parava."*
+
+### Como isso é possível, se o bot usa `PostMessageW`?
+
+`PostMessageW` entrega a UMA janela. Não existe vazamento por foco — o bot não
+usa `SendInput` nem `keybd_event` em lugar nenhum (varrido: **nenhuma mensagem
+de teclado sai fora do `core/inputs.py`**). Então o `hwnd` estava errado. Três
+jeitos de isso acontecer:
+
+1. **O Windows RECICLA HWND.** A janela do cliente morre — queda, relogin,
+   cliente fechado — e o Windows entrega o MESMO número de handle a outra
+   janela. O `Input` guardava o `hwnd` no `__init__` e **não conferia nunca
+   mais**. A partir daí, `PostMessageW(hwnd, WM_CHAR, ...)` digita no Bloco de
+   Notas.
+2. **`hwnd = 0xFFFF` é `HWND_BROADCAST`** e entrega a TODAS as janelas de topo.
+   Explicaria os dois sintomas ao mesmo tempo: texto no Bloco de Notas E painéis
+   abrindo no jogo.
+3. **Um `hwnd` de outra conta** faz uma conta digitar na janela da outra.
+
+**Por que no login:** é onde a janela está NASCENDO (o supervisor pode ter o
+handle de antes), e a digitação de usuário/senha é o trecho com mais teclas
+seguidas do bot inteiro. *"Quando a conta logava parava"* — porque a digitação
+acabou.
+
+### A trava
+
+`Input._janela_confiavel()`, chamada ANTES de cada mensagem, nos **três** pontos
+de saída — `_enviar_tecla` (toda tecla), `_click` (os oito caminhos de clique) e
+`set_title`. Confere que o `hwnd`:
+
+* não é zero, não é negativo, não é `HWND_BROADCAST`;
+* ainda é janela viva (`IsWindow`);
+* **ainda pertence ao mesmo PID** de quando o `Input` nasceu;
+* e esse PID é um `client.exe`.
+
+Falhou qualquer uma, **a mensagem não sai** e o motivo vai para o log — uma vez
+por motivo, não por mensagem, senão uma senha vira 13 linhas iguais.
+
+### As duas armadilhas que a trava tinha que evitar
+
+Estas duas custaram mais pensamento que a trava em si, e as duas são a mesma
+ideia: **trocar um defeito raro por um permanente é o pior negócio possível.**
+
+1. **"Não sei" não é "não é o jogo".** Se o `psutil` levantar `AccessDenied` ao
+   ler o nome do processo e isso valesse "não é o jogo", o bot ficaria MUDO. O
+   nome do processo só bloqueia quando é lido com sucesso E é diferente; leitura
+   falhada mantém o que já se sabia. O pino do PID sozinho já segura o defeito
+   relatado.
+2. **O pino fecha TARDE.** No login a janela está nascendo e pode não dizer de
+   quem é ainda. Fixar `None` como pino e comparar contra ele travaria tudo para
+   sempre. Então o pino se fecha na primeira leitura que der certo — e a
+   identidade é conferida ANTES de fixar, senão o pino fecharia no Bloco de
+   Notas e a trava viraria decoração.
+
+Travado por `tests/test_trava_da_janela.py` (21 testes), incluindo uma varredura
+de AST que reprova qualquer módulo que mande mensagem de TECLADO fora do
+`Input` — um ponto de saída novo sem `_janela_confiavel` é um vazamento novo.
