@@ -34,7 +34,9 @@ O QUE ELA RESPONDE, DE UMA VEZ
 ELA NÃO MUDA NADA NO JOGO ALÉM DE SELECIONAR
 =========================================================================
 
-Clica em retrato e lê memória. **Não usa skill, não anda, não abre janela.** O
+Clica em retrato, aperta a tecla de AUTO-SELEÇÃO e lê memória. **Não usa skill,
+não anda, não abre janela.** A tecla é o único envio além dos cliques, e ela
+troca o alvo mais uma vez ao fim -- por isso está declarada aqui. O
 único efeito colateral é o alvo ficar trocado ao fim -- ela NÃO solta o alvo,
 porque largar alvo aqui exigiria apertar ESC, e ESC neste cliente abre o menu do
 jogo. Deixar o alvo selecionado é o menor dos dois males numa ferramenta que o
@@ -123,21 +125,44 @@ def _ler_alvo(ctx: BotContext) -> dict[str, Any]:
     return dados
 
 
-def _esperar_o_alvo_virar(ctx: BotContext, id_antes: int | None) -> tuple[dict, float]:
-    """Pergunta até o id mudar. Devolve o que leu e QUANTO DEMOROU.
+def _medir_a_troca(ctx: BotContext, acao, id_antes: int | None
+                   ) -> tuple[dict, float, str]:
+    """Executa `acao` e mede a troca de alvo. Devolve (lido, segundos, situação).
 
-    O tempo é o produto principal desta ferramenta: é o piso físico de qualquer
-    cadência que compare `TARGET_ID` depois de uma ação. Sem ele, quem compara
-    rápido demais lê o alvo ANTERIOR e conclui "não mudou" -- errando calado.
+    A SITUAÇÃO É EXPLÍCITA porque inferir tudo de "o id ficou diferente de zero"
+    mentia em quatro casos, e uma ferramenta de medição que mente é pior que
+    ferramenta nenhuma:
+
+      * `mudou`       -- id novo, diferente do anterior. É o único caso cujo
+                         tempo entra na estatística.
+      * `nao_mudou`   -- o id continua o mesmo depois do teto inteiro. Pode ser
+                         que o clique não pegou, OU que aquele já era o alvo --
+                         e daqui não dá para distinguir os dois. O tempo aqui é
+                         o TETO, não uma medição.
+      * `zerou`       -- o alvo foi embora. Antes isto passava por "não mudou",
+                         porque o `if lido.get("id")` descartava o zero.
+      * `sem_leitura` -- a memória não respondeu.
+
+    O CRONÔMETRO COMEÇA ANTES DA AÇÃO. Começar depois do `left_click` retornar
+    subestimaria justamente o que se quer medir: o caminho inteiro da ação até a
+    memória virar.
     """
     comeco = time.monotonic()
+    acao()
     limite = comeco + TETO_DA_ESPERA_DO_ALVO
     while time.monotonic() < limite:
         lido = _ler_alvo(ctx)
-        if lido.get("id") and lido["id"] != id_antes:
-            return lido, time.monotonic() - comeco
+        atual = lido.get("id")
+        if atual is None:
+            ctx.tick(PASSO_DA_MEDICAO)
+            continue
+        if atual != id_antes:
+            situacao = "zerou" if not atual else "mudou"
+            return lido, time.monotonic() - comeco, situacao
         ctx.tick(PASSO_DA_MEDICAO)
-    return _ler_alvo(ctx), time.monotonic() - comeco
+    lido = _ler_alvo(ctx)
+    situacao = "sem_leitura" if lido.get("id") is None else "nao_mudou"
+    return lido, time.monotonic() - comeco, situacao
 
 
 def _pontos_dos_retratos(ctx: BotContext) -> list[tuple[int, int]]:
@@ -152,9 +177,16 @@ def _desenhar_a_prova(ctx: BotContext, pontos, achados) -> str:
     não pode depender dele para ser importado) e quadro nulo/em branco reprovado.
     """
     try:
-        import cv2
+        return _desenhar(ctx, pontos, achados)
     except Exception:
+        # A PROVA É ESTRITAMENTE OPCIONAL. A medição já está feita quando esta
+        # função roda; deixá-la derrubar o resultado trocaria o que interessa
+        # pelo que é conveniência.
         return ""
+
+
+def _desenhar(ctx: BotContext, pontos, achados) -> str:
+    import cv2
     quadro = vision.capture_window(ctx.hwnd)
     if quadro is None or vision.frame_is_blank(quadro):
         return ""
@@ -168,10 +200,7 @@ def _desenhar_a_prova(ctx: BotContext, pontos, achados) -> str:
                     cv2.FONT_HERSHEY_SIMPLEX, 0.45, cor, 1, cv2.LINE_AA)
     PASTA_DE_PROVAS.mkdir(parents=True, exist_ok=True)
     caminho = PASTA_DE_PROVAS / f"retratos-{time.strftime('%Y%m%d-%H%M%S')}.png"
-    try:
-        cv2.imwrite(str(caminho), quadro)
-    except OSError:
-        return ""
+    cv2.imwrite(str(caminho), quadro)
     return str(caminho)
 
 
@@ -184,9 +213,14 @@ def rodar(config: BotConfig, account: Account,
         return {"ok": False, "erro": "Já existe uma aferição rodando."}
 
     _PARADA.clear()
-    supervisor = AccountSupervisor(config, account, on_status=on_status)
+    # O SUPERVISOR NASCE DENTRO DO `try`. Construí-lo antes deixava o
+    # `_EM_ANDAMENTO` preso para sempre se a construção falhasse -- e a
+    # ferramenta passava a responder "já existe uma aferição rodando" até o
+    # bot ser reiniciado.
+    supervisor: AccountSupervisor | None = None
     ctx: BotContext | None = None
     try:
+        supervisor = AccountSupervisor(config, account, on_status=on_status)
         adotada = supervisor._adotar_janela_existente()
         if adotada is None:
             return {"ok": False,
@@ -216,15 +250,16 @@ def rodar(config: BotConfig, account: Account,
         achados = []
         for i, (x, y) in enumerate(pontos):
             antes = _ler_alvo(ctx)
-            ctx.input.left_click(x, y)
-            depois, demora = _esperar_o_alvo_virar(ctx, antes.get("id"))
+            depois, demora, situacao = _medir_a_troca(
+                ctx, lambda px=x, py=y: ctx.input.left_click(px, py),
+                antes.get("id"))
             achados.append({"slot": i + 1, "ponto": (x, y),
                             "antes": antes, "depois": depois,
-                            "segundos": round(demora, 3)})
+                            "segundos": round(demora, 3), "situacao": situacao})
             log.info(
-                "Slot %d em (%d,%d): id %s -> %s | nome=%r hp=%s/%s nivel=%s "
-                "| %.3fs",
-                i + 1, x, y, antes.get("id"), depois.get("id"),
+                "Slot %d em (%d,%d): %s | id %s -> %s | nome=%r hp=%s/%s "
+                "nivel=%s | %.3fs",
+                i + 1, x, y, situacao, antes.get("id"), depois.get("id"),
                 depois.get("nome"), depois.get("hp"), depois.get("max_hp"),
                 depois.get("nivel"), demora)
 
@@ -233,12 +268,13 @@ def rodar(config: BotConfig, account: Account,
             log.info("Sondando a auto-seleção (%s).", ", ".join(TECLAS_SONDADAS))
             for tecla in TECLAS_SONDADAS:
                 antes = _ler_alvo(ctx)
-                ctx.press(tecla)
-                depois, demora = _esperar_o_alvo_virar(ctx, antes.get("id"))
-                teclas.append({"tecla": tecla, "antes": antes,
-                               "depois": depois, "segundos": round(demora, 3)})
-                log.info("Tecla %s: id %s -> %s | nome=%r | %.3fs",
-                         tecla, antes.get("id"), depois.get("id"),
+                depois, demora, situacao = _medir_a_troca(
+                    ctx, lambda t=tecla: ctx.press(t), antes.get("id"))
+                teclas.append({"tecla": tecla, "antes": antes, "depois": depois,
+                               "segundos": round(demora, 3),
+                               "situacao": situacao})
+                log.info("Tecla %s: %s | id %s -> %s | nome=%r | %.3fs",
+                         tecla, situacao, antes.get("id"), depois.get("id"),
                          depois.get("nome"), demora)
 
         prova = _desenhar_a_prova(ctx, pontos, achados)
@@ -246,7 +282,12 @@ def rodar(config: BotConfig, account: Account,
                      "teclas": teclas, "prova": prova,
                      "passo": PASSO_ENTRE_RETRATOS_DO_TIME,
                      "primeiro": PRIMEIRO_RETRATO_DO_TIME}
-        resultado["resumo"] = resumir(resultado)
+        try:
+            resultado["resumo"] = resumir(resultado)
+        except Exception as exc:
+            # O resumo é texto para humano; a medição já está no dicionário e
+            # no log. Perder tudo por causa da formatação seria absurdo.
+            resultado["resumo"] = f"(falha ao resumir: {exc})"
         log.info("Aferição do aliado: %s", resultado["resumo"])
         if prova:
             log.info("Prova em %s", prova)
@@ -260,10 +301,20 @@ def rodar(config: BotConfig, account: Account,
     finally:
         # A ORDEM IMPORTA e é a do molde: sem o `_release()` o bot de verdade
         # veria a janela como de outra conta e abriria um cliente novo.
-        if ctx is not None:
-            ctx.close()
-        supervisor._release()
-        _PARADA.clear()
+        # CADA LIMPEZA PROTEGIDA DA OUTRA. Encadeadas, uma exceção em
+        # `ctx.close()` pulava o `_release()` -- e é justamente o `_release()`
+        # que devolve o PID; sem ele o bot de verdade abre um cliente novo e o
+        # usuário paga três horas de fila. A exceção no finally também escapava
+        # para o chamador, quebrando a promessa de "erro sai como dado".
+        for limpeza in (
+            lambda: ctx.close() if ctx is not None else None,
+            lambda: supervisor._release() if supervisor is not None else None,
+            _PARADA.clear,
+        ):
+            try:
+                limpeza()
+            except Exception:
+                log.exception("Falha na limpeza da aferição")
         _EM_ANDAMENTO.release()
 
 
@@ -277,23 +328,24 @@ def _seguro(fn) -> Any:
 def resumir(resultado: dict[str, Any]) -> str:
     """O veredito em TEXTO. O Python decide, as interfaces só exibem."""
     slots = resultado.get("slots") or []
-    com_nome = [s for s in slots if (s.get("depois") or {}).get("nome")]
-    trocou = [s for s in slots
-              if (s.get("depois") or {}).get("id")
-              and (s.get("depois") or {}).get("id") != (s.get("antes") or {}).get("id")]
+    trocou = [s for s in slots if s.get("situacao") == "mudou"]
+    com_nome = [s for s in trocou if (s.get("depois") or {}).get("nome")]
     if not trocou:
         return ("REPROVOU: nenhum clique trocou o alvo. Ou o time não estava na "
-                "tela, ou as coordenadas estão erradas — abra a prova em PNG.")
-    if not com_nome:
-        return (f"PARCIAL: {len(trocou)} de {len(slots)} cliques trocaram o alvo, "
-                "mas a memória não descreveu NENHUM deles. A Fada consegue "
-                "mirar, mas não consegue confirmar em quem clicou — a vítima "
-                "terá de anunciar tudo.")
+                "tela, ou as coordenadas estão erradas — abra a prova em PNG. "
+                "(Se algum slot já era o alvo selecionado, ele aparece como "
+                "'nao_mudou' e isso NÃO é conclusivo: rode de novo com outro "
+                "alvo selecionado antes.)")
     demoras = [s["segundos"] for s in trocou]
+    faixa = f"{min(demoras):.3f}s a {max(demoras):.3f}s"
+    if not com_nome:
+        return (f"PARCIAL: {len(trocou)} de {len(slots)} cliques trocaram o alvo "
+                f"({faixa}), mas a memória não descreveu NENHUM deles. A Fada "
+                "consegue mirar, mas não consegue confirmar em quem clicou — a "
+                "vítima terá de anunciar tudo.")
+    nomes = ", ".join(str((s.get("depois") or {}).get("nome")) for s in com_nome)
     return (f"PASSOU: {len(com_nome)} de {len(slots)} aliados lidos pela memória "
-            f"({', '.join(str((s.get('depois') or {}).get('nome')) for s in com_nome)}). "
-            f"Atraso do clique até a memória virar: "
-            f"{min(demoras):.3f}s a {max(demoras):.3f}s.")
+            f"({nomes}). Atraso do clique até a memória virar: {faixa}.")
 
 
 def main() -> int:

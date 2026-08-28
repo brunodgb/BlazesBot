@@ -223,8 +223,8 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 
 | tempo | atual | original | natureza | onde | função | para que serve |
 |---|---|---|---|---|---|---|
-| `TETO_DA_ESPERA_DO_ALVO` | 2 s | *novo* | TETO | [afericao_do_aliado.py:79](blazesbot/bot/app/afericao_do_aliado.py#L79) | `_esperar_o_alvo_virar` | Quanto esperar, no máximo, a memória refletir o alvo novo depois do clique. |
-| `PASSO_DA_MEDICAO` | 0.02 s | *novo* | PASSO | [afericao_do_aliado.py:83](blazesbot/bot/app/afericao_do_aliado.py#L83) | `_esperar_o_alvo_virar` | De quanto em quanto tempo perguntar. 20 ms é fino o bastante para o número |
+| `TETO_DA_ESPERA_DO_ALVO` | 2 s | *novo* | TETO | [afericao_do_aliado.py:81](blazesbot/bot/app/afericao_do_aliado.py#L81) | `_medir_a_troca` | Quanto esperar, no máximo, a memória refletir o alvo novo depois do clique. |
+| `PASSO_DA_MEDICAO` | 0.02 s | *novo* | PASSO | [afericao_do_aliado.py:85](blazesbot/bot/app/afericao_do_aliado.py#L85) | `_medir_a_troca` | De quanto em quanto tempo perguntar. 20 ms é fino o bastante para o número |
 | `SEGUNDOS_ENTRE_POCOES` | 15 s | = | FIXO | [cura.py:104](blazesbot/bot/app/cura.py#L104) | `_curar_com_pocao` | Quanto esperar entre uma poção e a próxima. |
 | `SEGUNDOS_PARA_VOLTAR_AO_PONTO` | 5 s | = | TETO | [cura.py:121](blazesbot/bot/app/cura.py#L121) | `_voltar_ao_ponto` | Teto da caminhada de volta ao ponto inicial. |
 | `SEGUNDOS_SENTADO` | 30 s | = | TETO | [cura.py:128](blazesbot/bot/app/cura.py#L128) | `_curar_sentado` | Teto sentado, para quem não tem tecla de poção configurada. |

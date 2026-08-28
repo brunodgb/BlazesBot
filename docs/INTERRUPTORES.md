@@ -70,8 +70,8 @@ ligar código não testado.
 
 | constante | valor | onde | quem lê | porquê (resumo) |
 |---|---|---|---|---|
-| `PASSO_DA_MEDICAO` | `0.02` | [blazesbot/bot/app/afericao_do_aliado.py:83](blazesbot/bot/app/afericao_do_aliado.py#L83) | amostragem_de_cliques.py | De quanto em quanto tempo perguntar. 20 ms é fino o bastante para o número |
-| `TETO_DA_ESPERA_DO_ALVO` | `2.0` | [blazesbot/bot/app/afericao_do_aliado.py:79](blazesbot/bot/app/afericao_do_aliado.py#L79) | — | Quanto esperar, no máximo, a memória refletir o alvo novo depois do clique. |
+| `PASSO_DA_MEDICAO` | `0.02` | [blazesbot/bot/app/afericao_do_aliado.py:85](blazesbot/bot/app/afericao_do_aliado.py#L85) | amostragem_de_cliques.py | De quanto em quanto tempo perguntar. 20 ms é fino o bastante para o número |
+| `TETO_DA_ESPERA_DO_ALVO` | `2.0` | [blazesbot/bot/app/afericao_do_aliado.py:81](blazesbot/bot/app/afericao_do_aliado.py#L81) | — | Quanto esperar, no máximo, a memória refletir o alvo novo depois do clique. |
 | `MAXIMO_DE_POCOES` | `5` | [blazesbot/bot/app/cura.py:114](blazesbot/bot/app/cura.py#L114) | — | Teto de poções por ciclo de cura. |
 | `PASSO_DA_PERGUNTA` | `0.1` | [blazesbot/bot/app/cura.py:151](blazesbot/bot/app/cura.py#L151) | — | Cadência de toda pergunta deste módulo. Leitura de memória é ~1 µs; o custo é |
 | `SEGUNDOS_ENTRE_POCOES` | `15.0` | [blazesbot/bot/app/cura.py:104](blazesbot/bot/app/cura.py#L104) | — | Quanto esperar entre uma poção e a próxima. |
