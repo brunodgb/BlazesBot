@@ -149,6 +149,25 @@ linhas no piso até emparelhar, e uma conta uma volta inteira atrás destrava na
 hora, porque a marca da volta seguinte já é "maior" que qualquer linha da
 anterior.
 
+### E a primeira correção ainda estava errada
+
+Marcar cada linha não bastou, porque cada conta continuava com **cursor
+próprio** e a marca era só uma autorização. Com o seguidor atrasado, a
+comparação `>=` autorizava a linha **velha** dele: ele despejava as teclas
+atrasadas a cada 100 ms enquanto o líder já estava na linha 12. Emparelhava no
+relógio e divergia no conteúdo — e o efeito, medido pelo usuário rodando,
+foi *"raramente atacam o mesmo mob"*.
+
+**O seguidor não tem cursor próprio.** Ele espera a marca e manda **a linha que
+a marca diz**, não a dele. Ficar para trás deixa de significar "mandar tecla
+velha" e passa a significar "pular direto para onde o time está" — que é o que
+*"mesmo comando ao mesmo tempo"* quer dizer. Se a marca já é de outra volta, a
+volta local termina ali: o resto dela bateria fora de hora, e a largada seguinte
+realinha tudo, inclusive o alvo.
+
+E o "líder sumiu" vale por **volta**, não por linha: sem isso, um líder que caiu
+no meio da volta custava um teto por linha restante — vinte esperas seguidas.
+
 ### Dois furos achados lendo o código contra a descrição do usuário
 
 Nenhum dos dois teria aparecido em teste de unidade — os dois só falham com duas

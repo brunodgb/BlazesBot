@@ -2525,10 +2525,19 @@ class ExecutorDeMacro:
                 return self._abortar_a_volta()
             # A MARCA DA LINHA. No time, é aqui que as contas mandam a MESMA
             # tecla no MESMO instante: o líder marca e segue; o seguidor espera
-            # a marca. Fora de um time, `sincronia` responde na hora e a macro
-            # roda exatamente como sempre rodou.
-            if self.sincronia is not None and not self.sincronia.antes_da_linha(i):
-                return False
+            # a marca e manda A LINHA QUE ELA DIZ -- não a dele. Fora de um
+            # time, responde na hora com o próprio índice e a macro roda
+            # exatamente como sempre rodou.
+            if self.sincronia is not None:
+                linha = self.sincronia.linha_a_enviar(i)
+                if linha is None:
+                    return False
+                if linha < 0:
+                    # O líder virou a volta. O que sobrava desta bateria fora
+                    # de hora; a largada seguinte realinha tudo.
+                    return self._abortar_a_volta()
+                if 0 <= linha < len(passos):
+                    passo = passos[linha]
             self.input.key(passo.key)
             self.teclas_enviadas += 1
             # QUEM DITA O RITMO. No líder (e fora de time) é o delay da macro;

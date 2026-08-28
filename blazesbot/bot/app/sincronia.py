@@ -186,6 +186,11 @@ class SincroniaDoTime:
         self.alinhamentos_falhos = 0
         self.linhas_juntas = 0
         self.linhas_sem_marca = 0
+        # A última linha do líder que esta conta já executou nesta volta. É o
+        # cursor do SEGUIDOR -- e ele é do líder, não dela.
+        self._ultima_marca = -1
+        # O líder não marcou dentro do teto NESTA volta. Zerado a cada largada.
+        self._sem_lider_nesta_volta = False
         # Relógio do "4 s sem mudar de estado de batalha".
         self._estado_de_batalha: bool | None = None
         self._mudou_em = time.monotonic()
@@ -249,6 +254,8 @@ class SincroniaDoTime:
         verdade. "Não consegui sincronizar" é sempre "vai assim mesmo".
         """
         self.volta += 1
+        self._ultima_marca = -1
+        self._sem_lider_nesta_volta = False
         if self.modo == "copiar":
             return True
         # SEM TIME NÃO HÁ LARGADA. A pergunta é feita a cada volta, e não uma
@@ -371,7 +378,12 @@ class SincroniaDoTime:
         self.largada_epoca = epoca
         self.largadas_juntas += 1
         if self.modo == "mesmo_alvo" and alvo:
-            self._alinhar_no_alvo(alvo)
+            # O RETORNO IMPORTA: `_alinhar_no_alvo` devolve False tanto para
+            # "não alinhei" (segue assim mesmo) quanto para "é para parar".
+            # Ignorar os dois juntos adiava a parada até a checagem seguinte do
+            # executor.
+            if not self._alinhar_no_alvo(alvo) and not self._ex._continuar():
+                return False
         return True
 
     def _alinhar_no_alvo(self, alvo: int) -> bool:
@@ -422,36 +434,72 @@ class SincroniaDoTime:
         """Há time E o modo pede sincronia."""
         return self.modo != "copiar" and len(self._membros()) > 1
 
-    def antes_da_linha(self, i: int) -> bool:
-        """Chamada antes de CADA tecla da macro. `False` = é para parar.
+    def linha_a_enviar(self, i: int) -> int | None:
+        """Qual linha da macro mandar AGORA. `None` = é para parar.
 
-        No líder: marca a linha, e segue sem esperar ninguém. Segurar o líder a
-        cada linha faria o time inteiro andar na velocidade do pior momento de
-        qualquer conta -- e a regra é que ninguém fica parado.
+        =================================================================
+        O SEGUIDOR NÃO TEM CURSOR PRÓPRIO -- correção de 28/08/2026
+        =================================================================
 
-        No seguidor: espera a marca. Se ela já foi dada (ele está atrasado), não
-        espera nada -- é assim que a defasagem se desfaz em vez de se manter.
+        A versão anterior deixava cada conta andar no próprio índice e só
+        PERGUNTAVA se podia mandar. Quando o seguidor ficava para trás, a
+        comparação `>=` autorizava a linha ATRASADA dele: ele despejava as
+        teclas velhas a cada 100 ms enquanto o líder já estava na linha 12.
+        Alcançava no relógio mandando as teclas ERRADAS -- e o resultado
+        medido pelo usuário foi *"raramente atacam o mesmo mob"*.
+
+        Agora o seguidor ESPELHA: ele espera a marca do líder e manda a linha
+        que a marca diz, não a dele. Ficar para trás deixa de significar
+        "mandar tecla velha" e passa a significar "pular direto para onde o
+        time está" -- que é o que "mesmo comando ao mesmo tempo" quer dizer.
+
+        Devolve:
+          * o índice a enviar (do líder, ou o próprio quando não há time);
+          * `-1` quando o líder já virou a volta -- a minha acabou aqui;
+          * `None` quando é para parar.
         """
         if not self._sincronizando():
-            return True
+            return i
         if self.sou_o_lider():
+            # MARCA ANTES DE ENVIAR: dá ao seguidor o começo mais cedo
+            # possível. A diferença entre marcar antes ou depois é de
+            # microssegundos (são threads do mesmo processo), e antes é o lado
+            # que aproxima os dois envios em vez de afastá-los.
             mural.abrir_passo(self.login, self.epoca, self.volta_do_time, i)
-            return True
+            return i
 
-        alvo = (self.largada_epoca, self.volta_do_time, i)
+        # O LÍDER SUMIU NESTA VOLTA: não se paga o teto de novo a cada linha.
+        # Sem isto, um líder que caiu no meio da volta custava
+        # TETO_DA_LINHA_SEGUNDOS por linha restante -- vinte esperas de 2 s.
+        if self._sem_lider_nesta_volta:
+            return i
+
+        alvo = (self.largada_epoca, self.volta_do_time, self._ultima_marca + 1)
         limite = time.monotonic() + TETO_DA_LINHA_SEGUNDOS
         while time.monotonic() < limite:
             if mural.esperar_passo(self.largada_de, alvo,
                                    PASSO_DA_ESPERA_DA_LINHA):
+                marca = mural.passo_do_lider(self.largada_de)
+                if marca is None:
+                    break
+                epoca, volta, linha = marca
+                if (epoca, volta) != (self.largada_epoca, self.volta_do_time):
+                    # O líder virou a volta (ou reiniciou). A minha acaba aqui:
+                    # o que sobrava dela bateria fora de hora. A largada da
+                    # volta seguinte realinha tudo, inclusive o alvo.
+                    return -1
+                self._ultima_marca = linha
                 self.linhas_juntas += 1
-                return True
+                return linha
             if not self._ex._continuar():
-                return False
-        # O líder não marcou a tempo: está curando, voltando à base ou caiu.
-        # Mandar sozinho é melhor que ficar parado, e a linha seguinte já
-        # realinha (a comparação da marca é `>=`).
+                return None
+
+        # Passou o teto: o líder parou (curando, voltando à base, caiu). Mandar
+        # sozinho é melhor que ficar parado -- e a volta segue no ritmo próprio
+        # até a largada seguinte reencontrar o time.
+        self._sem_lider_nesta_volta = True
         self.linhas_sem_marca += 1
-        return True
+        return i
 
     def espera_da_linha(self, delay_ms: int) -> int:
         """Quanto esperar DEPOIS de mandar a tecla.

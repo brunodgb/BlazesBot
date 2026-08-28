@@ -505,62 +505,134 @@ def test_a_largada_e_fechada_quando_o_lider_para_de_esperar():
     assert mural.largada_pendente("lider") is None
 
 # ---------------------------------------------------------------------------
-# LINHA A LINHA -- a correção de 28/08/2026
+# LINHA A LINHA -- o seguidor ESPELHA o líder (28/08/2026)
 # ---------------------------------------------------------------------------
 #
-# O QUE ESTES TESTES IMPEDEM DE VOLTAR: a defasagem ESTÁVEL. Medido no log
-# real, duas contas rodavam voltas de ~20 s defasadas em ~13 s, volta após
-# volta, porque o seguidor atrasado dormia o próprio delay ALÉM de esperar o
-# líder -- nunca corria mais rápido, então nunca alcançava.
+# O QUE ESTES TESTES IMPEDEM DE VOLTAR:
+#
+# 1. A DEFASAGEM ESTÁVEL. Sincronizando só o começo da volta, duas contas
+#    rodavam voltas de ~20 s defasadas em ~13 s, volta após volta -- o atrasado
+#    dormia o próprio delay além de esperar o líder e nunca alcançava.
+#
+# 2. ALCANÇAR MANDANDO TECLA ERRADA. A primeira tentativa de correção deixou
+#    cada conta com cursor PRÓPRIO e só perguntava se podia mandar. O atrasado
+#    era autorizado a mandar a linha VELHA dele enquanto o líder já estava na
+#    12: ele emparelhava no relógio e divergia no conteúdo. Medido pelo
+#    usuário: *"raramente atacam o mesmo mob"*.
+
 
 def _linha(s, i):
-    return s.antes_da_linha(i)
+    return s.linha_a_enviar(i)
 
 
-def test_o_lider_marca_cada_linha():
+def _seguidor(ex=None, modo="largada", volta=1, epoca=1):
+    """Um seguidor já dentro da largada `volta` do líder."""
+    _anunciar("lider", volta, 0, epoca=epoca)
+    s = _sinc(ex or _ExecutorFalso(), login="seguidor", lider="lider", modo=modo,
+              membros=("lider", "seguidor"))
+    s.esperar_a_largada()
+    return s
+
+
+def test_o_lider_marca_a_propria_linha():
     s = _sinc(_ExecutorFalso(), login="lider", lider="lider",
               membros=("lider", "seguidor"))
     s.esperar_a_largada()
-    assert _linha(s, 3) is True
+    assert _linha(s, 3) == 3
     assert mural.passo_do_lider("lider") == (s.epoca, s.volta_do_time, 3)
 
 
-def test_o_seguidor_espera_a_marca_da_linha():
-    s = _sinc(_ExecutorFalso(), login="seguidor", lider="lider",
-              membros=("lider", "seguidor"))
-    _anunciar("lider", 1, 0)
-    s.esperar_a_largada()
-    mural.abrir_passo("lider", 1, 1, 5)          # o líder já está na linha 5
-    assert _linha(s, 5) is True
-    assert s.linhas_juntas >= 1
+def test_o_seguidor_manda_a_linha_DO_LIDER_e_nao_a_dele():
+    """O coração da correção. O seguidor não tem cursor próprio."""
+    s = _seguidor()
+    mural.abrir_passo("lider", 1, 1, 12)      # o líder está na linha 12
+    assert _linha(s, 3) == 12                 # ele pediu a 3 e manda a 12
 
 
-def test_o_seguidor_ATRASADO_nao_espera_nada():
-    """O coração da correção: marca já dada não faz esperar.
-
-    Sem isto o atrasado esperava a linha que já passou, gastava o teto e
-    continuava exatamente com o mesmo atraso na linha seguinte.
-    """
-    s = _sinc(_ExecutorFalso(), login="seguidor", lider="lider",
-              membros=("lider", "seguidor"))
-    _anunciar("lider", 1, 0)
-    s.esperar_a_largada()
-    mural.abrir_passo("lider", 1, 1, 18)         # o líder está MUITO à frente
+def test_o_atrasado_pula_para_onde_o_time_esta():
+    """Antes ele despejava as linhas velhas a 100 ms -- teclas erradas na hora
+    certa. Agora ele pula direto para a linha do time."""
+    s = _seguidor()
+    mural.abrir_passo("lider", 1, 1, 18)
     comeco = mod.time.monotonic()
-    assert _linha(s, 2) is True                  # linha antiga: não espera
+    assert _linha(s, 0) == 18
     assert mod.time.monotonic() - comeco < 0.05
 
 
-def test_uma_volta_inteira_atras_tambem_destrava():
-    """A marca da volta seguinte é 'maior' que qualquer linha da anterior."""
-    s = _sinc(_ExecutorFalso(), login="seguidor", lider="lider",
-              membros=("lider", "seguidor"))
-    _anunciar("lider", 4, 0)
-    s.esperar_a_largada()
-    mural.abrir_passo("lider", 1, 5, 0)          # já é a volta seguinte
+def test_cada_marca_e_consumida_UMA_vez():
+    """Sem isto o seguidor mandaria a mesma linha várias vezes enquanto o líder
+    não avança -- ou seja, marteleria a mesma tecla."""
+    s = _seguidor()
+    mural.abrir_passo("lider", 1, 1, 4)
+    assert _linha(s, 0) == 4
+    # a marca 4 já foi consumida: sem marca nova, ele não repete a 4
+    assert _linha(s, 1) != 4
+
+
+def test_o_lider_virou_a_volta_encerra_a_minha():
+    """O que sobrava da volta bateria fora de hora; a largada seguinte
+    realinha tudo, inclusive o alvo."""
+    s = _seguidor(volta=4)
+    mural.abrir_passo("lider", 1, 5, 0)       # já é a volta seguinte
+    assert _linha(s, 7) == -1
+
+
+def test_lider_parado_nao_prende_o_seguidor(monkeypatch):
+    """Passado o teto, manda a linha dele -- ninguém fica parado."""
+    monkeypatch.setattr(mod, "TETO_DA_LINHA_SEGUNDOS", 0.1)
+    s = _seguidor()
+    mural.esquecer_passo("lider")
+    assert _linha(s, 9) == 9
+    assert s.linhas_sem_marca == 1
+
+
+def test_o_teto_do_lider_sumido_nao_e_pago_a_cada_linha(monkeypatch):
+    """Um líder que caiu no meio da volta custava TETO por linha restante --
+    vinte esperas seguidas. Agora a volta inteira segue sozinha."""
+    monkeypatch.setattr(mod, "TETO_DA_LINHA_SEGUNDOS", 0.3)
+    s = _seguidor()
+    mural.esquecer_passo("lider")
+    _linha(s, 0)                               # esta paga o teto
     comeco = mod.time.monotonic()
-    assert _linha(s, 19) is True
-    assert mod.time.monotonic() - comeco < 0.05
+    for i in range(1, 20):
+        assert _linha(s, i) == i
+    assert mod.time.monotonic() - comeco < 0.2   # as outras 19, não
+
+
+def test_a_volta_seguinte_volta_a_esperar_o_lider(monkeypatch):
+    """'O líder sumiu' vale para UMA volta, não para sempre."""
+    monkeypatch.setattr(mod, "TETO_DA_LINHA_SEGUNDOS", 0.05)
+    s = _seguidor()
+    mural.esquecer_passo("lider")
+    _linha(s, 0)
+    assert s._sem_lider_nesta_volta is True
+    _anunciar("lider", 2, 0)
+    s.esperar_a_largada()
+    assert s._sem_lider_nesta_volta is False
+
+
+def test_sem_time_manda_a_propria_linha():
+    s = _sinc(_ExecutorFalso(), membros=("eu",))
+    assert _linha(s, 7) == 7
+    assert mural.passo_do_lider("eu") is None
+    assert s.espera_da_linha(3000) == 3000
+
+
+def test_modo_copiar_nao_marca_nem_espera():
+    s = _sinc(_ExecutorFalso(), login="lider", lider="lider", modo="copiar",
+              membros=("lider", "seguidor"))
+    assert _linha(s, 2) == 2
+    assert mural.passo_do_lider("lider") is None
+    assert s.espera_da_linha(3000) == 3000
+
+
+def test_parar_interrompe_a_espera_da_linha(monkeypatch):
+    monkeypatch.setattr(mod, "TETO_DA_LINHA_SEGUNDOS", 5.0)
+    ex = _ExecutorFalso()
+    s = _seguidor(ex)
+    mural.esquecer_passo("lider")
+    ex._continuar = lambda: False
+    assert _linha(s, 9) is None
 
 
 def test_o_seguidor_so_dorme_o_piso():
@@ -576,43 +648,6 @@ def test_o_lider_dorme_o_delay_da_macro():
               membros=("lider", "seguidor"))
     assert s.espera_da_linha(3000) == 3000
 
-
-def test_sem_time_a_macro_nao_e_gatilhada():
-    s = _sinc(_ExecutorFalso(), membros=("eu",))
-    assert _linha(s, 7) is True
-    assert mural.passo_do_lider("eu") is None
-    assert s.espera_da_linha(3000) == 3000
-
-
-def test_modo_copiar_nao_marca_nem_espera():
-    s = _sinc(_ExecutorFalso(), login="lider", lider="lider", modo="copiar",
-              membros=("lider", "seguidor"))
-    assert _linha(s, 2) is True
-    assert mural.passo_do_lider("lider") is None
-    assert s.espera_da_linha(3000) == 3000
-
-
-def test_lider_parado_nao_prende_o_seguidor(monkeypatch):
-    """Passado o teto da linha, manda sozinho -- ninguém fica parado."""
-    monkeypatch.setattr(mod, "TETO_DA_LINHA_SEGUNDOS", 0.1)
-    s = _sinc(_ExecutorFalso(), login="seguidor", lider="lider",
-              membros=("lider", "seguidor"))
-    _anunciar("lider", 1, 0)
-    s.esperar_a_largada()
-    mural.esquecer_passo("lider")
-    assert _linha(s, 9) is True                  # não trava
-    assert s.linhas_sem_marca == 1
-
-
-def test_parar_interrompe_a_espera_da_linha(monkeypatch):
-    monkeypatch.setattr(mod, "TETO_DA_LINHA_SEGUNDOS", 5.0)
-    ex = _ExecutorFalso()
-    ex._continuar = lambda: False
-    s = _sinc(ex, login="seguidor", lider="lider", membros=("lider", "seguidor"))
-    _anunciar("lider", 1, 0)
-    s.esperar_a_largada()
-    mural.esquecer_passo("lider")
-    assert _linha(s, 9) is False
 
 # ---------------------------------------------------------------------------
 # A SEQUÊNCIA DO "MESMO ALVO", conferida contra a descrição do usuário
