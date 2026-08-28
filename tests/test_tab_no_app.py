@@ -97,6 +97,11 @@ def _executor(roda=None, tecla="TAB", sem_leitura=False, em_batalha=None):
     # atributo lido pelo laço tem de ser posto à mão. `None` é o valor de
     # "esta conta não está num time" -- a macro roda como sempre rodou.
     e.sincronia = None
+    # O TAB só sai quando FALTA alvo (`_preciso_de_alvo`), e a decisão usa
+    # estes dois: a batalha da volta anterior e as voltas seguidas com alvo
+    # e sem batalha.
+    e._lutava_na_volta_anterior = False
+    e._voltas_com_alvo_sem_batalha = 0
     e._tabs_sem_resposta = 0
     e._avisou_tecla_morta = False
     # A régua do alvo inalcançável.
@@ -2206,3 +2211,66 @@ def test_SAIR_de_batalha_corta_o_pedagio_no_meio():
 
     assert dentro, "o pedágio não olha a saída de batalha"
     assert "self._linhas_cegas = 0" in fonte
+
+# ===========================================================================
+# O TAB NÃO EXISTE PARA TROCAR DE ALVO -- 28/08/2026
+# ===========================================================================
+#
+# Observado em campo pelo usuário: *"algumas vezes eles já estavam com 1 target
+# e trocaram"*. O TAB do começo da volta saía sempre que a conta não estava em
+# batalha -- e não estar em batalha NÃO significa não ter alvo. Acontece quando
+# a macro seleciona o mob e a luta não começa na mesma volta: a volta seguinte
+# apertava TAB e ia para outro mob.
+#
+# Num time isso é pior que desperdício: é o que desfaz o alvo combinado.
+
+
+def _com_alvo(ident):
+    """Um executor pronto para responder `_preciso_de_alvo`."""
+    e = _executor()
+    e._id_do_alvo = lambda: ident
+    e._lutava_na_volta_anterior = False
+    e._voltas_com_alvo_sem_batalha = 0
+    return e
+
+
+def test_lutando_nunca_troca_de_alvo():
+    """O alvo é o que está batendo. TAB aqui seria largar a luta no meio."""
+    assert _com_alvo(777)._preciso_de_alvo(lutando=True) is False
+
+
+def test_com_alvo_e_fora_de_batalha_NAO_troca():
+    """O defeito relatado: a luta ainda não começou, e o TAB trocava o mob."""
+    assert _com_alvo(777)._preciso_de_alvo(lutando=False) is False
+
+
+def test_sem_alvo_o_TAB_sai():
+    assert _com_alvo(0)._preciso_de_alvo(lutando=False) is True
+
+
+def test_sair_da_batalha_pede_alvo_novo():
+    """Saiu de batalha entre uma volta e outra: o mob caiu.
+
+    É a mesma prova que `_a_batalha_acabou` usa, e a única que funciona com o
+    HP do alvo ILEGÍVEL.
+    """
+    e = _com_alvo(777)
+    e._lutava_na_volta_anterior = True
+    assert e._preciso_de_alvo(lutando=False) is True
+
+
+def test_SEM_leitura_de_id_o_TAB_sai_como_sempre():
+    """Cego é o modo em que o APP foi feito para funcionar."""
+    e = _com_alvo(0)
+    e._id_do_alvo = None
+    assert e._preciso_de_alvo(lutando=False) is True
+
+
+def test_alvo_inalcancavel_nao_prende_para_sempre():
+    """Rede de segurança: o mob do penhasco nunca entra em batalha, então nunca
+    'morre' -- sem o contador, o TAB nunca mais sairia."""
+    e = _com_alvo(777)
+    for _ in range(mod.VOLTAS_SEM_BATALHA_PARA_TROCAR - 1):
+        assert e._preciso_de_alvo(lutando=False) is False
+    assert e._preciso_de_alvo(lutando=False) is True
+    assert any("sem batalha" in m for _, m in e.linhas), e.linhas

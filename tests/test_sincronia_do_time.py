@@ -755,3 +755,59 @@ def test_esperar_a_marca_devolve_a_marca_que_liberou():
     mural.abrir_passo("lider", 1, 2, 6)
     assert mural.esperar_passo("lider", (1, 2, 6), 0.01) == (1, 2, 6)
     assert mural.esperar_passo("lider", (1, 2, 9), 0.01) is None
+
+# ---------------------------------------------------------------------------
+# O BÁSICO NOS MODOS SIMPLES (28/08/2026)
+# ---------------------------------------------------------------------------
+#
+#   *"tirando o 'começar juntos e com mesmo alvo', os outros modos só devem dar
+#    um único TAB, sem verificar nada, pois não é para ter preocupação, é para
+#    fazer o básico: TAB -> Macro."*
+#
+# E há a razão técnica: a sincronia só se sustenta se a volta de TODAS as contas
+# durar o mesmo tanto. Cada conferência no meio da volta acrescenta tempo a uma
+# conta e não às outras -- é dali que nasce a defasagem.
+
+def test_os_modos_simples_tem_volta_cega():
+    for modo in ("copiar", "largada"):
+        s = _sinc(_ExecutorFalso(), login="lider", lider="lider", modo=modo,
+                  membros=("lider", "seguidor"))
+        assert s.volta_cega() is True, modo
+
+
+def test_o_mesmo_alvo_continua_conferindo():
+    """Lá o alvo é combinado: saber que ele morreu é o que faz o líder virar a
+    volta e o time inteiro pegar o mob seguinte junto."""
+    s = _sinc(_ExecutorFalso(), login="lider", lider="lider", modo="mesmo_alvo",
+              membros=("lider", "seguidor"))
+    assert s.volta_cega() is False
+
+
+def test_sozinha_a_volta_nunca_e_cega():
+    """Fora de um time o APP continua exatamente como sempre foi."""
+    for modo in ("copiar", "largada", "mesmo_alvo"):
+        s = _sinc(_ExecutorFalso(), modo=modo, membros=("eu",))
+        assert s.volta_cega() is False, modo
+
+
+def test_cada_comparacao_de_TARGET_ID_vai_para_o_log(caplog):
+    """Pedido do usuário: é o único jeito de descobrir POR QUE o alinhamento
+    falha -- se o id do mesmo mob bate entre dois clientes, se o mob do líder
+    está no ciclo de TAB da outra conta, e quantos TABs custa."""
+    import logging
+    ex = _ExecutorFalso(alvo=111)
+
+    def tab():
+        ex.alvo = 999
+        return True
+    ex._tab_simples = tab
+    _anunciar("lider", 1, 999)
+    s = _sinc(ex, login="seguidor", lider="lider", modo="mesmo_alvo",
+              membros=("lider", "seguidor"))
+    with caplog.at_level(logging.INFO, logger="teste.time"):
+        s.esperar_a_largada()
+    linhas = [r.getMessage() for r in caplog.records if "TARGET_ID" in r.getMessage()]
+    assert len(linhas) >= 2, linhas          # a que difere e a que bate
+    assert "diferente" in linhas[0]
+    assert "IGUAL" in linhas[-1]
+    assert "111" in linhas[0] and "999" in linhas[0]

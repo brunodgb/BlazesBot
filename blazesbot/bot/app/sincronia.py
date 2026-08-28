@@ -394,15 +394,27 @@ class SincroniaDoTime:
         TAB desta conta (longe, outro andar, já morto) -- daí o teto.
         """
         limite = time.monotonic() + TETO_DO_ALINHAMENTO_SEGUNDOS
+        comparacoes = 0
         while time.monotonic() < limite:
             try:
                 atual = self._ex._ler_id_do_alvo() or 0
             except Exception:
                 # Sem memória não há como perguntar. Esta conta cai para o
                 # comportamento do modo "largada": bate no que tiver.
-                self.log.debug("Time: sem leitura de alvo -- volta sem alinhar")
+                self.log.info("Time: sem leitura de TARGET_ID -- volta sem alinhar")
                 return False
-            if atual == alvo:
+            comparacoes += 1
+            igual = atual == alvo
+            # CADA COMPARAÇÃO VAI PARA O LOG, a pedido do usuário. É o único
+            # jeito de descobrir por que o alinhamento falha: o id do mesmo mob
+            # bate entre dois clientes? o mob do líder está no ciclo de TAB
+            # desta conta? quantos TABs custa? O valor comparado é o do
+            # `TARGET_ID_ADDR` (`core/target_hybrid`), lido de cada cliente.
+            self.log.info(
+                "Time: TARGET_ID %s x líder %s -> %s (comparação %d, %d TABs)",
+                atual or "0", alvo, "IGUAL" if igual else "diferente",
+                comparacoes, self.tabs_de_alinhamento)
+            if igual:
                 return True
             self.tabs_de_alinhamento += 1
             if not self._ex._tab_simples():
@@ -415,6 +427,27 @@ class SincroniaDoTime:
             alvo, TETO_DO_ALINHAMENTO_SEGUNDOS)
         return False
 
+    def volta_cega(self) -> bool:
+        """Nesta volta, é TAB -> macro e nada mais?
+
+        Pedido do usuário em 28/08/2026: *"tirando o 'começar juntos e com
+        mesmo alvo', os outros modos só devem dar um único TAB, sem verificar
+        nada, pois não é para ter preocupação, é para fazer o básico."*
+
+        E há uma razão técnica que empurra para o mesmo lado: **a sincronia só
+        se sustenta se a volta de todas as contas durar o mesmo tanto**. Cada
+        conferência de alvo no meio da volta -- a régua da tela, o corte por
+        saída de batalha, o abandono do mob inalcançável -- acrescenta tempo a
+        UMA conta e não às outras, e é exatamente daí que nasce a defasagem que
+        este arquivo existe para combater. Volta cega tem duração previsível: a
+        soma dos delays.
+
+        No `mesmo_alvo` as conferências continuam: lá o alvo é combinado, e
+        saber que ele morreu é o que faz o líder virar a volta e o time inteiro
+        pegar o mob seguinte junto.
+        """
+        return self._tem_time() and self.modo != "mesmo_alvo"
+
     def deve_dar_tab_na_abertura(self) -> bool:
         """O TAB de cortesia do começo da volta ainda faz sentido?
 
@@ -426,13 +459,21 @@ class SincroniaDoTime:
         Nos outros modos ele continua: lá ninguém combinou alvo, e pegar mob
         novo no começo da volta é o que faz a macro ter no que bater.
         """
-        return not (self._sincronizando() and self.modo == "mesmo_alvo")
+        return not (self._tem_time() and self.modo == "mesmo_alvo")
 
     # -- linha a linha -----------------------------------------------------
 
+    def _tem_time(self) -> bool:
+        """Esta conta está num time com pelo menos mais uma."""
+        return len(self._membros()) > 1
+
     def _sincronizando(self) -> bool:
-        """Há time E o modo pede sincronia."""
-        return self.modo != "copiar" and len(self._membros()) > 1
+        """Há time E o modo pede sincronia de tempo.
+
+        Diferente de `_tem_time`: no modo `copiar` há time (a macro é
+        emprestada) mas ninguém espera ninguém.
+        """
+        return self._tem_time() and self.modo != "copiar"
 
     def linha_a_enviar(self, i: int, delay_ms: int = 0) -> int | None:
         """Qual linha da macro mandar AGORA. `None` = é para parar.

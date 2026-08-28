@@ -66,7 +66,7 @@ ligar código não testado.
 
 ## Números medidos -- tolerância, limiar, teto, cadência
 
-456 constantes, agrupadas por arquivo.
+457 constantes, agrupadas por arquivo.
 
 | constante | valor | onde | quem lê | porquê (resumo) |
 |---|---|---|---|---|
@@ -107,18 +107,19 @@ ligar código não testado.
 | `LINHAS_SEM_DANO_PARA_TROCAR` | `3` | [blazesbot/bot/app/executor.py:377](blazesbot/bot/app/executor.py#L377) | — | Quantas LINHAS da macro sem o alvo perder vida antes de trocar de alvo. |
 | `MINIMO_DE_ESPERA_DO_APP_MS` | `100` | [blazesbot/bot/app/executor.py:500](blazesbot/bot/app/executor.py#L500) | sincronia.py, config.py, account_dialog.py, web_app.py | Piso de qualquer tempo do APP, em milissegundos. O MESMO número vive em |
 | `PASSO_DA_CONFERENCIA_DO_ALVO` | `0.1` | [blazesbot/bot/app/executor.py:219](blazesbot/bot/app/executor.py#L219) | — | De quanto em quanto tempo perguntar "o alvo morreu?" DENTRO da espera de uma |
-| `PASSO_DA_CONFIRMACAO_DO_TAB` | `0.01` | [blazesbot/bot/app/executor.py:687](blazesbot/bot/app/executor.py#L687) | — | ERA AQUI O ATRASO ENTRE O TAB E A LINHA 1 -- 26/08/2026 |
-| `PASSO_DA_ESPERA_DA_BASE` | `0.1` | [blazesbot/bot/app/executor.py:663](blazesbot/bot/app/executor.py#L663) | — | Cadência da pergunta "já cheguei?". Leitura de posição é de microssegundos; o |
-| `SEGUNDOS_DO_PASSO_DO_SHUFFLE` | `2.0` | [blazesbot/bot/app/executor.py:693](blazesbot/bot/app/executor.py#L693) | — | Cada perna do shuffle anti-AFK (ida e volta). Era `time.sleep(1.0)` cego duas |
+| `PASSO_DA_CONFIRMACAO_DO_TAB` | `0.01` | [blazesbot/bot/app/executor.py:698](blazesbot/bot/app/executor.py#L698) | — | ERA AQUI O ATRASO ENTRE O TAB E A LINHA 1 -- 26/08/2026 |
+| `PASSO_DA_ESPERA_DA_BASE` | `0.1` | [blazesbot/bot/app/executor.py:674](blazesbot/bot/app/executor.py#L674) | — | Cadência da pergunta "já cheguei?". Leitura de posição é de microssegundos; o |
+| `SEGUNDOS_DO_PASSO_DO_SHUFFLE` | `2.0` | [blazesbot/bot/app/executor.py:704](blazesbot/bot/app/executor.py#L704) | — | Cada perna do shuffle anti-AFK (ida e volta). Era `time.sleep(1.0)` cego duas |
 | `SEGUNDOS_OBSERVANDO_DEPOIS_DA_MORTE` | `3.0` | [blazesbot/bot/app/executor.py:556](blazesbot/bot/app/executor.py#L556) | — | DEPOIS DE MATAR, O BOT OBSERVA -- E O QUE ELE OBSERVA É A BATALHA |
 | `SEGUNDOS_PARA_A_RODA_REINICIAR` | `3.0` | [blazesbot/bot/app/executor.py:276](blazesbot/bot/app/executor.py#L276) | — | Quanto esperar depois de uma aquisição FRACASSADA, antes da volta seguinte. |
 | `SEGUNDOS_PARA_A_TRAVA_DEVOLVER` | `2.0` | [blazesbot/bot/app/executor.py:493](blazesbot/bot/app/executor.py#L493) | — | — |
 | `SEGUNDOS_PARA_O_ALVO_APARECER` | `0.6` | [blazesbot/bot/app/executor.py:184](blazesbot/bot/app/executor.py#L184) | — | O TAB DEIXOU DE SER LINHA DA MACRO |
-| `SHUFFLE_DEFAULT_PIXELS` | `6` | [blazesbot/bot/app/executor.py:688](blazesbot/bot/app/executor.py#L688) | — | — |
+| `SHUFFLE_DEFAULT_PIXELS` | `6` | [blazesbot/bot/app/executor.py:699](blazesbot/bot/app/executor.py#L699) | — | — |
 | `TABS_SEM_RESPOSTA_PARA_DESISTIR` | `2` | [blazesbot/bot/app/executor.py:301](blazesbot/bot/app/executor.py#L301) | — | Quantos TABs seguidos SEM O ID MUDAR antes de desistir. |
 | `TENTATIVAS_DE_TAB` | `1` | [blazesbot/bot/app/executor.py:262](blazesbot/bot/app/executor.py#L262) | — | A RODA É ORDENADA POR DISTÂNCIA, E ISSO MUDA TUDO -- 26/08/2026 |
 | `TOLERANCIA_POSICAO` | `1` | [blazesbot/bot/app/executor.py:157](blazesbot/bot/app/executor.py#L157) | — | Constantes mantidas para compatibilidade com testes e configuração. |
 | `VOLTAS_COM_ALVO_ILEGIVEL_PARA_TROCAR` | `2` | [blazesbot/bot/app/executor.py:438](blazesbot/bot/app/executor.py#L438) | — | Quantas VOLTAS inteiras com o alvo selecionado e o HP ilegível antes de |
+| `VOLTAS_SEM_BATALHA_PARA_TROCAR` | `3` | [blazesbot/bot/app/executor.py:670](blazesbot/bot/app/executor.py#L670) | — | Quantas voltas seguidas COM alvo e FORA de batalha antes de trocar de alvo. |
 | `ESPERA_ENTRE_TABS_DO_ALINHAMENTO` | `0.4` | [blazesbot/bot/app/sincronia.py:97](blazesbot/bot/app/sincronia.py#L97) | — | Cadência do TAB durante o alinhamento. |
 | `PASSO_DA_ESPERA_DA_LARGADA` | `0.05` | [blazesbot/bot/app/sincronia.py:100](blazesbot/bot/app/sincronia.py#L100) | — | De quanto em quanto tempo o seguidor confere se a largada saiu. |
 | `PASSO_DA_ESPERA_DA_LINHA` | `0.05` | [blazesbot/bot/app/sincronia.py:121](blazesbot/bot/app/sincronia.py#L121) | — | De quanto em quanto tempo a espera da linha acorda para conferir o botão |

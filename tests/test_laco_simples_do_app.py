@@ -57,6 +57,14 @@ def _executor(em_batalha=None, passos=3, tecla="TAB"):
     # atributo lido pelo laço tem de ser posto à mão. `None` é o valor de
     # "esta conta não está num time" -- a macro roda como sempre rodou.
     e.sincronia = None
+    # O TAB só sai quando FALTA alvo (`_preciso_de_alvo`), e a decisão usa
+    # estes dois: a batalha da volta anterior e as voltas seguidas com alvo
+    # e sem batalha.
+    e._lutava_na_volta_anterior = False
+    e._voltas_com_alvo_sem_batalha = 0
+    # `None` = SEM leitura de id, que é o modo cego: sem ela `_preciso_de_alvo`
+    # responde "sim" e o TAB sai como sempre saiu.
+    e._id_do_alvo = None
     e.voltas = e.voltas_abortadas = e.teclas_enviadas = e.tabs_dados = 0
 
     # As conferências viram marcas numa lista, para a ORDEM poder ser conferida.

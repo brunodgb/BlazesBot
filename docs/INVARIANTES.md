@@ -108,6 +108,20 @@ seguidores). Pedido do usuário em 27/08/2026.
   `tests/test_config_ida_e_volta.py`).
 - **`time_modo` fora de `MODOS_DO_TIME` nunca entra**: a normalização é feita
   nos DOIS lados (leitura do config e ponte web), como o piso de 100 ms.
+- **O TAB NÃO EXISTE PARA TROCAR DE ALVO, e sim para conseguir um.** Ele sai
+  quando FALTA alvo: o mob caiu (saiu de batalha), não há id, ou a memória não
+  responde. Ter alvo e não estar em batalha **não** é motivo — a luta pode
+  ainda não ter começado. Rede de segurança contra o mob inalcançável:
+  `VOLTAS_SEM_BATALHA_PARA_TROCAR`. Vale COM e SEM time.
+- **Nos modos `copiar` e `largada` a volta do time é CEGA**: TAB → macro e nada
+  mais. Sem conferir alvo no meio, sem cortar a volta na saída de batalha. Não
+  é só simplicidade: a sincronia só se sustenta se a volta de todas as contas
+  durar o MESMO tanto, e cada conferência acrescenta tempo a uma e não às
+  outras. No `mesmo_alvo` as conferências ficam — é a morte do alvo que faz o
+  líder virar a volta e o time pegar o mob seguinte junto.
+- **Cada comparação de `TARGET_ID` no alinhamento vai para o log.** É a única
+  via de descobrir por que o alinhamento falha; o valor comparado é o de
+  `TARGET_ID_ADDR` (`core/target_hybrid`), lido da memória de cada cliente.
 - **O SEGUIDOR NÃO DORME O DELAY DELE** — só o piso. Quem dá o ritmo é a marca
   da linha do líder. Dormir o próprio delay ALÉM de esperar a marca é o que
   fazia a defasagem ser preservada volta após volta (medido: 13 s estáveis).

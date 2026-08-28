@@ -658,6 +658,17 @@ LIMIAR_DE_MORTE_NA_TELA = 0.02
 # propósito -- girar a roda continua sendo barato.
 ESPERA_ENTRE_TABS = 0.60
 
+# Quantas voltas seguidas COM alvo e FORA de batalha antes de trocar de alvo.
+#
+# Existe como rede de segurança da regra "TAB só quando falta alvo" (ver
+# `_preciso_de_alvo`). Sem ela, um alvo que não dá para alcançar -- o mob do
+# penhasco, o que está do outro lado da parede -- seria mantido para sempre: ele
+# nunca entra em batalha, então nunca "morre", e o TAB nunca sairia.
+#
+# Três e não uma: uma volta fora de batalha é normal (o mob está vindo, a
+# primeira skill errou o tempo). Três seguidas já é "não vai acontecer".
+VOLTAS_SEM_BATALHA_PARA_TROCAR = 3
+
 # Cadência da pergunta "já cheguei?". Leitura de posição é de microssegundos; o
 # custo é o `sleep`.
 PASSO_DA_ESPERA_DA_BASE = 0.1
@@ -962,6 +973,11 @@ class ExecutorDeMacro:
         # porque ele NÃO é volta de macro e NÃO é morte -- ver `uma_volta`.
         self.alvos_inalcancaveis = 0
         self.voltas_abortadas = 0
+        # A batalha da volta ANTERIOR e quantas voltas seguidas se passaram com
+        # alvo e sem batalha. Os dois existem para o TAB não trocar um alvo que
+        # já existe -- ver `_preciso_de_alvo`.
+        self._lutava_na_volta_anterior = False
+        self._voltas_com_alvo_sem_batalha = 0
         self.cura = cura(self) if cura is not None else None
 
         # A SINCRONIA DO TIME, pela MESMA fábrica que a cura usa: ela precisa do
@@ -1754,6 +1770,49 @@ class ExecutorDeMacro:
         self._voltas_ilegiveis = 0
         return True
 
+    def _preciso_de_alvo(self, lutando: bool) -> bool:
+        """O TAB faz falta agora? `False` = já tenho alvo, não troco.
+
+        =================================================================
+        POR QUE ISTO EXISTE
+        =================================================================
+
+        O TAB do começo da volta saía sempre que a conta não estava em batalha
+        -- e **não estar em batalha não significa não ter alvo**. Observado em
+        campo pelo usuário em 28/08/2026: *"algumas vezes eles já estavam com 1
+        target e trocaram"*. Acontece quando a macro seleciona o mob e a luta
+        não começa na mesma volta (ele ainda está vindo, a primeira skill errou
+        o tempo): a volta seguinte apertava TAB e ia para outro mob.
+
+        Num time isso é pior que desperdício: é o que desfaz o alvo combinado.
+
+        A regra passa a ser: TAB quando **falta** alvo. Falta quando o mob caiu
+        (saiu de batalha), quando não há id nenhum, ou quando a memória não
+        responde -- cego, o comportamento continua o de sempre.
+        """
+        if lutando:
+            return False
+        if self._lutava_na_volta_anterior:
+            # Saiu de batalha entre uma volta e outra: o mob caiu. É a mesma
+            # prova que `_a_batalha_acabou` usa, e a única que funciona com o
+            # HP do alvo ilegível.
+            return True
+        ident = self._ler_id_do_alvo()
+        if ident is None:
+            return True
+        if not ident:
+            return True
+        # Tenho alvo e não estou lutando. Espero -- mas não para sempre.
+        self._voltas_com_alvo_sem_batalha += 1
+        if self._voltas_com_alvo_sem_batalha >= VOLTAS_SEM_BATALHA_PARA_TROCAR:
+            self.log.info(
+                "APP: %d voltas com alvo e sem batalha — provavelmente não dá "
+                "para alcançá-lo. Troco de alvo.",
+                self._voltas_com_alvo_sem_batalha)
+            self._voltas_com_alvo_sem_batalha = 0
+            return True
+        return False
+
     def _tab_simples(self) -> bool:
         """Aperta a tecla de alvo. Só isso. `False` = é para parar.
 
@@ -2506,13 +2565,26 @@ class ExecutorDeMacro:
             self.garantir_pet()
             self.feed_pet()
             self._travar_posicao_se_preciso()
-            # O TAB DE CORTESIA -- e o time pode vetá-lo. No modo "mesmo alvo"
-            # a largada acabou de alinhar todo mundo no mob do líder, e este
-            # TAB trocaria esse alvo logo antes da primeira linha, desfazendo
-            # o alinhamento inteiro.
-            if self.sincronia is None or self.sincronia.deve_dar_tab_na_abertura():
+            # UM ÚNICO TAB, E SÓ QUANDO FALTA ALVO. Ver `_preciso_de_alvo`: o
+            # TAB não existe para trocar de mob, existe para conseguir um.
+            #
+            # E o time pode vetá-lo: no modo "mesmo alvo" a largada acabou de
+            # alinhar todo mundo no mob do líder, e este TAB trocaria esse alvo
+            # logo antes da primeira linha.
+            permitido = (self.sincronia is None
+                         or self.sincronia.deve_dar_tab_na_abertura())
+            if permitido and self._preciso_de_alvo(lutando):
+                self._voltas_com_alvo_sem_batalha = 0
                 if not self._tab_simples():
                     return False
+        self._lutava_na_volta_anterior = lutando
+
+        # A VOLTA CEGA DO TIME. Nos modos simples do time é TAB -> macro e mais
+        # nada: sem conferir alvo no meio, sem cortar a volta quando a batalha
+        # acaba. Pedido do usuário, e com uma razão técnica atrás -- a sincronia
+        # só se sustenta se a volta de todas as contas durar o MESMO tanto, e
+        # cada conferência acrescenta tempo a uma conta e não às outras.
+        cega = self.sincronia is not None and self.sincronia.volta_cega()
 
         for i, passo in enumerate(passos):
             if not self._continuar():
@@ -2520,8 +2592,9 @@ class ExecutorDeMacro:
             if not self._esperar_saida_da_pausa():
                 return False
             # SAIU DE BATALHA: a luta acabou, e o que sobra da macro bateria no
-            # vazio. É o ÚNICO motivo de a volta terminar antes do fim.
-            if self._a_batalha_acabou():
+            # vazio. É o ÚNICO motivo de a volta terminar antes do fim -- e na
+            # volta cega nem ele vale.
+            if not cega and self._a_batalha_acabou():
                 return self._abortar_a_volta()
             # A MARCA DA LINHA. No time, é aqui que as contas mandam a MESMA
             # tecla no MESMO instante: o líder marca e segue; o seguidor espera
@@ -2558,7 +2631,11 @@ class ExecutorDeMacro:
             espera = passo.delay_ms
             if self.sincronia is not None:
                 espera = self.sincronia.espera_da_linha(passo.delay_ms)
-            if not self._esperar(espera):
+            # `_esperar_cego` na volta cega: ele NÃO olha o alvo enquanto
+            # espera. É a mesma espera fatiada (o Parar continua respondendo na
+            # hora), só que sem a conferência que faria esta conta gastar um
+            # tempo que as outras não gastam.
+            if not (self._esperar_cego(espera) if cega else self._esperar(espera)):
                 # `_esperar` devolve False para "é para parar" E para "saiu de
                 # batalha" (ele confere lá dentro, a cada
                 # `PASSO_DA_CONFERENCIA_DO_ALVO`). Quem separa é o `continuar`.
