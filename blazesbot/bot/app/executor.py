@@ -1791,6 +1791,10 @@ class ExecutorDeMacro:
         responde -- cego, o comportamento continua o de sempre.
         """
         if lutando:
+            # ZERA O CONTADOR AO ENTRAR EM BATALHA. Ele conta voltas SEGUIDAS
+            # sem luta; sem zerar aqui, uma luta no meio do caminho não
+            # interrompia a contagem e a troca saía cedo demais.
+            self._voltas_com_alvo_sem_batalha = 0
             return False
         if self._lutava_na_volta_anterior:
             # Saiu de batalha entre uma volta e outra: o mob caiu. É a mesma
@@ -2556,6 +2560,11 @@ class ExecutorDeMacro:
         """
         # A LEITURA É FEITA UMA VEZ e guarda a transição para as linhas: quem
         # confere o corte lá embaixo precisa saber que a batalha estava de pé.
+        # O QUE FICOU DA VOLTA ANTERIOR, lido ANTES da leitura nova (que
+        # sobrescreve `_estava_em_batalha`). Uma luta que começa e termina
+        # DENTRO de uma volta não aparece na amostra do começo da volta
+        # seguinte -- este resto é a única pista que sobra dela.
+        lutava_antes = bool(self._estava_em_batalha)
         lutando = self._ler_em_batalha() is True
 
         if not lutando:
@@ -2577,7 +2586,10 @@ class ExecutorDeMacro:
                 self._voltas_com_alvo_sem_batalha = 0
                 if not self._tab_simples():
                     return False
-        self._lutava_na_volta_anterior = lutando
+        # `or lutava_antes`: se a luta cabia dentro da volta, a amostra do começo
+        # da próxima diria "não estava lutando" e o mob morto passaria por alvo
+        # válido até o contador de segurança estourar.
+        self._lutava_na_volta_anterior = lutando or lutava_antes
 
         # A VOLTA CEGA DO TIME. Nos modos simples do time é TAB -> macro e mais
         # nada: sem conferir alvo no meio, sem cortar a volta quando a batalha

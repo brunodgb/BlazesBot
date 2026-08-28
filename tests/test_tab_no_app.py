@@ -2274,3 +2274,16 @@ def test_alvo_inalcancavel_nao_prende_para_sempre():
         assert e._preciso_de_alvo(lutando=False) is False
     assert e._preciso_de_alvo(lutando=False) is True
     assert any("sem batalha" in m for _, m in e.linhas), e.linhas
+
+def test_entrar_em_batalha_zera_a_contagem():
+    """Ele conta voltas SEGUIDAS sem luta.
+
+    Sem zerar aqui, uma luta no meio do caminho não interrompia a contagem e a
+    troca de alvo saía cedo demais.
+    """
+    e = _com_alvo(777)
+    e._preciso_de_alvo(lutando=False)
+    e._preciso_de_alvo(lutando=False)
+    assert e._voltas_com_alvo_sem_batalha == 2
+    e._preciso_de_alvo(lutando=True)
+    assert e._voltas_com_alvo_sem_batalha == 0
