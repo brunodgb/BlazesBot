@@ -54,7 +54,12 @@ from .. import mural
 # PROVISÓRIO. Chute informado: uma volta típica da macro do usuário passa de 10
 # s, e esperar mais que ~3 s por conta atrasada custaria mais do que a
 # sincronia rende. O log diz quanto foi de fato usado.
-TETO_DA_LARGADA_SEGUNDOS = 3.0
+#
+# É O MESMO NÚMERO da validade da largada no mural, e por isso é IMPORTADO em
+# vez de repetido: enquanto eram dois, havia um buraco entre eles em que o
+# seguidor "entrava" numa largada que o líder já tinha abandonado -- os dois se
+# contavam como juntos estando segundos fora de fase.
+TETO_DA_LARGADA_SEGUNDOS = mural.LARGADA_VALIDA_SEGUNDOS
 
 # Quanto o seguidor insiste no TAB até o alvo dele bater com o do líder.
 #
@@ -106,15 +111,19 @@ class SincroniaDoTime:
         log: Any,
     ) -> None:
         self._ex = executor
-        self.login = (login or "").strip()
+        # LOGIN EM CAIXA BAIXA, sempre. O mural guarda tudo por
+        # `strip().lower()`, e comparar aqui em caixa original fazia a conta
+        # `Foo` não se reconhecer como o líder `foo`: ela esperaria para sempre
+        # a largada que ela mesma deveria anunciar.
+        self.login = (login or "").strip().lower()
         # O líder DECLARADO na configuração. Quem manda de fato pode ser outro
         # quando ele cai -- ver `_lider_efetivo`.
-        self.lider_declarado = (lider or "").strip()
+        self.lider_declarado = (lider or "").strip().lower()
         self.modo = modo
         # FUNÇÃO e não lista: quem está no time muda enquanto o bot roda (uma
         # conta liga o farm da cave, outra cai). Ler na hora é o que faz o time
         # encolher sem precisar religar nada.
-        self._membros = membros
+        self._membros_brutos = membros
         self._max_hp = max_hp
         self.log = log
 
@@ -127,6 +136,11 @@ class SincroniaDoTime:
         # publicado -- publicar o contador local fazia os dois baterem só por
         # coincidência, e a barreira "todos prontos" nunca fechava.
         self.volta_do_time = 0
+        # DE QUEM é a largada que esta conta está cumprindo. Sem isto a
+        # confirmação era só um número, e um número de outro líder (ou de uma
+        # execução anterior, que recomeça do 1) contava como "este seguidor já
+        # entrou" -- o líder largava sozinho achando que estava acompanhado.
+        self.largada_de = ""
         # A última volta em que esta conta entrou junto. Serve para o seguidor
         # não entrar duas vezes na MESMA largada.
         self.ultima_largada = -1
@@ -137,7 +151,11 @@ class SincroniaDoTime:
         self.alinhamentos_falhos = 0
         # Relógio do "4 s sem mudar de estado de batalha".
         self._estado_de_batalha: bool | None = None
-        self._mudou_em = time.time()
+        self._mudou_em = time.monotonic()
+
+    def _membros(self) -> list[str]:
+        """Os membros do time, na mesma caixa que o mural usa."""
+        return [str(x).strip().lower() for x in self._membros_brutos() if x]
 
     # -- quem manda --------------------------------------------------------
 
@@ -203,6 +221,13 @@ class SincroniaDoTime:
         if len(self._membros()) <= 1:
             return True
 
+        # PRESENÇA ANTES DA ESPERA. O estado também era publicado só no FIM, e
+        # isso deixava uma janela: o líder que volta de um relogin ficava
+        # "calado" durante a largada inteira, e o líder temporário continuava
+        # anunciando em paralelo. Publicar aqui faz o substituto devolver o
+        # posto na primeira volta em que o titular reaparece.
+        self._publicar()
+
         if self.sou_o_lider():
             ok = self._abrir_a_largada()
         else:
@@ -229,6 +254,7 @@ class SincroniaDoTime:
                 self.log.warning("Time: não consegui alvo para anunciar (%s)", exc)
 
         self.volta_do_time = self.volta
+        self.largada_de = self.login
         mural.anunciar_largada(self.login, self.volta_do_time, alvo)
         if not self._esperar_os_seguidores(alvo):
             return False
@@ -239,11 +265,11 @@ class SincroniaDoTime:
         esperados = [x for x in self._membros() if x != self.login]
         if not esperados:
             return True
-        limite = time.time() + TETO_DA_LARGADA_SEGUNDOS
-        while time.time() < limite:
+        limite = time.monotonic() + TETO_DA_LARGADA_SEGUNDOS
+        while time.monotonic() < limite:
             prontos = sum(
                 1 for x in esperados
-                if (mural.estado_da_conta(x) or {}).get("volta_pronta") == self.volta_do_time
+                if self._confirmou(x)
             )
             if prontos >= len(esperados):
                 self.largadas_juntas += 1
@@ -257,20 +283,26 @@ class SincroniaDoTime:
         # batendo sozinho e entra na próxima. O aviso existe para a medição --
         # é este número que diz se o teto está apertado demais.
         atrasados = [x for x in esperados
-                     if (mural.estado_da_conta(x) or {}).get("volta_pronta") != self.volta_do_time]
+                     if not self._confirmou(x)]
         self.largadas_perdidas += 1
         self.log.info(
             "Time: volta %d largou sem %s (teto de %.1fs) -- eles entram na próxima",
             self.volta_do_time, ", ".join(atrasados) or "?", TETO_DA_LARGADA_SEGUNDOS)
         return True
 
+    def _confirmou(self, login: str) -> bool:
+        """Este membro confirmou a largada QUE EU abri, e não outra qualquer."""
+        estado = mural.estado_da_conta(login) or {}
+        return (estado.get("volta_pronta") == self.volta_do_time
+                and estado.get("largada_de") == self.login)
+
     # -- o seguidor --------------------------------------------------------
 
     def _entrar_na_largada(self) -> bool:
         lider = self._lider_efetivo()
-        limite = time.time() + TETO_DA_LARGADA_SEGUNDOS
+        limite = time.monotonic() + TETO_DA_LARGADA_SEGUNDOS
         largada = None
-        while time.time() < limite:
+        while time.monotonic() < limite:
             pendente = mural.largada_pendente(lider)
             if pendente is not None and pendente[0] != self.ultima_largada:
                 largada = pendente
@@ -289,6 +321,7 @@ class SincroniaDoTime:
         volta, alvo = largada
         self.ultima_largada = volta
         self.volta_do_time = volta
+        self.largada_de = lider
         self.largadas_juntas += 1
         if self.modo == "mesmo_alvo" and alvo:
             self._alinhar_no_alvo(alvo)
@@ -301,8 +334,8 @@ class SincroniaDoTime:
         TAB e comparar o `TARGET_ID`. O mob do líder pode nem estar no ciclo de
         TAB desta conta (longe, outro andar, já morto) -- daí o teto.
         """
-        limite = time.time() + TETO_DO_ALINHAMENTO_SEGUNDOS
-        while time.time() < limite:
+        limite = time.monotonic() + TETO_DO_ALINHAMENTO_SEGUNDOS
+        while time.monotonic() < limite:
             try:
                 atual = self._ex._ler_id_do_alvo() or 0
             except Exception:
@@ -341,9 +374,16 @@ class SincroniaDoTime:
             return False
         if agora_em_batalha != self._estado_de_batalha:
             self._estado_de_batalha = agora_em_batalha
-            self._mudou_em = time.time()
+            self._mudou_em = time.monotonic()
             return False
-        return (time.time() - self._mudou_em) >= SEGUNDOS_SEM_MUDANCA_PARA_TAB
+        if (time.monotonic() - self._mudou_em) < SEGUNDOS_SEM_MUDANCA_PARA_TAB:
+            return False
+        # REARMA AO DISPARAR. Sem isto, passados os 4 s a resposta seria `True`
+        # em TODA volta seguinte até o estado de batalha mudar -- e o executor
+        # daria TAB antes de cada macro, indefinidamente, justamente quando o
+        # personagem está num combate longo e não deveria trocar de alvo.
+        self._mudou_em = time.monotonic()
+        return True
 
     # -- publicação --------------------------------------------------------
 
@@ -363,6 +403,7 @@ class SincroniaDoTime:
         mural.publicar_estado(
             self.login,
             volta_pronta=self.volta_do_time,
+            largada_de=self.largada_de,
             max_hp=_seguro(self._max_hp),
             alvo=_seguro(lambda: self._ex._ler_id_do_alvo()) or 0,
             em_batalha=_seguro(lambda: self._ex._ler_em_batalha()),

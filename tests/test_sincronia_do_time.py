@@ -36,6 +36,10 @@ from blazesbot.bot.app import sincronia as mod
 from blazesbot.bot.supervisor import AccountSupervisor
 from blazesbot.config import Account, BotConfig
 
+# O VALOR REAL DO TETO, guardado no import -- antes de a fixture `_tetos_curtos`
+# encurtá-lo. Sem isto não haveria como afirmar nada sobre o número de verdade.
+TETO_REAL_DA_LARGADA = mod.TETO_DA_LARGADA_SEGUNDOS
+
 
 @pytest.fixture(autouse=True)
 def _tetos_curtos(monkeypatch):
@@ -146,7 +150,7 @@ def test_o_seguidor_sem_largada_vai_sozinho():
 
 
 def test_o_lider_larga_na_hora_quando_todos_confirmam():
-    mural.publicar_estado("seguidor", volta_pronta=1, max_hp=50)
+    mural.publicar_estado("seguidor", volta_pronta=1, largada_de="lider", max_hp=50)
     ex = _ExecutorFalso()
     s = _sinc(ex, login="lider", lider="lider", membros=("lider", "seguidor"))
     assert s.esperar_a_largada() is True
@@ -293,8 +297,8 @@ def test_passado_o_tempo_sem_mudanca_pede_tab(monkeypatch):
     ex = _ExecutorFalso(em_batalha=False)
     s = _sinc(ex)
     s.conferir_a_parada()
-    agora = mod.time.time() + mod.SEGUNDOS_SEM_MUDANCA_PARA_TAB + 0.1
-    monkeypatch.setattr(mod.time, "time", lambda: agora)
+    agora = mod.time.monotonic() + mod.SEGUNDOS_SEM_MUDANCA_PARA_TAB + 0.1
+    monkeypatch.setattr(mod.time, "monotonic", lambda: agora)
     assert s.conferir_a_parada() is True
 
 
@@ -375,3 +379,60 @@ def test_o_lider_encabeca_a_lista_de_membros():
     lider = _conta("lider", app=True, segue=["a"])
     sup = _sup(lider, _conta("a"))
     assert sup._membros_do_time()[0] == "lider"
+
+# ---------------------------------------------------------------------------
+# O QUE A REVISÃO DO CODEX PEGOU (27/08/2026)
+# ---------------------------------------------------------------------------
+
+def test_confirmacao_de_outro_lider_nao_conta():
+    """O número da volta sozinho não identifica largada nenhuma.
+
+    Um líder temporário anuncia a volta 1; o titular também recomeça do 1 ao
+    reiniciar. Sem o nome de quem abriu, uma confirmação valia para as duas e o
+    líder largava sozinho achando que estava acompanhado.
+    """
+    mural.publicar_estado("seguidor", volta_pronta=1, largada_de="OUTRO", max_hp=50)
+    s = _sinc(_ExecutorFalso(), login="lider", lider="lider",
+              membros=("lider", "seguidor"))
+    assert s.esperar_a_largada() is True
+    assert s.largadas_perdidas == 1          # não contou a confirmação alheia
+
+
+def test_o_seguidor_publica_de_quem_e_a_largada():
+    mural.anunciar_largada("lider", 5, 0)
+    mural.publicar_estado("lider", volta_pronta=5, largada_de="lider", max_hp=100)
+    s = _sinc(_ExecutorFalso(), login="seguidor", lider="lider",
+              membros=("lider", "seguidor"))
+    s.esperar_a_largada()
+    estado = mural.estado_da_conta("seguidor")
+    assert estado["largada_de"] == "lider"
+    assert estado["volta_pronta"] == 5
+
+
+def test_o_login_nao_depende_da_caixa():
+    """O mural guarda em caixa baixa; a sincronia comparava em caixa original.
+
+    A conta `Foo` não se reconhecia como o líder `foo` e esperava para sempre a
+    largada que ela própria deveria anunciar.
+    """
+    s = _sinc(_ExecutorFalso(), login="Foo", lider="foo", membros=("Foo", "outro"))
+    assert s.sou_o_lider() is True
+
+
+def test_o_relogio_dos_4s_rearma_ao_disparar(monkeypatch):
+    """Sem rearmar, ele pedia TAB em TODA volta seguinte -- inclusive no meio
+    de um combate longo, que é justamente quando não se deve trocar de alvo."""
+    ex = _ExecutorFalso(em_batalha=True)
+    s = _sinc(ex)
+    s.conferir_a_parada()
+    agora = mod.time.monotonic() + mod.SEGUNDOS_SEM_MUDANCA_PARA_TAB + 0.1
+    monkeypatch.setattr(mod.time, "monotonic", lambda: agora)
+    assert s.conferir_a_parada() is True
+    assert s.conferir_a_parada() is False    # rearmou
+
+
+def test_a_validade_da_largada_e_o_teto_do_lider_sao_o_mesmo_numero():
+    """Enquanto eram dois, havia um buraco entre eles: o seguidor entrava numa
+    largada que o líder já tinha abandonado, e os dois se contavam como juntos
+    estando segundos fora de fase."""
+    assert TETO_REAL_DA_LARGADA == mural.LARGADA_VALIDA_SEGUNDOS

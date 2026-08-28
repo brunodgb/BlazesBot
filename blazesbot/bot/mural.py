@@ -233,6 +233,18 @@ _LARGADAS: dict[str, tuple[int, int, float]] = {}   # lider -> (volta, alvo, qua
 _ESTADOS: dict[str, tuple[dict, float]] = {}        # login -> (estado, quando)
 _LOCK_TIME = threading.Lock()
 
+# O QUADRO DO TIME USA `time.monotonic()`, e o resto deste arquivo continua com
+# `time.time()`. Não é inconsistência esquecida:
+#
+# - o quadro do time mede TETO DE ESPERA, e teto medido em relógio de parede
+#   deixa de ser teto quando o relógio anda para trás (ajuste de NTP, fuso). A
+#   regra do time é que ninguém espera sem limite; `monotonic` é o que a
+#   sustenta.
+# - os quadros de convite/batida/aceite acima ficam como estavam porque a
+#   exigência do usuário era o BC continuar EXATAMENTE como hoje, e há teste
+#   que troca o relógio deles (`test_reset_de_time.py`).
+
+
 # Quanto tempo uma largada anunciada continua valendo.
 #
 # PROVISÓRIO -- não medido. Decisão do usuário em 27/08/2026: deixar rodando
@@ -242,7 +254,14 @@ _LOCK_TIME = threading.Lock()
 # Ele existe para o seguidor não entrar numa largada VELHA: se ele estava
 # relogando, o anúncio que encontrar ao voltar pode ser de minutos atrás, e
 # entrar nele seria começar a volta sozinho achando que está junto.
-LARGADA_VALIDA_SEGUNDOS = 8.0
+#
+# ELE É O MESMO NÚMERO DO TETO DE ESPERA DO LÍDER, e por isso mora aqui, num
+# lugar só (`sincronia.TETO_DA_LARGADA_SEGUNDOS` importa daqui). Eram dois
+# números diferentes -- 8 s de validade contra 3 s de espera -- e a diferença
+# era um buraco: entre o terceiro e o oitavo segundo o seguidor "entrava" numa
+# largada que o líder já tinha abandonado, e os dois se contavam como juntos
+# estando cinco segundos fora de fase.
+LARGADA_VALIDA_SEGUNDOS = 3.0
 
 # Quanto tempo o estado publicado por uma conta continua valendo.
 #
@@ -258,20 +277,26 @@ def anunciar_largada(lider: str, volta: int, alvo: int) -> None:
     if not lider:
         return
     with _LOCK_TIME:
-        _LARGADAS[lider.strip().lower()] = (int(volta), int(alvo or 0), time.time())
+        _LARGADAS[lider.strip().lower()] = (int(volta), int(alvo or 0),
+                                             time.monotonic())
 
 
 def largada_pendente(lider: str) -> tuple[int, int] | None:
     """A largada aberta pelo líder, ou `None` se não houver ou já vencida."""
     if not lider:
         return None
+    chave = lider.strip().lower()
     with _LOCK_TIME:
-        dados = _LARGADAS.get(lider.strip().lower())
-    if dados is None:
-        return None
-    volta, alvo, quando = dados
-    if time.time() - quando > LARGADA_VALIDA_SEGUNDOS:
-        return None
+        dados = _LARGADAS.get(chave)
+        if dados is None:
+            return None
+        volta, alvo, quando = dados
+        if time.monotonic() - quando > LARGADA_VALIDA_SEGUNDOS:
+            # APAGA O VENCIDO em vez de só ignorá-lo: sem isto o quadro só
+            # encolhe em saída limpa, e uma execução longa acumula anúncios de
+            # contas que nem existem mais.
+            _LARGADAS.pop(chave, None)
+            return None
     return volta, alvo
 
 
@@ -293,7 +318,7 @@ def publicar_estado(login: str, **estado: object) -> None:
     if not login:
         return
     with _LOCK_TIME:
-        _ESTADOS[login.strip().lower()] = (dict(estado), time.time())
+        _ESTADOS[login.strip().lower()] = (dict(estado), time.monotonic())
 
 
 def estado_da_conta(login: str) -> dict | None:
@@ -305,13 +330,15 @@ def estado_da_conta(login: str) -> dict | None:
     """
     if not login:
         return None
+    chave = login.strip().lower()
     with _LOCK_TIME:
-        dados = _ESTADOS.get(login.strip().lower())
-    if dados is None:
-        return None
-    estado, quando = dados
-    if time.time() - quando > ESTADO_VALIDO_SEGUNDOS:
-        return None
+        dados = _ESTADOS.get(chave)
+        if dados is None:
+            return None
+        estado, quando = dados
+        if time.monotonic() - quando > ESTADO_VALIDO_SEGUNDOS:
+            _ESTADOS.pop(chave, None)
+            return None
     return estado
 
 

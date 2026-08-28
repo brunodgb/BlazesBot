@@ -66,7 +66,7 @@ ligar código não testado.
 
 ## Números medidos -- tolerância, limiar, teto, cadência
 
-456 constantes, agrupadas por arquivo.
+455 constantes, agrupadas por arquivo.
 
 | constante | valor | onde | quem lê | porquê (resumo) |
 |---|---|---|---|---|
@@ -119,11 +119,10 @@ ligar código não testado.
 | `TENTATIVAS_DE_TAB` | `1` | [blazesbot/bot/app/executor.py:262](blazesbot/bot/app/executor.py#L262) | — | A RODA É ORDENADA POR DISTÂNCIA, E ISSO MUDA TUDO -- 26/08/2026 |
 | `TOLERANCIA_POSICAO` | `1` | [blazesbot/bot/app/executor.py:157](blazesbot/bot/app/executor.py#L157) | — | Constantes mantidas para compatibilidade com testes e configuração. |
 | `VOLTAS_COM_ALVO_ILEGIVEL_PARA_TROCAR` | `2` | [blazesbot/bot/app/executor.py:438](blazesbot/bot/app/executor.py#L438) | — | Quantas VOLTAS inteiras com o alvo selecionado e o HP ilegível antes de |
-| `ESPERA_ENTRE_TABS_DO_ALINHAMENTO` | `0.4` | [blazesbot/bot/app/sincronia.py:74](blazesbot/bot/app/sincronia.py#L74) | — | Cadência do TAB durante o alinhamento. |
-| `PASSO_DA_ESPERA_DA_LARGADA` | `0.05` | [blazesbot/bot/app/sincronia.py:77](blazesbot/bot/app/sincronia.py#L77) | — | De quanto em quanto tempo o seguidor confere se a largada saiu. |
-| `SEGUNDOS_SEM_MUDANCA_PARA_TAB` | `4.0` | [blazesbot/bot/app/sincronia.py:85](blazesbot/bot/app/sincronia.py#L85) | — | Sem trocar de estado de batalha por este tempo, dá TAB. |
-| `TETO_DA_LARGADA_SEGUNDOS` | `3.0` | [blazesbot/bot/app/sincronia.py:57](blazesbot/bot/app/sincronia.py#L57) | — | Quanto o líder espera os seguidores confirmarem a largada. |
-| `TETO_DO_ALINHAMENTO_SEGUNDOS` | `4.0` | [blazesbot/bot/app/sincronia.py:63](blazesbot/bot/app/sincronia.py#L63) | — | Quanto o seguidor insiste no TAB até o alvo dele bater com o do líder. |
+| `ESPERA_ENTRE_TABS_DO_ALINHAMENTO` | `0.4` | [blazesbot/bot/app/sincronia.py:79](blazesbot/bot/app/sincronia.py#L79) | — | Cadência do TAB durante o alinhamento. |
+| `PASSO_DA_ESPERA_DA_LARGADA` | `0.05` | [blazesbot/bot/app/sincronia.py:82](blazesbot/bot/app/sincronia.py#L82) | — | De quanto em quanto tempo o seguidor confere se a largada saiu. |
+| `SEGUNDOS_SEM_MUDANCA_PARA_TAB` | `4.0` | [blazesbot/bot/app/sincronia.py:90](blazesbot/bot/app/sincronia.py#L90) | — | Sem trocar de estado de batalha por este tempo, dá TAB. |
+| `TETO_DO_ALINHAMENTO_SEGUNDOS` | `4.0` | [blazesbot/bot/app/sincronia.py:68](blazesbot/bot/app/sincronia.py#L68) | — | Quanto o seguidor insiste no TAB até o alvo dele bater com o do líder. |
 | `AMOSTRAS_POR_COORDENADA` | `3` | [blazesbot/bot/bc/amostragem_de_cliques.py:126](blazesbot/bot/bc/amostragem_de_cliques.py#L126) | — | Quantas vezes cada coordenada é testada. Três é o mínimo que separa "abriu |
 | `ANCORA_PADRAO` | `1.9` | [blazesbot/bot/bc/amostragem_de_cliques.py:163](blazesbot/bot/bc/amostragem_de_cliques.py#L163) | — | Precisão aceita nos pontos que o próprio bot não exige exatos (Fay, entrada |
 | `ASSENTAMENTO_APOS_O_CLIQUE` | `0.125` | [blazesbot/bot/bc/amostragem_de_cliques.py:150](blazesbot/bot/bc/amostragem_de_cliques.py#L150) | — | Assentamento depois da amostra, antes de reler a posição. É o tempo de o |
@@ -341,8 +340,8 @@ ligar código não testado.
 | `THRESHOLD` | `0.8` | [blazesbot/bot/login_states.py:35](blazesbot/bot/login_states.py#L35) | — | — |
 | `ACEITE_VALIDO_SEGUNDOS` | `15.0` | [blazesbot/bot/mural.py:185](blazesbot/bot/mural.py#L185) | — | Validade do aceite. Curta de propósito: ele confirma UM convite recém-enviado, |
 | `CONVITE_VALIDO_SEGUNDOS` | `60.0` | [blazesbot/bot/mural.py:63](blazesbot/bot/mural.py#L63) | — | Validade do anúncio. Cobre a fila de resposta do outro cliente com folga; mais |
-| `ESTADO_VALIDO_SEGUNDOS` | `30.0` | [blazesbot/bot/mural.py:253](blazesbot/bot/mural.py#L253) | supervisor.py | Quanto tempo o estado publicado por uma conta continua valendo. |
-| `LARGADA_VALIDA_SEGUNDOS` | `8.0` | [blazesbot/bot/mural.py:245](blazesbot/bot/mural.py#L245) | — | Quanto tempo uma largada anunciada continua valendo. |
+| `ESTADO_VALIDO_SEGUNDOS` | `30.0` | [blazesbot/bot/mural.py:272](blazesbot/bot/mural.py#L272) | supervisor.py | Quanto tempo o estado publicado por uma conta continua valendo. |
+| `LARGADA_VALIDA_SEGUNDOS` | `3.0` | [blazesbot/bot/mural.py:264](blazesbot/bot/mural.py#L264) | sincronia.py | Quanto tempo uma largada anunciada continua valendo. |
 | `SILENCIO_MAXIMO` | `5.0` | [blazesbot/bot/mural.py:129](blazesbot/bot/mural.py#L129) | — | Quanto silêncio já é "caiu". |
 | `DESVIO_MINIMO` | `12.0` | [blazesbot/bot/recorte_do_time.py:109](blazesbot/bot/recorte_do_time.py#L109) | — | Recorte liso casa em todo lugar. `region_is_uniform` já é o teste que o |
 | `FOLGA_DO_ESPACAMENTO` | `6.0` | [blazesbot/bot/recorte_do_time.py:105](blazesbot/bot/recorte_do_time.py#L105) | — | Espaçamento vertical: desvio máximo aceito entre os intervalos, em pixels. As |

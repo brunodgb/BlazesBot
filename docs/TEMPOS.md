@@ -31,7 +31,7 @@ desta lista é ou uma exceção justificada, ou dívida que ninguém converteu a
 mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 
 
-**278 tempos catalogados** — 212 FIXOS (espera cega), 66 entre TETO e PASSO.
+**277 tempos catalogados** — 212 FIXOS (espera cega), 65 entre TETO e PASSO.
 
 
 **1 estão diferentes do original:** `PASSOS_DO_APP`
@@ -252,11 +252,10 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | `PASSO_DA_CONFIRMACAO_DO_TAB` | 0.01 s | *novo* | PASSO | [executor.py:687](blazesbot/bot/app/executor.py#L687) | `_esperar_o_alvo_trocar` | ERA AQUI O ATRASO ENTRE O TAB E A LINHA 1 -- 26/08/2026 |
 | `SEGUNDOS_DO_PASSO_DO_SHUFFLE` | 2 s | *novo* | PASSO | [executor.py:693](blazesbot/bot/app/executor.py#L693) | `_fazer_shuffle_anti_afk` | Cada perna do shuffle anti-AFK (ida e volta). Era `time.sleep(1.0)` cego duas |
 | *literal em* `rodar` | 0.25 s | = | FIXO | [executor.py:2699](blazesbot/bot/app/executor.py#L2699) | `rodar` | Laço contínuo: volta após volta, até `continuar()` devolver False. |
-| `TETO_DA_LARGADA_SEGUNDOS` | 3 s | *novo* | TETO | [sincronia.py:57](blazesbot/bot/app/sincronia.py#L57) | `_esperar_os_seguidores, _entrar_na_largada` | Quanto o líder espera os seguidores confirmarem a largada. |
-| `TETO_DO_ALINHAMENTO_SEGUNDOS` | 4 s | *novo* | TETO | [sincronia.py:63](blazesbot/bot/app/sincronia.py#L63) | `_alinhar_no_alvo` | Quanto o seguidor insiste no TAB até o alvo dele bater com o do líder. |
-| `ESPERA_ENTRE_TABS_DO_ALINHAMENTO` | 0.4 s | *novo* | FIXO | [sincronia.py:74](blazesbot/bot/app/sincronia.py#L74) | `_alinhar_no_alvo` | Cadência do TAB durante o alinhamento. |
-| `PASSO_DA_ESPERA_DA_LARGADA` | 0.05 s | *novo* | PASSO | [sincronia.py:77](blazesbot/bot/app/sincronia.py#L77) | `_esperar_os_seguidores, _entrar_na_largada` | De quanto em quanto tempo o seguidor confere se a largada saiu. |
-| `SEGUNDOS_SEM_MUDANCA_PARA_TAB` | 4 s | *novo* | FIXO | [sincronia.py:85](blazesbot/bot/app/sincronia.py#L85) | `conferir_a_parada` | Sem trocar de estado de batalha por este tempo, dá TAB. |
+| `TETO_DO_ALINHAMENTO_SEGUNDOS` | 4 s | *novo* | TETO | [sincronia.py:68](blazesbot/bot/app/sincronia.py#L68) | `_alinhar_no_alvo` | Quanto o seguidor insiste no TAB até o alvo dele bater com o do líder. |
+| `ESPERA_ENTRE_TABS_DO_ALINHAMENTO` | 0.4 s | *novo* | FIXO | [sincronia.py:79](blazesbot/bot/app/sincronia.py#L79) | `_alinhar_no_alvo` | Cadência do TAB durante o alinhamento. |
+| `PASSO_DA_ESPERA_DA_LARGADA` | 0.05 s | *novo* | PASSO | [sincronia.py:82](blazesbot/bot/app/sincronia.py#L82) | `_esperar_os_seguidores, _entrar_na_largada` | De quanto em quanto tempo o seguidor confere se a largada saiu. |
+| `SEGUNDOS_SEM_MUDANCA_PARA_TAB` | 4 s | *novo* | FIXO | [sincronia.py:90](blazesbot/bot/app/sincronia.py#L90) | `conferir_a_parada` | Sem trocar de estado de batalha por este tempo, dá TAB. |
 
 
 ## LOGIN E RELOGIN
@@ -309,8 +308,8 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | *literal em* `main` | 8 s | = | FIXO | [instrumentar_clique.py:488](blazesbot/bot/instrumentar_clique.py#L488) | `main` |  |
 | `CONVITE_VALIDO_SEGUNDOS` | 60 s (1 min) | = | FIXO | [mural.py:63](blazesbot/bot/mural.py#L63) | `convite_pendente` | Validade do anúncio. Cobre a fila de resposta do outro cliente com folga; mais |
 | `ACEITE_VALIDO_SEGUNDOS` | 15 s | = | FIXO | [mural.py:185](blazesbot/bot/mural.py#L185) | `aceite_pendente` | Validade do aceite. Curta de propósito: ele confirma UM convite recém-enviado, |
-| `LARGADA_VALIDA_SEGUNDOS` | 8 s | *novo* | FIXO | [mural.py:245](blazesbot/bot/mural.py#L245) | `largada_pendente` | Quanto tempo uma largada anunciada continua valendo. |
-| `ESTADO_VALIDO_SEGUNDOS` | 30 s | *novo* | FIXO | [mural.py:253](blazesbot/bot/mural.py#L253) | `estado_da_conta` | Quanto tempo o estado publicado por uma conta continua valendo. |
+| `LARGADA_VALIDA_SEGUNDOS` | 3 s | *novo* | FIXO | [mural.py:264](blazesbot/bot/mural.py#L264) | `largada_pendente` | Quanto tempo uma largada anunciada continua valendo. |
+| `ESTADO_VALIDO_SEGUNDOS` | 30 s | *novo* | FIXO | [mural.py:272](blazesbot/bot/mural.py#L272) | `estado_da_conta` | Quanto tempo o estado publicado por uma conta continua valendo. |
 | `PASSO_VERTICAL` | 4 s | = | PASSO | [recorte_do_time.py:90](blazesbot/bot/recorte_do_time.py#L90) | `_candidatos` |  |
 | `TETO_DA_FATIA_DE_ESPERA` | 0.25 s | = | TETO | [supervisor.py:70](blazesbot/bot/supervisor.py#L70) | `wait` | Teto de uma fatia dentro de `_AnyEvent.wait`. É REDE, não o caminho normal -- |
 | *literal em* `_sleep_interruptible` | 0.125 s | = | FIXO | [supervisor.py:247](blazesbot/bot/supervisor.py#L247) | `_sleep_interruptible` |  |
