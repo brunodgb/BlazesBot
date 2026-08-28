@@ -66,10 +66,12 @@ ligar código não testado.
 
 ## Números medidos -- tolerância, limiar, teto, cadência
 
-459 constantes, agrupadas por arquivo.
+463 constantes, agrupadas por arquivo.
 
 | constante | valor | onde | quem lê | porquê (resumo) |
 |---|---|---|---|---|
+| `PASSO_DA_MEDICAO` | `0.02` | [blazesbot/bot/app/afericao_do_aliado.py:83](blazesbot/bot/app/afericao_do_aliado.py#L83) | amostragem_de_cliques.py | De quanto em quanto tempo perguntar. 20 ms é fino o bastante para o número |
+| `TETO_DA_ESPERA_DO_ALVO` | `2.0` | [blazesbot/bot/app/afericao_do_aliado.py:79](blazesbot/bot/app/afericao_do_aliado.py#L79) | — | Quanto esperar, no máximo, a memória refletir o alvo novo depois do clique. |
 | `MAXIMO_DE_POCOES` | `5` | [blazesbot/bot/app/cura.py:114](blazesbot/bot/app/cura.py#L114) | — | Teto de poções por ciclo de cura. |
 | `PASSO_DA_PERGUNTA` | `0.1` | [blazesbot/bot/app/cura.py:151](blazesbot/bot/app/cura.py#L151) | — | Cadência de toda pergunta deste módulo. Leitura de memória é ~1 µs; o custo é |
 | `SEGUNDOS_ENTRE_POCOES` | `15.0` | [blazesbot/bot/app/cura.py:104](blazesbot/bot/app/cura.py#L104) | — | Quanto esperar entre uma poção e a próxima. |
@@ -131,7 +133,7 @@ ligar código não testado.
 | `ESPERA_APOS_O_ESC` | `0.075` | [blazesbot/bot/bc/amostragem_de_cliques.py:153](blazesbot/bot/bc/amostragem_de_cliques.py#L153) | — | Espera depois de cada ESC, antes de reconferir se o diálogo fechou. |
 | `FALHAS_SEGUIDAS_PARA_ABORTAR` | `20` | [blazesbot/bot/bc/amostragem_de_cliques.py:188](blazesbot/bot/bc/amostragem_de_cliques.py#L188) | — | Amostras seguidas SEM o diálogo abrir em NENHUMA coordenada. Numa varredura |
 | `INVALIDAS_SEGUIDAS_PARA_ABORTAR` | `6` | [blazesbot/bot/bc/amostragem_de_cliques.py:193](blazesbot/bot/bc/amostragem_de_cliques.py#L193) | — | Amostras inválidas (captura preta / sem template) seguidas. A ferramenta |
-| `PASSO_DA_MEDICAO` | `0.03` | [blazesbot/bot/bc/amostragem_de_cliques.py:145](blazesbot/bot/bc/amostragem_de_cliques.py#L145) | — | Passo do laço que pergunta se o diálogo abriu. Cada volta custa uma captura |
+| `PASSO_DA_MEDICAO` | `0.03` | [blazesbot/bot/bc/amostragem_de_cliques.py:145](blazesbot/bot/bc/amostragem_de_cliques.py#L145) | afericao_do_aliado.py | Passo do laço que pergunta se o diálogo abriu. Cada volta custa uma captura |
 | `PASSO_DO_GRID` | `6` | [blazesbot/bot/bc/amostragem_de_cliques.py:121](blazesbot/bot/bc/amostragem_de_cliques.py#L121) | — | — |
 | `RAIO_DO_GRID` | `12` | [blazesbot/bot/bc/amostragem_de_cliques.py:120](blazesbot/bot/bc/amostragem_de_cliques.py#L120) | — | Raio e passo, em PIXELS da janela do cliente. 12/6 dá 5 valores por eixo |
 | `RAIO_PARA_RECONHECER` | `45.0` | [blazesbot/bot/bc/amostragem_de_cliques.py:173](blazesbot/bot/bc/amostragem_de_cliques.py#L173) | — | Quão perto o personagem precisa estar para a ferramenta RECONHECER o ponto. |
@@ -405,12 +407,14 @@ ligar código não testado.
 | `ESPERA_APOS_PEGAR` | `4.0` | [blazesbot/core/catador.py:112](blazesbot/core/catador.py#L112) | — | Espera entre o clique no botão e a próxima conferência. NÚMERO DO USUÁRIO. |
 | `ESPERA_ENTRE_CLIQUES` | `0.1` | [blazesbot/core/catador.py:96](blazesbot/core/catador.py#L96) | — | Espera entre dois cliques direitos. Também do T-R0XX. Não é tempo de abrir a |
 | `TETO_DE_CLIQUES` | `10` | [blazesbot/core/catador.py:124](blazesbot/core/catador.py#L124) | — | Teto de cliques no botão. REDE DE SEGURANÇA, não estratégia -- mesmo papel do |
-| `FRIEND_ROW_HEIGHT` | `15` | [blazesbot/core/coords.py:276](blazesbot/core/coords.py#L276) | — | Altura de linha nas listas da janela de amigos. |
-| `SELL_CELL_H` | `35` | [blazesbot/core/coords.py:272](blazesbot/core/coords.py#L272) | — | — |
-| `SELL_CELL_W` | `34` | [blazesbot/core/coords.py:271](blazesbot/core/coords.py#L271) | — | — |
-| `SELL_COLUMNS` | `6` | [blazesbot/core/coords.py:269](blazesbot/core/coords.py#L269) | — | Geometria da grade de venda, medida no print real. |
-| `SELL_ROWS` | `4` | [blazesbot/core/coords.py:270](blazesbot/core/coords.py#L270) | — | — |
-| `SERVER_ROW_HEIGHT` | `20` | [blazesbot/core/coords.py:265](blazesbot/core/coords.py#L265) | — | — |
+| `FRIEND_ROW_HEIGHT` | `15` | [blazesbot/core/coords.py:308](blazesbot/core/coords.py#L308) | — | Altura de linha nas listas da janela de amigos. |
+| `MAXIMO_DE_RETRATOS_DO_TIME` | `4` | [blazesbot/core/coords.py:113](blazesbot/core/coords.py#L113) | afericao_do_aliado.py | — |
+| `PASSO_ENTRE_RETRATOS_DO_TIME` | `80` | [blazesbot/core/coords.py:112](blazesbot/core/coords.py#L112) | afericao_do_aliado.py | — |
+| `SELL_CELL_H` | `35` | [blazesbot/core/coords.py:304](blazesbot/core/coords.py#L304) | — | — |
+| `SELL_CELL_W` | `34` | [blazesbot/core/coords.py:303](blazesbot/core/coords.py#L303) | — | — |
+| `SELL_COLUMNS` | `6` | [blazesbot/core/coords.py:301](blazesbot/core/coords.py#L301) | — | Geometria da grade de venda, medida no print real. |
+| `SELL_ROWS` | `4` | [blazesbot/core/coords.py:302](blazesbot/core/coords.py#L302) | — | — |
+| `SERVER_ROW_HEIGHT` | `20` | [blazesbot/core/coords.py:297](blazesbot/core/coords.py#L297) | — | — |
 | `VALIDATED_RESOLUTION` | `'1024x768'` | [blazesbot/core/coords.py:43](blazesbot/core/coords.py#L43) | main_window.py, web_app.py | — |
 | `LINHAS_MAXIMAS_DO_DIARIO` | `20000` | [blazesbot/core/diario.py:39](blazesbot/core/diario.py#L39) | — | Teto de linhas por diário. Generoso de propósito -- o diário existe para ser |
 | `HP_MAXIMO_PLAUSIVEL` | `5000000` | [blazesbot/core/entidades.py:40](blazesbot/core/entidades.py#L40) | — | Teto de HP que ainda é HP. Cinco milhões é folgado de sobra para qualquer |
@@ -441,7 +445,7 @@ ligar código não testado.
 | `ANGULO_DA_CAMERA` | `956.720459` | [blazesbot/core/memory.py:223](blazesbot/core/memory.py#L223) | ler_camera.py | O ângulo em que os cliques na cena 3D foram medidos. |
 | `BAG_OPEN_VALUE` | `903` | [blazesbot/core/memory.py:376](blazesbot/core/memory.py#L376) | — | — |
 | `DIALOGO_ABERTO_VALOR` | `16775` | [blazesbot/core/memory.py:366](blazesbot/core/memory.py#L366) | — | — |
-| `ESCALA_DE_INIMIGO` | `100` | [blazesbot/core/memory.py:381](blazesbot/core/memory.py#L381) | — | HP máximo padrão de inimigos do covil (Gun Witch, Cemetery Guard, etc.) |
+| `ESCALA_DE_INIMIGO` | `100` | [blazesbot/core/memory.py:381](blazesbot/core/memory.py#L381) | afericao_do_aliado.py | HP máximo padrão de inimigos do covil (Gun Witch, Cemetery Guard, etc.) |
 | `JANELA_DE_COMBATE` | `16` | [blazesbot/core/memory.py:68](blazesbot/core/memory.py#L68) | — | Quantos bytes ler de cada lado de `OFF_BATTLE` em `battle_window()`. Serve para |
 | `LIMITE_DE_ENTIDADES` | `512` | [blazesbot/core/memory.py:265](blazesbot/core/memory.py#L265) | target_hybrid.py | Quantos slots do array de entidades varrer. 512 cobre com folga o que o |
 | `PASSO_DA_PROVA_DA_CAMERA` | `0.05` | [blazesbot/core/memory.py:248](blazesbot/core/memory.py#L248) | — | — |

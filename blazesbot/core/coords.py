@@ -105,6 +105,14 @@ BR = Anchor.BOTTOM_RIGHT
 #   * Fila de botões da tela de personagem -> BOTTOM_CENTER
 #   * Minimapa e botões do canto -> TOP_RIGHT
 #   * Abas de chat -> BOTTOM_LEFT
+# Retratos do painel de time. O primeiro foi MEDIDO no cliente; o passo é
+# derivado do print que o usuário enviou (28/08/2026) e ainda precisa de
+# conferência na aferição -- por isso é UM número, e não quatro coordenadas.
+PRIMEIRO_RETRATO_DO_TIME = (28, 204)
+PASSO_ENTRE_RETRATOS_DO_TIME = 80
+MAXIMO_DE_RETRATOS_DO_TIME = 4
+
+
 _SPOTS: dict[str, Spot] = {
     # -- retrato do próprio personagem, canto superior esquerdo --------------
     # Clicar com o botão DIREITO no rosto abre o menu do personagem, e é de lá
@@ -117,6 +125,30 @@ _SPOTS: dict[str, Spot] = {
     # (57,66) mais um deslocamento calculado, e o clique caía fora do item.
     "own_portrait": _from_base(44, 48, Anchor.TOP_LEFT),
     "menu_leave_team": _from_base(82, 97, Anchor.TOP_LEFT),
+
+    # -- painel de time: os retratos dos COMPANHEIROS ------------------------
+    #
+    # Ficam na coluna esquerda, ABAIXO do retrato do próprio personagem -- que
+    # não faz parte desta lista (ele é o `own_portrait` acima, maior).
+    #
+    # Clicar com o botão ESQUERDO no rosto de um companheiro o SELECIONA como
+    # alvo -- é o que a Fada usa para mirar a cura (`docs/decisoes/fada.md`).
+    #
+    # O PRIMEIRO FOI MEDIDO pelo usuário: (28, 204). Os outros três são
+    # DERIVADOS de um passo fixo, e é assim que tem de ficar -- quatro literais
+    # soltos seriam quatro chances de só um ser corrigido quando a medição do
+    # passo mudar.
+    #
+    # O painel ENCOLHE POR BAIXO: com menos companheiros, o slot de baixo some e
+    # os de cima ficam onde estavam. Então o slot 1 sempre existe (para haver
+    # time é preciso líder + 1) e a varredura vai só até o número de membros.
+    **{
+        f"team_member_{i + 1}": _from_base(
+            PRIMEIRO_RETRATO_DO_TIME[0],
+            PRIMEIRO_RETRATO_DO_TIME[1] + i * PASSO_ENTRE_RETRATOS_DO_TIME,
+            Anchor.TOP_LEFT)
+        for i in range(MAXIMO_DE_RETRATOS_DO_TIME)
+    },
 
     # -- minimapa: coração da navegação, ancorado no canto superior direito ---
     "minimap_center": _from_base(919, 115, TR),

@@ -31,7 +31,7 @@ desta lista é ou uma exceção justificada, ou dívida que ninguém converteu a
 mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 
 
-**278 tempos catalogados** — 212 FIXOS (espera cega), 66 entre TETO e PASSO.
+**281 tempos catalogados** — 212 FIXOS (espera cega), 69 entre TETO e PASSO.
 
 
 **1 estão diferentes do original:** `PASSOS_DO_APP`
@@ -223,6 +223,8 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 
 | tempo | atual | original | natureza | onde | função | para que serve |
 |---|---|---|---|---|---|---|
+| `TETO_DA_ESPERA_DO_ALVO` | 2 s | *novo* | TETO | [afericao_do_aliado.py:79](blazesbot/bot/app/afericao_do_aliado.py#L79) | `_esperar_o_alvo_virar` | Quanto esperar, no máximo, a memória refletir o alvo novo depois do clique. |
+| `PASSO_DA_MEDICAO` | 0.02 s | *novo* | PASSO | [afericao_do_aliado.py:83](blazesbot/bot/app/afericao_do_aliado.py#L83) | `_esperar_o_alvo_virar` | De quanto em quanto tempo perguntar. 20 ms é fino o bastante para o número |
 | `SEGUNDOS_ENTRE_POCOES` | 15 s | = | FIXO | [cura.py:104](blazesbot/bot/app/cura.py#L104) | `_curar_com_pocao` | Quanto esperar entre uma poção e a próxima. |
 | `SEGUNDOS_PARA_VOLTAR_AO_PONTO` | 5 s | = | TETO | [cura.py:121](blazesbot/bot/app/cura.py#L121) | `_voltar_ao_ponto` | Teto da caminhada de volta ao ponto inicial. |
 | `SEGUNDOS_SENTADO` | 30 s | = | TETO | [cura.py:128](blazesbot/bot/app/cura.py#L128) | `_curar_sentado` | Teto sentado, para quem não tem tecla de poção configurada. |
@@ -350,6 +352,7 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | `ESPERA_ENTRE_CLIQUES` | 0.1 s | = | FIXO | [catador.py:96](blazesbot/core/catador.py#L96) | `catar` | Espera entre dois cliques direitos. Também do T-R0XX. Não é tempo de abrir a |
 | `ESPERA_APOS_PEGAR` | 4 s | = | FIXO | [catador.py:112](blazesbot/core/catador.py#L112) | `_pegar` | Espera entre o clique no botão e a próxima conferência. NÚMERO DO USUÁRIO. |
 | `TETO_DE_CLIQUES` | 10 s | = | TETO | [catador.py:124](blazesbot/core/catador.py#L124) | `_pegar` | Teto de cliques no botão. REDE DE SEGURANÇA, não estratégia -- mesmo papel do |
+| `PASSO_ENTRE_RETRATOS_DO_TIME` | 80 s (1 min) | *novo* | PASSO | [coords.py:112](blazesbot/core/coords.py#L112) |  |  |
 | `ESPERA_ENTRE_PASSOS` | 0.3 s | = | PASSO | [esconder_jogadores.py:109](blazesbot/core/esconder_jogadores.py#L109) | `esconder_jogadores` | Espera entre os passos da sequência. O cliente precisa processar a abertura do |
 | `TETO_DO_BLOQUEIO_MS` | 80 s (1 min) | = | TETO | [inputs.py:130](blazesbot/core/inputs.py#L130) | `_click_sendmessage_rapido, _click_postmessage_puro` | TETO do bloqueio do mouse físico, em milissegundos -- e TETO, não gasto: o |
 | `INTERVALO_ENTRE_CLIQUES_DIREITOS` | 0.044 s | = | FIXO | [inputs.py:269](blazesbot/core/inputs.py#L269) | `right_click` | Espaço entre um clique e o seguinte. Curto de propósito: a aposta é que a |
