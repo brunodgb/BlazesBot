@@ -53,6 +53,10 @@ def _executor(em_batalha=None, passos=3, tecla="TAB"):
     e._estava_em_batalha = False
     e._espera_depois_do_tab_ms = None
     e._avisou_sem_tecla_de_alvo = False
+    # SEM TIME: estes testes montam o executor por `__new__`, então todo
+    # atributo lido pelo laço tem de ser posto à mão. `None` é o valor de
+    # "esta conta não está num time" -- a macro roda como sempre rodou.
+    e.sincronia = None
     e.voltas = e.voltas_abortadas = e.teclas_enviadas = e.tabs_dados = 0
 
     # As conferências viram marcas numa lista, para a ORDEM poder ser conferida.

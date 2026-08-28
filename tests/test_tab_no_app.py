@@ -93,6 +93,10 @@ def _executor(roda=None, tecla="TAB", sem_leitura=False, em_batalha=None):
     e.voltas_abortadas = 0
     e.voltas = 0
     e._avisou_sem_tecla_de_alvo = False
+    # SEM TIME: estes testes montam o executor por `__new__`, então todo
+    # atributo lido pelo laço tem de ser posto à mão. `None` é o valor de
+    # "esta conta não está num time" -- a macro roda como sempre rodou.
+    e.sincronia = None
     e._tabs_sem_resposta = 0
     e._avisou_tecla_morta = False
     # A régua do alvo inalcançável.

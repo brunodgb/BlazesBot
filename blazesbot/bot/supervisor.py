@@ -1703,6 +1703,7 @@ class AccountSupervisor(threading.Thread):
                 log.info("Modo APP encerrado -- %s", executor.sincronia.resumo())
                 if executor.sincronia.sou_o_lider():
                     mural.esquecer_largada(self.account.login)
+                    mural.esquecer_passo(self.account.login)
             # Fecha o handle do processo em qualquer saída. Sem o `finally`, uma
             # exceção no laço deixaria um handle aberto por sessão de modo APP --
             # e o modo APP é reiniciado a cada volta do laço de vida.

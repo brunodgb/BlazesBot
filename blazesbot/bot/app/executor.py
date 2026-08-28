@@ -2506,10 +2506,15 @@ class ExecutorDeMacro:
             self.garantir_pet()
             self.feed_pet()
             self._travar_posicao_se_preciso()
-            if not self._tab_simples():
-                return False
+            # O TAB DE CORTESIA -- e o time pode vetá-lo. No modo "mesmo alvo"
+            # a largada acabou de alinhar todo mundo no mob do líder, e este
+            # TAB trocaria esse alvo logo antes da primeira linha, desfazendo
+            # o alinhamento inteiro.
+            if self.sincronia is None or self.sincronia.deve_dar_tab_na_abertura():
+                if not self._tab_simples():
+                    return False
 
-        for passo in passos:
+        for i, passo in enumerate(passos):
             if not self._continuar():
                 return False
             if not self._esperar_saida_da_pausa():
@@ -2518,9 +2523,22 @@ class ExecutorDeMacro:
             # vazio. É o ÚNICO motivo de a volta terminar antes do fim.
             if self._a_batalha_acabou():
                 return self._abortar_a_volta()
+            # A MARCA DA LINHA. No time, é aqui que as contas mandam a MESMA
+            # tecla no MESMO instante: o líder marca e segue; o seguidor espera
+            # a marca. Fora de um time, `sincronia` responde na hora e a macro
+            # roda exatamente como sempre rodou.
+            if self.sincronia is not None and not self.sincronia.antes_da_linha(i):
+                return False
             self.input.key(passo.key)
             self.teclas_enviadas += 1
-            if not self._esperar(passo.delay_ms):
+            # QUEM DITA O RITMO. No líder (e fora de time) é o delay da macro;
+            # no seguidor é só o piso, porque o relógio dele é a marca da linha
+            # seguinte. Dormir o próprio delay ALÉM de esperar a marca era o que
+            # fazia uma defasagem de 13 s ser carregada volta após volta.
+            espera = passo.delay_ms
+            if self.sincronia is not None:
+                espera = self.sincronia.espera_da_linha(passo.delay_ms)
+            if not self._esperar(espera):
                 # `_esperar` devolve False para "é para parar" E para "saiu de
                 # batalha" (ele confere lá dentro, a cada
                 # `PASSO_DA_CONFERENCIA_DO_ALVO`). Quem separa é o `continuar`.

@@ -66,7 +66,7 @@ ligar código não testado.
 
 ## Números medidos -- tolerância, limiar, teto, cadência
 
-455 constantes, agrupadas por arquivo.
+456 constantes, agrupadas por arquivo.
 
 | constante | valor | onde | quem lê | porquê (resumo) |
 |---|---|---|---|---|
@@ -105,7 +105,7 @@ ligar código não testado.
 | `LINHAS_ANTES_DE_OLHAR_A_TELA` | `2` | [blazesbot/bot/app/executor.py:606](blazesbot/bot/app/executor.py#L606) | supervisor.py | Quantas LINHAS da macro passam antes de a tela ser consultada pela primeira |
 | `LINHAS_BATENDO_CEGO_DEPOIS_DA_TELA` | `3` | [blazesbot/bot/app/executor.py:639](blazesbot/bot/app/executor.py#L639) | — | Quantas linhas o bot continua batendo DEPOIS de a tela dizer que o mob morreu. |
 | `LINHAS_SEM_DANO_PARA_TROCAR` | `3` | [blazesbot/bot/app/executor.py:377](blazesbot/bot/app/executor.py#L377) | — | Quantas LINHAS da macro sem o alvo perder vida antes de trocar de alvo. |
-| `MINIMO_DE_ESPERA_DO_APP_MS` | `100` | [blazesbot/bot/app/executor.py:500](blazesbot/bot/app/executor.py#L500) | config.py, account_dialog.py, web_app.py | Piso de qualquer tempo do APP, em milissegundos. O MESMO número vive em |
+| `MINIMO_DE_ESPERA_DO_APP_MS` | `100` | [blazesbot/bot/app/executor.py:500](blazesbot/bot/app/executor.py#L500) | sincronia.py, config.py, account_dialog.py, web_app.py | Piso de qualquer tempo do APP, em milissegundos. O MESMO número vive em |
 | `PASSO_DA_CONFERENCIA_DO_ALVO` | `0.1` | [blazesbot/bot/app/executor.py:219](blazesbot/bot/app/executor.py#L219) | — | De quanto em quanto tempo perguntar "o alvo morreu?" DENTRO da espera de uma |
 | `PASSO_DA_CONFIRMACAO_DO_TAB` | `0.01` | [blazesbot/bot/app/executor.py:687](blazesbot/bot/app/executor.py#L687) | — | ERA AQUI O ATRASO ENTRE O TAB E A LINHA 1 -- 26/08/2026 |
 | `PASSO_DA_ESPERA_DA_BASE` | `0.1` | [blazesbot/bot/app/executor.py:663](blazesbot/bot/app/executor.py#L663) | — | Cadência da pergunta "já cheguei?". Leitura de posição é de microssegundos; o |
@@ -119,10 +119,11 @@ ligar código não testado.
 | `TENTATIVAS_DE_TAB` | `1` | [blazesbot/bot/app/executor.py:262](blazesbot/bot/app/executor.py#L262) | — | A RODA É ORDENADA POR DISTÂNCIA, E ISSO MUDA TUDO -- 26/08/2026 |
 | `TOLERANCIA_POSICAO` | `1` | [blazesbot/bot/app/executor.py:157](blazesbot/bot/app/executor.py#L157) | — | Constantes mantidas para compatibilidade com testes e configuração. |
 | `VOLTAS_COM_ALVO_ILEGIVEL_PARA_TROCAR` | `2` | [blazesbot/bot/app/executor.py:438](blazesbot/bot/app/executor.py#L438) | — | Quantas VOLTAS inteiras com o alvo selecionado e o HP ilegível antes de |
-| `ESPERA_ENTRE_TABS_DO_ALINHAMENTO` | `0.4` | [blazesbot/bot/app/sincronia.py:89](blazesbot/bot/app/sincronia.py#L89) | — | Cadência do TAB durante o alinhamento. |
-| `PASSO_DA_ESPERA_DA_LARGADA` | `0.05` | [blazesbot/bot/app/sincronia.py:92](blazesbot/bot/app/sincronia.py#L92) | — | De quanto em quanto tempo o seguidor confere se a largada saiu. |
-| `SEGUNDOS_SEM_MUDANCA_PARA_TAB` | `4.0` | [blazesbot/bot/app/sincronia.py:100](blazesbot/bot/app/sincronia.py#L100) | — | Sem trocar de estado de batalha por este tempo, dá TAB. |
-| `TETO_DO_ALINHAMENTO_SEGUNDOS` | `4.0` | [blazesbot/bot/app/sincronia.py:78](blazesbot/bot/app/sincronia.py#L78) | — | Quanto o seguidor insiste no TAB até o alvo dele bater com o do líder. |
+| `ESPERA_ENTRE_TABS_DO_ALINHAMENTO` | `0.4` | [blazesbot/bot/app/sincronia.py:97](blazesbot/bot/app/sincronia.py#L97) | — | Cadência do TAB durante o alinhamento. |
+| `PASSO_DA_ESPERA_DA_LARGADA` | `0.05` | [blazesbot/bot/app/sincronia.py:100](blazesbot/bot/app/sincronia.py#L100) | — | De quanto em quanto tempo o seguidor confere se a largada saiu. |
+| `PASSO_DA_ESPERA_DA_LINHA` | `0.05` | [blazesbot/bot/app/sincronia.py:121](blazesbot/bot/app/sincronia.py#L121) | — | De quanto em quanto tempo a espera da linha acorda para conferir o botão |
+| `SEGUNDOS_SEM_MUDANCA_PARA_TAB` | `4.0` | [blazesbot/bot/app/sincronia.py:108](blazesbot/bot/app/sincronia.py#L108) | — | Sem trocar de estado de batalha por este tempo, dá TAB. |
+| `TETO_DA_LINHA_SEGUNDOS` | `2.0` | [blazesbot/bot/app/sincronia.py:116](blazesbot/bot/app/sincronia.py#L116) | — | Quanto o seguidor espera a marca de UMA linha antes de mandar assim mesmo. |
 | `AMOSTRAS_POR_COORDENADA` | `3` | [blazesbot/bot/bc/amostragem_de_cliques.py:126](blazesbot/bot/bc/amostragem_de_cliques.py#L126) | — | Quantas vezes cada coordenada é testada. Três é o mínimo que separa "abriu |
 | `ANCORA_PADRAO` | `1.9` | [blazesbot/bot/bc/amostragem_de_cliques.py:163](blazesbot/bot/bc/amostragem_de_cliques.py#L163) | — | Precisão aceita nos pontos que o próprio bot não exige exatos (Fay, entrada |
 | `ASSENTAMENTO_APOS_O_CLIQUE` | `0.125` | [blazesbot/bot/bc/amostragem_de_cliques.py:150](blazesbot/bot/bc/amostragem_de_cliques.py#L150) | — | Assentamento depois da amostra, antes de reler a posição. É o tempo de o |

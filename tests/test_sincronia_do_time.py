@@ -77,6 +77,11 @@ class _ExecutorFalso:
         self._parar_em = parar_em
         self._dormidas = 0
 
+    def _continuar(self) -> bool:
+        """O laço do executor pergunta isto; a espera da linha também, para o
+        botão Parar responder no meio dela."""
+        return True
+
     def _dormir(self, segundos: float) -> bool:
         self.dormiu += segundos
         self._dormidas += 1
@@ -498,3 +503,176 @@ def test_a_largada_e_fechada_quando_o_lider_para_de_esperar():
               membros=("lider", "sumido"))
     s.esperar_a_largada()
     assert mural.largada_pendente("lider") is None
+
+# ---------------------------------------------------------------------------
+# LINHA A LINHA -- a correção de 28/08/2026
+# ---------------------------------------------------------------------------
+#
+# O QUE ESTES TESTES IMPEDEM DE VOLTAR: a defasagem ESTÁVEL. Medido no log
+# real, duas contas rodavam voltas de ~20 s defasadas em ~13 s, volta após
+# volta, porque o seguidor atrasado dormia o próprio delay ALÉM de esperar o
+# líder -- nunca corria mais rápido, então nunca alcançava.
+
+def _linha(s, i):
+    return s.antes_da_linha(i)
+
+
+def test_o_lider_marca_cada_linha():
+    s = _sinc(_ExecutorFalso(), login="lider", lider="lider",
+              membros=("lider", "seguidor"))
+    s.esperar_a_largada()
+    assert _linha(s, 3) is True
+    assert mural.passo_do_lider("lider") == (s.epoca, s.volta_do_time, 3)
+
+
+def test_o_seguidor_espera_a_marca_da_linha():
+    s = _sinc(_ExecutorFalso(), login="seguidor", lider="lider",
+              membros=("lider", "seguidor"))
+    _anunciar("lider", 1, 0)
+    s.esperar_a_largada()
+    mural.abrir_passo("lider", 1, 1, 5)          # o líder já está na linha 5
+    assert _linha(s, 5) is True
+    assert s.linhas_juntas >= 1
+
+
+def test_o_seguidor_ATRASADO_nao_espera_nada():
+    """O coração da correção: marca já dada não faz esperar.
+
+    Sem isto o atrasado esperava a linha que já passou, gastava o teto e
+    continuava exatamente com o mesmo atraso na linha seguinte.
+    """
+    s = _sinc(_ExecutorFalso(), login="seguidor", lider="lider",
+              membros=("lider", "seguidor"))
+    _anunciar("lider", 1, 0)
+    s.esperar_a_largada()
+    mural.abrir_passo("lider", 1, 1, 18)         # o líder está MUITO à frente
+    comeco = mod.time.monotonic()
+    assert _linha(s, 2) is True                  # linha antiga: não espera
+    assert mod.time.monotonic() - comeco < 0.05
+
+
+def test_uma_volta_inteira_atras_tambem_destrava():
+    """A marca da volta seguinte é 'maior' que qualquer linha da anterior."""
+    s = _sinc(_ExecutorFalso(), login="seguidor", lider="lider",
+              membros=("lider", "seguidor"))
+    _anunciar("lider", 4, 0)
+    s.esperar_a_largada()
+    mural.abrir_passo("lider", 1, 5, 0)          # já é a volta seguinte
+    comeco = mod.time.monotonic()
+    assert _linha(s, 19) is True
+    assert mod.time.monotonic() - comeco < 0.05
+
+
+def test_o_seguidor_so_dorme_o_piso():
+    """Dormir o delay próprio ALÉM da marca é o que preservava a defasagem."""
+    s = _sinc(_ExecutorFalso(), login="seguidor", lider="lider",
+              membros=("lider", "seguidor"))
+    assert s.espera_da_linha(3000) == mod.MINIMO_DE_ESPERA_DO_APP_MS
+
+
+def test_o_lider_dorme_o_delay_da_macro():
+    """É ele quem dita o ritmo do time -- se ele acelerar, todos aceleram."""
+    s = _sinc(_ExecutorFalso(), login="lider", lider="lider",
+              membros=("lider", "seguidor"))
+    assert s.espera_da_linha(3000) == 3000
+
+
+def test_sem_time_a_macro_nao_e_gatilhada():
+    s = _sinc(_ExecutorFalso(), membros=("eu",))
+    assert _linha(s, 7) is True
+    assert mural.passo_do_lider("eu") is None
+    assert s.espera_da_linha(3000) == 3000
+
+
+def test_modo_copiar_nao_marca_nem_espera():
+    s = _sinc(_ExecutorFalso(), login="lider", lider="lider", modo="copiar",
+              membros=("lider", "seguidor"))
+    assert _linha(s, 2) is True
+    assert mural.passo_do_lider("lider") is None
+    assert s.espera_da_linha(3000) == 3000
+
+
+def test_lider_parado_nao_prende_o_seguidor(monkeypatch):
+    """Passado o teto da linha, manda sozinho -- ninguém fica parado."""
+    monkeypatch.setattr(mod, "TETO_DA_LINHA_SEGUNDOS", 0.1)
+    s = _sinc(_ExecutorFalso(), login="seguidor", lider="lider",
+              membros=("lider", "seguidor"))
+    _anunciar("lider", 1, 0)
+    s.esperar_a_largada()
+    mural.esquecer_passo("lider")
+    assert _linha(s, 9) is True                  # não trava
+    assert s.linhas_sem_marca == 1
+
+
+def test_parar_interrompe_a_espera_da_linha(monkeypatch):
+    monkeypatch.setattr(mod, "TETO_DA_LINHA_SEGUNDOS", 5.0)
+    ex = _ExecutorFalso()
+    ex._continuar = lambda: False
+    s = _sinc(ex, login="seguidor", lider="lider", membros=("lider", "seguidor"))
+    _anunciar("lider", 1, 0)
+    s.esperar_a_largada()
+    mural.esquecer_passo("lider")
+    assert _linha(s, 9) is False
+
+# ---------------------------------------------------------------------------
+# A SEQUÊNCIA DO "MESMO ALVO", conferida contra a descrição do usuário
+# ---------------------------------------------------------------------------
+#
+#   *"o líder dar tab primeiro para pegar o target_id; aí depois que tiver o id,
+#    os outros dão tab; e quando todos estão com o mesmo target_id todos
+#    começam juntos a macro."*
+
+def test_o_alinhamento_cabe_dentro_da_espera_do_lider():
+    """Eram dois números soltos e a conta não fechava.
+
+    Com alinhamento de 4 s e espera de 3 s, o líder desistia ANTES de o
+    seguidor terminar de alinhar -- e "todos começam juntos no mesmo alvo",
+    que é a razão de o modo existir, nunca acontecia quando o alinhamento
+    demorava.
+    """
+    assert mod.TETO_DO_ALINHAMENTO_SEGUNDOS < TETO_REAL_DA_LARGADA
+
+
+def test_no_mesmo_alvo_o_prelud1o_da_volta_NAO_da_tab():
+    """O TAB de cortesia do começo da volta desfaria o alinhamento.
+
+    A largada acabou de pôr as contas todas no mob do líder; esse TAB trocaria
+    o alvo logo antes da primeira linha da macro.
+    """
+    s = _sinc(_ExecutorFalso(), login="seguidor", lider="lider",
+              modo="mesmo_alvo", membros=("lider", "seguidor"))
+    assert s.deve_dar_tab_na_abertura() is False
+
+
+def test_nos_outros_modos_o_tab_de_abertura_continua():
+    """Lá ninguém combinou alvo: o TAB é o que dá mob para a macro bater."""
+    for modo in ("largada", "copiar"):
+        s = _sinc(_ExecutorFalso(), login="seguidor", lider="lider", modo=modo,
+                  membros=("lider", "seguidor"))
+        assert s.deve_dar_tab_na_abertura() is True, modo
+
+
+def test_sozinha_o_tab_de_abertura_continua():
+    s = _sinc(_ExecutorFalso(), modo="mesmo_alvo", membros=("eu",))
+    assert s.deve_dar_tab_na_abertura() is True
+
+
+def test_o_seguidor_so_confirma_DEPOIS_de_alinhar():
+    """A ordem é o que faz o líder esperar pelo alinhamento, e não só pela
+    presença: a confirmação é publicada no fim de `esperar_a_largada`, depois
+    do TAB de alinhamento."""
+    ex = _ExecutorFalso(alvo=111)
+    tentativas = {"n": 0}
+
+    def tab():
+        tentativas["n"] += 1
+        ex.alvo = 999
+        return True
+    ex._tab_simples = tab
+    _anunciar("lider", 1, 999)
+    s = _sinc(ex, login="seguidor", lider="lider", modo="mesmo_alvo",
+              membros=("lider", "seguidor"))
+    s.esperar_a_largada()
+    assert tentativas["n"] >= 1
+    estado = mural.estado_da_conta("seguidor")
+    assert estado["alvo"] == 999          # confirmou JÁ no alvo do líder

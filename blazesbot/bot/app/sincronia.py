@@ -44,6 +44,7 @@ import time
 from collections.abc import Callable
 from typing import Any
 
+from ...config import MINIMO_DE_ESPERA_DO_APP_MS
 from .. import mural
 
 # ÉPOCA: um número por objeto de sincronia criado neste processo.
@@ -73,9 +74,16 @@ TETO_DA_LARGADA_SEGUNDOS = mural.LARGADA_VALIDA_SEGUNDOS
 
 # Quanto o seguidor insiste no TAB até o alvo dele bater com o do líder.
 #
-# PROVISÓRIO. Estourar não cancela nada: a conta bate no próprio mob nessa
-# volta e tenta de novo na seguinte.
-TETO_DO_ALINHAMENTO_SEGUNDOS = 4.0
+# PROVISÓRIO no valor, mas NÃO na forma: ele é DERIVADO do teto da largada e
+# tem de caber dentro dele. Eram dois números soltos, 4 s de alinhamento contra
+# 3 s de espera do líder, e a conta não fechava: o líder desistia de esperar
+# ANTES de o seguidor terminar de alinhar, então "todos começam juntos no mesmo
+# alvo" -- que é a razão de o modo existir -- nunca acontecia quando o
+# alinhamento demorava. A margem de 1 s cobre a publicação da confirmação.
+#
+# Estourar não cancela nada: a conta bate no próprio mob nessa volta, confirma
+# assim mesmo e larga JUNTO, só que em outro mob.
+TETO_DO_ALINHAMENTO_SEGUNDOS = max(0.5, TETO_DA_LARGADA_SEGUNDOS - 1.0)
 
 # Cadência do TAB durante o alinhamento.
 #
@@ -98,6 +106,19 @@ PASSO_DA_ESPERA_DA_LARGADA = 0.05
 # em algum dos personagens"*. Não é preciso identificar o mob: o TAB deste jogo
 # pega o mais perto, e o mais perto de quem está apanhando é justamente ele.
 SEGUNDOS_SEM_MUDANCA_PARA_TAB = 4.0
+
+# Quanto o seguidor espera a marca de UMA linha antes de mandar assim mesmo.
+#
+# PROVISÓRIO. Curto de propósito: passar disso significa que o líder parou (está
+# curando, voltando à base, caindo), e nesse caso mandar a linha sozinho é
+# melhor que ficar parado -- a regra do time. Quem alcança de novo alcança na
+# linha seguinte, porque a comparação da marca é `>=`.
+TETO_DA_LINHA_SEGUNDOS = 2.0
+
+# De quanto em quanto tempo a espera da linha acorda para conferir o botão
+# Parar. Não é a latência do aviso: o aviso chega por `Condition.notify_all` em
+# microssegundos. Isto é só o intervalo em que a espera é interrompível.
+PASSO_DA_ESPERA_DA_LINHA = 0.05
 
 
 class SincroniaDoTime:
@@ -163,6 +184,8 @@ class SincroniaDoTime:
         self.largadas_perdidas = 0
         self.tabs_de_alinhamento = 0
         self.alinhamentos_falhos = 0
+        self.linhas_juntas = 0
+        self.linhas_sem_marca = 0
         # Relógio do "4 s sem mudar de estado de batalha".
         self._estado_de_batalha: bool | None = None
         self._mudou_em = time.monotonic()
@@ -380,6 +403,72 @@ class SincroniaDoTime:
             alvo, TETO_DO_ALINHAMENTO_SEGUNDOS)
         return False
 
+    def deve_dar_tab_na_abertura(self) -> bool:
+        """O TAB de cortesia do começo da volta ainda faz sentido?
+
+        NÃO no modo `mesmo_alvo`: a largada acabou de alinhar todas as contas
+        no mob do líder, e o TAB do prelúdio troca esse alvo na linha seguinte
+        -- desfazendo exatamente o que a largada custou a fazer. Foi encontrado
+        lendo o código contra a descrição do usuário, antes de rodar.
+
+        Nos outros modos ele continua: lá ninguém combinou alvo, e pegar mob
+        novo no começo da volta é o que faz a macro ter no que bater.
+        """
+        return not (self._sincronizando() and self.modo == "mesmo_alvo")
+
+    # -- linha a linha -----------------------------------------------------
+
+    def _sincronizando(self) -> bool:
+        """Há time E o modo pede sincronia."""
+        return self.modo != "copiar" and len(self._membros()) > 1
+
+    def antes_da_linha(self, i: int) -> bool:
+        """Chamada antes de CADA tecla da macro. `False` = é para parar.
+
+        No líder: marca a linha, e segue sem esperar ninguém. Segurar o líder a
+        cada linha faria o time inteiro andar na velocidade do pior momento de
+        qualquer conta -- e a regra é que ninguém fica parado.
+
+        No seguidor: espera a marca. Se ela já foi dada (ele está atrasado), não
+        espera nada -- é assim que a defasagem se desfaz em vez de se manter.
+        """
+        if not self._sincronizando():
+            return True
+        if self.sou_o_lider():
+            mural.abrir_passo(self.login, self.epoca, self.volta_do_time, i)
+            return True
+
+        alvo = (self.largada_epoca, self.volta_do_time, i)
+        limite = time.monotonic() + TETO_DA_LINHA_SEGUNDOS
+        while time.monotonic() < limite:
+            if mural.esperar_passo(self.largada_de, alvo,
+                                   PASSO_DA_ESPERA_DA_LINHA):
+                self.linhas_juntas += 1
+                return True
+            if not self._ex._continuar():
+                return False
+        # O líder não marcou a tempo: está curando, voltando à base ou caiu.
+        # Mandar sozinho é melhor que ficar parado, e a linha seguinte já
+        # realinha (a comparação da marca é `>=`).
+        self.linhas_sem_marca += 1
+        return True
+
+    def espera_da_linha(self, delay_ms: int) -> int:
+        """Quanto esperar DEPOIS de mandar a tecla.
+
+        No líder é o delay da macro -- é ele quem dita o ritmo do time.
+
+        No SEGUIDOR é só o piso, e essa é a correção que faz a sincronia parar
+        de escorregar. Antes ele dormia o próprio delay ALÉM de esperar a
+        marca: um atraso de 13 s medido em 28/08/2026 era carregado volta após
+        volta, porque o seguidor nunca corria mais rápido que o líder e por isso
+        nunca alcançava. Agora, atrasado, ele manda as linhas no piso até
+        emparelhar; emparelhado, quem segura é a marca da linha seguinte.
+        """
+        if not self._sincronizando() or self.sou_o_lider():
+            return delay_ms
+        return MINIMO_DE_ESPERA_DO_APP_MS
+
     # -- o relógio dos 4 segundos -----------------------------------------
 
     def conferir_a_parada(self) -> bool:
@@ -441,7 +530,9 @@ class SincroniaDoTime:
 
     def resumo(self) -> str:
         """Uma linha para o log quando o modo APP termina -- é a medição bruta."""
-        return (f"time[{self.modo}] {self.largadas_juntas} juntas, "
+        return (f"time[{self.modo}] {self.largadas_juntas} largadas juntas, "
                 f"{self.largadas_perdidas} perdidas, "
+                f"{self.linhas_juntas} linhas na marca, "
+                f"{self.linhas_sem_marca} sem marca, "
                 f"{self.tabs_de_alinhamento} TABs de alinhamento, "
                 f"{self.alinhamentos_falhos} sem alinhar")

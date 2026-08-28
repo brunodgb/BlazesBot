@@ -111,6 +111,60 @@ valor declarado pelo usuário, e entram no `docs/TEMPOS.md` marcados como tal. O
 `4.0` que já existem no BC são de outras coisas
 (`SEGUNDOS_SENTADO_APOS_GUARDAS`, `SEGUNDOS_ANTES_DO_TAB_NO_BOSS`).
 
+## POR VOLTA NÃO BASTOU — a rodada real de 28/08/2026
+
+A primeira versão sincronizava só o COMEÇO de cada volta, que foi o que ficou
+combinado no Q3 (*"não precisa ser linha a linha juntos, mas sempre dar tab e
+começar a macro juntos"*). **A rodada real reprovou.** Medido no log:
+
+```
+00:13:21  blazestpas   volta 17 largou sem gamerblazes (teto 3s)
+00:13:34  gamerblazes  sem largada de blazestpas em 3s -- indo sozinho
+00:13:41  blazestpas   volta 18 largou sem gamerblazes
+```
+
+As duas contas rodavam voltas de **~20 s defasadas em ~13 s**, volta após
+volta. O mecanismo:
+
+1. a largada ficava aberta 3 s de um ciclo de 20 — uma janela de **15%**;
+2. quem perdia a janela rodava uma volta solo INTEIRA;
+3. como a volta solo dura o mesmo tanto, **a defasagem era preservada
+   exatamente**. Nada puxava ninguém de volta.
+
+E a causa de o atrasado nunca alcançar: ele **dormia o próprio delay ALÉM de
+esperar o líder**. Nunca corria mais rápido que o líder, então nunca fechava a
+diferença.
+
+### O que passou a valer
+
+O líder marca **cada linha** da macro (`mural.abrir_passo`); o seguidor espera a
+marca antes de mandar a mesma tecla, por `threading.Condition` — aviso em
+microssegundos, e não uma olhada a cada 50 ms. E, decisivo: **o seguidor não
+dorme o delay dele**, só o piso de `MINIMO_DE_ESPERA_DO_APP_MS`. Quem dá o ritmo
+é a marca.
+
+A propriedade que conserta a defasagem é a comparação `>=` sobre
+`(época, volta, linha)`: **marca já dada não faz esperar**. O atrasado manda as
+linhas no piso até emparelhar, e uma conta uma volta inteira atrás destrava na
+hora, porque a marca da volta seguinte já é "maior" que qualquer linha da
+anterior.
+
+### Dois furos achados lendo o código contra a descrição do usuário
+
+Nenhum dos dois teria aparecido em teste de unidade — os dois só falham com duas
+contas de verdade:
+
+1. **O teto do alinhamento era MAIOR que o teto da largada** (4 s contra 3 s): o
+   líder desistia de esperar antes de o seguidor terminar de alinhar, e
+   *"quando todos estão com o mesmo target_id todos começam juntos"* — a razão
+   de o modo existir — nunca acontecia quando o alinhamento demorava. O
+   alinhamento passou a ser DERIVADO do teto da largada, para não poder voltar
+   a divergir.
+2. **O TAB de cortesia do começo da volta desfazia o alinhamento.** A largada
+   punha as contas todas no mob do líder e, uma linha depois, cada uma apertava
+   TAB e ia para outro mob. No modo `mesmo_alvo` esse TAB passou a ser vetado
+   pela sincronia.
+
 ## A IDENTIDADE DE UMA LARGADA É `(líder, época, volta)`
 
 Não é o número da volta, e não é só o nome do líder. Os três juntos, porque

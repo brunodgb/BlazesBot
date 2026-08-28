@@ -364,6 +364,77 @@ def esquecer_estado(login: str) -> None:
     with _LOCK_TIME:
         _ESTADOS.pop(login.strip().lower(), None)
 
+# ===========================================================================
+# O RELÓGIO DE LINHA -- o líder marca cada tecla, e os outros seguem
+# ===========================================================================
+#
+# POR QUE ISTO EXISTE. A primeira versão sincronizava só o COMEÇO de cada volta,
+# e a rodada real de 28/08/2026 mostrou que não basta. Medido no log:
+#
+#     00:13:21  blazestpas   volta 17 largou sem gamerblazes (teto 3s)
+#     00:13:34  gamerblazes  sem largada de blazestpas em 3s -- indo sozinho
+#     00:13:41  blazestpas   volta 18 largou sem gamerblazes
+#
+# As duas contas rodavam voltas de ~20 s DEFASADAS EM ~13 s. A largada ficava
+# aberta 3 s de um ciclo de 20 -- uma janela de 15% --, e quando o seguidor
+# perdia, ele rodava uma volta solo inteira: a defasagem era preservada
+# EXATAMENTE, volta após volta. Nada puxava ele de volta.
+#
+# COMO ISTO RESOLVE. O líder marca CADA linha da macro. O seguidor espera a
+# marca antes de mandar a mesma tecla, e -- esta é a parte que conserta -- ele
+# NÃO dorme o delay dele: quem dá o ritmo é a marca. Atrasado, ele encontra a
+# marca já dada, não espera nada, e alcança. A defasagem deixa de ser estável.
+#
+# A COMPARAÇÃO É `>=` E A CHAVE É `(época, volta, linha)`. Assim um seguidor que
+# ficou uma volta inteira para trás não trava esperando uma linha que já passou:
+# a marca da volta seguinte já é "maior", ele destrava na hora e alcança.
+_PASSOS: dict[str, tuple[int, int, int]] = {}      # lider -> (epoca, volta, linha)
+
+# `Condition` e não polling: as contas são threads do MESMO processo, então o
+# aviso chega em microssegundos em vez de esperar a próxima olhada. É a
+# diferença entre "ao mesmo tempo" e "quase ao mesmo tempo".
+_COND_DO_PASSO = threading.Condition()
+
+
+def abrir_passo(lider: str, epoca: int, volta: int, linha: int) -> None:
+    """O líder está mandando esta linha AGORA."""
+    if not lider:
+        return
+    with _COND_DO_PASSO:
+        _PASSOS[lider.strip().lower()] = (int(epoca), int(volta), int(linha))
+        _COND_DO_PASSO.notify_all()
+
+
+def passo_do_lider(lider: str) -> tuple[int, int, int] | None:
+    if not lider:
+        return None
+    with _COND_DO_PASSO:
+        return _PASSOS.get(lider.strip().lower())
+
+
+def esperar_passo(lider: str, alvo: tuple[int, int, int],
+                  teto: float) -> bool:
+    """Espera o líder chegar em `alvo`. `True` = chegou (ou já tinha passado).
+
+    O `>=` é o que faz o atrasado destravar na hora em vez de esperar por uma
+    linha que já foi anunciada.
+    """
+    if not lider:
+        return False
+    chave = lider.strip().lower()
+    with _COND_DO_PASSO:
+        return _COND_DO_PASSO.wait_for(
+            lambda: _PASSOS.get(chave, (0, 0, -1)) >= alvo, timeout=teto)
+
+
+def esquecer_passo(lider: str) -> None:
+    if not lider:
+        return
+    with _COND_DO_PASSO:
+        _PASSOS.pop(lider.strip().lower(), None)
+        _COND_DO_PASSO.notify_all()
+
+
 def zerar_o_time_para_teste() -> None:
     """Esvazia o quadro do time. SÓ para teste.
 
@@ -375,3 +446,5 @@ def zerar_o_time_para_teste() -> None:
     with _LOCK_TIME:
         _LARGADAS.clear()
         _ESTADOS.clear()
+    with _COND_DO_PASSO:
+        _PASSOS.clear()

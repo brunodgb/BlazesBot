@@ -108,6 +108,16 @@ seguidores). Pedido do usuário em 27/08/2026.
   `tests/test_config_ida_e_volta.py`).
 - **`time_modo` fora de `MODOS_DO_TIME` nunca entra**: a normalização é feita
   nos DOIS lados (leitura do config e ponte web), como o piso de 100 ms.
+- **O SEGUIDOR NÃO DORME O DELAY DELE** — só o piso. Quem dá o ritmo é a marca
+  da linha do líder. Dormir o próprio delay ALÉM de esperar a marca é o que
+  fazia a defasagem ser preservada volta após volta (medido: 13 s estáveis).
+- **A marca é comparada com `>=` sobre `(época, volta, linha)`** — marca já dada
+  não faz esperar. É isso que faz o atrasado alcançar em vez de travar.
+- **O teto do alinhamento tem de caber DENTRO do teto da largada.** Ele é
+  derivado, não escrito à mão: com o alinhamento maior, o líder desiste antes
+  de o seguidor alinhar e o modo `mesmo_alvo` nunca cumpre o que promete.
+- **No `mesmo_alvo` o TAB de abertura da volta é VETADO** — ele trocaria o alvo
+  que a largada acabou de alinhar.
 - **`esperar_a_largada` devolve `False` SÓ para parar de verdade.** "Não
   consegui sincronizar" é sempre "vai assim mesmo" -- sincronia nunca derruba
   a macro nem cancela uma volta.
