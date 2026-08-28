@@ -33,7 +33,9 @@ from ..core.coords import coords_for_window
 from ..core.memory import Memory
 from ..core.target_hybrid import TargetHybrid
 from ..core.vision import TemplateLibrary
+from . import mural
 from .app import ExecutorDeMacro
+from .app.sincronia import SincroniaDoTime
 from .bc.routine import BossRushRoutine
 from .context import BotContext, Disconnected, StopRequested
 from .login import (
@@ -1028,7 +1030,10 @@ class AccountSupervisor(threading.Thread):
             # a macro, e ela vale NA HORA -- interface e bot compartilham o mesmo
             # objeto de configuração. Fica no topo porque APP e farm da cave
             # disputariam o teclado se rodassem juntos.
-            if self.account.settings.app.enabled:
+            # A SEGUNDA PORTA: convocado pelo time. A caixa "Ativar Modo APP"
+            # desta conta pode estar desmarcada -- quem manda é o líder.
+            if (self.account.settings.app.enabled
+                    or self._lider_do_time() is not None):
                 anunciado = None      # ao voltar, o estado é anunciado de novo
                 self._rodar_modo_app()
                 continue
@@ -1108,6 +1113,68 @@ class AccountSupervisor(threading.Thread):
                     ctx.tick(0.5)
                 else:
                     ctx.tick(2.5 if estado_desejado == "aguardando memória" else 1.5)
+
+    # -- time do APP -------------------------------------------------------
+
+    def _lider_do_time(self) -> Account | None:
+        """A conta que CONVOCA esta para o time do APP, ou `None`.
+
+        Convocação é o que faz um seguidor rodar o modo APP com a caixa
+        "Ativar Modo APP" DELE desmarcada -- pedido do usuário em 27/08/2026:
+        *"quando o líder ligar o modo APP ou se já estiver ligado, as contas que
+        fazem parte do time devem rodar APP, mesmo que a flag dele esteja como
+        false, mas é só em caso de time."*
+
+        Ela vale enquanto TRÊS coisas forem verdade ao mesmo tempo, e some
+        sozinha quando qualquer uma cair -- por isso este método é consultado a
+        cada volta, e não uma vez na largada:
+
+        1. alguém tem esta conta no `time_logins` dele;
+        2. esse alguém está com o modo APP LIGADO (líder desligou, time acabou);
+        3. nem o líder nem esta conta estão farmando a Bewitcher Cave. BC e APP
+           nunca rodam juntos: convocar uma conta no meio de uma run perderia a
+           run (teleporte gasto, travessia feita, boss vivo).
+
+        Ver `docs/INVARIANTES.md`, seção "Time do APP".
+        """
+        login = self.config.lider_do_time_do_app(self.account.login)
+        if not login or self.account.farms:
+            return None
+        lider = next((c for c in self.config.accounts if c.login == login), None)
+        if lider is None or lider.farms or not lider.settings.app.enabled:
+            return None
+        return lider
+
+    def _dono_da_macro(self) -> Account:
+        """De quem é a macro que esta conta roda: do líder, ou dela mesma."""
+        lider = self._lider_do_time()
+        return lider if lider is not None else self.account
+
+    def _membros_do_time(self) -> list[str]:
+        """Os logins que participam da largada, começando pelo líder.
+
+        Conta farmando a cave é filtrada AQUI, e não só na tela: a tela impede
+        de escolher, mas o farm pode ser ligado depois, com o time já rodando. O
+        login continua gravado no `config.json` -- ela volta ao time sozinha
+        quando o farm for desligado.
+        """
+        dono = self._dono_da_macro()
+        logins = [dono.login, *dono.settings.app.time_logins]
+        por_login = {c.login: c for c in self.config.accounts}
+        vistos: list[str] = []
+        for x in logins:
+            conta = por_login.get(x)
+            if not x or x in vistos or conta is None or conta.farms:
+                continue
+            vistos.append(x)
+        return vistos
+
+    def _tem_time_do_app(self) -> bool:
+        """Esta conta participa de um time -- como líder ou como seguidora."""
+        if self._lider_do_time() is not None:
+            return True
+        return bool(self.account.settings.app.time_logins) and len(
+            self._membros_do_time()) > 1
 
     # -- modo APP ----------------------------------------------------------
 
@@ -1469,12 +1536,53 @@ class AccountSupervisor(threading.Thread):
                     ctx_do_historico.ultima_queda = (chave, quadro)
             raise Disconnected(motivo.value)
 
+        def max_hp_do_time() -> int | None:
+            """A vida MÁXIMA desta conta -- o critério de quem assume o time.
+
+            Vida máxima e não vida atual: a atual oscila a cada golpe, e o time
+            trocaria de líder no meio de uma luta. Sem memória devolve `None` e
+            a eleição cai no desempate por ordem de login.
+            """
+            if memoria_do_pet is None:
+                return None
+            try:
+                return memoria_do_pet.max_hp()
+            except Exception:
+                return None
+
+        def montar_sincronia(ex):
+            """Fábrica: o executor recebe o objeto pronto e não conhece o mural.
+
+            É SEMPRE injetada, mesmo sem time. Quem decide se há largada é a
+            própria sincronia, a cada volta -- assim montar ou desfazer um time
+            com o bot rodando passa a valer sem religar nada.
+            """
+            dono = self._dono_da_macro()
+            return SincroniaDoTime(
+                ex,
+                login=self.account.login,
+                lider=dono.login,
+                # O MODO É DO LÍDER: é ele quem monta o time, e um seguidor com
+                # modo próprio faria duas contas do mesmo time discordarem
+                # sobre o que "sincronizado" significa.
+                modo=dono.settings.app.time_modo,
+                membros=self._membros_do_time,
+                max_hp=max_hp_do_time,
+                log=log,
+            )
+
         executor = ExecutorDeMacro(
             hwnd=self.hwnd,
-            fonte_dos_passos=lambda: app.passos_ativos,
+            # A MACRO PODE SER EMPRESTADA. Num time, o seguidor roda as linhas
+            # do LÍDER -- e a leitura é feita a cada volta, então editar a
+            # macro do líder com o time rodando vale na largada seguinte, o
+            # mesmo contrato que `app.enabled` já tem.
+            fonte_dos_passos=lambda: self._dono_da_macro().settings.app.passos_ativos,
             continuar=lambda: (
                 not self.stop_event.is_set()
-                and app.enabled
+                # Ou a caixa desta conta, OU a convocação do líder. É isto que
+                # faz o seguidor parar quando o líder desliga o modo APP.
+                and (app.enabled or self._lider_do_time() is not None)
                 # Janela fechada: parar de mandar tecla para um destino que não
                 # existe mais. Quem decide reabrir o cliente é o laço de vida,
                 # como em qualquer outra queda.
@@ -1540,7 +1648,10 @@ class AccountSupervisor(threading.Thread):
             # A LINHA 0 DA MACRO: o tempo depois do TAB. Função e não número,
             # pelo mesmo motivo de `fonte_dos_passos` -- mudar na tela com o bot
             # rodando passa a valer na volta seguinte.
-            espera_depois_do_tab_ms=lambda: app.espera_depois_do_tab_ms,
+            # A LARGADA DO TIME. Ver `bot/app/sincronia.py`.
+            sincronia=montar_sincronia,
+            espera_depois_do_tab_ms=lambda: (
+                self._dono_da_macro().settings.app.espera_depois_do_tab_ms),
             # ==========================================================
             # A SEGUNDA PORTA: A VIDA DO ALVO PELA TELA
             # ==========================================================
@@ -1583,6 +1694,15 @@ class AccountSupervisor(threading.Thread):
         try:
             executor.rodar()
         finally:
+            # SAIR DO MURAL. Sem isto a conta que parou continuaria publicada
+            # por `ESTADO_VALIDO_SEGUNDOS`, e nesse intervalo o time esperaria
+            # a largada de quem não está mais lá -- exatamente o "esperar por
+            # quem não vai chegar" que a regra do teto existe para evitar.
+            mural.esquecer_estado(self.account.login)
+            if executor.sincronia is not None:
+                log.info("Modo APP encerrado -- %s", executor.sincronia.resumo())
+                if executor.sincronia.sou_o_lider():
+                    mural.esquecer_largada(self.account.login)
             # Fecha o handle do processo em qualquer saída. Sem o `finally`, uma
             # exceção no laço deixaria um handle aberto por sessão de modo APP --
             # e o modo APP é reiniciado a cada volta do laço de vida.

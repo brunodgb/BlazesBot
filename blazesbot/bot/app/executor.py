@@ -793,6 +793,7 @@ class ExecutorDeMacro:
         #
         # `None` = sem proteção de vida, e o APP roda exatamente como antes.
         cura: Callable[[object], object] | None = None,
+        sincronia: Callable[[object], object] | None = None,
         # O ALVO, com HP exato -- pedido do usuário em 25/08/2026: *"é
         # importante trazer os dados do target para o APP, para que também
         # saibamos a vida exata do mob que está sendo atacado"*. Serve para o
@@ -961,7 +962,14 @@ class ExecutorDeMacro:
         # porque ele NÃO é volta de macro e NÃO é morte -- ver `uma_volta`.
         self.alvos_inalcancaveis = 0
         self.voltas_abortadas = 0
-        self.cura = cura(self) if cura is not None else None
+        self.cura = cura(self) if cura is not None else None
+
+        # A SINCRONIA DO TIME, pela MESMA fábrica que a cura usa: ela precisa do
+        # executor (dormir respeitando o Parar, ler o alvo, garantir alvo) e o
+        # executor não pode conhecê-la -- ela fala com o mural, que mora em
+        # `blazesbot.bot`, e este arquivo só importa `core`. `None` significa
+        # "sem time", e aí o APP roda exatamente como sempre rodou.
+        self.sincronia = sincronia(self) if sincronia is not None else None
 
     # -- espera ------------------------------------------------------------
 
@@ -2689,6 +2697,24 @@ class ExecutorDeMacro:
                 time.sleep(0.25)
                 continue
             vazio_avisado = False
+            # A LARGADA DO TIME -- depois da barra de atalhos e antes da volta.
+            #
+            # Depois da barra porque o alinhamento pode dar TAB, e TAB na página
+            # errada da hotbar dispara outra coisa. Antes da volta porque é o
+            # único ponto em que todas as contas do time estão no MESMO lugar da
+            # sequência.
+            #
+            # `False` aqui é SEMPRE "é para parar" -- nunca "não consegui
+            # sincronizar". Falha de sincronia deixa a conta ir sozinha, que é a
+            # regra do time: ninguém fica parado esperando.
+            if self.sincronia is not None:
+                if not self.sincronia.esperar_a_largada():
+                    break
+                # 4 s sem trocar de estado de batalha: dá TAB. Não é preciso
+                # saber QUAL mob -- o TAB pega o mais perto, e o mais perto de
+                # quem está apanhando é justamente ele.
+                if self.sincronia.conferir_a_parada():
+                    self._garantir_alvo(forcar=True)
             if self._antes_da_volta is not None:
                 try:
                     self._antes_da_volta()

@@ -108,6 +108,20 @@ seguidores). Pedido do usuário em 27/08/2026.
   `tests/test_config_ida_e_volta.py`).
 - **`time_modo` fora de `MODOS_DO_TIME` nunca entra**: a normalização é feita
   nos DOIS lados (leitura do config e ponte web), como o piso de 100 ms.
+- **`esperar_a_largada` devolve `False` SÓ para parar de verdade.** "Não
+  consegui sincronizar" é sempre "vai assim mesmo" -- sincronia nunca derruba
+  a macro nem cancela uma volta.
+- **TODA espera da sincronia tem TETO**, e estourar o teto não cancela nada:
+  quem não chegou segue batendo sozinho e entra na próxima largada.
+- **A eleição do líder temporário é DETERMINÍSTICA** (maior `max_hp`; empate
+  ou memória muda, ordem do login). Cada conta decide na própria thread: um
+  sorteio daria respostas diferentes e o time teria DOIS líderes anunciando.
+- **O número de volta comparado é o DO LÍDER** (`volta_do_time`), nunca o
+  contador local de cada conta — eles divergem assim que alguém perde uma
+  largada.
+- **Os tempos da sincronia são PROVISÓRIOS** (`bot/app/sincronia.py`), por
+  decisão do usuário: rodar primeiro, medir pelos logs depois. Todo número lá
+  é declarado como provisório e a classe registra o que a medição precisa.
 - **O MURAL MORA EM UM LUGAR SÓ** (`bot/mural.py`). Ele é o quadro de avisos
   entre as contas do MESMO processo, e é usado pelo time do jogo (BC) e pelo
   time do APP. Duplicá-lo cria dois dicionários de batidas: o reseter bate num

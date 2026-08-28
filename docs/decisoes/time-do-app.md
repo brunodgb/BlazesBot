@@ -111,6 +111,37 @@ valor declarado pelo usuário, e entram no `docs/TEMPOS.md` marcados como tal. O
 `4.0` que já existem no BC são de outras coisas
 (`SEGUNDOS_SENTADO_APOS_GUARDAS`, `SEGUNDOS_ANTES_DO_TAB_NO_BOSS`).
 
+## O SORTEIO VIROU ORDEM FIXA -- desvio do que foi combinado
+
+Na conversa ficou *"se a memória não ler, escolhe um aleatório"* para o líder
+temporário. **Foi implementado como ordem determinística** (maior `max_hp`;
+empate ou memória muda, ordem do login), e o desvio é de correção, não de
+gosto:
+
+**cada conta decide isso sozinha, na própria thread.** Um sorteio faria a conta
+A concluir "quem assume é B" e a conta B concluir "quem assume é C" -- e o time
+passaria a ter DOIS líderes anunciando largadas concorrentes, que é pior que
+não ter nenhum. Com ordem fixa todo mundo calcula a mesma resposta sem precisar
+combinar nada. Travado por
+`tests/test_sincronia_do_time.py::test_a_eleicao_e_deterministica_para_todas_as_contas`.
+
+## DOIS DEFEITOS QUE OS TESTES PEGARAM ANTES DE RODAR
+
+Ficam registrados porque os dois são invisíveis em leitura e silenciosos em
+produção -- o time simplesmente não sincronizaria, sem erro nenhum:
+
+1. **O líder perdia a liderança na primeira volta.** Ele só publica estado no
+   FIM da largada, então qualquer seguidor que já tivesse publicado ganhava a
+   eleição -- e o líder declarado passava a esperar a largada de quem ele
+   lidera. Ninguém anunciava nada. Corrigido: quem é o líder declarado e está
+   rodando não elege ninguém.
+
+2. **`volta_pronta` comparava contadores diferentes.** O seguidor publicava o
+   número da volta DELE e o líder comparava com o número da volta DELE. As duas
+   contagens divergem no instante em que alguém perde uma largada, então a
+   barreira "todos prontos" fechava só por coincidência. Corrigido com
+   `volta_do_time`, que é sempre o número do líder.
+
 ## Os blocos, na ordem
 
 | # | bloco | estado |
@@ -118,7 +149,7 @@ valor declarado pelo usuário, e entram no `docs/TEMPOS.md` marcados como tal. O
 | 1 | Campos `time_logins` / `time_modo` no `AppConfig`, ponte web, testes | **feito** |
 | 2 | Aba APP em duas colunas + painel do Time na direita + `npm run build` | **feito** |
 | 3 | Promoção do `team.py`: `bot/mural.py` (quadro de avisos) + `bot/team.py` (time no jogo) | **feito** |
-| 4 | Sincronia: mural do time, convocação no supervisor, largada no executor | a fazer |
+| 4 | Sincronia: mural do time, convocação no supervisor, largada no executor | **feito** |
 | 5 | Ajuste dos tempos pelos logs da rodada real | a fazer |
 
 A ordem não é gosto: **2** precisa dos campos de **1** e **4** precisa do mural

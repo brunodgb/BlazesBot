@@ -31,7 +31,7 @@ desta lista é ou uma exceção justificada, ou dívida que ninguém converteu a
 mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 
 
-**271 tempos catalogados** — 208 FIXOS (espera cega), 63 entre TETO e PASSO.
+**278 tempos catalogados** — 212 FIXOS (espera cega), 66 entre TETO e PASSO.
 
 
 **1 estão diferentes do original:** `PASSOS_DO_APP`
@@ -251,7 +251,12 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | `PASSO_DA_ESPERA_DA_BASE` | 0.1 s | = | PASSO | [executor.py:663](blazesbot/bot/app/executor.py#L663) | `_esperar_chegar_na_base` | Cadência da pergunta "já cheguei?". Leitura de posição é de microssegundos; o |
 | `PASSO_DA_CONFIRMACAO_DO_TAB` | 0.01 s | *novo* | PASSO | [executor.py:687](blazesbot/bot/app/executor.py#L687) | `_esperar_o_alvo_trocar` | ERA AQUI O ATRASO ENTRE O TAB E A LINHA 1 -- 26/08/2026 |
 | `SEGUNDOS_DO_PASSO_DO_SHUFFLE` | 2 s | *novo* | PASSO | [executor.py:693](blazesbot/bot/app/executor.py#L693) | `_fazer_shuffle_anti_afk` | Cada perna do shuffle anti-AFK (ida e volta). Era `time.sleep(1.0)` cego duas |
-| *literal em* `rodar` | 0.25 s | = | FIXO | [executor.py:2689](blazesbot/bot/app/executor.py#L2689) | `rodar` | Laço contínuo: volta após volta, até `continuar()` devolver False. |
+| *literal em* `rodar` | 0.25 s | = | FIXO | [executor.py:2699](blazesbot/bot/app/executor.py#L2699) | `rodar` | Laço contínuo: volta após volta, até `continuar()` devolver False. |
+| `TETO_DA_LARGADA_SEGUNDOS` | 3 s | *novo* | TETO | [sincronia.py:57](blazesbot/bot/app/sincronia.py#L57) | `_esperar_os_seguidores, _entrar_na_largada` | Quanto o líder espera os seguidores confirmarem a largada. |
+| `TETO_DO_ALINHAMENTO_SEGUNDOS` | 4 s | *novo* | TETO | [sincronia.py:63](blazesbot/bot/app/sincronia.py#L63) | `_alinhar_no_alvo` | Quanto o seguidor insiste no TAB até o alvo dele bater com o do líder. |
+| `ESPERA_ENTRE_TABS_DO_ALINHAMENTO` | 0.4 s | *novo* | FIXO | [sincronia.py:74](blazesbot/bot/app/sincronia.py#L74) | `_alinhar_no_alvo` | Cadência do TAB durante o alinhamento. |
+| `PASSO_DA_ESPERA_DA_LARGADA` | 0.05 s | *novo* | PASSO | [sincronia.py:77](blazesbot/bot/app/sincronia.py#L77) | `_esperar_os_seguidores, _entrar_na_largada` | De quanto em quanto tempo o seguidor confere se a largada saiu. |
+| `SEGUNDOS_SEM_MUDANCA_PARA_TAB` | 4 s | *novo* | FIXO | [sincronia.py:85](blazesbot/bot/app/sincronia.py#L85) | `conferir_a_parada` | Sem trocar de estado de batalha por este tempo, dá TAB. |
 
 
 ## LOGIN E RELOGIN
@@ -304,13 +309,15 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | *literal em* `main` | 8 s | = | FIXO | [instrumentar_clique.py:488](blazesbot/bot/instrumentar_clique.py#L488) | `main` |  |
 | `CONVITE_VALIDO_SEGUNDOS` | 60 s (1 min) | = | FIXO | [mural.py:63](blazesbot/bot/mural.py#L63) | `convite_pendente` | Validade do anúncio. Cobre a fila de resposta do outro cliente com folga; mais |
 | `ACEITE_VALIDO_SEGUNDOS` | 15 s | = | FIXO | [mural.py:185](blazesbot/bot/mural.py#L185) | `aceite_pendente` | Validade do aceite. Curta de propósito: ele confirma UM convite recém-enviado, |
+| `LARGADA_VALIDA_SEGUNDOS` | 8 s | *novo* | FIXO | [mural.py:245](blazesbot/bot/mural.py#L245) | `largada_pendente` | Quanto tempo uma largada anunciada continua valendo. |
+| `ESTADO_VALIDO_SEGUNDOS` | 30 s | *novo* | FIXO | [mural.py:253](blazesbot/bot/mural.py#L253) | `estado_da_conta` | Quanto tempo o estado publicado por uma conta continua valendo. |
 | `PASSO_VERTICAL` | 4 s | = | PASSO | [recorte_do_time.py:90](blazesbot/bot/recorte_do_time.py#L90) | `_candidatos` |  |
-| `TETO_DA_FATIA_DE_ESPERA` | 0.25 s | = | TETO | [supervisor.py:68](blazesbot/bot/supervisor.py#L68) | `wait` | Teto de uma fatia dentro de `_AnyEvent.wait`. É REDE, não o caminho normal -- |
-| *literal em* `_sleep_interruptible` | 0.125 s | = | FIXO | [supervisor.py:245](blazesbot/bot/supervisor.py#L245) | `_sleep_interruptible` |  |
-| *literal em* `_launch_client` | 1 s | = | FIXO | [supervisor.py:333](blazesbot/bot/supervisor.py#L333) | `_launch_client` | Lança o Client.bat e devolve o PID da nova instância. |
-| *literal em* `_find_window` | 1 s | = | FIXO | [supervisor.py:350](blazesbot/bot/supervisor.py#L350) | `_find_window` | Localiza a janela de nível superior pertencente ao PID. |
-| *literal em* `_run_session` | 1.5 s | = | FIXO | [supervisor.py:917](blazesbot/bot/supervisor.py#L917) | `_run_session` | Uma sessão: obter uma janela, logar se preciso, e operar. |
-| *literal em* `_operate` | 0.5 s | = | FIXO | [supervisor.py:1108](blazesbot/bot/supervisor.py#L1108) | `_operate` | Opera a conta logada, respeitando o farm ligado/desligado ao vivo. |
+| `TETO_DA_FATIA_DE_ESPERA` | 0.25 s | = | TETO | [supervisor.py:70](blazesbot/bot/supervisor.py#L70) | `wait` | Teto de uma fatia dentro de `_AnyEvent.wait`. É REDE, não o caminho normal -- |
+| *literal em* `_sleep_interruptible` | 0.125 s | = | FIXO | [supervisor.py:247](blazesbot/bot/supervisor.py#L247) | `_sleep_interruptible` |  |
+| *literal em* `_launch_client` | 1 s | = | FIXO | [supervisor.py:335](blazesbot/bot/supervisor.py#L335) | `_launch_client` | Lança o Client.bat e devolve o PID da nova instância. |
+| *literal em* `_find_window` | 1 s | = | FIXO | [supervisor.py:352](blazesbot/bot/supervisor.py#L352) | `_find_window` | Localiza a janela de nível superior pertencente ao PID. |
+| *literal em* `_run_session` | 1.5 s | = | FIXO | [supervisor.py:919](blazesbot/bot/supervisor.py#L919) | `_run_session` | Uma sessão: obter uma janela, logar se preciso, e operar. |
+| *literal em* `_operate` | 0.5 s | = | FIXO | [supervisor.py:1113](blazesbot/bot/supervisor.py#L1113) | `_operate` | Opera a conta logada, respeitando o farm ligado/desligado ao vivo. |
 | `ESPERA_DO_MENU` | 0.35 s | = | FIXO | [team.py:134](blazesbot/bot/team.py#L134) | `_enviar_convite` | Tempo para o menu de contexto aparecer depois do clique direito. |
 | `ESPERA_PELA_RESPOSTA` | 4 s | = | FIXO | [team.py:139](blazesbot/bot/team.py#L139) | `montar_time` | Quanto esperar a outra conta aceitar. Ela recebe o anúncio interno e clica no |
 | `PASSO_DA_ESPERA_DO_TIME` | 0.1 s | = | PASSO | [team.py:147](blazesbot/bot/team.py#L147) | `montar_time` | De quanto em quanto tempo conferir se o time já formou. |

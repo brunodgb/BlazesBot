@@ -215,3 +215,121 @@ def consumir_aceite(meu_nick: str) -> None:
         return
     with _LOCK_CONVITES:
         _ACEITES.pop(meu_nick.strip().lower(), None)
+
+# ===========================================================================
+# O TIME DO APP -- a largada, o alvo e o estado de cada conta
+# ===========================================================================
+#
+# POR QUE ISTO EXISTE. O time do APP precisa que várias contas comecem cada
+# volta da macro no MESMO instante, e (no modo "mesmo_alvo") no MESMO mob. As
+# contas são threads do mesmo processo, então isso não pede rede, nem arquivo,
+# nem leitura de tela: o líder ANUNCIA e os seguidores CONSULTAM -- o mesmo
+# princípio que já resolvia o convite de time logo acima.
+#
+# O QUADRO É POR LÍDER. A chave de tudo é o login do líder, e não um "time
+# global": duas pessoas podem montar dois times na mesma execução, e cada um
+# tem a sua largada.
+_LARGADAS: dict[str, tuple[int, int, float]] = {}   # lider -> (volta, alvo, quando)
+_ESTADOS: dict[str, tuple[dict, float]] = {}        # login -> (estado, quando)
+_LOCK_TIME = threading.Lock()
+
+# Quanto tempo uma largada anunciada continua valendo.
+#
+# PROVISÓRIO -- não medido. Decisão do usuário em 27/08/2026: deixar rodando
+# antes de medir, para a rodada real produzir os números. Ver
+# `docs/decisoes/time-do-app.md`, seção "MEDIR DEPOIS, NÃO ANTES".
+#
+# Ele existe para o seguidor não entrar numa largada VELHA: se ele estava
+# relogando, o anúncio que encontrar ao voltar pode ser de minutos atrás, e
+# entrar nele seria começar a volta sozinho achando que está junto.
+LARGADA_VALIDA_SEGUNDOS = 8.0
+
+# Quanto tempo o estado publicado por uma conta continua valendo.
+#
+# PROVISÓRIO -- não medido, mesma decisão. Serve para o líder saber quem ainda
+# está de pé: conta que parou de publicar não conta para a eleição nem para a
+# barreira. Mais generoso que a largada porque uma volta longa da macro pode
+# passar de 8 s sem publicar nada.
+ESTADO_VALIDO_SEGUNDOS = 30.0
+
+
+def anunciar_largada(lider: str, volta: int, alvo: int) -> None:
+    """O líder abre a volta `volta`, com `alvo` = id do mob dele (0 = nenhum)."""
+    if not lider:
+        return
+    with _LOCK_TIME:
+        _LARGADAS[lider.strip().lower()] = (int(volta), int(alvo or 0), time.time())
+
+
+def largada_pendente(lider: str) -> tuple[int, int] | None:
+    """A largada aberta pelo líder, ou `None` se não houver ou já vencida."""
+    if not lider:
+        return None
+    with _LOCK_TIME:
+        dados = _LARGADAS.get(lider.strip().lower())
+    if dados is None:
+        return None
+    volta, alvo, quando = dados
+    if time.time() - quando > LARGADA_VALIDA_SEGUNDOS:
+        return None
+    return volta, alvo
+
+
+def esquecer_largada(lider: str) -> None:
+    """Apaga a largada do líder. Usado quando o time para."""
+    if not lider:
+        return
+    with _LOCK_TIME:
+        _LARGADAS.pop(lider.strip().lower(), None)
+
+
+def publicar_estado(login: str, **estado: object) -> None:
+    """Cada conta do time publica o que sabe de si: vida, alvo, batalha.
+
+    É PUBLICADO UMA VEZ POR VOLTA, e não continuamente: a volta é a unidade de
+    decisão do time, e publicar mais rápido só gastaria lock sem mudar nenhuma
+    decisão.
+    """
+    if not login:
+        return
+    with _LOCK_TIME:
+        _ESTADOS[login.strip().lower()] = (dict(estado), time.time())
+
+
+def estado_da_conta(login: str) -> dict | None:
+    """O último estado publicado por esta conta, ou `None` se velho demais.
+
+    "Velho demais" e "nunca publicou" devolvem a MESMA coisa de propósito: as
+    duas respostas significam "não conte com ela agora", e distinguir as duas
+    faria quem pergunta escrever dois ramos para o mesmo desfecho.
+    """
+    if not login:
+        return None
+    with _LOCK_TIME:
+        dados = _ESTADOS.get(login.strip().lower())
+    if dados is None:
+        return None
+    estado, quando = dados
+    if time.time() - quando > ESTADO_VALIDO_SEGUNDOS:
+        return None
+    return estado
+
+
+def esquecer_estado(login: str) -> None:
+    """A conta saiu do time (parou, caiu, foi para o BC)."""
+    if not login:
+        return
+    with _LOCK_TIME:
+        _ESTADOS.pop(login.strip().lower(), None)
+
+def zerar_o_time_para_teste() -> None:
+    """Esvazia o quadro do time. SÓ para teste.
+
+    Existe pelo mesmo motivo de `core.calibracao.zerar_para_teste`: o quadro é
+    estado global de módulo e a suíte não tem fixture que o limpe, então um
+    teste que anuncia uma largada contamina o seguinte -- e o sintoma seria um
+    teste passando por causa do vizinho, que é pior que um teste falhando.
+    """
+    with _LOCK_TIME:
+        _LARGADAS.clear()
+        _ESTADOS.clear()
