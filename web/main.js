@@ -296,9 +296,10 @@ function renderContas() {
     }
     const tr = document.createElement("tr");
     tr.dataset.uid = c.uid;
-    // login permite casar esta linha com est.contas[].login do estado, para
-    // refletir em runtime o BC farm (ex.: o bot desliga sozinho quando a conta
-    // vai vender sem tecla de retorno configurada).
+    // O login fica no atributo só para depuração e para a estatística casar por
+    // nome; QUEM identifica a linha é o `data-uid` acima. O poll de estado
+    // buscava por login e login é campo livre: dois iguais faziam a busca
+    // acertar a primeira linha, que podia ser de outra conta.
     tr.dataset.login = c.login || "";
     if (c.uid === contaUidSelecionado) tr.classList.add("linha-ativa");
 
@@ -439,29 +440,85 @@ function linhasDeConta() {
 
 function aoPegarAlca(e) {
   if (e.button !== 0) return;
+  // UM arraste por vez. Sem esta guarda, um segundo `pointerdown` (segundo
+  // dedo, caneta) sobrescrevia o arraste em curso e o primeiro ficava com o
+  // `transform` pendurado na linha, sem nada para limpá-lo.
+  if (arraste) return;
   const alca = e.target.closest('[data-acao="arrastar"]');
   if (!alca) return;
   const linha = alca.closest("tr[data-uid]");
   if (!linha) return;
   e.preventDefault();
+
   const linhas = linhasDeConta();
+  // RÉGUA DO TBODY INTEIRO, cabeçalhos de grupo incluídos.
+  //
+  // O destino é decidido pela posição REAL do ponteiro contra estas faixas, e
+  // não por "quantas alturas de linha ele andou". É isso que permite saber que
+  // a conta caiu ABAIXO de um cabeçalho -- ou seja, DENTRO daquele grupo -- e
+  // conserta o gesto mais natural de todos: soltar como PRIMEIRA linha de outro
+  // grupo. Medindo por múltiplos de altura, aquele caso herdava o grupo da
+  // vizinha de cima, que é a última do grupo ANTERIOR.
+  //
+  // Medidas tiradas UMA vez: durante o arraste as linhas estão deslocadas por
+  // `transform`, e medir de novo leria a posição fingida.
+  const faixas = $$("#corpo-contas tr").map((tr) => {
+    const r = tr.getBoundingClientRect();
+    return {
+      topo: r.top,
+      base: r.bottom,
+      conta: tr.hasAttribute("data-uid"),
+      grupo: tr.classList.contains("linha-grupo")
+        ? (tr.dataset.grupo || "") : null,
+    };
+  });
+
   arraste = {
+    pointerId: e.pointerId,
+    alca,
     linha,
     y0: e.clientY,
     movendo: false,
-    // Altura de cada linha, medida UMA vez: durante o arraste as linhas estão
-    // deslocadas por `transform`, e medir de novo leria a posição fingida.
+    faixas,
     alturas: linhas.map((l) => l.getBoundingClientRect().height),
     linhas,
     de: linhas.indexOf(linha),
     para: linhas.indexOf(linha),
-    ordemAnterior: contasCache.map((c) => c.uid),
+    grupoDestino: (contasCache.find((c) => c.uid === linha.dataset.uid)
+                   || {}).grupo || "",
   };
   alca.setPointerCapture(e.pointerId);
 }
 
+// Onde a conta cai, e em que grupo ela entra, para um `clientY`.
+//
+// `posicao` é o índice ENTRE AS CONTAS (faixa de cabeçalho não conta), e
+// `grupo` é o do último cabeçalho acima do ponteiro -- `""` quando não há
+// nenhum, que é justamente o bloco sem grupo.
+function destinoDoArraste(clientY) {
+  const { faixas, de, linhas } = arraste;
+  let contasAntes = 0;
+  let grupo = "";
+  let passou = 0;
+  for (const f of faixas) {
+    if (clientY < (f.topo + f.base) / 2) break;
+    passou++;
+    if (f.grupo !== null) grupo = f.grupo;
+    else if (f.conta) contasAntes++;
+  }
+  if (!passou) {
+    // Acima de tudo: entra no grupo do primeiro bloco, se ele tiver rótulo.
+    const primeira = faixas[0];
+    grupo = primeira && primeira.grupo !== null ? primeira.grupo : "";
+  }
+  // A própria linha arrastada não conta como "antes" de si mesma.
+  let posicao = contasAntes > de ? contasAntes - 1 : contasAntes;
+  posicao = Math.max(0, Math.min(linhas.length - 1, posicao));
+  return { posicao, grupo };
+}
+
 function aoMoverArraste(e) {
-  if (!arraste) return;
+  if (!arraste || e.pointerId !== arraste.pointerId) return;
   const dy = e.clientY - arraste.y0;
   if (!arraste.movendo) {
     if (Math.abs(dy) < FOLGA_PARA_ARRASTAR) return;
@@ -470,11 +527,11 @@ function aoMoverArraste(e) {
     arraste.linha.classList.add("linha-arrastada");
   }
 
-  // Quantas posições o ponteiro já cobriu, medido pelas alturas reais.
+  const { posicao, grupo } = destinoDoArraste(e.clientY);
+  arraste.para = posicao;
+  arraste.grupoDestino = grupo;
+  const destino = posicao;
   const altura = arraste.alturas[arraste.de] || 1;
-  let destino = arraste.de + Math.round(dy / altura);
-  destino = Math.max(0, Math.min(arraste.linhas.length - 1, destino));
-  arraste.para = destino;
 
   arraste.linha.style.transform = `translateY(${dy}px)`;
   // As vizinhas abrem espaço; ninguém muda de lugar no DOM ainda.
@@ -489,17 +546,26 @@ function aoMoverArraste(e) {
 
 function limparArraste() {
   if (!arraste) return;
+  // SOLTAR A CAPTURA EXPLICITAMENTE. Cancelando por Esc, o ponteiro seguia
+  // capturado pela alça até o usuário largar o botão -- e enquanto isso a
+  // tabela não recebia mais evento nenhum.
+  try {
+    if (arraste.alca.hasPointerCapture(arraste.pointerId)) {
+      arraste.alca.releasePointerCapture(arraste.pointerId);
+    }
+  } catch (_) { /* o navegador já soltou */ }
   document.body.classList.remove("arrastando-conta");
   arraste.linha.classList.remove("linha-arrastada");
   arraste.linhas.forEach((l) => { l.style.transform = ""; });
   arraste = null;
 }
 
-function aoSoltarLinha() {
+function aoSoltarLinha(e) {
   if (!arraste) return;
-  const { movendo, de, para, ordemAnterior, linhas } = arraste;
+  if (e && e.pointerId !== undefined && e.pointerId !== arraste.pointerId) return;
+  const { movendo, de, para, linhas, grupoDestino } = arraste;
   limparArraste();
-  if (!movendo || de === para) return;
+  if (!movendo) return;
 
   // A ordem nova, calculada sobre os UIDS -- nunca sobre posições de tela.
   const uids = linhas.map((l) => l.dataset.uid);
@@ -517,15 +583,16 @@ function aoSoltarLinha() {
   // (`accept_team_invites`). Nada do bot muda de comportamento por causa dele --
   // era isso que a decisão "só reordena" protegia.
   //
-  // A regra é a vizinha DE CIMA; sem vizinha de cima, a de baixo. Assim
-  // arrastar para o topo de um grupo entra NELE em vez de virar "sem grupo".
+  // Quem diz o grupo é o CABEÇALHO acima de onde o ponteiro soltou
+  // (`destinoDoArraste`), não a conta vizinha. A regra da vizinha errava justo
+  // no gesto mais natural: soltar como PRIMEIRA linha de outro grupo, onde a
+  // vizinha de cima é a última do grupo ANTERIOR.
   const grupoPorUid = new Map(contasCache.map((c) => [c.uid, (c.grupo || "").trim()]));
-  const acima = para > 0 ? uids[para - 1] : null;
-  const abaixo = para + 1 < uids.length ? uids[para + 1] : null;
-  const grupoDestino = acima !== null
-    ? grupoPorUid.get(acima)
-    : (abaixo !== null ? grupoPorUid.get(abaixo) : "");
-  grupoPorUid.set(movido, grupoDestino || "");
+  const grupoNovo = (grupoDestino || "").trim();
+  const grupoAntigo = grupoPorUid.get(movido) || "";
+  grupoPorUid.set(movido, grupoNovo);
+  // Nem a posição nem o rótulo mudaram: não gasta gravação.
+  if (de === para && grupoNovo === grupoAntigo) return;
 
   // UMA chamada leva ordem e rótulos juntos: se fossem duas, uma podia gravar e
   // a outra falhar, e a tabela ficaria com a ordem nova e o grupo velho.
@@ -538,12 +605,15 @@ function aoSoltarLinha() {
       renderContas();
       return;
     }
-    // Falhou: volta à ordem anterior. Mostrar uma ordem que o disco não tem
-    // seria pior que não reordenar -- o usuário confiaria nela.
-    const antes = new Map(contasCache.map((c) => [c.uid, c]));
-    contasCache = ordemAnterior.map((u) => antes.get(u)).filter(Boolean);
-    renderContas();
+    // FALHOU: RECARREGA DO BACKEND, não de uma cópia local.
+    //
+    // Reconstruir a ordem anterior de memória parece mais simples e está errado
+    // por dois motivos, os dois achados na revisão: uma conta que tenha entrado
+    // no cache durante a chamada DESAPARECERIA da tabela, e a chamada pode ter
+    // gravado no disco e falhado só na resposta -- e aí a "ordem anterior"
+    // seria justamente a que o disco NÃO tem. Quem sabe a verdade é o disco.
     avisar((r && r.erro) || "Não foi possível salvar a nova ordem.");
+    carregarContas();
   });
 }
 
@@ -1936,7 +2006,11 @@ function atualizarEstado(est) {
   // deixa o checkbox da tabela acompanhar, sem re-renderizar a linha inteira
   // (que apagaria uma edição inline em andamento).
   (est.contas || []).forEach((c) => {
-    const tr = $("#corpo-contas").querySelector(`tr[data-login="${CSS.escape(c.login)}"]`);
+    // POR UID, não por login: o login é campo livre e dois iguais faziam esta
+    // busca acertar a primeira linha, que podia ser de outra conta. Cai fora
+    // sem uid em vez de adivinhar pelo login.
+    if (!c.uid) return;
+    const tr = $("#corpo-contas").querySelector(`tr[data-uid="${CSS.escape(c.uid)}"]`);
     if (!tr) return;
     const chkBC = tr.querySelector('input[data-acao="bc"]');
     if (chkBC && chkBC.checked !== !!c.farm) chkBC.checked = !!c.farm;

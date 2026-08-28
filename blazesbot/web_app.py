@@ -47,6 +47,7 @@ from .bot.bc import amostragem_de_cliques, teste_venda
 from .bot.supervisor import BotManager
 from .config import (
     DEFAULT_CONFIG_PATH,
+    ICONE_DO_APP,
     LIMITE_DO_NOME_DO_GRUPO,
     MAX_BOLSAS,
     MINIMO_DE_ESPERA_DO_APP_MS,
@@ -752,6 +753,11 @@ class _App:
             conta = por_login.get(login)
             contas.append({
                 "login": login,
+                # UID para a tela achar a LINHA certa. Ela casava por login, e
+                # login repetido (o campo é livre) atualizava a primeira linha
+                # encontrada -- que podia ser de outra conta. É a mesma classe de
+                # defeito que o uid existe para fechar.
+                "uid": conta.garantir_uid() if conta else "",
                 "nick": _nick(conta) if conta else login,
                 "farm": bool(d.get("farm")),
                 "runs": d.get("runs", 0),
@@ -1333,8 +1339,22 @@ def run() -> None:
     # ÚNICA área arrastável; clicar em qualquer outro ponto do app não move a
     # janela.
     webview.settings["DRAG_REGION_SELECTOR"] = ".titlebar"
+    # ÍCONE DA JANELA E DA BARRA DE TAREFAS. A janela é `frameless`, então o
+    # ícone não aparece em barra de título nenhuma -- ele existe para a BARRA DE
+    # TAREFAS e o Alt+Tab, que sem isto mostravam o ícone genérico do Python.
+    # `icon=` é ignorado por alguns backends do pywebview, então a falha é
+    # tolerada: ficar sem ícone não pode impedir o bot de abrir.
+    icone = str(ICONE_DO_APP) if ICONE_DO_APP.exists() else None
     try:
-        webview.start(private_mode=False)
+        try:
+            if icone:
+                webview.start(private_mode=False, icon=icone)
+            else:
+                webview.start(private_mode=False)
+        except TypeError:
+            # Backend do pywebview sem suporte a `icon=`: abre sem ícone. Ficar
+            # sem ícone não pode impedir o bot de subir.
+            webview.start(private_mode=False)
     finally:
         if _APP.manager:
             _APP.manager.stop()

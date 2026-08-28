@@ -22,7 +22,7 @@ from datetime import date
 from pathlib import Path
 
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal
-from PyQt6.QtGui import QTextCursor
+from PyQt6.QtGui import QIcon, QTextCursor
 from PyQt6.QtWidgets import (
     QApplication,
     QCheckBox,
@@ -53,7 +53,7 @@ from PyQt6.QtWidgets import (
 from ..bot.app import afericao
 from ..bot.bc import amostragem_de_cliques, teste_venda
 from ..bot.supervisor import BotManager
-from ..config import Account, BotConfig, segundos_para_ms
+from ..config import ICONE_DO_APP, Account, BotConfig, segundos_para_ms
 from ..core import logmodo, quedas, stats_diarias
 from ..core.coords import (
     SUPPORTED_RESOLUTIONS,
@@ -177,6 +177,13 @@ class MainWindow(QMainWindow):
         self._contas_no_filtro: set[str] = set()
 
         self.setWindowTitle("BlazesBot — Talisman Online — Bewitcher Cave")
+        # ÍCONE DA JANELA E DA BARRA DE TAREFAS. Não existia: nem aqui nem no
+        # pywebview havia `setWindowIcon`, e o `favicon.ico` que a web
+        # referenciava não estava no repositório. Um arquivo só serve às duas
+        # telas -- duas cópias divergiriam na primeira troca de arte.
+        icone = ICONE_DO_APP
+        if icone.exists():
+            self.setWindowIcon(QIcon(str(icone)))
         self.resize(1200, 800)
         self.setStyleSheet(STYLESHEET)
 
@@ -380,8 +387,30 @@ class MainWindow(QMainWindow):
         rem = QPushButton("Remover selecionada")
         rem.setObjectName("danger")
         rem.clicked.connect(self._remove_row)
+
+        # ORDEM DAS CONTAS: botões, e NÃO arraste de linha.
+        #
+        # A web reordena arrastando; aqui não pode. Esta tabela tem SEIS
+        # `setCellWidget` (senha, posição, servidor, BC, APP, editar), e o
+        # arraste interno do Qt move os `QTableWidgetItem` mas NÃO move os
+        # widgets de célula: a senha de uma conta ficaria na linha de outra.
+        # Botão mexe no MODELO e repopula, então widget e dado nunca se
+        # separam. A funcionalidade é a mesma nas duas telas -- reordenar e
+        # gravar --, só o gesto difere, e o motivo está medido aqui.
+        self.bt_subir = QPushButton("▲")
+        self.bt_subir.setToolTip("Mover a conta selecionada para cima")
+        self.bt_subir.setFixedWidth(34)
+        self.bt_subir.clicked.connect(lambda: self._mover_conta(-1))
+        self.bt_descer = QPushButton("▼")
+        self.bt_descer.setToolTip("Mover a conta selecionada para baixo")
+        self.bt_descer.setFixedWidth(34)
+        self.bt_descer.clicked.connect(lambda: self._mover_conta(1))
+
         botoes.addWidget(add)
         botoes.addWidget(rem)
+        botoes.addSpacing(12)
+        botoes.addWidget(self.bt_subir)
+        botoes.addWidget(self.bt_descer)
         botoes.addStretch()
         layout.addLayout(botoes)
 
@@ -416,6 +445,41 @@ class MainWindow(QMainWindow):
                 "Conta adicionada como INATIVA. Preencha usuário e senha e "
                 "marque 'Ativa' para ela entrar no ar."
             )
+
+    def _mover_conta(self, passo: int) -> None:
+        """Move a conta selecionada uma posição, e GRAVA.
+
+        Reordena `config.accounts` -- a ordem das contas É a ordem do array,
+        não existe campo de ordem (ver `BotConfig.reordenar_contas`). Depois
+        repopula a tabela inteira: é o que mantém cada widget de célula com o
+        dado da conta certa.
+
+        A seleção ACOMPANHA a conta, não a posição. Sem isso, clicar ▲ duas
+        vezes moveria duas contas diferentes.
+        """
+        linha = self.tbl.currentRow()
+        conta = self._account_of_row(linha)
+        if conta is None:
+            return
+        contas = self.config.accounts
+        try:
+            de = contas.index(conta)
+        except ValueError:
+            return
+        para = de + passo
+        if not (0 <= para < len(contas)):
+            return
+        contas.insert(para, contas.pop(de))
+
+        self._loading = True
+        try:
+            self.tbl.setRowCount(0)
+            for c in contas:
+                self._add_row(c)
+        finally:
+            self._loading = False
+        self.tbl.setCurrentCell(para, COL_LOGIN)
+        self._apply_live()
 
     def _add_row(self, conta: Account, novo: bool = False) -> None:
         antes = self._loading

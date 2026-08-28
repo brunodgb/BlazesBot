@@ -471,6 +471,19 @@ MINIMO_DELAY_MS = 100
 # Um número lido por dois lados mora num lugar só.
 MINIMO_DE_ESPERA_DO_APP_MS = MINIMO_DELAY_MS
 
+# ÍCONE DO APLICATIVO — UM ARQUIVO SÓ para as duas interfaces.
+#
+# Mora em `web/public/` porque é de lá que o Vite o copia para o `dist/`, e é o
+# `dist/` que o pywebview abre. A GUI PyQt6 aponta para o MESMO arquivo: duas
+# cópias divergiriam na primeira troca de arte.
+#
+# Antes disto, `favicon.ico` era referenciado em dois lugares do HTML e NÃO
+# EXISTIA no repositório -- o que aparecia no titlebar era o placeholder de
+# imagem quebrada do WebView2. E não havia `setWindowIcon` em lugar nenhum, então
+# a janela e a barra de tarefas também estavam sem ícone.
+ICONE_DO_APP = Path(__file__).resolve().parents[1] / "web" / "public" / "favicon.ico"
+
+
 # Teto do nome de um grupo de contas (`Account.grupo`).
 #
 # O rótulo entra num cabeçalho que ocupa a largura da tabela: nome gigante

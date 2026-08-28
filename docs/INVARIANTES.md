@@ -166,9 +166,16 @@ time a flag não faz nada.
 - **A VÍTIMA AVISA, a Fada não adivinha.** Quem lê a vida é o próprio
   personagem, pela memória. A Fada nunca decide quem curar olhando barra de
   tela.
-- **CLICOU, CONFERE.** Depois de clicar no retrato, a Fada lê o `nome` do alvo
-  pela memória e compara com quem pediu. O mapa slot→nick é aprendido, mas
-  **conferido sempre**: a ordem do painel muda quando alguém reentra no time.
+- **CLICOU, CONFERE — E ID QUE NÃO BATE NÃO CURA.** MEDIDO em 28/08/2026: a
+  memória NÃO descreve jogador (`nome`/`hp` vêm nulos até para o próprio
+  personagem), mas o `TARGET_ID` responde. Então a confirmação é por ID:
+  cada conta publica o próprio id (obtido com a tecla de auto-seleção) e a
+  Fada compara o id lido depois do clique. **Clicar num aliado LONGE não
+  seleciona nada e o alvo continua o de antes** — curar sem conferir curaria
+  o aliado ANTERIOR, tirando o pedido da fila com a vítima ainda ferida, sem
+  erro nenhum na tela.
+- **A LEITURA DO ALVO SÓ VALE ~150 ms DEPOIS DA AÇÃO.** Medido: 36 a 123 ms
+  entre o clique e a memória virar. Perguntar antes disso lê o alvo ANTERIOR.
 - **A FADA FICA FORA DA LARGADA**, da macro e da sincronia. Contá-la como
   membro trava o time esperando uma confirmação que nunca vem.
 - **SEM FADA DE PÉ, A POÇÃO VOLTA.** "De pé" é a batida dela no mural, e essa

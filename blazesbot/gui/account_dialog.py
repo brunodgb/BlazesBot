@@ -38,6 +38,7 @@ from PyQt6.QtWidgets import (
 
 from ..bot.bc.combat import SEGUNDOS_DA_POCAO_DE_VIDA
 from ..config import (
+    LIMITE_DO_NOME_DO_GRUPO,
     MAX_BOLSAS,
     MINIMO_DE_ESPERA_DO_APP_MS,
     MINIMO_DELAY_MS,
@@ -306,6 +307,21 @@ class AccountDialog(QDialog):
         f.addRow(self.ck_pet_start)
         # Mesma faixa e mesmo passo do campo na web (40..60, de 5 em 5) --
         # ver `PET_FEED_MINUTOS_MIN`/`MAX`.
+        # GRUPO: rótulo só para organizar a lista de contas. Não é o time do
+        # APP (`time_logins`) nem a party da cave (`accept_team_invites`) --
+        # o bot não muda nada por causa dele. Espelha o campo da web.
+        self.in_grupo = QLineEdit()
+        self.in_grupo.setMaxLength(LIMITE_DO_NOME_DO_GRUPO)
+        self.in_grupo.setPlaceholderText("sem grupo")
+        self.in_grupo.setToolTip(
+            "Rótulo só para VOCÊ organizar a lista de contas: as que tiverem "
+            "o mesmo grupo aparecem juntas.\n\n"
+            "NÃO é o time do modo APP nem a party da cave — o bot não muda "
+            "nada por causa deste campo.\n\n"
+            "Vazio deixa a conta fora de qualquer grupo."
+        )
+        f.addRow("Grupo:", self.in_grupo)
+
         self.cb_pet_feed = QComboBox()
         for m in range(PET_FEED_MINUTOS_MIN, PET_FEED_MINUTOS_MAX + 1, 5):
             self.cb_pet_feed.addItem(f"a cada {m} minutos", m)
@@ -1088,6 +1104,7 @@ class AccountDialog(QDialog):
         k, pet, pot, bc = st.keys, st.pet, st.potions, st.bc
 
         self.in_nick.setText(self.conta.last_char_name)
+        self.in_grupo.setText(self.conta.grupo)
         self.ck_aceitar.setChecked(st.accept_team_invites)
         self.ck_catador.setChecked(st.usar_catador)
 
@@ -1201,6 +1218,7 @@ class AccountDialog(QDialog):
         # identifica a janela do jogo, e isso não muda de atividade para
         # atividade.
         self.conta.last_char_name = self.in_nick.text().strip()
+        self.conta.grupo = self.in_grupo.text().strip()[:LIMITE_DO_NOME_DO_GRUPO]
         if self._reseter_seria_desmarcado():
             return                          # nada é salvo; o diálogo continua aberto
         st.accept_team_invites = self.ck_aceitar.isChecked()
