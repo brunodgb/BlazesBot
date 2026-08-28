@@ -251,7 +251,7 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | `PASSO_DA_ESPERA_DA_BASE` | 0.1 s | = | PASSO | [executor.py:663](blazesbot/bot/app/executor.py#L663) | `_esperar_chegar_na_base` | Cadência da pergunta "já cheguei?". Leitura de posição é de microssegundos; o |
 | `PASSO_DA_CONFIRMACAO_DO_TAB` | 0.01 s | *novo* | PASSO | [executor.py:687](blazesbot/bot/app/executor.py#L687) | `_esperar_o_alvo_trocar` | ERA AQUI O ATRASO ENTRE O TAB E A LINHA 1 -- 26/08/2026 |
 | `SEGUNDOS_DO_PASSO_DO_SHUFFLE` | 2 s | *novo* | PASSO | [executor.py:693](blazesbot/bot/app/executor.py#L693) | `_fazer_shuffle_anti_afk` | Cada perna do shuffle anti-AFK (ida e volta). Era `time.sleep(1.0)` cego duas |
-| *literal em* `rodar` | 0.25 s | = | FIXO | [executor.py:2726](blazesbot/bot/app/executor.py#L2726) | `rodar` | Laço contínuo: volta após volta, até `continuar()` devolver False. |
+| *literal em* `rodar` | 0.25 s | = | FIXO | [executor.py:2737](blazesbot/bot/app/executor.py#L2737) | `rodar` | Laço contínuo: volta após volta, até `continuar()` devolver False. |
 | `ESPERA_ENTRE_TABS_DO_ALINHAMENTO` | 0.4 s | *novo* | FIXO | [sincronia.py:97](blazesbot/bot/app/sincronia.py#L97) | `_alinhar_no_alvo` | Cadência do TAB durante o alinhamento. |
 | `PASSO_DA_ESPERA_DA_LARGADA` | 0.05 s | *novo* | PASSO | [sincronia.py:100](blazesbot/bot/app/sincronia.py#L100) | `_esperar_os_seguidores, _entrar_na_largada` | De quanto em quanto tempo o seguidor confere se a largada saiu. |
 | `SEGUNDOS_SEM_MUDANCA_PARA_TAB` | 4 s | *novo* | FIXO | [sincronia.py:108](blazesbot/bot/app/sincronia.py#L108) | `conferir_a_parada` | Sem trocar de estado de batalha por este tempo, dá TAB. |

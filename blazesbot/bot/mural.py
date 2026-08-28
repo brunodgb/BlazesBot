@@ -413,18 +413,25 @@ def passo_do_lider(lider: str) -> tuple[int, int, int] | None:
 
 
 def esperar_passo(lider: str, alvo: tuple[int, int, int],
-                  teto: float) -> bool:
-    """Espera o líder chegar em `alvo`. `True` = chegou (ou já tinha passado).
+                  teto: float) -> tuple[int, int, int] | None:
+    """Espera o líder chegar em `alvo` e DEVOLVE A MARCA que o liberou.
+
+    Devolver a marca aqui, e não deixar quem chamou lê-la depois, fecha uma
+    corrida real: entre o "pode ir" e a leitura, o líder podia virar a volta --
+    e o seguidor descartava uma linha que já estava autorizada, achando que a
+    volta tinha acabado. Esperar e ler é UMA operação, sob o mesmo lock.
 
     O `>=` é o que faz o atrasado destravar na hora em vez de esperar por uma
     linha que já foi anunciada.
     """
     if not lider:
-        return False
+        return None
     chave = lider.strip().lower()
     with _COND_DO_PASSO:
-        return _COND_DO_PASSO.wait_for(
-            lambda: _PASSOS.get(chave, (0, 0, -1)) >= alvo, timeout=teto)
+        if not _COND_DO_PASSO.wait_for(
+                lambda: _PASSOS.get(chave, (0, 0, -1)) >= alvo, timeout=teto):
+            return None
+        return _PASSOS.get(chave)
 
 
 def esquecer_passo(lider: str) -> None:

@@ -2529,15 +2529,26 @@ class ExecutorDeMacro:
             # time, responde na hora com o próprio índice e a macro roda
             # exatamente como sempre rodou.
             if self.sincronia is not None:
-                linha = self.sincronia.linha_a_enviar(i)
+                # O DELAY VAI JUNTO: o teto de espera da marca precisa ser maior
+                # que a pausa que o líder legitimamente faz nesta linha, senão
+                # uma macro com linhas de 3000 ms daria o líder como sumido em
+                # todas elas.
+                linha = self.sincronia.linha_a_enviar(i, passo.delay_ms)
                 if linha is None:
                     return False
                 if linha < 0:
                     # O líder virou a volta. O que sobrava desta bateria fora
                     # de hora; a largada seguinte realinha tudo.
                     return self._abortar_a_volta()
-                if 0 <= linha < len(passos):
-                    passo = passos[linha]
+                if not (0 <= linha < len(passos)):
+                    # Fora da lista. Só acontece se as macros divergirem, e o
+                    # silêncio aqui é o pior desfecho possível: `passo` ficaria
+                    # com o da iteração ANTERIOR e a tecla sairia repetida.
+                    self.log.warning(
+                        "Time: linha %d fora da macro (%d linhas) -- encerro a "
+                        "volta em vez de repetir tecla.", linha, len(passos))
+                    return self._abortar_a_volta()
+                passo = passos[linha]
             self.input.key(passo.key)
             self.teclas_enviadas += 1
             # QUEM DITA O RITMO. No líder (e fora de time) é o delay da macro;

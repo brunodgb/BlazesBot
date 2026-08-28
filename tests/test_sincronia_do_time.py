@@ -53,6 +53,7 @@ def _tetos_curtos(monkeypatch):
     monkeypatch.setattr(mod, "TETO_DA_LARGADA_SEGUNDOS", 0.2)
     monkeypatch.setattr(mod, "TETO_DO_ALINHAMENTO_SEGUNDOS", 0.2)
     monkeypatch.setattr(mod, "ESPERA_ENTRE_TABS_DO_ALINHAMENTO", 0.01)
+    monkeypatch.setattr(mod, "TETO_DA_LINHA_SEGUNDOS", 0.1)
 
 
 @pytest.fixture(autouse=True)
@@ -711,3 +712,46 @@ def test_o_seguidor_so_confirma_DEPOIS_de_alinhar():
     assert tentativas["n"] >= 1
     estado = mural.estado_da_conta("seguidor")
     assert estado["alvo"] == 999          # confirmou JÁ no alvo do líder
+
+def test_o_teto_da_linha_cobre_o_delay_dela():
+    """A macro real do usuário tem linhas de 3000 ms.
+
+    Com teto fixo de 2 s, o líder seria dado como sumido em TODA linha longa --
+    e o time se desmontaria justamente nas pausas normais dele.
+    """
+    s = _seguidor()
+    comeco = mod.time.monotonic()
+    s.linha_a_enviar(0, delay_ms=300)          # teto encurtado pela fixture
+    gasto = mod.time.monotonic() - comeco
+    assert gasto >= mod.TETO_DA_LINHA_SEGUNDOS + 0.3, (
+        "o teto ignorou o delay da linha")
+    assert s.linhas_sem_marca == 1
+
+
+def test_sem_lider_continua_de_onde_o_espelho_parou():
+    """Voltar ao índice local reenviaria linhas JÁ mandadas.
+
+    O seguidor espelhou até a linha 8 enquanto o índice local dele estava em 2;
+    perdido o líder, ele segue da 9 -- não da 2.
+    """
+    s = _seguidor()
+    mural.abrir_passo("lider", 1, 1, 8)
+    assert s.linha_a_enviar(0) == 8
+    mural.esquecer_passo("lider")
+    assert s.linha_a_enviar(2, delay_ms=0) == 9
+
+
+def test_sem_lider_o_ritmo_volta_a_ser_o_da_macro():
+    """Com o piso, a conta sozinha despejaria a volta inteira em 2 segundos."""
+    s = _seguidor()
+    assert s.espera_da_linha(3000) == mod.MINIMO_DE_ESPERA_DO_APP_MS
+    s._sem_lider_nesta_volta = True
+    assert s.espera_da_linha(3000) == 3000
+
+
+def test_esperar_a_marca_devolve_a_marca_que_liberou():
+    """Ler depois abria uma corrida: entre o 'pode ir' e a leitura, o líder
+    podia virar a volta e o seguidor descartava uma linha autorizada."""
+    mural.abrir_passo("lider", 1, 2, 6)
+    assert mural.esperar_passo("lider", (1, 2, 6), 0.01) == (1, 2, 6)
+    assert mural.esperar_passo("lider", (1, 2, 9), 0.01) is None

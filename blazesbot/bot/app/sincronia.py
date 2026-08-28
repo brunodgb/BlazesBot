@@ -434,7 +434,7 @@ class SincroniaDoTime:
         """Há time E o modo pede sincronia."""
         return self.modo != "copiar" and len(self._membros()) > 1
 
-    def linha_a_enviar(self, i: int) -> int | None:
+    def linha_a_enviar(self, i: int, delay_ms: int = 0) -> int | None:
         """Qual linha da macro mandar AGORA. `None` = é para parar.
 
         =================================================================
@@ -475,13 +475,16 @@ class SincroniaDoTime:
             return i
 
         alvo = (self.largada_epoca, self.volta_do_time, self._ultima_marca + 1)
-        limite = time.monotonic() + TETO_DA_LINHA_SEGUNDOS
+        # O TETO INCLUI O DELAY DA LINHA, e isso não é folga: com teto fixo de
+        # 2 s e uma macro cujas linhas esperam 3000 ms -- que é a macro real do
+        # usuário --, o líder seria dado como sumido em TODA linha longa. O
+        # teto pergunta "ele parou?", e para isso precisa ser maior que a pausa
+        # que ele legitimamente faz.
+        limite = time.monotonic() + TETO_DA_LINHA_SEGUNDOS + max(0, delay_ms) / 1000.0
         while time.monotonic() < limite:
-            if mural.esperar_passo(self.largada_de, alvo,
-                                   PASSO_DA_ESPERA_DA_LINHA):
-                marca = mural.passo_do_lider(self.largada_de)
-                if marca is None:
-                    break
+            marca = mural.esperar_passo(self.largada_de, alvo,
+                                        PASSO_DA_ESPERA_DA_LINHA)
+            if marca is not None:
                 epoca, volta, linha = marca
                 if (epoca, volta) != (self.largada_epoca, self.volta_do_time):
                     # O líder virou a volta (ou reiniciou). A minha acaba aqui:
@@ -494,12 +497,22 @@ class SincroniaDoTime:
             if not self._ex._continuar():
                 return None
 
-        # Passou o teto: o líder parou (curando, voltando à base, caiu). Mandar
-        # sozinho é melhor que ficar parado -- e a volta segue no ritmo próprio
-        # até a largada seguinte reencontrar o time.
+        # Passou o teto: o líder parou (curando, voltando à base, caiu). A volta
+        # segue SOZINHA -- ficar parado é o que não pode.
         self._sem_lider_nesta_volta = True
         self.linhas_sem_marca += 1
-        return i
+        return self._proxima_linha_sozinha(i)
+
+    def _proxima_linha_sozinha(self, i: int) -> int:
+        """Onde continuar quando o líder some no meio da volta.
+
+        NÃO é o índice local `i`: ele ficou para trás enquanto a conta espelhava
+        o líder, então voltar a ele reenviaria linhas JÁ MANDADAS -- teclas
+        repetidas, e as erradas. Continua-se de onde o espelho parou.
+        """
+        proxima = max(i, self._ultima_marca + 1)
+        self._ultima_marca = proxima
+        return proxima
 
     def espera_da_linha(self, delay_ms: int) -> int:
         """Quanto esperar DEPOIS de mandar a tecla.
@@ -514,6 +527,11 @@ class SincroniaDoTime:
         emparelhar; emparelhado, quem segura é a marca da linha seguinte.
         """
         if not self._sincronizando() or self.sou_o_lider():
+            return delay_ms
+        # SEM LÍDER NESTA VOLTA, o ritmo volta a ser o da macro. O piso só faz
+        # sentido enquanto quem dita o compasso é a marca; sozinha, a conta
+        # despejaria a volta inteira em dois segundos.
+        if self._sem_lider_nesta_volta:
             return delay_ms
         return MINIMO_DE_ESPERA_DO_APP_MS
 
