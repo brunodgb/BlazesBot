@@ -158,6 +158,33 @@ seguidores). Pedido do usuário em 27/08/2026.
   lista fechada em `tests/test_app_config_campo_por_campo.py`
   (`CAMPOS_SO_DA_WEB`) — não é permissão para novos campos ficarem fora da GUI.
 
+## A Fada — `docs/decisoes/fada.md`
+
+A conta marcada como `Fada` que, **em time**, cura em vez de atacar. Fora de um
+time a flag não faz nada.
+
+- **A VÍTIMA AVISA, a Fada não adivinha.** Quem lê a vida é o próprio
+  personagem, pela memória. A Fada nunca decide quem curar olhando barra de
+  tela.
+- **CLICOU, CONFERE.** Depois de clicar no retrato, a Fada lê o `nome` do alvo
+  pela memória e compara com quem pediu. O mapa slot→nick é aprendido, mas
+  **conferido sempre**: a ordem do painel muda quando alguém reentra no time.
+- **A FADA FICA FORA DA LARGADA**, da macro e da sincronia. Contá-la como
+  membro trava o time esperando uma confirmação que nunca vem.
+- **SEM FADA DE PÉ, A POÇÃO VOLTA.** "De pé" é a batida dela no mural, e essa
+  batida sai de DENTRO do laço que cura — nunca de uma checagem externa.
+- **BOLSA E PET SÓ COM A FILA VAZIA.** Abrir inventário com alguém esperando
+  cura mata o alguém.
+- **MORTO NÃO É CURADO** e para de rodar o APP (só em time). A Fada ignora e
+  segue para o próximo.
+- **O PONTO INICIAL DO TIME É O DO LÍDER** — isto INVERTE a regra anterior, e a
+  inversão tem trava: só adota se estiver no MESMO MAPA. `_voltar_para_base`
+  anda pelo minimapa, e destino fora do raio útil vira clique na borda: no mapa
+  errado o personagem anda contra a parede indefinidamente.
+- **A GEOMETRIA DO PAINEL É DERIVADA**: primeiro retrato em (28,204) e um passo
+  fixo. Nunca cinco literais soltos. O painel encolhe por baixo, e quantos
+  slots varrer é "membros − ela" — mas quem confirma é a memória, não a conta.
+
 ## Estado atual relevante — as REGRAS
 
 Cada item é o que **não pode ser violado**. O detalhe de cada área mora em
