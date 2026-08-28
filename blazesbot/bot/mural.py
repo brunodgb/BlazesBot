@@ -229,7 +229,12 @@ def consumir_aceite(meu_nick: str) -> None:
 # O QUADRO É POR LÍDER. A chave de tudo é o login do líder, e não um "time
 # global": duas pessoas podem montar dois times na mesma execução, e cada um
 # tem a sua largada.
-_LARGADAS: dict[str, tuple[int, int, float]] = {}   # lider -> (volta, alvo, quando)
+# lider -> (epoca, volta, alvo, quando). A ÉPOCA é o que distingue duas
+# execuções do mesmo líder: o contador de voltas recomeça do 1 a cada
+# reinício do executor, e sem ela uma confirmação da execução anterior --
+# ainda válida por `ESTADO_VALIDO_SEGUNDOS` -- contava como se o seguidor já
+# tivesse entrado na largada nova.
+_LARGADAS: dict[str, tuple[int, int, int, float]] = {}
 _ESTADOS: dict[str, tuple[dict, float]] = {}        # login -> (estado, quando)
 _LOCK_TIME = threading.Lock()
 
@@ -272,17 +277,23 @@ LARGADA_VALIDA_SEGUNDOS = 3.0
 ESTADO_VALIDO_SEGUNDOS = 30.0
 
 
-def anunciar_largada(lider: str, volta: int, alvo: int) -> None:
+def anunciar_largada(lider: str, epoca: int, volta: int, alvo: int) -> None:
     """O líder abre a volta `volta`, com `alvo` = id do mob dele (0 = nenhum)."""
     if not lider:
         return
     with _LOCK_TIME:
-        _LARGADAS[lider.strip().lower()] = (int(volta), int(alvo or 0),
-                                             time.monotonic())
+        _LARGADAS[lider.strip().lower()] = (int(epoca), int(volta),
+                                            int(alvo or 0), time.monotonic())
 
 
-def largada_pendente(lider: str) -> tuple[int, int] | None:
-    """A largada aberta pelo líder, ou `None` se não houver ou já vencida."""
+def largada_pendente(lider: str) -> tuple[int, int, int] | None:
+    """A largada aberta pelo líder: `(epoca, volta, alvo)`.
+
+    `None` quando não há, quando venceu, ou quando o líder já FECHOU a largada
+    -- ele fecha assim que para de esperar. Sem esse fechamento havia uma
+    janela em que o seguidor entrava numa largada que o líder já tinha
+    abandonado, e os dois se contavam como juntos.
+    """
     if not lider:
         return None
     chave = lider.strip().lower()
@@ -290,18 +301,22 @@ def largada_pendente(lider: str) -> tuple[int, int] | None:
         dados = _LARGADAS.get(chave)
         if dados is None:
             return None
-        volta, alvo, quando = dados
+        epoca, volta, alvo, quando = dados
         if time.monotonic() - quando > LARGADA_VALIDA_SEGUNDOS:
             # APAGA O VENCIDO em vez de só ignorá-lo: sem isto o quadro só
             # encolhe em saída limpa, e uma execução longa acumula anúncios de
             # contas que nem existem mais.
             _LARGADAS.pop(chave, None)
             return None
-    return volta, alvo
+    return epoca, volta, alvo
 
 
 def esquecer_largada(lider: str) -> None:
-    """Apaga a largada do líder. Usado quando o time para."""
+    """FECHA a largada do líder: ninguém mais entra nela.
+
+    Chamada em dois momentos: quando o líder termina de esperar (a largada
+    passou, quem não entrou entra na próxima) e quando o modo APP encerra.
+    """
     if not lider:
         return
     with _LOCK_TIME:

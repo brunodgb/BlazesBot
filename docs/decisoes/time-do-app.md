@@ -111,6 +111,25 @@ valor declarado pelo usuário, e entram no `docs/TEMPOS.md` marcados como tal. O
 `4.0` que já existem no BC são de outras coisas
 (`SEGUNDOS_SENTADO_APOS_GUARDAS`, `SEGUNDOS_ANTES_DO_TAB_NO_BOSS`).
 
+## A IDENTIDADE DE UMA LARGADA É `(líder, época, volta)`
+
+Não é o número da volta, e não é só o nome do líder. Os três juntos, porque
+cada pedaço fecha um buraco que a revisão do Codex encontrou:
+
+- **o número sozinho** recomeça do 1 a cada reinício do executor (relogin, o
+  usuário religando o modo), e o estado publicado sobrevive a esse reinício.
+  Uma confirmação da execução ANTERIOR valia para a volta 1 da nova, e o líder
+  largava sozinho achando que o seguidor já tinha entrado;
+- **sem o nome do líder**, a confirmação de um líder temporário contava para o
+  titular, e vice-versa;
+- **sem a época**, trocar de líder fazia a largada 1 do novo ser recusada
+  porque o seguidor "já tinha entrado na largada 1" — a do antigo.
+
+E a largada é **FECHADA** assim que o líder para de esperar. Antes ela
+continuava válida enquanto o relógio permitisse: um seguidor entrava numa
+largada já abandonada e os dois se contavam como juntos estando segundos fora
+de fase.
+
 ## O SORTEIO VIROU ORDEM FIXA -- desvio do que foi combinado
 
 Na conversa ficou *"se a memória não ler, escolhe um aleatório"* para o líder

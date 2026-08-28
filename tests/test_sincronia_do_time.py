@@ -107,6 +107,27 @@ def _sinc(ex, *, login="eu", lider="eu", modo="largada", membros=("eu", "outro")
         log=__import__("logging").getLogger("teste.time"))
 
 
+def _confirmar(login: str, alvo_sinc, volta: int | None = None) -> None:
+    """Publica a confirmação que `alvo_sinc` (o líder) aceita como válida.
+
+    A identidade da largada é `(lider, epoca, volta)` -- confirmar só com o
+    número da volta era exatamente o defeito que a época veio corrigir.
+    """
+    mural.publicar_estado(
+        login,
+        volta_pronta=volta if volta is not None else alvo_sinc.volta + 1,
+        largada_de=alvo_sinc.login,
+        largada_epoca=alvo_sinc.epoca,
+        max_hp=50,
+    )
+
+
+def _anunciar(lider: str, volta: int, alvo: int = 0, epoca: int = 1) -> None:
+    mural.anunciar_largada(lider, epoca, volta, alvo)
+    mural.publicar_estado(lider, volta_pronta=volta, largada_de=lider,
+                          largada_epoca=epoca, max_hp=100)
+
+
 # ---------------------------------------------------------------------------
 # NINGUÉM FICA PARADO
 # ---------------------------------------------------------------------------
@@ -150,27 +171,25 @@ def test_o_seguidor_sem_largada_vai_sozinho():
 
 
 def test_o_lider_larga_na_hora_quando_todos_confirmam():
-    mural.publicar_estado("seguidor", volta_pronta=1, largada_de="lider", max_hp=50)
     ex = _ExecutorFalso()
     s = _sinc(ex, login="lider", lider="lider", membros=("lider", "seguidor"))
+    _confirmar("seguidor", s)
     assert s.esperar_a_largada() is True
     assert s.largadas_juntas == 1
     assert s.largadas_perdidas == 0
 
 
 def test_o_seguidor_entra_na_largada_anunciada():
-    mural.anunciar_largada("lider", 7, 999)
+    _anunciar("lider", 7, 999)
     ex = _ExecutorFalso()
     s = _sinc(ex, login="seguidor", lider="lider", membros=("lider", "seguidor"))
-    mural.publicar_estado("lider", volta_pronta=7, max_hp=100)
     assert s.esperar_a_largada() is True
     assert s.largadas_juntas == 1
-    assert s.ultima_largada == 7
+    assert s.ultima_largada == ("lider", 1, 7)
 
 
 def test_o_seguidor_nao_entra_duas_vezes_na_mesma_largada():
-    mural.anunciar_largada("lider", 7, 0)
-    mural.publicar_estado("lider", volta_pronta=7, max_hp=100)
+    _anunciar("lider", 7, 0)
     ex = _ExecutorFalso()
     s = _sinc(ex, login="seguidor", lider="lider", membros=("lider", "seguidor"))
     s.esperar_a_largada()
@@ -199,8 +218,7 @@ def test_alinha_dando_tab_ate_o_id_bater():
         ex.tabs += 1
         ex.alvo = 999            # o terceiro TAB acha o alvo do líder
         return True
-    mural.anunciar_largada("lider", 1, 999)
-    mural.publicar_estado("lider", volta_pronta=1, max_hp=100)
+    _anunciar("lider", 1, 999)
     s = _sinc(ex, login="seguidor", lider="lider", modo="mesmo_alvo",
               membros=("lider", "seguidor"))
     ex._tab_simples = tab
@@ -212,8 +230,7 @@ def test_alinha_dando_tab_ate_o_id_bater():
 def test_alinhamento_desiste_no_teto_e_a_volta_continua():
     """O mob do líder pode nem estar no ciclo de TAB desta conta."""
     ex = _ExecutorFalso(alvo=111)          # nunca vira 999
-    mural.anunciar_largada("lider", 1, 999)
-    mural.publicar_estado("lider", volta_pronta=1, max_hp=100)
+    _anunciar("lider", 1, 999)
     s = _sinc(ex, login="seguidor", lider="lider", modo="mesmo_alvo",
               membros=("lider", "seguidor"))
     assert s.esperar_a_largada() is True   # a volta NÃO é cancelada
@@ -223,12 +240,14 @@ def test_alinhamento_desiste_no_teto_e_a_volta_continua():
 def test_o_lider_pega_alvo_antes_de_anunciar():
     """Sem isto ele anunciaria o alvo da volta ANTERIOR -- o que acabou de morrer."""
     ex = _ExecutorFalso(alvo=42)
-    mural.publicar_estado("seguidor", volta_pronta=1, max_hp=50)
     s = _sinc(ex, login="lider", lider="lider", modo="mesmo_alvo",
               membros=("lider", "seguidor"))
+    _confirmar("seguidor", s)
     s.esperar_a_largada()
     assert ex.garantiu == 1
-    assert mural.largada_pendente("lider") == (1, 42)
+    # A largada foi FECHADA ao sair da espera -- ninguém entra depois.
+    assert mural.largada_pendente("lider") is None
+    assert s.largada_epoca == s.epoca
 
 
 # ---------------------------------------------------------------------------
@@ -391,7 +410,8 @@ def test_confirmacao_de_outro_lider_nao_conta():
     reiniciar. Sem o nome de quem abriu, uma confirmação valia para as duas e o
     líder largava sozinho achando que estava acompanhado.
     """
-    mural.publicar_estado("seguidor", volta_pronta=1, largada_de="OUTRO", max_hp=50)
+    mural.publicar_estado("seguidor", volta_pronta=1, largada_de="OUTRO",
+                          largada_epoca=1, max_hp=50)
     s = _sinc(_ExecutorFalso(), login="lider", lider="lider",
               membros=("lider", "seguidor"))
     assert s.esperar_a_largada() is True
@@ -399,13 +419,13 @@ def test_confirmacao_de_outro_lider_nao_conta():
 
 
 def test_o_seguidor_publica_de_quem_e_a_largada():
-    mural.anunciar_largada("lider", 5, 0)
-    mural.publicar_estado("lider", volta_pronta=5, largada_de="lider", max_hp=100)
+    _anunciar("lider", 5, 0, epoca=9)
     s = _sinc(_ExecutorFalso(), login="seguidor", lider="lider",
               membros=("lider", "seguidor"))
     s.esperar_a_largada()
     estado = mural.estado_da_conta("seguidor")
     assert estado["largada_de"] == "lider"
+    assert estado["largada_epoca"] == 9
     assert estado["volta_pronta"] == 5
 
 
@@ -436,3 +456,45 @@ def test_a_validade_da_largada_e_o_teto_do_lider_sao_o_mesmo_numero():
     largada que o líder já tinha abandonado, e os dois se contavam como juntos
     estando segundos fora de fase."""
     assert TETO_REAL_DA_LARGADA == mural.LARGADA_VALIDA_SEGUNDOS
+
+def test_confirmacao_de_execucao_ANTERIOR_do_mesmo_lider_nao_conta():
+    """O contador de voltas recomeça do 1 a cada reinício do executor.
+
+    O estado publicado sobrevive ao reinício por `ESTADO_VALIDO_SEGUNDOS`, então
+    sem a ÉPOCA a confirmação da execução anterior valia para a volta 1 da nova
+    -- o líder largava sozinho achando que o seguidor tinha entrado.
+    """
+    s = _sinc(_ExecutorFalso(), login="lider", lider="lider",
+              membros=("lider", "seguidor"))
+    mural.publicar_estado("seguidor", volta_pronta=1, largada_de="lider",
+                          largada_epoca=s.epoca - 1, max_hp=50)   # execução velha
+    assert s.esperar_a_largada() is True
+    assert s.largadas_perdidas == 1
+
+
+def test_largada_de_um_lider_NOVO_nao_e_recusada_pelo_numero():
+    """Trocar de líder recomeça a numeração; guardar só o número recusava a
+    largada 1 do líder novo por já se ter entrado na largada 1 do anterior."""
+    s = _sinc(_ExecutorFalso(), login="seguidor", lider="antigo",
+              membros=("antigo", "novo", "seguidor"))
+    _anunciar("antigo", 1, 0)
+    s.esperar_a_largada()
+    assert s.ultima_largada == ("antigo", 1, 1)
+
+    # O antigo some; quem assume é o "novo", e ele também começa do 1.
+    mural.zerar_o_time_para_teste()
+    _anunciar("novo", 1, 0)
+    mural.publicar_estado("novo", volta_pronta=1, largada_de="novo",
+                          largada_epoca=1, max_hp=900)
+    s.esperar_a_largada()
+    assert s.ultima_largada == ("novo", 1, 1)
+    assert s.largadas_juntas == 2
+
+
+def test_a_largada_e_fechada_quando_o_lider_para_de_esperar():
+    """Depois disso a macro do líder começa: entrar seria contar-se como junto
+    estando segundos atrás."""
+    s = _sinc(_ExecutorFalso(), login="lider", lider="lider",
+              membros=("lider", "sumido"))
+    s.esperar_a_largada()
+    assert mural.largada_pendente("lider") is None

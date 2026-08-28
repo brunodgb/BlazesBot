@@ -39,11 +39,21 @@ AS DUAS REGRAS QUE MANDAM AQUI
 """
 from __future__ import annotations
 
+import itertools
 import time
 from collections.abc import Callable
 from typing import Any
 
 from .. import mural
+
+# ÉPOCA: um número por objeto de sincronia criado neste processo.
+#
+# O contador de voltas recomeça do 1 a cada reinício do executor (relogin, o
+# usuário religando o modo), e o estado publicado sobrevive a esse reinício por
+# `ESTADO_VALIDO_SEGUNDOS`. Sem a época, uma confirmação da execução ANTERIOR
+# do mesmo líder valia para a volta 1 da execução nova -- o líder largava
+# sozinho achando que o seguidor já tinha entrado.
+_EPOCAS = itertools.count(1)
 
 # ---------------------------------------------------------------------------
 # TEMPOS PROVISÓRIOS -- nenhum deles foi medido (ver o cabeçalho)
@@ -127,6 +137,7 @@ class SincroniaDoTime:
         self._max_hp = max_hp
         self.log = log
 
+        self.epoca = next(_EPOCAS)
         self.volta = 0
         # O NÚMERO DA VOLTA DO TIME, que NÃO é `self.volta`.
         #
@@ -141,9 +152,12 @@ class SincroniaDoTime:
         # execução anterior, que recomeça do 1) contava como "este seguidor já
         # entrou" -- o líder largava sozinho achando que estava acompanhado.
         self.largada_de = ""
-        # A última volta em que esta conta entrou junto. Serve para o seguidor
-        # não entrar duas vezes na MESMA largada.
-        self.ultima_largada = -1
+        self.largada_epoca = 0
+        # A ÚLTIMA LARGADA em que esta conta entrou, como identidade completa
+        # `(lider, epoca, volta)` -- e não como número solto. Guardar só o
+        # número fazia a largada 1 de um líder NOVO ser recusada por já se ter
+        # entrado na largada 1 do anterior.
+        self.ultima_largada: tuple[str, int, int] = ("", 0, -1)
         # Contadores para a medição que ainda não foi feita.
         self.largadas_juntas = 0
         self.largadas_perdidas = 0
@@ -255,7 +269,8 @@ class SincroniaDoTime:
 
         self.volta_do_time = self.volta
         self.largada_de = self.login
-        mural.anunciar_largada(self.login, self.volta_do_time, alvo)
+        self.largada_epoca = self.epoca
+        mural.anunciar_largada(self.login, self.epoca, self.volta_do_time, alvo)
         if not self._esperar_os_seguidores(alvo):
             return False
         return True
@@ -272,6 +287,11 @@ class SincroniaDoTime:
                 if self._confirmou(x)
             )
             if prontos >= len(esperados):
+                # FECHA A LARGADA ao sair da espera, nos DOIS caminhos. A partir
+                # daqui a macro começa, e quem entrasse agora estaria começando
+                # a volta com o líder já batendo -- contando-se como junto sem
+                # estar. Quem perdeu esta entra na próxima.
+                mural.esquecer_largada(self.login)
                 self.largadas_juntas += 1
                 self.log.debug(
                     "Time: volta %d com %d/%d juntos (alvo %s)",
@@ -282,6 +302,7 @@ class SincroniaDoTime:
         # TETO ESTOURADO. Não é erro e não cancela nada: quem não chegou segue
         # batendo sozinho e entra na próxima. O aviso existe para a medição --
         # é este número que diz se o teto está apertado demais.
+        mural.esquecer_largada(self.login)
         atrasados = [x for x in esperados
                      if not self._confirmou(x)]
         self.largadas_perdidas += 1
@@ -294,7 +315,8 @@ class SincroniaDoTime:
         """Este membro confirmou a largada QUE EU abri, e não outra qualquer."""
         estado = mural.estado_da_conta(login) or {}
         return (estado.get("volta_pronta") == self.volta_do_time
-                and estado.get("largada_de") == self.login)
+                and estado.get("largada_de") == self.login
+                and estado.get("largada_epoca") == self.epoca)
 
     # -- o seguidor --------------------------------------------------------
 
@@ -304,7 +326,8 @@ class SincroniaDoTime:
         largada = None
         while time.monotonic() < limite:
             pendente = mural.largada_pendente(lider)
-            if pendente is not None and pendente[0] != self.ultima_largada:
+            if (pendente is not None
+                    and (lider, pendente[0], pendente[1]) != self.ultima_largada):
                 largada = pendente
                 break
             if not self._ex._dormir(PASSO_DA_ESPERA_DA_LARGADA):
@@ -318,10 +341,11 @@ class SincroniaDoTime:
                            lider, TETO_DA_LARGADA_SEGUNDOS)
             return True
 
-        volta, alvo = largada
-        self.ultima_largada = volta
+        epoca, volta, alvo = largada
+        self.ultima_largada = (lider, epoca, volta)
         self.volta_do_time = volta
         self.largada_de = lider
+        self.largada_epoca = epoca
         self.largadas_juntas += 1
         if self.modo == "mesmo_alvo" and alvo:
             self._alinhar_no_alvo(alvo)
@@ -371,6 +395,11 @@ class SincroniaDoTime:
         except Exception:
             return False
         if agora_em_batalha is None:
+            # SEM MEMÓRIA, ESTA REGRA NÃO EXISTE -- e isso não deixa a conta
+            # parada: a macro continua sendo enviada volta após volta, e o
+            # `_garantir_alvo` do executor continua dando TAB quando não há
+            # alvo. Os 4 s são um EXTRA para quem lê memória, não a única coisa
+            # que faz a conta bater.
             return False
         if agora_em_batalha != self._estado_de_batalha:
             self._estado_de_batalha = agora_em_batalha
@@ -404,6 +433,7 @@ class SincroniaDoTime:
             self.login,
             volta_pronta=self.volta_do_time,
             largada_de=self.largada_de,
+            largada_epoca=self.largada_epoca,
             max_hp=_seguro(self._max_hp),
             alvo=_seguro(lambda: self._ex._ler_id_do_alvo()) or 0,
             em_batalha=_seguro(lambda: self._ex._ler_em_batalha()),
