@@ -57,6 +57,7 @@ from .config import (
     Account,
     BotConfig,
     mount_multiplier,
+    normalizar_pct,
     normalizar_time_logins,
     normalizar_time_modo,
     pet_feed_na_faixa,
@@ -309,6 +310,9 @@ class _App:
                 "espera_depois_do_tab_ms": st.app.espera_depois_do_tab_ms,
                 "time_logins": st.app.time_logins,
                 "time_modo": st.app.time_modo,
+                "fada": st.app.fada,
+                "cura_pedir_pct": st.app.cura_pedir_pct,
+                "cura_parar_pct": st.app.cura_parar_pct,
                 "steps": [{"key": p.key, "delay_ms": p.delay_ms}
                           for p in st.app.steps],
             },
@@ -525,6 +529,11 @@ class _App:
             app.get("time_logins", st.app.time_logins))
         st.app.time_modo = normalizar_time_modo(
             app.get("time_modo", st.app.time_modo))
+        st.app.fada = bool(app.get("fada", st.app.fada))
+        st.app.cura_pedir_pct = normalizar_pct(
+            app.get("cura_pedir_pct"), st.app.cura_pedir_pct)
+        st.app.cura_parar_pct = normalizar_pct(
+            app.get("cura_parar_pct"), st.app.cura_parar_pct)
         passos = (app.get("steps") or [])[:PASSOS_DO_APP]
         for i, passo in enumerate(st.app.steps):
             bruto = passos[i] if i < len(passos) else {}

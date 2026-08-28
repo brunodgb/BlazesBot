@@ -66,7 +66,8 @@ def _ler(caminho: str) -> str:
 # campos são gravados no `config.json` por `asdict` e lidos por
 # `_app_from_dict`, então a GUI não os apaga -- ela apenas não os mostra e não
 # os edita. Ver `docs/decisoes/interface.md`.
-CAMPOS_SO_DA_WEB = {"time_logins", "time_modo"}
+CAMPOS_SO_DA_WEB = {"time_logins", "time_modo",
+                    "fada", "cura_pedir_pct", "cura_parar_pct"}
 
 
 def test_a_excecao_da_gui_congelada_nao_cresce_sozinha() -> None:
@@ -76,7 +77,8 @@ def test_a_excecao_da_gui_congelada_nao_cresce_sozinha() -> None:
     que dá trabalho pôr na GUI -- e a regra das duas interfaces morreria por
     acúmulo, sem ninguém decidir isso.
     """
-    assert CAMPOS_SO_DA_WEB == {"time_logins", "time_modo"}, (
+    assert CAMPOS_SO_DA_WEB == {"time_logins", "time_modo",
+                                "fada", "cura_pedir_pct", "cura_parar_pct"}, (
         "para acrescentar um campo aqui é preciso decidir (e escrever em "
         "docs/decisoes/interface.md) que ele não existe na PyQt6."
     )

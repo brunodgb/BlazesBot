@@ -81,6 +81,10 @@ def test_o_resto_do_APP_continua_indo_e_voltando(tmp_path):
     # de ida já tem de estar na forma normalizada para a comparação valer.
     ("time_logins", ["outra", "maisoutra"]),
     ("time_modo", "mesmo_alvo"),
+    # A FADA e as duas barras de cura (28/08/2026).
+    ("fada", True),
+    ("cura_pedir_pct", 45),
+    ("cura_parar_pct", 80),
 ])
 def test_todo_campo_do_AppConfig_sobrevive(tmp_path, campo, valor):
     """LISTA VIVA: todo campo novo do `AppConfig` (fora `steps`) entra aqui.
@@ -106,7 +110,9 @@ def test_a_lista_acima_cobre_o_AppConfig_inteiro():
                 "_base_pos_x", "_base_pos_y",
                 # O time do APP: quem o líder arrasta junto, e o quanto de
                 # sincronia. Ver `MODOS_DO_TIME` em config.py.
-                "time_logins", "time_modo"}
+                "time_logins", "time_modo",
+                # A Fada e as duas barras de cura.
+                "fada", "cura_pedir_pct", "cura_parar_pct"}
     faltando = {f.name for f in fields(AppConfig)} - cobertos
     assert not faltando, (
         f"campo(s) novo(s) no AppConfig sem teste de ida e volta: {faltando}")

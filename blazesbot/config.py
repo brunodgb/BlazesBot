@@ -569,6 +569,31 @@ def normalizar_time_logins(bruto: object) -> list[str]:
     return limpos
 
 
+# Padrões das duas barras de cura do time. Pedido do usuário em 28/08/2026:
+# *"duas barras em todas as contas (padrão 30% e 90%) na aba APP; e em time, a
+# configuração do líder manda"*.
+#
+# São perguntas diferentes e por isso são dois números: `PEDIR` é "estou ferido
+# o bastante para chamar a Fada (ou beber poção)"; `PARAR` é "já estou curado o
+# bastante, pode ir para o próximo". A distância entre os dois é o que impede a
+# Fada de ser chamada de novo no instante em que termina.
+CURA_PEDIR_PCT_PADRAO = 30
+CURA_PARAR_PCT_PADRAO = 90
+
+
+def normalizar_pct(bruto: object, padrao: int) -> int:
+    """Uma porcentagem de 1 a 100, ou o padrão. Nunca 0 e nunca acima de 100.
+
+    Zero não é "desligado" aqui: seria "peça cura quando estiver morto". Quem
+    desliga a cura é a tecla vazia, não a barra no fim da escala.
+    """
+    try:
+        valor = int(bruto)
+    except (TypeError, ValueError):
+        return padrao
+    return max(1, min(100, valor))
+
+
 def normalizar_time_modo(bruto: object) -> str:
     """O modo escolhido, ou o padrão. Valor desconhecido NUNCA entra.
 
@@ -664,6 +689,24 @@ class AppConfig:
     # espera por quem não vai chegar.
     time_logins: list[str] = field(default_factory=list)
     time_modo: str = MODO_PADRAO_DO_TIME
+
+    # ==================================================================
+    # A FADA e as duas barras de cura
+    # ==================================================================
+    #
+    # `fada` só tem efeito EM TIME: a conta marcada deixa de atacar e passa a
+    # curar os aliados. Sozinha, a flag não faz nada -- e isso é de propósito,
+    # para marcar a conta uma vez e ela se comportar conforme o contexto.
+    #
+    # AS DUAS BARRAS VALEM PARA TODA CONTA, com ou sem time: elas descrevem
+    # "quando estou ferido o bastante" e "quando estou curado o bastante", e
+    # essas perguntas existem desde antes da Fada -- a poção usa as mesmas.
+    # EM TIME, as do LÍDER mandam, para o time inteiro se comportar igual.
+    #
+    # Ver `docs/decisoes/fada.md`.
+    fada: bool = False
+    cura_pedir_pct: int = CURA_PEDIR_PCT_PADRAO
+    cura_parar_pct: int = CURA_PARAR_PCT_PADRAO
     # Posição base salva (X, Y) — INTERNA, não aparece na UI.
     # Gravada automaticamente quando o APP inicia com travar_posicao ligado.
     # Usada pelo executor para devolver o personagem ao ponto original.
@@ -1303,6 +1346,11 @@ class BotConfig:
                 1, int(dados.get("shuffle_apos_n_voltas", 30) or 30)),
             time_logins=normalizar_time_logins(dados.get("time_logins")),
             time_modo=normalizar_time_modo(dados.get("time_modo")),
+            fada=bool(dados.get("fada", False)),
+            cura_pedir_pct=normalizar_pct(
+                dados.get("cura_pedir_pct"), CURA_PEDIR_PCT_PADRAO),
+            cura_parar_pct=normalizar_pct(
+                dados.get("cura_parar_pct"), CURA_PARAR_PCT_PADRAO),
             _base_pos_x=int(dados.get("_base_pos_x", 0) or 0),
             _base_pos_y=int(dados.get("_base_pos_y", 0) or 0),
         )
