@@ -47,6 +47,7 @@ from .bot.bc import amostragem_de_cliques, teste_venda
 from .bot.supervisor import BotManager
 from .config import (
     DEFAULT_CONFIG_PATH,
+    LIMITE_DO_NOME_DO_GRUPO,
     MAX_BOLSAS,
     MINIMO_DE_ESPERA_DO_APP_MS,
     MOUNT_SPEEDS,
@@ -144,18 +145,24 @@ class _App:
     # helpers internos
     # ------------------------------------------------------------------
 
-    def _conta(self, indice: int) -> Account:
-        """Conta pelo ÍNDICE na lista, espelho da referência de objeto da GUI.
+    def _conta(self, uid: str) -> Account:
+        """Conta pelo `uid` -- a identidade ESTÁVEL, espelho da referência de
+        objeto que a GUI guarda no item da tabela (`ACCOUNT_ROLE`).
 
-        A web não pode usar o login como chave: contas recém-criadas nascem com
-        login vazio (`nova_conta`) e precisam ser editáveis antes de ter nome.
-        O índice é estável enquanto o editor está aberto (modal bloqueia a
-        tabela), então é seguro usá-lo.
+        ERA O ÍNDICE NA LISTA, e valia enquanto a lista não podia ser
+        reordenada. A tabela ganhou arraste para reordenar, e isso quebra a
+        premissa: com a ordem do disco diferente da ordem da tela, um
+        `definir_senha` gravaria a senha NA CONTA ERRADA -- login quebrado e
+        senha certa perdida, sem desfazer.
+
+        O login não serve de chave: conta recém-criada nasce sem login
+        (`nova_conta`) e precisa ser editável antes de ter nome. Por isso `uid`, e
+        não login.
         """
-        try:
-            return self.config.accounts[int(indice)]
-        except (ValueError, IndexError):
-            raise ValueError(f"conta não encontrada (índice {indice})") from None
+        conta = self.config.conta_por_uid(uid)
+        if conta is None:
+            raise ValueError(f"conta não encontrada (uid {uid})")
+        return conta
 
     def _por_login(self) -> dict[str, Account]:
         return {c.login: c for c in self.config.accounts if c.login}
@@ -230,14 +237,22 @@ class _App:
     def contas(self) -> list[dict[str, Any]]:
         """Lista as contas para a tabela. A senha NUNCA sai daqui.
 
-        `id` é o índice na lista — é a identidade estável que a web usa para
-        todas as operações, porque login ainda pode ser vazio (conta nova).
+        `uid` é a identidade que a web usa para TODAS as operações. Era o índice
+        na lista, e deixou de ser quando a tabela ganhou arraste: com a ordem da
+        tela diferente da ordem do disco, uma escrita por índice cairia na conta
+        errada (ver `_conta`). Login não serve de chave — conta nova nasce sem
+        login e precisa ser editável antes de ter nome.
+
+        `ordem` vai junto só para a tela conseguir conferir se está desatualizada
+        em relação ao disco; ela NÃO é fonte de verdade de nada.
         O servidor vem NORMALIZADO (mesma regra dos combos da GUI).
         """
         out = []
         for i, c in enumerate(self.config.accounts):
             out.append({
-                "id": i,
+                "uid": c.garantir_uid(),
+                "ordem": i,
+                "grupo": c.grupo,
                 "login": c.login,
                 "enabled": c.enabled,
                 "position": c.position,
@@ -249,8 +264,8 @@ class _App:
             })
         return out
 
-    def conta_editor(self, indice: int) -> dict[str, Any]:
-        c = self._conta(indice)
+    def conta_editor(self, uid: str) -> dict[str, Any]:
+        c = self._conta(uid)
         st = c.settings
         k = st.keys
         ataques = list(k.attack_skills) + [""] * 4
@@ -259,6 +274,7 @@ class _App:
             "login": c.login,
             "tem_senha": bool(c.password_enc),
             "nick": c.last_char_name,
+            "grupo": c.grupo,
             "accept_team_invites": st.accept_team_invites,
             # AS CANDIDATAS A RESETER. O campo "conta que reseta a cave" deixou
             # de ser texto livre: o reseter precisa ser uma conta cadastrada
@@ -368,12 +384,12 @@ class _App:
             dados.get("reuse_login_screen_clients", False))
         self._aplicar()
 
-    def definir_senha(self, indice: int, nova: str) -> None:
-        c = self._conta(indice)
+    def definir_senha(self, uid: str, nova: str) -> None:
+        c = self._conta(uid)
         c.set_password(str(nova or ""))
         self._aplicar()
 
-    def definir_login(self, indice: int, novo: str) -> None:
+    def definir_login(self, uid: str, novo: str) -> None:
         """Login editável direto na tabela (como a célula COL_LOGIN da GUI).
 
         Vazio NÃO apaga o login atual — mesmo contrato do campo de login do
@@ -381,22 +397,22 @@ class _App:
         ser clique acidental, e apagar a chave de uma conta ativa derrubaria
         o vínculo com o supervisor que já está rodando aquela conta.
         """
-        c = self._conta(indice)
+        c = self._conta(uid)
         novo_login = str(novo or "").strip()
         if novo_login:
             c.login = novo_login
         self._aplicar()
 
-    def definir_posicao(self, indice: int, posicao: str) -> None:
+    def definir_posicao(self, uid: str, posicao: str) -> None:
         """Posição da janela do cliente (Left|Center|Right) — combo da tabela."""
-        c = self._conta(indice)
+        c = self._conta(uid)
         if str(posicao or "") in POSITIONS:
             c.position = str(posicao)
         self._aplicar()
 
-    def definir_servidor(self, indice: int, servidor: str) -> None:
+    def definir_servidor(self, uid: str, servidor: str) -> None:
         """Servidor da conta — combo da tabela (nomes canônicos de server_rows)."""
-        c = self._conta(indice)
+        c = self._conta(uid)
         c.server = str(servidor or "").strip()
         self._aplicar()
 
@@ -404,10 +420,40 @@ class _App:
         # Com o bot rodando a conta nasce INATIVA de propósito (mesmo da GUI):
         # o usuário preenche com calma e, ao marcar "Ativa", entra no ar.
         rodando = bool(self.manager and self.manager.running())
-        self.config.accounts.append(Account(enabled=not rodando))
+        nova = Account(enabled=not rodando)
+        nova.garantir_uid()   # nasce com identidade: a tela endereça por ela
+        self.config.accounts.append(nova)
         self._aplicar()
 
-    def bloqueio_de_reseter(self, indice: int, acao: str) -> str | None:
+    def reordenar_contas(self, itens: list[tuple[str, object]]) -> None:
+        """Nova ordem das contas e o rótulo de grupo de cada uma.
+
+        A ordem é a do array -- não existe campo de ordem. O grupo vem no mesmo
+        pacote porque arrastar para dentro de outro grupo muda o rótulo: em duas
+        chamadas, uma podia gravar e a outra falhar.
+
+        UMA gravação no fim, e só se algo mudou de verdade.
+        """
+        uids = [uid for uid, _ in itens]
+        mudou = self.config.reordenar_contas(uids)
+        for uid, grupo in itens:
+            conta = self.config.conta_por_uid(uid)
+            if conta is None:
+                continue
+            novo = str(grupo or "").strip()[:LIMITE_DO_NOME_DO_GRUPO]
+            if conta.grupo != novo:
+                conta.grupo = novo
+                mudou = True
+        if mudou:
+            self._aplicar()
+
+    def definir_grupo(self, uid: str, grupo: object) -> None:
+        """Rótulo de organização (`Account.grupo`). Não representa time nenhum."""
+        c = self._conta(uid)
+        c.grupo = str(grupo or "").strip()[:LIMITE_DO_NOME_DO_GRUPO]
+        self._aplicar()
+
+    def bloqueio_de_reseter(self, uid: str, acao: str) -> str | None:
         """Por que esta conta NÃO pode ser tirada do ar. `None` = pode.
 
         Espelho de `MainWindow._bloqueado_por_ser_reseter` na GUI: as duas
@@ -421,7 +467,7 @@ class _App:
         trocar o reset da outra conta primeiro é um clique.
         """
         try:
-            conta = self._conta(indice)
+            conta = self._conta(uid)
         except Exception:
             return None
         dependentes = self.config.accounts_reset_by(conta)
@@ -435,28 +481,33 @@ class _App:
             "dessa(s) conta(s) primeiro."
         )
 
-    def remover_conta(self, indice: int) -> None:
-        try:
-            indice = int(indice)
-            if 0 <= indice < len(self.config.accounts):
-                login = self.config.accounts[indice].login
-                del self.config.accounts[indice]
-                # Limpa o contador de log desta conta — sem isso o dict acumula
-                # entradas órfãs para sempre (vazamento lento, mas real).
-                if login and login in self._contagem_por_conta:
-                    del self._contagem_por_conta[login]
-                self._aplicar()
-        except ValueError:
-            pass
+    def remover_conta(self, uid: str) -> None:
+        """Remove a conta com este `uid`. Uid desconhecido não faz nada.
 
-    def alternar(self, indice: int, ativa: bool) -> list[str]:
-        c = self._conta(indice)
+        Remove por IDENTIDADE e não por posição: a tabela pode estar reordenada
+        em relação ao disco, e apagar por índice apagaria a conta errada -- com a
+        senha cifrada dela, sem desfazer.
+        """
+        conta = self.config.conta_por_uid(uid)
+        if conta is None:
+            return
+        login = conta.login
+        self.config.accounts = [c for c in self.config.accounts
+                                if c.uid != conta.uid]
+        # Limpa o contador de log desta conta — sem isso o dict acumula
+        # entradas órfãs para sempre (vazamento lento, mas real).
+        if login and login in self._contagem_por_conta:
+            del self._contagem_por_conta[login]
+        self._aplicar()
+
+    def alternar(self, uid: str, ativa: bool) -> list[str]:
+        c = self._conta(uid)
         c.enabled = bool(ativa)
         self._aplicar()
         return self._sincronizar()
 
-    def alternar_farm(self, indice: int, ligado: bool) -> None:
-        c = self._conta(indice)
+    def alternar_farm(self, uid: str, ligado: bool) -> None:
+        c = self._conta(uid)
         c.bc_farm = bool(ligado)
         if self.manager and self.manager.running():
             self._status(c.login,
@@ -464,8 +515,8 @@ class _App:
                          "em tempo real")
         self._aplicar()
 
-    def alternar_app(self, indice: int, ligado: bool) -> None:
-        c = self._conta(indice)
+    def alternar_app(self, uid: str, ligado: bool) -> None:
+        c = self._conta(uid)
         c.settings.app.enabled = bool(ligado)
         if self.manager and self.manager.running():
             self._status(c.login,
@@ -473,14 +524,14 @@ class _App:
                          "em tempo real")
         self._aplicar()
 
-    def salvar_personagem(self, indice: int, dados: dict[str, Any]) -> None:
+    def salvar_personagem(self, uid: str, dados: dict[str, Any]) -> None:
         """Aplica o editor da conta (espelha `AccountDialog._aplicar`).
 
         O login é editável AQUI (campo do editor). Vazio não apaga o login
         atual; diferente, renomeia. É o mesmo efeito do login editável da
         célula da tabela na GUI.
         """
-        c = self._conta(indice)
+        c = self._conta(uid)
         st = c.settings
 
         novo_login = str(dados.get("login", "") or "").strip()
@@ -488,6 +539,8 @@ class _App:
             c.login = novo_login
 
         c.last_char_name = str(dados.get("nick", "")).strip()
+        # Rótulo de organização. Não representa time nenhum -- ver `Account.grupo`.
+        c.grupo = str(dados.get("grupo", "") or "").strip()[:LIMITE_DO_NOME_DO_GRUPO]
         st.accept_team_invites = bool(dados.get("accept_team_invites", False))
         st.usar_catador = bool(dados.get("usar_catador", False))
         st.mount_speed_pct = int(dados.get("mount_speed_pct") or MOUNT_SPEEDS[0])
@@ -618,7 +671,7 @@ class _App:
             self.manager.resume()
 
     # TEMPORÁRIO ------------------------------------------------------
-    def testar_venda(self, indice: int) -> dict[str, Any]:
+    def testar_venda(self, uid: str) -> dict[str, Any]:
         """Roda só a venda, na conta selecionada. Bloqueia até terminar.
 
         Bloquear é seguro: o pywebview atende cada chamada do frontend em uma
@@ -630,7 +683,7 @@ class _App:
                 "Pare o bot antes de testar a venda — os dois disputariam o "
                 "teclado e o mouse do mesmo cliente.")}
         try:
-            conta = self._conta(indice)
+            conta = self._conta(uid)
         except ValueError as exc:
             return {"ok": False, "erro": str(exc)}
         return teste_venda.rodar(self.config, conta, on_status=self._status)
@@ -644,7 +697,7 @@ class _App:
         """
         teste_venda.cancelar()
 
-    def amostrar_cliques(self, indice: int) -> dict[str, Any]:
+    def amostrar_cliques(self, uid: str) -> dict[str, Any]:
         """Varre coordenadas de clique DIREITO no ponto onde o personagem está.
 
         Bloqueia como o teste de venda, e pelo mesmo motivo: cada chamada do
@@ -655,7 +708,7 @@ class _App:
                 "Pare o bot antes de amostrar — os dois disputariam o teclado "
                 "e o mouse do mesmo cliente.")}
         try:
-            conta = self._conta(indice)
+            conta = self._conta(uid)
         except ValueError as exc:
             return {"ok": False, "erro": str(exc)}
         return amostragem_de_cliques.rodar(self.config, conta,
@@ -665,14 +718,14 @@ class _App:
         """Interrompe a amostragem em andamento (o próprio botão cancela)."""
         amostragem_de_cliques.cancelar()
 
-    def conferir_modelos_de_exclusao(self, indice: int) -> dict[str, Any]:
+    def conferir_modelos_de_exclusao(self, uid: str) -> dict[str, Any]:
         """Fotografa a bolsa e DESENHA o que seria apagado. Não apaga nada."""
         if self.manager and self.manager.running():
             return {"ok": False, "erro": (
                 "Pare o bot antes de conferir — os dois disputariam o teclado "
                 "e o mouse do mesmo cliente.")}
         try:
-            conta = self._conta(indice)
+            conta = self._conta(uid)
         except ValueError as exc:
             return {"ok": False, "erro": str(exc)}
         return afericao.rodar(self.config, conta, on_status=self._status)
@@ -954,8 +1007,8 @@ class Api:
     def obter_contas(self) -> list[dict[str, Any]]:
         return self._app.contas()
 
-    def obter_conta(self, indice: Any) -> dict[str, Any]:
-        return self._app.conta_editor(indice)
+    def obter_conta(self, uid: Any) -> dict[str, Any]:
+        return self._app.conta_editor(uid)
 
     # ---- escrita (tempo real) ----
 
@@ -963,60 +1016,97 @@ class Api:
         self._app.salvar_config(dados)
         return {"ok": True}
 
-    def definir_senha(self, indice: Any, nova: Any) -> dict[str, Any]:
-        self._app.definir_senha(indice, nova)
+    def definir_senha(self, uid: Any, nova: Any) -> dict[str, Any]:
+        self._app.definir_senha(uid, nova)
         return {"ok": True}
 
-    def definir_login(self, indice: Any, novo: Any) -> dict[str, Any]:
-        self._app.definir_login(indice, novo)
+    def definir_login(self, uid: Any, novo: Any) -> dict[str, Any]:
+        self._app.definir_login(uid, novo)
         return {"ok": True}
 
-    def definir_posicao(self, indice: Any, posicao: Any) -> dict[str, Any]:
-        self._app.definir_posicao(indice, posicao)
+    def definir_posicao(self, uid: Any, posicao: Any) -> dict[str, Any]:
+        self._app.definir_posicao(uid, posicao)
         return {"ok": True}
 
-    def definir_servidor(self, indice: Any, servidor: Any) -> dict[str, Any]:
-        self._app.definir_servidor(indice, servidor)
+    def definir_servidor(self, uid: Any, servidor: Any) -> dict[str, Any]:
+        self._app.definir_servidor(uid, servidor)
+        return {"ok": True}
+
+    def reordenar_contas(self, ordem: Any) -> dict[str, Any]:
+        """Grava a nova ordem das contas. UMA chamada por arraste.
+
+        SÍNCRONA E SEM DEBOUNCE, de propósito: debounce é justamente o que perde a
+        última alteração quando a janela fecha, e o drop é evento raro e
+        deliberado (não é digitação). Medido: `config.json` tem ~19 KB com 7
+        contas, a gravação é atômica (`.tmp` + `os.replace`) e cada caixa
+        clicada na tabela já grava o arquivo inteiro hoje.
+
+        Devolve a lista de contas depois da gravação, para a tela redesenhar do
+        que está NO DISCO em vez de confiar no que ela mesma reorganizou. Se esta
+        chamada falhar, a tela volta à ordem anterior (ver `aoSoltarLinha`).
+        """
+        if not isinstance(ordem, list):
+            return {"ok": False, "erro": "ordem inválida"}
+        # Cada item é `{uid, grupo}`: a ordem e os rótulos vêm JUNTOS, numa
+        # chamada só. Separados, uma podia gravar e a outra falhar, e a tabela
+        # ficaria com a ordem nova e o grupo velho.
+        try:
+            itens = [(str(i.get("uid", "")), i.get("grupo", ""))
+                     for i in ordem if isinstance(i, dict)]
+        except AttributeError:
+            return {"ok": False, "erro": "ordem inválida"}
+        try:
+            self._app.reordenar_contas(itens)
+        except Exception as exc:
+            return {"ok": False, "erro": str(exc)}
+        return {"ok": True, "contas": self._app.contas()}
+
+    def definir_grupo(self, uid: Any, grupo: Any) -> dict[str, Any]:
+        """Rótulo de organização da conta. NÃO É TIME -- ver `Account.grupo`."""
+        try:
+            self._app.definir_grupo(uid, grupo)
+        except Exception as exc:
+            return {"ok": False, "erro": str(exc)}
         return {"ok": True}
 
     def nova_conta(self) -> dict[str, Any]:
         self._app.nova_conta()
         return {"ok": True}
 
-    def remover_conta(self, indice: Any) -> dict[str, Any]:
+    def remover_conta(self, uid: Any) -> dict[str, Any]:
         # O BLOQUEIO É AQUI, NO BACKEND, e não só na tela: o frontend também
         # avisa, mas quem garante é este ponto -- é por onde toda remoção passa.
-        bloqueio = self._app.bloqueio_de_reseter(indice, "remover")
+        bloqueio = self._app.bloqueio_de_reseter(uid, "remover")
         if bloqueio:
             return {"ok": False, "erro": bloqueio}
-        self._app.remover_conta(indice)
+        self._app.remover_conta(uid)
         return {"ok": True}
 
-    def ativar_conta(self, indice: Any, ativa: Any) -> dict[str, Any]:
+    def ativar_conta(self, uid: Any, ativa: Any) -> dict[str, Any]:
         if not bool(ativa):
-            bloqueio = self._app.bloqueio_de_reseter(indice, "desativar")
+            bloqueio = self._app.bloqueio_de_reseter(uid, "desativar")
             if bloqueio:
                 return {"ok": False, "erro": bloqueio}
-        return {"ok": True, "iniciadas": self._app.alternar(indice, bool(ativa))}
+        return {"ok": True, "iniciadas": self._app.alternar(uid, bool(ativa))}
 
-    def alternar_farm(self, indice: Any, ligado: Any) -> dict[str, Any]:
-        self._app.alternar_farm(indice, bool(ligado))
+    def alternar_farm(self, uid: Any, ligado: Any) -> dict[str, Any]:
+        self._app.alternar_farm(uid, bool(ligado))
         return {"ok": True}
 
-    def alternar_app(self, indice: Any, ligado: Any) -> dict[str, Any]:
-        self._app.alternar_app(indice, bool(ligado))
+    def alternar_app(self, uid: Any, ligado: Any) -> dict[str, Any]:
+        self._app.alternar_app(uid, bool(ligado))
         return {"ok": True}
 
-    def salvar_personagem(self, indice: Any, dados: Any) -> dict[str, Any]:
+    def salvar_personagem(self, uid: Any, dados: Any) -> dict[str, Any]:
         # DESMARCAR 'aceitar convites' de um reseter é o mesmo estrago que
         # deletar ou desativar, por outra porta: a conta fica no ar mas para de
         # aceitar o convite, e quem depende dela não reseta mais a cave.
         if not bool((dados or {}).get("accept_team_invites", False)):
             bloqueio = self._app.bloqueio_de_reseter(
-                indice, "tirar a marca de 'aceitar convites de time' de")
+                uid, "tirar a marca de 'aceitar convites de time' de")
             if bloqueio:
                 return {"ok": False, "erro": bloqueio}
-        self._app.salvar_personagem(indice, dados)
+        self._app.salvar_personagem(uid, dados)
         return {"ok": True}
 
     # ---- controle do bot ----
@@ -1057,22 +1147,22 @@ class Api:
     def stats_conta(self, login: Any) -> dict[str, Any]:
         return self._app.stats(login)
 
-    def testar_venda(self, indice: Any) -> dict[str, Any]:
-        return self._app.testar_venda(indice)
+    def testar_venda(self, uid: Any) -> dict[str, Any]:
+        return self._app.testar_venda(uid)
 
     def cancelar_teste_venda(self) -> dict[str, Any]:
         self._app.cancelar_teste_venda()
         return {"ok": True}
 
-    def amostrar_cliques(self, indice: Any) -> dict[str, Any]:
-        return self._app.amostrar_cliques(indice)
+    def amostrar_cliques(self, uid: Any) -> dict[str, Any]:
+        return self._app.amostrar_cliques(uid)
 
     def cancelar_amostragem(self) -> dict[str, Any]:
         self._app.cancelar_amostragem()
         return {"ok": True}
 
-    def conferir_modelos_de_exclusao(self, indice: Any) -> dict[str, Any]:
-        return self._app.conferir_modelos_de_exclusao(indice)
+    def conferir_modelos_de_exclusao(self, uid: Any) -> dict[str, Any]:
+        return self._app.conferir_modelos_de_exclusao(uid)
 
     def abrir_imagem_da_afericao(self, caminho: Any) -> dict[str, Any]:
         return self._app.abrir_imagem_da_afericao(caminho)

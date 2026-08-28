@@ -663,3 +663,124 @@ Abrir uma conta pela PyQt6 e salvar **não apaga** o time — ela apenas não o
 mostra nem o edita. Quem for descongelar precisa de um widget novo em
 `_aba_app`, leitura em `_carregar` e escrita em `_aplicar`; os três lugares
 estão nomeados no teste.
+
+
+## 28/08/2026 — reordenar contas arrastando, grupos do usuário, e o ícone
+
+Pedido: reordenação por arrastar-e-soltar na tabela de contas, agrupamento
+visual, persistência da ordem, e ícone novo. Precedido de análise arquitetural
+nos três eixos, com as decisões abaixo tomadas pelo usuário ANTES de existir
+código.
+
+### O que a análise mudou no pedido
+
+Três premissas do pedido não se sustentaram na leitura:
+
+1. **Não faltava `sort_order`.** A ordem JÁ é persistida — é a ordem do array
+   `accounts` no `config.json`. Faltava a UI poder mudá-la. Um campo de ordem
+   criaria uma SEGUNDA fonte de verdade sobre a mesma coisa, e a pergunta "se o
+   campo discordar do array, quem manda?" não tem resposta boa.
+2. **Não faltava gravação segura.** `BotConfig.save()` já escreve em `.tmp` e
+   troca com `os.replace`, sob `_LOCK_ARQUIVO`.
+3. **`team_id` NÃO PODE EXISTIR.** `docs/decisoes/time-do-app.md` registra que
+   time simétrico foi RECUSADO, e `INVARIANTES.md` grava "quem monta o time é o
+   líder". Um `team_id` por conta é o time simétrico por outro nome, e reabre o
+   nó de A liderar B enquanto B lidera A.
+
+### D1 — A IDENTIDADE DA CONTA NA INTERFACE É UM `uid`, NÃO O ÍNDICE
+
+O `id` que a web usava era o índice do array (`web_app.contas()`), e
+`_conta()` documentava a premissa: *"o índice é estável enquanto o editor está
+aberto (modal bloqueia a tabela)"*. **Arrastar viola essa premissa por
+construção.**
+
+Seis operações de escrita eram endereçadas por índice: `definir_login`,
+`definir_senha`, `definir_posicao`, `definir_servidor`, `remover_conta`,
+`salvar_personagem`. A falha concreta: a UI reordena, a ordem no disco é outra, e
+o `definir_senha` seguinte grava **a senha na conta errada** — o que é login
+quebrado E senha certa perdida, sem desfazer.
+
+Escolhido o `uid` (e não "índice com reload obrigatório") porque o usuário pediu
+*"a forma mais estável"*: `uid` acerta a conta mesmo com a GUI e a web abertas ao
+mesmo tempo, cenário em que o reload não protege. De brinde, apaga um defeito que
+já existia: `!contaIdSelecionado` tratava a PRIMEIRA conta (índice `0`) como
+"nada selecionado", então o botão Remover não ligava para ela.
+
+O `uid` é gerado na criação, **imutável**, e invisível em toda interface — mesma
+categoria de `last_hwnd`/`last_pid`. Conta de `config.json` antigo recebe um na
+leitura.
+
+### D2 + D3 — O GRUPO É ORGANIZACIONAL E NÃO REPRESENTA NADA DO BOT
+
+Decisão do usuário: *"ele nao precisa representar nada, pode ser um agrupamento a
+escolha do usuario, para ele poder organizar e deixar mais facil visualmente"*.
+
+Isto é o que resolve a tensão entre D2 (*"só reordena"*) e o agrupamento: D2
+existia para impedir que soltar uma conta dentro de um grupo editasse
+`time_logins` pelas costas — com teto de 4 seguidores, bloqueio de `bc_farm` e
+recusa por já liderar outro time, um drop podia falhar por regra. **Como o grupo
+não é time, arrastar entre grupos não tem efeito colateral nenhum**: é rótulo
+visual, e mover é seguro.
+
+- **A ordem é ordem; o time é `time_logins`; o grupo é rótulo.** Três coisas
+  ortogonais. Nenhuma deriva da outra.
+- `time_logins` continua indexado por LOGIN, portanto imune a reordenação.
+- O grupo é **um campo de texto livre por conta** (`Account.grupo`). Os grupos
+  existentes são os valores distintos, na ordem em que aparecem no array — então
+  **a ordem dos grupos também sai do array**, e continua havendo uma fonte de
+  verdade só.
+- Conta sem grupo (`""`) não ganha cabeçalho: ausência de rótulo é o rótulo.
+
+### O arraste é POINTER EVENTS, não HTML5 Drag & Drop
+
+Três razões, em ordem de peso:
+
+1. **A linha é quase toda campo de entrada** — login editável, senha, dois
+   `<select>`, três caixas e o botão Editar. Arrastar pela linha inteira brigaria
+   com selecionar texto no login. Exige ALÇA dedicada, e alça é trivial com
+   Pointer Events.
+2. **`<tr>` é hostil ao DnD nativo**: a imagem de arraste de uma linha de tabela
+   sai deformada e `<table>` não aceita placeholder arbitrário entre linhas.
+3. **Zero dependência nova.** Trazer SortableJS contraria a diretriz de preferir
+   nativo, e o WebView2 abre por `file://`, onde CDN não carrega.
+
+O DOM **só é reordenado no drop** (um `insertBefore`); durante o arraste o
+feedback é `transform`, que não causa reflow de layout.
+
+### Por que NÃO tem debounce, contrariando o pedido
+
+O pedido pedia debounce ou gravação assíncrona para o caso de "arrastar e fechar
+o app no mesmo segundo". **Debounce é exatamente o mecanismo que perde a última
+alteração quando a janela fecha.** O que o justificaria é gravação caríssima ou
+muito frequente, e medido, não é nenhum dos dois: `data/config.json` tem **18 946
+bytes com 7 contas** (~2,7 KB por conta; 50 contas dariam ~135 KB), a gravação é
+atômica, e `_aplicar()` já grava o arquivo inteiro **a cada caixa clicada** hoje.
+
+Então: **gravação síncrona no drop**, e se ela falhar a tabela **volta à ordem
+anterior** e avisa — a tela nunca mostra uma ordem que o disco não tem.
+
+### Performance: virtualização foi RECUSADA
+
+`renderContas` recria a tabela inteira (`innerHTML = ""`), mas só em ação
+explícita — **nunca no poll**; o poll de 1500 ms toca as linhas cirurgicamente
+(`tr[data-login]`), com o comentário de que re-renderizar apagaria uma edição
+inline em andamento. Há precedente: arraste em curso não é destruído pelo poll.
+
+Com 50 contas, o custo do arraste é `transform` em até 50 nós por quadro (sem
+reflow) e um `insertBefore` no drop. O gargalo plausível é a RECRIAÇÃO (50
+`<select>` de servidor), que é pré-existente e não vem do arraste. Virtualizar
+quebraria o arraste para fora da viewport e a busca do navegador para resolver um
+problema que 7 contas não têm.
+
+### D4 — ícone: monograma "B" em chama (opção C)
+
+`web/favicon.ico` era **referenciado em dois lugares e não existia** — o
+quadradinho que o usuário via no titlebar era o placeholder de imagem quebrada do
+WebView2. Não havia `setWindowIcon` em lugar nenhum: a janela e a barra de
+tarefas também estavam sem ícone.
+
+São **duas peças, e não uma**: SVG inline no titlebar (zero requisição, imune ao
+CSP e ao `file://`, herda `currentColor`) e um `.ico` multi-resolução de verdade
+para a janela, a GUI e a taskbar. FontAwesome e Material Icons foram recusados:
+webfont externa não carrega em `file://`, e via npm entra um pacote inteiro para
+um glifo.

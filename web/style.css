@@ -415,6 +415,114 @@ body {
     @apply text-center;
   }
 
+  /* ============================================================
+     ORDENAR CONTAS ARRASTANDO, E OS GRUPOS DO USUÁRIO
+     ============================================================
+     A coluna da alça é estreita de propósito: ela existe porque a linha é quase
+     toda campo de entrada, e arrastar pela linha inteira brigaria com
+     selecionar texto no login. */
+  .tabela .col-alca,
+  .tabela .cel-alca {
+    width: 24px;
+    padding-left: 4px;
+    padding-right: 0;
+  }
+
+  .alca-arraste {
+    display: inline-block;
+    padding: 0 2px;
+    color: var(--color-faint);
+    font-size: 13px;
+    line-height: 1;
+    cursor: grab;
+    /* A alça é gesto, não texto: selecioná-la só atrapalharia o arraste. */
+    user-select: none;
+    -webkit-user-select: none;
+    /* Sem isto o navegador rola a página em vez de entregar o `pointermove`. */
+    touch-action: none;
+    transition: color 0.15s;
+  }
+
+  .tabela tbody tr:hover .alca-arraste {
+    color: var(--color-dim);
+  }
+
+  .alca-arraste:active {
+    cursor: grabbing;
+    color: var(--accent);
+  }
+
+  /* Enquanto arrasta: cursor de agarrar em toda a tela e nada de seleção de
+     texto, senão o arraste pinta metade da tabela de azul. */
+  body.arrastando-conta {
+    cursor: grabbing;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  /* A linha em movimento sai do plano e ganha sombra -- é o que diz "esta é a
+     que você está levando". `position: relative` para o z-index valer numa
+     linha de tabela. */
+  .tabela tbody tr.linha-arrastada {
+    position: relative;
+    z-index: 20;
+    background: var(--color-panel2);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+    opacity: 0.97;
+  }
+
+  /* As vizinhas abrem espaço com transição; a arrastada NÃO tem transição, senão
+     ela persegue o cursor com atraso. */
+  .tabela tbody tr[data-uid] {
+    transition: transform 0.16s cubic-bezier(0.2, 0.8, 0.3, 1);
+  }
+
+  .tabela tbody tr.linha-arrastada {
+    transition: none;
+  }
+
+  /* CABEÇALHO DE GRUPO. Rótulo de organização do usuário -- NÃO é time.
+     Separação por AR e FIO, nunca por faixa colorida de fundo: é a mesma
+     decisão já tomada na tela de Log, e por aqui ela vale duas vezes, porque a
+     linha de conta já usa fundo para "selecionada" e para "arrastando". */
+  .tabela tbody tr.linha-grupo td {
+    padding: 14px 8px 4px;
+    border-bottom: 1px solid var(--color-line);
+    background: transparent;
+  }
+
+  /* O primeiro grupo não precisa do ar de cima: ele já encosta no cabeçalho. */
+  .tabela tbody tr.linha-grupo:first-child td {
+    padding-top: 6px;
+  }
+
+  .tabela tbody tr.linha-grupo:hover {
+    background: transparent;
+  }
+
+  .grupo-rotulo {
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-accent);
+  }
+
+  .grupo-contagem {
+    margin-left: 8px;
+    font-size: 10px;
+    color: var(--color-faint);
+  }
+
+  /* "sem grupo" é divisória, não título: sem cor de destaque e sem caixa alta
+     forte, para não competir com os grupos que o usuário nomeou. */
+  .tabela tbody tr.linha-sem-grupo .grupo-rotulo {
+    color: var(--color-faint);
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: none;
+  }
+
   .cel-target {
     @apply font-mono text-[11px] transition-colors duration-200;
     color: var(--color-dim);

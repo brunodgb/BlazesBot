@@ -19,6 +19,10 @@ echo.
 echo  Ela clica no rosto de cada companheiro e mede o que a memoria passa a
 echo  ver. NAO usa skill, NAO anda, NAO abre janela.
 echo.
+echo  Ela vai LISTAR as janelas abertas e pedir para voce escolher a da
+echo  FADA -- e a tela DELA que mostra os companheiros dela.
+echo  Para repetir sem escolher: 18-AFERIR-ALVO-ALIADO.bat --pid 12345
+echo.
 .venv\Scripts\python.exe -m blazesbot.bot.app.afericao_do_aliado %*
 echo.
 echo  A prova em PNG fica em: logs\afericao_aliado\

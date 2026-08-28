@@ -95,6 +95,46 @@ PASSO_DA_MEDICAO = 0.02
 TECLAS_SONDADAS = ("F1",)
 
 
+def clientes_abertos(config: BotConfig) -> list[dict[str, Any]]:
+    """Toda janela de `client.exe` viva, com PID, hwnd, título e conta.
+
+    A ESCOLHA TEM DE SER DO USUÁRIO. Esta aferição só faz sentido na janela da
+    FADA -- é a tela dela que mostra os companheiros dela. Rodar na conta errada
+    clica no painel de outro personagem e mede outra coisa, sem dizer que
+    mediu.
+
+    O título da janela do cliente é o NOME DO PERSONAGEM (visível no print que o
+    usuário enviou), então dá para casar a janela com a conta cadastrada sem
+    abrir memória nenhuma.
+    """
+    import win32gui
+    import win32process
+
+    from ..watchdog import client_pids
+
+    pids = client_pids()
+    achados: list[dict[str, Any]] = []
+
+    def visitar(hwnd: int, _) -> bool:
+        if not win32gui.IsWindowVisible(hwnd):
+            return True
+        try:
+            _, pid = win32process.GetWindowThreadProcessId(hwnd)
+        except Exception:
+            return True
+        if pid not in pids:
+            return True
+        titulo = (win32gui.GetWindowText(hwnd) or "").strip()
+        conta = config.account_by_nick(titulo) if titulo else None
+        achados.append({"pid": pid, "hwnd": hwnd, "titulo": titulo,
+                        "conta": conta})
+        return True
+
+    win32gui.EnumWindows(visitar, None)
+    achados.sort(key=lambda a: (a["titulo"].lower(), a["pid"]))
+    return achados
+
+
 def em_andamento() -> bool:
     return _EM_ANDAMENTO.locked()
 
@@ -206,8 +246,15 @@ def _desenhar(ctx: BotContext, pontos, achados) -> str:
 
 def rodar(config: BotConfig, account: Account,
           on_status: Callable[[str, str], None] | None = None,
-          sondar_teclas: bool = True) -> dict[str, Any]:
-    """Clica em cada retrato do painel de time e mede o que a memória vê."""
+          sondar_teclas: bool = True,
+          janela: tuple[int, int] | None = None) -> dict[str, Any]:
+    """Clica em cada retrato do painel de time e mede o que a memória vê.
+
+    `janela` é o par `(pid, hwnd)` ESCOLHIDO pelo usuário. Quando vem, a busca
+    automática é pulada -- e é assim que se usa esta ferramenta: ela só mede
+    coisa útil na janela da Fada, e "a janela de alguma conta habilitada" não é
+    a janela da Fada.
+    """
     log = logging.getLogger(f"blazes.{account.login or 'afericao_aliado'}")
     if not _EM_ANDAMENTO.acquire(blocking=False):
         return {"ok": False, "erro": "Já existe uma aferição rodando."}
@@ -221,15 +268,23 @@ def rodar(config: BotConfig, account: Account,
     ctx: BotContext | None = None
     try:
         supervisor = AccountSupervisor(config, account, on_status=on_status)
-        adotada = supervisor._adotar_janela_existente()
-        if adotada is None:
-            return {"ok": False,
-                    "erro": "Não encontrei a janela desta conta. Ela precisa "
-                            "estar logada e com o time FORMADO na tela."}
-        pid, hwnd, ja_logado, personagem = adotada
+        if janela is not None:
+            pid, hwnd = janela
+            personagem = account.last_char_name or None
+        else:
+            adotada = supervisor._adotar_janela_existente()
+            if adotada is None:
+                return {"ok": False,
+                        "erro": "Não encontrei a janela desta conta. Ela "
+                                "precisa estar logada e com o time FORMADO na "
+                                "tela."}
+            pid, hwnd, ja_logado, personagem = adotada
+            if not ja_logado:
+                return {"ok": False,
+                        "erro": "O cliente encontrado está na tela de login."}
+        # OBRIGATÓRIO nos dois caminhos: é daqui que o `_release()` do `finally`
+        # tira o que devolver.
         supervisor.pid, supervisor.hwnd = pid, hwnd
-        if not ja_logado:
-            return {"ok": False, "erro": "O cliente encontrado está na tela de login."}
 
         ctx = BotContext(config=config, account=account, pid=pid, hwnd=hwnd,
                          stop_event=_PARADA)
@@ -349,7 +404,7 @@ def resumir(resultado: dict[str, Any]) -> str:
 
 
 def main() -> int:
-    """Entrada do `.bat`. Recebe o login da conta como argumento opcional."""
+    """Entrada do `.bat`. O usuário ESCOLHE a janela; não há palpite."""
     import sys
 
     def dizer(texto: str = "") -> None:
@@ -357,51 +412,93 @@ def main() -> int:
 
     logging.basicConfig(level=logging.INFO, format="%(message)s")
     config = BotConfig.load()
-    contas = [c for c in config.accounts if c.enabled] or config.accounts
-    if not contas:
-        dizer("Nenhuma conta configurada.")
+
+    janelas = clientes_abertos(config)
+    if not janelas:
+        dizer("Nenhuma janela de client.exe aberta.")
+        dizer("Abra o cliente da FADA, forme o time, e rode de novo.")
         return 1
 
-    # A auto-seleção entra por padrão: ela é do próprio personagem, não é slot
-    # de skill, e prova o caso mais fácil do alvo-jogador. `--sem-teclas` desliga.
-    sondar = "--sem-teclas" not in sys.argv
-    pedido = [a for a in sys.argv[1:] if not a.startswith("-")]
-    if pedido:
-        contas = [c for c in contas if (c.login or "").lower() == pedido[0].lower()]
-        if not contas:
-            dizer(f"Não achei a conta {pedido[0]!r} na configuração.")
+    # `--pid N` pula a pergunta -- serve para repetir a mesma medição sem
+    # escolher de novo, e para chamar de fora sem terminal interativo.
+    escolhido = None
+    for i, arg in enumerate(sys.argv):
+        if arg == "--pid" and i + 1 < len(sys.argv):
+            try:
+                alvo = int(sys.argv[i + 1])
+            except ValueError:
+                dizer(f"PID inválido: {sys.argv[i + 1]!r}")
+                return 1
+            escolhido = next((j for j in janelas if j["pid"] == alvo), None)
+            if escolhido is None:
+                dizer(f"Não há cliente aberto com o PID {alvo}.")
+                return 1
+
+    if escolhido is None:
+        dizer("Janelas abertas:")
+        dizer()
+        for n, j in enumerate(janelas, 1):
+            conta = j["conta"].login if j["conta"] else "(fora da configuração)"
+            dizer(f"  {n}) {j['titulo'] or '(sem título)':<20} "
+                  f"pid {j['pid']:<7} conta: {conta}")
+        dizer()
+        dizer("ESCOLHA A JANELA DA FADA -- é a tela DELA que mostra os")
+        dizer("companheiros dela. Na conta errada a medição não vale.")
+        dizer()
+        try:
+            resposta = input("Numero da janela (Enter cancela): ").strip()
+        except EOFError:
+            resposta = ""
+        if not resposta:
+            dizer("Cancelado.")
             return 1
+        if not resposta.isdigit() or not (1 <= int(resposta) <= len(janelas)):
+            dizer(f"Escolha inválida: {resposta!r}")
+            return 1
+        escolhido = janelas[int(resposta) - 1]
 
-    dizer("O time precisa estar FORMADO e VISÍVEL na tela do cliente.")
-    dizer("O bot precisa estar PARADO.")
+    conta = escolhido["conta"]
+    if conta is None:
+        # A janela existe mas o nick não bate com conta nenhuma cadastrada. A
+        # medição ainda vale -- ela lê memória e clica em coordenada fixa, não
+        # depende da configuração da conta -- mas o usuário precisa saber que
+        # está rodando com a configuração de outra.
+        conta = next((c for c in config.accounts if c.enabled), None)
+        if conta is None:
+            dizer("Nenhuma conta configurada para emprestar a configuração.")
+            return 1
+        dizer(f"AVISO: o personagem {escolhido['titulo']!r} não está cadastrado; "
+              f"usando a configuração de {conta.login!r}.")
+
+    sondar = "--sem-teclas" not in sys.argv
+    dizer()
+    dizer(f"Medindo na janela {escolhido['titulo']!r} (pid {escolhido['pid']}).")
+    dizer("O time precisa estar FORMADO e VISÍVEL, e o bot PARADO.")
     if sondar:
-        dizer("A auto-seleção (F1) também será testada — use --sem-teclas para pular.")
+        dizer("A auto-seleção (F1) também será testada — --sem-teclas pula.")
     dizer()
 
-    for conta in contas:
-        dizer(f"Tentando pela conta {conta.login or '(sem login)'}...")
-        r = rodar(config, conta, sondar_teclas=sondar)
-        if r.get("ok"):
-            dizer()
-            for s in r["slots"]:
-                d = s["depois"]
-                dizer(f"  slot {s['slot']} em {s['ponto']}: id={d.get('id')} "
-                      f"nome={d.get('nome')!r} hp={d.get('hp')}/{d.get('max_hp')} "
-                      f"nivel={d.get('nivel')} ({s['segundos']}s)")
-            for t in r.get("teclas") or []:
-                d = t["depois"]
-                dizer(f"  tecla {t['tecla']}: id={d.get('id')} "
-                      f"nome={d.get('nome')!r} ({t['segundos']}s)")
-            dizer()
-            dizer(f"  {r['resumo']}")
-            if r.get("prova"):
-                dizer(f"  prova : {r['prova']}   <- ABRA E CONFIRA OS 4 PONTOS")
-            return 0
+    r = rodar(config, conta, sondar_teclas=sondar,
+              janela=(escolhido["pid"], escolhido["hwnd"]))
+    if not r.get("ok"):
         dizer(f"  {r.get('erro')}")
+        return 1
 
+    for s_ in r["slots"]:
+        d = s_["depois"]
+        dizer(f"  slot {s_['slot']} em {s_['ponto']}: {s_['situacao']:<12} "
+              f"id={d.get('id')} nome={d.get('nome')!r} "
+              f"hp={d.get('hp')}/{d.get('max_hp')} nivel={d.get('nivel')} "
+              f"({s_['segundos']}s)")
+    for t in r.get("teclas") or []:
+        d = t["depois"]
+        dizer(f"  tecla {t['tecla']}: {t['situacao']:<12} id={d.get('id')} "
+              f"nome={d.get('nome')!r} ({t['segundos']}s)")
     dizer()
-    dizer("Nenhuma conta produziu aferição.")
-    return 1
+    dizer(f"  {r['resumo']}")
+    if r.get("prova"):
+        dizer(f"  prova : {r['prova']}   <- ABRA E CONFIRA OS 4 PONTOS")
+    return 0
 
 
 if __name__ == "__main__":

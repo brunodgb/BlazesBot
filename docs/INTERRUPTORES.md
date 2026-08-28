@@ -50,7 +50,7 @@ ligar código não testado.
 | `CIRCULO_POR_RAIO` | `True` | [blazesbot/bot/bc/navigation.py:245](blazesbot/bot/bc/navigation.py#L245) | — | True = raio por raio (1,2,3,5; em cada raio os 8 pontos); False = bússola por |
 | `CONFIRMAR_CHEGADA_POR_COORDENADA` | `False` | [blazesbot/bot/bc/ui_service.py:418](blazesbot/bot/bc/ui_service.py#L418) | — | INTERRUPTOR: a coordenada do painel CONFIRMA a chegada? |
 | `CONFERIR_SLOT_VAZIO` | `False` | [blazesbot/bot/bc/vendor.py:252](blazesbot/bot/bc/vendor.py#L252) | — | INTERRUPTOR -- A CONFERÊNCIA DE SLOT VAZIO ESTÁ DESLIGADA (decisão do usuário, |
-| `MODO_PADRAO_DO_TIME` | `'largada'` | [blazesbot/config.py:543](blazesbot/config.py#L543) | — | — |
+| `MODO_PADRAO_DO_TIME` | `'largada'` | [blazesbot/config.py:551](blazesbot/config.py#L551) | — | — |
 | `ATIVADA` | `True` | [blazesbot/core/calibracao.py:82](blazesbot/core/calibracao.py#L82) | routine.py, vendor.py | INTERRUPTOR |
 | `ATIVADO` | `False` | [blazesbot/core/esconder_jogadores.py:84](blazesbot/core/esconder_jogadores.py#L84) | deletador.py, diagnostico_do_link.py, supervisor.py, petbug.py | INTERRUPTOR -- DESLIGADO EM 19/08/2026 |
 | `SEGURAR_ATIVADO` | `False` | [blazesbot/core/esconder_jogadores.py:102](blazesbot/core/esconder_jogadores.py#L102) | petbug.py | INTERRUPTOR DO F12 PRESO -- DESLIGADO EM 19/08/2026 |
@@ -66,7 +66,7 @@ ligar código não testado.
 
 ## Números medidos -- tolerância, limiar, teto, cadência
 
-463 constantes, agrupadas por arquivo.
+464 constantes, agrupadas por arquivo.
 
 | constante | valor | onde | quem lê | porquê (resumo) |
 |---|---|---|---|---|
@@ -375,23 +375,24 @@ ligar código não testado.
 | `RECONNECT_TEMPLATE` | `'state_conn_prefix.png'` | [blazesbot/bot/watchdog.py:35](blazesbot/bot/watchdog.py#L35) | — | Template do aviso "Connection interrupted[, please open client again]". |
 | `RECONNECT_THRESHOLD` | `0.8` | [blazesbot/bot/watchdog.py:36](blazesbot/bot/watchdog.py#L36) | — | — |
 | `VISUAL_CHECK_SECONDS` | `10.0` | [blazesbot/bot/watchdog.py:39](blazesbot/bot/watchdog.py#L39) | executor.py, context.py, supervisor.py, target_hybrid.py | Este virou o sinal principal de queda, então roda numa cadência curta. |
-| `CLIQUES_POR_PASSADA` | `24` | [blazesbot/config.py:737](blazesbot/config.py#L737) | vendor.py | Limite do jogo: a janela mostra 24 itens e só dá para marcar 24 por venda. |
-| `CONFIG_VERSION` | `4` | [blazesbot/config.py:33](blazesbot/config.py#L33) | — | Versão 4: o caminho da cave saiu do arquivo e passou a viver em |
-| `CURA_PARAR_PCT_PADRAO` | `90` | [blazesbot/config.py:581](blazesbot/config.py#L581) | — | — |
-| `CURA_PEDIR_PCT_PADRAO` | `30` | [blazesbot/config.py:580](blazesbot/config.py#L580) | — | Padrões das duas barras de cura do time. Pedido do usuário em 28/08/2026: |
-| `DEFAULT_MOUNT_SPEED` | `90` | [blazesbot/config.py:48](blazesbot/config.py#L48) | — | — |
-| `FOLGA_PADRAO_DE_SLOTS` | `6` | [blazesbot/config.py:406](blazesbot/config.py#L406) | — | Espaços livres a partir dos quais já vale voltar para vender. |
-| `GUARDAS_DO_COVIL` | `4` | [blazesbot/config.py:781](blazesbot/config.py#L781) | — | Quantos mobs de guarda esperam na entrada do covil do boss. Contados no jogo. |
-| `MAXIMO_DE_SEGUIDORES_DO_TIME` | `4` | [blazesbot/config.py:524](blazesbot/config.py#L524) | — | Quantas contas o líder arrasta junto. Pedido do usuário em 27/08/2026: |
-| `MAX_BOLSAS` | `3` | [blazesbot/config.py:399](blazesbot/config.py#L399) | account_dialog.py, web_app.py | — |
-| `MINIMO_DELAY_MS` | `100` | [blazesbot/config.py:468](blazesbot/config.py#L468) | account_dialog.py | Espera mínima de QUALQUER campo de tempo do APP, em milissegundos. |
-| `NOME_DOS_GUARDAS` | `'Gun Witch'` | [blazesbot/config.py:801](blazesbot/config.py#L801) | combat.py, routine.py | Como os quatro guardas se chamam no jogo. Lido no quadro do alvo, no print do |
-| `PASSOS_DO_APP` | `20` | [blazesbot/config.py:449](blazesbot/config.py#L449) | account_dialog.py, web_app.py | Linhas oferecidas na aba APP. Dezesseis cobre com folga a macro mais longa que |
-| `PET_FEED_MINUTES` | `50` | [blazesbot/config.py:227](blazesbot/config.py#L227) | account_dialog.py, web_app.py | Cada comida de pet dá 5 de felicidade, o máximo é 100, e o pet perde 1 a cada |
-| `PET_FEED_MINUTOS_MAX` | `60` | [blazesbot/config.py:237](blazesbot/config.py#L237) | account_dialog.py | — |
-| `PET_FEED_MINUTOS_MIN` | `40` | [blazesbot/config.py:236](blazesbot/config.py#L236) | account_dialog.py | FAIXA FECHADA DO INTERVALO DE COMIDA (26/08/2026, decisão do usuário). |
-| `SLOTS_POR_BOLSA` | `30` | [blazesbot/config.py:398](blazesbot/config.py#L398) | account_dialog.py, web_app.py | Cada bolsa do jogo tem 30 espaços. O personagem começa com uma e pode ter até |
-| `SPEED_DURACAO_SEGUNDOS` | `30` | [blazesbot/config.py:777](blazesbot/config.py#L777) | velocidade.py | Skill de velocidade da montaria, valores do jogo. Ficam aqui e não na |
+| `CLIQUES_POR_PASSADA` | `24` | [blazesbot/config.py:745](blazesbot/config.py#L745) | vendor.py | Limite do jogo: a janela mostra 24 itens e só dá para marcar 24 por venda. |
+| `CONFIG_VERSION` | `4` | [blazesbot/config.py:34](blazesbot/config.py#L34) | — | Versão 4: o caminho da cave saiu do arquivo e passou a viver em |
+| `CURA_PARAR_PCT_PADRAO` | `90` | [blazesbot/config.py:589](blazesbot/config.py#L589) | — | — |
+| `CURA_PEDIR_PCT_PADRAO` | `30` | [blazesbot/config.py:588](blazesbot/config.py#L588) | — | Padrões das duas barras de cura do time. Pedido do usuário em 28/08/2026: |
+| `DEFAULT_MOUNT_SPEED` | `90` | [blazesbot/config.py:49](blazesbot/config.py#L49) | — | — |
+| `FOLGA_PADRAO_DE_SLOTS` | `6` | [blazesbot/config.py:407](blazesbot/config.py#L407) | — | Espaços livres a partir dos quais já vale voltar para vender. |
+| `GUARDAS_DO_COVIL` | `4` | [blazesbot/config.py:789](blazesbot/config.py#L789) | — | Quantos mobs de guarda esperam na entrada do covil do boss. Contados no jogo. |
+| `LIMITE_DO_NOME_DO_GRUPO` | `40` | [blazesbot/config.py:479](blazesbot/config.py#L479) | web_app.py | Teto do nome de um grupo de contas (`Account.grupo`). |
+| `MAXIMO_DE_SEGUIDORES_DO_TIME` | `4` | [blazesbot/config.py:532](blazesbot/config.py#L532) | — | Quantas contas o líder arrasta junto. Pedido do usuário em 27/08/2026: |
+| `MAX_BOLSAS` | `3` | [blazesbot/config.py:400](blazesbot/config.py#L400) | account_dialog.py, web_app.py | — |
+| `MINIMO_DELAY_MS` | `100` | [blazesbot/config.py:469](blazesbot/config.py#L469) | account_dialog.py | Espera mínima de QUALQUER campo de tempo do APP, em milissegundos. |
+| `NOME_DOS_GUARDAS` | `'Gun Witch'` | [blazesbot/config.py:809](blazesbot/config.py#L809) | combat.py, routine.py | Como os quatro guardas se chamam no jogo. Lido no quadro do alvo, no print do |
+| `PASSOS_DO_APP` | `20` | [blazesbot/config.py:450](blazesbot/config.py#L450) | account_dialog.py, web_app.py | Linhas oferecidas na aba APP. Dezesseis cobre com folga a macro mais longa que |
+| `PET_FEED_MINUTES` | `50` | [blazesbot/config.py:228](blazesbot/config.py#L228) | account_dialog.py, web_app.py | Cada comida de pet dá 5 de felicidade, o máximo é 100, e o pet perde 1 a cada |
+| `PET_FEED_MINUTOS_MAX` | `60` | [blazesbot/config.py:238](blazesbot/config.py#L238) | account_dialog.py | — |
+| `PET_FEED_MINUTOS_MIN` | `40` | [blazesbot/config.py:237](blazesbot/config.py#L237) | account_dialog.py | FAIXA FECHADA DO INTERVALO DE COMIDA (26/08/2026, decisão do usuário). |
+| `SLOTS_POR_BOLSA` | `30` | [blazesbot/config.py:399](blazesbot/config.py#L399) | account_dialog.py, web_app.py | Cada bolsa do jogo tem 30 espaços. O personagem começa com uma e pode ter até |
+| `SPEED_DURACAO_SEGUNDOS` | `30` | [blazesbot/config.py:785](blazesbot/config.py#L785) | velocidade.py | Skill de velocidade da montaria, valores do jogo. Ficam aqui e não na |
 | `AMOSTRAS_ENTRE_GRAVACOES` | `40` | [blazesbot/core/calibracao.py:167](blazesbot/core/calibracao.py#L167) | combat.py | De quantas em quantas amostras o placar vai para o disco. |
 | `AMOSTRAS_PARA_GABARITAR` | `50` | [blazesbot/core/calibracao.py:102](blazesbot/core/calibracao.py#L102) | — | Para um candidato ser declarado `gabaritou`. |
 | `AMOSTRAS_PARA_REPROVAR` | `100` | [blazesbot/core/calibracao.py:109](blazesbot/core/calibracao.py#L109) | — | Para um candidato ser declarado `reprovado` e PARAR de ser amostrado. Não é |
@@ -532,4 +533,4 @@ ligar código não testado.
 | `PASSO` | `0.1` | [blazesbot/tools/vigiar_combate.py:48](blazesbot/tools/vigiar_combate.py#L48) | routine.py, ui_service.py, supervisor.py, indice_de_tempos.py, ler_camera.py | Cadência da leitura. É memória pura -- algumas leituras de 4 bytes por volta, |
 | `SEGUNDOS_ENTRE_ECOS` | `5.0` | [blazesbot/tools/vigiar_combate.py:58](blazesbot/tools/vigiar_combate.py#L58) | — | De quanto em quanto tempo repetir uma linha que NÃO mudou. |
 | `SEGUNDOS_PADRAO` | `900.0` | [blazesbot/tools/vigiar_combate.py:51](blazesbot/tools/vigiar_combate.py#L51) | ler_camera.py | Teto padrão, para a ferramenta fechar sozinha se você esquecer dela aberta. |
-| `MAX_LINHAS_GUARDADAS` | `12000` | [blazesbot/web_app.py:80](blazesbot/web_app.py#L80) | main_window.py | Linhas guardadas em memória para permitir refiltrar por conta, espelho do |
+| `MAX_LINHAS_GUARDADAS` | `12000` | [blazesbot/web_app.py:81](blazesbot/web_app.py#L81) | main_window.py | Linhas guardadas em memória para permitir refiltrar por conta, espelho do |

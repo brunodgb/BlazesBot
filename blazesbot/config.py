@@ -22,6 +22,7 @@ from __future__ import annotations
 import json
 import os
 import threading
+import uuid
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
@@ -469,6 +470,13 @@ MINIMO_DELAY_MS = 100
 
 # Um número lido por dois lados mora num lugar só.
 MINIMO_DE_ESPERA_DO_APP_MS = MINIMO_DELAY_MS
+
+# Teto do nome de um grupo de contas (`Account.grupo`).
+#
+# O rótulo entra num cabeçalho que ocupa a largura da tabela: nome gigante
+# empurra o layout e o usuário não vê por quê. Aplicado na LEITURA e na TELA, nos
+# dois lados -- mesmo contrato do piso dos delays.
+LIMITE_DO_NOME_DO_GRUPO = 40
 
 
 def segundos_para_ms(segundos: float) -> int:
@@ -982,7 +990,53 @@ class Account:
     # serial, só existe no config.json — o usuário não o vê em tela nenhuma.
     last_hwnd: int = 0
     last_pid: int = 0
+    # IDENTIDADE ESTÁVEL DESTA CONTA -- INTERNA, não aparece em interface nenhuma
+    # (mesma categoria de `last_hwnd`/`last_pid`).
+    #
+    # A web endereçava toda escrita pelo ÍNDICE da conta na lista, e isso valia
+    # enquanto a lista não podia ser reordenada: `_conta()` documentava a
+    # premissa ("o índice é estável enquanto o editor está aberto"). Arrastar
+    # linha para reordenar QUEBRA essa premissa por construção, e a falha não é
+    # cosmética: com a ordem do disco diferente da ordem da tela, um
+    # `definir_senha` grava a senha NA CONTA ERRADA -- login quebrado e senha
+    # certa perdida, sem desfazer.
+    #
+    # O `uid` acerta a conta mesmo com a GUI e a web abertas ao mesmo tempo, que
+    # é o cenário em que recarregar a tabela depois do arraste não protege.
+    #
+    # Vazio no dataclass e preenchido por `garantir_uid()`: conta de
+    # `config.json` antigo recebe o dela na leitura, e o valor NUNCA muda depois.
+    uid: str = ""
+    # RÓTULO DE ORGANIZAÇÃO, escolhido pelo usuário. NÃO É TIME.
+    #
+    # Não representa nada para o bot: serve para ele agrupar as contas na tabela
+    # como quiser. Time do APP continua sendo `AppConfig.time_logins` (por
+    # LOGIN, no líder) e party do BC continua sendo `accept_team_invites` --
+    # `docs/INVARIANTES.md` proíbe derivar qualquer um dos dois da tela.
+    #
+    # Os grupos existentes são os valores distintos deste campo, na ordem em que
+    # aparecem na lista de contas: assim a ordem dos grupos também sai do array e
+    # continua havendo UMA fonte de verdade sobre ordem.
+    grupo: str = ""
     settings: AccountSettings = field(default_factory=AccountSettings)
+
+    def garantir_uid(self) -> str:
+        """Preenche o `uid` se ele não existe, e devolve o valor final.
+
+        Idempotente de propósito: é chamada na leitura do arquivo, na criação da
+        conta e antes de qualquer resposta que enderece contas. Trocar um `uid`
+        já gravado apontaria as escritas em voo para outra conta.
+
+        NORMALIZA PARA `str`, e isso não é zelo: o `config.json` é editado à mão
+        (o usuário duplica conta copiando bloco), e um `uid` que chegasse como
+        NÚMERO ficaria `int` aqui enquanto as buscas comparam com texto -- a
+        conta existiria e nenhuma escrita a encontraria.
+        """
+        atual = self.uid
+        if not isinstance(atual, str):
+            atual = "" if atual is None else str(atual)
+        self.uid = atual.strip() or uuid.uuid4().hex
+        return self.uid
 
     @property
     def farms(self) -> bool:
@@ -1110,6 +1164,69 @@ class BotConfig:
         """
         return [a for a in self.enabled_accounts()
                 if a.settings.accept_team_invites]
+
+    def reordenar_contas(self, uids: list[str]) -> bool:
+        """Reordena `accounts` conforme a sequência de `uids`. `True` se mudou.
+
+        A ORDEM DAS CONTAS É A ORDEM DO ARRAY -- não existe campo de ordem, e não
+        pode existir: seriam duas fontes de verdade para a mesma coisa, com a
+        pergunta sem resposta "se discordarem, quem manda?". Reordenar é
+        reordenar a lista, e `save()` grava.
+
+        TOLERANTE POR DESENHO, e cada tolerância conserta um estrago possível:
+
+        - uid desconhecido é IGNORADO (a tela pode estar defasada de outra
+          interface que removeu uma conta);
+        - conta que a tela NÃO citou vai para o fim, na ordem relativa que já
+          tinha -- nunca é descartada. Perder uma conta aqui é perder a senha
+          cifrada dela;
+        - `uids` repetido só vale na primeira aparição.
+
+        O resultado tem SEMPRE o mesmo conjunto de contas de antes; só a ordem
+        muda. É isso que `test_reordenar_nao_perde_conta` trava.
+        """
+        # PRIMEIRA APARIÇÃO GANHA, e a marca de "já colocada" é por IDENTIDADE
+        # DE OBJETO (`id()`), não por `uid`.
+        #
+        # Conserta uma PERDA DE CONTA achada na revisão: com duas contas
+        # carregando o mesmo uid (`config.json` editado à mão), um índice por uid
+        # guardaria só a última, a primeira seria marcada como "usada" pelo uid
+        # alheio e sumiria do resultado -- levando a senha cifrada dela. Objeto é
+        # único mesmo quando o uid não é. Também alinha com `conta_por_uid`, que
+        # devolve a PRIMEIRA: as duas concordam sobre quem um uid repetido
+        # endereça.
+        por_uid: dict[str, Account] = {}
+        for conta in self.accounts:
+            por_uid.setdefault(conta.garantir_uid(), conta)
+
+        nova: list[Account] = []
+        colocados: set[int] = set()
+        for uid in uids:
+            conta = por_uid.get(str(uid or "").strip())
+            if conta is None or id(conta) in colocados:
+                continue
+            colocados.add(id(conta))
+            nova.append(conta)
+        # As não citadas mantêm a ordem relativa original.
+        nova.extend(c for c in self.accounts if id(c) not in colocados)
+
+        if len(nova) != len(self.accounts):
+            # Rede de segurança: preferir NÃO reordenar a gravar uma lista
+            # menor. Perder conta aqui é perder senha cifrada, sem desfazer.
+            raise RuntimeError("reordenação perderia conta — ordem preservada")
+        mudou = [id(c) for c in nova] != [id(c) for c in self.accounts]
+        self.accounts = nova
+        return mudou
+
+    def conta_por_uid(self, uid: str) -> Account | None:
+        """A conta com este `uid`, ou `None`. A busca das escritas da interface."""
+        alvo = str(uid or "")
+        if not alvo:
+            return None
+        for conta in self.accounts:
+            if conta.garantir_uid() == alvo:
+                return conta
+        return None
 
     def lider_do_time_do_app(self, login: str, ignorar: str = "") -> str:
         """Quem já puxa esta conta como seguidora do time do APP, ou "".
@@ -1510,6 +1627,18 @@ class BotConfig:
             else:
                 settings = AccountSettings()
             cfg.accounts.append(Account(settings=settings, **dados))
+
+        # UID PARA TODA CONTA, e SEM REPETIÇÃO. Arquivo antigo não tem o campo;
+        # arquivo copiado à mão (o usuário duplica conta editando o JSON) pode ter
+        # o MESMO uid em duas contas, e aí as escritas de uma cairiam na outra --
+        # exatamente o defeito que o uid existe para impedir. Quem repete perde o
+        # valor e ganha outro.
+        vistos: set[str] = set()
+        for conta in cfg.accounts:
+            conta.garantir_uid()          # normaliza o tipo antes de comparar
+            if conta.uid in vistos:
+                conta.uid = ""
+            vistos.add(conta.garantir_uid())
 
         # SÓ AQUI, com TODAS as contas construídas: esta migração é a única que
         # olha uma conta a partir de OUTRA.

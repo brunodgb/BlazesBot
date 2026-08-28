@@ -86,6 +86,9 @@
           <table class="tabela">
             <thead>
               <tr>
+                <!-- Coluna da alça de arraste. Sem rótulo: o cabeçalho "Ordem"
+                     só ocuparia largura para dizer o que o ⠿ já diz. -->
+                <th class="col-alca" aria-label="Ordem"></th>
                 <th>Ativa</th>
                 <th>Login</th>
                 <th>Senha</th>
@@ -332,6 +335,12 @@
           <div class="campo">
             <span>Velocidade da Montaria</span>
             <select id="ed-montaria" class="campo-input"></select>
+          </div>
+          <div class="campo">
+            <span class="rotulo">Grupo <span class="ajuda"
+              data-ajuda="Rótulo só para VOCÊ organizar a lista de contas. Contas com o mesmo grupo aparecem juntas na tabela, com um cabeçalho.&#10;&#10;NÃO é o time do modo APP nem a party da cave — o bot não muda nada por causa deste campo.&#10;&#10;Deixe vazio para a conta ficar fora de qualquer grupo. Você também pode arrastar a conta pela alça (⠿) para dentro de outro grupo.">?</span></span>
+            <input id="ed-grupo" type="text" spellcheck="false" maxlength="40"
+                   class="campo-input" placeholder="sem grupo" />
           </div>
         </div>
 

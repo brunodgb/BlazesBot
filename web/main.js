@@ -86,8 +86,13 @@ function avisar(msg) {
 /* ---------- estado global ---------- */
 let constantes = null;
 let contasCache = [];
-let contaIdSelecionado = null;
-let contaIdEditando = null;
+// UID da conta selecionada na tabela, ou `null`.
+//
+// Era o ÍNDICE, e por isso `!contaUidSelecionado` tratava a PRIMEIRA conta
+// (índice 0) como "nada selecionado" -- o botão Remover não ligava para ela.
+// Com uid (texto) a comparação com `null` é a única que existe.
+let contaUidSelecionado = null;
+let contaUidEditando = null;
 let statsLogin = null;
 
 // Caches de render das estatísticas (ver `atualizarSeletorStats`/`carregarStats`).
@@ -232,6 +237,11 @@ $("#btn-tema").addEventListener("click", () => {
    CONTAS
    ============================================================ */
 
+// Quantas colunas a tabela de contas tem -- o `colSpan` do cabeçalho de grupo
+// precisa cobrir todas. Num lugar só: errar aqui deixa o cabeçalho estreito e a
+// tabela torta, e o erro é silencioso.
+const COLUNAS_DA_TABELA_DE_CONTAS = 9;
+
 function renderContas() {
   const corpo = $("#corpo-contas");
   corpo.innerHTML = "";
@@ -239,14 +249,70 @@ function renderContas() {
 
   const servidores = (constantes && constantes.servidores) || [];
 
+  // CABEÇALHO DE GRUPO. O grupo é rótulo de organização escolhido pelo usuário
+  // (`Account.grupo`) e NÃO representa time nenhum -- time do APP continua em
+  // `time_logins` (por login, no líder). Os grupos são os valores distintos na
+  // ordem em que aparecem na lista, então a ordem dos grupos também sai do
+  // array: uma fonte de verdade só sobre ordem.
+  //
+  // CONTA SEM GRUPO GANHA UM CABEÇALHO APAGADO, e isto é conserto de um defeito
+  // visto na tela: sem ele, as contas sem grupo que vêm DEPOIS de um grupo
+  // ficam colados nele e parecem pertencer a ele -- o cabeçalho dizia "1 conta"
+  // com três linhas embaixo. "Ausência de rótulo é o rótulo" só funciona quando
+  // o bloco sem grupo está isolado, e ele não está.
+  //
+  // Só que no PRIMEIRO bloco o cabeçalho é ruído: não há grupo antes para
+  // confundir com. Por isso ele só aparece quando já houve grupo.
+  let grupoDesenhado = null;
+  let jaTeveGrupo = false;
+
   contasCache.forEach((c) => {
+    const grupo = (c.grupo || "").trim();
+    if (grupo !== grupoDesenhado) {
+      grupoDesenhado = grupo;
+      if (grupo || jaTeveGrupo) {
+        const trGrupo = document.createElement("tr");
+        trGrupo.className = grupo ? "linha-grupo" : "linha-grupo linha-sem-grupo";
+        trGrupo.dataset.grupo = grupo;
+        const td = document.createElement("td");
+        td.colSpan = COLUNAS_DA_TABELA_DE_CONTAS;
+        const rot = document.createElement("span");
+        rot.className = "grupo-rotulo";
+        rot.textContent = grupo || "sem grupo";
+        const qtd = document.createElement("span");
+        qtd.className = "grupo-contagem";
+        // Conta as do MESMO rótulo em toda a lista, não só as deste bloco: o
+        // mesmo grupo pode aparecer em dois pedaços se o usuário arrastar uma
+        // conta para o meio de outro, e o número tem de continuar verdadeiro.
+        const n = contasCache.filter(
+          (x) => (x.grupo || "").trim() === grupo).length;
+        qtd.textContent = n === 1 ? "1 conta" : `${n} contas`;
+        td.appendChild(rot);
+        td.appendChild(qtd);
+        trGrupo.appendChild(td);
+        frag.appendChild(trGrupo);
+      }
+      if (grupo) jaTeveGrupo = true;
+    }
     const tr = document.createElement("tr");
-    tr.dataset.id = String(c.id);
+    tr.dataset.uid = c.uid;
     // login permite casar esta linha com est.contas[].login do estado, para
     // refletir em runtime o BC farm (ex.: o bot desliga sozinho quando a conta
     // vai vender sem tecla de retorno configurada).
     tr.dataset.login = c.login || "";
-    if (c.id === contaIdSelecionado) tr.classList.add("linha-ativa");
+    if (c.uid === contaUidSelecionado) tr.classList.add("linha-ativa");
+
+    // ALÇA DE ARRASTE. Coluna própria porque a linha é quase toda campo de
+    // entrada (login, senha, dois combos, três caixas, botão): arrastar pela
+    // linha inteira brigaria com selecionar texto no login.
+    const tdAlca = document.createElement("td");
+    tdAlca.className = "ctr cel-alca";
+    const alca = document.createElement("span");
+    alca.className = "alca-arraste";
+    alca.dataset.acao = "arrastar";
+    alca.textContent = "⠿";
+    alca.title = "Arraste para reordenar";
+    tdAlca.appendChild(alca);
 
     const tdAtiva = document.createElement("td");
     tdAtiva.className = "ctr";
@@ -330,7 +396,7 @@ function renderContas() {
     btnEdit.dataset.acao = "editar";
     tdEdit.appendChild(btnEdit);
 
-    [tdAtiva, tdLogin, tdSenha, tdPos, tdServ, tdBC, tdAPP, tdEdit]
+    [tdAlca, tdAtiva, tdLogin, tdSenha, tdPos, tdServ, tdBC, tdAPP, tdEdit]
       .forEach((td) => tr.appendChild(td));
     frag.appendChild(tr);
   });
@@ -339,34 +405,185 @@ function renderContas() {
   atualizarFiltroLog();
 }
 
+/* ============================================================
+   ARRASTAR PARA REORDENAR AS CONTAS
+   ============================================================
+   POINTER EVENTS, e não HTML5 Drag & Drop. Três razões, em ordem de peso:
+
+   1. A linha é quase toda CAMPO DE ENTRADA -- login editável, senha, dois
+      combos, três caixas e o botão Editar. Arrastar pela linha inteira brigaria
+      com selecionar texto no login, então o arraste sai de uma ALÇA dedicada, e
+      alça é trivial aqui e chata no DnD nativo.
+   2. `<tr>` é hostil ao DnD nativo: a imagem de arraste de uma linha de tabela
+      sai deformada, e `<table>` não aceita placeholder arbitrário entre linhas.
+   3. Zero dependência nova. O WebView2 abre por `file://`, onde CDN não carrega.
+
+   O DOM SÓ É REORDENADO NO SOLTAR (um `insertBefore`). Durante o arraste o
+   feedback é `transform`, que não causa reflow de layout -- é o que mantém o
+   custo plano com 50 contas.
+
+   GRAVAÇÃO SÍNCRONA, SEM DEBOUNCE: debounce é justamente o que perde a última
+   alteração quando a janela fecha. E se a gravação falhar, a tabela VOLTA à
+   ordem anterior -- a tela nunca mostra uma ordem que o disco não tem.
+*/
+
+// Quanto o ponteiro precisa andar para virar arraste. Abaixo disto é clique --
+// sem esta folga, clicar na alça já reordenava por tremor de mão.
+const FOLGA_PARA_ARRASTAR = 4;
+
+let arraste = null;
+
+function linhasDeConta() {
+  return $$("#corpo-contas tr[data-uid]");
+}
+
+function aoPegarAlca(e) {
+  if (e.button !== 0) return;
+  const alca = e.target.closest('[data-acao="arrastar"]');
+  if (!alca) return;
+  const linha = alca.closest("tr[data-uid]");
+  if (!linha) return;
+  e.preventDefault();
+  const linhas = linhasDeConta();
+  arraste = {
+    linha,
+    y0: e.clientY,
+    movendo: false,
+    // Altura de cada linha, medida UMA vez: durante o arraste as linhas estão
+    // deslocadas por `transform`, e medir de novo leria a posição fingida.
+    alturas: linhas.map((l) => l.getBoundingClientRect().height),
+    linhas,
+    de: linhas.indexOf(linha),
+    para: linhas.indexOf(linha),
+    ordemAnterior: contasCache.map((c) => c.uid),
+  };
+  alca.setPointerCapture(e.pointerId);
+}
+
+function aoMoverArraste(e) {
+  if (!arraste) return;
+  const dy = e.clientY - arraste.y0;
+  if (!arraste.movendo) {
+    if (Math.abs(dy) < FOLGA_PARA_ARRASTAR) return;
+    arraste.movendo = true;
+    document.body.classList.add("arrastando-conta");
+    arraste.linha.classList.add("linha-arrastada");
+  }
+
+  // Quantas posições o ponteiro já cobriu, medido pelas alturas reais.
+  const altura = arraste.alturas[arraste.de] || 1;
+  let destino = arraste.de + Math.round(dy / altura);
+  destino = Math.max(0, Math.min(arraste.linhas.length - 1, destino));
+  arraste.para = destino;
+
+  arraste.linha.style.transform = `translateY(${dy}px)`;
+  // As vizinhas abrem espaço; ninguém muda de lugar no DOM ainda.
+  arraste.linhas.forEach((l, i) => {
+    if (l === arraste.linha) return;
+    let desloca = 0;
+    if (arraste.de < destino && i > arraste.de && i <= destino) desloca = -altura;
+    if (arraste.de > destino && i >= destino && i < arraste.de) desloca = altura;
+    l.style.transform = desloca ? `translateY(${desloca}px)` : "";
+  });
+}
+
+function limparArraste() {
+  if (!arraste) return;
+  document.body.classList.remove("arrastando-conta");
+  arraste.linha.classList.remove("linha-arrastada");
+  arraste.linhas.forEach((l) => { l.style.transform = ""; });
+  arraste = null;
+}
+
+function aoSoltarLinha() {
+  if (!arraste) return;
+  const { movendo, de, para, ordemAnterior, linhas } = arraste;
+  limparArraste();
+  if (!movendo || de === para) return;
+
+  // A ordem nova, calculada sobre os UIDS -- nunca sobre posições de tela.
+  const uids = linhas.map((l) => l.dataset.uid);
+  const [movido] = uids.splice(de, 1);
+  uids.splice(para, 0, movido);
+
+  // A CONTA HERDA O GRUPO DO DESTINO.
+  //
+  // Sem isto, arrastar uma conta para dentro de outro grupo a deixava com o
+  // rótulo antigo, e o cabeçalho do grupo antigo aparecia DUAS vezes na tabela
+  // -- visto na tela. E o agrupamento não serviria para o que existe: organizar.
+  //
+  // Mover de grupo é seguro porque o grupo é RÓTULO: não é o time do APP
+  // (`time_logins`, por login, no líder) nem a party do BC
+  // (`accept_team_invites`). Nada do bot muda de comportamento por causa dele --
+  // era isso que a decisão "só reordena" protegia.
+  //
+  // A regra é a vizinha DE CIMA; sem vizinha de cima, a de baixo. Assim
+  // arrastar para o topo de um grupo entra NELE em vez de virar "sem grupo".
+  const grupoPorUid = new Map(contasCache.map((c) => [c.uid, (c.grupo || "").trim()]));
+  const acima = para > 0 ? uids[para - 1] : null;
+  const abaixo = para + 1 < uids.length ? uids[para + 1] : null;
+  const grupoDestino = acima !== null
+    ? grupoPorUid.get(acima)
+    : (abaixo !== null ? grupoPorUid.get(abaixo) : "");
+  grupoPorUid.set(movido, grupoDestino || "");
+
+  // UMA chamada leva ordem e rótulos juntos: se fossem duas, uma podia gravar e
+  // a outra falhar, e a tabela ficaria com a ordem nova e o grupo velho.
+  const ordem = uids.map((u) => ({ uid: u, grupo: grupoPorUid.get(u) || "" }));
+
+  chamar("reordenar_contas", ordem).then((r) => {
+    if (r && r.ok && Array.isArray(r.contas)) {
+      // Redesenha do que está NO DISCO, não do que a tela reorganizou.
+      contasCache = r.contas;
+      renderContas();
+      return;
+    }
+    // Falhou: volta à ordem anterior. Mostrar uma ordem que o disco não tem
+    // seria pior que não reordenar -- o usuário confiaria nela.
+    const antes = new Map(contasCache.map((c) => [c.uid, c]));
+    contasCache = ordemAnterior.map((u) => antes.get(u)).filter(Boolean);
+    renderContas();
+    avisar((r && r.erro) || "Não foi possível salvar a nova ordem.");
+  });
+}
+
+$("#corpo-contas").addEventListener("pointerdown", aoPegarAlca);
+$("#corpo-contas").addEventListener("pointermove", aoMoverArraste);
+$("#corpo-contas").addEventListener("pointerup", aoSoltarLinha);
+// Cancelar de verdade: `pointercancel` (o sistema tomou o ponteiro) e Esc.
+$("#corpo-contas").addEventListener("pointercancel", limparArraste);
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && arraste) limparArraste();
+});
+
 $("#corpo-contas").addEventListener("click", (e) => {
-  const tr = e.target.closest("tr[data-id]");
+  const tr = e.target.closest("tr[data-uid]");
   if (!tr) return;
-  const id = Number(tr.dataset.id);
+  const uid = tr.dataset.uid;
 
   if (e.target.dataset.acao === "editar") {
-    abrirEditor(id);
+    abrirEditor(uid);
     return;
   }
 
   // seleção para remover (ignora cliques nos controles)
   if (e.target.closest("input,button,select")) return;
-  contaIdSelecionado = id === contaIdSelecionado ? null : id;
+  contaUidSelecionado = uid === contaUidSelecionado ? null : uid;
   $$("#corpo-contas tr").forEach((r) =>
-    r.classList.toggle("linha-ativa", r.dataset.id === String(contaIdSelecionado)));
-  $("#btn-remover-conta").disabled = !contaIdSelecionado;
+    r.classList.toggle("linha-ativa", r.dataset.uid === contaUidSelecionado));
+  $("#btn-remover-conta").disabled = contaUidSelecionado === null;
 });
 
 $("#corpo-contas").addEventListener("change", (e) => {
-  const tr = e.target.closest("tr[data-id]");
+  const tr = e.target.closest("tr[data-uid]");
   if (!tr || !e.target.dataset.acao) return;
-  const id = Number(tr.dataset.id);
+  const uid = tr.dataset.uid;
   const acao = e.target.dataset.acao;
   const ligado = e.target.checked;
   const valor = e.target.value;
 
   if (acao === "ativa") {
-    chamar("ativar_conta", id, ligado).then((r) => {
+    chamar("ativar_conta", uid, ligado).then((r) => {
       // DESATIVAR um reseter deixa outra conta órfã. O backend recusa; aqui a
       // caixa volta ao estado real porque `carregarContas` re-renderiza a linha
       // a partir da configuração, que não mudou.
@@ -381,31 +598,31 @@ $("#corpo-contas").addEventListener("change", (e) => {
       carregarContas();
     });
   } else if (acao === "bc") {
-    chamar("alternar_farm", id, ligado).then(() => {
+    chamar("alternar_farm", uid, ligado).then(() => {
       toast(ligado ? "BC farm ligado" : "BC farm desligado");
       carregarContas();
     });
   } else if (acao === "app") {
-    chamar("alternar_app", id, ligado).then(() => {
+    chamar("alternar_app", uid, ligado).then(() => {
       toast(ligado ? "Modo APP ligado" : "Modo APP desligado");
       carregarContas();
     });
   } else if (acao === "posicao") {
-    chamar("definir_posicao", id, valor).then(() => {
-      const c = contasCache.find((x) => x.id === id);
+    chamar("definir_posicao", uid, valor).then(() => {
+      const c = contasCache.find((x) => x.uid === uid);
       if (c) c.position = valor;
       toast("Posição: " + valor);
     });
   } else if (acao === "servidor") {
-    chamar("definir_servidor", id, valor).then(() => {
-      const c = contasCache.find((x) => x.id === id);
+    chamar("definir_servidor", uid, valor).then(() => {
+      const c = contasCache.find((x) => x.uid === uid);
       if (c) c.server = valor;
       toast("Servidor: " + valor);
     });
   } else if (acao === "login") {
     const novo = e.target.value.trim();
-    if (novo && novo !== (contasCache.find((x) => x.id === id) || {}).login) {
-      chamar("definir_login", id, novo).then(() => {
+    if (novo && novo !== (contasCache.find((x) => x.uid === uid) || {}).login) {
+      chamar("definir_login", uid, novo).then(() => {
         toast("Login atualizado.");
         carregarContas();
       });
@@ -414,7 +631,7 @@ $("#corpo-contas").addEventListener("change", (e) => {
     // Não fazer trim: a senha pode conter espaços/bytes iniciais.
     const senha = e.target.value;
     if (senha) {
-      chamar("definir_senha", id, senha).then(() => {
+      chamar("definir_senha", uid, senha).then(() => {
         toast("Senha gravada (cifrada com o Windows).");
         carregarContas();
       });
@@ -436,7 +653,7 @@ $("#corpo-contas").addEventListener("keydown", (e) => {
   } else if (e.key === "Escape") {
     e.preventDefault();
     e.target.value = (e.target.dataset.acao === "senha") ? "" : (
-      (contasCache.find((x) => x.id === Number(e.target.closest("tr[data-id]").dataset.id)) || {}).login || ""
+      (contasCache.find((x) => x.uid === e.target.closest("tr[data-uid]").dataset.uid) || {}).login || ""
     );
     e.target.blur();
   }
@@ -457,18 +674,18 @@ $("#btn-adicionar-conta").addEventListener("click", () => {
 });
 
 $("#btn-remover-conta").addEventListener("click", () => {
-  if (contaIdSelecionado === null) return;
-  const sel = contasCache.find((x) => x.id === contaIdSelecionado);
+  if (contaUidSelecionado === null) return;
+  const sel = contasCache.find((x) => x.uid === contaUidSelecionado);
   const rotulo = (sel && (sel.login || sel.nick)) ||
-    `conta #${contaIdSelecionado + 1}`;
+    "esta conta";
   confirmar(`Remover a conta "${rotulo}"?`).then((ok) => {
     if (!ok) return;
-    chamar("remover_conta", contaIdSelecionado).then((r) => {
+    chamar("remover_conta", contaUidSelecionado).then((r) => {
       // RECUSADO porque esta conta é o reset de outra: aviso bloqueante, e a
       // conta continua onde estava. Quem decide é o backend.
       if (r && r.ok === false) { avisar(r.erro || "Não foi possível remover."); return; }
       toast("Conta removida.");
-      contaIdSelecionado = null;
+      contaUidSelecionado = null;
       $("#btn-remover-conta").disabled = true;
       carregarContas();
     });
@@ -517,22 +734,22 @@ $$(".aba").forEach((b) =>
   if (selModoTime) selModoTime.addEventListener("change", explicarModoDoTime);
 }
 
-function abrirEditor(id) {
-  contaIdEditando = id;
-  const sel = contasCache.find((x) => x.id === id);
-  const rotulo = (sel && (sel.login || sel.nick)) || `conta #${id + 1}`;
+function abrirEditor(uid) {
+  contaUidEditando = uid;
+  const sel = contasCache.find((x) => x.uid === uid);
+  const rotulo = (sel && (sel.login || sel.nick)) || "conta nova";
   $("#modal-editor-titulo").textContent = "Editar conta — " + rotulo;
   $("#ed-login").value = "";
   $("#ed-senha").value = "";
   trocarAba(ABA_PADRAO);
   $("#modal-editor").classList.remove("escondida");
 
-  chamar("obter_conta", id).then((d) => preencherEditor(d));
+  chamar("obter_conta", uid).then((d) => preencherEditor(d));
 }
 
 function fecharEditor() {
   $("#modal-editor").classList.add("escondida");
-  contaIdEditando = null;
+  contaUidEditando = null;
 }
 $("#btn-fechar-modal").addEventListener("click", fecharEditor);
 $("#btn-cancelar-modal").addEventListener("click", fecharEditor);
@@ -541,6 +758,7 @@ function preencherEditor(d) {
   if (!d) return;
   $("#ed-login").value = d.login || "";
   $("#ed-nick").value = d.nick || "";
+  $("#ed-grupo").value = d.grupo || "";
   $("#ed-aceitar-time").checked = !!d.accept_team_invites;
   $("#ed-usar-catador").checked = !!d.usar_catador;
   $("#ed-montaria").value = String(d.mount_speed_pct);
@@ -918,7 +1136,7 @@ function lerTeclas() {
 }
 
 function salvarEditor() {
-  if (contaIdEditando === null) return;
+  if (contaUidEditando === null) return;
   const senhaNova = $("#ed-senha").value;
 
   // `tr.app-linha` exclui a linha 0 (o TAB), que não é um passo da macro.
@@ -932,6 +1150,7 @@ function salvarEditor() {
   const dados = {
     login: $("#ed-login").value.trim(),
     nick: $("#ed-nick").value.trim(),
+    grupo: $("#ed-grupo").value.trim(),
     accept_team_invites: $("#ed-aceitar-time").checked,
     usar_catador: $("#ed-usar-catador").checked,
     mount_speed_pct: Number($("#ed-montaria").value),
@@ -976,11 +1195,11 @@ function salvarEditor() {
   };
 
   const senhaP = senhaNova
-    ? chamar("definir_senha", contaIdEditando, senhaNova)
+    ? chamar("definir_senha", contaUidEditando, senhaNova)
     : Promise.resolve(null);
 
   senhaP.then(() =>
-    chamar("salvar_personagem", contaIdEditando, dados)
+    chamar("salvar_personagem", contaUidEditando, dados)
   ).then((r) => {
     // RECUSADO: desmarcar "aceitar convites de time" numa conta que é o reset
     // de outra é o mesmo estrago que deletar, por outra porta. O editor fica
@@ -1738,7 +1957,7 @@ function atualizarEstado(est) {
 // NOVO: gerencia estado dos botões temporários (Testar Venda, Amostrar Cliques, Conferir Exclusão)
 // Só habilitados quando: bot PARADO E conta selecionada
 function atualizarBotoesTemporarios(est) {
-  const temConta = contaIdSelecionado !== null;
+  const temConta = contaUidSelecionado !== null;
   const botParado = !est.rodando;
   const habilitado = temConta && botParado;
 
@@ -1783,7 +2002,7 @@ $("#btn-testar-venda").addEventListener("click", () => {
     return;
   }
 
-  if (contaIdSelecionado === null) {
+  if (contaUidSelecionado === null) {
     toast("Selecione a conta na aba Contas primeiro.", "erro");
     return;
   }
@@ -1793,7 +2012,7 @@ $("#btn-testar-venda").addEventListener("click", () => {
   // A chamada só resolve quando a venda termina (pode levar minutos); o log
   // continua sendo puxado normalmente porque o pywebview atende cada chamada
   // do frontend em uma thread própria.
-  chamar("testar_venda", contaIdSelecionado).then((r) => {
+  chamar("testar_venda", contaUidSelecionado).then((r) => {
     testeDeVendaRodando = false;
     bt.disabled = false;
     bt.textContent = ROTULO_TESTE_VENDA;
@@ -1824,14 +2043,14 @@ $("#btn-amostrar-cliques").addEventListener("click", () => {
     return;
   }
 
-  if (contaIdSelecionado === null) {
+  if (contaUidSelecionado === null) {
     toast("Selecione a conta na aba Contas primeiro.", "erro");
     return;
   }
   amostragemRodando = true;
   bt.textContent = "Amostrando… (clique para parar)";
   toast("Amostragem iniciada — acompanhe pelo log.");
-  chamar("amostrar_cliques", contaIdSelecionado).then((r) => {
+  chamar("amostrar_cliques", contaUidSelecionado).then((r) => {
     amostragemRodando = false;
     bt.disabled = false;
     bt.textContent = ROTULO_AMOSTRAGEM;
@@ -1847,13 +2066,13 @@ $("#btn-amostrar-cliques").addEventListener("click", () => {
 // apagado, SEM apagar nada. Ver blazesbot/bot/app/afericao.py.
 $("#btn-conferir-exclusao").addEventListener("click", () => {
   const bt = $("#btn-conferir-exclusao");
-  if (contaIdSelecionado === null) {
+  if (contaUidSelecionado === null) {
     toast("Selecione a conta na aba Contas primeiro.", "erro");
     return;
   }
   bt.disabled = true;
   toast("Conferindo os modelos — abrindo o inventário…");
-  chamar("conferir_modelos_de_exclusao", contaIdSelecionado).then((r) => {
+  chamar("conferir_modelos_de_exclusao", contaUidSelecionado).then((r) => {
     bt.disabled = false;
     if (!r) { toast("Erro de comunicação.", "erro"); return; }
     if (!r.ok) { toast("Falha: " + (r.erro || ""), "erro"); return; }
