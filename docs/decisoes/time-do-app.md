@@ -9,6 +9,48 @@
 > Este arquivo guarda o **porquê**. A regra que não pode ser violada está em
 > `docs/INVARIANTES.md`, seção "Time do APP".
 
+## STATUS EM 28/08/2026: OS DOIS MODOS SINCRONIZADOS NÃO FUNCIONAM
+
+**Declarado pelo usuário depois de rodar com duas contas de verdade:** nem
+*"começar cada volta juntos"* (`largada`) nem *"começar juntos e com mesmo
+alvo"* (`mesmo_alvo`) entregam o que prometem. `copiar` — que é só a macro
+emprestada, sem sincronia — não faz parte deste veredito.
+
+Fica escrito aqui porque a área vai continuar sendo mexida (a Fada), e quem
+chegar depois precisa saber que **isto está em aberto, não resolvido**.
+
+### O que foi observado, em ordem
+
+1. **Defasagem estável.** Log real: voltas de ~20 s com **13 s de atraso fixo**
+   entre as contas, volta após volta. A largada ficava aberta 3 s de um ciclo de
+   20, e quem perdia rodava uma volta solo inteira — a defasagem era preservada.
+2. **`mesmo_alvo` sem alinhar.** *"raramente atacam o mesmo mob"*. Duas causas
+   distintas: o modo salvo no `config.json` era `largada` (o usuário trocou na
+   tela e não salvou), e o desenho de então deixava o atrasado mandar a linha
+   VELHA dele.
+
+### O que foi corrigido DEPOIS dessa observação, e ainda não foi validado
+
+Nenhuma destas correções chegou a rodar com duas contas. **Elas não devem ser
+tratadas como "funciona" até alguém medir de novo:**
+
+- sincronia linha a linha em vez de por volta (o líder marca cada tecla);
+- o seguidor deixou de ter cursor próprio: ele manda a linha que o líder
+  anunciou, não a dele;
+- teto de espera passou a incluir o delay da linha (com teto fixo de 2 s e
+  macro de 3000 ms, o líder era dado como sumido em toda linha longa);
+- teto do alinhamento passou a caber dentro do teto da largada;
+- o TAB de abertura da volta deixou de desfazer o alinhamento;
+- volta cega nos modos simples, para a volta de todas as contas durar o mesmo;
+- o TAB deixou de trocar um alvo que já existe.
+
+### O que NUNCA foi medido, e é onde a dúvida mora
+
+**O `TARGET_ID` do mesmo mob é o mesmo número em dois clientes diferentes?**
+Ninguém verificou. Se não for, `mesmo_alvo` é impossível pelo caminho atual e a
+correção não é de sincronia — é de premissa. Por isso cada comparação passou a
+ir para o log.
+
 ## O que foi decidido, e o que foi RECUSADO
 
 Cada linha abaixo saiu de uma pergunta feita ao usuário antes de existir código.
