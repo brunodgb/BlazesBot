@@ -410,7 +410,7 @@ def test_o_guarda_NAO_roda_antes_do_clique_direito_da_block_list():
     `preparar_entrada` roda o guarda DEPOIS do time formado e ANTES da rajada de
     cliques da entrada.
     """
-    from blazesbot.bot.bc import team
+    from blazesbot.bot import team
     fonte = inspect.getsource(team.TeamService._enviar_convite)
     assert "desobstruir_a_cena" not in fonte, (
         "o guarda entrou antes do clique direito da Block list e vai fechar a "

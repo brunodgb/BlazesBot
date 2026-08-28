@@ -10,7 +10,7 @@
 
 Fazendo a Bewitcher Cave duas vezes seguidas sem mudar de time, o boss **não
 renasce**: a instância continua com ele morto e a run é perdida. Entrar num time
-novo reseta a cave. Isso o `bot/bc/team.py` já resolvia.
+novo reseta a cave. Isso o `bot/team.py` já resolvia.
 
 O que **não** estava resolvido é o que acontece quando a conta de reset cai.
 

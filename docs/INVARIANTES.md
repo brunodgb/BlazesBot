@@ -108,6 +108,14 @@ seguidores). Pedido do usuário em 27/08/2026.
   `tests/test_config_ida_e_volta.py`).
 - **`time_modo` fora de `MODOS_DO_TIME` nunca entra**: a normalização é feita
   nos DOIS lados (leitura do config e ponte web), como o piso de 100 ms.
+- **O MURAL MORA EM UM LUGAR SÓ** (`bot/mural.py`). Ele é o quadro de avisos
+  entre as contas do MESMO processo, e é usado pelo time do jogo (BC) e pelo
+  time do APP. Duplicá-lo cria dois dicionários de batidas: o reseter bate num
+  e o farm consulta o outro, e a conta espera para sempre na porta da cave sem
+  erro nenhum. Travado por `tests/test_ecossistemas.py`.
+- **Os três quadros do mural compartilham um lock de propósito** — convite e
+  aceite são as duas pontas da MESMA conversa. Separar os mutexes muda a
+  exclusão mútua entre elas sem alterar função nenhuma.
 - **A PyQt6 NÃO conhece o time** (congelada em 27/08/2026). A exceção é uma
   lista fechada em `tests/test_app_config_campo_por_campo.py`
   (`CAMPOS_SO_DA_WEB`) — não é permissão para novos campos ficarem fora da GUI.

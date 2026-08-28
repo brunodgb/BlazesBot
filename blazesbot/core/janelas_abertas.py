@@ -37,7 +37,7 @@ necessárias:
 A moldura NÃO conta janelas -- o filigrama se repete ao longo da borda, então
 uma janela só produz de 2 a 7 casamentos. Por isso aqui nunca se conta nada: o
 laço pergunta *"ainda tem janela?"* e fecha UMA por passada, reconferindo. É o
-mesmo desenho do `bc/team._fechar_janelas`, e pelo mesmo motivo: fechar uma
+mesmo desenho do `bot/team._fechar_janelas`, e pelo mesmo motivo: fechar uma
 janela MUDA a tela, então as posições calculadas antes podem já não valer.
 
 =========================================================================

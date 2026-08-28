@@ -1219,7 +1219,7 @@ class Memory:
         """Quantidade de membros no time.
 
         ESTA LEITURA NUNCA RESPONDEU neste cliente, e o preço está medido em
-        `bot/bc/team.py`: a confirmação do convite dependia dela, e o log real
+        `bot/team.py`: a confirmação do convite dependia dela, e o log real
         registrou ONZE aceites falsos seguidos para um único convite. O
         `_time_pela_imagem()` foi escrito como segunda via por causa disso --
         e essa segunda via também está morta, porque o template

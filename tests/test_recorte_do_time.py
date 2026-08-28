@@ -4,7 +4,7 @@
 O QUE ESTÁ SOB TESTE
 =============================================================================
 
-`bot/bc/team.py` procura `state_team_member.png` e esse arquivo nunca existiu
+`bot/team.py` procura `state_team_member.png` e esse arquivo nunca existiu
 em disco -- então `_time_pela_imagem()` devolve `None` sempre, e somado a
 `team_size()` também não responder o bot não sabe se está em time por caminho
 nenhum.

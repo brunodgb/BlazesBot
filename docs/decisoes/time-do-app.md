@@ -71,6 +71,27 @@ Levantado por leitura antes de escrever a primeira linha:
 10. **`tests/test_linha_zero_do_app.py:158`** exige `dist/` recompilado: mudar
     `web/` sem `npm run build` reprova.
 
+## MEDIR DEPOIS, NÃO ANTES — decisão do usuário em 27/08/2026
+
+> *"é importante deixar rodando mesmo sem as medições, para justamente a gente
+> testar em um cenário real, e após termos os logs a gente ajusta os tempos e a
+> sincronia perfeita."*
+
+Isto INVERTE a recomendação que estava escrita aqui (medir antes de escrever
+qualquer número). O que a inversão obriga, em troca:
+
+1. **Todo número provisório é declarado como tal** — no código e no
+   `docs/TEMPOS.md`. Um número provisório que não se anuncia vira, em duas
+   semanas, um número medido que ninguém lembra de ter medido.
+2. **A rodada real É a medição.** A sincronia registra no log o que a aferição
+   registraria: quanto cada conta atrasou na largada e por quê, quantos TABs o
+   alinhamento custou, e quantas vezes o teto estourou. Sem isso a rodada
+   confirma "funciona" ou "não funciona" e não diz mais nada.
+3. **O provisório erra para o lado seguro.** Na dúvida, esperar de mais é
+   perder alguns segundos por volta; esperar de menos é comparar contra o alvo
+   ANTERIOR e concluir "não alinhou" quando alinhou — erro calado, o tipo que
+   este projeto persegue.
+
 ## O que ainda NÃO está medido
 
 Nenhum número de sincronia foi escrito, e não será antes destas duas medições —
@@ -96,10 +117,9 @@ valor declarado pelo usuário, e entram no `docs/TEMPOS.md` marcados como tal. O
 |---|---|---|
 | 1 | Campos `time_logins` / `time_modo` no `AppConfig`, ponte web, testes | **feito** |
 | 2 | Aba APP em duas colunas + painel do Time na direita + `npm run build` | **feito** |
-| 3 | Promoção do `team.py`: mural e mecânica do jogo para `bot/`, política do reset fica em `bc/` | a fazer |
-| 4 | As duas ferramentas de medição | a fazer |
-| 5 | Sincronia: mural do time, injeção no supervisor, largada no executor | a fazer |
+| 3 | Promoção do `team.py`: `bot/mural.py` (quadro de avisos) + `bot/team.py` (time no jogo) | **feito** |
+| 4 | Sincronia: mural do time, convocação no supervisor, largada no executor | a fazer |
+| 5 | Ajuste dos tempos pelos logs da rodada real | a fazer |
 
-A ordem não é gosto: **2** precisa dos campos de **1**; **5** precisa do mural de
-**3** e dos números de **4**. Cada bloco fecha com a suíte inteira e uma revisão
-do Codex.
+A ordem não é gosto: **2** precisa dos campos de **1** e **4** precisa do mural
+de **3**. Cada bloco fecha com a suíte inteira e uma revisão do Codex.

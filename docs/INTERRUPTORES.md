@@ -218,47 +218,31 @@ ligar código não testado.
 | `TOLERANCIA_DE_VOLTA_AO_CAMINHO` | `2` | [blazesbot/bot/bc/navigation.py:211](blazesbot/bot/bc/navigation.py#L211) | — | Tolerância para VOLTAR ao caminho, no candidato mais próximo da manobra. |
 | `TOLERANCIA_ROTA` | `7` | [blazesbot/bot/bc/navigation.py:106](blazesbot/bot/bc/navigation.py#L106) | mapa_bc.py | Tolerância dos waypoints de rota. Waypoint de rota não é destino: é só uma |
 | `TRICKY_TOLERANCE` | `8` | [blazesbot/bot/bc/navigation.py:63](blazesbot/bot/bc/navigation.py#L63) | mapa_bc.py, routine.py | — |
-| `ASSENTAMENTO_DA_BOLSA` | `0.14` | [blazesbot/bot/bc/routine.py:329](blazesbot/bot/bc/routine.py#L329) | — | Depois que a MEMÓRIA confirma a bolsa aberta, o quanto esperar o DESENHO dela. |
-| `CAPTURAS_INVALIDAS_PACKAGE` | `3` | [blazesbot/bot/bc/routine.py:261](blazesbot/bot/bc/routine.py#L261) | — | Se a captura do inventário vier preta/None por estas vezes seguidas, NÃO é |
-| `DEPOIS_DE_FECHAR_A_BOLSA` | `0.05` | [blazesbot/bot/bc/routine.py:340](blazesbot/bot/bc/routine.py#L340) | — | Depois de fechar o inventário. Nada depende deste tempo -- o passo seguinte é |
-| `ENTRE_CLIQUES_NO_PACKAGE` | `0.05` | [blazesbot/bot/bc/routine.py:335](blazesbot/bot/bc/routine.py#L335) | — | Entre um clique direito e o seguinte. Curto porque o clique deste bot é |
-| `ESPERA_ENTRE_TENTATIVAS` | `0.025` | [blazesbot/bot/bc/routine.py:128](blazesbot/bot/bc/routine.py#L128) | — | E O INTERVALO ENTRE TENTATIVAS quase desaparece: a janela de reconhecimento já |
-| `INTERVALO_DO_AVISO_DO_RESETER` | `300.0` | [blazesbot/bot/bc/routine.py:149](blazesbot/bot/bc/routine.py#L149) | — | De quanto em quanto tempo repetir o aviso enquanto a trava dura. |
-| `JANELA_DE_RECONHECIMENTO` | `0.25` | [blazesbot/bot/bc/routine.py:113](blazesbot/bot/bc/routine.py#L113) | — | para reconhecer e reagir ..........   0,607 s |
-| `LIMIAR_DO_CHAT_ABERTO` | `0.9` | [blazesbot/bot/bc/routine.py:240](blazesbot/bot/bc/routine.py#L240) | — | Limiar do casamento da carinha. Alto porque ela é um ícone pequeno e fixo: no |
-| `LIMIAR_DO_PACKAGE_EM_COR` | `0.92` | [blazesbot/bot/bc/routine.py:282](blazesbot/bot/bc/routine.py#L282) | — | Limiar do casamento EM COR do ícone do item. |
-| `LIMIAR_DO_PICK_UP_ALL` | `0.85` | [blazesbot/bot/bc/routine.py:235](blazesbot/bot/bc/routine.py#L235) | — | Limiar do botão. 0.85 e não 0.90: é um botão de UI com texto, e o fundo atrás |
-| `PASSO_DA_ESPERA_DA_BOLSA` | `0.05` | [blazesbot/bot/bc/routine.py:323](blazesbot/bot/bc/routine.py#L323) | — | De quanto em quanto tempo perguntar se a bolsa já abriu. Era 0,15 s, o que |
-| `PASSO_DA_ESPERA_DO_RESETER` | `1.0` | [blazesbot/bot/bc/routine.py:142](blazesbot/bot/bc/routine.py#L142) | — | Cadência da espera pela conta de reset (ver `_esperar_o_reseter`). |
-| `PASSO_DO_RECONHECIMENTO` | `0.04` | [blazesbot/bot/bc/routine.py:118](blazesbot/bot/bc/routine.py#L118) | — | PASSO: de quanto em quanto tempo perguntar, dentro da janela. A pergunta é uma |
-| `RODADAS_DE_USO_DO_PACKAGE` | `5` | [blazesbot/bot/bc/routine.py:256](blazesbot/bot/bc/routine.py#L256) | — | Rodadas de "procurar -> clicar em todos -> reconferir". |
-| `RODADAS_DE_VENDA_ANTES_DE_DESLIGAR` | `3` | [blazesbot/bot/bc/routine.py:405](blazesbot/bot/bc/routine.py#L405) | — | Quantas rodadas de "não vendeu ⇒ roda mais uma run de BC ⇒ tenta de novo" |
-| `SEGUNDOS_ESPERANDO_A_BOLSA` | `0.2` | [blazesbot/bot/bc/routine.py:298](blazesbot/bot/bc/routine.py#L298) | — | Quanto esperar a bolsa CONFIRMAR que abriu, lendo a memória. |
-| `SEGUNDOS_POR_TENTATIVA_NO_ALTAR` | `1.5` | [blazesbot/bot/bc/routine.py:179](blazesbot/bot/bc/routine.py#L179) | — | — |
-| `TEMPLATE_CHAT_ABERTO` | `'state_chat_aberto.png'` | [blazesbot/bot/bc/routine.py:208](blazesbot/bot/bc/routine.py#L208) | — | Carinha amarela no fim da barra de digitação do chat. Ela SÓ existe com o chat |
-| `TEMPLATE_PACKAGE_COURAGE` | `'package_courage.png'` | [blazesbot/bot/bc/routine.py:202](blazesbot/bot/bc/routine.py#L202) | — | USO DO PACKAGE_COURAGE (pós-boss, ANTES de ativar a montaria e sair) |
-| `TEMPLATE_PICK_UP_ALL` | `'btn_pick_up_all.png'` | [blazesbot/bot/bc/routine.py:214](blazesbot/bot/bc/routine.py#L214) | — | Botão "Pick up all" da janela de loot. É ELE que autoriza o clique esquerdo do |
-| `TENTATIVAS_ANTES_DE_DESENCALHAR` | `6` | [blazesbot/bot/bc/routine.py:164](blazesbot/bot/bc/routine.py#L164) | — | Quantas tentativas de clique no Altar Stone por CICLO, antes do vai-e-volta. |
-| `TENTATIVAS_DE_ENCOSTAR_NO_ALTAR` | `6` | [blazesbot/bot/bc/routine.py:178](blazesbot/bot/bc/routine.py#L178) | — | Orçamento do ajuste fino do patamar: quantos `goto` apertados tentamos e por |
-| `TENTATIVAS_POR_LINHA_DE_LOG` | `15` | [blazesbot/bot/bc/routine.py:153](blazesbot/bot/bc/routine.py#L153) | indice_de_tempos.py | A cada quantas tentativas o log conta como vai a disputa. Uma linha por |
-| `TOLERANCIA_DA_ENTRADA` | `12` | [blazesbot/bot/bc/routine.py:348](blazesbot/bot/bc/routine.py#L348) | — | DUAS PERGUNTAS DIFERENTES sobre a mesma coordenada, e por isso dois números. |
-| `TOLERANCIA_DO_PONTO_DO_BOSS` | `15` | [blazesbot/bot/bc/routine.py:188](blazesbot/bot/bc/routine.py#L188) | — | Quão perto do ponto do boss conta como "estou no waypoint". |
-| `ACEITE_VALIDO_SEGUNDOS` | `15.0` | [blazesbot/bot/bc/team.py:277](blazesbot/bot/bc/team.py#L277) | — | Validade do aceite. Curta de propósito: ele confirma UM convite recém-enviado, |
-| `ANCHOR_THRESHOLD` | `0.8` | [blazesbot/bot/bc/team.py:77](blazesbot/bot/bc/team.py#L77) | ui_service.py, janelas_abertas.py | — |
-| `CONVITE_VALIDO_SEGUNDOS` | `60.0` | [blazesbot/bot/bc/team.py:155](blazesbot/bot/bc/team.py#L155) | — | Validade do anúncio. Cobre a fila de resposta do outro cliente com folga; mais |
-| `ESPERA_DO_MENU` | `0.35` | [blazesbot/bot/bc/team.py:120](blazesbot/bot/bc/team.py#L120) | — | Tempo para o menu de contexto aparecer depois do clique direito. |
-| `ESPERA_PELA_RESPOSTA` | `4.0` | [blazesbot/bot/bc/team.py:125](blazesbot/bot/bc/team.py#L125) | — | Quanto esperar a outra conta aceitar. Ela recebe o anúncio interno e clica no |
-| `INVITE_TEMPLATE` | `'state_team_invite.png'` | [blazesbot/bot/bc/team.py:74](blazesbot/bot/bc/team.py#L74) | — | — |
-| `INVITE_TEXT_TEMPLATE` | `'state_team_invite_texto.png'` | [blazesbot/bot/bc/team.py:75](blazesbot/bot/bc/team.py#L75) | — | — |
-| `INVITE_THRESHOLD` | `0.8` | [blazesbot/bot/bc/team.py:76](blazesbot/bot/bc/team.py#L76) | janelas_abertas.py | — |
-| `MAX_CLIQUES_DE_ACEITE` | `5` | [blazesbot/bot/bc/team.py:285](blazesbot/bot/bc/team.py#L285) | — | Quantas vezes clicar no Ok para o MESMO convite anunciado. |
-| `MAX_ENTRADAS` | `12` | [blazesbot/bot/bc/team.py:136](blazesbot/bot/bc/team.py#L136) | — | Quantas linhas da lista limpar antes de desistir. |
-| `MENU_LEAVE_TEMPLATE` | `'menu_leave_team.png'` | [blazesbot/bot/bc/team.py:78](blazesbot/bot/bc/team.py#L78) | — | — |
-| `MENU_TEAM_UP_TEMPLATE` | `'menu_team_up.png'` | [blazesbot/bot/bc/team.py:94](blazesbot/bot/bc/team.py#L94) | — | Item "Team up" do menu de contexto da entrada na lista. |
-| `PASSO_DA_ESPERA_DO_TIME` | `0.1` | [blazesbot/bot/bc/team.py:133](blazesbot/bot/bc/team.py#L133) | — | De quanto em quanto tempo conferir se o time já formou. |
-| `SEMELHANCA_MINIMA` | `0.9` | [blazesbot/bot/bc/team.py:91](blazesbot/bot/bc/team.py#L91) | — | Semelhança a partir da qual um recorte aprendido é considerado o mesmo texto. |
-| `SILENCIO_MAXIMO` | `5.0` | [blazesbot/bot/bc/team.py:221](blazesbot/bot/bc/team.py#L221) | — | Quanto silêncio já é "caiu". |
-| `TEAM_MEMBER_TEMPLATE` | `'state_team_member.png'` | [blazesbot/bot/bc/team.py:86](blazesbot/bot/bc/team.py#L86) | recorte_do_time.py | Painel do companheiro de time, desenhado abaixo do retrato do próprio |
+| `ASSENTAMENTO_DA_BOLSA` | `0.14` | [blazesbot/bot/bc/routine.py:330](blazesbot/bot/bc/routine.py#L330) | — | Depois que a MEMÓRIA confirma a bolsa aberta, o quanto esperar o DESENHO dela. |
+| `CAPTURAS_INVALIDAS_PACKAGE` | `3` | [blazesbot/bot/bc/routine.py:262](blazesbot/bot/bc/routine.py#L262) | — | Se a captura do inventário vier preta/None por estas vezes seguidas, NÃO é |
+| `DEPOIS_DE_FECHAR_A_BOLSA` | `0.05` | [blazesbot/bot/bc/routine.py:341](blazesbot/bot/bc/routine.py#L341) | — | Depois de fechar o inventário. Nada depende deste tempo -- o passo seguinte é |
+| `ENTRE_CLIQUES_NO_PACKAGE` | `0.05` | [blazesbot/bot/bc/routine.py:336](blazesbot/bot/bc/routine.py#L336) | — | Entre um clique direito e o seguinte. Curto porque o clique deste bot é |
+| `ESPERA_ENTRE_TENTATIVAS` | `0.025` | [blazesbot/bot/bc/routine.py:129](blazesbot/bot/bc/routine.py#L129) | — | E O INTERVALO ENTRE TENTATIVAS quase desaparece: a janela de reconhecimento já |
+| `INTERVALO_DO_AVISO_DO_RESETER` | `300.0` | [blazesbot/bot/bc/routine.py:150](blazesbot/bot/bc/routine.py#L150) | — | De quanto em quanto tempo repetir o aviso enquanto a trava dura. |
+| `JANELA_DE_RECONHECIMENTO` | `0.25` | [blazesbot/bot/bc/routine.py:114](blazesbot/bot/bc/routine.py#L114) | — | para reconhecer e reagir ..........   0,607 s |
+| `LIMIAR_DO_CHAT_ABERTO` | `0.9` | [blazesbot/bot/bc/routine.py:241](blazesbot/bot/bc/routine.py#L241) | — | Limiar do casamento da carinha. Alto porque ela é um ícone pequeno e fixo: no |
+| `LIMIAR_DO_PACKAGE_EM_COR` | `0.92` | [blazesbot/bot/bc/routine.py:283](blazesbot/bot/bc/routine.py#L283) | — | Limiar do casamento EM COR do ícone do item. |
+| `LIMIAR_DO_PICK_UP_ALL` | `0.85` | [blazesbot/bot/bc/routine.py:236](blazesbot/bot/bc/routine.py#L236) | — | Limiar do botão. 0.85 e não 0.90: é um botão de UI com texto, e o fundo atrás |
+| `PASSO_DA_ESPERA_DA_BOLSA` | `0.05` | [blazesbot/bot/bc/routine.py:324](blazesbot/bot/bc/routine.py#L324) | — | De quanto em quanto tempo perguntar se a bolsa já abriu. Era 0,15 s, o que |
+| `PASSO_DA_ESPERA_DO_RESETER` | `1.0` | [blazesbot/bot/bc/routine.py:143](blazesbot/bot/bc/routine.py#L143) | — | Cadência da espera pela conta de reset (ver `_esperar_o_reseter`). |
+| `PASSO_DO_RECONHECIMENTO` | `0.04` | [blazesbot/bot/bc/routine.py:119](blazesbot/bot/bc/routine.py#L119) | — | PASSO: de quanto em quanto tempo perguntar, dentro da janela. A pergunta é uma |
+| `RODADAS_DE_USO_DO_PACKAGE` | `5` | [blazesbot/bot/bc/routine.py:257](blazesbot/bot/bc/routine.py#L257) | — | Rodadas de "procurar -> clicar em todos -> reconferir". |
+| `RODADAS_DE_VENDA_ANTES_DE_DESLIGAR` | `3` | [blazesbot/bot/bc/routine.py:406](blazesbot/bot/bc/routine.py#L406) | — | Quantas rodadas de "não vendeu ⇒ roda mais uma run de BC ⇒ tenta de novo" |
+| `SEGUNDOS_ESPERANDO_A_BOLSA` | `0.2` | [blazesbot/bot/bc/routine.py:299](blazesbot/bot/bc/routine.py#L299) | — | Quanto esperar a bolsa CONFIRMAR que abriu, lendo a memória. |
+| `SEGUNDOS_POR_TENTATIVA_NO_ALTAR` | `1.5` | [blazesbot/bot/bc/routine.py:180](blazesbot/bot/bc/routine.py#L180) | — | — |
+| `TEMPLATE_CHAT_ABERTO` | `'state_chat_aberto.png'` | [blazesbot/bot/bc/routine.py:209](blazesbot/bot/bc/routine.py#L209) | — | Carinha amarela no fim da barra de digitação do chat. Ela SÓ existe com o chat |
+| `TEMPLATE_PACKAGE_COURAGE` | `'package_courage.png'` | [blazesbot/bot/bc/routine.py:203](blazesbot/bot/bc/routine.py#L203) | — | USO DO PACKAGE_COURAGE (pós-boss, ANTES de ativar a montaria e sair) |
+| `TEMPLATE_PICK_UP_ALL` | `'btn_pick_up_all.png'` | [blazesbot/bot/bc/routine.py:215](blazesbot/bot/bc/routine.py#L215) | — | Botão "Pick up all" da janela de loot. É ELE que autoriza o clique esquerdo do |
+| `TENTATIVAS_ANTES_DE_DESENCALHAR` | `6` | [blazesbot/bot/bc/routine.py:165](blazesbot/bot/bc/routine.py#L165) | — | Quantas tentativas de clique no Altar Stone por CICLO, antes do vai-e-volta. |
+| `TENTATIVAS_DE_ENCOSTAR_NO_ALTAR` | `6` | [blazesbot/bot/bc/routine.py:179](blazesbot/bot/bc/routine.py#L179) | — | Orçamento do ajuste fino do patamar: quantos `goto` apertados tentamos e por |
+| `TENTATIVAS_POR_LINHA_DE_LOG` | `15` | [blazesbot/bot/bc/routine.py:154](blazesbot/bot/bc/routine.py#L154) | indice_de_tempos.py | A cada quantas tentativas o log conta como vai a disputa. Uma linha por |
+| `TOLERANCIA_DA_ENTRADA` | `12` | [blazesbot/bot/bc/routine.py:349](blazesbot/bot/bc/routine.py#L349) | — | DUAS PERGUNTAS DIFERENTES sobre a mesma coordenada, e por isso dois números. |
+| `TOLERANCIA_DO_PONTO_DO_BOSS` | `15` | [blazesbot/bot/bc/routine.py:189](blazesbot/bot/bc/routine.py#L189) | — | Quão perto do ponto do boss conta como "estou no waypoint". |
 | `ABERTURAS_POR_TRAJETO` | `4` | [blazesbot/bot/bc/ui_service.py:462](blazesbot/bot/bc/ui_service.py#L462) | — | Teto de aberturas do painel por TRAJETO. |
 | `ANCHOR_THRESHOLD` | `0.8` | [blazesbot/bot/bc/ui_service.py:79](blazesbot/bot/bc/ui_service.py#L79) | team.py, janelas_abertas.py | — |
 | `BUSCAS_ANTES_DE_DESISTIR_DA_LEITURA` | `3` | [blazesbot/bot/bc/ui_service.py:322](blazesbot/bot/bc/ui_service.py#L322) | — | Quantas buscas seguidas sem a memória responder antes de desistir dela. Duas, e |
@@ -350,14 +334,30 @@ ligar código não testado.
 | `SEGUNDOS_CONECTANDO` | `6.0` | [blazesbot/bot/login.py:122](blazesbot/bot/login.py#L122) | — | "Connecting to the server, please wait a moment." -- espera LEGÍTIMA, com |
 | `WAIT_HEARTBEAT_SECONDS` | `150.0` | [blazesbot/bot/login.py:98](blazesbot/bot/login.py#L98) | — | Cadência do aviso de "continuo esperando", só para o log não ficar mudo. |
 | `THRESHOLD` | `0.8` | [blazesbot/bot/login_states.py:35](blazesbot/bot/login_states.py#L35) | — | — |
+| `ACEITE_VALIDO_SEGUNDOS` | `15.0` | [blazesbot/bot/mural.py:185](blazesbot/bot/mural.py#L185) | — | Validade do aceite. Curta de propósito: ele confirma UM convite recém-enviado, |
+| `CONVITE_VALIDO_SEGUNDOS` | `60.0` | [blazesbot/bot/mural.py:63](blazesbot/bot/mural.py#L63) | — | Validade do anúncio. Cobre a fila de resposta do outro cliente com folga; mais |
+| `SILENCIO_MAXIMO` | `5.0` | [blazesbot/bot/mural.py:129](blazesbot/bot/mural.py#L129) | — | Quanto silêncio já é "caiu". |
 | `DESVIO_MINIMO` | `12.0` | [blazesbot/bot/recorte_do_time.py:109](blazesbot/bot/recorte_do_time.py#L109) | — | Recorte liso casa em todo lugar. `region_is_uniform` já é o teste que o |
 | `FOLGA_DO_ESPACAMENTO` | `6.0` | [blazesbot/bot/recorte_do_time.py:105](blazesbot/bot/recorte_do_time.py#L105) | — | Espaçamento vertical: desvio máximo aceito entre os intervalos, em pixels. As |
 | `LARGURA_DO_RECORTE` | `120` | [blazesbot/bot/recorte_do_time.py:91](blazesbot/bot/recorte_do_time.py#L91) | — | — |
 | `LIMIAR` | `0.9` | [blazesbot/bot/recorte_do_time.py:95](blazesbot/bot/recorte_do_time.py#L95) | combat.py, navigation.py | Um casamento fraco não conta. 0.90 é o mesmo patamar que o deletador usa para |
 | `MINIMO_DE_LINHAS` | `2` | [blazesbot/bot/recorte_do_time.py:99](blazesbot/bot/recorte_do_time.py#L99) | — | Menos de dois casamentos não prova repetição -- prova que o recorte se achou a |
-| `NOME_DO_TEMPLATE` | `'state_team_member.png'` | [blazesbot/bot/recorte_do_time.py:73](blazesbot/bot/recorte_do_time.py#L73) | — | Nome que `bot/bc/team.py` procura. Mudar aqui sem mudar lá deixa o arquivo |
+| `NOME_DO_TEMPLATE` | `'state_team_member.png'` | [blazesbot/bot/recorte_do_time.py:73](blazesbot/bot/recorte_do_time.py#L73) | — | Nome que `bot/team.py` procura. Mudar aqui sem mudar lá deixa o arquivo |
 | `PASSO_VERTICAL` | `4` | [blazesbot/bot/recorte_do_time.py:90](blazesbot/bot/recorte_do_time.py#L90) | — | — |
 | `TETO_DA_FATIA_DE_ESPERA` | `0.25` | [blazesbot/bot/supervisor.py:68](blazesbot/bot/supervisor.py#L68) | — | Teto de uma fatia dentro de `_AnyEvent.wait`. É REDE, não o caminho normal -- |
+| `ANCHOR_THRESHOLD` | `0.8` | [blazesbot/bot/team.py:91](blazesbot/bot/team.py#L91) | ui_service.py, janelas_abertas.py | — |
+| `ESPERA_DO_MENU` | `0.35` | [blazesbot/bot/team.py:134](blazesbot/bot/team.py#L134) | — | Tempo para o menu de contexto aparecer depois do clique direito. |
+| `ESPERA_PELA_RESPOSTA` | `4.0` | [blazesbot/bot/team.py:139](blazesbot/bot/team.py#L139) | — | Quanto esperar a outra conta aceitar. Ela recebe o anúncio interno e clica no |
+| `INVITE_TEMPLATE` | `'state_team_invite.png'` | [blazesbot/bot/team.py:88](blazesbot/bot/team.py#L88) | — | — |
+| `INVITE_TEXT_TEMPLATE` | `'state_team_invite_texto.png'` | [blazesbot/bot/team.py:89](blazesbot/bot/team.py#L89) | — | — |
+| `INVITE_THRESHOLD` | `0.8` | [blazesbot/bot/team.py:90](blazesbot/bot/team.py#L90) | janelas_abertas.py | — |
+| `MAX_CLIQUES_DE_ACEITE` | `5` | [blazesbot/bot/team.py:159](blazesbot/bot/team.py#L159) | — | Quantas vezes clicar no Ok para o MESMO convite anunciado. |
+| `MAX_ENTRADAS` | `12` | [blazesbot/bot/team.py:150](blazesbot/bot/team.py#L150) | — | Quantas linhas da lista limpar antes de desistir. |
+| `MENU_LEAVE_TEMPLATE` | `'menu_leave_team.png'` | [blazesbot/bot/team.py:92](blazesbot/bot/team.py#L92) | — | — |
+| `MENU_TEAM_UP_TEMPLATE` | `'menu_team_up.png'` | [blazesbot/bot/team.py:108](blazesbot/bot/team.py#L108) | — | Item "Team up" do menu de contexto da entrada na lista. |
+| `PASSO_DA_ESPERA_DO_TIME` | `0.1` | [blazesbot/bot/team.py:147](blazesbot/bot/team.py#L147) | — | De quanto em quanto tempo conferir se o time já formou. |
+| `SEMELHANCA_MINIMA` | `0.9` | [blazesbot/bot/team.py:105](blazesbot/bot/team.py#L105) | — | Semelhança a partir da qual um recorte aprendido é considerado o mesmo texto. |
+| `TEAM_MEMBER_TEMPLATE` | `'state_team_member.png'` | [blazesbot/bot/team.py:100](blazesbot/bot/team.py#L100) | recorte_do_time.py | Painel do companheiro de time, desenhado abaixo do retrato do próprio |
 | `CLIQUES_POR_FASE` | `20` | [blazesbot/bot/teste_do_cursor.py:91](blazesbot/bot/teste_do_cursor.py#L91) | — | Quantos cliques por fase. 20 dá resolução de 5 pontos percentuais -- suficiente |
 | `DIFERENCA_QUE_E_EFEITO` | `3.0` | [blazesbot/bot/teste_do_cursor.py:95](blazesbot/bot/teste_do_cursor.py#L95) | instrumentar_clique.py | Quanto o minimapa precisa mudar para o clique contar como surtido efeito. O |
 | `DISTANCIA_MINIMA_DO_ALVO` | `120` | [blazesbot/bot/teste_do_cursor.py:98](blazesbot/bot/teste_do_cursor.py#L98) | instrumentar_clique.py | Distância mínima entre o cursor físico e o alvo, em pixels do cliente. |

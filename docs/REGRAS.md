@@ -965,7 +965,7 @@ sem isso o bot de verdade abriria um cliente novo.
   amostra** (clique que erra MOVE o personagem) e nunca usa
   `ui._esperar_o_dialogo`, para não envenenar o teto adaptativo.
 - **`bot/recorte_do_time.py`** (`14-RECORTAR-TIME.bat`) — recorta o
-  `state_team_member.png` que `bc/team.py` carrega e **nunca existiu em disco**.
+  `state_team_member.png` que `bot/team.py` carrega e **nunca existiu em disco**.
   Acha o painel pela REPETIÇÃO (um bom recorte se acha N vezes em espaçamento
   regular, conferido com o MESMO `find_all_templates` que vai consumi-lo),
   DESENHA o que achou num JPEG e grava o PNG. Mora em `bot/` e não em `bc/`
@@ -1789,7 +1789,7 @@ construídas. Liga `accept_team_invites` na conta que o `reset_nick` já apontav
 **só se ela estiver limpa** (sem `bc_farm`, sem `app.enabled`). Conta suja ou nick
 que não bate com ninguém: **não toca em nada**, e o caso cai no veto por conta.
 
-### A batida — `bot/bc/team.py`
+### A batida — `bot/mural.py`
 
 - `bater(nick)` é a **primeira linha de `InviteAcceptor.check_and_accept`**,
   **antes do cooldown**. A posição é a regra: ela prova a capacidade em vez de

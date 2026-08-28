@@ -80,7 +80,7 @@ Travado por `tests/test_rebase_de_endereco.py` (18 casos, lógica pura, sem jogo
 
 ## O segundo achado: a detecção de time estava CEGA pelas duas vias
 
-Além de `team_size()` não responder, `bot/bc/team.py` carrega
+Além de `team_size()` não responder, `bot/team.py` carrega
 `TEAM_MEMBER_TEMPLATE = "state_team_member.png"` — e **esse arquivo nunca
 existiu** em `data/templates/`. `templates.load()` devolve `None`,
 `_time_pela_imagem()` devolve `None`, `estado_do_time` devolve `None` sempre.
@@ -551,7 +551,7 @@ clique cobre todos os clientes, cinco supervisores chamando isto ao mesmo tempo
 produziriam cinco cliques idênticos.
 
 `INTERVALO_MINIMO = 30 s`, com estado de módulo e lock (mesmo desenho do quadro de
-convites do `bc/team.py`, e pelo mesmo motivo: os supervisores rodam no mesmo
+convites do `bot/mural.py`, e pelo mesmo motivo: os supervisores rodam no mesmo
 processo). **O intervalo é reservado ANTES de agir** — marcar depois deixaria duas
 contas passarem pela janela de tempo enquanto a primeira ainda está clicando.
 

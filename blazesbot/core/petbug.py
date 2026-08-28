@@ -74,7 +74,7 @@ ao mesmo tempo produziriam cinco cliques idênticos e inúteis.
 
 `INTERVALO_MINIMO` resolve: o primeiro a chegar aplica para todos, e os outros
 quatro veem que acabou de ser aplicado e seguem. O estado é de MÓDULO com lock,
-igual ao quadro de convites do `bc/team.py` -- os supervisores rodam no mesmo
+igual ao quadro de convites do `bot/mural.py` -- os supervisores rodam no mesmo
 processo.
 """
 from __future__ import annotations

@@ -170,7 +170,7 @@ AMOSTRAS_ENTRE_GRAVACOES = 40
 # Estado de MÓDULO, com lock -- cinco contas no mesmo processo
 # ===========================================================================
 #
-# Mesmo desenho do `petbug` e do quadro de convites do `bc/team.py`, e pelo mesmo
+# Mesmo desenho do `petbug` e do quadro de convites do `bot/mural.py`, e pelo mesmo
 # motivo: os supervisores são threads do MESMO processo, então o placar é um só e
 # precisa de lock. Duas contas amostrando o mesmo candidato somam evidência em vez
 # de brigar por ela.

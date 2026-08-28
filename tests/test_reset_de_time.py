@@ -32,8 +32,9 @@ import inspect
 import textwrap
 from pathlib import Path
 
+from blazesbot.bot import mural as mod_mural
+from blazesbot.bot import team as mod_team
 from blazesbot.bot.bc import routine as mod_routine
-from blazesbot.bot.bc import team as mod_team
 from blazesbot.config import Account, BotConfig
 
 RAIZ = Path(__file__).resolve().parents[1]
@@ -76,31 +77,31 @@ def test_nunca_ter_batido_conta_como_offline():
     "provavelmente está ok" devolveria exatamente a run perdida que a trava
     existe para evitar.
     """
-    assert mod_team.silencio_do_reseter("NinguemBateuAinda") is None
-    assert mod_team.reseter_online("NinguemBateuAinda") is False
+    assert mod_mural.silencio_do_reseter("NinguemBateuAinda") is None
+    assert mod_mural.reseter_online("NinguemBateuAinda") is False
 
 
 def test_bater_poe_o_nick_online_e_o_silencio_o_derruba(monkeypatch):
     agora = [1000.0]
-    monkeypatch.setattr(mod_team.time, "time", lambda: agora[0])
+    monkeypatch.setattr(mod_mural.time, "time", lambda: agora[0])
 
-    mod_team.bater("Reseter")
-    assert mod_team.reseter_online("Reseter") is True
+    mod_mural.bater("Reseter")
+    assert mod_mural.reseter_online("Reseter") is True
 
     # Dentro da janela: continua no ar.
-    agora[0] += mod_team.SILENCIO_MAXIMO - 0.5
-    assert mod_team.reseter_online("Reseter") is True
+    agora[0] += mod_mural.SILENCIO_MAXIMO - 0.5
+    assert mod_mural.reseter_online("Reseter") is True
 
     # Passou do limite: caiu.
     agora[0] += 1.0
-    assert mod_team.reseter_online("Reseter") is False
-    assert mod_team.silencio_do_reseter("Reseter") > mod_team.SILENCIO_MAXIMO
+    assert mod_mural.reseter_online("Reseter") is False
+    assert mod_mural.silencio_do_reseter("Reseter") > mod_mural.SILENCIO_MAXIMO
 
 
 def test_a_batida_ignora_caixa_e_espaco():
     """O nick vem da memória de um lado e da configuração do outro."""
-    mod_team.bater("  WizzOfBlazes5  ")
-    assert mod_team.reseter_online("wizzofblazes5") is True
+    mod_mural.bater("  WizzOfBlazes5  ")
+    assert mod_mural.reseter_online("wizzofblazes5") is True
 
 
 def test_nick_vazio_nunca_fica_online():
@@ -109,8 +110,8 @@ def test_nick_vazio_nunca_fica_online():
     Se string vazia pudesse ficar online, uma conta sem nick lido ainda bateria
     e todo mundo que não usa reset apareceria como reseter no ar.
     """
-    mod_team.bater("")
-    assert mod_team.reseter_online("") is False
+    mod_mural.bater("")
+    assert mod_mural.reseter_online("") is False
 
 
 def test_a_batida_e_a_PRIMEIRA_linha_do_aceitador():

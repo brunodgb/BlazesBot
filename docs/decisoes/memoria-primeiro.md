@@ -217,7 +217,7 @@ precisa da mesma prova que o alvo teve.
 | onde | o que decide por imagem | dá para memória? |
 |---|---|---|
 | `bot/login_states.py` | telas de login (usuário/senha, fila, erro) | **talvez** — `queue_text` e `modal_open` já existem em memória e ainda não decidem |
-| `bot/bc/team.py` | painel de time | `team_size` **já existe** em memória; falta o `state_team_member.png` para comparar |
+| `bot/team.py` | painel de time | `team_size` **já existe** em memória; falta o `state_team_member.png` para comparar |
 | `bot/bc/vendor.py` | janela de venda, caixa "precious" | `bag_open`/`bag_count` existem; a janela de venda não |
 | `bot/bc/ui_service.py` | diálogo de NPC, painel Surroundings | `dialog_open` e `surroundings_first` **já existem** e estão EM VALIDAÇÃO |
 | `bot/bc/routine.py` | entrada da cave, link | — |

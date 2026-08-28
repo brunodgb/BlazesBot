@@ -81,12 +81,13 @@ from ...core.lugares import LUGAR_FORA_DA_CAVE
 from ...core.quedas import frase_do_tempo
 from ...core.vision import capture_window, find_template, frame_is_blank
 from ..context import BotContext, Disconnected, FarmDesligado, StopRequested
+from ..mural import reseter_online, silencio_do_reseter
+from ..team import TeamService
 from ..watchdog import DcReason, Watchdog
 from . import hotbar, mapa_bc
 from .combat import CombatEngine
 from .localizacao import RastreadorDeLocal
 from .navigation import Navigator
-from .team import TeamService, reseter_online, silencio_do_reseter
 from .ui_service import TOLERANCIA_DO_NPC_DA_ENTRADA, UIService
 from .vendor import VendorService
 

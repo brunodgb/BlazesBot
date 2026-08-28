@@ -35,7 +35,6 @@ from ..core.target_hybrid import TargetHybrid
 from ..core.vision import TemplateLibrary
 from .app import ExecutorDeMacro
 from .bc.routine import BossRushRoutine
-from .bc.team import InviteAcceptor
 from .context import BotContext, Disconnected, StopRequested
 from .login import (
     BadCredentials,
@@ -44,6 +43,7 @@ from .login import (
     LoginSequence,
     StopDuringLogin,
 )
+from .team import InviteAcceptor
 from .watchdog import (
     VISUAL_CHECK_SECONDS,
     DcReason,

@@ -8,7 +8,7 @@ o time, e a Fairy vai ler as mesmas linhas.
 POR QUE ISTO EXISTE
 =========================================================================
 
-`bot/bc/team.py` carrega `TEAM_MEMBER_TEMPLATE = "state_team_member.png"` para
+`bot/team.py` carrega `TEAM_MEMBER_TEMPLATE = "state_team_member.png"` para
 responder "estou em time?" quando a memória não responde. **Esse arquivo nunca
 existiu em `data/templates/`.** `templates.load()` devolve `None`,
 `_time_pela_imagem()` devolve `None`, e `estado_do_time` devolve `None` sempre.
@@ -68,7 +68,7 @@ from .supervisor import AccountSupervisor
 _PARADA = threading.Event()
 _EM_ANDAMENTO = threading.Lock()
 
-# Nome que `bot/bc/team.py` procura. Mudar aqui sem mudar lá deixa o arquivo
+# Nome que `bot/team.py` procura. Mudar aqui sem mudar lá deixa o arquivo
 # gravado e o consumidor cego -- que é exatamente o defeito de hoje.
 NOME_DO_TEMPLATE = "state_team_member.png"
 PASTA_DE_TEMPLATES = Path("data") / "templates"

@@ -307,6 +307,55 @@ def test_o_reuso_esta_DOCUMENTADO_como_dependencia_cruzada():
         assert "COMPARTILHAD" in fonte.upper(), caminho
 
 
+def test_o_mural_promovido_esta_DOCUMENTADO_como_dependencia_cruzada():
+    """A mesma exigência do teste acima, para a promoção de 27/08/2026.
+
+    `bot/mural.py` saiu de `bot/bc/team.py` porque o ecossistema APP passou a
+    precisar do mesmo quadro de avisos entre contas. Promoção sem esta
+    documentação é a armadilha que a diretiva descreve: quem mexer no mural
+    mexe em DOIS ecossistemas e não tem como saber disso lendo o arquivo.
+    """
+    mural = _fonte("blazesbot/bot/mural.py")
+
+    assert "DEPENDENCIA CRUZADA" in mural
+    assert "bot/team.py" in mural, "não diz QUEM usa"
+    assert "APP" in mural, "não diz que o APP passou a usar"
+    assert "NÃO SUBIU" in mural.upper(), "não diz o que ficou de fora, e por quê"
+
+    # E o mural não pode conhecer ecossistema nenhum: ele é o pedaço que os dois
+    # compartilham, então uma menção a `bc.` ou `app.` em import seria o
+    # acoplamento voltando pela porta dos fundos.
+    import ast
+    arvore = ast.parse(mural)
+    for no in ast.walk(arvore):
+        if isinstance(no, ast.ImportFrom):
+            assert not (no.module or "").startswith(("blazesbot.bot.bc",
+                                                     "blazesbot.bot.app")), no.module
+        elif isinstance(no, ast.Import):
+            for alias in no.names:
+                assert not alias.name.startswith(("blazesbot.bot.bc",
+                                                  "blazesbot.bot.app")), alias.name
+
+
+def test_o_mural_nao_ficou_duplicado_no_bc():
+    """O quadro de avisos existe em UM lugar só.
+
+    A tentação, ao promover, é deixar o original de pé "para o BC continuar
+    funcionando". Seriam DOIS dicionários de batidas: o reseter bate num e o
+    farm consulta o outro, e a conta espera para sempre na porta da cave sem
+    erro nenhum -- nenhum teste pegaria, porque cada um importaria um módulo.
+    """
+    from pathlib import Path
+    assert not (RAIZ / "blazesbot/bot/bc/team.py").exists(), (
+        "bc/team.py voltou a existir: o mural precisa morar em um lugar só."
+    )
+    assert not (RAIZ / "blazesbot/bot/bc/mural.py").exists()
+    for caminho in Path(RAIZ / "blazesbot/bot/bc").glob("*.py"):
+        fonte = caminho.read_text(encoding="utf-8")
+        assert "_LOCK_BATIDAS" not in fonte, caminho
+        assert "_BATIDAS: dict" not in fonte, caminho
+
+
 def test_a_peca_compartilhada_NAO_arrasta_dependencia_do_ecossistema():
     """*"Abstrair suas dependências locais"* — a peça promovida não pode
     conhecer nem o BC nem o APP, senão ela não é core, é acoplamento com outro
