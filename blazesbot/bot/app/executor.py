@@ -85,7 +85,7 @@ from ...core.zones import coord_para_pixel_do_minimapa, distancia_linear
 
 # Fatia máxima de espera antes de conferir se é para continuar. 0,05 s dá parada
 # praticamente instantânea e não custa processador.
-FATIA_DE_ESPERA = 0.05
+FATIA_DE_ESPERA = 0.08
 
 # ===========================================================================
 # O LACO SIMPLES -- 26/08/2026, e ele e o laco que RODA
@@ -145,7 +145,7 @@ LACO_SIMPLES = True
 # novo e apertaria de novo -- e em várias classes a tecla é interruptor, então o
 # segundo toque desfaria o primeiro. É a mesma armadilha da tecla de montaria,
 # que já custou caro neste projeto.
-INTERVALO_ENTRE_INVOCACOES = 10.0
+INTERVALO_ENTRE_INVOCACOES = 6.0
 
 # Espera depois de apertar a tecla do pet, antes de seguir para as teclas da
 # macro. Curta de propósito: é só para o comando sair antes da rajada seguinte,
@@ -216,7 +216,7 @@ INTERROMPER_A_MACRO_QUANDO_O_ALVO_MORRE = True
 # A leitura custa microssegundos; o que se paga é a volta do laço. 0,1 s deixa o
 # corte acontecer no meio de uma espera longa -- uma linha de 3000 ms sem isto
 # faria o bot bater num cadáver por até 3 segundos.
-PASSO_DA_CONFERENCIA_DO_ALVO = 0.1
+PASSO_DA_CONFERENCIA_DO_ALVO = 0.16
 
 # Quantos saltos da roda do TAB antes de desistir desta aquisição.
 #
@@ -259,7 +259,9 @@ PASSO_DA_CONFERENCIA_DO_ALVO = 0.1
 # O CAMINHO DE DOIS SALTOS NÃO FOI APAGADO, virou interruptor: subir esta
 # constante religa o espaçamento (`ESPERA_ENTRE_TABS`) e o resto do laço sem
 # mexer em mais nada.
-TENTATIVAS_DE_TAB = 1
+# MUDADO EM 30/08/2026: o usuário pediu 4 tentativas. Com o portão de
+# aquisição propagando o False, é seguro — se as 4 falharem, a macro não roda.
+TENTATIVAS_DE_TAB = 4
 
 # Quanto esperar depois de uma aquisição FRACASSADA, antes da volta seguinte.
 #
@@ -273,7 +275,7 @@ TENTATIVAS_DE_TAB = 1
 # tempo a roda deste cliente reinicia. Três segundos é folga confortável para o
 # comportamento típico e barata (só é paga quando NÃO houve alvo). Se um dia
 # alguém medir, o número desce.
-SEGUNDOS_PARA_A_RODA_REINICIAR = 3.0
+SEGUNDOS_PARA_A_RODA_REINICIAR = 1.6
 
 # Quantos TABs seguidos SEM O ID MUDAR antes de desistir.
 #
@@ -298,7 +300,7 @@ SEGUNDOS_PARA_A_RODA_REINICIAR = 3.0
 # procurando mob onde o problema é a tecla. Os dois cortes existem justamente
 # porque os dois fracassos pedem AÇÕES diferentes: um manda esperar, o outro
 # manda configurar.
-TABS_SEM_RESPOSTA_PARA_DESISTIR = 2
+TABS_SEM_RESPOSTA_PARA_DESISTIR = 1
 
 # Quantas LINHAS da macro sem o alvo perder vida antes de trocar de alvo.
 #
@@ -374,7 +376,7 @@ EXIGIR_ALVO_INTEIRO = False
 # segurava esta régua saiu junto (ver `_alvo_intocavel`), então o que sobra
 # protegendo um mob em luta legítima é o número de linhas e a referência ser o
 # PRIMEIRO HP lido daquele alvo.
-LINHAS_SEM_DANO_PARA_TROCAR = 3
+LINHAS_SEM_DANO_PARA_TROCAR = 4
 
 # ===========================================================================
 # O QUE É "ABSOLUTO" NUMA CONFIRMAÇÃO DE MORTE
@@ -441,7 +443,7 @@ VOLTAS_COM_ALVO_ILEGIVEL_PARA_TROCAR = 2
 #
 # Sem isso o laço de `rodar()` giraria sem pausa perguntando a memória, e o
 # custo real de um APP parado seria uma CPU a 100%.
-ESPERA_SEM_ALVO = 0.3
+ESPERA_SEM_ALVO = 0.4
 
 # Respiro ANTES do TAB -- entre a última tecla da macro e a troca de alvo.
 #
@@ -468,7 +470,7 @@ ESPERA_SEM_ALVO = 0.3
 #
 # SÓ É PAGO QUANDO UMA TECLA VAI SAIR. Alvo vivo na mira não gasta nada, igual
 # ao respiro de baixo.
-ESPERA_ANTES_DO_TAB = 0.6
+ESPERA_ANTES_DO_TAB = 0.4
 
 # Respiro entre o TAB e a PRIMEIRA linha da macro.
 #
@@ -488,7 +490,7 @@ ESPERA_ANTES_DO_TAB = 0.6
 #
 # NÚMERO DE OBSERVAÇÃO DE CAMPO, não de medição instrumentada -- é o usuário
 # vendo a primeira linha se perder.
-ESPERA_DEPOIS_DO_TAB = 1.0
+ESPERA_DEPOIS_DO_TAB = 0.01
 
 SEGUNDOS_PARA_A_TRAVA_DEVOLVER = 2.0
 
@@ -553,7 +555,7 @@ ANDAR_SO_FORA_DE_BATALHA = True
 # pelo motivo certo (a flag de combate demora um instante para baixar, e a
 # caminhada e a cura decidem em cima dela), mas ESPERAVA em vez de PERGUNTAR --
 # pagava 1 s sempre e mesmo assim não sabia dizer se a luta tinha acabado.
-SEGUNDOS_OBSERVANDO_DEPOIS_DA_MORTE = 3.0
+SEGUNDOS_OBSERVANDO_DEPOIS_DA_MORTE = 2.5
 
 # ===========================================================================
 # SAIR DE BATALHA CORTA A MACRO NO MEIO
@@ -603,7 +605,7 @@ USAR_A_TELA_COMO_SEGUNDA_PORTA = True
 # ainda nao ter entrado no array (medido: 1 leitura em ~45), e pagar uma captura
 # de janela para descobrir isso seria caro. Duas linhas dao tempo de a memoria
 # responder sozinha no caminho feliz.
-LINHAS_ANTES_DE_OLHAR_A_TELA = 2
+LINHAS_ANTES_DE_OLHAR_A_TELA = 3
 
 # Intervalo minimo entre duas capturas.
 #
@@ -696,12 +698,12 @@ PASSO_DA_ESPERA_DA_BASE = 0.1
 # NAO E "um numero lido por dois lados": sao duas perguntas diferentes
 # ("cheguei?" e "trocou?"), com custos e urgencias diferentes.
 PASSO_DA_CONFIRMACAO_DO_TAB = 0.01
-SHUFFLE_DEFAULT_PIXELS = 6
+SHUFFLE_DEFAULT_PIXELS = 5
 
 # Cada perna do shuffle anti-AFK (ida e volta). Era `time.sleep(1.0)` cego duas
 # vezes; hoje passa por `_esperar`, que responde ao Parar e confere a morte do
 # alvo dentro da espera. O número é o mesmo -- o que mudou é a natureza.
-SEGUNDOS_DO_PASSO_DO_SHUFFLE = 2.0
+SEGUNDOS_DO_PASSO_DO_SHUFFLE = 3.0
 
 
 class Passo(Protocol):
@@ -805,6 +807,11 @@ class ExecutorDeMacro:
         # `None` = sem proteção de vida, e o APP roda exatamente como antes.
         cura: Callable[[object], object] | None = None,
         sincronia: Callable[[object], object] | None = None,
+        # A FADA: cura o time clicando nos retratos e confirmando pelo TARGET_ID.
+        # Chega como FÁBRICA pelo mesmo motivo da cura e da sincronia -- o executor
+        # não conhece o módulo `fada`, só recebe a função que sabe montá-la.
+        # `None` = sem Fada, e o APP roda exatamente como antes.
+        fada: Callable[[object], object] | None = None,
         # O ALVO, com HP exato -- pedido do usuário em 25/08/2026: *"é
         # importante trazer os dados do target para o APP, para que também
         # saibamos a vida exata do mob que está sendo atacado"*. Serve para o
@@ -978,14 +985,31 @@ class ExecutorDeMacro:
         # já existe -- ver `_preciso_de_alvo`.
         self._lutava_na_volta_anterior = False
         self._voltas_com_alvo_sem_batalha = 0
-        self.cura = cura(self) if cura is not None else None
-
+        # O TAB ÚNICO e a IDEMPOTÊNCIA dele -- ver `_adquirir_alvo` e
+        # `_mesmo_alvo_verificado`. `_tab_solicitado` é o PEDIDO do relógio dos
+        # 4s do time (`conferir_a_parada`): o `rodar()` não aperta mais TAB
+        # direto, só deixa este flag -- quem consome e aperta é a volta, como a
+        # última coisa antes da linha 1 (Eixo 1). `_alvo_verificado` é o último
+        # alvo VIVO confirmado `(id, hp)`, gravado no sucesso da aquisição; se o
+        # alvo atual ainda é o mesmo e vivo, o TAB não sai de novo (Eixo 2).
+        self._tab_solicitado = False
+        self._alvo_verificado: tuple[int, int] | None = None
+        self.cura = cura(self) if cura is not None else None
+
+
+
         # A SINCRONIA DO TIME, pela MESMA fábrica que a cura usa: ela precisa do
         # executor (dormir respeitando o Parar, ler o alvo, garantir alvo) e o
         # executor não pode conhecê-la -- ela fala com o mural, que mora em
         # `blazesbot.bot`, e este arquivo só importa `core`. `None` significa
         # "sem time", e aí o APP roda exatamente como sempre rodou.
         self.sincronia = sincronia(self) if sincronia is not None else None
+
+        # A FADA DO TIME: cura o time em vez de atacar.
+        # Mesmo padrão da cura e da sincronia: fábrica que recebe o executor,
+        # o executor não a conhece (ela fala com o mural em blazesbot.bot).
+        # `None` = sem Fada, e o APP roda exatamente como antes.
+        self.fada = fada(self) if fada is not None else None
 
     # -- espera ------------------------------------------------------------
 
@@ -1817,6 +1841,95 @@ class ExecutorDeMacro:
             return True
         return False
 
+    def _adquirir_alvo(self, lutando: bool) -> bool:
+        """A ÚNICA função que dá TAB no laço simples -- e a última coisa antes
+        da linha 1. Pet, comida, posição e limpeza da bolsa vêm TODAS antes.
+
+        =================================================================
+        O TAB DUPLO MORRE AQUI
+        =================================================================
+
+        Antes havia DUAS formas independentes de dar TAB, sem uma saber da
+        outra: o relógio dos 4s do time (`conferir_a_parada`, em `rodar()`,
+        com `_garantir_alvo(forcar=True)`) e o portão do começo da volta
+        (`_preciso_de_alvo` -> `_tab_simples`). Quando o flag de batalha ainda
+        não tinha subido na mesma volta, os dois davam TAB em fila -- ou seja,
+        trocavam de alvo duas vezes, como observado no modo "copiar".
+
+        Agora o `rodar()` só PEDE via `_tab_solicitado`; quem aperta é esta
+        função, e ela decide pela memória fresca (idempotência), não por
+        cronômetro cego.
+        """
+        # O PEDIDO DO RELÓGIO É DE UMA VOLTA. Consome ao entrar, qualquer que
+        # seja o desfecho -- não pode vazar para a volta seguinte.
+        solicitado = self._tab_solicitado
+        self._tab_solicitado = False
+        # A ABERTURA respeita o veto do "mesmo alvo": a largada acabou de
+        # alinhar todo mundo no mob do líder, e um TAB aqui desfaria isso na
+        # linha seguinte. O relógio NÃO é vetado -- no mesmo_alvo ele continua
+        # como o `rodar()` antigo fazia, TABando quando a conta está presa há 4s.
+        permitido = (self.sincronia is None
+                     or self.sincronia.deve_dar_tab_na_abertura())
+        # 1) FALTA ALVO: saiu de batalha, sem id, ou alvo vivo travado há 3
+        #    voltas. O contador (VOLTAS_SEM_BATALHA_PARA_TROCAR) VENCE a
+        #    idempotência de propósito -- é a fronteira que o usuário exigiu.
+        if permitido and self._preciso_de_alvo(lutando):
+            self._voltas_com_alvo_sem_batalha = 0
+            return self._conseguir_o_tab()
+        # 2) JÁ TENHO ALVO VIVO CONFIRMADO: 0 TAB, seja chamado uma vez ou cem.
+        #    Bloqueia o TAB redundante e protege de trocar de alvo no meio da
+        #    luta quando um add (segundo mob) está batendo em nós.
+        if self._mesmo_alvo_verificado():
+            return True
+        # 3) O PEDIDO DO RELÓGIO do time (`_tab_solicitado`).
+        if solicitado:
+            return self._conseguir_o_tab()
+        return True
+
+    def _conseguir_o_tab(self) -> bool:
+        """Aperta o TAB com a conferência certa para o caso.
+
+        Sem as funções de alvo injetadas (APP cego), é `_tab_simples` -- o TAB
+        cego de sempre, e o `False` dele significa "é para PARAR".
+
+        Com elas, é `_garantir_alvo(forcar=True)`: um TAB que confere id+HP e,
+        se o alvo atual é um vivo-travado, FORÇA a troca (preserva
+        `VOLTAS_SEM_BATALHA_PARA_TROCAR`). O `False` do `_garantir_alvo` NÃO
+        aborta a volta -- a docstring dele é explícita: *"esgotou as tentativas
+        e não há mob vivo por perto, ele devolve False e a macro roda assim
+        mesmo"*. Só o `_tab_simples` aborta, e só porque é um PARAR.
+        """
+        if self._alvo_atual is None or self._id_do_alvo is None:
+            return self._tab_simples()          # False só para PARAR
+        # PROPAGA o veredito de `_garantir_alvo`: True = alvo REAL adquirido;
+        # False = sem mob vivo (só cadáver / id travado em 0). Quem chama então
+        # BLOQUEIA a macro -- é o fim do vazamento que deixava a macro disparar
+        # no vazio quando a aquisição falhava.
+        return self._garantir_alvo(forcar=True)
+
+    def _mesmo_alvo_verificado(self) -> bool:
+        """O alvo atual ainda é o mesmo VIVO que já confirmei? `True` = não TAB.
+
+        É a IDEMPOTÊNCIA do TAB único: impede que um segundo chamador (o
+        relógio do time, que agora só PEDE) dê TAB por cima de um alvo que já
+        está bom. Vive em MEMÓRIA (`_alvo_verificado`), gravado no sucesso da
+        aquisição -- nada de disco, nada de `config.json`. Expira sozinho:
+        quando o alvo muda ou morre, a leitura fresca deixa de bater e devolve
+        `False`, liberando o TAB na hora certa.
+
+        O alvo marcado como INALCANÇÁVEL não é protegido: é o que vamos largar
+        de propósito (mob de penhasco), e bloquear seria segurar o escoamento.
+        """
+        if self._alvo_verificado is None:
+            return False
+        if (self._inalcancavel_id
+                and self._alvo_verificado[0] == self._inalcancavel_id):
+            return False
+        alvo = self._alvo_atual() if self._alvo_atual else None
+        if not self._alvo_aceitavel(alvo):
+            return False                     # cadáver / sumiu -> libera o TAB
+        return alvo.get("id") == self._alvo_verificado[0]
+
     def _tab_simples(self) -> bool:
         """Aperta a tecla de alvo. Só isso. `False` = é para parar.
 
@@ -2011,6 +2124,10 @@ class ExecutorDeMacro:
             # logo depois, na volta, e diria a MESMA coisa. Marcar a chave aqui
             # poupa uma leitura e uma escrita em disco no trecho mais sensível.
             self._ultimo_alvo_dito = (alvo.get("id"), alvo.get("hp"))
+            # A IDEMPOTÊNCIA do TAB único: este alvo VIVO confirmado passa a
+            # proteger o próximo TAB (`_mesmo_alvo_verificado`). Gravado no
+            # sucesso da aquisição, junto ao `_ultimo_alvo_dito`.
+            self._alvo_verificado = (alvo.get("id"), alvo.get("hp"))
 
             # RESPIRO ANTES DA PRIMEIRA LINHA -- ver `ESPERA_DEPOIS_DO_TAB`. Só
             # aqui, onde uma tecla realmente saiu, e por ÚLTIMO.
@@ -2574,17 +2691,34 @@ class ExecutorDeMacro:
             self.garantir_pet()
             self.feed_pet()
             self._travar_posicao_se_preciso()
-            # UM ÚNICO TAB, E SÓ QUANDO FALTA ALVO. Ver `_preciso_de_alvo`: o
-            # TAB não existe para trocar de mob, existe para conseguir um.
-            #
-            # E o time pode vetá-lo: no modo "mesmo alvo" a largada acabou de
-            # alinhar todo mundo no mob do líder, e este TAB trocaria esse alvo
-            # logo antes da primeira linha.
+            # LIMPEZA DA BOLSA ANTES DO TAB -- a regra absoluta do Core Loop:
+            # toda ação "fora de batalha" vem PRIMEIRO, e o TAB (a aquisição de
+            # alvo) é a ÚLTIMA coisa antes da linha 1. Veio de `rodar()` para
+            # cá em 29/08/2026 para obedecer a essa ordem cronológica estrita.
+            self._limpar_a_bolsa_se_for_a_hora()
+            # A AQUISIÇÃO DE ALVO É UMA FUNÇÃO SÓ -- ver `_adquirir_alvo`. Ela
+            # concentra o pedido do relógio (`_tab_solicitado`) e o pedido do
+            # portão (`_preciso_de_alvo`), e é idempotente: se já tenho o alvo
+            # vivo, nem chega a TABar. O time pode vetá-la no "mesmo alvo"
+            # (a largada acabou de alinhar todo mundo no mob do líder).
             permitido = (self.sincronia is None
                          or self.sincronia.deve_dar_tab_na_abertura())
-            if permitido and self._preciso_de_alvo(lutando):
-                self._voltas_com_alvo_sem_batalha = 0
-                if not self._tab_simples():
+            if permitido:
+                # PORTÃO DE AQUISIÇÃO PRÉ-MACRO (Eixo 1).
+                #
+                # `_adquirir_alvo` só devolve `True` quando o alvo é REAL -- ou
+                # quando o APP é cego (sem leitura de memória: contrato
+                # histórico, roda como sempre rodou, e é o que os testes daqui
+                # travam). O caso que o usuário queria fechar -- target_id == 0
+                # ou travado no alvo antigo -- é resolvido DENTRO de
+                # `_garantir_alvo`: ele só devolve `True` quando o id MUDOU e
+                # está VIVO; se o TAB cai em cadáver ou não sai do 0, devolve
+                # `False`, e `_conseguir_o_tab` PROPAGA esse veredito. Logo aqui
+                # um `False` significa "sem alvo real" e a macro NÃO roda --
+                # nenhuma skill sai no vazio. O micro-delay evita giro apertado
+                # de CPU no retorno ao Core Loop.
+                if not self._adquirir_alvo(lutando):
+                    time.sleep(ESPERA_SEM_ALVO)
                     return False
         # `or lutava_antes`: se a luta cabia dentro da volta, a amostra do começo
         # da próxima diria "não estava lutando" e o mob morto passaria por alvo
@@ -2837,11 +2971,13 @@ class ExecutorDeMacro:
             if self.sincronia is not None:
                 if not self.sincronia.esperar_a_largada():
                     break
-                # 4 s sem trocar de estado de batalha: dá TAB. Não é preciso
-                # saber QUAL mob -- o TAB pega o mais perto, e o mais perto de
-                # quem está apanhando é justamente ele.
-                if self.sincronia.conferir_a_parada():
-                    self._garantir_alvo(forcar=True)
+                # 4 s sem trocar de estado de batalha: hora de TAB. NÃO apertado
+                # aqui -- quem aperta é `_adquirir_alvo`, como a ÚLTIMA coisa
+                # fora de batalha, logo antes da linha 1. Aqui o relógio só
+                # PEDE (flag consumido por uma volta). Foi o fim do TAB duplo:
+                # antes este TAB direto e o portão do começo da volta podiam dar
+                # dois TABs em fila quando o flag de batalha ainda não subira.
+                self._tab_solicitado = self.sincronia.conferir_a_parada()
             if self._antes_da_volta is not None:
                 try:
                     self._antes_da_volta()
@@ -2865,7 +3001,11 @@ class ExecutorDeMacro:
             if self.cura is not None:
                 self.cura.cuidar()
 
-            self._limpar_a_bolsa_se_for_a_hora()
+            # A FADA VEM AQUI, depois da cura pessoal e ANTES da limpeza da bolsa.
+            # A ordem é decisão do usuário (docs/fada.md): a Fada só cura quando
+            # a fila não está vazia; fila vazia -> cuida da própria mana.
+            if self.fada is not None:
+                self.fada.cuidar()
 
         self.log.info(
             "Modo APP encerrado -- %s volta(s) completa(s), %s abortada(s), "

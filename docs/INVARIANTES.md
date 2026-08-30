@@ -22,11 +22,31 @@ Decisão do usuário depois de refinamentos que foram ficando piores:
 meio se SAIR DE BATALHA; não verifica mais vida, não verifica mais nada"*.
 
 ```
-FORA de batalha  → pet → comida → voltar ao ponto → 600 ms → TAB → linha 0 → macro
+FORA de batalha → pet → comida → voltar ao ponto → limpar bolsa → TAB único → linha 0 → macro
 EM batalha       → roda a macro de novo, SEM TAB e SEM conferência
 saiu de batalha  → corta a macro no meio, volta ao topo
 vida < 30%       → a cura, entre voltas (inalterada)
 ```
+
+- **ORDEM ESTRITA: TODO "fora de batalha" ANTES do TAB, o TAB por ÚLTIMO.** Pet,
+  comida, trava de posição e limpeza da bolsa vêm PRIMEIRO; a aquisição de alvo
+  é a ÚLTIMA coisa antes da linha 1 (a regra absoluta do Core Loop). A limpeza
+  da bolsa passou do fim da volta para cá em 29/08/2026.
+- **UM SÓ CAMINHO DÁ TAB, `_adquirir_alvo`** (29/08/2026). O relógio dos 4 s
+  do time NÃO TABa mais em `rodar()` — só PEDE via `_tab_solicitado`, consumido
+  pela volta. É IDEMPOTENTE (`_mesmo_alvo_verificado`): se já tenho o alvo VIVO
+  confirmado, o TAB não sai de novo mesmo que o relógio e o portão peçam na mesma
+  volta. Foi o fim do TAB duplo no modo "copiar".
+- **O GUARD SE COMPÕE COM AS TRÊS TROCAS QUE VALEM:** alvo morto/sumiu libera o
+  TAB; o mob do PENHASCO (`_inalcancavel_id`) não é protegido; e o contador
+  `VOLTAS_SEM_BATALHA_PARA_TROCAR = 3` (alvo vivo travado) VENCE a idempotência.
+- **SEM ALVO REAL A MACRO NÃO RODA — o veredito da aquisição é PROPAGADO**
+  (30/08/2026). O vazamento fechado: `_conseguir_o_tab` engolia o `False` de
+  `_garantir_alvo` e a macro disparava com `target_id == 0` (ou travado no
+  cadáver). Agora ele PROPAGA: id não mudou nem está vivo ⇒ `_garantir_alvo`
+  volta `False` ⇒ `_adquirir_alvo` volta `False` ⇒ a volta retorna ao Core Loop
+  **antes da linha 1** — nenhuma skill sai no vazio. No caminho cego (sem
+  leitura de memória) o contrato histórico permanece: TAB cego, macro roda.
 
 - **NÃO LÊ O ALVO EM LUGAR NENHUM** — nem HP, nem id, nem nome, nem a barra. A
   única pergunta é *"estou em batalha?"*, da struct do PERSONAGEM, que nunca
@@ -51,9 +71,14 @@ vida < 30%       → a cura, entre voltas (inalterada)
 ### O que ficou PARADO (interruptor, não apagado)
 
 Morte pelo HP, a segunda porta pela TELA, o pedágio das 3 linhas cegas, a régua
-do penhasco, a conferência de id no TAB, a urgência. **Cada uma tem medição
-atrás**, e `tests/test_tab_no_app.py` desliga o interruptor e exercita todas —
-religar é trocar um `True` por `False` e 134 testes voltam a valer.
+do penhasco, a urgência. **Cada uma tem medição atrás**, e
+`tests/test_tab_no_app.py` desliga o interruptor e exercita todas — religar é
+trocar um `True` por `False` e 134 testes voltam a valer.
+
+A conferência de id no TAB RELIGOU como parte do TAB único (`_adquirir_alvo` +
+`_mesmo_alvo_verificado`): o TAB de abertura agora confere id/hp em memória e é
+idempotente, não cego por timer. O porquê está em
+`docs/decisoes/tab-unico-do-app.md`.
 
 - **O ALVO VEM PELO MESMO CAMINHO DO BC** (`TargetHybrid`) quando for religado.
   O portão `critical_ok()` vale **só para as leituras do personagem**.
@@ -491,3 +516,43 @@ exigem o **bot parado** e devolvem o PID com `_release()` no `finally`.
   `try/except` inalcançável, e da 9ª queda a conta esperava 300 s antes de CADA
   relogin. **Senha errada (só a tela do erro, 5 recusas) DESATIVA a conta.**
 - Travado por `tests/test_saude_em_todo_ecossistema.py` (lê o AST).
+
+
+## Ordem, identidade e grupo das contas — `docs/decisoes/interface.md`
+
+A tabela de contas pode ser reordenada arrastando (web) ou por botões ▲▼ (GUI).
+Pedido do usuário em 28/08/2026.
+
+- **A ORDEM DAS CONTAS É A ORDEM DO ARRAY `accounts`.** Não existe campo de ordem
+  e **não pode existir**: seriam duas fontes de verdade para a mesma coisa, com a
+  pergunta sem resposta "se o campo discordar do array, quem manda?". Reordenar é
+  `BotConfig.reordenar_contas(uids)`, e `save()` grava.
+- **A IDENTIDADE DA CONTA NA INTERFACE É O `Account.uid`, NUNCA O ÍNDICE.** Era o
+  índice, e a premissa que sustentava isso ("o índice é estável enquanto o editor
+  está aberto") morre com a tabela reordenável: com a ordem da tela diferente da
+  do disco, `definir_senha` grava **a senha na conta errada** — login quebrado e
+  senha certa perdida, sem desfazer. O `uid` é gerado na criação, **imutável** e
+  invisível em toda tela.
+- **REORDENAR NÃO PODE PERDER CONTA.** `reordenar_contas` desduplica por
+  identidade de OBJETO (não por uid), põe no fim quem a tela não citou, e
+  **aborta** em vez de gravar uma lista menor. Perder conta ali é perder a senha
+  cifrada dela.
+- **A TELA NUNCA RECEBE UID REPETIDO** (`garantir_uids_unicos`, chamado na leitura
+  do arquivo E antes de responder a lista). Duas contas com o mesmo uid são
+  indistinguíveis para a interface: arrastar a segunda moveria a primeira.
+- **`Account.grupo` É RÓTULO VISUAL, ESCOLHIDO PELO USUÁRIO.** Não representa
+  nada para o bot. **Nenhum caminho do bot pode ler dele** — travado por
+  `test_NENHUM_caminho_do_bot_le_o_grupo`, que lê o AST. Se algum comportamento
+  passar a depender do rótulo, arrastar uma conta na tabela mudaria o que o bot
+  FAZ.
+- **AS TRÊS COISAS SÃO ORTOGONAIS:** a **ordem** é o array, o **time do APP** é
+  `time_logins` (por LOGIN, no líder — imune a reordenação), a **party do BC** é
+  `accept_team_invites`, e o **grupo** é rótulo. Nenhuma deriva da outra.
+- **O ARRASTE NÃO TEM DEBOUNCE.** Grava no soltar, síncrono; se falhar, a tabela
+  **recarrega do backend** — a tela nunca mostra uma ordem que o disco não tem.
+  Debounce é justamente o que perde a última alteração quando a janela fecha.
+- **NA GUI A REORDENAÇÃO É POR BOTÃO, NÃO POR ARRASTE.** A `QTableWidget` tem
+  seis `setCellWidget`, e o arraste interno do Qt move os `QTableWidgetItem` mas
+  **não** os widgets de célula: a senha de uma conta ficaria na linha de outra. A
+  funcionalidade é a mesma nas duas telas; só o gesto difere.
+- Travado por `tests/test_ordem_e_grupo_das_contas.py` (28 testes).

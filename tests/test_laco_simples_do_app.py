@@ -65,7 +65,29 @@ def _executor(em_batalha=None, passos=3, tecla="TAB"):
     # `None` = SEM leitura de id, que é o modo cego: sem ela `_preciso_de_alvo`
     # responde "sim" e o TAB sai como sempre saiu.
     e._id_do_alvo = None
+    # Sem leitura de alvo injetada, `_conseguir_o_tab` cai no TAB cego
+    # (`_tab_simples`), que é o contrato de sempre do modo simples.
+    e._alvo_atual = None
     e.voltas = e.voltas_abortadas = e.teclas_enviadas = e.tabs_dados = 0
+    # O TAB ÚNICO e a IDEMPOTÊNCIA dele -- ver `_adquirir_alvo` e
+    # `_mesmo_alvo_verificado`. `_tab_solicitado` é o pedido do relógio dos 4s
+    # do time (só o `rodar()` seta); sem time, fica False. `_alvo_verificado`
+    # é o último alvo VIVO confirmado; sem leitura de alvo injetada, nunca é
+    # gravado e o guard devolve False (liberando o TAB cego de sempre).
+    e._tab_solicitado = False
+    e._alvo_verificado = None
+    e._inalcancavel_id = None
+    # A LIMPEZA DA BOLSA roda no começo da VOLTA (passo pré-TAB) desde a
+    # refatoração do TAB único em 29/08/2026 — ver `_adquirir_alvo`. A fixture
+    # monta o executor por `__new__`, então o atributo injetado precisa existir.
+    # `None` = sem limpeza configurada: `_limpar_a_bolsa_se_for_a_hora` devolve
+    # na hora e a volta não é interrompida.
+    e._limpar_a_bolsa = None
+    # Os contadores do TAB que o caminho INJETADO lê (`_garantir_alvo`). No modo
+    # cego estes testes não os encontravam; injetar leitura de alvo (o portão
+    # pré-macro) passa a tocá-los.
+    e._tabs_sem_resposta = 0
+    e._avisou_tecla_morta = False
 
     # As conferências viram marcas numa lista, para a ORDEM poder ser conferida.
     e.garantir_pet = lambda: e.feitos.append("pet")
@@ -295,3 +317,74 @@ def test_o_gatilho_da_cura_continua_em_30_por_cento():
     from blazesbot.bot.app import cura
 
     assert cura.VIDA_PARA_CURAR == 30.0
+
+
+# ===========================================================================
+# O PORTÃO DE AQUISIÇÃO PRÉ-MACRO (Eixo 1): sem alvo REAL, a macro não roda
+# ===========================================================================
+
+def test_COM_alvo_REAL_a_macro_roda(monkeypatch):
+    """O caso feliz não pode regredir: alvo vivo já selecionado => a macro roda
+    SEM TAB (a idempotência que protege o mob vivo de ser trocado na luta)."""
+    monkeypatch.setattr(mod, "ESPERA_ANTES_DO_TAB", 0.0)
+    monkeypatch.setattr(mod, "ESPERA_DEPOIS_DO_TAB", 0.0)
+
+    e = _executor(em_batalha=lambda: False)
+    # INJETADO: um mob vivo (id 7) selecionado.
+    e._id_do_alvo = lambda: 7
+    e._alvo_atual = lambda: {"id": 7, "nome": "mob", "hp": 100, "max_hp": 100}
+    e._mesmo_alvo_verificado = lambda: True
+
+    assert e.uma_volta() is True
+    assert e.teclas == ["1", "1", "1"], e.teclas
+    assert "TAB" not in e.teclas, "trocou de alvo com o alvo vivo presente"
+
+
+def test_SEM_alvo_REAL_depois_do_TAB_a_macro_NAO_roda(monkeypatch):
+    """O portão do Eixo 1: TAB apertado mas o id permanece 0 (nada selecionado)
+    => `_garantir_alvo` devolve False, `_adquirir_alvo` devolve False, e
+    NENHUMA tecla de ataque sai. A volta volta ao Core Loop."""
+    monkeypatch.setattr(mod, "ESPERA_ANTES_DO_TAB", 0.0)
+    monkeypatch.setattr(mod, "ESPERA_DEPOIS_DO_TAB", 0.0)
+    monkeypatch.setattr(mod, "ESPERA_SEM_ALVO", 0.0)
+
+    e = _executor(em_batalha=lambda: False)
+    # INJETADO: o TAB não consegue selecionar mob vivo -- id permanece 0.
+    e._id_do_alvo = lambda: 0
+    e._alvo_atual = lambda: {"id": 0, "nome": "", "hp": 0, "max_hp": 100}
+
+    assert e.uma_volta() is False
+    # Nenhuma linha da macro: só o TAB de aquisição (que falhou em pegar alvo).
+    assert all(t == "TAB" for t in e.teclas), e.teclas
+    assert "1" not in e.teclas, "a macro disparou no vazio sem alvo real"
+
+
+def test_TAB_que_cai_no_CADAVER_nao_roda_a_macro(monkeypatch):
+    """O outro fracasso de aquisição: o TAB move o id MAS para um cadáver
+    (hp <= 0). `_alvo_aceitavel` recusa, as tentativas esgotam e a macro não
+    roda com o corpo selecionado."""
+    monkeypatch.setattr(mod, "ESPERA_ANTES_DO_TAB", 0.0)
+    monkeypatch.setattr(mod, "ESPERA_DEPOIS_DO_TAB", 0.0)
+    monkeypatch.setattr(mod, "ESPERA_SEM_ALVO", 0.0)
+    monkeypatch.setattr(mod, "ESPERA_ENTRE_TABS", 0.0)
+    monkeypatch.setattr(mod, "SEGUNDOS_PARA_A_RODA_REINICIAR", 0.0)
+    dormidas: list[float] = []
+    monkeypatch.setattr(mod.time, "sleep", dormidas.append)
+
+    e = _executor(em_batalha=lambda: False)
+    # INJETADO: id 0 antes; o TAB troca para o corpo (id 8, hp 0).
+    estado = {"id": 0}
+    e._id_do_alvo = lambda: estado["id"]
+    e._alvo_atual = lambda: {
+        "id": estado["id"], "nome": "corpo", "hp": 0, "max_hp": 100}
+    # A espera que trocaria de id devolve o corpo imediatamente.
+    e._esperar_o_alvo_trocar = lambda id_antes: 8
+    # O TAB muda o estado para o corpo.
+    def apertar(t):
+        e.teclas.append(t)
+        if t == "TAB":
+            estado["id"] = 8
+    e.input = SimpleNamespace(key=apertar)
+
+    assert e.uma_volta() is False
+    assert "1" not in e.teclas, "a macro disparou com o cadáver selecionado"
