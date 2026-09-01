@@ -178,6 +178,7 @@ class CuraDoApp:
         esta_sentado: Callable[[], bool | None] | None = None,
         tecla_de_pocao: Callable[[], str] | None = None,
         tecla_de_sentar: Callable[[], str] | None = None,
+        fada: Callable[[float], bool] | None = None,
         continuar: Callable[[], bool] | None = None,
     ) -> None:
         self.log = log
@@ -190,6 +191,10 @@ class CuraDoApp:
         self._esta_sentado = esta_sentado or (lambda: None)
         self._tecla_de_pocao = tecla_de_pocao or (lambda: "")
         self._tecla_de_sentar = tecla_de_sentar or (lambda: "")
+        # QUEM CHAMA A FADA. `None` = esta conta não está num time com Fada, e
+        # a cura se resolve com poção como sempre. Injetado pelo supervisor,
+        # que é quem conhece o time e o mural.
+        self._fada = fada
         self._continuar = continuar or (lambda: True)
 
         self.curas = 0
@@ -233,6 +238,15 @@ class CuraDoApp:
 
         self._voltas_presas = 0
         self._voltar_ao_ponto()
+
+        # A FADA TEM PREFERÊNCIA SOBRE A POÇÃO. Tendo uma Fada de pé no time,
+        # quem cura é ela -- e a poção fica para quando ela não estiver lá.
+        #
+        # `False` aqui não é falha: é "não há Fada", e o caminho segue para a
+        # poção exatamente como sempre seguiu. Fora de um time, `_fada` é `None`
+        # e nada disto existe.
+        if self._fada is not None and self._fada(vida):
+            return True
         return self._curar(vida)
 
     # -- sair de batalha --------------------------------------------------

@@ -1035,7 +1035,12 @@ class AccountSupervisor(threading.Thread):
             if (self.account.settings.app.enabled
                     or self._lider_do_time() is not None):
                 anunciado = None      # ao voltar, o estado é anunciado de novo
-                self._rodar_modo_app()
+                # A FADA NÃO RODA MACRO. Ela é convocada pela mesma porta (o
+                # líder ligou o APP), mas o laço dela é outro: curar e sentar.
+                if self._sou_a_fada():
+                    self._rodar_fada()
+                else:
+                    self._rodar_modo_app()
                 continue
 
             # Aceitar convites é a função da conta de reset e não depende de
@@ -1145,6 +1150,45 @@ class AccountSupervisor(threading.Thread):
             return None
         return lider
 
+    def _fada_do_meu_time(self) -> str:
+        """O login da Fada do meu time, ou "".
+
+        Uma só: se houver mais de uma conta marcada, a primeira da lista de
+        membros manda. Duas Fadas curando a mesma fila é desperdício, não erro,
+        então não vale complicar -- mas a ordem precisa ser determinística para
+        todo mundo chamar a MESMA.
+        """
+        por_login = {c.login: c for c in self.config.accounts}
+        for login in self._membros_do_time():
+            conta = por_login.get(login)
+            if conta is not None and conta.settings.app.fada:
+                return login
+        return ""
+
+    def _sou_a_fada(self) -> bool:
+        """Esta conta é a Fada de um time que está de pé?
+
+        As DUAS condições são obrigatórias. A flag sozinha não faz nada -- é o
+        que permite marcar a conta uma vez e ela se comportar conforme o
+        contexto: sozinha ela roda a macro dela como qualquer outra.
+        """
+        if not self.account.settings.app.fada:
+            return False
+        return self._tem_time_do_app()
+
+    def _nick_do_login(self, login: str) -> str:
+        """O nick do personagem daquela conta, ou "".
+
+        A ponte entre os dois vocabulários do sistema: o mural e a configuração
+        falam LOGIN, e a memória do jogo fala NICK. A Fada precisa dos dois --
+        recebe o pedido por login e clica no retrato por nick.
+        """
+        alvo = (login or "").strip().lower()
+        for conta in self.config.accounts:
+            if (conta.login or "").strip().lower() == alvo:
+                return (conta.last_char_name or "").strip()
+        return ""
+
     def _dono_da_macro(self) -> Account:
         """De quem é a macro que esta conta roda: do líder, ou dela mesma."""
         lider = self._lider_do_time()
@@ -1175,6 +1219,137 @@ class AccountSupervisor(threading.Thread):
             return True
         return bool(self.account.settings.app.time_logins) and len(
             self._membros_do_time()) > 1
+
+    # -- a Fada ------------------------------------------------------------
+
+    def _rodar_fada(self) -> None:
+        """Roda o laço da Fada enquanto o time estiver de pé.
+
+        MESMO ISOLAMENTO DO MODO APP: a `FadaDoTime` não recebe `BotContext`,
+        não abre memória e não conhece supervisor. Tudo chega por injeção, e
+        quem sabe abrir o processo do jogo é este arquivo, que já sabia.
+
+        A DIFERENÇA para o modo APP é que aqui a memória NÃO é opcional. A Fada
+        precisa saber quem está no time, onde cada um está no painel e quanta
+        vida tem -- sem isso ela clicaria às cegas, e clique às cegas cura o
+        aliado errado. Sem memória ela avisa e não faz nada, que é melhor.
+        """
+        from ..core.inputs import Input as _Input
+        from . import mural
+        from .app.fada import FadaDoTime
+
+        log = logging.getLogger(f"blazes.{self.account.login}")
+        teclas = self.account.settings.keys
+        app = self.account.settings.app
+
+        try:
+            memoria = Memory(self.pid)
+        except Exception as exc:
+            log.warning("FADA: não consegui abrir a memória (%s). Sem ela a "
+                        "Fada não age.", exc)
+            return
+
+        entrada = _Input(self.hwnd)
+        pontos = coords_for_window(self.hwnd)
+
+        def _seguro(fn, padrao=None):
+            try:
+                return fn()
+            except Exception:
+                return padrao
+
+        def clicar_no_retrato(slot: int) -> bool:
+            """Clique esquerdo no retrato do companheiro `slot` (0-based)."""
+            ponto = getattr(pontos, f"team_member_{slot + 1}", None)
+            if ponto is None:
+                return False
+            entrada.left_click(ponto[0], ponto[1])
+            return True
+
+        def dormir(segundos: float) -> bool:
+            """Espera fatiada: o botão Parar responde no meio dela."""
+            fim = time.monotonic() + max(0.0, segundos)
+            while time.monotonic() < fim:
+                if self.stop_event.is_set():
+                    return False
+                time.sleep(min(0.05, max(0.0, fim - time.monotonic())))
+            return not self.stop_event.is_set()
+
+        fada = FadaDoTime(
+            log=log,
+            meu_login=self.account.login,
+            meu_nick=lambda: _seguro(memoria.char_name),
+            vida_pct=lambda: _seguro(memoria.vida_pct),
+            mana_pct=lambda: _seguro(memoria.mana_pct),
+            em_batalha=lambda: _seguro(memoria.in_battle),
+            companheiros=lambda: _seguro(memoria.companheiros_de_time),
+            vida_do_time=lambda: _seguro(memoria.vida_do_time),
+            id_do_alvo=lambda: _seguro(memoria.id_do_alvo),
+            clicar_no_retrato=clicar_no_retrato,
+            apertar_cura=lambda: entrada.key(teclas.heal_skill),
+            apertar_sentar=lambda: entrada.key(teclas.sit),
+            auto_selecionar=lambda: entrada.key(teclas.self_target),
+            mural=mural,
+            membros_do_time=self._membros_do_time,
+            nick_de=self._nick_do_login,
+            continuar=lambda: (
+                not self.stop_event.is_set()
+                and self._sou_a_fada()
+                and bool(win32gui.IsWindow(self.hwnd))
+            ),
+            dormir=dormir,
+            # AS DUAS BARRAS SÃO DO LÍDER quando há time -- é o que faz o time
+            # inteiro se comportar igual. `_dono_da_macro` já responde isso.
+            pedir_pct=lambda: float(self._dono_da_macro().settings.app.cura_pedir_pct),
+            parar_pct=lambda: float(self._dono_da_macro().settings.app.cura_parar_pct),
+        )
+
+        # O PRÓPRIO ID, PUBLICADO ANTES DE COMEÇAR. É o que permite a QUALQUER
+        # Fada confirmar um clique nesta conta -- e a Fada também é alvo de si
+        # mesma na auto-cura.
+        self._publicar_o_proprio_id(memoria, entrada, log)
+
+        try:
+            fada.rodar()
+        finally:
+            try:
+                memoria.close()
+            except Exception:
+                pass
+        if not app.fada:
+            self._status("Fada desligada")
+
+    def _publicar_o_proprio_id(self, memoria, entrada, log) -> None:
+        """Aperta a auto-seleção, lê o `TARGET_ID` e publica no mural.
+
+        É a peça que a medição de 28/08/2026 revelou: a memória NÃO descreve um
+        alvo que é jogador (nome e vida vêm nulos), mas o `TARGET_ID` responde,
+        e a tecla de auto-seleção põe o id da própria conta nele.
+
+        Sem isso a Fada não tem como confirmar em quem clicou -- e o invariante
+        é que id que não bate não cura. Ou seja: sem publicar, esta conta
+        simplesmente não é curável.
+        """
+        from . import mural
+
+        tecla = (getattr(self.account.settings.keys, "self_target", "") or "").strip()
+        if not tecla:
+            log.warning("Sem tecla de auto-seleção configurada: esta conta não "
+                        "poderá ser curada pela Fada (não há como confirmar o "
+                        "clique). Configure-a em Editar conta > Teclas.")
+            return
+        try:
+            entrada.key(tecla)
+            time.sleep(0.3)                        # o alvo leva ~0,1 s para virar
+            ident = memoria.id_do_alvo()
+        except Exception as exc:
+            log.warning("Não consegui ler o próprio id: %s", exc)
+            return
+        if not ident:
+            log.warning("A auto-seleção não trouxe id nenhum.")
+            return
+        mural.publicar_id(self.account.login, ident)
+        log.info("Meu id no time é %s (publicado no mural).", ident)
 
     # -- modo APP ----------------------------------------------------------
 
@@ -1443,6 +1618,59 @@ class AccountSupervisor(threading.Thread):
 
         teclas = self.account.settings.keys
 
+        def chamar_a_fada(vida: float) -> bool:
+            """Pede cura à Fada do time e espera. `False` = não há Fada, beba poção.
+
+            A ESPERA É INDEFINIDA ENQUANTO A FADA BATE no mural, e isso é
+            decisão do usuário: o tempo de uma cura depende dos itens dela e até
+            de crítico, então um teto fixo mandaria beber poção no meio de uma
+            cura que ia funcionar. O que encerra a espera é a Fada PARAR de
+            bater -- aí ela não está mais lá, e a poção volta a valer.
+
+            Quem chega aqui já saiu de batalha e já voltou ao ponto inicial: é o
+            `CuraDoApp` que garante os dois antes de chamar.
+            """
+            from . import mural
+
+            fada_login = self._fada_do_meu_time()
+            if not fada_login or not mural.fada_de_pe(fada_login):
+                return False
+
+            # O MÁXIMO VAI JUNTO. A memória do time entrega o HP ATUAL de cada
+            # companheiro, não o máximo -- quem sabe o próprio máximo é esta
+            # conta, e sem ele a Fada não tem como calcular porcentagem.
+            mural.publicar_estado(
+                self.account.login,
+                max_hp=_seguro_max_hp(),
+                nick=(self.account.last_char_name or "").strip(),
+            )
+            mural.pedir_cura(self.account.login, vida)
+            alvo = float(self._dono_da_macro().settings.app.cura_parar_pct)
+            log.info("Pedi cura à Fada %s (vida %.0f%%, alvo %.0f%%).",
+                     fada_login, vida, alvo)
+
+            try:
+                while not self.stop_event.is_set():
+                    if not mural.fada_de_pe(fada_login):
+                        log.warning("A Fada %s parou de responder — vou de poção.",
+                                    fada_login)
+                        return False
+                    atual = vida_pct()
+                    if atual is not None and atual >= alvo:
+                        log.info("Curado pela Fada (%.0f%%). Voltando à macro.",
+                                 atual)
+                        return True
+                    time.sleep(0.2)
+            finally:
+                mural.cancelar_pedido(self.account.login)
+            return True
+
+        def _seguro_max_hp():
+            try:
+                return memoria_do_pet.max_hp() if memoria_do_pet else None
+            except Exception:
+                return None
+
         def montar_cura(executor_do_app):
             """A fábrica. Recebe o executor porque a cura precisa dos métodos
             dele para voltar ao ponto inicial -- ver o parâmetro `cura` do
@@ -1458,6 +1686,8 @@ class AccountSupervisor(threading.Thread):
                 voltar_para_base=executor_do_app.mandar_voltar_para_base,
                 apertar=executor_do_app.input.key,
                 esta_sentado=esta_sentado,
+                # A FADA TEM PREFERÊNCIA SOBRE A POÇÃO -- e só existe em time.
+                fada=chamar_a_fada if self._tem_time_do_app() else None,
                 # A TECLA DE POÇÃO É A DE FORA DE BATALHA. Medição do usuário:
                 # personagens que rodam APP usam só essa, e ela NÃO funciona em
                 # combate -- por isso a cura espera sair de batalha.

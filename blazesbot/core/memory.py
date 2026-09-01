@@ -947,6 +947,25 @@ class Memory:
     # entidade traz HP, HP máximo, nível, posição e nome nos MESMOS offsets do
     # personagem.
 
+    def mana_maxima(self) -> int | None:
+        """Mana máxima (`OFF_MAX_MP`). O par do `mp()`, que já existia sozinho."""
+        addr = self._player_field(OFF_MAX_MP)
+        if not addr:
+            return None
+        valor = self.read_int(addr)
+        return valor if valor and valor > 0 else None
+
+    def mana_pct(self) -> float | None:
+        """Mana em porcentagem, ou `None` se não deu para ler.
+
+        A Fada decide sentar e voltar a curar por este número; sem ele, ela não
+        adivinha -- fica de pé e cura enquanto conseguir.
+        """
+        atual, maximo = self.mp(), self.mana_maxima()
+        if atual is None or maximo is None or maximo <= 0:
+            return None
+        return max(0.0, min(100.0, atual * 100.0 / maximo))
+
     def vida_pct(self) -> float | None:
         """A vida do PERSONAGEM em porcentagem (0..100), ou `None`.
 

@@ -28,13 +28,13 @@ ligar código não testado.
 | constante | valor | onde | quem lê | porquê (resumo) |
 |---|---|---|---|---|
 | `ATIVADO` | `True` | [blazesbot/bot/app/deletador.py:74](blazesbot/bot/app/deletador.py#L74) | diagnostico_do_link.py, supervisor.py, esconder_jogadores.py, petbug.py | O caminho continua inteiro com ele em False -- desligado não é apagado. |
-| `ANDAR_SO_FORA_DE_BATALHA` | `True` | [blazesbot/bot/app/executor.py:523](blazesbot/bot/app/executor.py#L523) | — | A CAMINHADA DE VOLTA À BASE NÃO ACONTECE EM BATALHA |
-| `EXIGIR_ALVO_INTEIRO` | `False` | [blazesbot/bot/app/executor.py:365](blazesbot/bot/app/executor.py#L365) | — | ALVO INTEIRO (100/100): EXIGÊNCIA REVOGADA PELO USUÁRIO -- 26/08/2026 |
+| `ANDAR_SO_FORA_DE_BATALHA` | `True` | [blazesbot/bot/app/executor.py:525](blazesbot/bot/app/executor.py#L525) | — | A CAMINHADA DE VOLTA À BASE NÃO ACONTECE EM BATALHA |
+| `EXIGIR_ALVO_INTEIRO` | `False` | [blazesbot/bot/app/executor.py:367](blazesbot/bot/app/executor.py#L367) | — | ALVO INTEIRO (100/100): EXIGÊNCIA REVOGADA PELO USUÁRIO -- 26/08/2026 |
 | `INTERROMPER_A_MACRO_QUANDO_O_ALVO_MORRE` | `True` | [blazesbot/bot/app/executor.py:211](blazesbot/bot/app/executor.py#L211) | — | O MOB MORREU: A MACRO PARA NO MEIO E VAI PARA O PRÓXIMO |
 | `LACO_SIMPLES` | `True` | [blazesbot/bot/app/executor.py:139](blazesbot/bot/app/executor.py#L139) | — | O QUE FICOU PARADO, E POR QUE NAO FOI APAGADO |
-| `USAR_A_SAIDA_DE_BATALHA_PARA_CORTAR` | `True` | [blazesbot/bot/app/executor.py:572](blazesbot/bot/app/executor.py#L572) | — | SAIR DE BATALHA CORTA A MACRO NO MEIO |
-| `USAR_A_TELA_COMO_SEGUNDA_PORTA` | `True` | [blazesbot/bot/app/executor.py:594](blazesbot/bot/app/executor.py#L594) | — | A SEGUNDA PORTA: A VIDA PELA TELA -- 26/08/2026 |
-| `USAR_COMBATE_COMO_RESERVA_DE_MORTE` | `True` | [blazesbot/bot/app/executor.py:426](blazesbot/bot/app/executor.py#L426) | supervisor.py | A RESERVA: QUANDO O HP É ILEGÍVEL, QUEM RESPONDE É A FLAG DE COMBATE |
+| `USAR_A_SAIDA_DE_BATALHA_PARA_CORTAR` | `True` | [blazesbot/bot/app/executor.py:574](blazesbot/bot/app/executor.py#L574) | — | SAIR DE BATALHA CORTA A MACRO NO MEIO |
+| `USAR_A_TELA_COMO_SEGUNDA_PORTA` | `True` | [blazesbot/bot/app/executor.py:596](blazesbot/bot/app/executor.py#L596) | — | A SEGUNDA PORTA: A VIDA PELA TELA -- 26/08/2026 |
+| `USAR_COMBATE_COMO_RESERVA_DE_MORTE` | `True` | [blazesbot/bot/app/executor.py:428](blazesbot/bot/app/executor.py#L428) | supervisor.py | A RESERVA: QUANDO O HP É ILEGÍVEL, QUEM RESPONDE É A FLAG DE COMBATE |
 | `ATACAR_DURANTE_A_CONFIRMACAO_NO_BOSS` | `True` | [blazesbot/bot/bc/combat.py:469](blazesbot/bot/bc/combat.py#L469) | — | SÓ NO BOSS, e a razão é o motivo pelo qual o golpe parava |
 | `DESMONTAR_FORA_DA_CAVE_SO_SEM_PET` | `True` | [blazesbot/bot/bc/combat.py:877](blazesbot/bot/bc/combat.py#L877) | — | FORA DA CAVE, SÓ DESMONTA SE O PET NÃO ESTIVER ATIVO |
 | `EXIGIR_SAIR_DE_COMBATE_NOS_GUARDAS` | `True` | [blazesbot/bot/bc/combat.py:528](blazesbot/bot/bc/combat.py#L528) | — | O CUSTO, DITO INTEIRO |
@@ -50,14 +50,14 @@ ligar código não testado.
 | `CIRCULO_POR_RAIO` | `True` | [blazesbot/bot/bc/navigation.py:245](blazesbot/bot/bc/navigation.py#L245) | — | True = raio por raio (1,2,3,5; em cada raio os 8 pontos); False = bússola por |
 | `CONFIRMAR_CHEGADA_POR_COORDENADA` | `False` | [blazesbot/bot/bc/ui_service.py:418](blazesbot/bot/bc/ui_service.py#L418) | — | INTERRUPTOR: a coordenada do painel CONFIRMA a chegada? |
 | `CONFERIR_SLOT_VAZIO` | `False` | [blazesbot/bot/bc/vendor.py:252](blazesbot/bot/bc/vendor.py#L252) | — | INTERRUPTOR -- A CONFERÊNCIA DE SLOT VAZIO ESTÁ DESLIGADA (decisão do usuário, |
-| `MODO_PADRAO_DO_TIME` | `'largada'` | [blazesbot/config.py:564](blazesbot/config.py#L564) | — | — |
+| `MODO_PADRAO_DO_TIME` | `'largada'` | [blazesbot/config.py:573](blazesbot/config.py#L573) | — | — |
 | `ATIVADA` | `True` | [blazesbot/core/calibracao.py:82](blazesbot/core/calibracao.py#L82) | routine.py, vendor.py | INTERRUPTOR |
 | `ATIVADO` | `False` | [blazesbot/core/esconder_jogadores.py:84](blazesbot/core/esconder_jogadores.py#L84) | deletador.py, diagnostico_do_link.py, supervisor.py, petbug.py | INTERRUPTOR -- DESLIGADO EM 19/08/2026 |
 | `SEGURAR_ATIVADO` | `False` | [blazesbot/core/esconder_jogadores.py:102](blazesbot/core/esconder_jogadores.py#L102) | petbug.py | INTERRUPTOR DO F12 PRESO -- DESLIGADO EM 19/08/2026 |
-| `CONFERIR_A_JANELA_ANTES_DE_ENVIAR` | `True` | [blazesbot/core/inputs.py:349](blazesbot/core/inputs.py#L349) | — | INTERRUPTOR. Desligar volta ao comportamento anterior (mandar sem conferir), e |
-| `MODO_DE_CLIQUE` | `'postmessage_puro'` | [blazesbot/core/inputs.py:187](blazesbot/core/inputs.py#L187) | ui_service.py, instrumentar_clique.py, teste_do_cursor.py | INTERRUPTOR DO MODO DE CLIQUE |
-| `MODO_DE_TECLA` | `'postmessage'` | [blazesbot/core/inputs.py:231](blazesbot/core/inputs.py#L231) | — | INTERRUPTOR DO TECLADO -- "sendmessage" \| "postmessage" |
-| `USAR_MOUSE_SHIELD` | `False` | [blazesbot/core/inputs.py:119](blazesbot/core/inputs.py#L119) | instrumentar_clique.py, teste_do_cursor.py | INTERRUPTOR DO MOUSE SHIELD |
+| `CONFERIR_A_JANELA_ANTES_DE_ENVIAR` | `True` | [blazesbot/core/inputs.py:293](blazesbot/core/inputs.py#L293) | — | INTERRUPTOR. Desligar volta ao comportamento anterior (mandar sem conferir), e |
+| `MODO_DE_CLIQUE` | `'postmessage_puro'` | [blazesbot/core/inputs.py:131](blazesbot/core/inputs.py#L131) | ui_service.py, instrumentar_clique.py, teste_do_cursor.py | INTERRUPTOR DO MODO DE CLIQUE |
+| `MODO_DE_TECLA` | `'postmessage'` | [blazesbot/core/inputs.py:175](blazesbot/core/inputs.py#L175) | — | INTERRUPTOR DO TECLADO -- "sendmessage" \| "postmessage" |
+| `USAR_MOUSE_SHIELD` | `False` | [blazesbot/core/inputs.py:63](blazesbot/core/inputs.py#L63) | instrumentar_clique.py, teste_do_cursor.py | INTERRUPTOR DO MOUSE SHIELD |
 | `COMPRIMIR_ARQUIVO_MORTO` | `True` | [blazesbot/core/log_limitado.py:72](blazesbot/core/log_limitado.py#L72) | — | O arquivo morto de DIAS ANTERIORES é comprimido. Medido no arquivo da noite de |
 | `ATIVADO` | `True` | [blazesbot/core/petbug.py:104](blazesbot/core/petbug.py#L104) | deletador.py, diagnostico_do_link.py, supervisor.py, esconder_jogadores.py | INTERRUPTOR |
 | `USAR_OFFSET_FIXO_DA_BARRA` | `True` | [blazesbot/core/vision.py:1467](blazesbot/core/vision.py#L1467) | — | INTERRUPTOR: o offset fixo é a régua; a âncora azul é a reserva |
@@ -66,7 +66,7 @@ ligar código não testado.
 
 ## Números medidos -- tolerância, limiar, teto, cadência
 
-465 constantes, agrupadas por arquivo.
+472 constantes, agrupadas por arquivo.
 
 | constante | valor | onde | quem lê | porquê (resumo) |
 |---|---|---|---|---|
@@ -82,50 +82,55 @@ ligar código não testado.
 | `VIDA_ALVO_DA_CURA` | `90.0` | [blazesbot/bot/app/cura.py:97](blazesbot/bot/app/cura.py#L97) | — | Até onde curar. Acima disso não se bebe mais nada. |
 | `VIDA_PARA_CURAR` | `30.0` | [blazesbot/bot/app/cura.py:94](blazesbot/bot/app/cura.py#L94) | — | Abaixo de quanta vida a proteção dispara. |
 | `VOLTAS_PRESAS_PARA_AVISAR` | `5` | [blazesbot/bot/app/cura.py:157](blazesbot/bot/app/cura.py#L157) | — | Quantas voltas presas em batalha com vida baixa antes de gritar. |
-| `DEPOIS_DO_OK` | `0.15` | [blazesbot/bot/app/deletador.py:142](blazesbot/bot/app/deletador.py#L142) | — | Assentamento depois do Ok, para o item sumir antes do clique seguinte. |
-| `DISTANCIA_QUE_E_O_MESMO_ITEM` | `12` | [blazesbot/bot/app/deletador.py:117](blazesbot/bot/app/deletador.py#L117) | — | Dois casamentos a menos de tanto um do outro são o MESMO item, contado duas |
-| `ESPERA_DA_BOLSA_ABRIR` | `0.35` | [blazesbot/bot/app/deletador.py:146](blazesbot/bot/app/deletador.py#L146) | afericao.py | A janela do inventário terminar de pintar depois da tecla. A memória confirma |
-| `LIMIAR_DA_CAIXA` | `0.8` | [blazesbot/bot/app/deletador.py:153](blazesbot/bot/app/deletador.py#L153) | — | — |
-| `LIMIAR_DA_REGIAO` | `0.8` | [blazesbot/bot/app/deletador.py:221](blazesbot/bot/app/deletador.py#L221) | — | — |
-| `LIMIAR_DO_ICONE` | `0.8` | [blazesbot/bot/app/deletador.py:152](blazesbot/bot/app/deletador.py#L152) | — | — |
-| `LIMIAR_EM_COR` | `0.92` | [blazesbot/bot/app/deletador.py:109](blazesbot/bot/app/deletador.py#L109) | — | Limiar do casamento EM COR dos itens. Vem do `package_courage`, que mediu o |
-| `MAXIMO_DE_EXCLUSOES` | `12` | [blazesbot/bot/app/deletador.py:112](blazesbot/bot/app/deletador.py#L112) | — | Teto de exclusões por chamada. Um template ruim não pode esvaziar a bolsa. |
-| `PASSO_DA_ESPERA` | `0.05` | [blazesbot/bot/app/deletador.py:139](blazesbot/bot/app/deletador.py#L139) | — | — |
-| `TEMPLATE_DO_ICONE` | `'btn_delete_item.png'` | [blazesbot/bot/app/deletador.py:155](blazesbot/bot/app/deletador.py#L155) | — | — |
-| `TENTATIVAS_DE_FECHAR_A_BOLSA` | `2` | [blazesbot/bot/app/deletador.py:150](blazesbot/bot/app/deletador.py#L150) | — | Quantas vezes insistir para FECHAR a bolsa. Duas, porque a tecla é síncrona: |
-| `TETO_DA_CAIXA` | `1.0` | [blazesbot/bot/app/deletador.py:138](blazesbot/bot/app/deletador.py#L138) | — | Espera pela caixa de confirmação aparecer, depois do clique no ícone. |
-| `TETO_DE_SEGUNDOS` | `10.0` | [blazesbot/bot/app/deletador.py:135](blazesbot/bot/app/deletador.py#L135) | — | Teto do passo inteiro (verificar + apagar), pedido do usuário. |
-| `ESPERA_ANTES_DO_TAB` | `0.6` | [blazesbot/bot/app/executor.py:471](blazesbot/bot/app/executor.py#L471) | — | PAGO UMA VEZ POR AQUISIÇÃO, NÃO UMA VEZ POR TECLA |
+| `DEPOIS_DO_OK` | `0.18` | [blazesbot/bot/app/deletador.py:154](blazesbot/bot/app/deletador.py#L154) | — | Assentamento depois do Ok, para o item sumir antes do clique seguinte. |
+| `DISTANCIA_QUE_E_O_MESMO_ITEM` | `12` | [blazesbot/bot/app/deletador.py:129](blazesbot/bot/app/deletador.py#L129) | — | Dois casamentos a menos de tanto um do outro são o MESMO item, contado duas |
+| `ESPERA_DA_BOLSA_ABRIR` | `0.58` | [blazesbot/bot/app/deletador.py:158](blazesbot/bot/app/deletador.py#L158) | afericao.py | A janela do inventário terminar de pintar depois da tecla. A memória confirma |
+| `LIMIAR_DA_CAIXA` | `0.8` | [blazesbot/bot/app/deletador.py:165](blazesbot/bot/app/deletador.py#L165) | — | — |
+| `LIMIAR_DA_REGIAO` | `0.8` | [blazesbot/bot/app/deletador.py:233](blazesbot/bot/app/deletador.py#L233) | — | — |
+| `LIMIAR_DO_ICONE` | `0.8` | [blazesbot/bot/app/deletador.py:164](blazesbot/bot/app/deletador.py#L164) | — | — |
+| `LIMIAR_EM_COR` | `0.92` | [blazesbot/bot/app/deletador.py:121](blazesbot/bot/app/deletador.py#L121) | — | Limiar do casamento EM COR dos itens. Vem do `package_courage`, que mediu o |
+| `MAXIMO_DE_EXCLUSOES` | `20` | [blazesbot/bot/app/deletador.py:124](blazesbot/bot/app/deletador.py#L124) | — | Teto de exclusões por chamada. Um template ruim não pode esvaziar a bolsa. |
+| `PASSO_DA_ESPERA` | `0.08` | [blazesbot/bot/app/deletador.py:151](blazesbot/bot/app/deletador.py#L151) | — | — |
+| `TEMPLATE_DO_ICONE` | `'btn_delete_item.png'` | [blazesbot/bot/app/deletador.py:167](blazesbot/bot/app/deletador.py#L167) | — | — |
+| `TENTATIVAS_DE_FECHAR_A_BOLSA` | `2` | [blazesbot/bot/app/deletador.py:162](blazesbot/bot/app/deletador.py#L162) | — | Quantas vezes insistir para FECHAR a bolsa. Duas, porque a tecla é síncrona: |
+| `TETO_DA_CAIXA` | `1.2` | [blazesbot/bot/app/deletador.py:150](blazesbot/bot/app/deletador.py#L150) | — | Espera pela caixa de confirmação aparecer, depois do clique no ícone. |
+| `TETO_DE_SEGUNDOS` | `10.0` | [blazesbot/bot/app/deletador.py:147](blazesbot/bot/app/deletador.py#L147) | — | Teto do passo inteiro (verificar + apagar), pedido do usuário. |
+| `ESPERA_ANTES_DO_TAB` | `0.4` | [blazesbot/bot/app/executor.py:473](blazesbot/bot/app/executor.py#L473) | — | PAGO UMA VEZ POR AQUISIÇÃO, NÃO UMA VEZ POR TECLA |
 | `ESPERA_DEPOIS_DE_INVOCAR` | `1` | [blazesbot/bot/app/executor.py:153](blazesbot/bot/app/executor.py#L153) | — | Espera depois de apertar a tecla do pet, antes de seguir para as teclas da |
-| `ESPERA_DEPOIS_DO_TAB` | `1.0` | [blazesbot/bot/app/executor.py:491](blazesbot/bot/app/executor.py#L491) | combat.py, config.py | Respiro entre o TAB e a PRIMEIRA linha da macro. |
-| `ESPERA_ENTRE_TABS` | `0.6` | [blazesbot/bot/app/executor.py:659](blazesbot/bot/app/executor.py#L659) | — | Espaçamento entre um salto da roda do TAB e o seguinte. |
-| `ESPERA_SEM_ALVO` | `0.3` | [blazesbot/bot/app/executor.py:444](blazesbot/bot/app/executor.py#L444) | — | Quanto esperar antes de tentar de novo quando NÃO HÁ alvo vivo. |
-| `FATIA_DE_ESPERA` | `0.05` | [blazesbot/bot/app/executor.py:88](blazesbot/bot/app/executor.py#L88) | __init__.py | Fatia máxima de espera antes de conferir se é para continuar. 0,05 s dá parada |
-| `INTERVALO_ENTRE_INVOCACOES` | `10.0` | [blazesbot/bot/app/executor.py:148](blazesbot/bot/app/executor.py#L148) | — | Intervalo mínimo entre dois toques na tecla do pet. |
-| `INTERVALO_MINIMO_DA_TELA` | `0.5` | [blazesbot/bot/app/executor.py:620](blazesbot/bot/app/executor.py#L620) | supervisor.py, target_hybrid.py | Intervalo minimo entre duas capturas. |
-| `LIMIAR_DE_MORTE_NA_TELA` | `0.02` | [blazesbot/bot/app/executor.py:647](blazesbot/bot/app/executor.py#L647) | — | Abaixo de quanto a barra desenhada conta como morte. |
-| `LINHAS_ANTES_DE_OLHAR_A_TELA` | `2` | [blazesbot/bot/app/executor.py:606](blazesbot/bot/app/executor.py#L606) | supervisor.py | Quantas LINHAS da macro passam antes de a tela ser consultada pela primeira |
-| `LINHAS_BATENDO_CEGO_DEPOIS_DA_TELA` | `3` | [blazesbot/bot/app/executor.py:639](blazesbot/bot/app/executor.py#L639) | — | Quantas linhas o bot continua batendo DEPOIS de a tela dizer que o mob morreu. |
-| `LINHAS_SEM_DANO_PARA_TROCAR` | `3` | [blazesbot/bot/app/executor.py:377](blazesbot/bot/app/executor.py#L377) | — | Quantas LINHAS da macro sem o alvo perder vida antes de trocar de alvo. |
-| `MINIMO_DE_ESPERA_DO_APP_MS` | `100` | [blazesbot/bot/app/executor.py:500](blazesbot/bot/app/executor.py#L500) | sincronia.py, config.py, account_dialog.py, web_app.py | Piso de qualquer tempo do APP, em milissegundos. O MESMO número vive em |
-| `PASSO_DA_CONFERENCIA_DO_ALVO` | `0.1` | [blazesbot/bot/app/executor.py:219](blazesbot/bot/app/executor.py#L219) | — | De quanto em quanto tempo perguntar "o alvo morreu?" DENTRO da espera de uma |
-| `PASSO_DA_CONFIRMACAO_DO_TAB` | `0.01` | [blazesbot/bot/app/executor.py:698](blazesbot/bot/app/executor.py#L698) | — | ERA AQUI O ATRASO ENTRE O TAB E A LINHA 1 -- 26/08/2026 |
-| `PASSO_DA_ESPERA_DA_BASE` | `0.1` | [blazesbot/bot/app/executor.py:674](blazesbot/bot/app/executor.py#L674) | — | Cadência da pergunta "já cheguei?". Leitura de posição é de microssegundos; o |
-| `SEGUNDOS_DO_PASSO_DO_SHUFFLE` | `2.0` | [blazesbot/bot/app/executor.py:704](blazesbot/bot/app/executor.py#L704) | — | Cada perna do shuffle anti-AFK (ida e volta). Era `time.sleep(1.0)` cego duas |
-| `SEGUNDOS_OBSERVANDO_DEPOIS_DA_MORTE` | `3.0` | [blazesbot/bot/app/executor.py:556](blazesbot/bot/app/executor.py#L556) | — | DEPOIS DE MATAR, O BOT OBSERVA -- E O QUE ELE OBSERVA É A BATALHA |
-| `SEGUNDOS_PARA_A_RODA_REINICIAR` | `3.0` | [blazesbot/bot/app/executor.py:276](blazesbot/bot/app/executor.py#L276) | — | Quanto esperar depois de uma aquisição FRACASSADA, antes da volta seguinte. |
-| `SEGUNDOS_PARA_A_TRAVA_DEVOLVER` | `2.0` | [blazesbot/bot/app/executor.py:493](blazesbot/bot/app/executor.py#L493) | — | — |
-| `SEGUNDOS_PARA_O_ALVO_APARECER` | `0.6` | [blazesbot/bot/app/executor.py:184](blazesbot/bot/app/executor.py#L184) | — | O TAB DEIXOU DE SER LINHA DA MACRO |
-| `SHUFFLE_DEFAULT_PIXELS` | `6` | [blazesbot/bot/app/executor.py:699](blazesbot/bot/app/executor.py#L699) | — | — |
-| `TABS_SEM_RESPOSTA_PARA_DESISTIR` | `2` | [blazesbot/bot/app/executor.py:301](blazesbot/bot/app/executor.py#L301) | — | Quantos TABs seguidos SEM O ID MUDAR antes de desistir. |
-| `TENTATIVAS_DE_TAB` | `1` | [blazesbot/bot/app/executor.py:262](blazesbot/bot/app/executor.py#L262) | — | A RODA É ORDENADA POR DISTÂNCIA, E ISSO MUDA TUDO -- 26/08/2026 |
+| `ESPERA_DEPOIS_DO_TAB` | `0.01` | [blazesbot/bot/app/executor.py:493](blazesbot/bot/app/executor.py#L493) | combat.py, config.py | Respiro entre o TAB e a PRIMEIRA linha da macro. |
+| `ESPERA_ENTRE_TABS` | `0.6` | [blazesbot/bot/app/executor.py:661](blazesbot/bot/app/executor.py#L661) | — | Espaçamento entre um salto da roda do TAB e o seguinte. |
+| `ESPERA_SEM_ALVO` | `0.4` | [blazesbot/bot/app/executor.py:446](blazesbot/bot/app/executor.py#L446) | — | Quanto esperar antes de tentar de novo quando NÃO HÁ alvo vivo. |
+| `FATIA_DE_ESPERA` | `0.08` | [blazesbot/bot/app/executor.py:88](blazesbot/bot/app/executor.py#L88) | __init__.py | Fatia máxima de espera antes de conferir se é para continuar. 0,05 s dá parada |
+| `INTERVALO_ENTRE_INVOCACOES` | `6.0` | [blazesbot/bot/app/executor.py:148](blazesbot/bot/app/executor.py#L148) | — | Intervalo mínimo entre dois toques na tecla do pet. |
+| `INTERVALO_MINIMO_DA_TELA` | `0.5` | [blazesbot/bot/app/executor.py:622](blazesbot/bot/app/executor.py#L622) | supervisor.py, target_hybrid.py | Intervalo minimo entre duas capturas. |
+| `LIMIAR_DE_MORTE_NA_TELA` | `0.02` | [blazesbot/bot/app/executor.py:649](blazesbot/bot/app/executor.py#L649) | — | Abaixo de quanto a barra desenhada conta como morte. |
+| `LINHAS_ANTES_DE_OLHAR_A_TELA` | `3` | [blazesbot/bot/app/executor.py:608](blazesbot/bot/app/executor.py#L608) | supervisor.py | Quantas LINHAS da macro passam antes de a tela ser consultada pela primeira |
+| `LINHAS_BATENDO_CEGO_DEPOIS_DA_TELA` | `3` | [blazesbot/bot/app/executor.py:641](blazesbot/bot/app/executor.py#L641) | — | Quantas linhas o bot continua batendo DEPOIS de a tela dizer que o mob morreu. |
+| `LINHAS_SEM_DANO_PARA_TROCAR` | `4` | [blazesbot/bot/app/executor.py:379](blazesbot/bot/app/executor.py#L379) | — | Quantas LINHAS da macro sem o alvo perder vida antes de trocar de alvo. |
+| `MINIMO_DE_ESPERA_DO_APP_MS` | `100` | [blazesbot/bot/app/executor.py:502](blazesbot/bot/app/executor.py#L502) | sincronia.py, config.py, account_dialog.py, web_app.py | Piso de qualquer tempo do APP, em milissegundos. O MESMO número vive em |
+| `PASSO_DA_CONFERENCIA_DO_ALVO` | `0.16` | [blazesbot/bot/app/executor.py:219](blazesbot/bot/app/executor.py#L219) | fada.py | De quanto em quanto tempo perguntar "o alvo morreu?" DENTRO da espera de uma |
+| `PASSO_DA_CONFIRMACAO_DO_TAB` | `0.01` | [blazesbot/bot/app/executor.py:700](blazesbot/bot/app/executor.py#L700) | — | ERA AQUI O ATRASO ENTRE O TAB E A LINHA 1 -- 26/08/2026 |
+| `PASSO_DA_ESPERA_DA_BASE` | `0.1` | [blazesbot/bot/app/executor.py:676](blazesbot/bot/app/executor.py#L676) | — | Cadência da pergunta "já cheguei?". Leitura de posição é de microssegundos; o |
+| `SEGUNDOS_DO_PASSO_DO_SHUFFLE` | `3.0` | [blazesbot/bot/app/executor.py:706](blazesbot/bot/app/executor.py#L706) | — | Cada perna do shuffle anti-AFK (ida e volta). Era `time.sleep(1.0)` cego duas |
+| `SEGUNDOS_OBSERVANDO_DEPOIS_DA_MORTE` | `2.5` | [blazesbot/bot/app/executor.py:558](blazesbot/bot/app/executor.py#L558) | — | DEPOIS DE MATAR, O BOT OBSERVA -- E O QUE ELE OBSERVA É A BATALHA |
+| `SEGUNDOS_PARA_A_RODA_REINICIAR` | `1.6` | [blazesbot/bot/app/executor.py:278](blazesbot/bot/app/executor.py#L278) | — | Quanto esperar depois de uma aquisição FRACASSADA, antes da volta seguinte. |
+| `SEGUNDOS_PARA_A_TRAVA_DEVOLVER` | `2.0` | [blazesbot/bot/app/executor.py:495](blazesbot/bot/app/executor.py#L495) | — | — |
+| `SEGUNDOS_PARA_O_ALVO_APARECER` | `0.35` | [blazesbot/bot/app/executor.py:184](blazesbot/bot/app/executor.py#L184) | — | O TAB DEIXOU DE SER LINHA DA MACRO |
+| `SHUFFLE_DEFAULT_PIXELS` | `5` | [blazesbot/bot/app/executor.py:701](blazesbot/bot/app/executor.py#L701) | — | — |
+| `TABS_SEM_RESPOSTA_PARA_DESISTIR` | `1` | [blazesbot/bot/app/executor.py:303](blazesbot/bot/app/executor.py#L303) | — | Quantos TABs seguidos SEM O ID MUDAR antes de desistir. |
+| `TENTATIVAS_DE_TAB` | `1` | [blazesbot/bot/app/executor.py:264](blazesbot/bot/app/executor.py#L264) | — | A RODA É ORDENADA POR DISTÂNCIA, E ISSO MUDA TUDO -- 26/08/2026 |
 | `TOLERANCIA_POSICAO` | `1` | [blazesbot/bot/app/executor.py:157](blazesbot/bot/app/executor.py#L157) | — | Constantes mantidas para compatibilidade com testes e configuração. |
-| `VOLTAS_COM_ALVO_ILEGIVEL_PARA_TROCAR` | `2` | [blazesbot/bot/app/executor.py:438](blazesbot/bot/app/executor.py#L438) | — | Quantas VOLTAS inteiras com o alvo selecionado e o HP ilegível antes de |
-| `VOLTAS_SEM_BATALHA_PARA_TROCAR` | `3` | [blazesbot/bot/app/executor.py:670](blazesbot/bot/app/executor.py#L670) | — | Quantas voltas seguidas COM alvo e FORA de batalha antes de trocar de alvo. |
-| `ESPERA_ENTRE_TABS_DO_ALINHAMENTO` | `0.4` | [blazesbot/bot/app/sincronia.py:97](blazesbot/bot/app/sincronia.py#L97) | — | Cadência do TAB durante o alinhamento. |
-| `PASSO_DA_ESPERA_DA_LARGADA` | `0.05` | [blazesbot/bot/app/sincronia.py:100](blazesbot/bot/app/sincronia.py#L100) | — | De quanto em quanto tempo o seguidor confere se a largada saiu. |
+| `VOLTAS_COM_ALVO_ILEGIVEL_PARA_TROCAR` | `2` | [blazesbot/bot/app/executor.py:440](blazesbot/bot/app/executor.py#L440) | — | Quantas VOLTAS inteiras com o alvo selecionado e o HP ilegível antes de |
+| `VOLTAS_SEM_BATALHA_PARA_TROCAR` | `3` | [blazesbot/bot/app/executor.py:672](blazesbot/bot/app/executor.py#L672) | — | Quantas voltas seguidas COM alvo e FORA de batalha antes de trocar de alvo. |
+| `ESPERA_ENTRE_CURAS` | `0.6` | [blazesbot/bot/app/fada.py:80](blazesbot/bot/app/fada.py#L80) | — | Entre uma tecla de cura e a seguinte. |
+| `PASSO_DA_CONFERENCIA_DO_ALVO` | `0.02` | [blazesbot/bot/app/fada.py:66](blazesbot/bot/app/fada.py#L66) | executor.py | — |
+| `PASSO_DA_FADA` | `0.1` | [blazesbot/bot/app/fada.py:58](blazesbot/bot/app/fada.py#L58) | — | Cadência do laço da Fada quando não há nada a fazer. |
+| `TETO_DA_CURA_SEGUNDOS` | `20.0` | [blazesbot/bot/app/fada.py:73](blazesbot/bot/app/fada.py#L73) | — | Quanto tempo insistir numa cura antes de desistir daquela vítima. |
+| `TETO_PARA_O_ALVO_VIRAR` | `0.4` | [blazesbot/bot/app/fada.py:65](blazesbot/bot/app/fada.py#L65) | — | Depois do clique no retrato, quanto esperar a memória mostrar o alvo novo. |
+| `ESPERA_ENTRE_TABS_DO_ALINHAMENTO` | `0.5` | [blazesbot/bot/app/sincronia.py:97](blazesbot/bot/app/sincronia.py#L97) | — | Cadência do TAB durante o alinhamento. |
+| `PASSO_DA_ESPERA_DA_LARGADA` | `0.04` | [blazesbot/bot/app/sincronia.py:100](blazesbot/bot/app/sincronia.py#L100) | — | De quanto em quanto tempo o seguidor confere se a largada saiu. |
 | `PASSO_DA_ESPERA_DA_LINHA` | `0.05` | [blazesbot/bot/app/sincronia.py:121](blazesbot/bot/app/sincronia.py#L121) | — | De quanto em quanto tempo a espera da linha acorda para conferir o botão |
-| `SEGUNDOS_SEM_MUDANCA_PARA_TAB` | `4.0` | [blazesbot/bot/app/sincronia.py:108](blazesbot/bot/app/sincronia.py#L108) | — | Sem trocar de estado de batalha por este tempo, dá TAB. |
+| `SEGUNDOS_SEM_MUDANCA_PARA_TAB` | `3.0` | [blazesbot/bot/app/sincronia.py:108](blazesbot/bot/app/sincronia.py#L108) | — | Sem trocar de estado de batalha por este tempo, dá TAB. |
 | `TETO_DA_LINHA_SEGUNDOS` | `2.0` | [blazesbot/bot/app/sincronia.py:116](blazesbot/bot/app/sincronia.py#L116) | — | Quanto o seguidor espera a marca de UMA linha antes de mandar assim mesmo. |
 | `AMOSTRAS_POR_COORDENADA` | `3` | [blazesbot/bot/bc/amostragem_de_cliques.py:126](blazesbot/bot/bc/amostragem_de_cliques.py#L126) | — | Quantas vezes cada coordenada é testada. Três é o mínimo que separa "abriu |
 | `ANCORA_PADRAO` | `1.9` | [blazesbot/bot/bc/amostragem_de_cliques.py:163](blazesbot/bot/bc/amostragem_de_cliques.py#L163) | — | Precisão aceita nos pontos que o próprio bot não exige exatos (Fay, entrada |
@@ -345,7 +350,7 @@ ligar código não testado.
 | `ACEITE_VALIDO_SEGUNDOS` | `15.0` | [blazesbot/bot/mural.py:185](blazesbot/bot/mural.py#L185) | — | Validade do aceite. Curta de propósito: ele confirma UM convite recém-enviado, |
 | `CONVITE_VALIDO_SEGUNDOS` | `60.0` | [blazesbot/bot/mural.py:63](blazesbot/bot/mural.py#L63) | — | Validade do anúncio. Cobre a fila de resposta do outro cliente com folga; mais |
 | `ESTADO_VALIDO_SEGUNDOS` | `30.0` | [blazesbot/bot/mural.py:277](blazesbot/bot/mural.py#L277) | sincronia.py, supervisor.py | Quanto tempo o estado publicado por uma conta continua valendo. |
-| `LARGADA_VALIDA_SEGUNDOS` | `3.0` | [blazesbot/bot/mural.py:269](blazesbot/bot/mural.py#L269) | sincronia.py | Quanto tempo uma largada anunciada continua valendo. |
+| `LARGADA_VALIDA_SEGUNDOS` | `5.0` | [blazesbot/bot/mural.py:269](blazesbot/bot/mural.py#L269) | sincronia.py | Quanto tempo uma largada anunciada continua valendo. |
 | `SILENCIO_DA_FADA` | `5.0` | [blazesbot/bot/mural.py:472](blazesbot/bot/mural.py#L472) | — | Quanto silêncio já é "a Fada não está lá". |
 | `SILENCIO_MAXIMO` | `5.0` | [blazesbot/bot/mural.py:129](blazesbot/bot/mural.py#L129) | — | Quanto silêncio já é "caiu". |
 | `DESVIO_MINIMO` | `12.0` | [blazesbot/bot/recorte_do_time.py:109](blazesbot/bot/recorte_do_time.py#L109) | — | Recorte liso casa em todo lugar. `region_is_uniform` já é o teste que o |
@@ -376,24 +381,24 @@ ligar código não testado.
 | `RECONNECT_TEMPLATE` | `'state_conn_prefix.png'` | [blazesbot/bot/watchdog.py:35](blazesbot/bot/watchdog.py#L35) | — | Template do aviso "Connection interrupted[, please open client again]". |
 | `RECONNECT_THRESHOLD` | `0.8` | [blazesbot/bot/watchdog.py:36](blazesbot/bot/watchdog.py#L36) | — | — |
 | `VISUAL_CHECK_SECONDS` | `10.0` | [blazesbot/bot/watchdog.py:39](blazesbot/bot/watchdog.py#L39) | executor.py, context.py, supervisor.py, target_hybrid.py | Este virou o sinal principal de queda, então roda numa cadência curta. |
-| `CLIQUES_POR_PASSADA` | `24` | [blazesbot/config.py:758](blazesbot/config.py#L758) | vendor.py | Limite do jogo: a janela mostra 24 itens e só dá para marcar 24 por venda. |
+| `CLIQUES_POR_PASSADA` | `24` | [blazesbot/config.py:767](blazesbot/config.py#L767) | vendor.py | Limite do jogo: a janela mostra 24 itens e só dá para marcar 24 por venda. |
 | `CONFIG_VERSION` | `4` | [blazesbot/config.py:34](blazesbot/config.py#L34) | — | Versão 4: o caminho da cave saiu do arquivo e passou a viver em |
-| `CURA_PARAR_PCT_PADRAO` | `90` | [blazesbot/config.py:602](blazesbot/config.py#L602) | — | — |
-| `CURA_PEDIR_PCT_PADRAO` | `30` | [blazesbot/config.py:601](blazesbot/config.py#L601) | — | Padrões das duas barras de cura do time. Pedido do usuário em 28/08/2026: |
+| `CURA_PARAR_PCT_PADRAO` | `90` | [blazesbot/config.py:611](blazesbot/config.py#L611) | — | — |
+| `CURA_PEDIR_PCT_PADRAO` | `30` | [blazesbot/config.py:610](blazesbot/config.py#L610) | — | Padrões das duas barras de cura do time. Pedido do usuário em 28/08/2026: |
 | `DEFAULT_MOUNT_SPEED` | `90` | [blazesbot/config.py:49](blazesbot/config.py#L49) | — | — |
-| `FOLGA_PADRAO_DE_SLOTS` | `6` | [blazesbot/config.py:407](blazesbot/config.py#L407) | — | Espaços livres a partir dos quais já vale voltar para vender. |
-| `GUARDAS_DO_COVIL` | `4` | [blazesbot/config.py:802](blazesbot/config.py#L802) | — | Quantos mobs de guarda esperam na entrada do covil do boss. Contados no jogo. |
-| `LIMITE_DO_NOME_DO_GRUPO` | `40` | [blazesbot/config.py:492](blazesbot/config.py#L492) | account_dialog.py, web_app.py | Teto do nome de um grupo de contas (`Account.grupo`). |
-| `MAXIMO_DE_SEGUIDORES_DO_TIME` | `4` | [blazesbot/config.py:545](blazesbot/config.py#L545) | — | Quantas contas o líder arrasta junto. Pedido do usuário em 27/08/2026: |
-| `MAX_BOLSAS` | `3` | [blazesbot/config.py:400](blazesbot/config.py#L400) | account_dialog.py, web_app.py | — |
-| `MINIMO_DELAY_MS` | `100` | [blazesbot/config.py:469](blazesbot/config.py#L469) | account_dialog.py | Espera mínima de QUALQUER campo de tempo do APP, em milissegundos. |
-| `NOME_DOS_GUARDAS` | `'Gun Witch'` | [blazesbot/config.py:822](blazesbot/config.py#L822) | combat.py, routine.py | Como os quatro guardas se chamam no jogo. Lido no quadro do alvo, no print do |
-| `PASSOS_DO_APP` | `20` | [blazesbot/config.py:450](blazesbot/config.py#L450) | account_dialog.py, web_app.py | Linhas oferecidas na aba APP. Dezesseis cobre com folga a macro mais longa que |
-| `PET_FEED_MINUTES` | `50` | [blazesbot/config.py:228](blazesbot/config.py#L228) | account_dialog.py, web_app.py | Cada comida de pet dá 5 de felicidade, o máximo é 100, e o pet perde 1 a cada |
-| `PET_FEED_MINUTOS_MAX` | `60` | [blazesbot/config.py:238](blazesbot/config.py#L238) | account_dialog.py | — |
-| `PET_FEED_MINUTOS_MIN` | `40` | [blazesbot/config.py:237](blazesbot/config.py#L237) | account_dialog.py | FAIXA FECHADA DO INTERVALO DE COMIDA (26/08/2026, decisão do usuário). |
-| `SLOTS_POR_BOLSA` | `30` | [blazesbot/config.py:399](blazesbot/config.py#L399) | account_dialog.py, web_app.py | Cada bolsa do jogo tem 30 espaços. O personagem começa com uma e pode ter até |
-| `SPEED_DURACAO_SEGUNDOS` | `30` | [blazesbot/config.py:798](blazesbot/config.py#L798) | velocidade.py | Skill de velocidade da montaria, valores do jogo. Ficam aqui e não na |
+| `FOLGA_PADRAO_DE_SLOTS` | `6` | [blazesbot/config.py:416](blazesbot/config.py#L416) | — | Espaços livres a partir dos quais já vale voltar para vender. |
+| `GUARDAS_DO_COVIL` | `4` | [blazesbot/config.py:811](blazesbot/config.py#L811) | — | Quantos mobs de guarda esperam na entrada do covil do boss. Contados no jogo. |
+| `LIMITE_DO_NOME_DO_GRUPO` | `40` | [blazesbot/config.py:501](blazesbot/config.py#L501) | account_dialog.py, web_app.py | Teto do nome de um grupo de contas (`Account.grupo`). |
+| `MAXIMO_DE_SEGUIDORES_DO_TIME` | `4` | [blazesbot/config.py:554](blazesbot/config.py#L554) | — | Quantas contas o líder arrasta junto. Pedido do usuário em 27/08/2026: |
+| `MAX_BOLSAS` | `3` | [blazesbot/config.py:409](blazesbot/config.py#L409) | account_dialog.py, web_app.py | — |
+| `MINIMO_DELAY_MS` | `100` | [blazesbot/config.py:478](blazesbot/config.py#L478) | account_dialog.py | Espera mínima de QUALQUER campo de tempo do APP, em milissegundos. |
+| `NOME_DOS_GUARDAS` | `'Gun Witch'` | [blazesbot/config.py:831](blazesbot/config.py#L831) | combat.py, routine.py | Como os quatro guardas se chamam no jogo. Lido no quadro do alvo, no print do |
+| `PASSOS_DO_APP` | `20` | [blazesbot/config.py:459](blazesbot/config.py#L459) | account_dialog.py, web_app.py | Linhas oferecidas na aba APP. Dezesseis cobre com folga a macro mais longa que |
+| `PET_FEED_MINUTES` | `50` | [blazesbot/config.py:237](blazesbot/config.py#L237) | account_dialog.py, web_app.py | Cada comida de pet dá 5 de felicidade, o máximo é 100, e o pet perde 1 a cada |
+| `PET_FEED_MINUTOS_MAX` | `60` | [blazesbot/config.py:247](blazesbot/config.py#L247) | account_dialog.py | — |
+| `PET_FEED_MINUTOS_MIN` | `40` | [blazesbot/config.py:246](blazesbot/config.py#L246) | account_dialog.py | FAIXA FECHADA DO INTERVALO DE COMIDA (26/08/2026, decisão do usuário). |
+| `SLOTS_POR_BOLSA` | `30` | [blazesbot/config.py:408](blazesbot/config.py#L408) | account_dialog.py, web_app.py | Cada bolsa do jogo tem 30 espaços. O personagem começa com uma e pode ter até |
+| `SPEED_DURACAO_SEGUNDOS` | `30` | [blazesbot/config.py:807](blazesbot/config.py#L807) | velocidade.py | Skill de velocidade da montaria, valores do jogo. Ficam aqui e não na |
 | `AMOSTRAS_ENTRE_GRAVACOES` | `40` | [blazesbot/core/calibracao.py:167](blazesbot/core/calibracao.py#L167) | combat.py | De quantas em quantas amostras o placar vai para o disco. |
 | `AMOSTRAS_PARA_GABARITAR` | `50` | [blazesbot/core/calibracao.py:102](blazesbot/core/calibracao.py#L102) | — | Para um candidato ser declarado `gabaritou`. |
 | `AMOSTRAS_PARA_REPROVAR` | `100` | [blazesbot/core/calibracao.py:109](blazesbot/core/calibracao.py#L109) | — | Para um candidato ser declarado `reprovado` e PARAR de ser amostrado. Não é |
@@ -427,11 +432,11 @@ ligar código não testado.
 | `TENTATIVAS_DE_FECHAR` | `3` | [blazesbot/core/esconder_jogadores.py:113](blazesbot/core/esconder_jogadores.py#L113) | amostragem_de_cliques.py | Enters de fechamento antes de desistir. Enter ALTERNA o chat, então cada |
 | `CABECALHO` | `'# TEMPOS — tudo que o bot ESPERA\n\n> **GERADO. Não edite à mão.**\n> `./.venv/Scripts/python.exe -m blazesbot.core.indice_de_tempos`\n> Travado por `tests/test_indice_de_tempos.py`: mexeu num tempo e não regerou,\n> a suíte reprova.\n\n## REGRA PERMANENTE\n\n**Todo tempo novo — constante OU literal no meio de uma função — entra aqui.**\nNão por disciplina: a extração acha sozinha, e o teste reprova se o arquivo\nestiver velho. Basta regerar.\n\nO que NÃO se faz sozinho é o **ponto de restauração**. Ver a seção\n"Se você mudou um tempo e deu errado", no fim.\n\n## Como ler a coluna NATUREZA\n\n| natureza | o que é | mexer nele significa |\n|---|---|---|\n| **TETO** | prazo máximo; quem responde antes não paga | encurtar arrisca **o caso lento**, não o comum |\n| **PASSO** | cadência de uma pergunta em laço | encurtar gasta **CPU**, não relógio |\n| **FIXO** | espera **CEGA**: paga sempre, inteira | é **aqui** que há tempo a ganhar |\n\nA regra do projeto é *"onde havia espera cega, agora se PERGUNTA"*. Cada **FIXO**\ndesta lista é ou uma exceção justificada, ou dívida que ninguém converteu ainda.\n\n## A coluna ORIGINAL\n\n`=` significa que o valor está como o de referência. **`⚠` significa que alguém\nmudou** — e a coluna mostra de quanto era. É o ponto de restauração.\n\n'` | [blazesbot/core/indice_de_tempos.py:311](blazesbot/core/indice_de_tempos.py#L311) | — | — |
 | `RODAPE` | `'\n---\n\n## Se você mudou um tempo e deu errado\n\n1. Ache a linha aqui pelo nome (ou pelo arquivo).\n2. A coluna **ORIGINAL** com `⚠` traz o valor de referência.\n3. Volte para ele no arquivo apontado pela coluna ONDE.\n\nO ponto de restauração vive em `docs/tempos-originais.json`.\n\n**Ele NÃO é atualizado sozinho, e isso é de propósito**: se toda geração\nrefotografasse os valores, o "original" seria sempre o de agora e o arquivo não\nserviria para nada. Refotografar é ato deliberado:\n\n```python\nfrom blazesbot.core.indice_de_tempos import extrair, gravar_originais\ngravar_originais(extrair())\n```\n\nFaça isso **só** quando um valor novo já estiver provado em produção e você\nquiser que ele passe a ser a referência.\n\n## O que este catálogo NÃO cobre\n\n* **Tempo que vem da configuração** (`attack_delay`, `max_fight_seconds`,\n  `launch_delay`, `time_factor`, os `delay_ms` da macro do APP): muda por conta,\n  na interface, e não tem "valor original" único. Está em `blazesbot/config.py`.\n* **Tempo que o JOGO impõe** (animação de montar, teleporte, efeito de poção):\n  não é nosso, e o bot só pode medir.\n* **Esperas calculadas** (`tick(resto)`, `tick(segundos * fator)`): o valor não\n  é literal, então não há número para catalogar. Elas aparecem indiretamente,\n  pelas constantes que as alimentam.\n'` | [blazesbot/core/indice_de_tempos.py:345](blazesbot/core/indice_de_tempos.py#L345) | — | — |
-| `CLIQUES_DIREITOS_POR_TENTATIVA` | `10` | [blazesbot/core/inputs.py:265](blazesbot/core/inputs.py#L265) | — | QUANTOS CLIQUES DIREITOS POR TENTATIVA |
-| `INTERVALO_ENTRE_CLIQUES_DIREITOS` | `0.044` | [blazesbot/core/inputs.py:269](blazesbot/core/inputs.py#L269) | — | Espaço entre um clique e o seguinte. Curto de propósito: a aposta é que a |
-| `NOME_DO_PROCESSO_DO_JOGO` | `'client.exe'` | [blazesbot/core/inputs.py:339](blazesbot/core/inputs.py#L339) | — | NENHUMA MENSAGEM SAI PARA UMA JANELA QUE NÃO É O JOGO |
-| `SEGUNDOS_ENTRE_CONFERENCIAS_DO_PROCESSO` | `2.0` | [blazesbot/core/inputs.py:356](blazesbot/core/inputs.py#L356) | — | De quanto em quanto tempo o NOME do processo é reconferido. |
-| `TETO_DO_BLOQUEIO_MS` | `80.0` | [blazesbot/core/inputs.py:130](blazesbot/core/inputs.py#L130) | — | TETO do bloqueio do mouse físico, em milissegundos -- e TETO, não gasto: o |
+| `CLIQUES_DIREITOS_POR_TENTATIVA` | `10` | [blazesbot/core/inputs.py:209](blazesbot/core/inputs.py#L209) | — | QUANTOS CLIQUES DIREITOS POR TENTATIVA |
+| `INTERVALO_ENTRE_CLIQUES_DIREITOS` | `0.044` | [blazesbot/core/inputs.py:213](blazesbot/core/inputs.py#L213) | — | Espaço entre um clique e o seguinte. Curto de propósito: a aposta é que a |
+| `NOME_DO_PROCESSO_DO_JOGO` | `'client.exe'` | [blazesbot/core/inputs.py:283](blazesbot/core/inputs.py#L283) | — | NENHUMA MENSAGEM SAI PARA UMA JANELA QUE NÃO É O JOGO |
+| `SEGUNDOS_ENTRE_CONFERENCIAS_DO_PROCESSO` | `2.0` | [blazesbot/core/inputs.py:300](blazesbot/core/inputs.py#L300) | — | De quanto em quanto tempo o NOME do processo é reconferido. |
+| `TETO_DO_BLOQUEIO_MS` | `80.0` | [blazesbot/core/inputs.py:74](blazesbot/core/inputs.py#L74) | — | TETO do bloqueio do mouse físico, em milissegundos -- e TETO, não gasto: o |
 | `SEM_JANELA` | `'(sem janela)'` | [blazesbot/core/janelas.py:36](blazesbot/core/janelas.py#L36) | — | O TÍTULO DE QUEM NÃO TEM JANELA. Texto, e não `None`, porque todo chamador |
 | `LIMIAR_DA_MOLDURA` | `0.65` | [blazesbot/core/janelas_abertas.py:107](blazesbot/core/janelas_abertas.py#L107) | — | Limiar da moldura, e ele NÃO é o 0.80 do projeto -- de propósito. |
 | `LIMIAR_DO_X` | `0.8` | [blazesbot/core/janelas_abertas.py:95](blazesbot/core/janelas_abertas.py#L95) | — | Limiar do X. É o 0.80 que o projeto inteiro já usa (`INVITE_THRESHOLD`, |
@@ -445,15 +450,17 @@ ligar código não testado.
 | `LUGAR_FORA_DA_CAVE` | `'Ghost Din Woods'` | [blazesbot/core/lugares.py:102](blazesbot/core/lugares.py#L102) | localizacao.py, routine.py | O lugar em que o personagem está quando NÃO está na cave e o X é grande. |
 | `MINIMO_CAUDA` | `5` | [blazesbot/core/lugares.py:126](blazesbot/core/lugares.py#L126) | — | Menor cauda que ainda identifica um lugar com segurança. Abaixo disso, |
 | `ANGULO_DA_CAMERA` | `956.720459` | [blazesbot/core/memory.py:223](blazesbot/core/memory.py#L223) | ler_camera.py | O ângulo em que os cliques na cena 3D foram medidos. |
-| `BAG_OPEN_VALUE` | `903` | [blazesbot/core/memory.py:376](blazesbot/core/memory.py#L376) | — | — |
-| `DIALOGO_ABERTO_VALOR` | `16775` | [blazesbot/core/memory.py:366](blazesbot/core/memory.py#L366) | — | — |
-| `ESCALA_DE_INIMIGO` | `100` | [blazesbot/core/memory.py:381](blazesbot/core/memory.py#L381) | afericao_do_aliado.py | HP máximo padrão de inimigos do covil (Gun Witch, Cemetery Guard, etc.) |
+| `BAG_OPEN_VALUE` | `903` | [blazesbot/core/memory.py:424](blazesbot/core/memory.py#L424) | — | — |
+| `DIALOGO_ABERTO_VALOR` | `16775` | [blazesbot/core/memory.py:414](blazesbot/core/memory.py#L414) | — | — |
+| `ESCALA_DE_INIMIGO` | `100` | [blazesbot/core/memory.py:429](blazesbot/core/memory.py#L429) | afericao_do_aliado.py | HP máximo padrão de inimigos do covil (Gun Witch, Cemetery Guard, etc.) |
 | `JANELA_DE_COMBATE` | `16` | [blazesbot/core/memory.py:68](blazesbot/core/memory.py#L68) | — | Quantos bytes ler de cada lado de `OFF_BATTLE` em `battle_window()`. Serve para |
-| `LIMITE_DE_ENTIDADES` | `512` | [blazesbot/core/memory.py:265](blazesbot/core/memory.py#L265) | target_hybrid.py | Quantos slots do array de entidades varrer. 512 cobre com folga o que o |
+| `LIMITE_DE_ENTIDADES` | `512` | [blazesbot/core/memory.py:313](blazesbot/core/memory.py#L313) | target_hybrid.py | Quantos slots do array de entidades varrer. 512 cobre com folga o que o |
+| `MAXIMO_DE_MEMBROS_LIDOS` | `4` | [blazesbot/core/memory.py:284](blazesbot/core/memory.py#L284) | — | O time do Talisman vai a cinco (o personagem mais quatro), mas a tabela lida |
 | `PASSO_DA_PROVA_DA_CAMERA` | `0.05` | [blazesbot/core/memory.py:248](blazesbot/core/memory.py#L248) | — | — |
+| `PASSO_ENTRE_MEMBROS` | `136` | [blazesbot/core/memory.py:278](blazesbot/core/memory.py#L278) | — | — |
 | `PROVA_DA_CAMERA` | `5.0` | [blazesbot/core/memory.py:235](blazesbot/core/memory.py#L235) | — | Quanto o diagnóstico soma ao ângulo para PROVAR que a escrita move a câmera. |
-| `SIT_VALUE` | `200` | [blazesbot/core/memory.py:375](blazesbot/core/memory.py#L375) | — | Valores sentinela observados no cliente |
-| `SYSTEM_MENU_VALUE` | `1610612736` | [blazesbot/core/memory.py:377](blazesbot/core/memory.py#L377) | — | — |
+| `SIT_VALUE` | `200` | [blazesbot/core/memory.py:423](blazesbot/core/memory.py#L423) | — | Valores sentinela observados no cliente |
+| `SYSTEM_MENU_VALUE` | `1610612736` | [blazesbot/core/memory.py:425](blazesbot/core/memory.py#L425) | — | — |
 | `TETO_DA_PROVA_DA_CAMERA` | `1.0` | [blazesbot/core/memory.py:247](blazesbot/core/memory.py#L247) | — | Teto da espera pelo termômetro depois de uma escrita na câmera. |
 | `TOLERANCIA_DA_POSE` | `0.001` | [blazesbot/core/memory.py:180](blazesbot/core/memory.py#L180) | — | Quanto cada campo da pose pode variar e ainda contar como certo. |
 | `TOLERANCIA_DO_ANGULO` | `0.001` | [blazesbot/core/memory.py:229](blazesbot/core/memory.py#L229) | — | Quanto o ângulo pode variar e ainda contar como certo. |
@@ -528,7 +535,7 @@ ligar código não testado.
 | `COR_MP` | `'#22488E'` | [blazesbot/gui/widgets.py:27](blazesbot/gui/widgets.py#L27) | — | — |
 | `COR_MP_BORDA` | `'#4A7BC4'` | [blazesbot/gui/widgets.py:28](blazesbot/gui/widgets.py#L28) | — | — |
 | `CHUNK` | `1048576` | [blazesbot/tools/find_base.py:57](blazesbot/tools/find_base.py#L57) | — | — |
-| `MUDOU` | `0.0005` | [blazesbot/tools/ler_camera.py:57](blazesbot/tools/ler_camera.py#L57) | executor.py, combat.py, localizacao.py, routine.py, context.py, config.py, calibracao.py, target_hybrid.py | O que conta como "mudou". Menor que isto é ruído de interpolação -- andando, o |
+| `MUDOU` | `0.0005` | [blazesbot/tools/ler_camera.py:57](blazesbot/tools/ler_camera.py#L57) | executor.py, fada.py, combat.py, localizacao.py, routine.py, context.py, config.py, calibracao.py, target_hybrid.py | O que conta como "mudou". Menor que isto é ruído de interpolação -- andando, o |
 | `PASSO` | `0.25` | [blazesbot/tools/ler_camera.py:50](blazesbot/tools/ler_camera.py#L50) | routine.py, ui_service.py, supervisor.py, indice_de_tempos.py, vigiar_combate.py | Cadência da leitura. Barata: são 8 leituras de 4 bytes por volta. |
 | `SEGUNDOS_PADRAO` | `300.0` | [blazesbot/tools/ler_camera.py:53](blazesbot/tools/ler_camera.py#L53) | vigiar_combate.py | Teto padrão, para a ferramenta fechar sozinha se você esquecer dela aberta. |
 | `PASSO` | `0.1` | [blazesbot/tools/vigiar_combate.py:48](blazesbot/tools/vigiar_combate.py#L48) | routine.py, ui_service.py, supervisor.py, indice_de_tempos.py, ler_camera.py | Cadência da leitura. É memória pura -- algumas leituras de 4 bytes por volta, |

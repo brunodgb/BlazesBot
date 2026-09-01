@@ -98,6 +98,15 @@ class KeyBinds:
     pet_summon: str = "R"
     # Interface -- padrões do jogo
     sit: str = "X"
+    # AUTO-SELEÇÃO: a tecla que seleciona o PRÓPRIO personagem.
+    #
+    # Medido em 28/08/2026: ela põe o id da própria conta no `TARGET_ID`, e é
+    # isso que permite a cada conta publicar "eu sou o <id>" no mural. Sem esse
+    # id a Fada não tem como confirmar em quem clicou -- e o invariante é que id
+    # que não bate não cura. Ou seja: conta sem esta tecla NÃO é curável.
+    #
+    # Serve também para a auto-cura da própria Fada.
+    self_target: str = "F1"
     next_target: str = "TAB"
     inventory: str = "I"
     friend_list: str = "F"

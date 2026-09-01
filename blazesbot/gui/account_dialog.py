@@ -572,6 +572,7 @@ class AccountDialog(QDialog):
             ("Montaria:", "k_mount"), ("Skill de velocidade:", "k_speed"),
             ("Guild Token:", "k_guild"), ("Invocar pet:", "k_pet"),
             ("Sentar:", "k_sit"), ("Próximo alvo:", "k_next"),
+            ("Auto-seleção:", "k_self"),
             ("Inventário:", "k_inv"), ("Lista de amigos:", "k_fl"),
             ("Atalho Hotbar 1:", "k_hotbar", AJUDA_HOTBAR),
             ("Esconder jogadores:", "k_esconder", AJUDA_ESCONDER),
@@ -1157,6 +1158,7 @@ class AccountDialog(QDialog):
         self.k_guild.set_key(k.guild_token)
         self.k_pet.set_key(k.pet_summon)
         self.k_sit.set_key(k.sit)
+        self.k_self.set_key(k.self_target)
         self.k_next.set_key(k.next_target)
         self.k_inv.set_key(k.inventory)
         self.k_fl.set_key(k.friend_list)
@@ -1264,6 +1266,7 @@ class AccountDialog(QDialog):
         k.guild_token = self.k_guild.key()
         k.pet_summon = self.k_pet.key()
         k.sit = self.k_sit.key()
+        k.self_target = self.k_self.key()
         k.next_target = self.k_next.key()
         k.inventory = self.k_inv.key()
         k.friend_list = self.k_fl.key()
