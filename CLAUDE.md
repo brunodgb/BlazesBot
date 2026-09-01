@@ -90,6 +90,13 @@ responder de memória — essas libs mudam. Não substitui o graphify.
 
 ## Regras de manutenção (obrigatórias)
 
+0. **Toda alteração ⇒ `git commit`, no mesmo passo — mesmo a menor delas**
+   (diretiva permanente do usuário, 01/09/2026). O bot roda por horas em várias
+   contas, e defeito aqui só aparece DEPOIS: a única forma barata de voltar ao
+   que funcionava é ter um ponto por alteração. Um commit gordo com cinco
+   assuntos não dá para desfazer pela metade — então **um assunto, um commit**,
+   com a mensagem dizendo o que mudou de comportamento, não que arquivo mudou.
+   Nunca junte "de passagem" o conserto de outra coisa.
 1. **Toda alteração no código ⇒ atualizar o graphify:** `graphify update .`
    (reextrai AST-only e regenera `graph.json` + `GRAPH_REPORT.md`).
 2. **Toda alteração que mude conhecimento/convenção ⇒ atualizar o documento do
