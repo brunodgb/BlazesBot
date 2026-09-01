@@ -253,7 +253,7 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | `PASSO_DA_ESPERA_DA_BASE` | 0.1 s | = | PASSO | [executor.py:676](blazesbot/bot/app/executor.py#L676) | `_esperar_chegar_na_base` | Cadência da pergunta "já cheguei?". Leitura de posição é de microssegundos; o |
 | `PASSO_DA_CONFIRMACAO_DO_TAB` | 0.01 s | *novo* | PASSO | [executor.py:700](blazesbot/bot/app/executor.py#L700) | `_esperar_o_alvo_trocar` | ERA AQUI O ATRASO ENTRE O TAB E A LINHA 1 -- 26/08/2026 |
 | `SEGUNDOS_DO_PASSO_DO_SHUFFLE` | 3 s | *novo* | PASSO | [executor.py:706](blazesbot/bot/app/executor.py#L706) | `_fazer_shuffle_anti_afk` | Cada perna do shuffle anti-AFK (ida e volta). Era `time.sleep(1.0)` cego duas |
-| *literal em* `rodar` | 0.25 s | = | FIXO | [executor.py:2840](blazesbot/bot/app/executor.py#L2840) | `rodar` | Laço contínuo: volta após volta, até `continuar()` devolver False. |
+| *literal em* `rodar` | 0.25 s | = | FIXO | [executor.py:2763](blazesbot/bot/app/executor.py#L2763) | `rodar` | Laço contínuo: volta após volta, até `continuar()` devolver False. |
 | `PASSO_DA_FADA` | 0.1 s | *novo* | PASSO | [fada.py:58](blazesbot/bot/app/fada.py#L58) | `rodar` | Cadência do laço da Fada quando não há nada a fazer. |
 | `TETO_PARA_O_ALVO_VIRAR` | 0.4 s | *novo* | TETO | [fada.py:65](blazesbot/bot/app/fada.py#L65) | `_clique_saiu_errado` | Depois do clique no retrato, quanto esperar a memória mostrar o alvo novo. |
 | `PASSO_DA_CONFERENCIA_DO_ALVO` | 0.02 s | *novo* | PASSO | [fada.py:66](blazesbot/bot/app/fada.py#L66) | `_clique_saiu_errado` |  |

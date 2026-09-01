@@ -106,7 +106,7 @@ ligar código não testado.
 | `LIMIAR_DE_MORTE_NA_TELA` | `0.02` | [blazesbot/bot/app/executor.py:649](blazesbot/bot/app/executor.py#L649) | — | Abaixo de quanto a barra desenhada conta como morte. |
 | `LINHAS_ANTES_DE_OLHAR_A_TELA` | `3` | [blazesbot/bot/app/executor.py:608](blazesbot/bot/app/executor.py#L608) | supervisor.py | Quantas LINHAS da macro passam antes de a tela ser consultada pela primeira |
 | `LINHAS_BATENDO_CEGO_DEPOIS_DA_TELA` | `3` | [blazesbot/bot/app/executor.py:641](blazesbot/bot/app/executor.py#L641) | — | Quantas linhas o bot continua batendo DEPOIS de a tela dizer que o mob morreu. |
-| `LINHAS_SEM_DANO_PARA_TROCAR` | `4` | [blazesbot/bot/app/executor.py:379](blazesbot/bot/app/executor.py#L379) | — | Quantas LINHAS da macro sem o alvo perder vida antes de trocar de alvo. |
+| `LINHAS_SEM_DANO_PARA_TROCAR` | `4` | [blazesbot/bot/app/executor.py:379](blazesbot/bot/app/executor.py#L379) | — | Quantas LINHAS da macro sem ENTRAR EM BATALHA antes de trocar de alvo. |
 | `MINIMO_DE_ESPERA_DO_APP_MS` | `100` | [blazesbot/bot/app/executor.py:502](blazesbot/bot/app/executor.py#L502) | sincronia.py, config.py, account_dialog.py, web_app.py | Piso de qualquer tempo do APP, em milissegundos. O MESMO número vive em |
 | `PASSO_DA_CONFERENCIA_DO_ALVO` | `0.16` | [blazesbot/bot/app/executor.py:219](blazesbot/bot/app/executor.py#L219) | fada.py | De quanto em quanto tempo perguntar "o alvo morreu?" DENTRO da espera de uma |
 | `PASSO_DA_CONFIRMACAO_DO_TAB` | `0.01` | [blazesbot/bot/app/executor.py:700](blazesbot/bot/app/executor.py#L700) | — | ERA AQUI O ATRASO ENTRE O TAB E A LINHA 1 -- 26/08/2026 |

@@ -682,21 +682,6 @@ def _com_regua(alvos, ident=0x111):
     return e
 
 
-def test_TRES_linhas_sem_tirar_vida_TROCAM_de_alvo():
-    """*"A primeira leitura do target é 100/100 HP e a vida não saiu disso
-    depois da primeira e segunda linha — já não alterou, então vai para o
-    próximo mob."*
-
-    O mob do penhasco: existe, está vivo, e o jogo não deixa acertar.
-    """
-    e = _com_regua([_mob(0x111, hp=100)] * 6)
-
-    assert e._alvo_intocavel() is False, "trocou na primeira linha"
-    assert e._alvo_intocavel() is False, "trocou na segunda linha"
-    assert e._alvo_intocavel() is True, "não percebeu em 3 linhas"
-    assert any("não estou alcançando" in t for _n, t in e.linhas), e.linhas
-
-
 def test_tirar_UM_ponto_de_vida_ja_zera_a_regua():
     """Se está tirando vida, está alcançando. Um ponto basta."""
     e = _com_regua([_mob(0x111, hp=100),     # a régua nasce com 100
@@ -713,22 +698,6 @@ def test_tirar_UM_ponto_de_vida_ja_zera_a_regua():
         assert e._alvo_intocavel() is False
 
 
-def test_a_referencia_e_o_PRIMEIRO_HP_e_regeneracao_nao_engana():
-    """Se a referência fosse o golpe anterior, um mob regenerando pareceria
-    estar sendo acertado a cada leitura.
-
-    A pergunta certa é "eu ALGUMA VEZ tirei vida dele?".
-    """
-    e = _com_regua([_mob(0x111, hp=100)] * 4)
-    assert e._hp_de_referencia == 1.0
-
-    # o mob regenera ACIMA da referência: continua sendo "não tirei nada"
-    e._alvo_atual = lambda: _mob(0x111, hp=120)   # regenera acima do teto
-    assert e._alvo_intocavel() is False
-    assert e._alvo_intocavel() is False
-    assert e._alvo_intocavel() is True
-
-
 def test_HP_ilegivel_NAO_conta_nem_a_favor_nem_contra():
     """"Não sei" nunca larga alvo -- mesma regra da régua da barra e da trava
     da janela."""
@@ -736,24 +705,6 @@ def test_HP_ilegivel_NAO_conta_nem_a_favor_nem_contra():
 
     for _ in range(4):
         assert e._alvo_intocavel() is False
-
-
-def test_alvo_NOVO_recomeca_a_regua():
-    """O contador é do ALVO, não da volta."""
-    e = _com_regua([_mob(0x111, hp=100),     # a régua nasce
-                    _mob(0x111, hp=100),     # 1ª linha sem dano
-                    _mob(0x111, hp=100),     # 2ª linha sem dano
-                    _mob(0x111, hp=100),     # 3ª linha sem dano
-                    _mob(0x222, hp=80),      # TAB: alvo novo
-                    _mob(0x222, hp=80)])
-
-    assert e._alvo_intocavel() is False
-    assert e._alvo_intocavel() is False
-    assert e._alvo_intocavel() is True       # o 0x111 é inalcançável
-
-    assert e._alvo_intocavel() is False, "não zerou no alvo novo"
-    assert e._alvo_da_regua == 0x222
-    assert e._hp_de_referencia == 0.8
 
 
 def test_o_TAB_do_inalcancavel_e_FORCADO():
@@ -840,17 +791,6 @@ def test_a_regua_roda_DEPOIS_de_cada_linha():
     chamadas = {n.func.attr for n in ast.walk(ast.parse(fonte))
                 if isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute)}
     assert "_alvo_intocavel" in chamadas
-
-
-def test_TRES_linhas_e_nao_duas():
-    """Decisão do usuário em 26/08/2026: *"LINHAS_SEM_DANO_PARA_TROCAR = 2
-    coloca em 3, acho que vai ser melhor"*.
-
-    Com 1, uma skill que erra ou de recarga longa trocaria alvo à toa. Com 2, a
-    margem contra o atraso do servidor ficou apertada demais depois que o
-    portão `hp >= max_hp` saiu (ver `EXIGIR_ALVO_INTEIRO`).
-    """
-    assert mod.LINHAS_SEM_DANO_PARA_TROCAR == 3
 
 
 def test_alvo_que_SUMIU_do_array_deixa_rastro_no_log():
@@ -947,33 +887,6 @@ def test_a_regua_do_inalcancavel_NAO_dispara_em_alvo_machucado():
             "largou um alvo que já estava machucado")
 
 
-def test_a_regua_AINDA_dispara_no_mob_INTEIRO():
-    """A trava não pode matar a regra: o mob do penhasco continua sendo
-    largado, porque ele fica em 100/100 para sempre."""
-    e = _com_regua([_mob(0x111, hp=100)] * 6)
-
-    assert e._alvo_intocavel() is False
-    assert e._alvo_intocavel() is False
-    assert e._alvo_intocavel() is True
-
-
-def test_a_regua_dispara_TAMBEM_no_mob_do_penhasco_JA_MACHUCADO():
-    """O QUE O PORTÃO `hp >= max_hp` IMPEDIA -- e por isso ele saiu.
-
-    Com a exigência de alvo inteiro revogada, o bot adquire mobs machucados.
-    Um mob a 60/100 do outro lado do penhasco ficava imune à régua para
-    sempre, porque ele nunca voltaria a 100/100.
-
-    A pergunta certa é sobre a AQUISIÇÃO, não sobre o máximo: adquirido a 60
-    e ainda em 60 depois de três linhas é alcance.
-    """
-    e = _com_regua([_mob(0x111, hp=60)] * 6)
-
-    assert e._alvo_intocavel() is False
-    assert e._alvo_intocavel() is False
-    assert e._alvo_intocavel() is True
-
-
 def test_machucar_DEPOIS_de_adquirir_cala_a_regua_para_sempre():
     """O CONSERTO DO DEFEITO QUE MATOU O PERSONAGEM, ancorado no lugar certo.
 
@@ -987,24 +900,6 @@ def test_machucar_DEPOIS_de_adquirir_cala_a_regua_para_sempre():
     for _ in range(8):
         assert e._alvo_intocavel() is False, (
             "largou um alvo que ELE MESMO machucou")
-
-
-def test_a_regua_le_a_memoria_UMA_VEZ_por_linha():
-    """Duas fotos de instantes diferentes respondendo à mesma pergunta é como
-    nascem as decisões que ninguém consegue reproduzir."""
-    leituras = [0]
-    e = _com_regua([_mob(0x111, hp=100)] * 6)
-
-    original = e._alvo_atual
-
-    def contando():
-        leituras[0] += 1
-        return original()
-
-    e._alvo_atual = contando
-    e._alvo_intocavel()
-
-    assert leituras[0] == 1, f"leu {leituras[0]} vezes numa linha só"
 
 
 def test_o_interruptor_do_alvo_inteiro_esta_DESLIGADO():
@@ -2334,3 +2229,60 @@ def test_lutando_com_aliado_no_alvo_nao_larga_a_luta():
     e = _com_alvo(777)
     e._alvo_e_aliado = lambda: True
     assert e._preciso_de_alvo(lutando=True) is False
+
+# ===========================================================================
+# A RÉGUA DO INALCANÇÁVEL: BATALHA, NÃO DANO -- 01/09/2026
+# ===========================================================================
+#
+# Decisão do usuário: *"em vez de ser sem dano, verifica se não entrou em
+# batalha (...) se em 4 linhas não entrar na batalha, você para a macro e dá TAB
+# novamente, para não ficar parado rodando a macro inteira sem ter entrado em
+# batalha."*
+#
+# OS TESTES DA RÉGUA ANTIGA FORAM REMOVIDOS junto com ela, e não é perda: eles
+# guardavam uma regra que dependia de LER a vida do alvo -- exatamente o que
+# falha no mob do penhasco, no mob longe e no alvo cuja entidade some do array.
+# A régua ficava cega no caso que existia para pegar.
+#
+# A flag de combate responde a mesma pergunta com uma leitura só: se o
+# personagem está batendo em alguém, está em batalha.
+
+
+def _regua(linha, batalha):
+    e = _executor()
+    e._linha_da_rotacao = linha
+    e._em_batalha = lambda: batalha
+    e._estava_em_batalha = False
+    return e
+
+
+def test_N_linhas_sem_entrar_em_batalha_LARGA_o_alvo():
+    e = _regua(mod.LINHAS_SEM_DANO_PARA_TROCAR, batalha=False)
+    assert e._alvo_intocavel() is True
+
+
+def test_antes_das_N_linhas_nao_larga():
+    """A margem existe para a primeira skill de conjuração longa sair."""
+    e = _regua(mod.LINHAS_SEM_DANO_PARA_TROCAR - 1, batalha=False)
+    assert e._alvo_intocavel() is False
+
+
+def test_EM_BATALHA_nunca_larga():
+    """Está batendo em alguém: largar aqui é largar mob no meio da luta."""
+    e = _regua(mod.LINHAS_SEM_DANO_PARA_TROCAR + 5, batalha=True)
+    assert e._alvo_intocavel() is False
+
+
+def test_SEM_leitura_de_batalha_nao_larga():
+    """`None` é "não sei", e quem não sabe não abandona alvo.
+
+    É o que mantém o modo cego funcionando como sempre funcionou.
+    """
+    e = _regua(mod.LINHAS_SEM_DANO_PARA_TROCAR + 5, batalha=None)
+    assert e._alvo_intocavel() is False
+
+
+def test_a_regua_avisa_no_log_por_que_largou():
+    e = _regua(mod.LINHAS_SEM_DANO_PARA_TROCAR, batalha=False)
+    e._alvo_intocavel()
+    assert any("nem entrei em batalha" in m for _, m in e.linhas), e.linhas

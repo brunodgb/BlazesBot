@@ -366,16 +366,16 @@ TABS_SEM_RESPOSTA_PARA_DESISTIR = 1
 # de novo exige medir antes: ele já matou o personagem uma vez.
 EXIGIR_ALVO_INTEIRO = False
 
-# Quantas LINHAS da macro sem o alvo perder vida antes de trocar de alvo.
+# Quantas LINHAS da macro sem ENTRAR EM BATALHA antes de trocar de alvo.
 #
-# TRÊS a partir de 26/08/2026, por decisão do usuário: *"LINHAS_SEM_DANO_PARA_
-# TROCAR = 2 coloca em 3, acho que vai ser melhor"*.
+# O CRITÉRIO MUDOU EM 01/09/2026 -- era "sem o alvo perder vida", virou "sem
+# entrar em batalha". O nome ficou a pedido do usuário. Ver `_alvo_intocavel`
+# para o porquê: a régua por dano dependia de ler a vida do alvo, que é o que
+# falha justamente no caso que ela existe para pegar.
 #
-# A terceira linha é margem contra o atraso do servidor, e ela ficou NECESSÁRIA
-# quando `EXIGIR_ALVO_INTEIRO` foi desligado: o portão `hp >= max_hp` que
-# segurava esta régua saiu junto (ver `_alvo_intocavel`), então o que sobra
-# protegendo um mob em luta legítima é o número de linhas e a referência ser o
-# PRIMEIRO HP lido daquele alvo.
+# QUATRO, valor que já estava configurado quando o critério mudou. É o que dá
+# margem para uma primeira skill de conjuração longa sair antes de o bot
+# concluir que está batendo no vazio.
 LINHAS_SEM_DANO_PARA_TROCAR = 4
 
 # ===========================================================================
@@ -1646,124 +1646,47 @@ class ExecutorDeMacro:
         self._hp_de_referencia = pct
 
     def _alvo_intocavel(self) -> bool:
-        """Duas linhas da macro e o alvo não perdeu UM ponto de vida?
+        """`LINHAS_SEM_DANO_PARA_TROCAR` linhas e o personagem NÃO entrou em
+        batalha?
 
         =================================================================
-        O MOB DO PENHASCO
+        O CRITÉRIO MUDOU EM 01/09/2026: BATALHA, NÃO DANO
         =================================================================
 
-        *"Pode acontecer de, por exemplo, estar em um penhasco e dar target lá
-        no mob de baixo, e o jogo não deixar atacar."* O alvo existe, está vivo,
-        e o bot bate nele para sempre sem tirar nada.
+        Decisão do usuário: *"em vez de ser sem dano, verifica se não entrou em
+        batalha (...) se em 4 linhas não entrar na batalha, você para a macro e
+        dá TAB novamente, para não ficar parado rodando a macro inteira sem ter
+        entrado em batalha."*
 
-        Antes de o bot ler o HP exato não havia como perceber isso. Agora há: se
-        `LINHAS_SEM_DANO_PARA_TROCAR` linhas passaram e o HP é o mesmo, não é
-        azar de mira -- é alcance.
+        POR QUE É MELHOR QUE O DANO. A régua antiga comparava o HP do alvo com o
+        primeiro HP lido dele, e por isso dependia de LER a vida do alvo -- que
+        é justamente o que falha com o mob do penhasco, o mob longe e o alvo
+        cuja entidade some do array. Ela ficava cega no caso que existia para
+        pegar, e precisava de toda uma máquina em volta (`_hp_de_referencia`,
+        `_ja_tirou_vida`, a régua por identidade) para não largar mob em luta
+        legítima.
 
-        A REFERÊNCIA É O PRIMEIRO HP LIDO deste alvo, e não o do golpe anterior:
-        *"a primeira leitura do target é 100/100 e a vida não saiu disso"*.
-        Assim regeneração no meio não zera o contador -- o que se pergunta é
-        "eu ALGUMA VEZ tirei vida dele?".
+        A FLAG DE COMBATE responde a mesma pergunta com uma leitura só e sem
+        ambiguidade: se o personagem está batendo em alguém, ele está em
+        batalha. Não estar em batalha depois de quatro linhas da macro significa
+        que as teclas estão indo para o vazio -- seja o mob do penhasco, seja um
+        alvo fora de alcance, seja um cadáver.
 
-        HP ILEGÍVEL NÃO CONTA, nem a favor nem contra. "Não sei" nunca larga
-        alvo -- é a mesma regra da régua da barra e da trava da janela.
+        `None` NÃO LARGA. Sem leitura de combate a resposta é "não sei", e quem
+        não sabe não abandona alvo -- é o mesmo contrato do resto do arquivo, e
+        o que mantém o modo cego funcionando como sempre funcionou.
+
+        O NOME FICOU, a pedido do usuário: quem lê `_alvo_intocavel` continua
+        entendendo "não estou conseguindo tocar neste alvo".
         """
-        # A RÉGUA USA A MESMA CASCATA (memória → tela). Decisão do usuário em
-        # 26/08/2026: *"se não ler o HP pela memória, lê pela tela; se não
-        # alterar nada a vida, o mob está inacessível, pode dar um novo TAB"*.
-        #
-        # A BARRA RESPONDE BEM A DIREÇÃO, que é o que esta régua pergunta ("saiu
-        # vida?"). O que ela erra é o VALOR exato e o atraso -- e nenhum dos
-        # dois muda a resposta de "não saiu nada".
-        #
-        # E SE ELA SÓ OLHASSE A MEMÓRIA, ficaria muda justamente nos casos em
-        # que a memória falha -- que é quando o mob do penhasco mais aparece.
-        vida, fonte, alvo = self._vida_do_alvo()
-        ident = alvo.get("id") if alvo is not None else self._ler_id_do_alvo()
-        if vida is None:
+        if self._linha_da_rotacao < LINHAS_SEM_DANO_PARA_TROCAR:
             return False
-        # A RÉGUA CONTA EM FRAÇÃO, e não em pontos de vida: a memória dá `pct` e
-        # a barra dá fração, e as duas têm que caber na mesma conta.
-        hp = vida
-
-        if ident != self._alvo_da_regua:
-            # ALVO NOVO: a régua recomeça do zero.
-            self._alvo_da_regua = ident
-            self._hp_de_referencia = hp
-            self._linhas_sem_dano = 0
-            self._ja_tirou_vida = False
+        if self._ler_em_batalha() is not False:
             return False
-
-        if self._ja_tirou_vida:
-            # =========================================================
-            # JÁ MACHUQUEI ESTE ALVO: A RÉGUA CALA PARA SEMPRE NELE
-            # =========================================================
-            #
-            # É o que substituiu o portão `hp >= max_hp`, e diz a MESMA coisa
-            # ancorada no lugar certo: se em algum momento saiu vida deste mob,
-            # ele está ao alcance, e o que está acontecendo agora é outra coisa
-            # (recarga, resistência, atraso do servidor). Largar aqui é largar
-            # mob no meio da luta -- o defeito que matou o personagem.
-            #
-            # O PORTÃO ANTIGO PERGUNTAVA AO `max_hp`, e por isso morreu junto
-            # com a exigência de alvo inteiro: um mob adquirido a 60/100 nunca
-            # voltaria a 100, então ele calava a régua para sempre em qualquer
-            # mob machucado -- inclusive no do penhasco, que é justamente quem
-            # ela existe para largar.
-            #
-            # ESTE PERGUNTA À AQUISIÇÃO: "desde que eu peguei este alvo, eu
-            # ALGUMA VEZ tirei vida dele?". Adquirido a 60 e ainda em 60 depois
-            # de três linhas é alcance; adquirido a 100, machucado para 97 e
-            # parado em 97 é luta.
-            return False
-
-        if self._hp_de_referencia is None:
-            self._hp_de_referencia = hp
-            return False
-
-        if hp < self._hp_de_referencia:
-            # TIROU VIDA. Um ponto que seja cala a régua neste alvo.
-            self._hp_de_referencia = hp
-            self._linhas_sem_dano = 0
-            self._ja_tirou_vida = True
-            return False
-
-        self._linhas_sem_dano += 1
-        if self._linhas_sem_dano < LINHAS_SEM_DANO_PARA_TROCAR:
-            return False
-
-        # =================================================================
-        # O PORTÃO `hp >= max_hp` SAIU -- 26/08/2026
-        # =================================================================
-        #
-        # Ele exigia que o alvo estivesse INTEIRO para a régua poder largá-lo, e
-        # era a trava contra o defeito que matou o personagem: duas linhas
-        # curtas passam antes de o servidor registrar o primeiro golpe, e o bot
-        # largava um mob que ESTAVA sendo morto.
-        #
-        # NÃO DÁ MAIS PARA MANTÊ-LO. O critério de aquisição virou "qualquer
-        # vida" (ver `EXIGIR_ALVO_INTEIRO`), então o alvo do penhasco chega aqui
-        # machucado com frequência -- e com o portão de pé a régua nunca
-        # dispararia nele, que é justamente o mob que ela existe para largar.
-        #
-        # O QUE SUBSTITUI A PROTEÇÃO são as duas coisas que sempre foram a
-        # substância dela, e não o portão:
-        #
-        #   * a REFERÊNCIA é o PRIMEIRO HP lido DESTE alvo (não o do golpe
-        #     anterior), então a pergunta é "eu ALGUMA VEZ tirei vida dele?" --
-        #     um único ponto em qualquer momento da luta cala a régua para
-        #     sempre;
-        #   * são `LINHAS_SEM_DANO_PARA_TROCAR` linhas, e o usuário subiu de 2
-        #     para 3 em 26/08 exatamente para alargar essa margem.
-        #
-        # Um mob que absorveu três linhas inteiras da macro sem perder um ponto
-        # de vida desde que foi adquirido não é atraso de servidor. É alcance.
-
         self.log.info(
-            "APP: %s linha(s) da macro e o alvo %r continua com %.0f%% de vida "
-            "(pela %s) — não estou alcançando ele. Troco de alvo.",
-            self._linhas_sem_dano,
-            (alvo.get("nome") if alvo else None) or "?", hp * 100.0, fonte)
+            "APP: %d linhas da macro e nem entrei em batalha — as teclas estão "
+            "indo para o vazio. Paro a volta e troco de alvo.",
+            self._linha_da_rotacao)
         return True
 
     def _alvo_ilegivel_demais(self, ident: int) -> bool:
