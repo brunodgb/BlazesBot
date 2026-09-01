@@ -807,6 +807,7 @@ class ExecutorDeMacro:
         # `None` = sem proteção de vida, e o APP roda exatamente como antes.
         cura: Callable[[object], object] | None = None,
         sincronia: Callable[[object], object] | None = None,
+        alvo_e_aliado: Callable[[], bool] | None = None,
         # A FADA: cura o time clicando nos retratos e confirmando pelo TARGET_ID.
         # Chega como FÁBRICA pelo mesmo motivo da cura e da sincronia -- o executor
         # não conhece o módulo `fada`, só recebe a função que sabe montá-la.
@@ -1004,6 +1005,9 @@ class ExecutorDeMacro:
         # `blazesbot.bot`, e este arquivo só importa `core`. `None` significa
         # "sem time", e aí o APP roda exatamente como sempre rodou.
         self.sincronia = sincronia(self) if sincronia is not None else None
+        # ALVO ALIADO NÃO É ALVO. `None` = sem time, e aí a pergunta nem
+        # existe. Ver `_preciso_de_alvo`.
+        self._alvo_e_aliado = alvo_e_aliado
 
         # A FADA DO TIME: cura o time em vez de atacar.
         # Mesmo padrão da cura e da sincronia: fábrica que recebe o executor,
@@ -1819,7 +1823,18 @@ class ExecutorDeMacro:
         ident = self._ler_id_do_alvo()
         if not ident:
             return True
-            
+
+        # ALVO ALIADO NÃO É ALVO -- e foi a armadilha que travou o bot em campo.
+        #
+        # A tecla de auto-seleção deixa a conta com ELA PRÓPRIA selecionada, e
+        # este método via um alvo perfeitamente válido: a conta nunca mais
+        # TABava e ficava rodando a macro contra nada. Companheiro de time dá no
+        # mesmo. Relatado em 01/09/2026: *"os não fadas estão se clicando e
+        # rodando a macro"*.
+        if self._alvo_e_aliado is not None and self._alvo_e_aliado():
+            self._voltas_com_alvo_sem_batalha = 0
+            return True
+
         # Se o alvo atual foi marcado como inalcançável (mob do penhasco), força o TAB
         if self._inalcancavel_id and ident == self._inalcancavel_id:
             return True

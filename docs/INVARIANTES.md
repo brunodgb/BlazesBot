@@ -191,14 +191,22 @@ time a flag não faz nada.
 - **A VÍTIMA AVISA, a Fada não adivinha.** Quem lê a vida é o próprio
   personagem, pela memória. A Fada nunca decide quem curar olhando barra de
   tela.
-- **CLICOU, CONFERE — E ID QUE NÃO BATE NÃO CURA.** MEDIDO em 28/08/2026: a
-  memória NÃO descreve jogador (`nome`/`hp` vêm nulos até para o próprio
-  personagem), mas o `TARGET_ID` responde. Então a confirmação é por ID:
-  cada conta publica o próprio id (obtido com a tecla de auto-seleção) e a
-  Fada compara o id lido depois do clique. **Clicar num aliado LONGE não
-  seleciona nada e o alvo continua o de antes** — curar sem conferir curaria
-  o aliado ANTERIOR, tirando o pedido da fila com a vítima ainda ferida, sem
-  erro nenhum na tela.
+- **ALVO ALIADO NÃO É ALVO.** A tecla de auto-seleção deixa a conta com ELA
+  PRÓPRIA selecionada, e a regra "TAB só quando falta alvo" via um alvo
+  válido: a conta nunca mais TABava e rodava a macro contra nada (medido em
+  campo, 01/09/2026). Toda conta EM TIME pergunta ao mural se o alvo atual é
+  de alguém do time — e, se for, TABa. Fora de time a pergunta não existe.
+- **DEPOIS DA AUTO-SELEÇÃO, TAB.** O id é publicado e o alvo é largado no
+  mesmo passo. Publicar sem largar é deixar a conta presa em si mesma.
+- **QUEM IDENTIFICA A VÍTIMA É O SLOT**, lido da memória — o `TARGET_ID`
+  publicado é REDE, não portão. Ele só recusa a cura quando existe E não
+  bate (aí há prova de que o clique pegou outra pessoa). Exigi-lo para curar
+  fez a Fada clicar 357 vezes sem curar ninguém: portão que falha fechado é
+  pior que portão nenhum.
+- **NENHUMA VÍTIMA LEVA MAIS QUE `MAXIMO_DE_TENTATIVAS_POR_VITIMA` CLIQUES.**
+  A contagem é POR VÍTIMA, e quem estoura sai da fila e se vira com poção.
+  Sem esse freio, qualquer defeito de seleção vira centenas de cliques — e
+  o personagem sai andando.
 - **A LEITURA DO ALVO SÓ VALE ~150 ms DEPOIS DA AÇÃO.** Medido: 36 a 123 ms
   entre o clique e a memória virar. Perguntar antes disso lê o alvo ANTERIOR.
 - **A FADA FICA FORA DA LARGADA**, da macro e da sincronia. Contá-la como

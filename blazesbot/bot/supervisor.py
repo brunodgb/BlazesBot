@@ -1351,6 +1351,25 @@ class AccountSupervisor(threading.Thread):
         mural.publicar_id(self.account.login, ident)
         log.info("Meu id no time é %s (publicado no mural).", ident)
 
+        # SOLTAR A SI MESMO, SEMPRE. A auto-seleção deixa a conta com ELA
+        # PRÓPRIA como alvo -- e alvo próprio é um alvo válido para a regra
+        # "TAB só quando falta alvo". A conta ficava com alvo, nunca mais
+        # TABava, e travava batendo em nada: relatado em campo em 01/09/2026,
+        # *"os não fadas estão se clicando e rodando a macro (...) tem que
+        # forçar um TAB depois de apertar F1"*.
+        #
+        # O TAB aqui não é conferido nem repetido: ele existe só para desfazer o
+        # que a linha acima fez. Quem escolhe alvo de verdade é a macro, na
+        # primeira volta.
+        tab = (getattr(self.account.settings.keys, "next_target", "") or "").strip()
+        if tab:
+            entrada.key(tab)
+            log.info("TAB depois da auto-seleção, para não ficar preso em mim "
+                     "mesmo.")
+        else:
+            log.warning("Sem tecla de 'próximo alvo': a conta fica selecionando "
+                        "a si mesma depois de publicar o id.")
+
     # -- modo APP ----------------------------------------------------------
 
     def _rodar_modo_app(self) -> None:
@@ -1809,6 +1828,22 @@ class AccountSupervisor(threading.Thread):
             except Exception:
                 return None
 
+        def alvo_e_aliado() -> bool:
+            """O alvo atual é gente do meu time (inclusive eu)?
+
+            A auto-seleção deixa a conta com ela própria selecionada, e alvo
+            próprio passava por alvo válido -- a conta nunca mais TABava. Esta
+            pergunta é o que desfaz isso de forma geral, e não só logo depois do
+            F1: vale também se um clique ou um acidente puser um companheiro no
+            alvo.
+            """
+            from . import mural
+
+            try:
+                return bool(mural.quem_e_o_id(id_do_alvo()))
+            except Exception:
+                return False
+
         def montar_sincronia(ex):
             """Fábrica: o executor recebe o objeto pronto e não conhece o mural.
 
@@ -1909,6 +1944,13 @@ class AccountSupervisor(threading.Thread):
             # rodando passa a valer na volta seguinte.
             # A LARGADA DO TIME. Ver `bot/app/sincronia.py`.
             sincronia=montar_sincronia,
+            # ALVO ALIADO NÃO É ALVO. Quem responde é o mural: se o id do alvo
+            # atual pertence a alguém que publicou o próprio id, é gente do
+            # time -- eu mesmo (depois da auto-seleção) ou um companheiro.
+            #
+            # `None` fora de time: sem time ninguém publica id, a pergunta não
+            # tem como ser respondida, e o executor nem a faz.
+            alvo_e_aliado=alvo_e_aliado if self._tem_time_do_app() else None,
             espera_depois_do_tab_ms=lambda: (
                 self._dono_da_macro().settings.app.espera_depois_do_tab_ms),
             # ==========================================================

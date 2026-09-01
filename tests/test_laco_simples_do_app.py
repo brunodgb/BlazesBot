@@ -57,6 +57,9 @@ def _executor(em_batalha=None, passos=3, tecla="TAB"):
     # atributo lido pelo laço tem de ser posto à mão. `None` é o valor de
     # "esta conta não está num time" -- a macro roda como sempre rodou.
     e.sincronia = None
+    # SEM TIME: alvo aliado não existe fora de um, e a pergunta
+    # nem chega a ser feita (`None` = não há como ser aliado).
+    e._alvo_e_aliado = None
     # O TAB só sai quando FALTA alvo (`_preciso_de_alvo`), e a decisão usa
     # estes dois: a batalha da volta anterior e as voltas seguidas com alvo
     # e sem batalha.

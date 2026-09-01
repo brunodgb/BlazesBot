@@ -97,6 +97,9 @@ def _executor(roda=None, tecla="TAB", sem_leitura=False, em_batalha=None):
     # atributo lido pelo laço tem de ser posto à mão. `None` é o valor de
     # "esta conta não está num time" -- a macro roda como sempre rodou.
     e.sincronia = None
+    # SEM TIME: alvo aliado não existe fora de um, e a pergunta
+    # nem chega a ser feita (`None` = não há como ser aliado).
+    e._alvo_e_aliado = None
     # O TAB só sai quando FALTA alvo (`_preciso_de_alvo`), e a decisão usa
     # estes dois: a batalha da volta anterior e as voltas seguidas com alvo
     # e sem batalha.
@@ -2290,3 +2293,44 @@ def test_entrar_em_batalha_zera_a_contagem():
     assert e._voltas_com_alvo_sem_batalha == 2
     e._preciso_de_alvo(lutando=True)
     assert e._voltas_com_alvo_sem_batalha == 0
+
+# ===========================================================================
+# ALVO ALIADO NÃO É ALVO -- 01/09/2026
+# ===========================================================================
+#
+# A tecla de auto-seleção (usada para a conta publicar o próprio id no time)
+# deixa o personagem com ELE MESMO selecionado. A regra "TAB só quando falta
+# alvo" via um alvo perfeitamente válido: a conta nunca mais TABava e ficava
+# rodando a macro contra nada.
+#
+# Relatado em campo: *"os não fadas estão se clicando e rodando a macro (...)
+# tem que forçar um TAB depois de apertar F1"*. O TAB forçado logo depois do F1
+# resolve o caso imediato; ESTA regra resolve o geral -- vale também se um
+# clique ou um acidente puser um companheiro no alvo.
+
+
+def test_alvo_que_e_aliado_pede_TAB():
+    e = _com_alvo(777)
+    e._alvo_e_aliado = lambda: True
+    assert e._preciso_de_alvo(lutando=False) is True
+
+
+def test_alvo_que_NAO_e_aliado_nao_pede_TAB():
+    """A regra é cirúrgica: mob continua sendo alvo bom."""
+    e = _com_alvo(777)
+    e._alvo_e_aliado = lambda: False
+    assert e._preciso_de_alvo(lutando=False) is False
+
+
+def test_sem_time_a_pergunta_nem_e_feita():
+    """Fora de um time ninguém publica id, e `None` significa "não pergunte"."""
+    e = _com_alvo(777)
+    e._alvo_e_aliado = None
+    assert e._preciso_de_alvo(lutando=False) is False
+
+
+def test_lutando_com_aliado_no_alvo_nao_larga_a_luta():
+    """Se está em batalha, o alvo é o que está batendo -- TAB aqui é pior."""
+    e = _com_alvo(777)
+    e._alvo_e_aliado = lambda: True
+    assert e._preciso_de_alvo(lutando=True) is False
