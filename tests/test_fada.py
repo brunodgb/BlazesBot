@@ -115,7 +115,8 @@ class _Jogo:
 
 
 def _fada(jogo, *, membros=("lider", "aliado"), nicks=None, parar=90.0,
-          pedir=30.0, continuar=None):
+          pedir=30.0, continuar=None, cuidar_do_pet=None,
+          limpar_a_bolsa=None):
     nicks = nicks or {"aliado": "Aliado", "outro": "Outro", "fada": "Fada"}
     return mod.FadaDoTime(
         log=logging.getLogger("teste.fada"),
@@ -138,6 +139,8 @@ def _fada(jogo, *, membros=("lider", "aliado"), nicks=None, parar=90.0,
         dormir=lambda s: True,
         pedir_pct=lambda: pedir,
         parar_pct=lambda: parar,
+        cuidar_do_pet=cuidar_do_pet,
+        limpar_a_bolsa=limpar_a_bolsa,
     )
 
 
@@ -735,3 +738,76 @@ def test_o_aviso_de_fora_do_painel_nao_cresce_para_sempre():
     mural.cancelar_pedido("aliado")
     f._uma_volta()
     assert f._avisei_fora_do_painel == set()
+
+# ===========================================================================
+# OS CUIDADOS DE OCIOSA: pet e bolsa
+# ===========================================================================
+#
+# *"Essas verificações podem ser feitas enquanto a fada está ociosa, mas não
+# deixa direto, para não ficar pesando, e param na hora se algum aliado entrar
+# na fila de cura ou ela entrar em batalha."*
+
+def test_ociosa_ela_cuida_do_pet_e_da_bolsa():
+    feitos = []
+    jogo = _Jogo()
+    f = _fada(jogo,
+              cuidar_do_pet=lambda: feitos.append("pet"),
+              limpar_a_bolsa=lambda: feitos.append("bolsa"))
+    f._uma_volta()
+    assert feitos == ["pet", "bolsa"]
+
+
+def test_os_cuidados_tem_CADENCIA_e_nao_saem_a_cada_giro():
+    """Sem cadência ela gastaria o laço em manutenção em vez de ficar pronta."""
+    feitos = []
+    jogo = _Jogo()
+    f = _fada(jogo, cuidar_do_pet=lambda: feitos.append("pet"))
+    for _ in range(20):
+        f._uma_volta()
+    assert feitos == ["pet"], feitos
+
+
+def test_com_alguem_na_fila_ela_NAO_cuida():
+    """Abrir o inventário com alguém esperando cura mata o alguém."""
+    feitos = []
+    jogo = _Jogo()
+    jogo.id_por_slot = {0: 777}
+    mural.publicar_id("aliado", 777)
+    mural.pedir_cura("aliado", 25.0)
+    f = _fada(jogo, membros=("fada", "aliado"),
+              cuidar_do_pet=lambda: feitos.append("pet"))
+    f._uma_volta()
+    assert feitos == []
+
+
+def test_em_batalha_ela_NAO_cuida():
+    feitos = []
+    jogo = _Jogo(batalha=True)
+    f = _fada(jogo, cuidar_do_pet=lambda: feitos.append("pet"))
+    f._uma_volta()
+    assert feitos == []
+
+
+def test_a_bolsa_e_reconferida_ENTRE_o_pet_e_ela():
+    """O pedido pode chegar no meio: a condição vale antes de CADA um dos dois,
+    não só na entrada."""
+    feitos = []
+    jogo = _Jogo()
+
+    def pet_que_atrasa():
+        feitos.append("pet")
+        mural.pedir_cura("aliado", 25.0)   # alguém entrou na fila agora
+
+    f = _fada(jogo, membros=("fada", "aliado"),
+              cuidar_do_pet=pet_que_atrasa,
+              limpar_a_bolsa=lambda: feitos.append("bolsa"))
+    f._uma_volta()
+    assert feitos == ["pet"], "abriu a bolsa com alguém já na fila"
+
+
+def test_sem_as_funcoes_injetadas_ela_nao_faz_nada():
+    """Fada sem pet: quem injeta passa `None` nos dois, e ela nem tenta."""
+    jogo = _Jogo()
+    f = _fada(jogo)
+    f._uma_volta()          # não pode explodir
+    assert f._cuidar_do_pet is None

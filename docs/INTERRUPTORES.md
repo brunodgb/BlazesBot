@@ -67,7 +67,7 @@ ligar código não testado.
 
 ## Números medidos -- tolerância, limiar, teto, cadência
 
-480 constantes, agrupadas por arquivo.
+481 constantes, agrupadas por arquivo.
 
 | constante | valor | onde | quem lê | porquê (resumo) |
 |---|---|---|---|---|
@@ -129,6 +129,7 @@ ligar código não testado.
 | `MAXIMO_DE_TENTATIVAS_POR_VITIMA` | `3` | [blazesbot/bot/app/fada.py:90](blazesbot/bot/app/fada.py#L90) | — | Quantas vezes tentar selecionar a MESMA vítima antes de desistir dela. |
 | `PASSO_DA_CONFERENCIA_DO_ALVO` | `0.02` | [blazesbot/bot/app/fada.py:66](blazesbot/bot/app/fada.py#L66) | executor.py | — |
 | `PASSO_DA_FADA` | `0.1` | [blazesbot/bot/app/fada.py:58](blazesbot/bot/app/fada.py#L58) | — | Cadência do laço da Fada quando não há nada a fazer. |
+| `SEGUNDOS_ENTRE_CUIDADOS` | `30.0` | [blazesbot/bot/app/fada.py:108](blazesbot/bot/app/fada.py#L108) | — | De quanto em quanto tempo a Fada cuida do pet e da bolsa, ESTANDO OCIOSA. |
 | `TETO_DA_CURA_SEGUNDOS` | `20.0` | [blazesbot/bot/app/fada.py:73](blazesbot/bot/app/fada.py#L73) | — | Quanto tempo insistir numa cura antes de desistir daquela vítima. |
 | `TETO_PARA_O_ALVO_VIRAR` | `0.4` | [blazesbot/bot/app/fada.py:65](blazesbot/bot/app/fada.py#L65) | — | Depois do clique no retrato, quanto esperar a memória mostrar o alvo novo. |
 | `ESPERA_ENTRE_TABS_DO_ALINHAMENTO` | `0.5` | [blazesbot/bot/app/sincronia.py:97](blazesbot/bot/app/sincronia.py#L97) | — | Cadência do TAB durante o alinhamento. |

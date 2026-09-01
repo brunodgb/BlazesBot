@@ -231,8 +231,20 @@ time a flag não faz nada.
   a Fada não volta ao topo enquanto cura: a vítima via 5 s de silêncio e bebia
   poção **enquanto estava sendo curada** (medido em campo, 6 s entre as duas
   linhas do log). Se ela está esperando, está viva — e é a espera que prova.
-- **BOLSA E PET SÓ COM A FILA VAZIA.** Abrir inventário com alguém esperando
-  cura mata o alguém.
+- **BOLSA E PET SÓ COM A FILA VAZIA E FORA DE BATALHA**, e com CADÊNCIA — não
+  a cada giro do laço. A condição é conferida antes de CADA um dos dois, e não
+  só na entrada: abrir o inventário com alguém esperando cura mata o alguém.
+- **SEM TECLA DE PET, NEM PET NEM BOLSA.** Fada sem pet não cata item, então
+  não tem lixo para apagar. Uma condição só porque é a mesma causa.
+- **A FADA NÃO FAZ SHUFFLE ANTI-AFK.** Ele mora no executor de macro, e ela
+  não roda o executor. A ausência é deliberada: ela passa a sessão parada.
+- **EM BATALHA ELA CUIDA DE SI**, não da fila: seleciona-se e cura até sair.
+  O time só protege quem está atacando, e quem espera cura não está — a
+  proteção com que ela contava não existia na hora em que ela precisava. Quem
+  avisa o time é a BATIDA, que carrega o estado de batalha junto.
+- **QUEM ESPERA CURA VOLTA À MACRO enquanto a Fada estiver em batalha.**
+  Atacando, o time mata o que está batendo nela — é a forma mais rápida de ela
+  voltar a curar.
 - **MORTO NÃO É CURADO** e para de rodar o APP (só em time). A Fada ignora e
   segue para o próximo.
 - **O PONTO INICIAL DO TIME É O DO LÍDER** — isto INVERTE a regra anterior, e a

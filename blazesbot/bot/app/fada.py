@@ -97,6 +97,16 @@ MAXIMO_DE_TENTATIVAS_POR_VITIMA = 3
 # de fato uma tentativa nova.
 ESPERA_DEPOIS_DE_ERRAR = 0.333
 
+# De quanto em quanto tempo a Fada cuida do pet e da bolsa, ESTANDO OCIOSA.
+#
+# Decisão do usuário em 01/09/2026: *"essas verificações podem ser feitas
+# enquanto a fada está ociosa, mas não deixa direto, para não ficar pesando"*.
+#
+# Trinta segundos porque nenhuma das duas é urgente: pet sumido e bolsa cheia se
+# resolvem em minutos, não em segundos. O que NÃO pode é a Fada gastar o laço
+# nisso -- ela existe para estar pronta quando alguém pedir cura.
+SEGUNDOS_ENTRE_CUIDADOS = 30.0
+
 
 class FadaDoTime:
     """O laço da Fada. Não ataca, não roda macro: cura e senta.
@@ -136,6 +146,9 @@ class FadaDoTime:
         parar_pct: Callable[[], float],
         mana_para_sentar: float = 10.0,
         mana_para_voltar: float = 50.0,
+        # -- cuidados de ociosa. `None` = não faz.
+        cuidar_do_pet: Callable[[], None] | None = None,
+        limpar_a_bolsa: Callable[[], None] | None = None,
     ) -> None:
         self.log = log
         self.meu_login = (meu_login or "").strip().lower()
@@ -170,6 +183,11 @@ class FadaDoTime:
         self._parar_pct = parar_pct
         self.mana_para_sentar = mana_para_sentar
         self.mana_para_voltar = mana_para_voltar
+        self._cuidar_do_pet = cuidar_do_pet
+        self._limpar_a_bolsa = limpar_a_bolsa
+        # Começa DEVENDO os cuidados: assim que ficar ociosa, faz a primeira
+        # rodada e só então entra na cadência.
+        self._proximo_cuidado = 0.0
 
         self.curas = 0
         self.curas_sem_efeito = 0
@@ -250,6 +268,7 @@ class FadaDoTime:
             return self._curar_a_mim_mesma(minha_vida)
 
         if not fila:
+            self._cuidados_de_ociosa()
             return self._descansar()
 
         if not self._tenho_mana_para_curar():
@@ -339,6 +358,39 @@ class FadaDoTime:
         zerar a marca aqui, ela ficaria presa no patamar alto para sempre.
         """
         self._sentada = False
+
+    def _cuidados_de_ociosa(self) -> None:
+        """Pet e bolsa, só com a fila vazia e fora de batalha.
+
+        A CADÊNCIA EXISTE PARA NÃO PESAR: os dois abrem janela e clicam, e fazer
+        isso a cada giro do laço gastaria a Fada em manutenção quando ela
+        deveria estar pronta para curar.
+
+        PARA NA HORA se alguém entrar na fila ou se ela entrar em batalha -- por
+        isso a condição é conferida ANTES de cada um dos dois, e não só na
+        entrada. Abrir o inventário com alguém esperando cura mata o alguém.
+
+        SEM TECLA DE PET NÃO HÁ NADA A FAZER -- nem pet, nem bolsa. Decisão do
+        usuário: uma Fada sem pet não cata item nenhum, então não tem lixo para
+        apagar. É quem injeta que decide isso (passa `None` nos dois).
+        """
+        if time.monotonic() < self._proximo_cuidado:
+            return
+        if not self._posso_cuidar():
+            return
+        self._proximo_cuidado = time.monotonic() + SEGUNDOS_ENTRE_CUIDADOS
+        if self._cuidar_do_pet is not None:
+            self._cuidar_do_pet()
+        if self._limpar_a_bolsa is not None and self._posso_cuidar():
+            self._limpar_a_bolsa()
+
+    def _posso_cuidar(self) -> bool:
+        """Nada na fila e fora de batalha."""
+        if self._em_batalha() is True:
+            return False
+        fila = [x for x in self.mural.fila_de_cura(self._membros_do_time())
+                if x != self.meu_login]
+        return not fila
 
     def _levantar(self) -> None:
         """Sai do chão para agir.

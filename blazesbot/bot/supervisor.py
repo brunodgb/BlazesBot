@@ -1236,6 +1236,7 @@ class AccountSupervisor(threading.Thread):
         """
         from ..core.inputs import Input as _Input
         from . import mural
+        from .app import deletador
         from .app.fada import FadaDoTime
 
         log = logging.getLogger(f"blazes.{self.account.login}")
@@ -1275,6 +1276,53 @@ class AccountSupervisor(threading.Thread):
                 time.sleep(min(0.05, max(0.0, fim - time.monotonic())))
             return not self.stop_event.is_set()
 
+        # ==================================================================
+        # OS CUIDADOS DE OCIOSA: pet e bolsa
+        # ==================================================================
+        #
+        # SEM TECLA DE PET, NENHUM DOS DOIS EXISTE. Decisão do usuário em
+        # 01/09/2026: uma Fada sem pet não cata item nenhum, então não tem lixo
+        # para apagar -- e verificar pet em quem não tem é gasto pelo gasto.
+        # Uma condição só porque é a mesma causa.
+        #
+        # A FADA NÃO FAZ SHUFFLE ANTI-AFK, e isso não precisou de código: ele
+        # mora no executor de macro, e ela não roda o executor. Fica dito aqui
+        # porque a ausência é deliberada, não esquecimento -- ela passa a sessão
+        # parada de propósito.
+        tecla_do_pet = (getattr(teclas, "pet_summon", "") or "").strip()
+        tecla_da_bolsa = (getattr(teclas, "inventory", "") or "").strip()
+
+        cuidar_do_pet = None
+        limpar_a_bolsa_da_fada = None
+        if tecla_do_pet:
+            def cuidar_do_pet() -> None:
+                """Invoca o pet se ele não estiver de pé."""
+                try:
+                    if memoria.pet_active() is False:
+                        log.info("FADA: pet sumiu — invocando.")
+                        entrada.key(tecla_do_pet)
+                except Exception as exc:
+                    log.debug("FADA: não deu para conferir o pet (%s).", exc)
+
+            if tecla_da_bolsa:
+                def limpar_a_bolsa_da_fada() -> None:
+                    """Mesma receita do modo APP: quem sabe abrir e apagar é o
+                    deletador; aqui só se monta o contexto."""
+                    ctx = BotContext(
+                        config=self.config, account=self.account,
+                        pid=self.pid, hwnd=self.hwnd,
+                        stop_event=self.stop_event,
+                        pause_event=self.pause_event)
+                    try:
+                        deletador.limpar_a_bolsa(ctx, tecla_da_bolsa)
+                    except Exception as exc:
+                        log.warning("FADA: falha ao limpar a bolsa: %s", exc)
+                    finally:
+                        ctx.close()
+        else:
+            log.info("FADA: sem tecla de pet configurada — não cuido de pet nem "
+                     "de bolsa (sem pet ela não cata item).")
+
         fada = FadaDoTime(
             log=log,
             meu_login=self.account.login,
@@ -1302,6 +1350,8 @@ class AccountSupervisor(threading.Thread):
             # inteiro se comportar igual. `_dono_da_macro` já responde isso.
             pedir_pct=lambda: float(self._dono_da_macro().settings.app.cura_pedir_pct),
             parar_pct=lambda: float(self._dono_da_macro().settings.app.cura_parar_pct),
+            cuidar_do_pet=cuidar_do_pet,
+            limpar_a_bolsa=limpar_a_bolsa_da_fada,
         )
 
         # O PRÓPRIO ID, PUBLICADO ANTES DE COMEÇAR. É o que permite a QUALQUER
@@ -1697,6 +1747,22 @@ class AccountSupervisor(threading.Thread):
                         log.warning("A Fada %s parou de responder — vou de poção.",
                                     fada_login)
                         return False
+                    if mural.fada_em_batalha(fada_login):
+                        # A FADA ESTÁ APANHANDO: volto a atacar.
+                        #
+                        # Não é desistir da cura -- é a forma mais rápida de
+                        # consegui-la. Parado, eu não ajudo; atacando, eu mato o
+                        # que está batendo nela, e ela volta a curar. Decisão do
+                        # usuário em 01/09/2026.
+                        #
+                        # `True` e NÃO `False`: `False` mandaria beber poção, e
+                        # a poção continua reservada para quando não há Fada. Eu
+                        # volto para a macro ainda ferido, e no fim da volta
+                        # seguinte peço de novo -- se ela já tiver saído da
+                        # briga, sou atendido.
+                        log.info("A Fada %s entrou em batalha — volto a atacar "
+                                 "para ajudá-la.", fada_login)
+                        return True
                     atual = vida_pct()
                     if atual is not None:
                         # A VÍTIMA REPUBLICA A PRÓPRIA VIDA enquanto espera.
