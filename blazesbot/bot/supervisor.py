@@ -1737,6 +1737,11 @@ class AccountSupervisor(threading.Thread):
                 esta_sentado=esta_sentado,
                 # A FADA TEM PREFERÊNCIA SOBRE A POÇÃO -- e só existe em time.
                 fada=chamar_a_fada if self._tem_time_do_app() else None,
+                # A BARRA DA TELA MANDA no gatilho -- e em time é a do líder.
+                pedir_pct=lambda: float(
+                    self._dono_da_macro().settings.app.cura_pedir_pct),
+                parar_pct=lambda: float(
+                    self._dono_da_macro().settings.app.cura_parar_pct),
                 # A TECLA DE POÇÃO É A DE FORA DE BATALHA. Medição do usuário:
                 # personagens que rodam APP usam só essa, e ela NÃO funciona em
                 # combate -- por isso a cura espera sair de batalha.

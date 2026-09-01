@@ -211,6 +211,13 @@ time a flag não faz nada.
   entre o clique e a memória virar. Perguntar antes disso lê o alvo ANTERIOR.
 - **A FADA FICA FORA DA LARGADA**, da macro e da sincronia. Contá-la como
   membro trava o time esperando uma confirmação que nunca vem.
+- **AS DUAS BARRAS SÃO A RÉGUA ÚNICA, seja qual for o método.** A primeira diz
+  QUANDO precisa de cura (Fada ou poção, tanto faz); a segunda, QUANTO precisa
+  atingir para voltar a rodar a macro. Em time valem as do LÍDER; fora de time,
+  as da própria conta. A constante fixa de 30% deixou de mandar.
+- **A VÍTIMA SENTA NO PONTO INICIAL para esperar a Fada**, e LEVANTA ao sair —
+  o levantar mora num `finally`, porque voltar à macro sentado é passar a volta
+  inteira sem atacar. Antes ela esperava de pé, puxando mob.
 - **TENDO FADA DE PÉ, ELA É A ÚNICA FONTE DE CURA DO TIME.** A poção só volta
   quando ela para de bater no mural.
 - **A BATIDA SAI DE TODA ESPERA**, não só do topo do laço. Ela ficava só lá, e

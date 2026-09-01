@@ -91,6 +91,17 @@ from collections.abc import Callable
 # -- *"assim tem uma margem de erro maior e a probabilidade de morrer é menor"*.
 # A margem existe porque entre o gatilho e a primeira poção há uma volta de
 # macro para terminar, até 2 s de espera de batalha e até 5 s de caminhada.
+# AS DUAS BARRAS SÃO A RÉGUA ÚNICA, e valem seja qual for o método.
+#
+# Decisão do usuário em 01/09/2026: *"a barra é sempre do líder do time, que vai
+# mandar; não vai ser mais usado a constante fixa. E caso não esteja em time
+# aquele valor vai ser o usado para poção (...) essa ali vai ser a régua de
+# quando saber que precisa de cura INDEPENDENTE DA FORMA, e o outro será o
+# quanto ele precisa atingir para voltar a rodar as macros."*
+#
+# Estes dois números continuam aqui como PADRÃO de quem roda sem configuração
+# injetada -- o supervisor sempre injeta, e em time injeta os do líder. Apagá-los
+# só trocaria "padrão explícito" por "explode se ninguém injetar".
 VIDA_PARA_CURAR = 30.0
 
 # Até onde curar. Acima disso não se bebe mais nada.
@@ -179,6 +190,8 @@ class CuraDoApp:
         tecla_de_pocao: Callable[[], str] | None = None,
         tecla_de_sentar: Callable[[], str] | None = None,
         fada: Callable[[float], bool] | None = None,
+        pedir_pct: Callable[[], float] | None = None,
+        parar_pct: Callable[[], float] | None = None,
         continuar: Callable[[], bool] | None = None,
     ) -> None:
         self.log = log
@@ -195,6 +208,15 @@ class CuraDoApp:
         # a cura se resolve com poção como sempre. Injetado pelo supervisor,
         # que é quem conhece o time e o mural.
         self._fada = fada
+        # O LIMIAR VEM DA TELA. Era a constante `VIDA_PARA_CURAR` fixa em 30, e
+        # a barra "pedir cura abaixo de" não mandava em nada -- ela só era usada
+        # pela Fada. Em time quem manda é o líder (`_dono_da_macro`), que é o
+        # que faz o time inteiro se comportar igual.
+        #
+        # `None` mantém o valor de sempre: quem não injeta nada não muda de
+        # comportamento.
+        self._pedir_pct = pedir_pct or (lambda: VIDA_PARA_CURAR)
+        self._parar_pct = parar_pct or (lambda: VIDA_ALVO_DA_CURA)
         self._continuar = continuar or (lambda: True)
 
         self.curas = 0
@@ -229,7 +251,7 @@ class CuraDoApp:
             return False
         self._avisou_sem_leitura = False
 
-        if vida >= VIDA_PARA_CURAR:
+        if vida >= self._pedir_pct():
             self._voltas_presas = 0
             return False
 
@@ -245,9 +267,38 @@ class CuraDoApp:
         # `False` aqui não é falha: é "não há Fada", e o caminho segue para a
         # poção exatamente como sempre seguiu. Fora de um time, `_fada` é `None`
         # e nada disto existe.
-        if self._fada is not None and self._fada(vida):
+        if self._fada is not None and self._esperar_a_fada(vida):
             return True
         return self._curar(vida)
+
+    def _esperar_a_fada(self, vida: float) -> bool:
+        """SENTA no ponto inicial e espera a Fada. `False` = não há Fada.
+
+        Sentar não é enfeite: parado e sentado o personagem não puxa mob, não
+        gasta a macro contra nada e regenera enquanto espera. É o que o usuário
+        descreveu -- *"vai até o ponto inicial e senta, se mantendo sem fazer
+        nada, apenas esperando a cura"* -- e o que faltava: antes ele ficava DE
+        PÉ esperando.
+
+        LEVANTAR É OBRIGATÓRIO NA SAÍDA, e por isso mora num `finally`. A tecla
+        de sentar é INTERRUPTOR e o bot não sabe o estado; deixar o personagem
+        sentado ao voltar para a macro seria pior que não ter sentado, porque
+        ele passaria a volta inteira sem atacar.
+        """
+        tecla = (self._tecla_de_sentar() or "").strip()
+        sentei = False
+        if tecla and self._esta_sentado() is not True:
+            self.log.info("APP: sentando no ponto inicial para esperar a Fada.")
+            self._apertar(tecla)
+            sentei = True
+        try:
+            return self._fada(vida)
+        finally:
+            # Só levanta se FOMOS nós que sentamos, e não quando a leitura diz
+            # que ele já está de pé -- aí algo o levantou (dano, por exemplo) e
+            # apertar de novo o faria sentar bem na hora de voltar a atacar.
+            if sentei and tecla and self._esta_sentado() is not False:
+                self._apertar(tecla)
 
     # -- sair de batalha --------------------------------------------------
 
@@ -393,7 +444,7 @@ class CuraDoApp:
                     "poção(ões)). Volto a rodar a macro — parado o mob mata.",
                     vida if vida is not None else -1, gastas)
                 return True
-            if vida is not None and vida >= VIDA_ALVO_DA_CURA:
+            if vida is not None and vida >= self._parar_pct():
                 self.curas += 1
                 self.log.info("APP: curado em %.0f%% com %s poção(ões).",
                               vida, gastas)
@@ -403,7 +454,7 @@ class CuraDoApp:
             "APP: gastei %s poção(ões) e a vida parou em %s%%, abaixo dos "
             "%.0f%%. Poção provavelmente fraca demais para o dano que o "
             "personagem toma. Volto a rodar a macro.",
-            gastas, "?" if vida is None else f"{vida:.0f}", VIDA_ALVO_DA_CURA)
+            gastas, "?" if vida is None else f"{vida:.0f}", self._parar_pct())
         return True
 
     def _a_pocao_saiu(self) -> bool | None:
@@ -518,7 +569,7 @@ class CuraDoApp:
             if self._em_batalha() is True:
                 return self._vida_pct(), "batalha"
             vida = self._vida_pct()
-            if vida is not None and vida >= VIDA_ALVO_DA_CURA:
+            if vida is not None and vida >= self._parar_pct():
                 return vida, "alvo"
             time.sleep(PASSO_DA_PERGUNTA)
         return self._vida_pct(), "teto"

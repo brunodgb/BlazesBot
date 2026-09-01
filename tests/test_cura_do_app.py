@@ -79,8 +79,12 @@ class _Jogo:
             debug=lambda *a, **k: None)
 
 
-def _cura(jogo, pocao="9", sentar="X"):
+def _cura(jogo, pocao="9", sentar="X", fada=None, pedir_pct=None,
+          parar_pct=None):
     return mod.CuraDoApp(
+        fada=fada,
+        pedir_pct=pedir_pct,
+        parar_pct=parar_pct,
         log=jogo.log,
         vida_pct=jogo.vida_pct,
         em_batalha=jogo.em_batalha,
@@ -782,3 +786,70 @@ def test_sentar_dura_30s_e_confere_a_batalha_o_tempo_todo():
 
     assert perguntas[0] > 20, (
         f"o sentar virou espera cega: {perguntas[0]} pergunta(s) em 30 s")
+
+# ===========================================================================
+# O LADO DA VÍTIMA QUANDO HÁ FADA NO TIME -- 01/09/2026
+# ===========================================================================
+
+def test_a_vitima_SENTA_no_ponto_para_esperar_a_fada():
+    """*"vai até o ponto inicial e senta, se mantendo sem fazer nada"*.
+
+    Antes ela voltava ao ponto e ficava DE PÉ esperando -- puxando mob e
+    gastando a macro contra nada.
+    """
+    jogo = _Jogo(vida=25.0)
+    chamadas = []
+    c = _cura(jogo, fada=lambda v: (chamadas.append(v), True)[1])
+
+    c.cuidar()
+
+    assert chamadas == [25.0]
+    assert "X" in jogo.teclas, "não sentou para esperar"
+
+
+def test_ela_LEVANTA_ao_terminar_de_esperar():
+    """Voltar para a macro sentado é passar a volta inteira sem atacar."""
+    jogo = _Jogo(vida=25.0)
+    c = _cura(jogo, fada=lambda v: True)
+
+    c.cuidar()
+
+    assert jogo.teclas.count("X") == 2, "sentou e não levantou"
+
+
+def test_sem_fada_nao_senta_e_vai_de_pocao():
+    """O caminho de sempre não pode mudar por causa da Fada."""
+    jogo = _Jogo(vida=25.0)
+    c = _cura(jogo, fada=lambda v: False)
+
+    c.cuidar()
+
+    assert "9" in jogo.teclas, "não bebeu poção"
+
+
+def test_o_gatilho_vem_da_TELA_e_nao_da_constante():
+    """A barra "pedir cura abaixo de" não mandava em nada: o gatilho era a
+    constante fixa de 30%, e mexer na tela não mudava quando a vítima pedia."""
+    jogo = _Jogo(vida=45.0)              # acima de 30, abaixo de 50
+    chamadas = []
+    c = _cura(jogo, pedir_pct=lambda: 50.0,
+              fada=lambda v: (chamadas.append(v), True)[1])
+
+    c.cuidar()
+
+    assert chamadas == [45.0], "o limiar da tela foi ignorado"
+
+
+def test_acima_do_gatilho_da_tela_nao_faz_nada():
+    jogo = _Jogo(vida=45.0)
+    c = _cura(jogo, pedir_pct=lambda: 40.0, fada=lambda v: True)
+    assert c.cuidar() is False
+
+def test_a_pocao_para_no_alvo_DA_TELA():
+    """A outra barra é "quanto preciso atingir para voltar a rodar a macro" --
+    e vale igual para a poção, não só para a Fada."""
+    jogo = _Jogo(vida=25.0)
+    # Cada poção sobe 40 pontos: 25 -> 65 -> 105. Com alvo de 60, UMA basta.
+    c = _cura(jogo, parar_pct=lambda: 60.0)
+    c.cuidar()
+    assert jogo.teclas.count("9") == 1, jogo.teclas
