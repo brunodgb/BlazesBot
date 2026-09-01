@@ -1330,6 +1330,7 @@ class AccountSupervisor(threading.Thread):
             vida_pct=lambda: _seguro(memoria.vida_pct),
             mana_pct=lambda: _seguro(memoria.mana_pct),
             em_batalha=lambda: _seguro(memoria.in_battle),
+            esta_sentado=lambda: _seguro(memoria.is_sitting),
             companheiros=lambda: _seguro(memoria.companheiros_de_time),
             vida_do_time=lambda: _seguro(memoria.vida_do_time),
             id_do_alvo=lambda: _seguro(memoria.id_do_alvo),

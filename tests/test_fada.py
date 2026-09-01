@@ -67,6 +67,9 @@ class _Jogo:
         self.cliques: list[int] = []
         self.curas = 0
         self.sentadas = 0
+        # O QUE A MEMÓRIA DIZ, que é diferente do que o bot acha. `None` = sem
+        # leitura, e aí o controle interno da Fada é tudo o que há.
+        self.sentado = False
         self.auto_selecoes = 0
         # Ao clicar no slot N, o alvo passa a ser este id (None = clique nao pega)
         self.id_por_slot: dict[int, int | None] = {}
@@ -108,7 +111,10 @@ class _Jogo:
                 mural.pedir_cura(login, min(100.0, atual + 40.0))
 
     def sentar(self) -> None:
+        """A tecla é INTERRUPTOR: ela ALTERNA o estado, como no jogo."""
         self.sentadas += 1
+        if self.sentado is not None:
+            self.sentado = not self.sentado
 
     def auto_selecionar(self) -> None:
         self.auto_selecoes += 1
@@ -125,6 +131,7 @@ def _fada(jogo, *, membros=("lider", "aliado"), nicks=None, parar=90.0,
         vida_pct=lambda: jogo.vida,
         mana_pct=lambda: jogo.mana,
         em_batalha=lambda: jogo.batalha,
+        esta_sentado=lambda: jogo.sentado,
         companheiros=lambda: jogo.companheiros,
         vida_do_time=lambda: jogo.vidas,
         id_do_alvo=lambda: jogo.alvo,
@@ -811,3 +818,59 @@ def test_sem_as_funcoes_injetadas_ela_nao_faz_nada():
     f = _fada(jogo)
     f._uma_volta()          # não pode explodir
     assert f._cuidar_do_pet is None
+
+# ===========================================================================
+# ANTES DE SENTAR, PERGUNTA À MEMÓRIA -- 01/09/2026
+# ===========================================================================
+#
+# *"Verifica pela memória se a fada já está sentada; caso esteja, não precisa
+# fazer ela sentar, pois senão faz ela levantar. Isso vale para tudo: sempre
+# antes de sentar verifica se já não está sentado, pq se tiver é só não fazer
+# nada."*
+#
+# O controle interno (`_sentada`) descreve o que o BOT fez, não o que
+# aconteceu: um golpe levanta o personagem sem passar por aqui, e um relogin
+# devolve o estado sem avisar ninguém.
+
+def test_ja_sentada_nao_aperta_a_tecla():
+    """Apertar aqui a faria LEVANTAR -- o oposto do que se queria."""
+    jogo = _Jogo()
+    jogo.sentado = True                   # a memória diz que já está no chão
+    f = _fada(jogo)
+    f._uma_volta()
+    assert jogo.sentadas == 0
+    assert f._sentada is True             # o controle interno se acertou
+
+
+def test_algo_a_levantou_e_ela_senta_de_novo():
+    """O bot achava que estava sentada, mas um golpe a levantou."""
+    jogo = _Jogo()
+    f = _fada(jogo)
+    f._uma_volta()                        # senta
+    assert jogo.sentadas == 1
+    jogo.sentado = False                  # levantou por fora
+    f._sentada = True                     # o bot ainda acha que está sentada
+    f._uma_volta()
+    assert jogo.sentadas == 2, "confiou no controle interno e ficou de pé"
+
+
+def test_ja_de_pe_nao_aperta_ao_levantar():
+    """O espelho da regra: apertar de pé a faria SENTAR na hora de curar."""
+    jogo = _Jogo()
+    jogo.sentado = False
+    f = _fada(jogo)
+    f._sentada = True                     # controle interno errado
+    f._levantar()
+    assert jogo.sentadas == 0
+    assert f._sentada is False
+
+
+def test_sem_leitura_usa_o_controle_interno():
+    """Cega, ela volta a se guiar pelo que fez -- que é tudo o que sobra."""
+    jogo = _Jogo()
+    jogo.sentado = None
+    f = _fada(jogo)
+    f._uma_volta()
+    assert jogo.sentadas == 1
+    f._uma_volta()
+    assert jogo.sentadas == 1, "sentou duas vezes sem leitura"

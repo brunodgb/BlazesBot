@@ -236,6 +236,12 @@ time a flag não faz nada.
   só na entrada: abrir o inventário com alguém esperando cura mata o alguém.
 - **SEM TECLA DE PET, NEM PET NEM BOLSA.** Fada sem pet não cata item, então
   não tem lixo para apagar. Uma condição só porque é a mesma causa.
+- **ANTES DE SENTAR, PERGUNTA À MEMÓRIA — e vale para todo lugar que senta.**
+  A tecla é INTERRUPTOR: apertá-la com o personagem já sentado o faz LEVANTAR.
+  Controle interno não basta, porque ele descreve o que o BOT fez e não o que
+  aconteceu: um golpe levanta o personagem sem passar pelo bot, e um relogin
+  devolve o estado sem avisar. Já sentado ⇒ não faz nada. Sem leitura, o
+  controle interno é tudo o que há.
 - **A FADA NÃO FAZ SHUFFLE ANTI-AFK.** Ele mora no executor de macro, e ela
   não roda o executor. A ausência é deliberada: ela passa a sessão parada.
 - **EM BATALHA ELA CUIDA DE SI**, não da fila: seleciona-se e cura até sair.

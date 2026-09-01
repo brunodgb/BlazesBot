@@ -126,6 +126,7 @@ class FadaDoTime:
         vida_pct: Callable[[], float | None],
         mana_pct: Callable[[], float | None],
         em_batalha: Callable[[], bool | None],
+        esta_sentado: Callable[[], bool | None],
         # -- leitura do time (memória, medida em 31/08/2026)
         companheiros: Callable[[], list[str] | None],
         vida_do_time: Callable[[], list[dict] | None],
@@ -156,6 +157,7 @@ class FadaDoTime:
         self._vida_pct = vida_pct
         self._mana_pct = mana_pct
         self._em_batalha = em_batalha
+        self._esta_sentado = esta_sentado
         self._companheiros = companheiros
         self._vida_do_time = vida_do_time
         self._id_do_alvo = id_do_alvo
@@ -328,8 +330,23 @@ class FadaDoTime:
 
         Sentar é a única coisa útil que ela pode fazer: não ataca, não coleta,
         e a mana é o insumo da próxima cura.
+
+        PERGUNTA À MEMÓRIA ANTES DE APERTAR. A tecla é INTERRUPTOR: apertá-la
+        com ela já sentada a faz LEVANTAR -- o oposto do que se queria. O
+        controle interno (`_sentada`) não basta, porque ele descreve o que o bot
+        fez, e não o que aconteceu: um golpe levanta o personagem sem passar por
+        aqui, e um relogin devolve o estado sem avisar ninguém.
+
+        Regra do usuário em 01/09/2026, e vale para TODO lugar que senta: *"se
+        já estiver sentado é só não fazer nada"*.
         """
-        if self._sentada:
+        no_chao = self._esta_sentado()
+        if no_chao is True:
+            # Já está lá. Só acerta o controle interno e sai.
+            self._sentada = True
+            return True
+        if no_chao is None and self._sentada:
+            # Sem leitura, o controle interno é tudo o que há.
             return True
         if por_falta_de_mana:
             self.log.info("FADA: mana abaixo de %.0f%% — sentando para recuperar.",
@@ -399,7 +416,12 @@ class FadaDoTime:
         por isso só este par de métodos mexe em `_sentada`. Apertar por engano
         com ela de pé a faria sentar bem na hora de curar.
         """
-        if not self._sentada:
+        no_chao = self._esta_sentado()
+        if no_chao is False:
+            # Já está de pé -- apertar aqui a faria SENTAR bem na hora de curar.
+            self._sentada = False
+            return
+        if no_chao is None and not self._sentada:
             return
         self._apertar_sentar()
         self._sentada = False
