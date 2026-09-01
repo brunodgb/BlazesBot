@@ -134,9 +134,9 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 
 | tempo | atual | original | natureza | onde | função | para que serve |
 |---|---|---|---|---|---|---|
-| `SEGUNDOS_DESENCALHANDO_O_ALTAR` | 3 s | = | FIXO | [mapa_bc.py:145](blazesbot/bot/bc/mapa_bc.py#L145) |  | Quanto esperar no ponto de vai-e-volta antes de retornar. |
-| `SEGUNDOS_POR_TENTATIVA_NA_SAIDA` | 1.8 s | = | FIXO | [mapa_bc.py:191](blazesbot/bot/bc/mapa_bc.py#L191) |  |  |
-| `SEGUNDOS_POR_TENTATIVA_NA_FAY` | 1.8 s | = | FIXO | [mapa_bc.py:238](blazesbot/bot/bc/mapa_bc.py#L238) |  |  |
+| `SEGUNDOS_DESENCALHANDO_O_ALTAR` | 3 s | = | FIXO | [mapa_bc.py:157](blazesbot/bot/bc/mapa_bc.py#L157) |  | Quanto esperar no ponto de vai-e-volta antes de retornar. |
+| `SEGUNDOS_POR_TENTATIVA_NA_SAIDA` | 1.8 s | = | FIXO | [mapa_bc.py:203](blazesbot/bot/bc/mapa_bc.py#L203) |  |  |
+| `SEGUNDOS_POR_TENTATIVA_NA_FAY` | 1.8 s | = | FIXO | [mapa_bc.py:250](blazesbot/bot/bc/mapa_bc.py#L250) |  |  |
 
 
 ## A RUN — passos da rotina

@@ -274,3 +274,81 @@ def test_o_montar_aceita_com_e_sem_via():
     feito = montar([(1, 1, "a"), (2, 2, "a", (900, 100))])
     assert feito[0].via is None
     assert feito[1].via == (900, 100)
+
+
+# ===========================================================================
+# O MOTOR DE ROTA É UM SÓ (`core/rota.py`), os DADOS são de cada cave
+# ===========================================================================
+
+
+def test_as_duas_caves_chamam_o_mesmo_motor():
+    """Duas implementações da retomada seriam duas chances de só uma ser
+    corrigida. A regra mora no core; `mapa_bc` e `mapa_hh` só injetam dados."""
+    from blazesbot.bot.bc import mapa_bc
+    from blazesbot.core import rota
+
+    for nome in ("mais_proximos", "vizinhos_na_rota", "distancia",
+                 "Retomada", "Waypoint"):
+        assert getattr(mapa_bc, nome) is getattr(rota, nome)
+        assert getattr(m, nome) is getattr(rota, nome)
+
+
+def test_a_retomada_da_hh_nao_recua_para_o_inicio_da_area():
+    """A HH NÃO passa `areas_apertadas`, e isso é deliberado.
+
+    O recuo "volte ao início da área" só faz sentido quando se sabe onde a área
+    começa. Aqui a área é um MARCADOR: todos os waypoints têm o mesmo texto, e
+    passá-lo como apertado mandaria o bot de volta ao waypoint 1 da cave inteira
+    sempre que ele escorregasse -- desfazendo a run.
+    """
+    caminho = m.CAMINHO_ATE_O_BOSS_1
+    # Fora da rota, no fim dela. A cave é sinuosa, então o waypoint mais próximo
+    # de um ponto qualquer não é necessariamente o último -- o que se exige aqui
+    # é que a retomada escolha O MAIS PRÓXIMO e não volte ao começo.
+    longe = (caminho[-1].x + 30, caminho[-1].y + 30)
+    r = m.onde_retomar(longe, caminho)
+
+    esperado, _ = m.mais_proximos(longe, caminho)[0]
+    assert r.indice in (esperado, esperado + 1), (
+        f"retomou no waypoint {r.indice + 1}/{len(caminho)}, e o mais próximo "
+        f"é o {esperado + 1}")
+    assert r.indice > 0, "recuou para o começo da cave"
+    assert "apertada" not in r.motivo
+
+
+def test_a_retomada_da_bc_continua_recuando_na_area_apertada():
+    """O contrário do teste acima, no mesmo motor: a BC injeta as áreas e o
+    recuo do Secret Altar continua valendo. Se este quebrar, a promoção levou
+    embora um comportamento medido."""
+    from blazesbot.bot.bc import mapa_bc
+
+    rota_altar = mapa_bc.CAMINHO_ATE_O_ALTAR
+    primeiro_altar = next(i for i, wp in enumerate(rota_altar)
+                          if wp.area == "Secret Altar")
+    # Fora da rota, mas mais perto de um waypoint do meio do Secret Altar.
+    meio = rota_altar[primeiro_altar + 4]
+    fora = (meio.x + 20, meio.y + 20)
+    r = mapa_bc.onde_retomar(fora, rota_altar)
+    assert r.indice == primeiro_altar, (
+        f"retomou em {r.indice}, esperado o início do Secret Altar "
+        f"({primeiro_altar})")
+    assert "apertada" in r.motivo
+
+
+def test_a_tolerancia_da_hh_sobe_no_ponto_de_mobs():
+    """(232, 188) é onde os mobs seguram o personagem: chegar ali exige folga."""
+    ponto = m.WAYPOINTS_PROBLEMATICOS[0]
+    problematico = next(wp for wp in m.TODOS_OS_WAYPOINTS if wp.pos == ponto)
+    outro = next(wp for wp in m.TODOS_OS_WAYPOINTS if wp.pos != ponto)
+
+    assert m.tolerancia_do_waypoint(problematico, 3, 8) == 8
+    assert m.tolerancia_do_waypoint(outro, 3, 8) == 3
+
+
+def test_o_rollback_vale_igual_nas_duas():
+    """Mesma função, mesma folga: voltar 2+ waypoints é rollback."""
+    caminho = m.CAMINHO_ATE_O_BOSS_1
+    assert m.houve_rollback(10, caminho[5].pos, caminho) == 5
+    assert m.houve_rollback(10, caminho[10].pos, caminho) is None
+    assert m.houve_rollback(10, caminho[9].pos, caminho) is None   # folga
+    assert m.houve_rollback(10, None, caminho) is None

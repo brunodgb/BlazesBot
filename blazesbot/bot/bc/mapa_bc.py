@@ -47,11 +47,23 @@ tentar um atalho: atalho ali não existe.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
-
+from ...core import rota
 from ...core.lugares import AREAS_BC
-from ...core.rota import Waypoint, distancia
+
+# REEXPORTAÇÃO PROPOSITAL (a forma `X as X` é o que diz isso ao ruff).
+#
+# Estes nomes moram em `core/rota.py` desde 01/09/2026, mas o código da BC os
+# chama por `mapa_bc.` -- e continuar assim é o objetivo: a promoção não deve
+# aparecer em nenhum ponto de chamada. `Waypoint` e `_wp` são o modelo; os outros
+# são a regra de rota que não precisa de dado nenhum da cave.
+from ...core.rota import NA_ROTA as NA_ROTA
+from ...core.rota import Retomada as Retomada
+from ...core.rota import Waypoint as Waypoint
+from ...core.rota import como_lista as como_lista
+from ...core.rota import distancia as distancia
+from ...core.rota import mais_proximos as mais_proximos
 from ...core.rota import montar as _wp
+from ...core.rota import vizinhos_na_rota as vizinhos_na_rota
 
 # ---------------------------------------------------------------------------
 # Pontos de referência
@@ -569,114 +581,29 @@ def posicao_esta_fora_da_cave(pos: tuple[int, int] | None) -> bool:
             or pos[1] < ymin - m or pos[1] > ymax + m)
 
 
-# Distância máxima até um waypoint para aceitar a área dele como resposta.
-# Acima disso o bot está fora da rota e dizer a área seria palpite.
-RAIO_DA_AREA = 55.0
-
-# Distância até o waypoint mais próximo abaixo da qual o personagem é considerado
-# NA rota, e não fora dela. É o limite que separa "escorreguei um pouco" de
-# "preciso me retomar" -- e a diferença importa: retomada dentro de área apertada
-# faz o bot voltar ao começo da área.
-NA_ROTA = 12.0
+# `RAIO_DA_AREA` e `NA_ROTA` vêm de `core/rota.py` (importados no topo): a
+# retomada de rota subiu para lá com a chegada da HH, e um número lido por dois
+# lados mora num lugar só.
 
 
 def area_da_posicao(pos: tuple[int, int] | None) -> str | None:
-    """Área da cave em que esta coordenada cai, pelo waypoint mais próximo.
-
-    Devolve None quando nenhum waypoint está perto o bastante -- e None aqui é
-    informação útil: significa "estou dentro da caixa da cave mas fora da rota",
-    que é exatamente o caso em que o bot precisa se retomar.
-    """
-    if pos is None:
-        return None
-    melhor: Waypoint | None = None
-    menor = float("inf")
-    for wp in TODOS_OS_WAYPOINTS:
-        d = _distancia(pos, wp.pos)
-        if d < menor:
-            menor, melhor = d, wp
-    if melhor is None or menor > RAIO_DA_AREA:
-        return None
-    return melhor.area
+    """Área da cave em que esta coordenada cai, pelo waypoint mais próximo."""
+    return rota.area_pelo_waypoint_mais_proximo(pos, TODOS_OS_WAYPOINTS)
 
 
 # ---------------------------------------------------------------------------
-# Retomada de rota
+# Retomada de rota -- a REGRA mora em `core/rota.py`; aqui só os dados da BC
 # ---------------------------------------------------------------------------
-
-@dataclass(frozen=True)
-class Retomada:
-    """De onde continuar a rota depois de sair dela."""
-
-    indice: int                 # waypoint por onde retomar
-    distancia: float            # a que distância dele estamos
-    motivo: str                 # texto para o log
-    area: str | None         # área em que o personagem está agora
-
-
-def mais_proximos(
-    pos: tuple[int, int],
-    caminho: tuple[Waypoint, ...],
-    n: int = 2,
-) -> list[tuple[int, float]]:
-    """Os `n` waypoints mais próximos da posição, como `(índice, distância)`.
-
-    A lista volta JÁ ORDENADA porque a proximidade é a decisão: do mais perto
-    para o mais longe. Mais de um, e não apenas o mais próximo, porque o mais
-    próximo pode ser justamente o que já foi passado -- com vários em mãos o
-    chamador escolhe a estratégia (a retomada de rota anda para frente quando
-    são vizinhos; a manobra de destravamento tenta por proximidade).
-    """
-    distancias = sorted(
-        ((i, _distancia(pos, wp.pos)) for i, wp in enumerate(caminho)),
-        key=lambda par: par[1],
-    )
-    return distancias[:n]
-
-
-def vizinhos_na_rota(
-    pos: tuple[int, int],
-    caminho: tuple[Waypoint, ...],
-) -> tuple[int | None, int | None, int | None]:
-    """Os vizinhos IMEDIATOS na rota. Devolve `(anterior, mais_proximo, seguinte)`.
-
-    "Anterior" e "seguinte" são os índices coladinhos no mais próximo -- `base-1`
-    e `base+1` --, NUNCA "o mais próximo entre os de índice maior/menor".
-
-    ISTO JÁ FOI O CONTRÁRIO, E CUSTOU UMA RUN. A versão anterior escolhia por
-    distância dentro de cada lado, e o log mostrou o resultado com o personagem
-    parado em (205,31):
-
-        51/58  (206, 41)  a 10.0   <- o anterior de verdade
-        53/58  (205, 23)  a  8.0   <- o mais próximo
-        54/58  (244, 23)  a 39.8   <- o seguinte de verdade
-        57/58  (219, 44)  a 19.1   <- o que a versão antiga escolhia
-
-    Ela pulava três waypoints para cair num ponto ao DOBRO da distância, e o
-    jogo respondia no chat: `Failed to auto-path [Secret Altar(205,31)->Secret
-    Altar(218,43)]`. A rota não é um conjunto de pontos, é um CAMINHO: cada
-    trecho foi desenhado porque é andável a partir do anterior. No Secret Altar,
-    que é uma pirâmide, pular waypoint é pedir para atravessar parede.
-
-    O MAIS PRÓXIMO TAMBÉM É CANDIDATO, e é o primeiro a ser tentado: quando o
-    personagem está FORA do caminho, voltar para ele é o que torna o resto
-    possível. Ver a ordem em `Navigator.destravar_pelos_vizinhos`.
-
-    A referência é a posição ATUAL, não o índice em que a rota achava que o
-    personagem estava -- depois de um rollback os dois divergem, e é o índice
-    que está errado.
-
-    Qualquer um dos três pode vir `None`: no começo da rota não há anterior, no
-    fim não há seguinte, e numa rota vazia não há nada.
-    """
-    if not caminho:
-        return None, None, None
-
-    base = min(range(len(caminho)),
-               key=lambda i: _distancia(pos, caminho[i].pos))
-    anterior = base - 1 if base > 0 else None
-    seguinte = base + 1 if base + 1 < len(caminho) else None
-    return anterior, base, seguinte
+#
+# `Retomada`, `mais_proximos`, `vizinhos_na_rota` e `como_lista` são importados
+# direto do core (topo do arquivo) porque não precisam de dado nenhum da cave. Os
+# dois abaixo precisam -- as áreas apertadas e os waypoints problemáticos --, e é
+# só isso que estes invólucros fazem.
+#
+# Por que invólucro e não passar os dados nos nove pontos de chamada da
+# navegação: assim a assinatura que a navegação usa não muda, e a `mapa_hh` tem
+# um par idêntico com os dados DELA. Um dia, quando a navegação também subir, é
+# o mapa que ela recebe que responde -- e nada nos dois lados precisa mudar.
 
 
 def onde_retomar(
@@ -684,58 +611,12 @@ def onde_retomar(
     caminho: tuple[Waypoint, ...],
     indice_esperado: int = 0,
 ) -> Retomada:
-    """Decide por qual waypoint a rota deve continuar.
-
-    Chamado sempre que a posição não é a esperada: lag, rollback, interferência
-    do usuário, ou o personagem simplesmente ficou preso e escorregou.
-
-    As regras, em ordem:
-
-      1. Entre os dois waypoints mais próximos, prefere o de índice MAIOR
-         quando eles são vizinhos -- é o que está à frente.
-      2. Se o waypoint escolhido está numa ÁREA APERTADA (a pirâmide do Secret
-         Altar), volta para o primeiro waypoint daquela área. Ali não existe
-         atalho: entrar pelo meio significa bater na parede.
-      3. Se nada está perto (fora da rota de verdade), retoma pelo waypoint
-         mais próximo mesmo assim, e o log registra a distância -- é o número
-         que diz se o personagem foi arrastado ou se só escorregou.
-    """
-    if pos is None or not caminho:
-        return Retomada(max(0, indice_esperado), float("inf"),
-                        "sem posição legível", None)
-
-    proximos = mais_proximos(pos, caminho)
-    (i1, d1) = proximos[0]
-    escolhido, distancia = i1, d1
-
-    if len(proximos) > 1:
-        (i2, d2) = proximos[1]
-        # Vizinhos e praticamente à mesma distância: o de índice maior está à
-        # frente, e ir para frente é sempre melhor que voltar.
-        if abs(i1 - i2) == 1 and abs(d1 - d2) < 8.0:
-            escolhido = max(i1, i2)
-            distancia = d2 if escolhido == i2 else d1
-
-    area = caminho[escolhido].area
-    motivo = f"waypoint {escolhido + 1}/{len(caminho)} a {distancia:.0f} unidades"
-
-    # O recuo até o início da área só vale para quem está FORA da rota.
-    #
-    # Estar em cima de um waypoint não é "sair da rota" -- é estar na rota. Sem
-    # esta condição, um personagem parado exatamente no patamar do Altar Stone
-    # (218,45), que é o ÚLTIMO waypoint do caminho, era mandado de volta ao começo
-    # do Secret Altar e refazia a pirâmide inteira por nada. E pior: como o portal
-    # do altar só é usado depois de o último waypoint ser alcançado, ele nunca
-    # chegava a clicar no Altar Stone -- ficava dando voltas na pirâmide.
-    if area in AREAS_APERTADAS and distancia > NA_ROTA:
-        primeiro = next(i for i, wp in enumerate(caminho) if wp.area == area)
-        if primeiro < escolhido:
-            motivo = (f"{motivo}; {area} é apertada e estou FORA da rota, "
-                      f"voltando ao início da área (waypoint {primeiro + 1})")
-            escolhido = primeiro
-            distancia = _distancia(pos, caminho[escolhido].pos)
-
-    return Retomada(escolhido, distancia, motivo, area_da_posicao(pos) or area)
+    """Por qual waypoint a rota deve continuar. Ver `core.rota.onde_retomar`."""
+    return rota.onde_retomar(
+        pos, caminho, indice_esperado,
+        areas_apertadas=AREAS_APERTADAS,
+        area_da_posicao=area_da_posicao,
+    )
 
 
 def houve_rollback(
@@ -744,34 +625,17 @@ def houve_rollback(
     caminho: tuple[Waypoint, ...],
     folga: int = 1,
 ) -> int | None:
-    """Detecta que o personagem voltou muito na rota (lag ou rollback).
-
-    Devolve o índice para onde ele voltou, ou None se está onde deveria. A folga
-    existe porque atravessar um waypoint correndo e reler a posição um instante
-    depois dá uma diferença pequena e normal -- só um salto de 2+ índices para
-    trás é rollback. (O usuário confirmou: o lag costuma devolver 2-3 waypoints,
-    nunca mais de 5; folga=1 pega todos.)
-    """
-    if pos is None or not caminho:
-        return None
-    (i, d) = mais_proximos(pos, caminho)[0]
-    if d > RAIO_DA_AREA:
-        return None
-    if i < indice_atual - folga:
-        return i
-    return None
+    """O personagem voltou muito na rota? Ver `core.rota.houve_rollback`."""
+    return rota.houve_rollback(indice_atual, pos, caminho, folga)
 
 
 def tolerancia_do_waypoint(wp: Waypoint, base: int, apertada: int) -> int:
-    """Tolerância de chegada, maior nas áreas de geometria apertada."""
-    if wp.pos in WAYPOINTS_PROBLEMATICOS or wp.area in AREAS_APERTADAS:
-        return max(base, apertada)
-    return base
-
-
-def como_lista(caminho: tuple[Waypoint, ...]) -> list[tuple[int, int]]:
-    """Só as coordenadas, para quem só precisa andar."""
-    return [wp.pos for wp in caminho]
+    """Tolerância de chegada, maior nas áreas de geometria apertada da BC."""
+    return rota.tolerancia_do_waypoint(
+        wp, base, apertada,
+        areas_apertadas=AREAS_APERTADAS,
+        problematicos=WAYPOINTS_PROBLEMATICOS,
+    )
 
 
 def descrever(pos: tuple[int, int] | None,

@@ -314,12 +314,26 @@ time a flag não faz nada.
 
 Mexer nestes mexe nos DOIS ecossistemas:
 
+Mexer nestes mexe nos DOIS ecossistemas:
+
 | módulo | veio de | o que NÃO subiu |
 |---|---|---|
-| `core/rota.py` *(feito)* | `bc/mapa_bc.py` | as rotas em si, o reconhecimento de lugar, a retomada |
-| `core/combate.py` *(pendente)* | `bc/combat.py` | as fases, a trava do Cemetery Guard, o Package Courage |
-| `core/navegacao.py` *(pendente)* | `bc/navigation.py` | as rotas, as áreas apertadas, os textos de busca |
-| `core/ui_do_jogo.py` *(pendente)* | `bc/ui_service.py` | quais NPCs, quais links, quais coordenadas |
+| `core/rota.py` *(feito)* | `bc/mapa_bc.py` | as rotas em si e o reconhecimento de lugar (caixa da cave, Stone City) |
+| `bot/navegacao.py` *(pendente)* | `bc/navigation.py` | as rotas, as áreas apertadas, os textos de busca |
+| `bot/combate.py` *(pendente)* | `bc/combat.py` | as fases, a trava do Cemetery Guard, o Package Courage |
+| `bot/ui_do_jogo.py` *(pendente)* | `bc/ui_service.py` | quais NPCs, quais links, quais coordenadas |
+
+**`core/` vs `bot/` não é escolha de gosto.** `core/rota.py` é função pura sobre
+coordenadas e cabe no `core/`. Navegação, combate e UI recebem `BotContext`, que
+mora em `bot/` — pôr no `core/` inverteria a dependência e tiraria a
+reusabilidade do core, e `tests/test_ecossistemas.py` reprova. `bot/` é a camada
+que o `CLAUDE.md` já define como *o SISTEMA — serve todos os ecossistemas*.
+
+**Cada mapa injeta seus dados, a regra é uma só.** `mapa_bc.onde_retomar` e
+`mapa_hh.onde_retomar` são invólucros de uma linha sobre `core.rota.onde_retomar`.
+A BC passa `AREAS_APERTADAS`; a HH **não passa**, porque a área dela é marcador —
+e mandar o bot voltar ao início da área sobre um marcador o devolveria ao
+waypoint 1 da cave a cada escorregão.
 
 ## Estado atual relevante — as REGRAS
 

@@ -17,8 +17,8 @@ as camadas de baixo, e é só isso que pode ser compartilhado:
                          É o supervisor que decide qual ecossistema roda.
     blazesbot/core/      capacidades que não sabem que ecossistema existe:
                          teclado e mouse, captura de tela, memória, log,
-                         coordenadas -- e, desde a chegada da HH, também o
-                         COMBATE, a NAVEGAÇÃO e a UI DO JOGO.
+                         coordenadas -- e, desde a chegada da HH, o MODELO DE
+                         ROTA (`core/rota.py`).
 
 Configuração global — as TECLAS, principalmente — é compartilhada de
 propósito: elas descrevem o jogo, não o ecossistema.
@@ -53,19 +53,34 @@ A PROMOÇÃO QUE A HH FORÇOU -- DEPENDÊNCIA CRUZADA, LEIA ANTES DE MEXER
 ===========================================================================
 
 A HH não pode importar de `bc/`, e duplicar o combate e a navegação é proibido
-pela diretiva de reuso. Então o que os dois usam DESCEU:
+pela diretiva de reuso. Então o que os dois usam DESCE -- e desce para DOIS
+lugares diferentes, por um motivo que não é estético:
 
-    core/combate.py      rotação de ataque, TAB confirmado pela troca de id,
-                         esperar a flag de combate baixar, curar, sentar para
-                         recuperar, pet, buffs
-    core/navegacao.py    clique de minimapa, detecção de travamento,
+    core/rota.py         o modelo de rota e a retomada: waypoint, montagem da
+                         lista, distância, vizinhos, rollback, tolerância.
+                         *Já feito.* Mora no `core/` porque é função pura sobre
+                         coordenadas: não conhece `BotContext`, nem precisa.
+
+    bot/navegacao.py     clique de minimapa, detecção de travamento,
                          destravamento pelos vizinhos, varredura em círculo,
                          manutenção de montaria e pet em movimento
-    core/ui_do_jogo.py   painel de arredores, busca por NPC, ir ao resultado,
+    bot/combate.py       rotação de ataque, TAB confirmado pela troca de id,
+                         esperar a flag de combate baixar, curar, sentar para
+                         recuperar, pet, buffs
+    bot/ui_do_jogo.py    painel de arredores, busca por NPC, ir ao resultado,
                          o par de cliques NPC+link com o diálogo conferido,
                          encostar no ponto exato antes de clicar
 
-**MEXER NESSES TRÊS MEXE NOS DOIS ECOSSISTEMAS.** O que NÃO subiu, e por quê:
+POR QUE ESSES TRÊS VÃO PARA `bot/` E NÃO PARA `core/`: os três recebem
+`BotContext`, que mora em `bot/context.py`. Pôr no `core/` faria o `core/`
+importar de `bot/` -- dependência invertida, ciclo, e o `core/` deixa de ser
+reusável fora do bot. `tests/test_ecossistemas.py` reprova isso, e com razão.
+
+E `bot/` é o lugar CERTO, não um consolo: o `CLAUDE.md` já define essa camada
+como *o SISTEMA -- serve todos os ecossistemas*. É onde o supervisor, o contexto,
+o login, o watchdog e o time já moram, pelo mesmo motivo.
+
+**MEXER NESSES QUATRO MEXE NOS DOIS ECOSSISTEMAS.** O que NÃO sobe, e por quê:
 
   * as FASES do combate. `fase_dos_guardas` e `fase_do_boss` são o roteiro da
     Bewitcher Cave; a HH tem quatro bosses em sequência. Roteiro é do

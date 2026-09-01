@@ -277,7 +277,7 @@ certo e que custaria medição para redescobrir:
 
 1. **HH é um ecossistema próprio**, `blazesbot/bot/hh/`. Não é um modo da BC:
    outra cave, outra rota, outro vendedor, outro ciclo de time.
-2. **`bc/combat.py` e `bc/navigation.py` são promovidos ao `core/`** e usados
+2. **`bc/combat.py` e `bc/navigation.py` são promovidos** e usados
    pelos dois. Decisão explícita do usuário: *"se o bc/combat.py for útil para
    esse novo, transforme ele em global e use nos 2, mas tomando cuidado para um
    não interferir no outro"*. Copiar está proibido pela Diretiva de Reuso;
@@ -289,6 +289,24 @@ certo e que custaria medição para redescobrir:
    ou seja, exatamente `viajar_para_...` + `buscar_npc` + `ir_para_resultado` +
    `garantir_coordenada_da_entrada` + `falar_com_npc`. Painel de arredores e
    diálogo de NPC são do JOGO, não da Bewitcher Cave.
+
+   **CORREÇÃO DO PLANO (mesmo dia): o destino é `bot/`, não `core/`.** O
+   relatório inicial disse `core/` para os três módulos grandes, e está errado —
+   erro de arquitetura, não de escrita. `Navigator`, `CombatEngine` e `UIService`
+   recebem `BotContext`, que mora em `bot/context.py`; levá-los para o `core/`
+   faria o `core/` importar de `bot/`: dependência invertida, ciclo, e o `core/`
+   deixa de ser reusável fora do bot. É exatamente o que
+   `test_o_core_nao_conhece_ecossistema_nenhum` existe para reprovar, e a regra
+   está certa.
+
+   O destino é **`blazesbot/bot/`**, e não como consolo: o `CLAUDE.md` já define
+   essa camada como *o SISTEMA — serve todos os ecossistemas*, e é onde o
+   supervisor, o contexto, o login, o watchdog e o `TeamService` já moram, pelo
+   mesmo motivo. O único que **fica no `core/` é o `core/rota.py`**, porque é
+   função pura sobre coordenadas: não conhece `BotContext` e não precisa.
+
+   A lição, para a próxima promoção: *o destino de um módulo é decidido pelo que
+   ele IMPORTA, não pelo quanto ele parece genérico.*
 4. **Nada é recriado.** Diretiva do usuário: *"tudo que já existir no nosso
    BlazesBot você não precisa recriar, apenas utilizar onde necessário."*
 5. **O que fica em cada lado da promoção** está em `docs/INVARIANTES.md`,

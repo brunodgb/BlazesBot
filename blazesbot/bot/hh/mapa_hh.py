@@ -48,8 +48,17 @@ Ver `docs/decisoes/hh.md`, seção 9, para a lista completa do que falta medir.
 """
 from __future__ import annotations
 
-from ...core.rota import Waypoint, distancia
+from ...core import rota
+
+# REEXPORTAÇÃO PROPOSITAL (a forma `X as X` é o que diz isso ao ruff): a HH
+# chama estes nomes por `mapa_hh.`, igual à BC por `mapa_bc.`. A regra mora em
+# `core/rota.py`; aqui ficam só os dados desta cave.
+from ...core.rota import Retomada as Retomada
+from ...core.rota import Waypoint as Waypoint
+from ...core.rota import distancia as distancia
+from ...core.rota import mais_proximos as mais_proximos
 from ...core.rota import montar as _wp
+from ...core.rota import vizinhos_na_rota as vizinhos_na_rota
 
 # ---------------------------------------------------------------------------
 # Nomes de lugar
@@ -382,9 +391,55 @@ def esta_dentro_da_hh(pos: tuple[int, int] | None) -> bool:
     return pos[0] > 0 and pos[1] > 0
 
 
+# ---------------------------------------------------------------------------
+# Retomada de rota -- a REGRA mora em `core/rota.py`; aqui só os dados da HH
+# ---------------------------------------------------------------------------
+#
+# O par abaixo é o espelho de `mapa_bc.onde_retomar` / `tolerancia_do_waypoint`, e
+# é assim que a HH usa o mesmo motor de rota da BC sem importar nada dela.
+#
+# A DIFERENÇA CONTRA A BC, E ELA É DE PROPÓSITO: aqui NÃO se passa
+# `areas_apertadas` nem `area_da_posicao`. As áreas internas desta cave não foram
+# medidas (ver o cabeçalho do módulo), e o recuo "volte ao início da área" só faz
+# sentido quando se sabe onde a área começa. Sem esse dado, a retomada volta ao
+# waypoint mais próximo -- que é o comportamento certo -- em vez de agir sobre um
+# nome que é marcador.
+#
+# Quando a área for medida, é aqui que ela entra, e o motor não muda.
+
+
+def onde_retomar(
+    pos: tuple[int, int] | None,
+    caminho: tuple[Waypoint, ...],
+    indice_esperado: int = 0,
+) -> Retomada:
+    """Por qual waypoint a rota deve continuar. Ver `core.rota.onde_retomar`."""
+    return rota.onde_retomar(pos, caminho, indice_esperado)
+
+
+def houve_rollback(
+    indice_atual: int,
+    pos: tuple[int, int] | None,
+    caminho: tuple[Waypoint, ...],
+    folga: int = 1,
+) -> int | None:
+    """O personagem voltou muito na rota? Ver `core.rota.houve_rollback`."""
+    return rota.houve_rollback(indice_atual, pos, caminho, folga)
+
+
+def tolerancia_do_waypoint(wp: Waypoint, base: int, apertada: int) -> int:
+    """Tolerância de chegada, maior nos waypoints onde os mobs seguram o char.
+
+    A HH não tem área apertada declarada -- tem o ponto (232, 188), onde o bot
+    Lua trata bloqueio de mob em dois lugares distintos.
+    """
+    return rota.tolerancia_do_waypoint(
+        wp, base, apertada, problematicos=WAYPOINTS_PROBLEMATICOS)
+
+
 def como_lista(caminho: tuple[Waypoint, ...]) -> list[tuple[int, int]]:
     """Só as coordenadas, para quem não precisa da área."""
-    return [wp.pos for wp in caminho]
+    return rota.como_lista(caminho)
 
 
 def area_medida() -> bool:

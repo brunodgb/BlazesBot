@@ -68,7 +68,7 @@ ligar código não testado.
 
 ## Números medidos -- tolerância, limiar, teto, cadência
 
-492 constantes, agrupadas por arquivo.
+493 constantes, agrupadas por arquivo.
 
 | constante | valor | onde | quem lê | porquê (resumo) |
 |---|---|---|---|---|
@@ -198,21 +198,19 @@ ligar código não testado.
 | `RAIO_DA_CHEGADA` | `40.0` | [blazesbot/bot/bc/localizacao.py:79](blazesbot/bot/bc/localizacao.py#L79) | — | Quão perto da coordenada de chegada da cave conta como "entrei". |
 | `SALTO_DE_TELEPORTE` | `150.0` | [blazesbot/bot/bc/localizacao.py:76](blazesbot/bot/bc/localizacao.py#L76) | — | Salto de posição que caracteriza teleporte (entrada na cave, portal do altar, |
 | `SEGUNDOS_PARA_DESCONFIAR` | `3.0` | [blazesbot/bot/bc/localizacao.py:72](blazesbot/bot/bc/localizacao.py#L72) | — | Tempo com o nome ilegível a partir do qual o bot passa a tratar a fonte de |
-| `FOLGA_DA_CAIXA` | `25` | [blazesbot/bot/bc/mapa_bc.py:407](blazesbot/bot/bc/mapa_bc.py#L407) | mapa_hh.py | Caixa que contém TODO o interior da cave, com folga. |
-| `MARGEM_PARA_CONTRADIZER` | `40` | [blazesbot/bot/bc/mapa_bc.py:443](blazesbot/bot/bc/mapa_bc.py#L443) | — | Folga exigida para a coordenada CONTRADIZER o nome lido da memória. Estar um |
-| `NA_ROTA` | `12.0` | [blazesbot/bot/bc/mapa_bc.py:580](blazesbot/bot/bc/mapa_bc.py#L580) | routine.py | Distância até o waypoint mais próximo abaixo da qual o personagem é considerado |
-| `NOME_DE_STONE_CITY` | `'Stone City'` | [blazesbot/bot/bc/mapa_bc.py:469](blazesbot/bot/bc/mapa_bc.py#L469) | — | — |
-| `PRECISAO_NO_PATAMAR_DO_ALTAR` | `0.7` | [blazesbot/bot/bc/mapa_bc.py:118](blazesbot/bot/bc/mapa_bc.py#L118) | routine.py, ui_service.py | Quão perto de (220,43) o clique no Altar Stone ainda acerta. |
-| `PRECISAO_NO_PONTO_DA_FAY` | `1.5` | [blazesbot/bot/bc/mapa_bc.py:231](blazesbot/bot/bc/mapa_bc.py#L231) | ui_service.py | O DEFEITO MEDIDO, 25/08/2026 -- COM PRINT |
-| `PRECISAO_NO_PONTO_DA_SAIDA` | `0.7` | [blazesbot/bot/bc/mapa_bc.py:185](blazesbot/bot/bc/mapa_bc.py#L185) | routine.py, ui_service.py | Precisão EXIGIDA no ponto da saída, e ela é UMA SÓ. |
-| `PRECISAO_NO_PONTO_DO_VENDEDOR` | `0.7` | [blazesbot/bot/bc/mapa_bc.py:257](blazesbot/bot/bc/mapa_bc.py#L257) | amostragem_de_cliques.py, vendor.py, coords.py | Precisão EXIGIDA no ponto do vendedor, e ela é UMA SÓ. |
-| `RAIO_DA_AREA` | `55.0` | [blazesbot/bot/bc/mapa_bc.py:574](blazesbot/bot/bc/mapa_bc.py#L574) | — | Distância máxima até um waypoint para aceitar a área dele como resposta. |
-| `SEGUNDOS_DESENCALHANDO_O_ALTAR` | `3` | [blazesbot/bot/bc/mapa_bc.py:145](blazesbot/bot/bc/mapa_bc.py#L145) | routine.py | Quanto esperar no ponto de vai-e-volta antes de retornar. |
-| `SEGUNDOS_POR_TENTATIVA_NA_FAY` | `1.8` | [blazesbot/bot/bc/mapa_bc.py:238](blazesbot/bot/bc/mapa_bc.py#L238) | ui_service.py | — |
-| `SEGUNDOS_POR_TENTATIVA_NA_SAIDA` | `1.8` | [blazesbot/bot/bc/mapa_bc.py:191](blazesbot/bot/bc/mapa_bc.py#L191) | routine.py | — |
-| `TENTATIVAS_DE_ENCOSTAR_NA_FAY` | `6` | [blazesbot/bot/bc/mapa_bc.py:237](blazesbot/bot/bc/mapa_bc.py#L237) | ui_service.py | Quantas tentativas de encostar no ponto da Fay antes de desistir. |
-| `TENTATIVAS_DE_ENCOSTAR_NA_SAIDA` | `6` | [blazesbot/bot/bc/mapa_bc.py:190](blazesbot/bot/bc/mapa_bc.py#L190) | routine.py | Orçamento para encostar no ponto da saída. Mesmo desenho do patamar do Altar |
-| `X_MAXIMO_DENTRO_DA_CAVE` | `500` | [blazesbot/bot/bc/mapa_bc.py:425](blazesbot/bot/bc/mapa_bc.py#L425) | — | O X MÁXIMO QUE PODE EXISTIR DENTRO DA CAVE. |
+| `FOLGA_DA_CAIXA` | `25` | [blazesbot/bot/bc/mapa_bc.py:419](blazesbot/bot/bc/mapa_bc.py#L419) | mapa_hh.py | Caixa que contém TODO o interior da cave, com folga. |
+| `MARGEM_PARA_CONTRADIZER` | `40` | [blazesbot/bot/bc/mapa_bc.py:455](blazesbot/bot/bc/mapa_bc.py#L455) | — | Folga exigida para a coordenada CONTRADIZER o nome lido da memória. Estar um |
+| `NOME_DE_STONE_CITY` | `'Stone City'` | [blazesbot/bot/bc/mapa_bc.py:481](blazesbot/bot/bc/mapa_bc.py#L481) | — | — |
+| `PRECISAO_NO_PATAMAR_DO_ALTAR` | `0.7` | [blazesbot/bot/bc/mapa_bc.py:130](blazesbot/bot/bc/mapa_bc.py#L130) | routine.py, ui_service.py | Quão perto de (220,43) o clique no Altar Stone ainda acerta. |
+| `PRECISAO_NO_PONTO_DA_FAY` | `1.5` | [blazesbot/bot/bc/mapa_bc.py:243](blazesbot/bot/bc/mapa_bc.py#L243) | ui_service.py | O DEFEITO MEDIDO, 25/08/2026 -- COM PRINT |
+| `PRECISAO_NO_PONTO_DA_SAIDA` | `0.7` | [blazesbot/bot/bc/mapa_bc.py:197](blazesbot/bot/bc/mapa_bc.py#L197) | routine.py, ui_service.py | Precisão EXIGIDA no ponto da saída, e ela é UMA SÓ. |
+| `PRECISAO_NO_PONTO_DO_VENDEDOR` | `0.7` | [blazesbot/bot/bc/mapa_bc.py:269](blazesbot/bot/bc/mapa_bc.py#L269) | amostragem_de_cliques.py, vendor.py, coords.py | Precisão EXIGIDA no ponto do vendedor, e ela é UMA SÓ. |
+| `SEGUNDOS_DESENCALHANDO_O_ALTAR` | `3` | [blazesbot/bot/bc/mapa_bc.py:157](blazesbot/bot/bc/mapa_bc.py#L157) | routine.py | Quanto esperar no ponto de vai-e-volta antes de retornar. |
+| `SEGUNDOS_POR_TENTATIVA_NA_FAY` | `1.8` | [blazesbot/bot/bc/mapa_bc.py:250](blazesbot/bot/bc/mapa_bc.py#L250) | ui_service.py | — |
+| `SEGUNDOS_POR_TENTATIVA_NA_SAIDA` | `1.8` | [blazesbot/bot/bc/mapa_bc.py:203](blazesbot/bot/bc/mapa_bc.py#L203) | routine.py | — |
+| `TENTATIVAS_DE_ENCOSTAR_NA_FAY` | `6` | [blazesbot/bot/bc/mapa_bc.py:249](blazesbot/bot/bc/mapa_bc.py#L249) | ui_service.py | Quantas tentativas de encostar no ponto da Fay antes de desistir. |
+| `TENTATIVAS_DE_ENCOSTAR_NA_SAIDA` | `6` | [blazesbot/bot/bc/mapa_bc.py:202](blazesbot/bot/bc/mapa_bc.py#L202) | routine.py | Orçamento para encostar no ponto da saída. Mesmo desenho do patamar do Altar |
+| `X_MAXIMO_DENTRO_DA_CAVE` | `500` | [blazesbot/bot/bc/mapa_bc.py:437](blazesbot/bot/bc/mapa_bc.py#L437) | — | O X MÁXIMO QUE PODE EXISTIR DENTRO DA CAVE. |
 | `ALCANCE_DA_EXPANSAO` | `4` | [blazesbot/bot/bc/navigation.py:199](blazesbot/bot/bc/navigation.py#L199) | — | ATÉ ONDE A MANOBRA SE AFASTA NA ROTA quando os vizinhos imediatos falham. |
 | `AVISAR_A_PE_NO_TRAJETO` | `4.0` | [blazesbot/bot/bc/navigation.py:297](blazesbot/bot/bc/navigation.py#L297) | — | Depois de quanto tempo a pé, no meio de um trajeto, o log passa a dizer isso em |
 | `CICLOS_ANTES_DE_DESTRAVAR` | `2` | [blazesbot/bot/bc/navigation.py:343](blazesbot/bot/bc/navigation.py#L343) | — | Depois de quantos ciclos sem montar o portao para de insistir MUDO e vai |
@@ -331,17 +329,17 @@ ligar código não testado.
 | `TOLERANCIA_DA_CAMINHADA_ATE_O_VENDEDOR` | `2` | [blazesbot/bot/bc/vendor.py:155](blazesbot/bot/bc/vendor.py#L155) | — | Folga da CAMINHADA até o vendedor. O painel de arredores caminha até perto e |
 | `FATIA_DA_ESPERA` | `0.25` | [blazesbot/bot/context.py:211](blazesbot/bot/context.py#L211) | petbug.py | Fatia máxima de sono dentro de um `tick`. |
 | `TENTATIVAS_DE_AJUSTE_DA_CAMERA` | `3` | [blazesbot/bot/context.py:244](blazesbot/bot/context.py#L244) | — | Quantas vezes insistir para a câmera ficar no ângulo certo. |
-| `AREA_INTERNA_NAO_MEDIDA` | `'HH (área não medida)'` | [blazesbot/bot/hh/mapa_hh.py:68](blazesbot/bot/hh/mapa_hh.py#L68) | — | Marcador para a área que ainda não foi medida. Ver o cabeçalho do módulo: é |
-| `BOSS_1` | `'Fa-Yuan'` | [blazesbot/bot/hh/mapa_hh.py:147](blazesbot/bot/hh/mapa_hh.py#L147) | — | Os quatro bosses |
-| `BOSS_2` | `'Dupla'` | [blazesbot/bot/hh/mapa_hh.py:148](blazesbot/bot/hh/mapa_hh.py#L148) | — | — |
-| `BOSS_3` | `'Green Robmaster'` | [blazesbot/bot/hh/mapa_hh.py:149](blazesbot/bot/hh/mapa_hh.py#L149) | — | — |
-| `BOSS_4` | `'Purple'` | [blazesbot/bot/hh/mapa_hh.py:150](blazesbot/bot/hh/mapa_hh.py#L150) | — | — |
-| `DESTINO_DO_TRANSPORTE` | `'West Suburb of Stone City'` | [blazesbot/bot/hh/mapa_hh.py:94](blazesbot/bot/hh/mapa_hh.py#L94) | — | O destino no diálogo do Fay. **SÓ APARECE ROLANDO A LISTA ATÉ O FIM.** |
-| `FOLGA_DA_CAIXA` | `25` | [blazesbot/bot/hh/mapa_hh.py:346](blazesbot/bot/hh/mapa_hh.py#L346) | mapa_bc.py | A caixa que envolve o interior da cave |
-| `GRUPO_DOS_ARREDORES` | `'Outside Black Wind Camp'` | [blazesbot/bot/hh/mapa_hh.py:64](blazesbot/bot/hh/mapa_hh.py#L64) | — | O grupo do painel de arredores naquele lugar. Serve para conferir que o painel |
-| `LUGAR_FORA_DA_HH` | `'Black Wind Camp Dungeon'` | [blazesbot/bot/hh/mapa_hh.py:60](blazesbot/bot/hh/mapa_hh.py#L60) | — | A zona de FORA da cave, lida da tela em 01/09/2026 (o rótulo do canto superior |
-| `NPC_DA_ENTRADA` | `'Elite Axe Monk Soldier'` | [blazesbot/bot/hh/mapa_hh.py:119](blazesbot/bot/hh/mapa_hh.py#L119) | — | O NPC com quem se fala para entrar na cave. |
-| `PRECISAO_NO_PONTO_DA_ENTRADA` | `1.5` | [blazesbot/bot/hh/mapa_hh.py:116](blazesbot/bot/hh/mapa_hh.py#L116) | — | Folga aceita para considerar que já se está no ponto de conversa. |
+| `AREA_INTERNA_NAO_MEDIDA` | `'HH (área não medida)'` | [blazesbot/bot/hh/mapa_hh.py:77](blazesbot/bot/hh/mapa_hh.py#L77) | — | Marcador para a área que ainda não foi medida. Ver o cabeçalho do módulo: é |
+| `BOSS_1` | `'Fa-Yuan'` | [blazesbot/bot/hh/mapa_hh.py:156](blazesbot/bot/hh/mapa_hh.py#L156) | — | Os quatro bosses |
+| `BOSS_2` | `'Dupla'` | [blazesbot/bot/hh/mapa_hh.py:157](blazesbot/bot/hh/mapa_hh.py#L157) | — | — |
+| `BOSS_3` | `'Green Robmaster'` | [blazesbot/bot/hh/mapa_hh.py:158](blazesbot/bot/hh/mapa_hh.py#L158) | — | — |
+| `BOSS_4` | `'Purple'` | [blazesbot/bot/hh/mapa_hh.py:159](blazesbot/bot/hh/mapa_hh.py#L159) | — | — |
+| `DESTINO_DO_TRANSPORTE` | `'West Suburb of Stone City'` | [blazesbot/bot/hh/mapa_hh.py:103](blazesbot/bot/hh/mapa_hh.py#L103) | — | O destino no diálogo do Fay. **SÓ APARECE ROLANDO A LISTA ATÉ O FIM.** |
+| `FOLGA_DA_CAIXA` | `25` | [blazesbot/bot/hh/mapa_hh.py:355](blazesbot/bot/hh/mapa_hh.py#L355) | mapa_bc.py | A caixa que envolve o interior da cave |
+| `GRUPO_DOS_ARREDORES` | `'Outside Black Wind Camp'` | [blazesbot/bot/hh/mapa_hh.py:73](blazesbot/bot/hh/mapa_hh.py#L73) | — | O grupo do painel de arredores naquele lugar. Serve para conferir que o painel |
+| `LUGAR_FORA_DA_HH` | `'Black Wind Camp Dungeon'` | [blazesbot/bot/hh/mapa_hh.py:69](blazesbot/bot/hh/mapa_hh.py#L69) | — | A zona de FORA da cave, lida da tela em 01/09/2026 (o rótulo do canto superior |
+| `NPC_DA_ENTRADA` | `'Elite Axe Monk Soldier'` | [blazesbot/bot/hh/mapa_hh.py:128](blazesbot/bot/hh/mapa_hh.py#L128) | — | O NPC com quem se fala para entrar na cave. |
+| `PRECISAO_NO_PONTO_DA_ENTRADA` | `1.5` | [blazesbot/bot/hh/mapa_hh.py:125](blazesbot/bot/hh/mapa_hh.py#L125) | — | Folga aceita para considerar que já se está no ponto de conversa. |
 | `CLIQUES_POR_MODO` | `40` | [blazesbot/bot/instrumentar_clique.py:105](blazesbot/bot/instrumentar_clique.py#L105) | — | Quantos cliques por modo. 40 e não 20: aqui não se está separando "funciona" de |
 | `DIFERENCA_QUE_E_EFEITO` | `3.0` | [blazesbot/bot/instrumentar_clique.py:118](blazesbot/bot/instrumentar_clique.py#L118) | teste_do_cursor.py | — |
 | `DISTANCIA_MINIMA_DO_ALVO` | `120` | [blazesbot/bot/instrumentar_clique.py:119](blazesbot/bot/instrumentar_clique.py#L119) | teste_do_cursor.py | — |
@@ -506,6 +504,9 @@ ligar código não testado.
 | `MOTIVO_DESCONHECIDO` | `'O jogo parou de responder'` | [blazesbot/core/quedas.py:92](blazesbot/core/quedas.py#L92) | — | — |
 | `QUALIDADE_DO_JPEG` | `85` | [blazesbot/core/quedas.py:70](blazesbot/core/quedas.py#L70) | — | Qualidade do JPEG. O print aqui é para OLHO HUMANO ler um aviso, não para |
 | `DESLOCAMENTO_6139_PARA_6400` | `96` | [blazesbot/core/rebase.py:91](blazesbot/core/rebase.py#L91) | — | Deslocamento MEDIDO entre a versão 6139 e a 6400 do cliente, em dois |
+| `EMPATE_ENTRE_VIZINHOS` | `8.0` | [blazesbot/core/rota.py:141](blazesbot/core/rota.py#L141) | — | Diferença de distância abaixo da qual dois waypoints VIZINHOS contam como |
+| `NA_ROTA` | `12.0` | [blazesbot/core/rota.py:137](blazesbot/core/rota.py#L137) | mapa_bc.py, routine.py | Distância até o waypoint mais próximo abaixo da qual o personagem é considerado |
+| `RAIO_DA_AREA` | `55.0` | [blazesbot/core/rota.py:131](blazesbot/core/rota.py#L131) | mapa_bc.py | Distância máxima até um waypoint para aceitar a área dele como resposta. |
 | `DIAS_RETIDOS` | `7` | [blazesbot/core/stats_diarias.py:49](blazesbot/core/stats_diarias.py#L49) | — | Quantos dias de histórico manter (hoje + os 6 anteriores = uma semana). |
 | `CASAS_DO_DESENHO` | `10` | [blazesbot/core/target_hybrid.py:115](blazesbot/core/target_hybrid.py#L115) | — | Casas do desenho da barra no log. |
 | `FAIXA_PARA_OLHAR_O_MARCADOR` | `0.1` | [blazesbot/core/target_hybrid.py:104](blazesbot/core/target_hybrid.py#L104) | — | Abaixo desta fração de vida vale a pena procurar o `EnemyDead.png`. |
