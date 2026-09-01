@@ -45,7 +45,7 @@ ligar código não testado.
 | `TAB_ATE_SAIR_DE_COMBATE_NOS_GUARDAS` | `True` | [blazesbot/bot/bc/combat.py:599](blazesbot/bot/bc/combat.py#L599) | — | O TETO DE TAB DEIXA DE BARRAR A TROCA ENQUANTO A FLAG ESTIVER ALTA. |
 | `USAR_BREAK_SOUL_SO_NA_FASE_2` | `True` | [blazesbot/bot/bc/combat.py:278](blazesbot/bot/bc/combat.py#L278) | — | BREAK SOUL -- SÓ NA SEGUNDA FASE DO BOSS |
 | `USAR_IMAGEM_DA_FASE_2` | `True` | [blazesbot/bot/bc/combat.py:871](blazesbot/bot/bc/combat.py#L871) | — | A SEGUNDA FASE DO BOSS TAMBÉM É VISTA NA TELA |
-| `USAR_PORTAO_DE_NOME` | `True` | [blazesbot/bot/bc/combat.py:817](blazesbot/bot/bc/combat.py#L817) | target_hybrid.py | RELIGADO EM 25/08/2026 -- O NOME VOLTOU |
+| `USAR_PORTAO_DE_NOME` | `True` | [blazesbot/bot/bc/combat.py:817](blazesbot/bot/bc/combat.py#L817) | memory.py, target_hybrid.py | RELIGADO EM 25/08/2026 -- O NOME VOLTOU |
 | `USAR_TAB_NOS_GUARDAS` | `True` | [blazesbot/bot/bc/combat.py:631](blazesbot/bot/bc/combat.py#L631) | diagnostico_do_link.py, inputs.py | >>>  INTERRUPTOR DO EXPERIMENTO -- TROCA DE ALVO POR TAB NOS GUARDAS  <<< |
 | `ATIVADO` | `True` | [blazesbot/bot/bc/diagnostico_do_link.py:62](blazesbot/bot/bc/diagnostico_do_link.py#L62) | deletador.py, supervisor.py, esconder_jogadores.py, petbug.py | Interruptor, no padrão do `USAR_TAB_NOS_GUARDAS`: desligar é trocar uma |
 | `CIRCULO_POR_RAIO` | `True` | [blazesbot/bot/bc/navigation.py:246](blazesbot/bot/bc/navigation.py#L246) | — | True = raio por raio (1,2,3,5; em cada raio os 8 pontos); False = bússola por |

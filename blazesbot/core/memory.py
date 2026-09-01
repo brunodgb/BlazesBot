@@ -1212,15 +1212,54 @@ class Memory:
 
         Inline em umas, PONTEIRO em outras -- o boss é do segundo tipo, e foi por
         isso que a busca por string não o encontrava.
+
+        =================================================================
+        O PONTEIRO VEM PRIMEIRO, E ISSO É MEDIÇÃO
+        =================================================================
+
+        A ordem já foi a inversa, e o nome saía ERRADO em 79% das leituras.
+        Medido em 01/09/2026, 38 amostras do mesmo mob:
+
+            'Burning Deadwood'   8 vezes   (certo)
+            'o1Shaman'  '1Shaman'  30 vezes   (lixo)
+
+        Os bytes explicam. `+0xBC` guarda um PONTEIRO, e logo depois dele há
+        um buffer com resto de OUTRA entidade:
+
+            +0x0B8  FF FF FF FF | D8 6F 82 31 | 53 68 61 6D 61 6E 00
+                                  ^ ponteiro    ^ buffer velho: "Shaman"
+
+        Ler inline devolve os bytes do próprio ponteiro seguidos do buffer:
+        `D8 6F 82 31` + `Shaman` = `.o.1` + `Shaman` = **'o1Shaman'**. É a
+        origem de toda a família (`'X1Shaman'`, `'71Shaman'`, `'L4Shaman'`,
+        `'6P4Shaman'`...): o prefixo varia porque o PONTEIRO varia.
+
+        E `_parece_nome` APROVA esse lixo -- `_CARACTERES_DE_NOME` aceita
+        dígito, e tem de aceitar: `Tsuki69` e `WizzOfBlazes4` são nomes de
+        jogador legítimos. Então não há régua que separe os dois casos, e a
+        única correção certa é a ORDEM.
+
+        AS DUAS VIAS CONTINUAM NECESSÁRIAS. Na medição, ~80% dos nomes saíram
+        pelo ponteiro e ~20% legitimamente inline. Tirar o ramo inline
+        quebraria essas.
+
+        PRECISÃO MEDIDA: 21% -> 100% (2.481 leituras, 5 baterias).
+        Detalhe em `Teste-Ponteiros/RESULTADOS.md`, seções 11.3 e 13.6.
+
+        POR QUE ISSO NÃO ERA COSMÉTICO: `combat.py` tem
+        `USAR_PORTAO_DE_NOME = True`, e o nome alimenta `_veredito_do_alvo`
+        (o portão que existe para evitar "atacando mob que não é o esperado")
+        e `_e_o_cemetery_guard`. Nome errado em 79% das leituras estava
+        decidindo combate.
         """
-        direto = self.read_string_direct(obj + OFF_NAME, length=32)
-        if direto and self._parece_nome(direto):
-            return direto
         ponteiro = self.read_uint(obj + OFF_NAME)
         if ponteiro is not None and 0x10000 <= ponteiro < 0x8000_0000:
             pelo_ponteiro = self.read_string_direct(ponteiro, length=32)
             if pelo_ponteiro and self._parece_nome(pelo_ponteiro):
                 return pelo_ponteiro
+        direto = self.read_string_direct(obj + OFF_NAME, length=32)
+        if direto and self._parece_nome(direto):
+            return direto
         return None
 
     def dialog_open(self) -> bool | None:

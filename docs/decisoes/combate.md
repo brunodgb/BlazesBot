@@ -1447,3 +1447,76 @@ resposta honesta"*.
 É a terceira vez nesta investigação que uma **frase confiante sobre a coisa
 errada** custa tempo — as outras duas foram o rótulo `"provável ID"` (que era
 vtable) e o `"ESTE É O CAMINHO"`. Rótulo errado custa mais que rótulo nenhum.
+
+## O nome do alvo saía errado em 79% das leituras (01/09/2026)
+
+`+0xBC` da entidade guarda um **PONTEIRO** para o nome, e logo depois dele há um
+buffer com resto de OUTRA entidade:
+
+```
++0x0B8  FF FF FF FF | D8 6F 82 31 | 53 68 61 6D 61 6E 00
+                      ^ ponteiro    ^ buffer velho: "Shaman"
+```
+
+`_nome_da_entidade` tentava o **inline primeiro**. Ler inline devolve os bytes do
+próprio ponteiro seguidos do buffer: `D8 6F 82 31` + `Shaman` = `.o.1Shaman`,
+que sai como **`'o1Shaman'`**. É a origem de toda a família de nomes corrompidos
+observada nos logs — `'X1Shaman'`, `'0x1Shaman'`, `'71Shaman'`, `'L4Shaman'`,
+`'6P4Shaman'`, `'8i1Shaman'`, `'R1Shaman'`: **o prefixo varia porque o PONTEIRO
+varia**, e o sufixo é sempre o mesmo buffer velho.
+
+### A medição
+
+38 amostras do mesmo mob, com o bot rodando:
+
+| o que a produção devolveu | vezes |
+|---|---|
+| `'Burning Deadwood'` (certo) | 8 |
+| `'o1Shaman'` / `'1Shaman'` (lixo) | 30 |
+
+| forma de ler | nome plausível |
+|---|---|
+| inline primeiro (como estava) | **8/38 — 21%** |
+| desreferenciar `+0xBC` primeiro | **38/38 — 100%** |
+
+Confirmado depois em **2.481 leituras** ao longo de 5 baterias: 100%, com
+**zero divergência** e o id do objeto conferindo em todas.
+
+### Por que a régua não resolve, e a ordem sim
+
+`_parece_nome` **aprova** `'o1Shaman'` porque `_CARACTERES_DE_NOME` aceita
+dígito — e **tem de aceitar**: `Tsuki69` e `WizzOfBlazes4` são nomes de jogador
+legítimos. Não existe régua que separe `'o1Shaman'` de `'Tsuki69'` sem quebrar o
+segundo. Logo a única correção certa é a **ORDEM**, não o filtro.
+
+### As duas vias continuam necessárias
+
+Na medição, **~80% dos nomes saíram pelo ponteiro e ~20% legitimamente inline**.
+O docstring original já dizia *"Inline em umas, PONTEIRO em outras"* — estava
+certo sobre a existência dos dois ramos e errado só sobre a prioridade. Tirar o
+ramo inline quebraria um quinto das leituras.
+
+### Por que isso não era cosmético
+
+O docstring de `_parece_nome` afirmava: *"nenhuma decisão do bot depende dele: o
+nome só aparece em diagnóstico e log."* **Isso deixou de ser verdade** quando
+`USAR_PORTAO_DE_NOME` foi religado em 25/08/2026. O nome alimenta:
+
+- `_veredito_do_alvo(alvo_esperado)` — o portão que existe justamente para
+  evitar *"atacando mob que não é o esperado"*;
+- `_e_o_cemetery_guard()` — decide travar ou destravar.
+
+Um nome errado em 79% das leituras estava alimentando essas duas decisões.
+
+### A lição de método
+
+A ordem errada ficou invisível porque a função **sempre devolvia algo
+plausível**, e o lixo até compartilhava o sufixo com o nome verdadeiro
+(`o1Shaman` × `Odd Shaman`) — parecia quase-acerto, não ramo errado. Em cadeia
+`tenta A, senão B`, é a **permissividade da régua** que decide qual ramo roda:
+régua que aceita a falha de A transforma B em código morto, e quem chama recebe
+uma resposta errada plausível em vez de erro. Medir a **distribuição dos ramos**
+teria mostrado o defeito no primeiro log.
+
+Bancada, logs e matriz completa: `Teste-Ponteiros/RESULTADOS.md`, seções 11.3,
+12.5 e 13.6.
