@@ -530,3 +530,53 @@ def test_aperta_a_cura_ate_a_vida_anunciada_chegar_no_alvo():
 
     assert jogo.curas >= 2
     assert f.curas == 1
+
+# ---------------------------------------------------------------------------
+# A BATIDA NÃO PODE PARAR ENQUANTO ELA CURA -- 01/09/2026
+# ---------------------------------------------------------------------------
+#
+# A batida ficava só no topo do laço externo, e a Fada não volta lá enquanto
+# cura. Medido no log, com 6 s entre as duas linhas:
+#
+#     02:27:15  Pedi cura à Fada (vida 24%)
+#     02:27:15  FADA: curando BlazesAPP1 até 90%
+#     02:27:21  A Fada parou de responder -- vou de poção
+#     02:27:21  FADA: BlazesAPP1 curado (100%)
+#
+# A vítima bebeu poção ENQUANTO ESTAVA SENDO CURADA. Tendo Fada de pé, ela tem
+# de ser a única fonte de cura do time.
+
+def test_toda_espera_bate_no_mural():
+    """Não importa onde ela esteja: se está esperando, está viva."""
+    jogo = _Jogo()
+    f = _fada(jogo)
+    mural.esquecer_fada("fada")
+    assert mural.fada_de_pe("fada") is False
+    f._dormir(0)
+    assert mural.fada_de_pe("fada") is True
+
+
+def test_a_batida_continua_durante_a_cura():
+    """É o caso exato do log: curar demora, e a vítima não pode desistir."""
+    jogo = _Jogo(vidas=[{"nome": "Aliado", "hp": 300}])
+    jogo.id_por_slot = {0: 777}
+    jogo.cura_sobe = 1
+    mural.publicar_id("aliado", 777)
+    mural.publicar_estado("aliado", max_hp=1000)
+    mural.pedir_cura("aliado", 10.0)      # precisa de várias curas
+    f = _fada(jogo, membros=("fada", "aliado"))
+
+    batidas = []
+    original = f._dormir_de_verdade
+
+    def espiar(segundos):
+        batidas.append(mural.fada_de_pe("fada"))
+        mural.esquecer_fada("fada")       # some a cada espera...
+        return original(segundos)
+
+    f._dormir_de_verdade = espiar
+    f._uma_volta()
+
+    # ...e mesmo assim TODA espera encontrou a batida recém-dada.
+    assert batidas, "a cura não esperou nenhuma vez"
+    assert all(batidas), "houve espera sem batida -- a vítima desistiria"

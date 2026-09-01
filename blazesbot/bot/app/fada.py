@@ -154,7 +154,18 @@ class FadaDoTime:
         self._membros_do_time = membros_do_time
         self._nick_de = nick_de
         self._continuar = continuar
-        self._dormir = dormir
+        # TODA ESPERA BATE NO MURAL.
+        #
+        # A batida ficava só no topo do laço externo, e a Fada não volta lá
+        # enquanto cura -- ela fica até `TETO_DA_CURA_SEGUNDOS` dentro do laço
+        # de cura. Resultado medido em campo (01/09/2026): a vítima via 5 s de
+        # silêncio, concluía "a Fada sumiu" e bebia poção **enquanto estava
+        # sendo curada**. O log mostrou as duas linhas com 6 s de diferença.
+        #
+        # Embrulhar a espera resolve na raiz: não importa em que ponto do código
+        # ela esteja, se ela está esperando é porque está viva e trabalhando.
+        self._dormir_de_verdade = dormir
+        self._dormir = self._dormir_batendo
         self._pedir_pct = pedir_pct
         self._parar_pct = parar_pct
         self.mana_para_sentar = mana_para_sentar
@@ -169,6 +180,11 @@ class FadaDoTime:
         self._tentativas: dict[str, int] = {}
         self._sentada = False
         self._avisou_sem_time = False
+
+    def _dormir_batendo(self, segundos: float) -> bool:
+        """Espera, batendo no mural antes. Ver o porquê no `__init__`."""
+        self.mural.bater_fada(self.meu_login)
+        return self._dormir_de_verdade(segundos)
 
     # -- o laço ------------------------------------------------------------
 

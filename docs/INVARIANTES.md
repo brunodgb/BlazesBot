@@ -211,8 +211,12 @@ time a flag não faz nada.
   entre o clique e a memória virar. Perguntar antes disso lê o alvo ANTERIOR.
 - **A FADA FICA FORA DA LARGADA**, da macro e da sincronia. Contá-la como
   membro trava o time esperando uma confirmação que nunca vem.
-- **SEM FADA DE PÉ, A POÇÃO VOLTA.** "De pé" é a batida dela no mural, e essa
-  batida sai de DENTRO do laço que cura — nunca de uma checagem externa.
+- **TENDO FADA DE PÉ, ELA É A ÚNICA FONTE DE CURA DO TIME.** A poção só volta
+  quando ela para de bater no mural.
+- **A BATIDA SAI DE TODA ESPERA**, não só do topo do laço. Ela ficava só lá, e
+  a Fada não volta ao topo enquanto cura: a vítima via 5 s de silêncio e bebia
+  poção **enquanto estava sendo curada** (medido em campo, 6 s entre as duas
+  linhas do log). Se ela está esperando, está viva — e é a espera que prova.
 - **BOLSA E PET SÓ COM A FILA VAZIA.** Abrir inventário com alguém esperando
   cura mata o alguém.
 - **MORTO NÃO É CURADO** e para de rodar o APP (só em time). A Fada ignora e
