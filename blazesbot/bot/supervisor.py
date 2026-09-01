@@ -1459,6 +1459,12 @@ class AccountSupervisor(threading.Thread):
         # Montado AQUI e não dentro do executor para preservar o isolamento dele:
         # `modo_app` importa só `core.inputs` e continua assim. Este arquivo já
         # sabia abrir a janela do jogo, então é ele quem monta o clique.
+        #
+        # A regra vem de `core/hotbar`, NÃO de `bc/hotbar`: ela é sobre o JOGO, e
+        # este caminho é o do APP. Enquanto morava só no `bc/`, o import daqui
+        # apontava para `bot/` e falhava calado -- 44 voltas do APP rodaram com a
+        # barra na página que estivesse (log de 31/08 a 01/09/2026).
+        #
         # Entrada compartilhada: barra de atalhos + trava de posição. Criada
         # fora do try do hotbar para estar disponível mesmo se a garantia da
         # página 1 falhar.
@@ -1467,9 +1473,9 @@ class AccountSupervisor(threading.Thread):
         altura: int = 0
         garantir_barra: Callable[[], None] | None = None
         try:
+            from ..core import hotbar
             from ..core.coords import coords_for_size
             from ..core.inputs import Input as _Input
-            from . import hotbar
 
             entrada = _Input(self.hwnd)
             largura, altura = entrada.client_size()
