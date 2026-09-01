@@ -597,8 +597,8 @@ class LoginSequence:
             "servidor travou. Clicando em Cancel para recomeçar.",
             SEGUNDOS_CONECTANDO)
         if point is not None:
-            self._click(point[0] + CANCEL_OFFSET_CONNECTING[0],
-                        point[1] + CANCEL_OFFSET_CONNECTING[1])
+            dx, dy = CANCEL_OFFSET_CONNECTING
+            self._click((point[0] + dx, point[1] + dy))
         self._set_phase(Phase.CREDENTIALS)
 
     def _handle_acquiring_ip(self, point: tuple[int, int] | None) -> None:
