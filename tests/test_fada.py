@@ -77,11 +77,22 @@ class _Jogo:
         return True
 
     def curar(self) -> None:
+        """Sobe a vida de QUEM ESTÁ SELECIONADO, não de um nome fixo.
+
+        O dublê antigo só subia a vida de "Aliado", e por isso um teste com
+        outra vítima falhava por culpa do dublê -- exatamente o tipo de falso
+        negativo que faz duvidar do código certo.
+        """
         self.curas += 1
-        if self.cura_sobe:
-            for m in self.vidas:
-                if m["nome"] == "Aliado":
-                    m["hp"] = (m["hp"] or 0) + self.cura_sobe
+        if not self.cura_sobe or not self.cliques:
+            return
+        slot = self.cliques[-1]
+        if slot >= len(self.companheiros):
+            return
+        alvo = self.companheiros[slot]
+        for m in self.vidas:
+            if m["nome"] == alvo:
+                m["hp"] = (m["hp"] or 0) + self.cura_sobe
 
     def sentar(self) -> None:
         self.sentadas += 1
@@ -141,17 +152,25 @@ def test_nao_cura_quando_o_clique_nao_seleciona():
     assert mural.fila_de_cura(["aliado"]) == ["aliado"]   # continua na fila
 
 
-def test_nao_cura_quem_nao_publicou_o_proprio_id():
-    """Sem o id não há como confirmar, e confirmar é o que impede curar errado."""
-    jogo = _Jogo()
+def test_sem_id_publicado_CONFIA_NO_SLOT_e_cura():
+    """Quem identifica é o SLOT, que vem da memória -- o id é rede, não portão.
+
+    A versão anterior exigia o id publicado e, sem ele, recusava a cura. O laço
+    voltava em 100 ms e clicava de novo: medido em campo, 357 cliques no mesmo
+    retrato, zero curas, e o personagem saiu andando. Um portão que falha
+    fechado é pior que portão nenhum.
+    """
+    jogo = _Jogo(vidas=[{"nome": "Aliado", "hp": 300}])
     jogo.id_por_slot = {0: 777}
-    mural.pedir_cura("aliado", 25.0)      # sem publicar_id
+    jogo.cura_sobe = 400
+    mural.publicar_estado("aliado", max_hp=1000)
+    mural.pedir_cura("aliado", 25.0)      # de propósito: SEM publicar_id
     f = _fada(jogo, membros=("fada", "aliado"))
 
     f._uma_volta()
 
-    assert jogo.curas == 0
-    assert f.cliques_errados == 1
+    assert f.curas == 1
+    assert f.cliques_errados == 0
 
 
 def test_cura_quando_o_id_confere():
@@ -378,3 +397,77 @@ def test_a_batida_existe_enquanto_ela_gira():
     f = _fada(jogo)
     f.mural.bater_fada(f.meu_login)
     assert mural.fada_de_pe("fada") is True
+
+# ---------------------------------------------------------------------------
+# O FREIO -- medido em campo em 01/09/2026
+# ---------------------------------------------------------------------------
+#
+# Com a confirmação falhando (a vítima não publicava o próprio id), o laço
+# clicou no MESMO retrato 357 vezes, dez por segundo, e o personagem saiu
+# ANDANDO de tanto clique. Insistir para sempre não cura ninguém e ainda
+# estraga o que estava funcionando.
+
+def test_desiste_da_vitima_depois_de_N_tentativas():
+    jogo = _Jogo(alvo=555)
+    jogo.id_por_slot = {0: None}          # o clique nunca pega: fica no 555
+    mural.publicar_id("aliado", 777)
+    mural.pedir_cura("aliado", 25.0)
+    f = _fada(jogo, membros=("fada", "aliado"))
+
+    for _ in range(mod.MAXIMO_DE_TENTATIVAS_POR_VITIMA):
+        f._uma_volta()
+
+    assert mural.fila_de_cura(["aliado"]) == []      # saiu da fila
+    assert len(jogo.cliques) == mod.MAXIMO_DE_TENTATIVAS_POR_VITIMA
+
+
+def test_nunca_clica_mais_que_o_teto_na_mesma_vitima():
+    """O laço gira a cada 100 ms: sem teto, isto vira centenas de cliques."""
+    jogo = _Jogo(alvo=555)
+    jogo.id_por_slot = {0: None}
+    mural.publicar_id("aliado", 777)
+    mural.pedir_cura("aliado", 25.0)
+    f = _fada(jogo, membros=("fada", "aliado"))
+
+    for _ in range(50):                   # muito além do teto
+        f._uma_volta()
+
+    assert len(jogo.cliques) <= mod.MAXIMO_DE_TENTATIVAS_POR_VITIMA
+
+
+def test_uma_vitima_perdida_nao_impede_a_seguinte():
+    """A contagem é POR VÍTIMA: quem não dá para curar não derruba as outras."""
+    jogo = _Jogo(companheiros=["Aliado", "Outro"], alvo=555,
+                 vidas=[{"nome": "Outro", "hp": 300}])
+    jogo.id_por_slot = {0: None, 1: 888}  # o primeiro nunca pega, o segundo sim
+    jogo.cura_sobe = 400
+    mural.publicar_id("aliado", 777)
+    mural.publicar_id("outro", 888)
+    mural.publicar_estado("outro", max_hp=1000)
+    mural.pedir_cura("aliado", 25.0)
+    mural.pedir_cura("outro", 25.0)
+    f = _fada(jogo, membros=("fada", "aliado", "outro"))
+
+    for _ in range(mod.MAXIMO_DE_TENTATIVAS_POR_VITIMA + 2):
+        f._uma_volta()
+
+    assert f.curas == 1                   # o segundo foi curado
+    assert mural.fila_de_cura(["aliado", "outro"]) == []
+
+
+def test_a_tentativa_bem_sucedida_zera_a_contagem():
+    """Uma falha ocasional não pode condenar quem depois seleciona."""
+    jogo = _Jogo(vidas=[{"nome": "Aliado", "hp": 300}], alvo=555)
+    jogo.id_por_slot = {0: None}
+    jogo.cura_sobe = 400
+    mural.publicar_id("aliado", 777)
+    mural.publicar_estado("aliado", max_hp=1000)
+    mural.pedir_cura("aliado", 25.0)
+    f = _fada(jogo, membros=("fada", "aliado"))
+
+    f._uma_volta()                        # falha 1
+    assert f._tentativas.get("aliado") == 1
+    jogo.id_por_slot = {0: 777}           # agora pega
+    f._uma_volta()
+    assert f._tentativas.get("aliado") is None
+    assert f.curas == 1

@@ -66,7 +66,7 @@ ligar código não testado.
 
 ## Números medidos -- tolerância, limiar, teto, cadência
 
-472 constantes, agrupadas por arquivo.
+474 constantes, agrupadas por arquivo.
 
 | constante | valor | onde | quem lê | porquê (resumo) |
 |---|---|---|---|---|
@@ -122,7 +122,9 @@ ligar código não testado.
 | `TOLERANCIA_POSICAO` | `1` | [blazesbot/bot/app/executor.py:157](blazesbot/bot/app/executor.py#L157) | — | Constantes mantidas para compatibilidade com testes e configuração. |
 | `VOLTAS_COM_ALVO_ILEGIVEL_PARA_TROCAR` | `2` | [blazesbot/bot/app/executor.py:440](blazesbot/bot/app/executor.py#L440) | — | Quantas VOLTAS inteiras com o alvo selecionado e o HP ilegível antes de |
 | `VOLTAS_SEM_BATALHA_PARA_TROCAR` | `3` | [blazesbot/bot/app/executor.py:672](blazesbot/bot/app/executor.py#L672) | — | Quantas voltas seguidas COM alvo e FORA de batalha antes de trocar de alvo. |
+| `ESPERA_DEPOIS_DE_ERRAR` | `0.5` | [blazesbot/bot/app/fada.py:98](blazesbot/bot/app/fada.py#L98) | — | Depois de uma tentativa que não pegou, espera antes da seguinte. |
 | `ESPERA_ENTRE_CURAS` | `0.6` | [blazesbot/bot/app/fada.py:80](blazesbot/bot/app/fada.py#L80) | — | Entre uma tecla de cura e a seguinte. |
+| `MAXIMO_DE_TENTATIVAS_POR_VITIMA` | `3` | [blazesbot/bot/app/fada.py:90](blazesbot/bot/app/fada.py#L90) | — | Quantas vezes tentar selecionar a MESMA vítima antes de desistir dela. |
 | `PASSO_DA_CONFERENCIA_DO_ALVO` | `0.02` | [blazesbot/bot/app/fada.py:66](blazesbot/bot/app/fada.py#L66) | executor.py | — |
 | `PASSO_DA_FADA` | `0.1` | [blazesbot/bot/app/fada.py:58](blazesbot/bot/app/fada.py#L58) | — | Cadência do laço da Fada quando não há nada a fazer. |
 | `TETO_DA_CURA_SEGUNDOS` | `20.0` | [blazesbot/bot/app/fada.py:73](blazesbot/bot/app/fada.py#L73) | — | Quanto tempo insistir numa cura antes de desistir daquela vítima. |

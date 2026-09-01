@@ -79,6 +79,24 @@ TETO_DA_CURA_SEGUNDOS = 20.0
 # cima é vítima esperando.
 ESPERA_ENTRE_CURAS = 0.6
 
+# Quantas vezes tentar selecionar a MESMA vítima antes de desistir dela.
+#
+# NÃO É REFINAMENTO, É FREIO. Medido em campo em 01/09/2026: com a confirmação
+# falhando (a vítima não publicava o id), o laço clicou no mesmo retrato **357
+# vezes**, dez por segundo -- e o personagem saiu ANDANDO de tanto clique.
+#
+# A regra é a mesma de sempre: quem não dá para curar cai para a poção. Insistir
+# infinitamente não cura ninguém e ainda estraga o que estava funcionando.
+MAXIMO_DE_TENTATIVAS_POR_VITIMA = 3
+
+# Depois de uma tentativa que não pegou, espera antes da seguinte.
+#
+# Sem isto, três tentativas sairiam em 300 ms -- rápido demais para o cliente
+# responder, e as três falhariam pelo mesmo motivo. Meio segundo é folga
+# suficiente sobre o atraso medido (36 a 123 ms) para a tentativa seguinte ser
+# de fato uma tentativa nova.
+ESPERA_DEPOIS_DE_ERRAR = 0.5
+
 
 class FadaDoTime:
     """O laço da Fada. Não ataca, não roda macro: cura e senta.
@@ -145,6 +163,10 @@ class FadaDoTime:
         self.curas = 0
         self.curas_sem_efeito = 0
         self.cliques_errados = 0
+        # Quantas vezes seguidas cada vítima falhou. Zera quando ela é atendida
+        # ou sai da fila -- é por vítima, não global: uma que não dá para curar
+        # não pode fazer a Fada desistir das outras.
+        self._tentativas: dict[str, int] = {}
         self._sentada = False
         self._avisou_sem_time = False
 
@@ -260,15 +282,28 @@ class FadaDoTime:
         if not self._clicar_no_retrato(slot):
             return False
 
-        if not self._selecionei(login_vitima, nick):
+        if self._clique_saiu_errado(login_vitima, nick):
             # ID QUE NÃO BATE NÃO CURA. O clique pode não ter pego, e o alvo
             # continua o de antes -- curar agora curaria o aliado ANTERIOR.
             self.cliques_errados += 1
+            tentativas = self._tentativas.get(login_vitima, 0) + 1
+            self._tentativas[login_vitima] = tentativas
+            if tentativas >= MAXIMO_DE_TENTATIVAS_POR_VITIMA:
+                # DESISTE DELA, e isso é o freio: sem ele o laço volta em 100 ms
+                # e clica de novo, para sempre. Ela cai para a poção.
+                self._tentativas.pop(login_vitima, None)
+                self.mural.cancelar_pedido(login_vitima)
+                self.log.warning(
+                    "FADA: %s não selecionou em %d tentativas — tirando da fila. "
+                    "Ele se vira com poção.", nick, tentativas)
+                return True
             self.log.warning(
-                "FADA: cliquei no slot %d esperando %s e o alvo não bateu. "
-                "NÃO vou curar; ele continua na fila.", slot + 1, nick)
-            return True
+                "FADA: cliquei no slot %d esperando %s e caí em OUTRO alvo "
+                "(tentativa %d de %d). NÃO vou curar.",
+                slot + 1, nick, tentativas, MAXIMO_DE_TENTATIVAS_POR_VITIMA)
+            return self._dormir(ESPERA_DEPOIS_DE_ERRAR)
 
+        self._tentativas.pop(login_vitima, None)
         return self._curar(login_vitima, nick)
 
     def _slot_do_nick(self, nick: str) -> int | None:
@@ -291,25 +326,47 @@ class FadaDoTime:
                 return i
         return None
 
-    def _selecionei(self, login_vitima: str, nick: str) -> bool:
-        """O clique de fato selecionou quem eu queria?
+    def _clique_saiu_errado(self, login_vitima: str, nick: str) -> bool:
+        """O clique selecionou OUTRA pessoa? `True` = não cure.
 
-        A prova é o `TARGET_ID`: cada conta publica o próprio, e ele é comparado
-        INTEIRO CONTRA INTEIRO. Sem o id publicado a resposta é `False` -- e
-        `False` aqui significa "não cura", que é o desfecho seguro.
+        =================================================================
+        QUEM IDENTIFICA É O SLOT, NÃO ESTA CONFERÊNCIA
+        =================================================================
+
+        A versão anterior exigia que a vítima tivesse publicado o próprio
+        `TARGET_ID` e SÓ curava com ele batendo. Isso estava errado por dois
+        motivos, e o segundo custou caro em campo:
+
+        1. **Era redundante.** Desde que o time passou a ser lido da memória, o
+           slot já É a identificação: `companheiros_de_time()` diz, em ordem,
+           quem está em cada retrato. Clicar no slot 2 é clicar em quem a
+           memória diz que está no slot 2.
+        2. **Falhava FECHADA.** Sem o id publicado a resposta era "não cure", e
+           o laço voltava em 100 ms para clicar de novo. Medido em 01/09/2026:
+           357 cliques no mesmo retrato, zero curas, e o personagem saiu andando
+           de tanto clique.
+
+        Agora o id é REDE, não portão: quando a vítima publicou um e ele NÃO
+        bate, aí sim há prova de que o clique pegou outra pessoa -- e curar
+        curaria o aliado errado. Sem id publicado, confia-se no slot e cura-se.
         """
         esperado = self.mural.id_publicado(login_vitima)
         if not esperado:
-            self.log.warning(
-                "FADA: %s não publicou o próprio id; sem ele não dá para "
-                "confirmar o clique, e curar às cegas cura o errado.", nick)
-            return False
+            return False                    # sem rede: o slot basta
         limite = time.monotonic() + TETO_PARA_O_ALVO_VIRAR
         while time.monotonic() < limite:
-            if self._id_do_alvo() == esperado:
+            atual = self._id_do_alvo()
+            if atual == esperado:
+                return False                # bateu
+            if atual:
+                # Já há alvo e é OUTRO: o clique pegou quem não devia.
                 return True
             if not self._dormir(PASSO_DA_CONFERENCIA_DO_ALVO):
                 return False
+        # Nada foi lido a tempo. Não é prova de erro -- e tratar "não sei" como
+        # erro é justamente o que travava tudo.
+        self.log.debug("FADA: não li o alvo a tempo ao clicar em %s; sigo pelo "
+                       "slot.", nick)
         return False
 
     # -- a cura em si ------------------------------------------------------

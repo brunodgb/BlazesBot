@@ -68,6 +68,29 @@ frequência, mas não elimina a morte.
 Quantos slots varrer = **membros do time − ela**. Mas a contagem só limita a
 varredura: **quem confirma é o `TARGET_ID` lido depois do clique.**
 
+### QUEM IDENTIFICA É O SLOT — corrigido em 01/09/2026
+
+A primeira versão exigia que a vítima publicasse o próprio `TARGET_ID` e **só
+curava com ele batendo**. Estava errado por dois motivos:
+
+1. **Era redundante.** Desde que o time passou a ser lido da memória, o slot já
+   É a identificação: `companheiros_de_time()` diz, em ordem, quem está em cada
+   retrato. *"Se sabe qual o slot, não precisa de outra confirmação depois"* —
+   e o usuário estava certo.
+2. **Falhava FECHADA**, que é o pecado maior. Sem o id publicado a resposta era
+   "não cure", e o laço voltava em 100 ms para clicar de novo. Medido em campo:
+   **357 cliques no mesmo retrato, zero curas**, e o personagem saiu andando de
+   tanto clique.
+
+O id virou **rede, não portão**: quando a vítima publicou um e ele **não bate**,
+aí sim há prova de que o clique pegou outra pessoa, e curar curaria o aliado
+errado. Sem id publicado, confia-se no slot e cura-se.
+
+E entrou um FREIO, que faltava e é o que transformou um defeito de confirmação
+num personagem andando pelo mapa: no máximo
+`MAXIMO_DE_TENTATIVAS_POR_VITIMA` cliques para a mesma vítima, com espera entre
+eles. Passou disso, ela sai da fila e se vira com poção.
+
 ### CURAR SEM CONFERIR É CURAR O ERRADO
 
 A medição mostrou que **clicar num aliado LONGE não seleciona nada** -- e o alvo

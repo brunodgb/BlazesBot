@@ -1384,6 +1384,23 @@ class AccountSupervisor(threading.Thread):
         except Exception:
             memoria_do_pet = None
 
+        # O PRÓPRIO ID, PUBLICADO TAMBÉM POR QUEM RODA A MACRO.
+        #
+        # Sem isto a Fada NUNCA consegue confirmar em quem clicou, e o portão
+        # "id que não bate não cura" trava tudo. Medido em campo: 357 cliques
+        # em cima do mesmo retrato, dez por segundo, porque a vítima nunca
+        # publicava -- e o personagem saiu andando de tanto clique.
+        #
+        # Só em time: fora dele ninguém pergunta este id, e apertar a tecla de
+        # auto-seleção à toa trocaria o alvo de quem está lutando.
+        if memoria_do_pet is not None and self._tem_time_do_app():
+            from ..core.inputs import Input as _InputDoId
+            try:
+                self._publicar_o_proprio_id(
+                    memoria_do_pet, _InputDoId(self.hwnd), log)
+            except Exception as exc:
+                log.warning("Não consegui publicar o próprio id: %s", exc)
+
         # TRAVA DE POSIÇÃO: salva a posição base IMEDIATAMENTE ao iniciar o APP,
         # usando a mesma leitura do diagnóstico (Memory.position()). Isso garante
         # que a posição seja salva no config mesmo se o resto da inicialização
