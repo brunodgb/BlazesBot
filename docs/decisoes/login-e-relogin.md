@@ -233,3 +233,84 @@ Uma conta aposentada por senha errada que era **reseter** de outra conta faz o B
 dependente cair no ramo *"nao existe mais"* do portao da cave: ele desliga o
 `bc_farm` daquela conta e avisa, em vez de esperar para sempre por alguem que o
 proprio bot acabou de aposentar. Ver `docs/decisoes/reset-de-time.md`.
+
+## A conversa dos OUTROS derrubava a conta (01/09/2026)
+
+### O que foi observado
+
+O usuário notou contas reabertas e marcadas como queda que, **pela imagem**, não
+tinham caído. O `logs/quedas/*.jpg` permite conferir isso sem hipótese: o print
+não é uma captura nova, é **o quadro que disparou a queda** — quem reconheceu foi
+ele mesmo (ver o docstring de `quadro_com_aviso_de_conexao`).
+
+Em `20260901-022514-blazesgamer.jpg` o personagem está em pé em Guild Demesne,
+com "Janitor of Guild D..." selecionado, HP cheio. Não há caixa de diálogo
+nenhuma. O que há é uma linha de chat:
+
+    [world] [zmypx]: maintenance more connection interrupted?
+
+### A medição
+
+`state_conn_prefix.png` é **só a frase** "Connection interrup" (114×25), sem
+moldura — recortada assim de propósito, para casar com as duas variantes do
+aviso ("Connection interrupted." e "Connection interrupted, please open client
+again."). O preço é que ela casa **onde quer que a frase apareça**.
+
+Rodando o template contra os 22 prints de `logs/quedas/`, com a verdade de campo
+conferida a olho:
+
+| | nota | centro do casamento | onde |
+|---|---|---|---|
+| queda real (12 prints) | 0.980 – 0.983 | (441, 198) | a caixa modal |
+| chat dos outros (10 prints) | 0.799 – 0.844 | (241, 570) | o rodapé esquerdo |
+
+O limiar era **0.80** — *abaixo* do ruído do chat. Duas rajadas de relogin
+saíram daí:
+
+    29/08 03:04  5 contas   notas 0.799-0.844
+    01/09 02:25  5 contas   notas 0.808-0.814
+
+Nenhuma delas tinha caído.
+
+### O conserto: duas defesas, cada uma suficiente sozinha
+
+1. **REGIÃO** — a busca só olha em volta de `coords.aviso_de_conexao`
+   (`_from_base(441, 198, CENTER)`), com `RAIO_DA_BUSCA_DO_AVISO = 120`. A caixa
+   variou 4 px nos 12 prints reais (é opaca e centralizada); 120 px é folga de
+   trinta vezes isso, e o chat fica 372 px abaixo — fora por larga margem.
+   Com a região, a melhor nota dos falsos cai de **0.844 para 0.421**.
+2. **LIMIAR** — de 0.80 para **0.92**, o meio entre 0.844 (pior falso) e 0.980
+   (pior queda real).
+
+Margem final medida: **+0.559** (0.421 → 0.980), contra as **−0.044** de antes
+(o limiar ficava abaixo do pior falso).
+
+**Por que as duas, se cada uma resolve.** A frase no chat é um evento que o bot
+não controla e não pode prever: qualquer jogador a digita quando quiser, quantas
+vezes quiser. Uma defesa só significa que a próxima build do jogo, ou um recorte
+de template refeito, volta a custar cinco relogins simultâneos. É o mesmo
+raciocínio do `state_team_invite_texto.png`.
+
+### Alternativas consideradas e reprovadas
+
+- **Recortar o template com a moldura da caixa.** Reprovado pela mesma razão
+  medida no `package_courage` e citado no cabeçalho do `bc/hotbar.py`: moldura
+  dourada domina a correlação e a margem despenca. Além disso o template
+  precisa casar com as **duas** variantes do texto, que têm larguras diferentes.
+- **Só subir o limiar.** Funciona nos dados de hoje (margem +0.137), mas depende
+  de o chat nunca renderizar a frase com contraste melhor — e o chat muda de cor
+  por canal.
+- **Exigir duas leituras seguidas.** Custa 10 s a mais para reagir a uma queda
+  real (`VISUAL_CHECK_SECONDS`), e nesse intervalo a conta aperta teclas contra
+  um cliente morto. Não se paga: a região já resolve sem custo nenhum.
+
+### O que mais saiu daqui
+
+A busca estava **duplicada** — `avaliar_saude` (a definição de queda para todo
+ecossistema) e `Watchdog._quadro_com_aviso_de_conexao` (a cadência do BC) faziam
+a mesma coisa em cópias separadas. Só uma teria sido consertada. Agora as duas
+chamam `watchdog.quadro_com_aviso_de_conexao(hwnd, templates)`.
+
+Travado por `tests/test_queda_por_aviso_de_conexao.py`, que roda contra os prints
+reais: os 10 falsos não podem passar, as 12 quedas reais não podem falhar, e a
+margem entre as duas populações não pode cair abaixo de +0.30.

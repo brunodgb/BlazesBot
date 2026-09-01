@@ -27,13 +27,50 @@ from enum import Enum
 
 import psutil
 
+from ..core.coords import coords_for_size
 from ..core.vision import capture_window, find_template
 from .context import BotContext, GameState
 
 # Template do aviso "Connection interrupted[, please open client again]".
 # O prefixo casa nas duas variantes do texto.
 RECONNECT_TEMPLATE = "state_conn_prefix.png"
-RECONNECT_THRESHOLD = 0.80
+
+# ===========================================================================
+# POR QUE A BUSCA É PRESA À CAIXA, E NÃO NA TELA INTEIRA
+# ===========================================================================
+#
+# O template é SÓ A FRASE, sem moldura -- foi recortado assim de propósito, para
+# casar com as duas variantes do texto. O preço disso é que ele casa com a frase
+# ONDE QUER QUE ELA APAREÇA, e ela aparece no CHAT: basta outro jogador digitar
+# "connection interrupted" no canal mundial.
+#
+# NÃO É HIPÓTESE. Medido nos prints de `logs/quedas/`, que são o quadro que
+# disparou a queda:
+#
+#     29/08 03:04  5 contas derrubadas   nota 0.799-0.844  em (248, 519..587)
+#     01/09 02:25  5 contas derrubadas   nota 0.808-0.814  em (241, 570)
+#
+# Nos dois casos o personagem está VIVO na imagem, com alvo selecionado, e a
+# linha de chat visível é `[world] [zmypx]: maintenance more connection
+# interrupted?`. Dez relogins por causa da conversa dos outros.
+#
+# As quedas REAIS, nos mesmos arquivos, casam em (441, 198) com nota 0.980-0.983.
+# Duas populações, nenhuma sobreposição.
+#
+# São DUAS defesas, e cada uma sozinha já separaria -- é de propósito, porque a
+# frase no chat é um evento que o bot não controla:
+#
+#   REGIÃO  a caixa é centralizada e opaca; o chat fica no canto de baixo. Com o
+#           raio abaixo, a melhor nota dos falsos cai de 0.844 para 0.421.
+#   LIMIAR  0.92 é o meio entre 0.844 (pior falso) e 0.980 (pior queda real).
+#
+# Margem final medida: +0.559 (0.421 -> 0.980).
+RECONNECT_THRESHOLD = 0.92
+
+# Meio-lado da janela de busca, em volta de `coords.aviso_de_conexao`. A caixa
+# variou 4 px nos 12 prints reais; 120 px é folga de trinta vezes isso e ainda
+# deixa o chat (372 px abaixo) inteiramente de fora.
+RAIO_DA_BUSCA_DO_AVISO = 120
 # Este virou o sinal principal de queda, então roda numa cadência curta.
 # Ainda assim é bem mais barato que verificar a cada tick.
 VISUAL_CHECK_SECONDS = 10.0
@@ -92,15 +129,53 @@ def avaliar_saude(
     # o único quadro que serve de print para o histórico de quedas: ele tem o
     # aviso na imagem por construção. Uma captura nova, milissegundos depois,
     # sai preta ou não sai, já que o cliente pode fechar a qualquer instante.
-    template = templates.load(RECONNECT_TEMPLATE) if templates else None
-    if template is None:
-        return DcReason.NONE, None
-    frame = capture_window(hwnd)
+    frame = quadro_com_aviso_de_conexao(hwnd, templates)
     if frame is None:
         return DcReason.NONE, None
-    if find_template(frame, template, threshold=RECONNECT_THRESHOLD) is None:
-        return DcReason.NONE, None
     return DcReason.RECONNECT_DIALOG, frame
+
+
+def quadro_com_aviso_de_conexao(hwnd: int, templates):
+    """O quadro com "Connection interrupted" na CAIXA, ou `None`.
+
+    UMA função e não duas: `avaliar_saude` (a definição de queda, para todo
+    ecossistema) e `Watchdog._quadro_com_aviso_de_conexao` (a cadência do BC)
+    faziam a mesma coisa em cópias separadas. Duas cópias divergem na primeira
+    manutenção -- e esta aqui é justamente a que precisou de manutenção.
+
+    DEVOLVE O QUADRO, e não um booleano, porque este é o único quadro que serve
+    de print para o histórico de quedas: ele tem o aviso na imagem por
+    construção -- foi ele que o reconheceu. Uma captura nova, milissegundos
+    depois, sai preta ou não sai, já que o cliente pode fechar a qualquer
+    instante.
+
+    A busca é presa à caixa e o limiar é alto: ver o bloco de comentário em
+    `RECONNECT_THRESHOLD`.
+    """
+    template = templates.load(RECONNECT_TEMPLATE) if templates else None
+    if template is None:
+        return None
+    frame = capture_window(hwnd)
+    if frame is None:
+        return None
+    if find_template(frame, template, threshold=RECONNECT_THRESHOLD,
+                     region=_regiao_do_aviso(frame)) is None:
+        return None
+    return frame
+
+
+def _regiao_do_aviso(frame) -> tuple[int, int, int, int]:
+    """A janela de busca em volta da caixa, na resolução DESTE quadro.
+
+    Sai de `coords`, e não de literal, porque a UI do jogo não escala: a caixa
+    é centralizada na área de cliente, então o ponto acompanha o centro.
+    """
+    altura, largura = frame.shape[:2]
+    cx, cy = coords_for_size(largura, altura).aviso_de_conexao
+    raio = RAIO_DA_BUSCA_DO_AVISO
+    x0 = max(0, cx - raio)
+    y0 = max(0, cy - raio)
+    return (x0, y0, min(largura - x0, raio * 2), min(altura - y0, raio * 2))
 
 
 class Watchdog:
@@ -178,16 +253,7 @@ class Watchdog:
         fechar a qualquer instante -- e isso aconteceria justamente no ÚNICO
         tipo de queda em que o print é possível.
         """
-        template = self.ctx.templates.load(RECONNECT_TEMPLATE)
-        if template is None:
-            return None
-        frame = capture_window(self.ctx.hwnd)
-        if frame is None:
-            return None
-        if find_template(frame, template,
-                         threshold=RECONNECT_THRESHOLD) is None:
-            return None
-        return frame
+        return quadro_com_aviso_de_conexao(self.ctx.hwnd, self.ctx.templates)
 
     def reset(self) -> None:
         self._last_visual_check = 0.0

@@ -285,6 +285,22 @@ _SPOTS: dict[str, Spot] = {
     "server_ip_ok": _from_base(512, 335, C),
     "server_ok": _from_base(557, 531, C),
 
+    # ONDE FICA O TEXTO "Connection interrupted" DENTRO DA CAIXA.
+    #
+    # NÃO é ponto de clique: é o CENTRO DA BUSCA do template que decide se a
+    # conta caiu (`watchdog.RECONNECT_TEMPLATE`). Existe porque o template é só
+    # a frase, sem moldura -- e a MESMA frase aparece no chat quando outro
+    # jogador a digita. Procurar na tela inteira derrubou 10 contas vivas.
+    #
+    # MEDIDO nos 12 prints de queda real de `logs/quedas/` (31/08 e 01/09/2026):
+    # o casamento cai em (441, 198) em onze deles e em (441, 202) no outro --
+    # 4 px de variação, porque a caixa é opaca e sempre centralizada.
+    #
+    # Âncora CENTER pela regra da tabela lá em cima: caixa de diálogo do jogo é
+    # centralizada na área de cliente, então em outra resolução ela acompanha o
+    # centro -- e é justamente por isso que não pode ser literal.
+    "aviso_de_conexao": _from_base(441, 198, C),
+
     # -- seleção de personagem: fila de botões presa à base ------------------
     "enter_game": _from_base(515, 735, BC),
     "char_left": _from_base(398, 640, BC),

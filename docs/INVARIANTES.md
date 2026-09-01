@@ -544,7 +544,20 @@ exigem o **bot parado** e devolvem o PID com `_release()` no `finally`.
 - **O BACKOFF DE RELOGIN ZERA NO LOGIN CONCLUÍDO** — era um `else:` de
   `try/except` inalcançável, e da 9ª queda a conta esperava 300 s antes de CADA
   relogin. **Senha errada (só a tela do erro, 5 recusas) DESATIVA a conta.**
-- Travado por `tests/test_saude_em_todo_ecossistema.py` (lê o AST).
+- **O AVISO DE CONEXÃO SÓ CONTA DENTRO DA CAIXA.** O template
+  (`state_conn_prefix.png`) é só a frase, sem moldura, então casa também com o
+  CHAT — outro jogador digitando "connection interrupted" no canal mundial
+  derrubou 10 contas vivas (29/08 e 01/09/2026). A busca é presa a
+  `coords.aviso_de_conexao` com raio `RAIO_DA_BUSCA_DO_AVISO`, e o limiar é
+  **0.92** (era 0.80, abaixo do ruído do chat). As duas defesas são
+  independentes de propósito: a frase no chat é evento que o bot não controla.
+- **A definição visual da queda mora em UMA função**,
+  `watchdog.quadro_com_aviso_de_conexao(hwnd, templates)` — `avaliar_saude` e o
+  `Watchdog` do BC chamam a mesma. Eram duas cópias; a divergência custaria
+  exatamente o defeito acima em só um dos caminhos.
+- Travado por `tests/test_saude_em_todo_ecossistema.py` (lê o AST) e
+  `tests/test_queda_por_aviso_de_conexao.py` (roda contra os prints reais de
+  `logs/quedas/`).
 
 
 ## Ordem, identidade e grupo das contas — `docs/decisoes/interface.md`
