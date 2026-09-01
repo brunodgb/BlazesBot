@@ -259,9 +259,9 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | `PASSO_DA_FADA` | 0.1 s | *novo* | PASSO | [fada.py:58](blazesbot/bot/app/fada.py#L58) | `rodar` | Cadência do laço da Fada quando não há nada a fazer. |
 | `TETO_PARA_O_ALVO_VIRAR` | 0.4 s | *novo* | TETO | [fada.py:65](blazesbot/bot/app/fada.py#L65) | `_clique_saiu_errado` | Depois do clique no retrato, quanto esperar a memória mostrar o alvo novo. |
 | `PASSO_DA_CONFERENCIA_DO_ALVO` | 0.02 s | *novo* | PASSO | [fada.py:66](blazesbot/bot/app/fada.py#L66) | `_clique_saiu_errado` |  |
-| `TETO_DA_CURA_SEGUNDOS` | 20 s | *novo* | TETO | [fada.py:73](blazesbot/bot/app/fada.py#L73) | `_curar, _curar_a_mim_mesma` | Quanto tempo insistir numa cura antes de desistir daquela vítima. |
+| `TETO_DA_CURA_SEGUNDOS` | 20 s | *novo* | TETO | [fada.py:73](blazesbot/bot/app/fada.py#L73) | `_me_defender, _curar (+1)` | Quanto tempo insistir numa cura antes de desistir daquela vítima. |
 | `ESPERA_ENTRE_CURAS` | 0.34 s | *novo* | FIXO | [fada.py:80](blazesbot/bot/app/fada.py#L80) | `_me_defender, _curar (+1)` | Entre uma tecla de cura e a seguinte. |
-| `ESPERA_DEPOIS_DE_ERRAR` | 0.5 s | *novo* | FIXO | [fada.py:98](blazesbot/bot/app/fada.py#L98) | `_atender` | Depois de uma tentativa que não pegou, espera antes da seguinte. |
+| `ESPERA_DEPOIS_DE_ERRAR` | 0.333 s | *novo* | FIXO | [fada.py:98](blazesbot/bot/app/fada.py#L98) | `_atender` | Depois de uma tentativa que não pegou, espera antes da seguinte. |
 | `ESPERA_ENTRE_TABS_DO_ALINHAMENTO` | 0.5 s | *novo* | FIXO | [sincronia.py:97](blazesbot/bot/app/sincronia.py#L97) |  | Cadência do TAB durante o alinhamento. |
 | `PASSO_DA_ESPERA_DA_LARGADA` | 0.04 s | *novo* | PASSO | [sincronia.py:100](blazesbot/bot/app/sincronia.py#L100) | `_esperar_os_seguidores, _entrar_na_largada` | De quanto em quanto tempo o seguidor confere se a largada saiu. |
 | `SEGUNDOS_SEM_MUDANCA_PARA_TAB` | 3 s | *novo* | FIXO | [sincronia.py:108](blazesbot/bot/app/sincronia.py#L108) | `conferir_a_parada` | Sem trocar de estado de batalha por este tempo, dá TAB. |

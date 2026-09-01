@@ -352,15 +352,38 @@ def test_sem_leitura_de_mana_ela_tenta():
     assert f._tenho_mana_para_curar() is True
 
 
-def test_em_batalha_nao_cura():
-    """Ela não luta, mas também não cura apanhando."""
+def test_em_batalha_ela_CUIDA_DE_SI_e_nao_da_fila():
+    """INVERTE a decisão anterior (ela sentava e confiava na proteção do time).
+
+    O motivo mudou: o time só protege se estiver ATACANDO, e quem está
+    esperando cura não está -- a proteção com que ela contava não existia
+    justamente na hora em que ela precisava. Decisão do usuário em 01/09/2026:
+    *"a ideia aqui é não deixar a fada morrer de forma alguma"*.
+    """
     jogo = _Jogo(batalha=True)
     mural.publicar_id("aliado", 777)
     mural.pedir_cura("aliado", 25.0)
     f = _fada(jogo, membros=("fada", "aliado"))
+
     f._uma_volta()
-    assert jogo.cliques == []
-    assert jogo.curas == 0
+
+    assert jogo.auto_selecoes == 1, "não se selecionou para se curar"
+    assert jogo.curas >= 1, "não se curou"
+    assert jogo.cliques == [], "foi atender a fila em vez de se defender"
+    assert mural.fada_em_batalha("fada") is True, "o time não soube"
+
+
+def test_o_time_sabe_NA_HORA_que_ela_entrou_em_batalha():
+    """*"É importante que o resto do time saiba o quanto antes."*
+
+    A batida leva o estado junto, e ela sai de dentro de toda espera -- então o
+    aviso chega antes da primeira tecla de cura, não depois.
+    """
+    jogo = _Jogo(batalha=True)
+    f = _fada(jogo, membros=("fada", "aliado"))
+    assert mural.fada_em_batalha("fada") is False
+    f._uma_volta()
+    assert mural.fada_em_batalha("fada") is True
 
 
 # ---------------------------------------------------------------------------

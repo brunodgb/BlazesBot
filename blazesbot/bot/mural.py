@@ -460,7 +460,8 @@ def esquecer_passo(lider: str) -> None:
 # o pedido sairia da fila e a vítima continuaria ferida, sem erro na tela.
 _IDS: dict[str, int] = {}                     # login -> id da entidade
 _PEDIDOS: dict[str, tuple[float, float]] = {}  # login -> (vida_pct, quando)
-_FADAS: dict[str, float] = {}                 # login -> última batida
+# login -> (última batida, em batalha)
+_FADAS: dict[str, tuple[float, bool]] = {}
 _LIMPEZAS: dict[str, float] = {}              # lider -> quando anunciou
 _LOCK_FADA = threading.Lock()
 
@@ -544,7 +545,7 @@ def fila_de_cura(logins) -> list[str]:
     return [login for _, login in itens]
 
 
-def bater_fada(login: str) -> None:
+def bater_fada(login: str, em_batalha: bool = False) -> None:
     """A Fada prova que está de pé. Chamada de DENTRO do laço que cura.
 
     De dentro, e não de fora: uma Fada logada mas presa numa janela aberta passa
@@ -554,7 +555,7 @@ def bater_fada(login: str) -> None:
     if not login:
         return
     with _LOCK_FADA:
-        _FADAS[login.strip().lower()] = time.monotonic()
+        _FADAS[login.strip().lower()] = (time.monotonic(), bool(em_batalha))
 
 
 def fada_de_pe(login: str) -> bool:
@@ -562,10 +563,33 @@ def fada_de_pe(login: str) -> bool:
     if not login:
         return False
     with _LOCK_FADA:
-        ultima = _FADAS.get(login.strip().lower())
-    if ultima is None:
+        dados = _FADAS.get(login.strip().lower())
+    if dados is None:
         return False
-    return (time.monotonic() - ultima) <= SILENCIO_DA_FADA
+    return (time.monotonic() - dados[0]) <= SILENCIO_DA_FADA
+
+
+def fada_em_batalha(login: str) -> bool:
+    """A Fada está apanhando agora?
+
+    Enquanto estiver, ela cuida de SI -- e quem esperava cura volta a rodar a
+    macro. Não é abandono: atacando, o time mata o que está batendo nela, que é
+    a forma mais rápida de ela voltar a curar. Decisão do usuário em
+    01/09/2026: *"a ideia aqui é não deixar a fada morrer de forma alguma"*.
+
+    Batida velha responde `False`: quem não está de pé não está em batalha, está
+    ausente -- e ausente é assunto do `fada_de_pe`.
+    """
+    if not login:
+        return False
+    with _LOCK_FADA:
+        dados = _FADAS.get(login.strip().lower())
+    if dados is None:
+        return False
+    quando, em_batalha = dados
+    if (time.monotonic() - quando) > SILENCIO_DA_FADA:
+        return False
+    return em_batalha
 
 
 def esquecer_fada(login: str) -> None:

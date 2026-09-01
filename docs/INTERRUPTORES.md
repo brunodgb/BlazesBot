@@ -124,7 +124,7 @@ ligar código não testado.
 | `VOLTAS_COM_ALVO_ILEGIVEL_PARA_TROCAR` | `2` | [blazesbot/bot/app/executor.py:454](blazesbot/bot/app/executor.py#L454) | — | Quantas VOLTAS inteiras com o alvo selecionado e o HP ilegível antes de |
 | `VOLTAS_SEM_ALVO_ANTES_DE_DESCANSAR` | `3` | [blazesbot/bot/app/executor.py:292](blazesbot/bot/app/executor.py#L292) | — | Quantas voltas SEGUIDAS sem conseguir alvo antes de pagar a pausa acima. |
 | `VOLTAS_SEM_BATALHA_PARA_TROCAR` | `3` | [blazesbot/bot/app/executor.py:690](blazesbot/bot/app/executor.py#L690) | — | Quantas voltas seguidas COM alvo e FORA de batalha antes de trocar de alvo. |
-| `ESPERA_DEPOIS_DE_ERRAR` | `0.5` | [blazesbot/bot/app/fada.py:98](blazesbot/bot/app/fada.py#L98) | — | Depois de uma tentativa que não pegou, espera antes da seguinte. |
+| `ESPERA_DEPOIS_DE_ERRAR` | `0.333` | [blazesbot/bot/app/fada.py:98](blazesbot/bot/app/fada.py#L98) | — | Depois de uma tentativa que não pegou, espera antes da seguinte. |
 | `ESPERA_ENTRE_CURAS` | `0.34` | [blazesbot/bot/app/fada.py:80](blazesbot/bot/app/fada.py#L80) | — | Entre uma tecla de cura e a seguinte. |
 | `MAXIMO_DE_TENTATIVAS_POR_VITIMA` | `3` | [blazesbot/bot/app/fada.py:90](blazesbot/bot/app/fada.py#L90) | — | Quantas vezes tentar selecionar a MESMA vítima antes de desistir dela. |
 | `PASSO_DA_CONFERENCIA_DO_ALVO` | `0.02` | [blazesbot/bot/app/fada.py:66](blazesbot/bot/app/fada.py#L66) | executor.py | — |

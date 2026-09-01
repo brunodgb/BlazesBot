@@ -77,7 +77,7 @@ TETO_DA_CURA_SEGUNDOS = 20.0
 # PROVISÓRIO. Curto porque a skill tem o próprio tempo de conjuração e o jogo
 # ignora o excesso; o custo de errar para baixo é tecla desperdiçada, e para
 # cima é vítima esperando.
-ESPERA_ENTRE_CURAS = 0.6
+ESPERA_ENTRE_CURAS = 0.34
 
 # Quantas vezes tentar selecionar a MESMA vítima antes de desistir dela.
 #
@@ -95,7 +95,7 @@ MAXIMO_DE_TENTATIVAS_POR_VITIMA = 3
 # responder, e as três falhariam pelo mesmo motivo. Meio segundo é folga
 # suficiente sobre o atraso medido (36 a 123 ms) para a tentativa seguinte ser
 # de fato uma tentativa nova.
-ESPERA_DEPOIS_DE_ERRAR = 0.5
+ESPERA_DEPOIS_DE_ERRAR = 0.333
 
 
 class FadaDoTime:
@@ -183,10 +183,19 @@ class FadaDoTime:
         self._avisei_fora_do_painel: set[str] = set()
         self._sentada = False
         self._avisou_sem_time = False
+        # Estado publicado na batida. Guardado num campo porque a batida sai de
+        # dentro de QUALQUER espera, inclusive de dentro da auto-cura -- e lá
+        # não há como perguntar de novo sem custar uma leitura por espera.
+        self._em_briga = False
 
     def _dormir_batendo(self, segundos: float) -> bool:
-        """Espera, batendo no mural antes. Ver o porquê no `__init__`."""
-        self.mural.bater_fada(self.meu_login)
+        """Espera, batendo no mural antes. Ver o porquê no `__init__`.
+
+        A BATIDA LEVA O ESTADO DE BATALHA junto, e é assim que o time descobre
+        que ela está ocupada se defendendo -- sem mensagem nova e sem leitura
+        nova, porque a batida já ia sair de qualquer forma.
+        """
+        self.mural.bater_fada(self.meu_login, em_batalha=self._em_briga)
         return self._dormir_de_verdade(segundos)
 
     # -- o laço ------------------------------------------------------------
@@ -200,7 +209,8 @@ class FadaDoTime:
                 # logada mas presa numa janela passa em qualquer checagem
                 # externa e não cura ninguém; a batida não descreve a
                 # capacidade, ela a prova.
-                self.mural.bater_fada(self.meu_login)
+                self.mural.bater_fada(self.meu_login,
+                                      em_batalha=self._em_briga)
 
                 if not self._uma_volta():
                     return
@@ -213,9 +223,21 @@ class FadaDoTime:
     def _uma_volta(self) -> bool:
         """Um giro do laço. `False` = é para parar."""
         if self._em_batalha() is True:
-            # Ela não luta, mas também não cura apanhando: sentar não gruda e a
-            # cura sai no meio do dano. Espera a briga acabar.
-            return True
+            # EM BATALHA ELA CUIDA DE SI, e não da fila.
+            #
+            # Decisão do usuário em 01/09/2026: *"caso a fada entre em batalha
+            # ela vai apertar F1 e começar a se curar até sair de batalha (...)
+            # a ideia aqui é não deixar a fada morrer de forma alguma"*.
+            #
+            # Isto INVERTE a decisão anterior, que era ela continuar tentando
+            # sentar e confiar na proteção do time. O motivo mudou: o time só
+            # protege se estiver atacando, e quem está esperando cura NÃO está
+            # -- então a proteção que ela contava não existia justamente na hora
+            # em que ela precisava. Quem avisa o time é a batida, que agora leva
+            # o estado de batalha junto.
+            self._em_briga = True
+            return self._me_defender()
+        self._em_briga = False
 
         fila = self.mural.fila_de_cura(self._membros_do_time())
         fila = [x for x in fila if x != self.meu_login]
@@ -233,6 +255,38 @@ class FadaDoTime:
             return self._descansar(por_falta_de_mana=True)
 
         return self._atender(fila[0])
+
+    def _me_defender(self) -> bool:
+        """Em batalha: seleciona a si mesma e cura até sair. `False` = parar.
+
+        NÃO OLHA A PRÓPRIA VIDA para decidir se começa -- em batalha ela cura e
+        pronto. O gatilho de porcentagem existe para decidir quando VALE A PENA
+        parar a macro; aqui a macro nem está rodando, e o custo de uma cura a
+        mais é uma tecla.
+
+        Ela sai no instante em que a batalha acaba: quem termina isto é o time
+        matando o que está batendo nela.
+        """
+        self._levantar()
+        self._auto_selecionar()
+        # TETO, e ele não é sobre desistir: é sobre DEVOLVER O CONTROLE ao laço
+        # principal de tempos em tempos. Sem ele, uma batalha que não acaba (ou
+        # uma leitura de combate presa em `True`) prende a Fada aqui para
+        # sempre -- e nada mais dela gira: nem a batida com estado novo, nem a
+        # parada pelo botão Parar em pontos que não sejam a espera.
+        #
+        # Ela volta para cá na volta seguinte se ainda estiver apanhando, então
+        # o comportamento visível é o mesmo; o que muda é que o laço respira.
+        limite = time.monotonic() + TETO_DA_CURA_SEGUNDOS
+        while self._continuar() and time.monotonic() < limite:
+            if self._em_batalha() is not True:
+                self.log.info("FADA: saí da batalha — volto para a fila de cura.")
+                self._em_briga = False
+                return True
+            self._apertar_cura()
+            if not self._dormir(ESPERA_ENTRE_CURAS):
+                return False
+        return self._continuar()
 
     # -- descanso ----------------------------------------------------------
 
@@ -270,6 +324,18 @@ class FadaDoTime:
         `mana_para_voltar` enquanto sentada e `mana_para_sentar` de pé). Sem
         zerar a marca aqui, ela ficaria presa no patamar alto para sempre.
         """
+        self._sentada = False
+
+    def _levantar(self) -> None:
+        """Sai do chão para agir.
+
+        A tecla de sentar é INTERRUPTOR e o bot não sabe em que estado está --
+        por isso só este par de métodos mexe em `_sentada`. Apertar por engano
+        com ela de pé a faria sentar bem na hora de curar.
+        """
+        if not self._sentada:
+            return
+        self._apertar_sentar()
         self._sentada = False
 
     def _tenho_mana_para_curar(self) -> bool:
