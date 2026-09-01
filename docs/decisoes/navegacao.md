@@ -780,3 +780,107 @@ incluindo um laço infinito digitando dentro do campo de busca. O relato inteiro
 a medição do guarda de janela e os quatro consertos estão em
 **`docs/decisoes/janela-na-frente.md`** -- leia aquele arquivo antes de mexer
 aqui.
+
+
+## O PORTÃO DA MONTARIA INSISTIA MUDO — 24 MINUTOS PARADOS (01/09/2026)
+
+### O log, inteiro
+
+Conta `creubo`, run `db7ebdace7`, 31/08/2026. Waypoint dos Gun Witch,
+`(110,-406)`, `Secret Cemetery`. Linhas repetidas suprimidas:
+
+```
+23:27:42  ATE_OS_GUARDAS levou 7,0s -> GUARDAS | posição (110, -406)
+23:27:43  Desmontando antes da luta de guardas
+23:27:46  ALVO MORREU: Gun Witch hp=0/100   -> TAB 1 de 3
+23:27:49  ALVO MORREU: Gun Witch hp=0/100   -> TAB 2 de 3
+23:27:53  ALVO MORREU: Gun Witch hp=0/100   -> TAB 3 de 3
+23:27:58  ALVO MORREU: Gun Witch hp=0/100   -> TAB 4 de 3
+23:27:58  Cemetery Guard na mira (TAB 4: tela, match em (535, 38)).
+          Largo a mira no ESC, paro de bater e AGUARDO a saída de combate.
+23:28:02  A flag de combate baixou em guardas (18s). Confirmando por 2,5s.
+23:28:07  Fora de combate confirmado: 2,6s contínuos com a flag baixa
+23:28:07  FASE 1 concluída em 23s (92 golpes); indo direto para o boss
+23:28:07  GUARDAS levou 24,4s -> ATE_O_BOSS | posição (103, -406)
+23:28:07  Não estou montado; montando antes de percorrer 1 waypoint(s)
+23:28:14  Não conseguiu montar em 6s          <- 453 linhas iguais a esta
+23:28:39  NÃO CONSIGO MONTAR ... há 32s (5 tentativas). Continuo insistindo.
+          ...                                 <- 62 vezes a MESMA frase
+23:52:32  Montaria confirmada depois de 1465s insistindo
+23:52:32  Percorrendo 1 waypoints (tolerância 6, teto 60s)
+23:52:34  sem progresso indo para (80, -406) (distância 578)
+23:52:48  Travado no waypoint 1/1, a 575 unidades. Posição (426, 53)
+23:52:48  ATE_O_BOSS levou 1481,4s -> SITUAR
+```
+
+**24 minutos e 25 segundos.** E ele não se recuperou: a posição final é
+`(426, 53)`, que é **Bewitcher Cave**, não o covil. A instância expirou e cuspiu
+o personagem para fora — foi isso que soltou a montaria. A recuperação em
+produção era SORTE, não lógica.
+
+### O que o log prova, e que muda o desenho
+
+**1. A fase dos guardas ENCERROU LIMPA.** "Fora de combate confirmado, 2,6 s
+contínuos com a flag baixa". Então um conserto colocado no estado `GUARDAS` não
+pegaria este caso: para aquele estado, deu tudo certo. A saída de combate foi um
+**pisco** — o Cemetery Guard que o ESC largou às 23:27:58 voltou a engajar
+depois da confirmação.
+
+**2. O portão não lia nada.** 1465 s, 62 ciclos, e nenhuma leitura de
+`in_battle`, de `dead` ou de vida. "Continuo insistindo" 62 vezes não é
+diagnóstico, é a mesma frase 62 vezes. Volume de log inversamente proporcional
+à informação.
+
+**3. Havia um segundo travamento latente, pior.** O portão nunca devolve o
+controle, e `_guard()` — quem detecta o personagem morto — só roda no topo do
+laço principal da rotina. Personagem morto dentro do portão = tecla de montaria
+apertada num cadáver **para sempre**, sem manutenção, sem poção, sem log. Nunca
+foi observado porque o de cima acontece primeiro.
+
+### Por que insistir não podia resolver
+
+**Em batalha o jogo RECUSA a montaria.** É a mesma parede que
+`ensure_dismounted` já documenta do outro lado. O portão insiste sem teto por
+decisão firme e correta (`NUNCA A PÉ DENTRO DA CAVE`, 25/08/2026 — a pé não se
+chega no boss), mas essa decisão pressupõe que insistir eventualmente funcione.
+Contra uma condição que só um GOLPE remove, insistir é esperar para sempre.
+
+E o `garantir_montaria_para_andar` diz, com todas as letras, que **não consulta
+flag de batalha**: *"a flag fica ligada com qualquer mob por perto, demora a
+baixar depois do último golpe e já foi vista presa. Consultá-la só fazia o bot
+deixar de acionar a tecla em situações em que ela funcionaria."* **Isso continua
+valendo e não foi revertido.** A flag NÃO decide se a tecla sai — ela continua
+saindo em todo ciclo. A flag só decide **se vale a pena tirar a causa do
+caminho**, e só a partir do 2º ciclo, quando o resultado já provou que o
+acionamento não está pegando.
+
+### Alternativas reprovadas
+
+| alternativa | por que não |
+|---|---|
+| Consertar no estado `GUARDAS` (o que o usuário pediu primeiro) | O log prova que aquele estado encerrou limpo. Não pegaria este caso, nem a volta do altar, nem a saída pelo Skull Herald. |
+| Dar teto ao portão e seguir a pé | Viola `NUNCA A PÉ DENTRO DA CAVE`. A pé não se chega no boss: seria perder a run mais tarde, depois de gastar a travessia. |
+| Dar teto ao portão e abandonar o waypoint | Foi oferecido ao usuário em 01/09/2026 e **recusado**: *"deve insistir"*. O portão continua sem teto. |
+| Bater em área para limpar rápido | Área acerta quem está em volta e puxa mob que não estava em combate. Troca um travamento por outro, agora em bola de neve. |
+| TAB imediato depois de cada morte | Mesmo defeito: sem nome esperado, o TAB mira o mob seguinte e o golpe o puxa. Daí a pausa de 3 s do usuário. |
+| Matar o Cemetery Guard sempre | A trava existe para EVITAR puxá-lo, e ela funciona. O usuário foi explícito: *"mantém o ESC, mas caso passe os segundos máximos de espera ... vai matando de 1 em 1"*. A trava só é suspensa **dentro** do destravamento. |
+
+### O conserto
+
+Duas peças, ligadas pela rotina porque `combat.py` já importa `navigation.py`:
+
+* **`navigation._diagnosticar_o_portao`** — a cada ciclo lê a causa. Morto ⇒
+  levanta `PersonagemMortoNoPortao` (a rotina converte em `RECUPERAR`). Em
+  batalha, a partir de `CICLOS_ANTES_DE_DESTRAVAR = 2` ⇒ chama o destravamento.
+  `in_battle() is None` (não sei) **não** destrava.
+* **`combat.limpar_o_combate`** — mata mob a mob, um por vez, sem AoE, com
+  pausa de 3 s olhando a flag depois de cada morte, teto de 60 s.
+
+O número `CICLOS_ANTES_DE_DESTRAVAR = 2` não é arredondamento: um ciclo é
+`TETO_DO_PORTAO = 6,0 s`, que já é o **dobro** da montagem mais lenta medida
+(1 a 3 s, usuário, 25/08/2026). Dois ciclos dão margem para um caso raro e põem
+o diagnóstico em **~13 s** contra os 1465 s do log.
+
+Medido na simulação (`tests/test_destravamento_do_combate.py`, relógio falso):
+1 mob ⇒ 5,6 s e **zero TAB**; 2 mobs ⇒ 11,5 s e **1 TAB**; ninguém cai ⇒ 63,1 s
+e `False`, com o portão voltando a insistir.

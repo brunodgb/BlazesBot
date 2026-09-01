@@ -690,6 +690,91 @@ TABS_NOS_GUARDAS = 3
 # não atacar mais, não dar mais TAB. Medido nos prints do covil: o Cemetery Guard
 # tem sprite distinto dos Gun Witch e aparece quando os 4 Gun Witch já morreram.
 LIMIAR_CEMETERY_GUARD = 0.85
+
+# ===========================================================================
+# DESTRAVAMENTO: MATAR MOB A MOB PARA SAIR DE BATALHA
+# ===========================================================================
+#
+# MEDIDO EM 31/08/2026, conta `creubo`, run `db7ebdace7`: o bot ficou **24
+# minutos e 25 segundos** parado no waypoint dos Gun Witch (110,-406) apertando
+# a tecla da montaria sem parar. A fase dos guardas tinha encerrado LIMPA, e
+# mesmo assim o portao da montaria nunca liberou:
+#
+#     23:27:58  Cemetery Guard na mira (TAB 4) -> ESC, paro de bater, aguardo
+#     23:28:07  Fora de combate confirmado (2,6s)   <- a saida foi um PISCO
+#     23:28:07  GUARDAS -> ATE_O_BOSS -> "Nao estou montado; montando"
+#               ... 453 linhas de "Nao conseguiu montar em 6s" ...
+#     23:52:32  Montaria confirmada depois de 1465s insistindo
+#     23:52:32  ... posicao (426, 53) = Bewitcher Cave, FORA do covil
+#
+# Ele so destravou porque a INSTANCIA EXPIROU e cuspiu o personagem para fora do
+# covil. Nao foi recuperacao, foi sorte -- e a run ja estava perdida.
+#
+# O QUE SEGURAVA: o Cemetery Guard que o ESC largou voltou a engajar logo depois
+# da confirmacao. Em batalha o jogo RECUSA a montaria, e o portao -- que insiste
+# sem teto por desenho, ver `navigation.garantir_montaria_para_andar` -- insistia
+# contra uma condicao que so um GOLPE resolve. Esperar mais nao ia resolver
+# nunca: a espera E o defeito.
+#
+# A SAIDA, combinada com o usuario em 01/09/2026: *"vai matando de 1 em 1 e
+# olhando se saiu de batalha ... no maximo atrasar 1 minuto ... so deve dar TAB
+# depois de 3 segundos que nao saiu de batalha, mas nesses 3 segundos voce vai
+# verificando se nao sai de batalha antes"*.
+#
+# ISTO NAO E UMA FASE DA RUN. E um RESGATE, chamado de fora pelo portao da
+# montaria (`Navigator.destravar_o_combate`), e por isso nao mora em
+# `atacar_ate_sair_de_combate`: la "saiu de combate" significa VITORIA e o
+# desfecho alimenta a estatistica da run; aqui significa apenas "da para andar
+# de novo". O que ele reaproveita sao as PECAS -- `_ler_flag_de_combate`,
+# `_alvo_morreu`, `_proxima_skill`, `maintain`, `_e_o_cemetery_guard` --, nunca
+# o desfecho.
+
+# Teto de UMA rodada de destravamento. Palavra do usuario: *"no maximo atrasar 1
+# minuto"*.
+#
+# NAO e teto para insistir na montaria -- esse continua nao existindo, e
+# `NUNCA A PE DENTRO DA CAVE` continua inteiro. Estourado este teto o portao
+# volta a insistir e chama o destravamento outra vez; o que o numero limita e
+# quanto tempo o bot passa BATENDO antes de reavaliar.
+TETO_DO_DESTRAVAMENTO = 60.0
+
+# Quanto esperar PARADO, sem bater, depois de cada morte, antes de gastar o TAB
+# seguinte. Numero do usuario.
+#
+# Nao e conforto: aqui nao existe nome esperado, entao o TAB imediato depois da
+# morte faz o bot atacar o mob seguinte e PUXAR quem nao estava em combate --
+# o mesmo travamento com outro nome, agora em bola de neve. Estes tres segundos
+# parado sao o que deixa a flag baixar sozinha quando aquele era o ultimo.
+#
+# A espera SAI ANTES no instante em que a saida se confirma, e ela se ESTENDE
+# quando a flag baixa perto do fim: baixou, o que vale e completar
+# `CONFIRMACAO_DE_SAIDA_DE_COMBATE` -- cortar a confirmacao pela metade gastaria
+# um TAB justamente na hora em que a luta estava acabando.
+ESPERA_APOS_A_MORTE_ANTES_DO_TAB = 3.0
+
+# Teto para UM mob dentro do destravamento.
+#
+# Medido no mesmo log: os quatro Gun Witch cairam em 3, 3, 4 e 4 segundos. Vinte
+# segundos dao folga de 5x para um mob mais duro (o Cemetery Guard tem a mesma
+# escala de HP do covil) sem deixar o destravamento inteiro preso num alvo que
+# nao morre -- alvo imortal na mira e caso de TROCAR de alvo, nao de insistir.
+LIMITE_POR_MOB_NO_DESTRAVAMENTO = 20.0
+
+# O DESTRAVAMENTO BATE NO CEMETERY GUARD? Decisao do usuario, 01/09/2026.
+#
+# FORA do destravamento a trava continua INTEIRA: Cemetery Guard na mira => ESC,
+# para o golpe, espera a saida (`_travar_no_cemetery_guard`). Aquela regra existe
+# para EVITAR puxa-lo, e ela nao muda.
+#
+# Aqui ela JA FALHOU. Se o destravamento esta rodando e porque o ESC e a espera
+# nao bastaram e o personagem esta preso em batalha ha mais de um minuto -- que
+# e exatamente o log dos 24 minutos. Palavras do usuario: *"mantem o ESC, mas
+# caso passe os segundos maximos de espera ... voce deve ir matando de 1 em 1
+# ate sair de batalha, justamente para nao ficar esses 24 minutos"*.
+#
+# `False` devolve o comportamento anterior: o destravamento pula o Cemetery
+# Guard, gasta um TAB e tenta o alvo seguinte.
+DESTRAVAMENTO_BATE_NO_CEMETERY_GUARD = True
 #
 # A FAIXA cobre a struct do personagem. Os offsets conhecidos vão até
 # `OFF_PET_ACTIVE = 0x10A8`, então 0x1800 dá folga de meia struct para cima --
@@ -2342,10 +2427,12 @@ class CombatEngine:
 
                 if morreu:
                     tabs_dados += 1
-                    ctx.press(ctx.settings.keys.next_target, 0.15)
-                    # Espera o jogo processar o TAB antes de continuar.
-                    # Padrão usado no engajamento do boss e outras trocas de alvo.
-                    ctx.tick(ESPERA_DEPOIS_DO_TAB)
+                    # UM lugar só para "aperta o TAB e espera o jogo redesenhar"
+                    # -- `_trocar_de_alvo`. Estas três linhas viviam soltas aqui
+                    # e o destravamento precisava das mesmas: duas cópias do
+                    # mesmo gesto divergiriam em silêncio, e a que ficasse para
+                    # trás leria a barra do alvo ANTIGO.
+                    self._trocar_de_alvo()
                     # Carência: o quadro do alvo novo leva um instante para
                     # desenhar, e ler nesse vão veria a barra do alvo ANTIGO.
                     proxima_leitura = agora + CARENCIA_APOS_O_TAB
@@ -2541,6 +2628,282 @@ class CombatEngine:
                         golpes += 1
 
             ctx.tick(PASSO_DA_VIGIA_DE_COMBATE)
+
+    # ==================================================================
+    # DESTRAVAMENTO -- ver o bloco "DESTRAVAMENTO: MATAR MOB A MOB PARA SAIR
+    # DE BATALHA" no topo do arquivo para o log que mediu o defeito.
+    # ==================================================================
+
+    def limpar_o_combate(self, motivo: str) -> bool:
+        """Mata mob a mob ate SAIR DE BATALHA. Ultimo recurso, nao fase da run.
+
+        Chamado de FORA, pelo portao da montaria, quando ele conclui que nao
+        monta PORQUE esta em batalha. Devolve True quando a saida de combate se
+        confirma, False quando o teto estoura -- e False nao encerra nada: o
+        portao continua insistindo e chama de novo.
+
+        A COREOGRAFIA E A DO USUARIO, e cada passo dela tem motivo:
+
+            1. um alvo por vez, SEM AoE  -- area puxa quem estava de fora
+            2. bate ate ele cair         -- `_bater_ate_o_alvo_cair`
+            3. PARA e olha a flag por 3s -- `_esperar_a_flag_baixar`
+            4. so entao UM TAB, e volta ao 2
+
+        O passo 3 e o que impede a bola de neve. Sem ele o TAB imediato depois
+        da morte mira o mob seguinte, o golpe o puxa, e o bot troca um
+        travamento por outro -- gastando a run em vez de um minuto.
+        """
+        ctx = self.ctx
+        inicio = time.time()
+
+        # `is False` e nao `not`: ilegivel (`None`) NAO e "fora de combate".
+        # Quem chamou esta travado ha mais de um minuto, e desistir por nao
+        # conseguir ler devolveria o bot para o mesmo laco mudo do log.
+        if self._ler_flag_de_combate() is False:
+            ctx.log.debug("Destravamento (%s): ja estou fora de batalha", motivo)
+            return True
+
+        ctx.log.warning(
+            "DESTRAVANDO (%s): estou preso em batalha, e e por isso que a "
+            "montaria nao sobe. Vou matar UM DE CADA VEZ ate a flag baixar, "
+            "com teto de %.0fs.", motivo, TETO_DO_DESTRAVAMENTO,
+        )
+
+        # Montado o personagem NAO ataca -- o jogo ignora a tecla de skill e nao
+        # devolve erro nenhum. Chegar aqui montado e improvavel (em batalha nao
+        # se monta), mas o passo e barato e a alternativa e girar a rotacao sem
+        # dano nenhum, que e a armadilha silenciosa de sempre.
+        self._descer_para_lutar("destravar (%s)" % motivo)
+
+        # POR EPISODIO, pelo mesmo motivo que sao por luta em
+        # `atacar_ate_sair_de_combate`: um id ja contado barraria o TAB do mesmo
+        # id agora, e o cliente reaproveita valores.
+        self._morte.esquecer()
+        self._ultima_leitura_do_alvo = None
+        self._cemetery_guard_encontrado = False
+        self._avisou_o_guarda_no_destravamento = False
+
+        mortes = tabs = golpes = 0
+        while time.time() - inicio < TETO_DO_DESTRAVAMENTO:
+            ctx.raise_if_stopped()
+
+            # Sem ninguem na mira, UM TAB -- e um so. Varios TAB seguidos varrem
+            # a vizinhanca e acabam mirando quem esta FORA do combate, que e
+            # exatamente como se puxa mob novo.
+            if not self._tem_alvo():
+                tabs += 1
+                self._trocar_de_alvo()
+
+            # O prazo do mob NUNCA passa do que sobra do teto. Sem isto uma
+            # rodada iniciada em 59 s rodaria mais 23 s, e o "no maximo atrasar
+            # 1 minuto" que o usuario pediu viraria um minuto e meio.
+            restante = TETO_DO_DESTRAVAMENTO - (time.time() - inicio)
+            caiu, novos = self._bater_ate_o_alvo_cair(
+                motivo, min(LIMITE_POR_MOB_NO_DESTRAVAMENTO, restante))
+            golpes += novos
+            if caiu:
+                mortes += 1
+
+            # A PAUSA. Parado, sem bater, olhando a flag. Sai no instante em que
+            # a saida confirma; so depois dela e que o TAB seguinte e gasto.
+            if self._esperar_a_flag_baixar(
+                    ESPERA_APOS_A_MORTE_ANTES_DO_TAB, motivo):
+                gasto = time.time() - inicio
+                ctx.log.info(
+                    "DESTRAVADO (%s) em %.0fs: %s morte(s), %s TAB, %s golpes. "
+                    "Liberando o portao da montaria.",
+                    motivo, gasto, mortes, tabs, golpes,
+                )
+                diario.registrar_evento(
+                    ctx.account_login, "destravamento",
+                    "sai de batalha matando mob a mob antes de %s: %s morte(s), "
+                    "%s TAB, %s golpes em %.0fs"
+                    % (motivo, mortes, tabs, golpes, gasto),
+                    ctx.memory.position(), ctx.memory.location(),
+                )
+                return True
+
+            # Continua em batalha depois dos 3 s: o proximo alvo. So gasta o
+            # TAB se ainda houver rodada pela frente -- mirar alguem novo na
+            # saida seria entregar um alvo a ninguem.
+            if time.time() - inicio < TETO_DO_DESTRAVAMENTO:
+                tabs += 1
+                self._trocar_de_alvo()
+
+        ctx.log.error(
+            "NAO DESTRAVEI (%s) em %.0fs: %s morte(s), %s TAB, %s golpes e "
+            "continuo em batalha. O portao da montaria vai insistir e me chamar "
+            "de novo.", motivo, TETO_DO_DESTRAVAMENTO, mortes, tabs, golpes,
+        )
+        diario.registrar_evento(
+            ctx.account_login, "destravamento-falhou",
+            "nao sai de batalha antes de %s em %.0fs (%s morte(s), %s golpes)"
+            % (motivo, TETO_DO_DESTRAVAMENTO, mortes, golpes),
+            ctx.memory.position(), ctx.memory.location(),
+        )
+        return False
+
+    def _trocar_de_alvo(self) -> None:
+        """UM TAB, com a espera que o jogo precisa para redesenhar o quadro.
+
+        A leitura do alvo e zerada junto: sem isso a primeira leitura depois do
+        TAB veria o alvo ANTIGO (morto) e o log contaria uma morte que ja foi
+        contada.
+        """
+        ctx = self.ctx
+        ctx.press(ctx.settings.keys.next_target, 0.15)
+        ctx.tick(ESPERA_DEPOIS_DO_TAB)
+        self._ultima_leitura_do_alvo = None
+
+    def _tem_alvo(self) -> bool:
+        """Ha alguem na mira AGORA? So memoria, sem captura.
+
+        "Nao sei" conta como NAO TEM, de proposito: o custo de errar para este
+        lado e um TAB; o de errar para o outro e o bot girando a rotacao contra
+        o nada ate o teto do mob.
+        """
+        try:
+            return self.ctx.memory.alvo_atual() is not None
+        except Exception as exc:
+            self.ctx.log.debug("Nao li o alvo no destravamento: %s", exc)
+            return False
+
+    def _esperar_a_flag_baixar(self, prazo: float, motivo: str) -> bool:
+        """Espera a flag baixar E CONFIRMAR, sem bater em nada.
+
+        `prazo` conta para a flag COMECAR a baixar. Depois que ela baixa, a
+        confirmacao vai ate o fim mesmo passando do prazo: cortar a confirmacao
+        pela metade para gastar um TAB e justamente o que puxa mob novo.
+
+        A regua da confirmacao e a mesma de `atacar_ate_sair_de_combate`
+        (`CONFIRMACAO_DE_SAIDA_DE_COMBATE`), e pelo mesmo motivo -- um unico
+        `False` nao encerra nada: com mobs caindo um a um a flag pisca entre
+        eles, e foi um pisco de 2,6 s que mandou o bot para o portao travado.
+        """
+        ctx = self.ctx
+        limite = time.time() + prazo
+        # Teto absoluto: a flag pode ficar num vaivem de baixa e alta, e sem isto
+        # nem a confirmacao fecharia nem o prazo venceria.
+        teto = limite + CONFIRMACAO_DE_SAIDA_DE_COMBATE + 1.0
+        baixa_desde = 0.0
+        while True:
+            ctx.raise_if_stopped()
+            agora = time.time()
+            if self._ler_flag_de_combate() is False:
+                if baixa_desde == 0.0:
+                    baixa_desde = agora
+                elif agora - baixa_desde >= CONFIRMACAO_DE_SAIDA_DE_COMBATE:
+                    ctx.log.info(
+                        "Fora de combate confirmado no destravamento (%s): "
+                        "%.1fs continuos com a flag baixa",
+                        motivo, agora - baixa_desde,
+                    )
+                    return True
+            else:
+                # Alta OU ilegivel: a confirmacao recomeca. "Nao sei" nunca vale
+                # como "saiu" -- ver `_ler_flag_de_combate`.
+                baixa_desde = 0.0
+            if agora >= (teto if baixa_desde else limite):
+                return False
+            ctx.tick(PASSO_DA_VIGIA_DE_COMBATE)
+
+    def _bater_ate_o_alvo_cair(self, motivo: str,
+                               prazo: float) -> tuple[bool, int]:
+        """Gira a rotacao contra UM alvo ate ele cair. Devolve (caiu, golpes).
+
+        SEM AoE, e isso e o ponto: area acerta quem esta em volta e PUXA mob que
+        nao estava em combate -- o oposto do que o destravamento quer. Um de cada
+        vez foi como o usuario pediu, e e tambem o unico jeito de a pausa depois
+        da morte significar alguma coisa.
+
+        Sai ANTES da hora em tres casos, e nenhum deles e "o alvo morreu": a
+        flag baixou (quem confirma e o chamador), o personagem morreu, ou o
+        prazo deste mob estourou.
+        """
+        ctx = self.ctx
+        fim = time.time() + prazo
+        golpes = 0
+        proximo_ataque = 0.0
+        proxima_manutencao = 0.0
+        # A carencia vale JA no comeco: o quadro do alvo novo leva um instante
+        # para desenhar, e ler nesse vao veria a barra do alvo ANTIGO.
+        proxima_leitura = time.time() + CARENCIA_APOS_O_TAB
+        while time.time() < fim:
+            ctx.raise_if_stopped()
+            agora = time.time()
+
+            if self._ler_flag_de_combate() is False:
+                # A flag baixou no meio da luta deste mob. Sai JA -- continuar
+                # batendo depois de a luta acabar e como se convida o seguinte.
+                return False, golpes
+
+            state = None
+            if agora >= proxima_manutencao:
+                proxima_manutencao = agora + 1.0
+                state = ctx.snapshot()
+                if state.dead:
+                    ctx.log.error("Morri destravando (%s) depois de %s golpes",
+                                  motivo, golpes)
+                    return False, golpes
+                # POCAO E CURA ENTRAM AQUI. O portao da montaria nao tinha
+                # manutencao nenhuma -- foi assim que o log passou 1465 s sem
+                # uma unica leitura de vida, com um guarda batendo.
+                self.maintain(state, em_luta=True)
+
+            if agora >= proxima_leitura:
+                proxima_leitura = agora + CADENCIA_DA_LEITURA_DO_ALVO
+                if self._alvo_morreu():
+                    return True, golpes
+
+            if agora >= proximo_ataque:
+                proximo_ataque = agora + ctx.settings.bc.attack_delay
+                if self._pode_bater_no_destravamento():
+                    if state is None:
+                        state = ctx.snapshot()
+                    key = self._proxima_skill(state, usar_aoe=False)
+                    if key is not None:
+                        ctx.press(key)
+                        golpes += 1
+
+            ctx.tick(PASSO_DA_VIGIA_DE_COMBATE)
+        return False, golpes
+
+    def _pode_bater_no_destravamento(self) -> bool:
+        """O alvo da mira pode apanhar? So o Cemetery Guard levanta a pergunta.
+
+        Ver `DESTRAVAMENTO_BATE_NO_CEMETERY_GUARD` para a decisao e o porque.
+        Com o interruptor ligado a resposta e sempre sim -- e o aviso sai UMA vez
+        por episodio, porque este metodo roda a cada `attack_delay`.
+        """
+        ctx = self.ctx
+        if not USAR_PORTAO_DE_NOME:
+            return True
+        # Popula `_ultimos_nomes_do_alvo` -- a MESMA leitura que
+        # `_e_o_cemetery_guard` consulta logo abaixo, e nao uma segunda.
+        self._veredito_do_alvo(NOME_DO_CEMETERY_GUARD)
+        if not self._e_o_cemetery_guard():
+            return True
+
+        if not DESTRAVAMENTO_BATE_NO_CEMETERY_GUARD:
+            self._travar_no_cemetery_guard(
+                NOME_DO_CEMETERY_GUARD, "destravamento")
+            return False
+
+        if not getattr(self, "_avisou_o_guarda_no_destravamento", False):
+            self._avisou_o_guarda_no_destravamento = True
+            ctx.log.warning(
+                "O que me segura em batalha e o %s. Fora do destravamento eu "
+                "largaria a mira no ESC -- mas o ESC e a espera JA falharam, e "
+                "foi assim que a run de 31/08 ficou 24 minutos parada. VOU "
+                "MATA-LO.", NOME_DO_CEMETERY_GUARD,
+            )
+            diario.registrar_evento(
+                ctx.account_login, "destravamento-guarda",
+                "matando o %s para sair de batalha -- o ESC e a espera nao "
+                "bastaram" % NOME_DO_CEMETERY_GUARD,
+                ctx.memory.position(), ctx.memory.location(),
+            )
+        return True
 
     def fase_dos_guardas_por_combate(self) -> FimDeCombate:
         """FASE 1 -- escolhe o caminho pelo interruptor do experimento.

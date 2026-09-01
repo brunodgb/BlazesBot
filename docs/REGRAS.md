@@ -350,6 +350,28 @@
   - Travado por `tests/test_guardas_batem_ate_sair_de_combate.py`. No boss:
     entrou em combate, ataca — o único TAB é o de ENGAJAR (5 s). Nome ilegível:
     `CARENCIA_SEM_LER_O_NOME = 3.0` segura o golpe.
+- **DESTRAVAMENTO — preso em batalha, mata mob a mob** (`limpar_o_combate`,
+  01/09/2026). O detalhe medido está em `docs/decisoes/navegacao.md`, seção
+  "O portão da montaria insistia mudo". O que é especificação:
+  - **Quem chama:** só o portão da montaria (`_diagnosticar_o_portao`), a partir
+    do ciclo `CICLOS_ANTES_DE_DESTRAVAR = 2` (~13 s), e só com
+    `in_battle() is True`. A ligação é injetada pela rotina
+    (`nav.destravar_o_combate = combat.limpar_o_combate`) porque `combat` já
+    importa `navigation` e o contrário faria ciclo.
+  - **O laço:** `_tem_alvo()` (memória, sem captura) → TAB se não houver →
+    `_bater_ate_o_alvo_cair` (sem AoE, com manutenção a cada 1 s) →
+    `_esperar_a_flag_baixar(3,0 s)` → TAB → repete. Devolve `True` na
+    confirmação de saída, `False` no teto de 60 s.
+  - **Os números:** `TETO_DO_DESTRAVAMENTO = 60.0` (palavra do usuário),
+    `ESPERA_APOS_A_MORTE_ANTES_DO_TAB = 3.0` (idem),
+    `LIMITE_POR_MOB_NO_DESTRAVAMENTO = 20.0` — 5x folga sobre os 3-4 s medidos
+    por Gun Witch no log de 31/08 (3, 3, 4 e 4 s).
+  - **Medido na simulação** (`tests/test_destravamento_do_combate.py`): 1 mob
+    ⇒ 5,6 s e **zero TAB**; 2 mobs ⇒ 11,5 s e **1 TAB**; ninguém cai ⇒ 63,1 s e
+    `False`. Contra os **1465 s** do log.
+  - **UM lugar só aperta o TAB de troca:** `_trocar_de_alvo`, usado pelo laço da
+    luta e pelo destravamento. O TAB de ENGAJAR o boss continua separado, porque
+    não é morte de ninguém. Travado por `tests/test_alvo_pela_memoria.py`.
 - **A BARRA DESENHADA VETA O MARCADOR** (`BARRA_DESENHADA_VETA_O_MARCADOR`), e é
   conserto de defeito reproduzido pelo usuário em 20/08/2026: *"na metade da vida
   do mob tem dado TAB em vez de matar"*. O log tem os três TABs em nove segundos,

@@ -30,20 +30,33 @@ from blazesbot.core.pet import PetFeeder
 # ===========================================================================
 
 class _NavFalso:
-    """O portão de verdade, com `ensure_mounted` sob controle do teste."""
+    """O portão de verdade, com `ensure_mounted` sob controle do teste.
+
+    O DIAGNÓSTICO É O DE VERDADE (`_diagnosticar_o_portao`, emprestado da classe
+    real): ele é parte do contrato do portão desde 01/09/2026 e um falso que o
+    substituísse por um `pass` deixaria de exercitar justamente a decisão nova
+    -- "não monto porque estou EM BATALHA" e "cadáver não monta".
+    """
 
     def __init__(self, montar_na_tentativa: int, log) -> None:
         self.tentativas = 0
         self._alvo = montar_na_tentativa
+        # Sem destravamento ligado: estes testes são sobre INSISTIR, e a ligação
+        # com o combate tem os seus próprios (`test_destravamento_do_combate`).
+        self.destravar_o_combate = None
         self.ctx = SimpleNamespace(
             log=log,
             raise_if_stopped=lambda: None,
             account_login="teste",
+            snapshot=lambda: SimpleNamespace(dead=False),
             settings=SimpleNamespace(keys=SimpleNamespace(mount="F1")),
             memory=SimpleNamespace(is_mounted=lambda: False,
+                                   in_battle=lambda: False,
                                    position=lambda: (1, 2),
                                    location=lambda: "Cave"),
         )
+
+    _diagnosticar_o_portao = navigation.Navigator._diagnosticar_o_portao
 
     def ensure_mounted(self, timeout=0.0):
         self.tentativas += 1

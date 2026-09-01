@@ -87,7 +87,7 @@ from ..watchdog import DcReason, Watchdog
 from . import hotbar, mapa_bc
 from .combat import CombatEngine
 from .localizacao import RastreadorDeLocal
-from .navigation import Navigator
+from .navigation import Navigator, PersonagemMortoNoPortao
 from .ui_service import TOLERANCIA_DO_NPC_DA_ENTRADA, UIService
 from .vendor import VendorService
 
@@ -414,6 +414,12 @@ class BossRushRoutine:
         self.local = RastreadorDeLocal(ctx.memory, ctx.log, ctx.account_login)
         self.nav = Navigator(ctx)
         self.combat = CombatEngine(ctx, self.nav)
+        # LIGA O PORTAO DA MONTARIA NO COMBATE. Em batalha o jogo recusa montar,
+        # e o portao insiste sem teto -- foi assim que a run de 31/08 ficou 24
+        # minutos parada no waypoint dos Gun Witch (ver o bloco "DESTRAVAMENTO"
+        # no topo de `combat.py`). A rotina e quem pode fazer esta ligacao:
+        # `combat` ja importa `navigation`, e o contrario faria ciclo.
+        self.nav.destravar_o_combate = self.combat.limpar_o_combate
         self.vendor = VendorService(ctx, self.nav)
         self.team = TeamService(ctx)
         # Um navegador só por conta, compartilhado. Ele guarda o cronômetro da
@@ -2535,6 +2541,14 @@ class BossRushRoutine:
                     handler()
                 except (StopRequested, Disconnected):
                     raise
+                except PersonagemMortoNoPortao as exc:
+                    # NAO e excecao inesperada: e o portao da montaria avisando
+                    # que nao ha o que insistir. Sem este ramo ele cairia no
+                    # `except Exception` abaixo e sairia com traceback no log,
+                    # como se fosse defeito. O desfecho e o mesmo do `_guard()`
+                    # ao ver o personagem morto -- RECUPERAR, que revive.
+                    ctx.log.warning("%s. Indo para RECUPERAR.", exc)
+                    self.state = State.RECUPERAR
                 except FarmDesligado:
                     ctx.log.info(
                         "BC desligado no meio de %s; devolvendo o controle "

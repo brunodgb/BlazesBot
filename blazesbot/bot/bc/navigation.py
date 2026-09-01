@@ -45,6 +45,7 @@ imprime a posição atual. Anote o par (x, y) e coloque na lista.
 from __future__ import annotations
 
 import time
+from collections.abc import Callable
 
 from ...core import diario
 from ...core.zones import (
@@ -325,6 +326,37 @@ TETO_DO_PORTAO = 6.0
 # parou de responder. Antes disso, insistir calado é o certo -- gritar a cada
 # hipótese encheria o log de falso alarme.
 CICLOS_ANTES_DE_GRITAR = 5
+
+# Depois de quantos ciclos sem montar o portao para de insistir MUDO e vai
+# PROCURAR A CAUSA -- e, quando a causa tem tratamento, tira ela do caminho.
+#
+# MEDIDO EM 31/08/2026 (run `db7ebdace7`, conta `creubo`): 1465 segundos, 62
+# ciclos e 453 toques na tecla sem UMA leitura que dissesse se o personagem
+# estava em batalha, morto ou com vida. "Continuo insistindo" 62 vezes nao e
+# diagnostico -- e a mesma frase 62 vezes.
+#
+# DOIS ciclos, e o numero nao e arredondamento: um ciclo ja e `TETO_DO_PORTAO`
+# = 6 s, que e o DOBRO da montagem mais lenta medida (1 a 3 s, usuario,
+# 25/08/2026). Um ciclo perdido ja significa que algo esta errado; dois dao a
+# margem de um caso raro sem chegar perto do minuto que o usuario aceitou
+# perder. Na pratica o diagnostico sai em ~13 s contra os 24 minutos do log.
+CICLOS_ANTES_DE_DESTRAVAR = 2
+
+
+class PersonagemMortoNoPortao(RuntimeError):
+    """O personagem morreu esperando a montaria. Nao ha o que insistir.
+
+    O portao da montaria insiste SEM TETO por desenho (`NUNCA A PE DENTRO DA
+    CAVE`), e essa decisao continua valendo -- mas ela pressupoe um personagem
+    VIVO. Com o personagem morto o laco aperta a tecla da montaria num cadaver
+    para sempre: `_guard()` so roda no topo do laco principal da rotina, e o
+    portao nunca devolve o controle para ele.
+
+    Levantar daqui e o unico jeito de a morte chegar ao `RECUPERAR`, que e quem
+    sabe reviver. NAO e "desistir da montaria": e reconhecer que nao ha
+    montaria possivel para quem esta morto.
+    """
+
 # Quantos waypoints à frente podem ser aproveitados de uma vez.
 #
 # Deliberadamente pequeno: a rota da cave se cruza consigo mesma, e uma janela
@@ -372,6 +404,18 @@ class Navigator:
         # interruptor: dois toques próximos se cancelam. Com cronômetros
         # separados, o bot remontava e desmontava em seguida.
         self._ultimo_toque_na_montaria = 0.0
+        # DEPENDENCIA CRUZADA, injetada pela rotina (`BossRushRoutine.__init__`).
+        #
+        # O portao da montaria precisa de COMBATE para se destravar: em batalha
+        # o jogo recusa montar, e so um golpe resolve. Mas `combat.py` ja importa
+        # `navigation.py` (o `CombatEngine` recebe o `Navigator`), entao importar
+        # de volta faria ciclo -- quem tem os dois na mao e a rotina, e e ela que
+        # liga um no outro.
+        #
+        # Quem usa: `_diagnosticar_o_portao`. O que NAO subiu para ca: o COMO
+        # matar, que e todo do `CombatEngine.limpar_o_combate`. Daqui sai so o
+        # QUANDO. Mexer neste contrato mexe nos dois arquivos.
+        self.destravar_o_combate: Callable[[str], bool] | None = None
         # Desde quando está a pé, e quanto tempo do trajeto atual foi a pé. É o
         # número que diz se a exigência de andar montado está sendo cumprida de
         # verdade -- sem ele, "andou a pé metade da cave" não aparece em log nenhum.
@@ -1652,6 +1696,10 @@ class Navigator:
 
             ciclo += 1
             gasto = time.time() - comeco
+            # POR QUE nao monto -- e, quando da, TIRA A CAUSA do caminho. Isto
+            # vem ANTES do grito de proposito: gritar sem diagnostico foi o que
+            # produziu as 453 linhas identicas do log de 31/08.
+            self._diagnosticar_o_portao(motivo, ciclo, gasto)
             if ciclo == CICLOS_ANTES_DE_GRITAR:
                 # UMA vez no diário, no ciclo em que o silêncio deixa de ser
                 # aceitável. Registrar a cada ciclo encheria o histórico com o
@@ -1670,6 +1718,60 @@ class Navigator:
                     "condição de montar.",
                     motivo, gasto, ciclo,
                 )
+
+    def _diagnosticar_o_portao(self, motivo: str, ciclo: int,
+                               gasto: float) -> None:
+        """POR QUE nao monta -- e, quando da, tira a causa do caminho.
+
+        Duas causas tem tratamento, e sao justamente as duas que insistir na
+        tecla nunca resolveria:
+
+          * MORTO -- cadaver nao monta. Levanta `PersonagemMortoNoPortao`, que a
+            rotina converte em `RECUPERAR` (revive e recomeca).
+          * EM BATALHA -- o jogo RECUSA montar em combate. Chama o
+            destravamento, que mata mob a mob ate a flag baixar. Ver
+            `combat.limpar_o_combate` e o log dos 24 minutos citado la.
+
+        Qualquer outra causa (tecla errada, condicao do personagem que o bot nao
+        conhece) continua com o comportamento antigo: o portao insiste e grita.
+        O que muda e que agora o log diz O QUE FOI LIDO, em vez de repetir
+        "continuo insistindo" ate a instancia expirar.
+        """
+        ctx = self.ctx
+
+        state = ctx.snapshot()
+        if state.dead:
+            raise PersonagemMortoNoPortao(
+                f"o personagem morreu esperando a montaria para {motivo} "
+                f"({gasto:.0f}s, {ciclo} tentativas)"
+            )
+
+        if ciclo < CICLOS_ANTES_DE_DESTRAVAR:
+            return
+
+        # `is not True`: ilegivel (`None`) NAO autoriza sair batendo. Nao saber
+        # se esta em combate e motivo para continuar insistindo na tecla, nunca
+        # para gastar um minuto puxando mob -- ver `MEMORIA PRIMEIRO`, e a regra
+        # de que "nao sei" nao decide nada.
+        if ctx.memory.in_battle() is not True:
+            return
+
+        if self.destravar_o_combate is None:
+            # Sem o destravamento ligado, dizer a causa ja e o ganho: antes o
+            # log nao trazia nem isso.
+            ctx.log.warning(
+                "Nao monto para %s ha %.0fs e estou EM BATALHA -- o jogo recusa "
+                "a montaria em combate. Nao tenho destravamento ligado; sigo "
+                "insistindo.", motivo, gasto,
+            )
+            return
+
+        ctx.log.warning(
+            "Nao monto para %s ha %.0fs porque estou EM BATALHA. Insistir na "
+            "tecla nao resolve isso -- vou limpar o combate antes.",
+            motivo, gasto,
+        )
+        self.destravar_o_combate(motivo)
 
     def _manter_montaria(self) -> None:
         """Repõe a montaria DURANTE o trajeto. Chamado a cada volta do laço.

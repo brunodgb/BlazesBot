@@ -345,6 +345,30 @@ Cada item é o que **não pode ser violado**. O detalhe de cada área mora em
   (`bot/bc/combat.py`) é assunto à parte, e exige placar de `alvo_morto_por_hp`.
 - **A ENTIDADE PODE DEMORAR UM CICLO A APARECER** no array logo depois de
   selecionar (medido: 1 em ~45) — por isso a tela continua como reserva.
+- **DESTRAVAMENTO: PRESO EM BATALHA, MATA MOB A MOB** (01/09/2026,
+  `combat.limpar_o_combate`). Não é fase da run, é RESGATE — chamado de fora
+  pelo portão da montaria, nunca pelo fluxo normal. A coreografia é do usuário e
+  cada passo tem dente:
+  - **UM alvo por vez, SEM AoE.** Área acerta quem está em volta e PUXA mob que
+    não estava em combate — trocaria um travamento por outro.
+  - **Morreu ⇒ PARA e olha a flag por `ESPERA_APOS_A_MORTE_ANTES_DO_TAB = 3.0`.**
+    O TAB imediato depois da morte mira o mob seguinte e o golpe o puxa; a pausa
+    é o que impede a bola de neve. Ela **sai antes** quando a saída confirma e
+    **se estende** para completar `CONFIRMACAO_DE_SAIDA_DE_COMBATE` se a flag
+    baixou perto do fim — cortar a confirmação gastaria um TAB à toa.
+  - **`TETO_DO_DESTRAVAMENTO = 60.0`** ("no máximo atrasar 1 minuto", usuário).
+    O prazo de cada mob (`LIMITE_POR_MOB_NO_DESTRAVAMENTO = 20.0`) é cortado
+    pelo que sobra do teto, e o último TAB não sai se não houver rodada adiante.
+  - **`False` NÃO encerra nada:** o portão da montaria continua insistindo e
+    chama de novo. O teto limita quanto tempo o bot passa BATENDO, não quanto
+    insiste em montar.
+  - **AQUI o Cemetery Guard APANHA** (`DESTRAVAMENTO_BATE_NO_CEMETERY_GUARD`).
+    A trava abaixo existe para EVITAR puxá-lo; se o destravamento está rodando é
+    porque o ESC e a espera já falharam — e foi essa espera que produziu os 24
+    minutos. Sai WARNING e registro no diário. **Fora do destravamento a trava
+    continua inteira.**
+  - **Manutenção (poção/cura) roda DENTRO**, a cada 1 s, e morte do personagem
+    encerra a rodada. O portão da montaria não tinha nenhuma das duas.
 - **NOS GUARDAS, SÓ O CEMETERY GUARD PARA O GOLPE** (26/08,
   `SO_O_CEMETERY_GUARD_PARA_O_GOLPE_NOS_GUARDAS`): outro nome não para nada —
   rotaciona skill **até sair de batalha**. Cemetery Guard na mira ⇒ ESC (uma
@@ -391,6 +415,21 @@ violado:
   "mais devagar", é perder a run mais tarde, depois de gastar a travessia.
   Grita a partir de `CICLOS_ANTES_DE_GRITAR = 5`; desiste só sem tecla
   configurada, que é erro de config.
+- **MAS INSISTIR NÃO PODE SER MUDO — o portão DIAGNOSTICA e AGE** (01/09/2026,
+  `CICLOS_ANTES_DE_DESTRAVAR = 2`). Medido: **1465 s** (24 min) num waypoint,
+  62 ciclos, 453 linhas idênticas, sem UMA leitura de batalha, morte ou vida.
+  A partir do 2º ciclo o portão lê a causa:
+  - **EM BATALHA ⇒ chama o destravamento** (`combat.limpar_o_combate`, injetado
+    pela rotina em `nav.destravar_o_combate`). Em combate o jogo RECUSA montar,
+    e só um golpe resolve — insistir na tecla nunca ia resolver.
+  - **MORTO ⇒ levanta `PersonagemMortoNoPortao`**, que a rotina converte em
+    `RECUPERAR`. Antes o laço apertava a tecla num cadáver **para sempre**:
+    `_guard()` só roda no topo do laço principal e o portão nunca devolvia.
+  - **"NÃO SEI" (`in_battle() is None`) NÃO destrava.** Não saber é motivo para
+    continuar insistindo na tecla, nunca para gastar um minuto puxando mob.
+  - **O invariante continua inteiro:** o portão NÃO ganhou teto para desistir.
+    Destravamento que falha devolve `False` e o portão chama de novo.
+  - Travado por `tests/test_destravamento_do_combate.py`.
 - **`INTERVALO_REMONTAR = 3.0`**, e o número é medição: montar leva de 1 a 3 s
   conforme a montaria. Com 1,50 s o segundo toque caía DENTRO da subida — e a
   tecla é interruptor, então ele desmontava quem estava montando.

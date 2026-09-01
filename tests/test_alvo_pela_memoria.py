@@ -279,7 +279,10 @@ def test_existem_exatamente_DOIS_lugares_que_apertam_a_tecla_de_alvo():
 
     Os dois de hoje, e a diferença entre eles importa para ler o log:
 
-      1. `atacar_ate_sair_de_combate` -- **por MORTE**, atrás de `_alvo_morreu`;
+      1. `_trocar_de_alvo` -- o gesto "aperta o TAB e espera o jogo redesenhar",
+         usado por quem troca de alvo **por MORTE**: o laço da luta
+         (`atacar_ate_sair_de_combate`, atrás de `_alvo_morreu`) e o
+         destravamento (`limpar_o_combate`, atrás da pausa de 3 s);
       2. `_fase_boss` -- **para ADQUIRIR o boss** que não engajou em
          `SEGUNDOS_ANTES_DO_TAB_NO_BOSS`. Este NÃO é morte de ninguém, e é o
          único do bot que não é.
@@ -300,7 +303,12 @@ def test_existem_exatamente_DOIS_lugares_que_apertam_a_tecla_de_alvo():
 
 
 def test_o_TAB_por_morte_so_sai_com_morreu_True():
-    """O laço da luta só aperta a tecla dentro de `if morreu:`."""
+    """O laço da luta só troca de alvo dentro de `if morreu:`.
+
+    A tecla saiu daqui e foi para `_trocar_de_alvo` (um lugar só para o gesto),
+    então quem o teste procura agora é a CHAMADA. A pergunta que ele trava é a
+    mesma de sempre: o laço da luta não pode trocar de alvo com o mob vivo.
+    """
     import ast
     import inspect
     import textwrap
@@ -311,22 +319,24 @@ def test_o_TAB_por_morte_so_sai_com_morreu_True():
         inspect.getsource(CombatEngine.atacar_ate_sair_de_combate))
     arvore = ast.parse(fonte)
 
+    def _trocas(no_raiz):
+        return [n.lineno for n in ast.walk(no_raiz)
+                if isinstance(n, ast.Attribute) and n.attr in
+                ("next_target", "_trocar_de_alvo")]
+
     dentro_de_morreu = []
     for no in ast.walk(arvore):
         if not (isinstance(no, ast.If) and isinstance(no.test, ast.Name)
                 and no.test.id == "morreu"):
             continue
-        dentro_de_morreu += [n.lineno for n in ast.walk(no)
-                             if isinstance(n, ast.Attribute)
-                             and n.attr == "next_target"]
+        dentro_de_morreu += _trocas(no)
 
-    todos = [n.lineno for n in ast.walk(arvore)
-             if isinstance(n, ast.Attribute) and n.attr == "next_target"]
+    todos = _trocas(arvore)
 
     assert todos, "o TAB por morte sumiu do laço da luta"
     assert dentro_de_morreu == todos, (
-        "há TAB no laço da luta FORA do `if morreu:` -- ele sairia com o mob "
-        "vivo")
+        "há troca de alvo no laço da luta FORA do `if morreu:` -- ela sairia "
+        "com o mob vivo")
 
 
 def test_so_a_memoria_declara_morte_esta_LIGADO():
