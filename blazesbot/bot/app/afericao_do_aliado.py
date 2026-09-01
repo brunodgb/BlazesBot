@@ -343,6 +343,16 @@ def rodar(config: BotConfig, account: Account,
         log.info("Aferição do aliado: conta %s (%s), max_hp=%s mp=%s",
                  account.login, personagem, eu["max_hp"], eu["mp"])
 
+        # O TIME PELA MEMÓRIA -- desde 31/08/2026 dá para saber, ANTES de
+        # clicar, quem deve estar em cada retrato. É isso que transforma esta
+        # aferição de "o clique troca o alvo?" em "o clique troca o alvo PARA A
+        # PESSOA CERTA?".
+        esperados = _seguro(lambda: ctx.memory.companheiros_de_time(personagem)) or []
+        eu["time"] = _seguro(lambda: ctx.memory.time_do_jogo())
+        eu["companheiros"] = esperados
+        log.info("Time pela memória: %s | companheiros (ordem dos retratos): %s",
+                 eu["time"], esperados)
+
         pontos = _pontos_dos_retratos(ctx)
         achados = []
         for i, (x, y) in enumerate(pontos):
@@ -350,7 +360,8 @@ def rodar(config: BotConfig, account: Account,
             depois, demora, situacao = _medir_a_troca(
                 ctx, lambda px=x, py=y: ctx.input.left_click(px, py),
                 antes.get("id"))
-            achados.append({"slot": i + 1, "ponto": (x, y),
+            esperado = esperados[i] if i < len(esperados) else ""
+            achados.append({"slot": i + 1, "ponto": (x, y), "esperado": esperado,
                             "antes": antes, "depois": depois,
                             "segundos": round(demora, 3), "situacao": situacao})
             log.info(
@@ -423,26 +434,40 @@ def _seguro(fn) -> Any:
 
 
 def resumir(resultado: dict[str, Any]) -> str:
-    """O veredito em TEXTO. O Python decide, as interfaces só exibem."""
+    """O veredito em TEXTO. O Python decide, as interfaces só exibem.
+
+    ELE MUDOU EM 31/08/2026. A versão anterior tratava "a memória não descreve
+    o alvo" como reprovação e concluía que a vítima teria de anunciar tudo.
+    Isso ficou FALSO: `alvo_atual()` continua sem descrever jogador, mas o time
+    inteiro -- nomes e vida de cada um -- é legível por outro caminho
+    (`Memory.time_do_jogo` / `vida_do_time`). O que esta aferição precisa provar
+    passou a ser só isto: **o clique seleciona, e em quanto tempo**.
+    """
     slots = resultado.get("slots") or []
-    trocou = [s for s in slots if s.get("situacao") == "mudou"]
-    com_nome = [s for s in trocou if (s.get("depois") or {}).get("nome")]
+    esperados = resultado.get("eu", {}).get("companheiros") or []
+    # Só os slots que DEVEM ter alguém. O painel encolhe por baixo, então com
+    # dois companheiros os slots 3 e 4 estão vazios -- e clicar em slot vazio
+    # não trocar o alvo é o comportamento certo, não uma falha.
+    uteis = [s for s in slots if s["slot"] <= len(esperados)]
+    trocou = [s for s in uteis if s.get("situacao") == "mudou"]
+
+    if not esperados:
+        return ("SEM TIME: a memória não vê companheiro nenhum. Forme o time e "
+                "rode de novo -- sem time não há retrato para clicar.")
     if not trocou:
-        return ("REPROVOU: nenhum clique trocou o alvo. Ou o time não estava na "
-                "tela, ou as coordenadas estão erradas — abra a prova em PNG. "
-                "(Se algum slot já era o alvo selecionado, ele aparece como "
-                "'nao_mudou' e isso NÃO é conclusivo: rode de novo com outro "
-                "alvo selecionado antes.)")
+        return (f"REPROVOU: nenhum dos {len(uteis)} retratos ocupados trocou o "
+                "alvo. Abra a prova em PNG: ou as coordenadas estão erradas, ou "
+                "o painel não estava visível.")
+
     demoras = [s["segundos"] for s in trocou]
-    faixa = f"{min(demoras):.3f}s a {max(demoras):.3f}s"
-    if not com_nome:
-        return (f"PARCIAL: {len(trocou)} de {len(slots)} cliques trocaram o alvo "
-                f"({faixa}), mas a memória não descreveu NENHUM deles. A Fada "
-                "consegue mirar, mas não consegue confirmar em quem clicou — a "
-                "vítima terá de anunciar tudo.")
-    nomes = ", ".join(str((s.get("depois") or {}).get("nome")) for s in com_nome)
-    return (f"PASSOU: {len(com_nome)} de {len(slots)} aliados lidos pela memória "
-            f"({nomes}). Atraso do clique até a memória virar: {faixa}.")
+    mapa = ", ".join(f"{s['slot']}={s.get('esperado') or '?'}:{(s.get('depois') or {}).get('id')}"
+                     for s in trocou)
+    veredito = "PASSOU" if len(trocou) == len(uteis) else "PARCIAL"
+    return (f"{veredito}: {len(trocou)} de {len(uteis)} retratos ocupados "
+            f"selecionaram ({mapa}). Atraso da ação até a memória virar: "
+            f"{min(demoras):.3f}s a {max(demoras):.3f}s. "
+            "Os ids MUDAM a cada sessão -- por isso cada conta publica o dela "
+            "ao iniciar o APP, e não se guarda nada em disco.")
 
 
 def main() -> int:
@@ -548,9 +573,8 @@ def main() -> int:
     for s_ in r["slots"]:
         d = s_["depois"]
         dizer(f"  slot {s_['slot']} em {s_['ponto']}: {s_['situacao']:<12} "
-              f"id={d.get('id')} nome={d.get('nome')!r} "
-              f"hp={d.get('hp')}/{d.get('max_hp')} nivel={d.get('nivel')} "
-              f"({s_['segundos']}s)")
+              f"esperado={s_.get('esperado') or '(vazio)':<16} "
+              f"id={d.get('id')} ({s_['segundos']}s)")
     for t in r.get("teclas") or []:
         d = t["depois"]
         dizer(f"  tecla {t['tecla']}: {t['situacao']:<12} id={d.get('id')} "

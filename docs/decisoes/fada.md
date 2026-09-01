@@ -128,16 +128,34 @@ O que ele custa: um F1 por conta no início (e de novo depois de cada relogin, j
 que o id é da sessão), e o alvo daquela conta fica trocado por um instante --
 resolvido pelo TAB seguinte, que ela daria de qualquer forma.
 
-### 4. Selecionar exige PROXIMIDADE
+### 4. Os slots 3 e 4 estavam VAZIOS, não longe
 
-Os slots 3 e 4 não trocaram o alvo, e o usuário explicou: aqueles dois aliados
-estavam **longe** (entraram no time só para o teste). Os quadrados do PNG caíram
-certos em cima de cada retrato -- então não é coordenada errada, é alcance.
+Foi o que ficou escrito aqui antes, e estava errado. A leitura do time
+(31/08/2026) mostra `tamanho=3` — ou seja, DOIS companheiros. O painel
+**encolhe por baixo**, então os slots 3 e 4 não tinham ninguém, e clicar em
+retrato vazio não trocar o alvo é o comportamento certo, não uma falha.
 
-**Reforça a decisão do ponto inicial compartilhado**: a Fada só cura quem está
-por perto, e é o ponto único do time que garante isso.
+Confirmado na rodada de 01/09/2026, com o mesmo time de 3: os slots 1 e 2
+selecionaram (`BlazesAPP1` e `WizzOfBlazes5`), o 3 e o 4 não. A ferramenta
+passou a **cruzar cada slot com o nome que a memória diz que está ali** e a só
+cobrar os slots ocupados — antes ela reprovava por causa de retrato vazio, e um
+instrumento que reprova o certo é pior que instrumento nenhum.
 
-### 5. As coordenadas derivadas estão certas
+Isso não enfraquece o ponto inicial compartilhado: a Fada precisa de todos por
+perto. Mas o motivo é outro — é o alcance da SKILL, que não foi medido, e não a
+seleção.
+
+### 5. Os ids MUDAM a cada sessão
+
+Medido comparando as duas rodadas: em 28/08 o id da `Tsuki69` era
+`1075052834`; em 01/09, `1084491547`. São ids de sessão.
+
+**É por isso que cada conta publica o próprio id ao INICIAR o APP, e nada é
+guardado em disco.** Um id gravado no `config.json` apontaria para outra pessoa
+na sessão seguinte — e o invariante "id que não bate não cura" viraria "id que
+bate por acaso cura o errado".
+
+### 6. As coordenadas derivadas estão certas
 
 O usuário gerou três provas, com 2, 3 e 4 companheiros: *"os quadrados ficaram
 perfeitos na foto de cada aliado"*. O passo de 80 px derivado do print está
