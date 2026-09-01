@@ -183,6 +183,12 @@ seguidores). Pedido do usuário em 27/08/2026.
   lista fechada em `tests/test_app_config_campo_por_campo.py`
   (`CAMPOS_SO_DA_WEB`) — não é permissão para novos campos ficarem fora da GUI.
 
+- **`TARGET_ID` EM ZERO NO MEIO DA MACRO CORTA A VOLTA.** Zero é o jogo dizendo
+  "não há nada selecionado" — o mob morreu e o cliente limpou o alvo, ele sumiu
+  de vista, ou uma janela roubou a seleção. As linhas que sobram sairiam para o
+  vazio. Conferido a CADA linha, porque é a leitura mais barata do bot (~1 µs).
+  `None` não corta: sem leitura o modo cego roda a macro inteira, como sempre.
+
 ## A Fada — `docs/decisoes/fada.md`
 
 A conta marcada como `Fada` que, **em time**, cura em vez de atacar. Fora de um

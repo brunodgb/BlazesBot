@@ -454,3 +454,48 @@ def test_TAB_que_cai_no_CADAVER_nao_roda_a_macro(monkeypatch):
 
     assert e.uma_volta() is False
     assert "1" not in e.teclas, "a macro disparou com o cadáver selecionado"
+
+# ===========================================================================
+# ALVO ZERADO NO MEIO DA MACRO -- 01/09/2026
+# ===========================================================================
+#
+# *"A cada linha deve verificar se o target_id != 0; caso for 0 ela vai ser
+# interrompida e recomeçar."*
+#
+# `TARGET_ID` em zero é o jogo dizendo "não há nada selecionado": o mob morreu e
+# o cliente limpou o alvo, ele sumiu de vista, ou uma janela roubou a seleção.
+# Todas as linhas que sobram sairiam para o vazio.
+
+
+def test_alvo_zerado_no_meio_CORTA_a_volta():
+    e = _executor()
+    e._id_do_alvo = lambda: 0
+    passos = [SimpleNamespace(key="1", delay_ms=1) for _ in range(5)]
+
+    assert e._uma_volta_simples(passos) is True     # aborto normal, não parada
+    # O TAB do prelúdio sai (não há alvo, então ele é a coisa certa a fazer).
+    # O que NÃO pode sair é linha de macro.
+    assert e.teclas == ["TAB"], e.teclas
+    assert e.voltas == 0, "contou como volta completa"
+
+
+def test_alvo_que_zera_no_MEIO_corta_ali():
+    e = _executor()
+    # O alvo some DEPOIS de duas linhas. Amarrado às teclas enviadas, e não a
+    # uma contagem de chamadas: o prelúdio também lê o id, e contar chamadas
+    # faria o teste medir a implementação em vez do comportamento.
+    e._id_do_alvo = lambda: 0 if e.teclas.count("1") >= 2 else 777
+    passos = [SimpleNamespace(key="1", delay_ms=1) for _ in range(6)]
+
+    e._uma_volta_simples(passos)
+    assert e.teclas.count("1") == 2, e.teclas
+
+
+def test_SEM_leitura_de_id_a_macro_roda_inteira():
+    """Cego é o modo em que o APP foi feito para funcionar: `None` não corta."""
+    e = _executor()
+    e._id_do_alvo = None
+    passos = [SimpleNamespace(key="1", delay_ms=1) for _ in range(4)]
+
+    e._uma_volta_simples(passos)
+    assert e.teclas.count("1") == 4, e.teclas

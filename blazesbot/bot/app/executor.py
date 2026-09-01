@@ -2598,7 +2598,26 @@ class ExecutorDeMacro:
                         "volta em vez de repetir tecla.", linha, len(passos))
                     return self._abortar_a_volta()
                 passo = passos[linha]
-                
+
+            # ALVO ZERADO NO MEIO DA MACRO -- decisão do usuário em
+            # 01/09/2026: *"a cada linha deve verificar se o target_id != 0;
+            # caso for 0 ela vai ser interrompida e recomeçar"*.
+            #
+            # `TARGET_ID` em zero é o jogo dizendo "não há nada selecionado".
+            # Acontece no meio da volta quando o mob morre e o cliente limpa o
+            # alvo, quando ele some de vista, ou quando uma janela rouba a
+            # seleção -- e todas as linhas que sobram sairiam para o vazio.
+            #
+            # É A LEITURA MAIS BARATA DO BOT (~1 µs, quatro bytes), e por isso
+            # cabe a cada linha, ao contrário da régua da tela.
+            #
+            # `None` NÃO INTERROMPE: sem leitura a resposta é "não sei", e o
+            # modo cego roda a macro inteira como sempre fez.
+            if self._ler_id_do_alvo() == 0:
+                self.log.info("APP: fiquei sem alvo na linha %d — corto a volta "
+                              "e pego outro.", i + 1)
+                return self._abortar_a_volta()
+
             self.input.key(passo.key)
             self.teclas_enviadas += 1
             
