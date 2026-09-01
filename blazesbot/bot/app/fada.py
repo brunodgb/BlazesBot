@@ -251,17 +251,25 @@ class FadaDoTime:
         self._sentada = True
         return True
 
-    def _levantar(self) -> None:
-        """Sai do chão para agir.
+    def _sair_do_descanso(self) -> None:
+        """Registra que o descanso acabou. **NÃO aperta tecla nenhuma.**
 
-        A tecla de sentar é INTERRUPTOR e o bot não sabe em que estado está --
-        por isso quem controla é este par de métodos, e só eles mexem em
-        `_sentada`. Apertar por engano com ela de pé a faria sentar bem na hora
-        de curar.
+        SENTAR NÃO É UMA TRAVA (regra do jogo, usuário, 01/09/2026): sentada, a
+        Fada clica, seleciona e cura normalmente, e o estado sai sozinho na
+        primeira ação que ela tomar. O que sentar faz é AUMENTAR a regeneração
+        base de vida e de mana -- que é exatamente o que ela veio buscar.
+
+        ISTO APERTAVA A TECLA E CHAMAVA-SE `_levantar`. Apertar era pior que
+        inútil: a tecla é INTERRUPTOR, então se ela já tivesse saído do chão
+        sozinha (levou dano, a volta anterior clicou em alguém), o toque a
+        SENTAVA -- bem na hora de curar, que é o único momento em que ela tem
+        pressa. O toque também jogava fora a regeneração do caminho.
+
+        O QUE FICOU É SÓ A CONTABILIDADE, e ela continua necessária: `_sentada`
+        é a histerese da mana (`_tenho_mana_para_curar` pede
+        `mana_para_voltar` enquanto sentada e `mana_para_sentar` de pé). Sem
+        zerar a marca aqui, ela ficaria presa no patamar alto para sempre.
         """
-        if not self._sentada:
-            return
-        self._apertar_sentar()
         self._sentada = False
 
     def _tenho_mana_para_curar(self) -> bool:
@@ -306,7 +314,7 @@ class FadaDoTime:
             return self._dormir(ESPERA_DEPOIS_DE_ERRAR)
         self._avisei_fora_do_painel.discard(nick)
 
-        self._levantar()
+        self._sair_do_descanso()
         if not self._clicar_no_retrato(slot):
             return False
 
@@ -460,7 +468,7 @@ class FadaDoTime:
         Ela se seleciona com a tecla de auto-seleção -- a mesma que a medição de
         28/08/2026 provou pôr o próprio id no `TARGET_ID`.
         """
-        self._levantar()
+        self._sair_do_descanso()
         self._auto_selecionar()
         alvo_pct = self._parar_pct()
         self.log.info("FADA: minha vida em %.0f%% — curando a mim mesma até %.0f%%.",

@@ -225,12 +225,12 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 |---|---|---|---|---|---|---|
 | `TETO_DA_ESPERA_DO_ALVO` | 2 s | *novo* | TETO | [afericao_do_aliado.py:81](blazesbot/bot/app/afericao_do_aliado.py#L81) | `_medir_a_troca` | Quanto esperar, no máximo, a memória refletir o alvo novo depois do clique. |
 | `PASSO_DA_MEDICAO` | 0.02 s | *novo* | PASSO | [afericao_do_aliado.py:85](blazesbot/bot/app/afericao_do_aliado.py#L85) | `_medir_a_troca` | De quanto em quanto tempo perguntar. 20 ms é fino o bastante para o número |
-| `SEGUNDOS_ENTRE_POCOES` | 15 s | = | FIXO | [cura.py:115](blazesbot/bot/app/cura.py#L115) | `_curar_com_pocao` | Quanto esperar entre uma poção e a próxima. |
-| `SEGUNDOS_PARA_VOLTAR_AO_PONTO` | 5 s | = | TETO | [cura.py:132](blazesbot/bot/app/cura.py#L132) | `_voltar_ao_ponto` | Teto da caminhada de volta ao ponto inicial. |
-| `SEGUNDOS_SENTADO` | 30 s | = | TETO | [cura.py:139](blazesbot/bot/app/cura.py#L139) | `_curar_sentado` | Teto sentado, para quem não tem tecla de poção configurada. |
-| `SEGUNDOS_ESPERANDO_SAIR_DE_BATALHA` | 2 s | = | FIXO | [cura.py:146](blazesbot/bot/app/cura.py#L146) | `_esperar_sair_de_batalha` | Quanto esperar a flag de batalha baixar depois que a macro termina. |
-| `SEGUNDOS_PARA_SENTAR_COM_A_POCAO` | 1 s | *novo* | FIXO | [cura.py:157](blazesbot/bot/app/cura.py#L157) | `_a_pocao_saiu` | Quanto esperar o personagem SENTAR depois de apertar a tecla de poção. |
-| `PASSO_DA_PERGUNTA` | 0.1 s | = | PASSO | [cura.py:162](blazesbot/bot/app/cura.py#L162) | `_esperar_sair_de_batalha, _voltar_ao_ponto (+2)` | Cadência de toda pergunta deste módulo. Leitura de memória é ~1 µs; o custo é |
+| `SEGUNDOS_ENTRE_POCOES` | 15 s | = | FIXO | [cura.py:141](blazesbot/bot/app/cura.py#L141) | `_curar_com_pocao` | Quanto esperar entre uma poção e a próxima. |
+| `SEGUNDOS_PARA_VOLTAR_AO_PONTO` | 5 s | = | TETO | [cura.py:158](blazesbot/bot/app/cura.py#L158) | `_voltar_ao_ponto` | Teto da caminhada de volta ao ponto inicial. |
+| `SEGUNDOS_SENTADO` | 30 s | = | TETO | [cura.py:169](blazesbot/bot/app/cura.py#L169) | `_curar_sentado` | Teto sentado, para quem não tem tecla de poção configurada. |
+| `SEGUNDOS_ESPERANDO_SAIR_DE_BATALHA` | 2 s | = | FIXO | [cura.py:176](blazesbot/bot/app/cura.py#L176) | `_esperar_sair_de_batalha` | Quanto esperar a flag de batalha baixar depois que a macro termina. |
+| `SEGUNDOS_PARA_SENTAR_COM_A_POCAO` | 1 s | *novo* | FIXO | [cura.py:187](blazesbot/bot/app/cura.py#L187) | `_a_pocao_saiu` | Quanto esperar o personagem SENTAR depois de apertar a tecla de poção. |
+| `PASSO_DA_PERGUNTA` | 0.1 s | = | PASSO | [cura.py:192](blazesbot/bot/app/cura.py#L192) | `_esperar_sair_de_batalha, _voltar_ao_ponto (+2)` | Cadência de toda pergunta deste módulo. Leitura de memória é ~1 µs; o custo é |
 | `TETO_DE_SEGUNDOS` | 10 s | = | TETO | [deletador.py:147](blazesbot/bot/app/deletador.py#L147) | `deletar_lixo, limpar_a_bolsa` | Teto do passo inteiro (verificar + apagar), pedido do usuário. |
 | `TETO_DA_CAIXA` | 1.2 s | **1 s** ⚠ | TETO | [deletador.py:150](blazesbot/bot/app/deletador.py#L150) | `_esperar_a_caixa` | Espera pela caixa de confirmação aparecer, depois do clique no ícone. |
 | `PASSO_DA_ESPERA` | 0.08 s | **0.05 s** ⚠ | PASSO | [deletador.py:151](blazesbot/bot/app/deletador.py#L151) | `_esperar_a_caixa` |  |

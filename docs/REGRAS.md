@@ -1565,9 +1565,9 @@ Consequências consertadas:
 * **da segunda poção em diante a prova não vale** — ele já está sentado pela
   primeira, então "está sentado" não prova que a tecla saiu. O estado é lido
   ANTES de apertar e a prova só é aceita quando ele estava de pé;
-* `_levantar()` com a leitura ilegível usa **o que o próprio bot fez**
-  (`_sentado_por_nos`), nunca palpite: apertar quem está de pé o SENTA, e não
-  apertar quem está sentado deixa a macro batendo no chão.
+* com a leitura ilegível (`None`) a cura **senta assim mesmo, uma vez só**. Não
+  há `_levantar()`: o bot só senta, porque sentar não é trava e sim bônus de
+  regeneração. Ver `docs/decisoes/cura-no-app.md`, seção "O bot SÓ SENTA".
 
 Os quatro consumidores do BC não mudam de comportamento — todos usam a leitura
 em contexto booleano, e `None` é falso exatamente como `False` era.

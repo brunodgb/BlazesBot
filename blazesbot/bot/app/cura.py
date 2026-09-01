@@ -19,18 +19,44 @@ Ao terminar CADA rotação da macro (nunca no meio de uma):
                             teto de 5 s. Chegou antes, cura antes.
     curar                -> com tecla de poção: bebe, espera até 15 s, repete
                             até 90% ou até 5 poções
-                         -> sem tecla de poção: senta até 30 s, levanta aos 90%
+                         -> sem tecla de poção: senta até 30 s, ou até os 90%
                          -> a poção NÃO saiu (não sentou): acabaram -> senta
 
     entrou em batalha    -> em QUALQUER ponto da cura, volta a rodar a macro
 
-SÓ SE ANDA ANTES DE BEBER, nunca depois. Depois da poção o personagem está
-SENTADO, e um clique no minimapa o levanta e cancela a recuperação -- por isso
-`_voltar_ao_ponto` roda uma vez, antes de `_curar`, e nenhum caminho da cura
-volta a andar. Travado por `tests/test_cura_do_app.py`.
+=============================================================================
+SENTAR NÃO É UMA TRAVA -- E ESTE ARQUIVO JÁ ERRROU ISSO
+=============================================================================
 
-E A CURA SEMPRE DEVOLVE O PERSONAGEM DE PÉ. Sentado, a macro inteira bate no
-chão: as teclas saem, o jogo ignora, e o bot conta voltas achando que farma.
+**O personagem sentado ataca, anda e faz qualquer coisa livremente.** Sentar não
+prende nada: é um ESTADO que sai sozinho na primeira ação, e o que ele faz é
+AUMENTAR a regeneração base de vida e de mana. Regra do jogo, dita pelo usuário
+em 01/09/2026.
+
+Disso decorre a regra deste arquivo:
+
+    **O BOT SÓ SENTA. NUNCA APERTA A TECLA PARA LEVANTAR.**
+
+E não é indiferença -- levantar é ATIVAMENTE PIOR, por dois motivos:
+
+1. **Perde a regeneração** que é a única razão de sentar. Sair antes da hora
+    joga fora exatamente o efeito que se foi buscar.
+2. **A tecla é INTERRUPTOR e o estado é uma corrida.** Se o personagem já saiu
+    do sentado sozinho -- levou dano, a macro mandou uma tecla, qualquer coisa
+    --, apertá-la de novo o SENTA, e senta bem na hora em que ele precisa
+    reagir. Foi por isso que existiu um `_levantar()` aqui, e é por isso que ele
+    não existe mais.
+
+A VERSÃO ANTIGA DESTE ARQUIVO AFIRMAVA O CONTRÁRIO ("sentado, a macro inteira
+bate no chão; as teclas saem e o jogo ignora"). Isso NÃO acontece neste jogo. A
+afirmação sobreviveu em docstrings por semanas e chegou a ser restaurada uma vez
+depois de removida, porque parecia bem fundamentada. Não estava.
+
+SÓ SE ANDA ANTES DE BEBER, nunca depois. Andar é uma AÇÃO, e ação tira o
+personagem do sentado -- ou seja, um clique no minimapa depois da poção cancela
+a regeneração extra. Por isso `_voltar_ao_ponto` roda uma vez, antes de
+`_curar`, e nenhum caminho da cura volta a andar. Travado por
+`tests/test_cura_do_app.py`.
 
 =============================================================================
 POR QUE FORA DE BATALHA
@@ -134,8 +160,12 @@ SEGUNDOS_PARA_VOLTAR_AO_PONTO = 5.0
 # Teto sentado, para quem não tem tecla de poção configurada.
 #
 # O "até" é do usuário e tem motivo: *"o mob pode acabar vindo atacar e, se for
-# o caso, deve começar a rodar a macro para poder matar o mob"*. Sentado é o
-# estado mais vulnerável do jogo.
+# o caso, deve começar a rodar a macro para poder matar o mob"*.
+#
+# NÃO É POR VULNERABILIDADE. Sentado o personagem reage normalmente (ver o
+# cabeçalho). A espera é cortada porque MATAR O MOB é melhor uso do tempo do que
+# regenerar com ele batendo -- e a macro tira o personagem do sentado sozinha,
+# sem tecla nenhuma.
 SEGUNDOS_SENTADO = 30.0
 
 # Quanto esperar a flag de batalha baixar depois que a macro termina.
@@ -224,11 +254,6 @@ class CuraDoApp:
         self._voltas_presas = 0
         self._avisou_sem_leitura = False
         self._avisou_sem_ponto = False
-        # SENTAMOS NÓS? É a reserva de `esta_sentado()` quando ela responde
-        # "não sei" -- ver `_levantar`. Não é palpite: é o registro de uma ação
-        # que este objeto tomou e observou.
-        self._sentado_por_nos = False
-        self._avisou_estado_ilegivel = False
 
     # -- o portão --------------------------------------------------------
 
@@ -275,30 +300,24 @@ class CuraDoApp:
         """SENTA no ponto inicial e espera a Fada. `False` = não há Fada.
 
         Sentar não é enfeite: parado e sentado o personagem não puxa mob, não
-        gasta a macro contra nada e regenera enquanto espera. É o que o usuário
+        gasta a macro contra nada e REGENERA MAIS DEPRESSA enquanto espera --
+        sentar aumenta a regeneração base de vida e de mana. É o que o usuário
         descreveu -- *"vai até o ponto inicial e senta, se mantendo sem fazer
         nada, apenas esperando a cura"* -- e o que faltava: antes ele ficava DE
         PÉ esperando.
 
-        LEVANTAR É OBRIGATÓRIO NA SAÍDA, e por isso mora num `finally`. A tecla
-        de sentar é INTERRUPTOR e o bot não sabe o estado; deixar o personagem
-        sentado ao voltar para a macro seria pior que não ter sentado, porque
-        ele passaria a volta inteira sem atacar.
+        NÃO SE LEVANTA NA SAÍDA, e isso é regra do arquivo inteiro (ver o
+        cabeçalho): sentado o personagem age normalmente, e a primeira tecla da
+        macro já o tira do estado. Havia aqui um `finally` que apertava a tecla
+        de volta; ele custava a regeneração e, pior, podia SENTAR o personagem
+        bem na hora de reagir, porque a tecla é interruptor e o estado muda
+        sozinho entre a leitura e o toque.
         """
         tecla = (self._tecla_de_sentar() or "").strip()
-        sentei = False
         if tecla and self._esta_sentado() is not True:
             self.log.info("APP: sentando no ponto inicial para esperar a Fada.")
             self._apertar(tecla)
-            sentei = True
-        try:
-            return self._fada(vida)
-        finally:
-            # Só levanta se FOMOS nós que sentamos, e não quando a leitura diz
-            # que ele já está de pé -- aí algo o levantou (dano, por exemplo) e
-            # apertar de novo o faria sentar bem na hora de voltar a atacar.
-            if sentei and tecla and self._esta_sentado() is not False:
-                self._apertar(tecla)
+        return self._fada(vida)
 
     # -- sair de batalha --------------------------------------------------
 
@@ -427,8 +446,6 @@ class CuraDoApp:
 
             # A POÇÃO SAIU MESMO? Ver `_a_pocao_saiu`.
             saiu = None if sentado_antes else self._a_pocao_saiu()
-            if saiu is True:
-                self._sentado_por_nos = True
             if saiu is False:
                 self.log.warning(
                     "APP: apertei a tecla de poção e o personagem NÃO sentou — "
@@ -439,22 +456,17 @@ class CuraDoApp:
 
             vida, saiu = self._esperar_o_efeito(SEGUNDOS_ENTRE_POCOES)
             if saiu == "batalha":
-                # LEVANTA ANTES DE QUALQUER OUTRA COISA. O mob está em cima, e
-                # sentado o personagem não reage nem apanha em pé.
-                self._levantar()
                 self.log.info(
                     "APP: entrei em batalha durante a cura (vida %.0f%%, %s "
                     "poção(ões)). Volto a rodar a macro — parado o mob mata.",
                     vida if vida is not None else -1, gastas)
                 return True
             if vida is not None and vida >= self._parar_pct():
-                self._levantar()
                 self.curas += 1
                 self.log.info("APP: curado em %.0f%% com %s poção(ões).",
                               vida, gastas)
                 return True
 
-        self._levantar()
         self.log.warning(
             "APP: gastei %s poção(ões) e a vida parou em %s%%, abaixo dos "
             "%.0f%%. Poção provavelmente fraca demais para o dano que o "
@@ -540,80 +552,26 @@ class CuraDoApp:
                 "APP: vida em %.0f%% e sem tecla de poção; sentando para "
                 "recuperar (até %.0fs).", vida_inicial, SEGUNDOS_SENTADO)
 
+        # SÓ SENTA SE AINDA NÃO ESTIVER SENTADO. A tecla é INTERRUPTOR: apertá-la
+        # com o personagem já sentado o LEVANTARIA, que é o oposto do que se
+        # quer aqui. Nunca há um segundo `_apertar` -- ver o cabeçalho: o bot só
+        # senta, e quem tira o personagem do sentado é a primeira ação da macro.
         if self._esta_sentado() is not True:
             self._apertar(tecla)
-            self._sentado_por_nos = True
 
         vida, saiu = self._esperar_o_efeito(SEGUNDOS_SENTADO)
 
-        # LEVANTA SEMPRE, e antes de qualquer outra coisa. Continuar a macro
-        # sentado é a macro inteira batendo no chão.
-        self._levantar()
-
         if saiu == "batalha":
             self.log.info(
-                "APP: mob veio enquanto eu estava sentado (vida %s%%). Levanto "
-                "e volto a rodar a macro para matá-lo.",
+                "APP: mob veio enquanto eu regenerava sentado (vida %s%%). "
+                "Volto a rodar a macro para matá-lo -- a primeira tecla já tira "
+                "o personagem do sentado.",
                 "?" if vida is None else f"{vida:.0f}")
         else:
             self.curas += 1
-            self.log.info("APP: levantei com a vida em %s%%.",
-                          "?" if vida is None else f"{vida:.0f}")
+            self.log.info("APP: terminei de regenerar sentado com a vida em "
+                          "%s%%.", "?" if vida is None else f"{vida:.0f}")
         return True
-
-    def _levantar(self) -> None:
-        """Põe o personagem de PÉ antes de devolver o controle à macro.
-
-        =================================================================
-        A MACRO NÃO PODE VOLTAR A RODAR COM ELE SENTADO
-        =================================================================
-
-        Sentado, a sequência inteira bate no chão: as teclas saem, o jogo
-        ignora, e o bot conta voltas achando que está farmando.
-
-        Isto já valia para o caminho do "sentar". **Passou a valer para o da
-        POÇÃO em 25/08/2026**, quando se descobriu que beber TAMBÉM senta o
-        personagem -- antes, a cura com poção devolvia o controle com ele no
-        chão e ninguém tinha como saber.
-
-        LEVANTA SÓ NO FIM DO CICLO, nunca entre uma poção e outra: a
-        recuperação acontece com o personagem sentado, e levantar no meio
-        cortaria justamente o efeito que se está esperando.
-
-        A tecla é INTERRUPTOR -- o estado é LIDO antes. Apertá-la de pé senta.
-
-        SUMIU E VOLTOU (01/09/2026). Uma alteração manual apagou este método e
-        as quatro chamadas dele; o log continuou dizendo "levantei com a vida em
-        X%" sem ninguém levantar coisa nenhuma. O caminho não é raro -- ele é o
-        que roda quando as poções acabam (13 ocorrências de "NÃO sentou —
-        provavelmente acabaram as poções" no log de 31/08). Ver
-        `tests/test_cura_do_app.py`, que reprovou em doze testes.
-        """
-        sentado = self._esta_sentado()
-        if sentado is None:
-            # "NÃO SEI" NÃO É "ESTÁ DE PÉ", e aqui os dois erros custam o
-            # mesmo: apertar quem está de pé o SENTA; não apertar quem está
-            # sentado deixa a macro batendo no chão. Não se decide isso no
-            # palpite -- decide-se no que este objeto SABE ter feito. Se fomos
-            # nós que o sentamos (poção que sentou, ou a tecla de sentar), ele
-            # está sentado, e a leitura é que faltou.
-            if not self._avisou_estado_ilegivel:
-                self._avisou_estado_ilegivel = True
-                self.log.info(
-                    "APP: não consigo ler se o personagem está sentado; uso o "
-                    "que eu mesmo fiz como referência para levantá-lo.")
-            sentado = self._sentado_por_nos
-        if sentado is not True:
-            self._sentado_por_nos = False
-            return
-        tecla = (self._tecla_de_sentar() or "").strip()
-        if not tecla:
-            self.log.warning(
-                "APP: o personagem ficou SENTADO e não há tecla de sentar "
-                "configurada para levantá-lo. A macro vai bater no chão.")
-            return
-        self._apertar(tecla)
-        self._sentado_por_nos = False
 
     def _esperar_o_efeito(self, teto: float) -> tuple[float | None, str]:
         """Espera perguntando. Devolve `(vida, motivo_da_saida)`.

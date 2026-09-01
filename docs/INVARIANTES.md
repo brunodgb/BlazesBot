@@ -215,9 +215,16 @@ time a flag não faz nada.
   QUANDO precisa de cura (Fada ou poção, tanto faz); a segunda, QUANTO precisa
   atingir para voltar a rodar a macro. Em time valem as do LÍDER; fora de time,
   as da própria conta. A constante fixa de 30% deixou de mandar.
-- **A VÍTIMA SENTA NO PONTO INICIAL para esperar a Fada**, e LEVANTA ao sair —
-  o levantar mora num `finally`, porque voltar à macro sentado é passar a volta
-  inteira sem atacar. Antes ela esperava de pé, puxando mob.
+- **A VÍTIMA SENTA NO PONTO INICIAL para esperar a Fada, e NÃO LEVANTA.** Antes
+  ela esperava de pé, puxando mob.
+- **SENTAR NÃO É UMA TRAVA — o bot SÓ SENTA, nunca aperta a tecla para
+  levantar.** Sentado o personagem ataca e age livremente; o estado sai sozinho
+  na primeira ação, e o que ele faz é AUMENTAR a regeneração base de vida e de
+  mana (regra do jogo, usuário, 01/09/2026). Levantar é pior que inútil: perde a
+  regeneração, e como a tecla é interruptor pode SENTAR o personagem na hora de
+  reagir. A única leitura de `is_sitting` que sobrou serve para não apertar a
+  tecla com ele já sentado. O porquê, e o erro que se repetiu duas vezes, em
+  `docs/decisoes/cura-no-app.md` (seção "O bot SÓ SENTA").
 - **TENDO FADA DE PÉ, ELA É A ÚNICA FONTE DE CURA DO TIME.** A poção só volta
   quando ela para de bater no mural.
 - **A BATIDA SAI DE TODA ESPERA**, não só do topo do laço. Ela ficava só lá, e

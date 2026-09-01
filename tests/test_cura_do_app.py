@@ -321,18 +321,26 @@ def test_entrar_em_batalha_no_meio_da_cura_VOLTA_PARA_A_MACRO():
 
 def test_sem_tecla_de_pocao_SENTA(monkeypatch):
     """*"O que pode fazer é voltar para o ponto inicial e sentar, ficar sentado
-    por até 30 segundos."*"""
+    por até 30 segundos."*
+
+    SENTA E PRONTO. Não há tecla de levantar no fim -- sentar aumenta a
+    regeneração base, e sair do estado é trabalho da primeira ação da macro.
+    """
     monkeypatch.setattr(mod, "SEGUNDOS_SENTADO", 0.05)
     jogo = _Jogo(vida=20.0)
 
     assert _cura(jogo, pocao="").cuidar() is True
 
-    assert jogo.teclas.count("X") == 2, "sentou e não levantou (ou nem sentou)"
-    assert jogo.sentado is False
+    assert jogo.teclas.count("X") == 1, "sentou mais de uma vez, ou nem sentou"
+    assert jogo.sentado is True, "levantou o personagem sem precisar"
 
 
-def test_sentado_LEVANTA_ao_bater_90():
-    """*"Caso chegue a 90% pode voltar a macro."*"""
+def test_sentado_SAI_DA_ESPERA_ao_bater_90():
+    """*"Caso chegue a 90% pode voltar a macro."*
+
+    Voltar para a macro, não levantar: chegar aos 90% encerra a ESPERA, e o
+    personagem segue sentado até a primeira tecla tirá-lo do estado.
+    """
     jogo = _Jogo(vida=20.0)
     leituras = [20.0, 50.0, 95.0]
 
@@ -342,13 +350,19 @@ def test_sentado_LEVANTA_ao_bater_90():
     jogo.vida_pct = vida_pct
 
     _cura(jogo, pocao="").cuidar()
-    assert jogo.sentado is False
+
+    assert jogo.teclas.count("X") == 1, jogo.teclas
+    assert any("90" in t or "regenerar" in t.lower() for _n, t in jogo.linhas)
 
 
 def test_mob_chegou_com_o_personagem_SENTADO(monkeypatch):
     """*"O mob pode acabar vindo atacar e, se for o caso, deve começar a rodar
-    a macro para poder matar o mob."* Sentado é o estado mais vulnerável do
-    jogo -- levantar vem antes de qualquer outra coisa."""
+    a macro para poder matar o mob."*
+
+    O QUE ACONTECE É SAIR DA ESPERA, não levantar. Sentado o personagem ataca
+    normalmente; a espera é cortada porque matar o mob vale mais que regenerar
+    com ele batendo, e a primeira tecla da macro já desfaz o sentado.
+    """
     monkeypatch.setattr(mod, "SEGUNDOS_SENTADO", 5.0)
     jogo = _Jogo(vida=20.0)
     original = jogo.apertar
@@ -362,21 +376,27 @@ def test_mob_chegou_com_o_personagem_SENTADO(monkeypatch):
 
     _cura(jogo, pocao="").cuidar()
 
-    assert jogo.sentado is False, "ficou sentado com mob em cima"
-    assert any("levanto" in t.lower() for _n, t in jogo.linhas)
+    assert jogo.teclas.count("X") == 1, (
+        f"apertou a tecla de novo para levantar: {jogo.teclas}")
+    assert any("volto a rodar a macro" in t.lower() for _n, t in jogo.linhas)
 
 
 def test_a_tecla_de_sentar_e_INTERRUPTOR_entao_o_estado_e_LIDO_ANTES(monkeypatch):
     """Apertá-la de pé senta; apertá-la sentado LEVANTA. Já sentado, não se
-    aperta -- senão o bot levanta o personagem para "sentar"."""
+    aperta -- senão o bot levanta o personagem para "sentar".
+
+    É a única razão pela qual esta função ainda lê `esta_sentado()`: para não
+    desfazer, com o próprio toque, o estado que ela quer.
+    """
     monkeypatch.setattr(mod, "SEGUNDOS_SENTADO", 0.05)
     jogo = _Jogo(vida=20.0, sentado=True)
 
     _cura(jogo, pocao="").cuidar()
 
-    assert jogo.teclas.count("X") == 1, (
-        "apertou a tecla de sentar com o personagem já sentado")
-    assert jogo.sentado is False
+    assert jogo.teclas.count("X") == 0, (
+        "apertou a tecla de sentar com o personagem já sentado -- isso o "
+        "LEVANTA")
+    assert jogo.sentado is True
 
 
 def test_sem_pocao_e_sem_sentar_avisa_e_nao_inventa():
@@ -619,23 +639,35 @@ def test_o_aviso_de_bolsa_vazia_NAO_repete_o_de_sem_tecla(monkeypatch):
 # A CURA DEVOLVE O PERSONAGEM DE PÉ, E SÓ ANDA ANTES DE BEBER
 # ===========================================================================
 
-def test_depois_da_pocao_o_personagem_fica_DE_PE():
-    """DEFEITO QUE ESTE TESTE TRAVA: beber senta o personagem, então a cura com
-    poção devolvia o controle com ele NO CHÃO.
+def test_a_cura_com_pocao_NAO_aperta_a_tecla_de_sentar():
+    """O BOT SÓ SENTA. NUNCA LEVANTA -- regra do jogo, dita pelo usuário em
+    01/09/2026: *"caso o personagem esteja sentado ele pode atacar e fazer
+    qualquer coisa livremente; o sentar não é uma trava, é só um estado que sai
+    com qualquer coisa que o personagem fizer"*.
 
-    Sentado, a macro inteira bate no chão: as teclas saem, o jogo ignora, e o
-    bot conta voltas achando que está farmando. O caminho do "sentar" já
-    levantava; o da poção não -- e ninguém tinha como saber.
+    Beber senta o personagem, e é BOM que sente: sentado a regeneração base de
+    vida e de mana é maior. Apertar a tecla para levantar joga fora exatamente
+    o efeito que se foi buscar -- e, pior, a tecla é interruptor: se ele já saiu
+    do sentado sozinho, o toque o SENTA bem na hora de reagir.
+
+    ESTE TESTE JÁ AFIRMOU O CONTRÁRIO. A versão anterior exigia
+    `jogo.sentado is False` ao fim da cura, apoiada num docstring que dizia
+    "sentado, a macro inteira bate no chão". Isso não acontece neste jogo.
     """
     jogo = _Jogo(vida=20.0, cura_por_pocao=40.0)
 
     _cura(jogo).cuidar()
 
-    assert jogo.sentado is False, "a cura devolveu o personagem sentado"
+    assert "X" not in jogo.teclas, (
+        f"a cura apertou a tecla de sentar/levantar: {jogo.teclas}")
 
 
-def test_fica_DE_PE_tambem_quando_o_mob_chega_no_meio_da_cura():
-    """Com o mob em cima, levantar vem ANTES de qualquer outra coisa."""
+def test_com_o_mob_em_cima_a_cura_volta_para_a_macro_sem_levantar():
+    """Sair para a macro é a reação certa; levantar não faz parte dela.
+
+    A primeira tecla da macro já tira o personagem do sentado -- e enquanto ela
+    não sai, sentado ele reage igual.
+    """
     jogo = _Jogo(vida=20.0, cura_por_pocao=1.0)
     original = jogo.apertar
 
@@ -648,26 +680,30 @@ def test_fica_DE_PE_tambem_quando_o_mob_chega_no_meio_da_cura():
 
     _cura(jogo).cuidar()
 
-    assert jogo.sentado is False, "voltou para a macro sentado, com mob em cima"
+    assert "X" not in jogo.teclas, f"levantou com o mob em cima: {jogo.teclas}"
+    assert any("volto a rodar a macro" in t.lower() for _n, t in jogo.linhas)
 
 
-def test_fica_DE_PE_quando_as_5_pocoes_nao_bastaram():
+def test_as_5_pocoes_sem_bastar_tambem_nao_levantam():
     jogo = _Jogo(vida=20.0, cura_por_pocao=1.0)
     _cura(jogo).cuidar()
-    assert jogo.sentado is False
+    assert "X" not in jogo.teclas, jogo.teclas
 
 
-def test_NAO_levanta_ENTRE_uma_pocao_e_a_outra():
-    """A recuperação acontece com o personagem SENTADO. Levantar no meio
-    cortaria justamente o efeito que se está esperando."""
-    jogo = _Jogo(vida=20.0, cura_por_pocao=20.0)   # precisa de 4 poções
-
-    _cura(jogo).cuidar()
-
-    # Uma única tecla de sentar no fim -- não uma a cada poção.
-    assert jogo.teclas.count("X") == 1, jogo.teclas
-    assert jogo.teclas.index("X") == len(jogo.teclas) - 1, (
-        f"levantou no meio da cura: {jogo.teclas}")
+def test_NENHUM_caminho_da_cura_aperta_a_tecla_DUAS_vezes():
+    """A trava geral: a tecla de sentar é apertada no máximo UMA vez por cura,
+    e só para SENTAR. Um segundo toque só poderia significar "levantar".
+    """
+    casos = {
+        "poção que cura de uma vez": _Jogo(vida=20.0, cura_por_pocao=40.0),
+        "poção fraca, 5 doses": _Jogo(vida=20.0, cura_por_pocao=1.0),
+        "poção acabou": _Jogo(vida=20.0, tem_pocoes=False),
+        "sem tecla de poção": _Jogo(vida=20.0),
+    }
+    for nome, jogo in casos.items():
+        pocao = "" if nome == "sem tecla de poção" else "9"
+        _cura(jogo, pocao=pocao).cuidar()
+        assert jogo.teclas.count("X") <= 1, f"{nome}: {jogo.teclas}"
 
 
 def test_NAO_anda_DEPOIS_de_beber():
@@ -706,7 +742,7 @@ def test_nenhum_caminho_de_CURA_manda_andar():
     import inspect
     import textwrap
 
-    for nome in ("_curar", "_curar_com_pocao", "_curar_sentado", "_levantar"):
+    for nome in ("_curar", "_curar_com_pocao", "_curar_sentado"):
         fonte = textwrap.dedent(
             inspect.getsource(getattr(mod.CuraDoApp, nome)))
         chamadas = {n.func.attr for n in ast.walk(ast.parse(fonte))
@@ -769,12 +805,18 @@ def test_estado_ILEGIVEL_nao_conclui_bolsa_vazia():
     assert not any("acabaram as po" in t for _n, t in jogo.linhas), jogo.linhas
 
 
-def test_LEVANTAR_com_o_estado_ilegivel_usa_o_que_o_BOT_FEZ():
-    """Os dois erros custam o mesmo: apertar quem está de pé o SENTA; não
-    apertar quem está sentado deixa a macro batendo no chão.
+def test_com_o_estado_ILEGIVEL_a_cura_tenta_sentar_UMA_vez():
+    """`esta_sentado()` devolvendo `None` não pode virar rajada de tecla.
 
-    Não se decide isso no palpite -- decide-se no que este objeto SABE ter
-    feito. Se fomos nós que o sentamos, ele está sentado.
+    O ERRO AQUI É BARATO E ASSIMÉTRICO, e é por isso que se aperta: se o
+    personagem está de pé, o toque o senta e ganha-se a regeneração; se já
+    estava sentado, o toque o levanta e perde-se ela -- mas nada trava, porque
+    sentar não é uma trava. O que não pode é apertar DUAS vezes e voltar à
+    estaca zero.
+
+    ESTE TESTE JÁ TESTOU OUTRA COISA. Havia aqui um `_levantar()` com uma
+    reserva de "sentamos nós?" para decidir o toque de saída. O método não
+    existe mais -- o bot só senta --, e a reserva foi removida com ele.
     """
     # SEM TECLA DE POÇÃO: o caminho é sentar direto. A tecla de sentar
     # funciona; o que está ilegível é a LEITURA do estado.
@@ -784,23 +826,7 @@ def test_LEVANTAR_com_o_estado_ilegivel_usa_o_que_o_BOT_FEZ():
 
     cura.cuidar()
 
-    # Apertou para sentar e apertou de novo para levantar.
-    assert jogo.teclas.count("X") == 2, jogo.teclas
-    assert any("uso o que eu mesmo fiz" in t for _n, t in jogo.linhas)
-
-
-def test_o_aviso_do_estado_ilegivel_sai_UMA_vez():
-    """Uma sessão de APP roda por horas; uma linha por cura afogaria o log."""
-    jogo = _Jogo(vida=20.0)
-    jogo.esta_sentado = lambda: None
-    cura = _cura(jogo, pocao="")
-
-    for _ in range(3):
-        jogo.vida = 20.0
-        cura.cuidar()
-
-    avisos = [t for _n, t in jogo.linhas if "uso o que eu mesmo fiz" in t]
-    assert len(avisos) == 1, avisos
+    assert jogo.teclas.count("X") == 1, jogo.teclas
 
 
 def test_a_pocao_que_realmente_NAO_SENTA_ainda_e_bolsa_vazia():
@@ -855,14 +881,22 @@ def test_a_vitima_SENTA_no_ponto_para_esperar_a_fada():
     assert "X" in jogo.teclas, "não sentou para esperar"
 
 
-def test_ela_LEVANTA_ao_terminar_de_esperar():
-    """Voltar para a macro sentado é passar a volta inteira sem atacar."""
+def test_ela_NAO_levanta_ao_terminar_de_esperar():
+    """Havia aqui um `finally` que apertava a tecla de volta ao sair da espera.
+
+    Ele custava a regeneração -- que é a razão de sentar -- e podia SENTAR o
+    personagem em vez de levantá-lo, porque a tecla é interruptor e o estado
+    muda sozinho entre a leitura e o toque. Sentado a vítima age normalmente, e
+    a primeira tecla da macro já a tira do estado.
+    """
     jogo = _Jogo(vida=25.0)
     c = _cura(jogo, fada=lambda v: True)
 
     c.cuidar()
 
-    assert jogo.teclas.count("X") == 2, "sentou e não levantou"
+    assert jogo.teclas.count("X") == 1, (
+        f"apertou a tecla de novo para levantar: {jogo.teclas}")
+    assert jogo.sentado is True
 
 
 def test_sem_fada_nao_senta_e_vai_de_pocao():

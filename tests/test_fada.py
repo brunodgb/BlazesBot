@@ -297,17 +297,30 @@ def test_sentada_nao_senta_de_novo():
     assert jogo.sentadas == 1
 
 
-def test_levanta_antes_de_curar():
+def test_ao_curar_ela_sai_do_descanso_SEM_apertar_a_tecla():
+    """SENTAR NÃO É UMA TRAVA (regra do jogo, usuário, 01/09/2026).
+
+    Sentada, a Fada clica e cura normalmente, e o estado sai sozinho na primeira
+    ação. A tecla é INTERRUPTOR: apertá-la para "levantar" a SENTARIA caso ela
+    já tivesse saído do chão sozinha -- bem na hora de curar, que é o único
+    momento em que ela tem pressa.
+
+    O QUE AINDA PRECISA ACONTECER é zerar a marca `_sentada`, porque ela é a
+    histerese da mana. Sem isso a Fada ficaria presa exigindo `mana_para_voltar`
+    para sempre.
+    """
     jogo = _Jogo()
     jogo.id_por_slot = {0: 777}
     mural.publicar_id("aliado", 777)
     f = _fada(jogo, membros=("fada", "aliado"))
     f._uma_volta()                        # fila vazia: senta
     assert f._sentada is True
+    assert jogo.sentadas == 1
     mural.pedir_cura("aliado", 25.0)
-    f._uma_volta()                        # chegou pedido: levanta
-    assert f._sentada is False
-    assert jogo.sentadas == 2             # sentou e levantou
+    f._uma_volta()                        # chegou pedido: age sentada
+    assert f._sentada is False, "a histerese da mana não foi zerada"
+    assert jogo.sentadas == 1, (
+        f"apertou a tecla de sentar para 'levantar': {jogo.sentadas} toques")
 
 
 def test_mana_no_chao_senta_mesmo_com_fila():

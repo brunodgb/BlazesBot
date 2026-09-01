@@ -141,10 +141,9 @@ Rodar a macro é o que mata o mob. O que o código faz a respeito é **avisar**
 
 ## Detalhes que custaram pensamento
 
-**Sentar é o estado mais vulnerável do jogo.** A tecla é INTERRUPTOR, então o
-estado é LIDO ANTES (`is_sitting`) — apertá-la sentado LEVANTA. E o `key_up` da
-saída vem antes de qualquer outra coisa: continuar a macro sentado é a macro
-inteira batendo no chão.
+**Sentar NÃO é uma trava** — ver a seção "O bot só senta" abaixo. A tecla é
+INTERRUPTOR, e é só por isso que o estado é LIDO ANTES (`is_sitting`): apertá-la
+com o personagem já sentado o LEVANTA, desfazendo justamente o que se queria.
 
 **Sem ponto, cura no lugar.** Trava de posição desligada, ou posição ilegível:
 nunca se deixa de curar por falta de ponto. Sem leitura de posição, o clique usa
@@ -235,17 +234,49 @@ Teste de guarda que ninguém viu falhar é esperança, não trava.
 
 ---
 
-## A cura devolve o personagem DE PÉ (25/08/2026)
+## O bot SÓ SENTA — nunca levanta (01/09/2026)
 
-Consequência direta da descoberta de que **beber senta**: a cura com poção
-devolvia o controle com o personagem **no chão**.
+**REGRA DO JOGO, dita pelo usuário e que este arquivo errou por semanas:**
 
-Sentado, a macro inteira bate no chão — as teclas saem, o jogo ignora, e o bot
-conta voltas achando que está farmando. O caminho do "sentar" já levantava; o da
-poção não, e ninguém tinha como saber.
+> *"Caso o personagem esteja sentado ele pode atacar e fazer qualquer coisa
+> livremente. O sentar não é uma trava, é só um estado que sai com qualquer
+> coisa que o personagem fizer. Não precisa de função para levantar nem nada
+> disso, só precisa sentar — pois o ato de sentar aumenta a cura de vida base do
+> personagem e também aumenta a cura de mana base."*
 
-`_levantar()` agora roda em **toda** saída da cura: curou, entrou em batalha, ou
-gastou as 5 poções. Com o mob em cima ele vem **antes de qualquer outra coisa**.
+### O que estava escrito aqui antes, e era falso
+
+> *"A cura devolve o personagem DE PÉ. Sentado, a macro inteira bate no chão —
+> as teclas saem, o jogo ignora, e o bot conta voltas achando que está
+> farmando."*
+
+**Isso não acontece neste jogo.** Não houve medição por trás da afirmação; ela
+nasceu de uma suposição sobre a mecânica, foi escrita em docstring, copiada para
+três documentos, e daí em diante cada leitura confirmava a anterior.
+
+### Por que levantar é ATIVAMENTE PIOR, e não apenas inútil
+
+1. **Perde a regeneração.** O bônus de vida e mana do sentado é a única razão de
+   sentar. Sair antes joga fora o efeito que se foi buscar.
+2. **A tecla é interruptor, e o estado é uma corrida.** Se o personagem já saiu
+   do sentado sozinho — levou dano, a macro mandou uma tecla —, o toque de
+   "levantar" o **senta**, e senta bem na hora em que ele precisa reagir.
+
+### O que ficou no lugar
+
+`_levantar()` não existe, e com ele foram embora `_sentado_por_nos` e
+`_avisou_estado_ilegivel`, que só existiam para alimentá-lo. O `finally` que
+levantava a vítima ao fim da espera da Fada também saiu, pelo mesmo motivo.
+
+Sobrou UMA leitura de `is_sitting`, e ela tem um propósito estreito: **não
+apertar a tecla se o personagem já está sentado**, porque aí o toque o
+levantaria. Nada mais.
+
+**Já foi restaurado uma vez por engano** (01/09/2026): os testes de
+`test_cura_do_app.py` reprovaram em doze casos depois da remoção manual, os
+docstrings antigos pareciam fundamentados, e o `_levantar` voltou. Foi preciso o
+usuário dizer a mecânica de novo. Se aparecer um teste exigindo `sentado is
+False` ao fim da cura, ele é desta safra — a regra é a de cima.
 
 **Mas nunca ENTRE uma poção e a outra.** A recuperação acontece com o personagem
 sentado; levantar no meio cortaria justamente o efeito que se está esperando.
@@ -669,10 +700,11 @@ Dois consertos vieram junto:
   primeira, então "está sentado" não prova que a tecla saiu — seria dar por boa
   uma tecla apertada contra a bolsa vazia. O estado é lido ANTES de apertar e a
   prova só é aceita quando ele estava de pé;
-* **`_levantar()` com a leitura ilegível usa o que o próprio bot fez**
-  (`_sentado_por_nos`). Os dois erros custam o mesmo — apertar quem está de pé o
-  SENTA; não apertar quem está sentado deixa a macro batendo no chão — então não
-  se decide no palpite, decide-se no registro de uma ação observada.
+* **com a leitura ilegível (`None`), senta assim mesmo — uma vez.** O erro é
+  barato e assimétrico: de pé, o toque senta e ganha-se a regeneração; já
+  sentado, o toque levanta e perde-se ela, mas nada trava. O que não pode é
+  apertar duas vezes e voltar à estaca zero. (A reserva `_sentado_por_nos` que
+  existia aqui era do `_levantar()`, e saiu com ele.)
 
 ## Os contadores
 

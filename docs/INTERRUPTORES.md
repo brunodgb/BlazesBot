@@ -72,16 +72,16 @@ ligar código não testado.
 |---|---|---|---|---|
 | `PASSO_DA_MEDICAO` | `0.02` | [blazesbot/bot/app/afericao_do_aliado.py:85](blazesbot/bot/app/afericao_do_aliado.py#L85) | amostragem_de_cliques.py | De quanto em quanto tempo perguntar. 20 ms é fino o bastante para o número |
 | `TETO_DA_ESPERA_DO_ALVO` | `2.0` | [blazesbot/bot/app/afericao_do_aliado.py:81](blazesbot/bot/app/afericao_do_aliado.py#L81) | — | Quanto esperar, no máximo, a memória refletir o alvo novo depois do clique. |
-| `MAXIMO_DE_POCOES` | `5` | [blazesbot/bot/app/cura.py:125](blazesbot/bot/app/cura.py#L125) | — | Teto de poções por ciclo de cura. |
-| `PASSO_DA_PERGUNTA` | `0.1` | [blazesbot/bot/app/cura.py:162](blazesbot/bot/app/cura.py#L162) | — | Cadência de toda pergunta deste módulo. Leitura de memória é ~1 µs; o custo é |
-| `SEGUNDOS_ENTRE_POCOES` | `15.0` | [blazesbot/bot/app/cura.py:115](blazesbot/bot/app/cura.py#L115) | — | Quanto esperar entre uma poção e a próxima. |
-| `SEGUNDOS_ESPERANDO_SAIR_DE_BATALHA` | `2.0` | [blazesbot/bot/app/cura.py:146](blazesbot/bot/app/cura.py#L146) | — | Quanto esperar a flag de batalha baixar depois que a macro termina. |
-| `SEGUNDOS_PARA_SENTAR_COM_A_POCAO` | `1.0` | [blazesbot/bot/app/cura.py:157](blazesbot/bot/app/cura.py#L157) | — | Quanto esperar o personagem SENTAR depois de apertar a tecla de poção. |
-| `SEGUNDOS_PARA_VOLTAR_AO_PONTO` | `5.0` | [blazesbot/bot/app/cura.py:132](blazesbot/bot/app/cura.py#L132) | — | Teto da caminhada de volta ao ponto inicial. |
-| `SEGUNDOS_SENTADO` | `30.0` | [blazesbot/bot/app/cura.py:139](blazesbot/bot/app/cura.py#L139) | — | Teto sentado, para quem não tem tecla de poção configurada. |
-| `VIDA_ALVO_DA_CURA` | `90.0` | [blazesbot/bot/app/cura.py:108](blazesbot/bot/app/cura.py#L108) | — | Até onde curar. Acima disso não se bebe mais nada. |
-| `VIDA_PARA_CURAR` | `30.0` | [blazesbot/bot/app/cura.py:105](blazesbot/bot/app/cura.py#L105) | — | Abaixo de quanta vida a proteção dispara. |
-| `VOLTAS_PRESAS_PARA_AVISAR` | `5` | [blazesbot/bot/app/cura.py:168](blazesbot/bot/app/cura.py#L168) | — | Quantas voltas presas em batalha com vida baixa antes de gritar. |
+| `MAXIMO_DE_POCOES` | `5` | [blazesbot/bot/app/cura.py:151](blazesbot/bot/app/cura.py#L151) | — | Teto de poções por ciclo de cura. |
+| `PASSO_DA_PERGUNTA` | `0.1` | [blazesbot/bot/app/cura.py:192](blazesbot/bot/app/cura.py#L192) | — | Cadência de toda pergunta deste módulo. Leitura de memória é ~1 µs; o custo é |
+| `SEGUNDOS_ENTRE_POCOES` | `15.0` | [blazesbot/bot/app/cura.py:141](blazesbot/bot/app/cura.py#L141) | — | Quanto esperar entre uma poção e a próxima. |
+| `SEGUNDOS_ESPERANDO_SAIR_DE_BATALHA` | `2.0` | [blazesbot/bot/app/cura.py:176](blazesbot/bot/app/cura.py#L176) | — | Quanto esperar a flag de batalha baixar depois que a macro termina. |
+| `SEGUNDOS_PARA_SENTAR_COM_A_POCAO` | `1.0` | [blazesbot/bot/app/cura.py:187](blazesbot/bot/app/cura.py#L187) | — | Quanto esperar o personagem SENTAR depois de apertar a tecla de poção. |
+| `SEGUNDOS_PARA_VOLTAR_AO_PONTO` | `5.0` | [blazesbot/bot/app/cura.py:158](blazesbot/bot/app/cura.py#L158) | — | Teto da caminhada de volta ao ponto inicial. |
+| `SEGUNDOS_SENTADO` | `30.0` | [blazesbot/bot/app/cura.py:169](blazesbot/bot/app/cura.py#L169) | — | Teto sentado, para quem não tem tecla de poção configurada. |
+| `VIDA_ALVO_DA_CURA` | `90.0` | [blazesbot/bot/app/cura.py:134](blazesbot/bot/app/cura.py#L134) | — | Até onde curar. Acima disso não se bebe mais nada. |
+| `VIDA_PARA_CURAR` | `30.0` | [blazesbot/bot/app/cura.py:131](blazesbot/bot/app/cura.py#L131) | — | Abaixo de quanta vida a proteção dispara. |
+| `VOLTAS_PRESAS_PARA_AVISAR` | `5` | [blazesbot/bot/app/cura.py:198](blazesbot/bot/app/cura.py#L198) | — | Quantas voltas presas em batalha com vida baixa antes de gritar. |
 | `DEPOIS_DO_OK` | `0.18` | [blazesbot/bot/app/deletador.py:154](blazesbot/bot/app/deletador.py#L154) | — | Assentamento depois do Ok, para o item sumir antes do clique seguinte. |
 | `DISTANCIA_QUE_E_O_MESMO_ITEM` | `12` | [blazesbot/bot/app/deletador.py:129](blazesbot/bot/app/deletador.py#L129) | — | Dois casamentos a menos de tanto um do outro são o MESMO item, contado duas |
 | `ESPERA_DA_BOLSA_ABRIR` | `0.58` | [blazesbot/bot/app/deletador.py:158](blazesbot/bot/app/deletador.py#L158) | afericao.py | A janela do inventário terminar de pintar depois da tecla. A memória confirma |
