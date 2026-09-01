@@ -1577,16 +1577,12 @@ class ExecutorDeMacro:
         para capturar a atualização do ponteiro de memória instantaneamente assim
         que o motor do jogo processa o comando de TAB.
         """
-        timeout_ms = 150
-        poll_interval = 0.015  # 15ms
-        inicio = time.time()
-        timeout = timeout_ms / 1000.0
-
-        while (time.time() - inicio) < timeout and self._continuar():
+        fim = time.time() + SEGUNDOS_PARA_O_ALVO_APARECER
+        while time.time() < fim and self._continuar():
             agora = self._ler_id_do_alvo()
             if agora is not None and agora != id_antes:
                 return agora
-            time.sleep(poll_interval)
+            time.sleep(PASSO_DA_CONFIRMACAO_DO_TAB)
         return None
 
     def _alvo_aceitavel(self, alvo: dict | None) -> bool:
@@ -1987,68 +1983,19 @@ class ExecutorDeMacro:
         return self._dormir(self._respiro_depois_do_tab())
 
     def _garantir_alvo(self, forcar: bool = False, urgente: bool = False) -> bool:
-        """Garante um alvo VIVO antes de a macro rodar. `True` = tem alvo vivo.
-
-        `forcar=True` pula o atalho do "alvo vivo, não mexe": é o que a régua do
-        alvo INALCANÇÁVEL usa para largar um mob que está vivo mas que o bot não
-        consegue acertar.
-
-        =================================================================
-        O TAB SÓ CONTA QUANDO O ID MUDA
-        =================================================================
-
-        Defeito relatado pelo usuário em 25/08/2026: *"os tabs não estão
-        funcionando direito; tem que perceber que o value do alvo alterou para
-        confirmar se trocou, aí sim pode começar a rodar a macro"*.
-
-        A versão anterior perguntava só **"tem id?"** depois do TAB -- e tinha:
-        o **CADÁVER continua selecionado**, com o MESMO id, por 7 a 13 s depois
-        da morte (medido em 20/08/2026). O bot apertava TAB, lia o id do corpo,
-        dava a troca por feita e voltava a rodar a macro contra um cadáver.
-
-        Agora a confirmação é o id ficar **DIFERENTE** do de antes. E como o TAB
-        é cíclico, ele pode cair noutro cadáver: nesse caso a leitura vale como
-        troca, mas não como alvo, e o bot aperta de novo.
-
-        DOIS CORTES, porque são dois fracassos diferentes:
-
-          * `TENTATIVAS_DE_TAB` -- os saltos permitidos acabaram (e são poucos
-            de propósito: a roda é ordenada por DISTÂNCIA);
-          * `TABS_SEM_RESPOSTA_PARA_DESISTIR` -- a tecla não está pegando.
-
-        O primeiro é barato (cada salto sai no instante em que o id muda); o
-        segundo paga o teto por tentativa, e por isso corta antes.
-
-        =================================================================
-        NÃO BLOQUEIA A VOLTA
-        =================================================================
-
-        Esgotadas as tentativas -- não há mais nada por perto --, a macro roda
-        assim mesmo. Macro de buff, de pesca ou de qualquer coisa que não seja
-        luta não pode parar por falta de alvo. O que acontece é um AVISO.
-        """
+        """Garante um alvo VIVO antes de a macro rodar. `True` = tem alvo vivo."""
         id_antes = self._ler_id_do_alvo()
         if id_antes is None:
-            # SEM LEITURA DE MEMÓRIA o APP roda exatamente como antes -- mesmo
-            # contrato do pet e da trava de posição. `True` porque não há como
-            # provar que não há alvo, e travar a macro por isso seria pior.
             return True
 
-        # ALVO VIVO: não mexe. O TAB no meio de uma luta largaria o mob
-        # machucado -- é o defeito que a linha 1 da macro tinha.
-        #
-        # COM UMA SAÍDA, e ela é conserto: um alvo cujo HP fica ILEGÍVEL volta
-        # após volta não pode bloquear o TAB para sempre. Era assim que o bot
-        # ficava preso num corpo -- "não sei" respondia "está vivo", e o portão
-        # aqui em cima nunca deixava a tecla sair. Ver `_alvo_ilegivel_demais`.
         if id_antes == self._inalcancavel_id and self._inalcancavel_id:
-            # A MARCA É GASTA AQUI, na primeira vez que serve. Ver
-            # `_largar_o_alvo_inalcancavel`: é um id, não uma lista.
             self._inalcancavel_id = None
             forcar = True
 
         if id_antes and not self._alvo_morreu() and not forcar:
             if not self._alvo_ilegivel_demais(id_antes):
+                # ALVO VIVO MANTIDO: zera o histórico de falhas
+                self._voltas_seguidas_sem_alvo = 0
                 return True
 
         tecla = ((self._tecla_de_alvo() or "").strip()
@@ -2060,24 +2007,8 @@ class ExecutorDeMacro:
                     "APP: sem alvo e sem tecla de 'próximo alvo' configurada. "
                     "Configure-a em Editar conta > Teclas para o bot adquirir "
                     "o alvo sozinho.")
-            # SEM TECLA NÃO HÁ COMO ADQUIRIR, e chegar aqui significa que não há
-            # alvo vivo. Devolver `True` (o que se fazia antes) mandava a macro
-            # rodar contra um cadáver ou contra o nada -- e, pior, a volta era
-            # cortada na primeira linha sem enviar tecla nenhuma e sem pagar
-            # espera nenhuma, o que fazia `rodar()` girar em laço apertado com a
-            # CPU em 100%. `False` faz o chamador pagar `ESPERA_SEM_ALVO`.
             return False
 
-        # RESPIRO ANTES DO PRIMEIRO TAB -- ver `ESPERA_ANTES_DO_TAB`. Uma vez
-        # por aquisição: as teclas da macro que podem engolir o TAB só existem
-        # antes do primeiro salto, e entre saltos o espaçamento já vem de
-        # `_esperar_o_alvo_trocar`, que só devolve com o id JÁ trocado.
-        #
-        # NA URGÊNCIA ELE NÃO É PAGO, e o motivo é o próprio motivo dele: ele
-        # existe para o TAB não chegar em cima das teclas da macro. Na urgência
-        # a macro foi CORTADA e a observação gastou até
-        # `SEGUNDOS_OBSERVANDO_DEPOIS_DA_MORTE` -- as teclas já assentaram, e o
-        # que sobra é um mob batendo.
         if not urgente and not self._dormir(ESPERA_ANTES_DO_TAB):
             return False
 
@@ -2089,10 +2020,6 @@ class ExecutorDeMacro:
 
             novo = self._esperar_o_alvo_trocar(id_antes)
             if novo is None:
-                # A TECLA NÃO PEGOU. Fracasso diferente de "caiu num cadáver", e
-                # o contador vive no OBJETO, atravessando voltas: com um único
-                # salto por aquisição, um contador local nunca chegaria a dois.
-                # Ver `TABS_SEM_RESPOSTA_PARA_DESISTIR`.
                 self._tabs_sem_resposta += 1
                 if self._tabs_sem_resposta >= TABS_SEM_RESPOSTA_PARA_DESISTIR:
                     if not self._avisou_tecla_morta:
@@ -2102,12 +2029,11 @@ class ExecutorDeMacro:
                             "tecla %r não está pegando. Confira em Editar conta "
                             "> Teclas > Próximo alvo.",
                             self._tabs_sem_resposta, tecla)
-                    return False
+                    break 
                 if not self._dormir(ESPERA_ENTRE_TABS):
                     return False
                 continue
 
-            # A TECLA PEGOU: o diagnóstico de "tecla morta" recomeça do zero.
             self._tabs_sem_resposta = 0
             self._avisou_tecla_morta = False
             try:
@@ -2116,80 +2042,40 @@ class ExecutorDeMacro:
                 alvo = None
 
             if not self._alvo_aceitavel(alvo):
-                # CADÁVER na roda. O corpo entra nela tanto quanto um mob vivo,
-                # e num ponto de farm há vários. Continuar é certo.
-                #
-                # MAS NÃO EM RAJADA: `_esperar_o_alvo_trocar` devolve NO
-                # INSTANTE em que o id muda, então sem este espaçamento a roda
-                # inteira era varrida em menos de meio segundo -- o *"trocando
-                # rápido demais"* que o usuário viu. Ver `ESPERA_ENTRE_TABS`.
                 id_antes = novo
                 if not self._dormir(ESPERA_ENTRE_TABS):
                     return False
                 continue
 
-            # ==========================================================
-            # TUDO O QUE NÃO É ESPERA ACONTECE ANTES DO RESPIRO
-            # ==========================================================
-            #
-            # *"O ideal é só dar tab na hora que for para rodar a macro; se
-            # tiver fazendo alguma verificação, não dê TAB ainda — nós
-            # desenhamos a ordem para o TAB ser o ÚLTIMO e logo em seguida
-            # rodar a macro."*
-            #
-            # A régua e o log ficavam DEPOIS do respiro, ou seja, entre o fim
-            # da espera e a primeira tecla. São baratos, mas o log escreve em
-            # disco — e qualquer coisa aí contraria o desenho. Agora o respiro
-            # é a ÚLTIMA coisa daqui, e ele encosta na linha 1.
-            #
-            # A RÉGUA RECEBE O `alvo` JÁ LIDO e não lê de novo: duas fotos de
-            # instantes diferentes respondendo à mesma pergunta é como nascem
-            # as decisões que ninguém consegue reproduzir.
             self._comecar_a_regua(novo, alvo)
             self.log.info("APP: alvo novo %r %s/%s — começando a macro da "
                           "linha 1.", alvo.get("nome") or "?", alvo.get("hp"),
                           alvo.get("max_hp"))
-            # E A LINHA DO ALVO NÃO SAI DUAS VEZES: `_registrar_o_alvo` roda
-            # logo depois, na volta, e diria a MESMA coisa. Marcar a chave aqui
-            # poupa uma leitura e uma escrita em disco no trecho mais sensível.
+            
             self._ultimo_alvo_dito = (alvo.get("id"), alvo.get("hp"))
-            # A IDEMPOTÊNCIA do TAB único: este alvo VIVO confirmado passa a
-            # proteger o próximo TAB (`_mesmo_alvo_verificado`). Gravado no
-            # sucesso da aquisição, junto ao `_ultimo_alvo_dito`.
             self._alvo_verificado = (alvo.get("id"), alvo.get("hp"))
 
-            # RESPIRO ANTES DA PRIMEIRA LINHA -- ver `ESPERA_DEPOIS_DO_TAB`. Só
-            # aqui, onde uma tecla realmente saiu, e por ÚLTIMO.
+            # ALVO NOVO ADQUIRIDO: zera o histórico de falhas
+            self._voltas_seguidas_sem_alvo = 0
+
             if not self._dormir(self._respiro_depois_do_tab()):
                 return False
             return True
 
-        # DESISTIR PERTO É MELHOR QUE INSISTIR LONGE. A roda é ordenada por
-        # distância: o salto seguinte seria um mob mais longe ainda, e engajar
-        # longe faz o personagem atravessar o ponto de farm puxando o caminho.
-        # A pausa devolve a roda ao começo para a volta seguinte tentar de novo
-        # NO MAIS PERTO -- ver `SEGUNDOS_PARA_A_RODA_REINICIAR`.
-        # NÃO SE INSISTE PARA "GARANTIR" UM ALVO. Insistir troca a mira certa
-        # por uma mira qualquer -- é melhor ficar sem alvo por alguns segundos
-        # do que engajar o mob errado, do outro lado do ponto de farm.
-        #
-        # O DIAGNÓSTICO SÓ SAI QUANDO ELE É CERTO. Se a tecla não respondeu nesta
-        # volta, dizer "só cadáver por aqui" mandaria o usuário procurar mob onde
-        # o problema é a tecla -- e o veredito da tecla morta precisa de
-        # `TABS_SEM_RESPOSTA_PARA_DESISTIR` voltas para existir. Até lá, cala.
         if not self._tabs_sem_resposta:
             self.log.info(
                 "APP: o TAB não trouxe mob vivo (%s salto(s)) — só cadáver por "
                 "aqui. Espero a roda voltar ao começo e tento de novo NO MAIS "
                 "PRÓXIMO.", tentativa)
-        # NA URGÊNCIA A PAUSA NÃO É PAGA. Ela existe para a roda voltar ao mob
-        # mais perto, e isso é uma otimização de MIRA -- com um mob batendo,
-        # tentar de novo já vale mais que tentar melhor. A volta seguinte tenta
-        # na hora, e a intenção do usuário continua respeitada: *"a ideia não é
-        # ter 2 alvos, é ter sempre 1 por vez"* -- o teto de dois saltos não
-        # muda, só a espera entre as tentativas.
-        if not urgente:
-            self._dormir(SEGUNDOS_PARA_A_RODA_REINICIAR)
+        
+        # MARGEM DE TOLERÂNCIA ANTES DO DESCANSO
+        # Uso getattr para evitar crash caso a variável tenha sumido do seu __init__
+        self._voltas_seguidas_sem_alvo = getattr(self, '_voltas_seguidas_sem_alvo', 0) + 1
+        if self._voltas_seguidas_sem_alvo >= 3:
+            self._voltas_seguidas_sem_alvo = 0
+            if not urgente:
+                self._dormir(SEGUNDOS_PARA_A_RODA_REINICIAR)
+                
         return False
 
     def _registrar_o_alvo(self) -> None:
