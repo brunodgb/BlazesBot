@@ -580,3 +580,48 @@ def test_a_batida_continua_durante_a_cura():
     # ...e mesmo assim TODA espera encontrou a batida recém-dada.
     assert batidas, "a cura não esperou nenhuma vez"
     assert all(batidas), "houve espera sem batida -- a vítima desistiria"
+
+def test_o_pedido_retirado_encerra_a_cura():
+    """A vítima decide quando está boa: ao chegar no alvo ela volta para a macro
+    e retira o pedido.
+
+    Medido em campo (01/09/2026): ela avisou "curado (94%)" e NOVE segundos
+    depois a Fada anunciou que tinha desistido dela -- porque ficou olhando um
+    pedido que não existia mais até o teto de 20 s. O sumiço do pedido É o
+    aviso, e já estava ali.
+    """
+    jogo = _Jogo(vidas=[{"nome": "Aliado", "hp": 300}])
+    jogo.id_por_slot = {0: 777}
+    mural.publicar_id("aliado", 777)
+    mural.publicar_estado("aliado", max_hp=1000)
+    mural.pedir_cura("aliado", 25.0)
+    f = _fada(jogo, membros=("fada", "aliado"))
+
+    # A vítima se dá por curada na primeira tecla de cura.
+    def curar_e_sair():
+        jogo.curas += 1
+        mural.cancelar_pedido("aliado")
+    f._apertar_cura = curar_e_sair
+
+    f._uma_volta()
+
+    assert f.curas == 1
+    assert f.curas_sem_efeito == 0, "desistiu de quem já estava curado"
+
+
+def test_fora_do_painel_avisa_UMA_vez_e_espera():
+    """O laço gira a 10 Hz: sem freio, treze avisos iguais em dois segundos."""
+    jogo = _Jogo(companheiros=["Outro"])
+    mural.publicar_id("aliado", 777)
+    mural.pedir_cura("aliado", 25.0)
+    f = _fada(jogo, membros=("fada", "aliado"))
+
+    esperas = []
+    f._dormir_de_verdade = lambda s: (esperas.append(s), True)[1]
+
+    for _ in range(5):
+        f._uma_volta()
+
+    assert "Aliado" in f._avisei_fora_do_painel
+    assert esperas, "não esperou entre as tentativas"
+    assert jogo.cliques == []

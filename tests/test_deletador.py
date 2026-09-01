@@ -112,6 +112,18 @@ def test_casamentos_colados_sao_o_mesmo_item():
 # ===========================================================================
 
 
+class _Conta:
+    """Só o `login`, que é a CHAVE da fila de templates.
+
+    A fila deixou de ser um contador único do módulo e passou a ser um por
+    conta (`deletador._estado_das_filas[login]`) -- sem isso, cinco contas
+    rodando juntas dividiriam o mesmo cursor e cada uma pularia os templates
+    que a outra tinha acabado de verificar.
+    """
+
+    login = "conta-de-teste"
+
+
 class _Ctx:
     """Dublê mínimo: conta cliques e teclas, e não toca em jogo nenhum."""
 
@@ -119,6 +131,7 @@ class _Ctx:
         self.cliques = []
         self.log = _Log()
         self.hwnd = 1
+        self.account = _Conta()
         self._relogio = relogio
 
     def click(self, ponto):

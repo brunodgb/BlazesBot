@@ -83,7 +83,26 @@ def _executor(roda=None, tecla="TAB", sem_leitura=False, em_batalha=None):
         e._alvo_atual = None
     else:
         e._id_do_alvo = lambda: (roda.atual or {}).get("id", 0) if roda else 0
-        e._alvo_atual = lambda: (roda.atual if roda else None)
+
+        def _entidade_do_alvo():
+            """Espelha o CONTRATO de `Memory.alvo_atual`: id 0 -> `None`.
+
+            A memória nunca devolve um dicionário com `id == 0`; ela devolve
+            `None`, porque "nada selecionado" não é uma entidade
+            (`if not alvo_id: return None`). O dublê devolvia `{"id": 0}`, e um
+            dicionário sem `hp` é ACEITO por `_alvo_aceitavel` -- então o teste
+            via o executor engajar o nada, que é o oposto do que acontece no
+            jogo. Dublê que mente para o lado FÁCIL esconde defeito; este agora
+            mente igual à memória.
+            """
+            if roda is None:
+                return None
+            atual = roda.atual
+            if atual is None or not atual.get("id"):
+                return None
+            return atual
+
+        e._alvo_atual = _entidade_do_alvo
 
     e._tecla_de_alvo = (lambda: tecla)
     e._continuar = lambda: True
@@ -344,16 +363,48 @@ def test_desistir_ESPERA_a_roda_voltar_ao_comeco(monkeypatch):
     Sem a pausa, a volta seguinte apertaria o TAB com a roda ainda adiantada e
     pegaria um mob mais longe ainda -- exatamente o que os dois saltos existem
     para impedir.
+
+    A PAUSA NÃO É PAGA NA PRIMEIRA FALHA. Um ponto de farm normal tem momentos
+    em que o TAB não acha nada vivo (o mob morreu, o próximo ainda não nasceu),
+    e descansar a cada um deles é tempo de farm jogado fora. Ela chega quando a
+    falha vira PADRÃO -- `VOLTAS_SEM_ALVO_ANTES_DE_DESCANSAR` voltas seguidas.
     """
     dormidas: list[float] = []
     monkeypatch.setattr(mod.time, "sleep", dormidas.append)
     monkeypatch.setattr(mod, "SEGUNDOS_PARA_A_RODA_REINICIAR", PAUSA_DA_RODA)
 
     e = _executor(_Roda([_mob(0x100 + i, hp=0) for i in range(5)]))
+
+    # As voltas ANTES da última não podem custar a pausa -- é isso que separa
+    # "o ponto está vazio agora" de "o ponto está vazio".
+    for _ in range(mod.VOLTAS_SEM_ALVO_ANTES_DE_DESCANSAR - 1):
+        e._garantir_alvo()
+    assert sum(dormidas) == pytest.approx(0.0), (
+        f"descansou antes da {mod.VOLTAS_SEM_ALVO_ANTES_DE_DESCANSAR}a volta "
+        f"seguida sem alvo: {dormidas}")
+
     e._garantir_alvo()
 
     assert sum(dormidas) == pytest.approx(PAUSA_DA_RODA)
     assert any("roda voltar ao começo" in t for _n, t in e.linhas), e.linhas
+
+
+def test_o_contador_de_voltas_sem_alvo_ZERA_quando_o_alvo_vem(monkeypatch):
+    """Senão três falhas espalhadas por uma hora acabariam somando e cobrando a
+    pausa no meio de um farm que estava indo bem."""
+    dormidas: list[float] = []
+    monkeypatch.setattr(mod.time, "sleep", dormidas.append)
+    monkeypatch.setattr(mod, "SEGUNDOS_PARA_A_RODA_REINICIAR", PAUSA_DA_RODA)
+
+    # Um cadáver e um mob vivo: a primeira aquisição falha, a seguinte acerta.
+    for _ in range(mod.VOLTAS_SEM_ALVO_ANTES_DE_DESCANSAR * 3):
+        e = _executor(_Roda([_mob(0x100, hp=0)]))
+        e._garantir_alvo()                       # falha
+        e = _executor(_Roda([{"id": 0}, _mob(0x222)]))
+        e._garantir_alvo()                       # acerta
+
+    assert PAUSA_DA_RODA not in dormidas, (
+        "a pausa da roda foi cobrada mesmo com alvo aparecendo no meio")
 
 
 def test_SEM_alvo_nenhum_o_TAB_traz_um():
@@ -1122,12 +1173,17 @@ def test_sem_tecla_e_com_o_alvo_MORTO_a_volta_NAO_roda():
 # anti-AFK. Contar aborto contamina os dois: num ponto de farm com muita morte
 # eles passam a disparar cedo demais.
 
-def _volta(alvos, passos=3, tecla="TAB"):
+def _volta(alvos, passos=3, tecla="TAB", em_batalha=None):
     """Um executor pronto para `uma_volta()`, com uma sequência de leituras.
 
     A sequência é consumida SÓ por `_alvo_atual`; `_id_do_alvo` espia a leitura
     corrente sem gastar. É o que reproduz o que o jogo faz: o id é estável e o
     HP muda por baixo dele.
+
+    `em_batalha` é a FLAG DE COMBATE, e o padrão `None` significa "não sei" --
+    que é o contrato do modo cego: sem leitura, nada é abandonado. Quem for
+    testar a régua do inalcançável precisa dizer `lambda: False` de propósito,
+    porque desde 01/09/2026 é a batalha (e não o dano) que ela lê.
     """
     fila = list(alvos)
     passo = [0]
@@ -1141,7 +1197,8 @@ def _volta(alvos, passos=3, tecla="TAB"):
         passo[0] += 1
         return alvo
 
-    e = _executor(_Roda([fila[0]] if fila else []), tecla=tecla)
+    e = _executor(_Roda([fila[0]] if fila else []), tecla=tecla,
+                  em_batalha=em_batalha)
     e._alvo_atual = ler
     e._id_do_alvo = lambda: (atual() or {}).get("id", 0)
     e._fonte = lambda: [SimpleNamespace(key="1", delay_ms=0)] * passos
@@ -1176,14 +1233,57 @@ def test_a_volta_CORTADA_pela_morte_NAO_conta():
 
 def test_a_volta_ABANDONADA_pelo_inalcancavel_NAO_conta():
     """É o caso que o usuário nomeou: *"os mobs que não conseguir atacar como
-    os do penhasco"*."""
-    e = _volta([_mob(0x111, hp=100)] * 30, passos=6)
+    os do penhasco"*.
+
+    O CRITÉRIO É A BATALHA desde 01/09/2026, não mais o dano: *"se em 4 linhas
+    não entrar na batalha, você para a macro e dá TAB novamente"*. Por isso o
+    alvo aqui tem vida CHEIA e estável -- ele não precisa perder HP para ser
+    largado; o que o larga é o personagem nunca entrar em combate.
+    """
+    e = _volta([_mob(0x111, hp=100)] * 30, passos=6, em_batalha=lambda: False)
 
     assert e.uma_volta() is True
     assert e.voltas == 0, "o mob do penhasco contou como volta de macro"
     assert e.voltas_abortadas == 1
     assert e.alvos_inalcancaveis == 1
     assert e._inalcancavel_id == 0x111
+
+
+def test_EM_BATALHA_o_alvo_nunca_e_largado_por_inalcancavel():
+    """A luta legítima que demora não pode ser confundida com o penhasco.
+
+    É a metade que dá valor à régua: sem ela, todo mob duro viraria "trocar de
+    alvo" e o personagem passaria a vida dando TAB.
+    """
+    e = _volta([_mob(0x111, hp=100)] * 30, passos=6, em_batalha=lambda: True)
+
+    assert e.uma_volta() is True
+    assert e.alvos_inalcancaveis == 0, "largou um alvo estando EM BATALHA"
+    assert e.voltas == 1
+
+
+def test_SEM_leitura_de_batalha_nada_e_largado():
+    """`None` é "não sei", e quem não sabe não abandona alvo -- o mesmo contrato
+    do resto do arquivo, e o que mantém o modo cego funcionando."""
+    e = _volta([_mob(0x111, hp=100)] * 30, passos=6, em_batalha=None)
+
+    assert e.uma_volta() is True
+    assert e.alvos_inalcancaveis == 0, "largou um alvo sem saber se havia luta"
+    assert e.voltas == 1
+
+
+def test_a_regua_do_inalcancavel_so_vale_DEPOIS_das_linhas_combinadas():
+    """Antes do limiar, "ainda não entrei em batalha" é normal: a primeira
+    tecla acabou de sair."""
+    passos = mod.LINHAS_SEM_DANO_PARA_TROCAR - 1
+    e = _volta([_mob(0x111, hp=100)] * 30, passos=passos,
+               em_batalha=lambda: False)
+
+    assert e.uma_volta() is True
+    assert e.alvos_inalcancaveis == 0, (
+        f"largou o alvo com só {passos} linha(s), antes do limiar de "
+        f"{mod.LINHAS_SEM_DANO_PARA_TROCAR}")
+    assert e.voltas == 1
 
 
 def test_a_regua_NAO_adquire_alvo_de_dentro_do_laco_das_linhas():
@@ -1943,10 +2043,22 @@ def test_a_linha_do_alvo_NAO_sai_duas_vezes_na_aquisicao():
     assert any("alvo novo" in t for _n, t in e.linhas)
 
 
-def test_a_janela_de_observacao_e_de_TRES_segundos():
+def test_a_janela_de_observacao_cobre_o_que_o_usuario_pediu():
     """*"Após notar a morte do mob ficando com 0 de HP, dá 2 segundos para sair
-    de batalha."*"""
-    assert OBSERVACAO_DA_MORTE == 3.0
+    de batalha."*
+
+    O PEDIDO É UM PISO, NÃO UM VALOR EXATO. O número em si é afinável (era 3.0,
+    hoje 2.5) e o teto é AVISO, não gasto: a observação pergunta a cada
+    `PASSO_DA_CONFERENCIA_DO_ALVO` e sai no instante em que a flag de combate
+    baixa. Fixar o literal transformava toda afinação em teste vermelho sem
+    dizer nada sobre a regra.
+    """
+    assert OBSERVACAO_DA_MORTE >= 2.0, (
+        "a janela ficou menor que os 2 s que o usuário pediu para sair de "
+        "batalha")
+    # Teto, não gasto: tem de caber várias perguntas dentro dele, senão a morte
+    # limpa voltaria a custar a janela inteira.
+    assert OBSERVACAO_DA_MORTE >= 5 * mod.PASSO_DA_CONFERENCIA_DO_ALVO
 
 
 # ===========================================================================
@@ -1994,16 +2106,21 @@ def test_SEM_as_duas_continua_NAO_SEI():
     assert (vida, fonte) == (None, "nada")
 
 
-def test_a_tela_NAO_e_olhada_antes_da_TERCEIRA_linha():
+def test_a_tela_NAO_e_olhada_nas_PRIMEIRAS_linhas():
     """*"Só vai começar a ler a partir da segunda linha, no caso antes de
     começar a terceira linha."*
 
     Logo depois do TAB a entidade pode simplesmente ainda não ter entrado no
     array — pagar uma captura para descobrir isso seria caro.
+
+    QUANTAS linhas é afinável (`LINHAS_ANTES_DE_OLHAR_A_TELA`, eram 2, hoje 3);
+    o que não pode mudar é a FORMA: as N primeiras não olham, a N+1 olha. O
+    teste lê a constante para não reprovar por afinação.
     """
-    for linha in (1, 2):
+    pedagio = mod.LINHAS_ANTES_DE_OLHAR_A_TELA
+    for linha in range(1, pedagio + 1):
         assert _com_tela(0.5, linha=linha)._olhar_a_tela() is None, linha
-    assert _com_tela(0.5, linha=3)._olhar_a_tela() == 0.5
+    assert _com_tela(0.5, linha=pedagio + 1)._olhar_a_tela() == 0.5
 
 
 def test_a_tela_NAO_e_olhada_DUAS_VEZES_na_mesma_linha():
@@ -2019,10 +2136,11 @@ def test_entre_capturas_ha_no_MINIMO_meio_segundo(monkeypatch):
     agora = [1000.0]
     monkeypatch.setattr(mod.time, "time", lambda: agora[0])
 
-    e = _com_tela(0.5, linha=3)
+    primeira = mod.LINHAS_ANTES_DE_OLHAR_A_TELA + 1
+    e = _com_tela(0.5, linha=primeira)
     assert e._olhar_a_tela() == 0.5
 
-    e._linha_da_rotacao = 4                     # linha nova, mas cedo demais
+    e._linha_da_rotacao = primeira + 1          # linha nova, mas cedo demais
     agora[0] += mod.INTERVALO_MINIMO_DA_TELA / 2
     assert e._olhar_a_tela() is None
 
@@ -2031,9 +2149,18 @@ def test_entre_capturas_ha_no_MINIMO_meio_segundo(monkeypatch):
 
 
 def test_o_intervalo_da_tela_e_MUITO_maior_que_a_conferencia_do_alvo():
-    """A conferência roda a cada 0,1 s dentro da espera de cada linha. Se a
-    tela entrasse ali seriam 10 capturas por segundo POR CONTA."""
-    assert mod.INTERVALO_MINIMO_DA_TELA >= 5 * mod.PASSO_DA_CONFERENCIA_DO_ALVO
+    """A conferência do alvo roda dentro da espera de CADA linha. Se a tela
+    entrasse nessa cadência seriam capturas de janela às dezenas por segundo,
+    POR CONTA -- e são cinco contas.
+
+    O QUE ESTE TESTE GUARDA é o acoplamento entre os dois números, não um valor.
+    A folga era de 5x quando `PASSO_DA_CONFERENCIA_DO_ALVO` era 0,1 s; o usuário
+    o subiu para 0,16 s (01/09/2026) e a folga caiu para ~3,1x. O piso desce
+    para 3x junto -- e fica DITO que ele é grade de proteção, não medição: se
+    encostar de novo, quem afinar o passo tem de olhar a tela também, que é
+    exatamente o serviço deste teste.
+    """
+    assert mod.INTERVALO_MINIMO_DA_TELA >= 3 * mod.PASSO_DA_CONFERENCIA_DO_ALVO
 
 
 def test_o_limiar_de_morte_na_tela_e_o_MESMO_do_core():

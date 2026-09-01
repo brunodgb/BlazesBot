@@ -213,9 +213,12 @@ INTERROMPER_A_MACRO_QUANDO_O_ALVO_MORRE = True
 # De quanto em quanto tempo perguntar "o alvo morreu?" DENTRO da espera de uma
 # linha da macro.
 #
-# A leitura custa microssegundos; o que se paga é a volta do laço. 0,1 s deixa o
-# corte acontecer no meio de uma espera longa -- uma linha de 3000 ms sem isto
+# A leitura custa microssegundos; o que se paga é a volta do laço. O passo deixa
+# o corte acontecer no meio de uma espera longa -- uma linha de 3000 ms sem isto
 # faria o bot bater num cadáver por até 3 segundos.
+#
+# ERA 0,1 s; subiu para 0,16 s numa afinação manual do usuário (01/09/2026). O
+# teto de atraso do corte sobe junto, e continua muito abaixo de uma linha.
 PASSO_DA_CONFERENCIA_DO_ALVO = 0.16
 
 # Quantos saltos da roda do TAB antes de desistir desta aquisição.
@@ -276,6 +279,17 @@ TENTATIVAS_DE_TAB = 1
 # comportamento típico e barata (só é paga quando NÃO houve alvo). Se um dia
 # alguém medir, o número desce.
 SEGUNDOS_PARA_A_RODA_REINICIAR = 1.6
+
+# Quantas voltas SEGUIDAS sem conseguir alvo antes de pagar a pausa acima.
+#
+# A pausa não é paga na primeira falha: um ponto de farm normal tem momentos em
+# que o TAB não acha nada vivo (o mob acabou de morrer, o próximo ainda não
+# nasceu), e descansar 1,6 s a cada um deles é tempo de farm jogado fora. Só
+# quando a falha VIRA PADRÃO é que faz sentido esperar a roda reiniciar.
+#
+# Era um literal solto no meio de `_garantir_alvo`; virou constante porque o
+# teste precisa do mesmo número, e número lido por dois lados mora num lugar só.
+VOLTAS_SEM_ALVO_ANTES_DE_DESCANSAR = 3
 
 # Quantos TABs seguidos SEM O ID MUDAR antes de desistir.
 #
@@ -601,10 +615,14 @@ USAR_A_TELA_COMO_SEGUNDA_PORTA = True
 #     *"So vai comecar a ler a partir da segunda linha, no caso antes de comecar
 #      a terceira linha."*
 #
-# DUAS, e o motivo e economia: logo depois do TAB a entidade pode simplesmente
-# ainda nao ter entrado no array (medido: 1 leitura em ~45), e pagar uma captura
-# de janela para descobrir isso seria caro. Duas linhas dao tempo de a memoria
+# O motivo e economia: logo depois do TAB a entidade pode simplesmente ainda nao
+# ter entrado no array (medido: 1 leitura em ~45), e pagar uma captura de janela
+# para descobrir isso seria caro. As primeiras linhas dao tempo de a memoria
 # responder sozinha no caminho feliz.
+#
+# ERAM DUAS; passou a TRES numa afinacao manual do usuario (01/09/2026), ou seja
+# a tela so entra a partir da QUARTA linha. Quem le este numero como "a partir
+# da linha N+1" nao se engana quando ele mudar de novo.
 LINHAS_ANTES_DE_OLHAR_A_TELA = 3
 
 # Intervalo minimo entre duas capturas.
@@ -2009,7 +2027,7 @@ class ExecutorDeMacro:
         # MARGEM DE TOLERÂNCIA ANTES DO DESCANSO
         # Uso getattr para evitar crash caso a variável tenha sumido do seu __init__
         self._voltas_seguidas_sem_alvo = getattr(self, '_voltas_seguidas_sem_alvo', 0) + 1
-        if self._voltas_seguidas_sem_alvo >= 3:
+        if self._voltas_seguidas_sem_alvo >= VOLTAS_SEM_ALVO_ANTES_DE_DESCANSAR:
             self._voltas_seguidas_sem_alvo = 0
             if not urgente:
                 self._dormir(SEGUNDOS_PARA_A_RODA_REINICIAR)

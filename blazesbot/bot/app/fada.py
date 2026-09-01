@@ -178,6 +178,9 @@ class FadaDoTime:
         # ou sai da fila -- é por vítima, não global: uma que não dá para curar
         # não pode fazer a Fada desistir das outras.
         self._tentativas: dict[str, int] = {}
+        # Quem já foi avisado como "fora do painel". Evita repetir a mesma linha
+        # dez vezes por segundo enquanto a situação não muda.
+        self._avisei_fora_do_painel: set[str] = set()
         self._sentada = False
         self._avisou_sem_time = False
 
@@ -290,9 +293,18 @@ class FadaDoTime:
         slot = self._slot_do_nick(nick)
         if slot is None:
             # Ela não está no painel: saiu do time, ainda não entrou, ou a
-            # leitura falhou. Não é erro da vítima -- só não dá para curar agora.
-            self.log.info("FADA: %s não está no meu painel de time — pulando.", nick)
-            return True
+            # leitura falhou. NÃO conta como tentativa falha -- pode ser
+            # passageiro, e mandá-la para a poção por isso seria injusto.
+            #
+            # MAS ESPERA ANTES DE OLHAR DE NOVO, e avisa UMA vez. Sem isso o
+            # laço gira a 10 Hz repetindo a mesma linha: medido em campo,
+            # treze avisos idênticos em dois segundos.
+            if nick not in self._avisei_fora_do_painel:
+                self._avisei_fora_do_painel.add(nick)
+                self.log.info("FADA: %s não está no meu painel de time — "
+                              "esperando ele aparecer.", nick)
+            return self._dormir(ESPERA_DEPOIS_DE_ERRAR)
+        self._avisei_fora_do_painel.discard(nick)
 
         self._levantar()
         if not self._clicar_no_retrato(slot):
@@ -403,6 +415,22 @@ class FadaDoTime:
                 return False
             if self._em_batalha() is True:
                 self.log.info("FADA: entrei em batalha durante a cura de %s.", nick)
+                return True
+
+            # O PEDIDO SUMIU = A VÍTIMA SE DEU POR CURADA.
+            #
+            # É ela quem decide quando está boa: ao chegar no alvo, ela volta
+            # para a macro e retira o pedido. A Fada não tinha como saber disso
+            # e ficava curando um pedido que não existia mais até o teto de 20 s
+            # -- medido em campo (01/09/2026): a vítima avisou "curado (94%)" e
+            # nove segundos depois a Fada anunciou que tinha desistido dela.
+            #
+            # O sumiço do pedido É o aviso. Não precisa de mensagem nova nem de
+            # leitura nenhuma: ele já estava ali.
+            if self.mural.pedido_de(login_vitima) is None:
+                self.curas += 1
+                self.log.info("FADA: %s tirou o pedido — está curado. Próximo.",
+                              nick)
                 return True
 
             pct = self._quanto_de_vida(login_vitima, nick, maximo)

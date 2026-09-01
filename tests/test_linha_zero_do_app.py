@@ -210,9 +210,20 @@ def test_a_leitura_do_ALVO_nao_passa_mais_pelo_portao_do_PERSONAGEM():
 
     assert "_ler(memoria_do_pet.alvo_atual)" not in trecho
     assert "_ler(memoria_do_pet.id_do_alvo)" not in trecho
-    # O portão continua valendo para o que ele foi feito: o PERSONAGEM.
-    for leitura in ("vida_pct", "in_battle", "is_sitting"):
+    # O portão continua valendo para o que ele foi feito: o ESTADO DO
+    # PERSONAGEM -- as leituras que de fato dependem de `hp`, `max_hp` e
+    # `position` estarem sãs.
+    for leitura in ("vida_pct", "is_sitting"):
         assert f"_ler(memoria_do_pet.{leitura})" in trecho, leitura
+
+    # A FLAG DE COMBATE SAIU DO PORTÃO TAMBÉM, e pela MESMA razão do alvo:
+    # `in_battle` é um byte direto no struct do jogador, e uma leitura ruim da
+    # POSIÇÃO não tem por que vetá-la. Quem veta devolve `None`, e `None` é
+    # indistinguível de "não estou em batalha" para quem consome -- foi assim
+    # que a régua do inalcançável começou a errar.
+    assert "_ler(memoria_do_pet.in_battle)" not in trecho, (
+        "in_battle voltou para o portão do PERSONAGEM")
+    assert "_ler_simples(memoria_do_pet.in_battle)" in trecho
 
 
 def test_o_handle_do_hibrido_e_FECHADO_na_saida():

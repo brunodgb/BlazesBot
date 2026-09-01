@@ -405,6 +405,10 @@ def test_o_par_de_cliques_do_NPC_esta_dentro_do_bloco():
 # tecla entram na MESMA fila POSTADA do clique, encostadas nele.
 
 
+VK_DA_TECLA = 0x7B          # F12
+VK_DOS_MODIFICADORES = (16, 17, 18)   # SHIFT, CTRL, ALT
+
+
 def _input_falso():
     from blazesbot.core.inputs import Input
 
@@ -415,6 +419,19 @@ def _input_falso():
     entrada._enviar_tecla = lambda m, vk: entrada.enviadas.append(
         ("down" if m == 0x0100 else "up", vk))
     return entrada
+
+
+def _soltas(entrada) -> list[tuple[str, int]]:
+    """Os KEYUP DA TECLA DESTE TESTE, sem o ruído dos modificadores.
+
+    `key_down` solta SHIFT/CTRL/ALT antes de cada tecla alvo -- é a mitigação de
+    Input Bleed (Eixo 1) em `Input._liberar_modificadores_fisicos`, e ela não
+    tem nada a ver com o aninhamento que estes testes defendem. Filtrar por
+    "qualquer up" fazia estes testes reprovarem por causa DELA, escondendo se a
+    regra do aninhamento continuava valendo ou não.
+    """
+    return [e for e in entrada.enviadas
+            if e[0] == "up" and e[1] not in VK_DOS_MODIFICADORES]
 
 
 def test_segurar_aninhado_manda_UM_keydown_so():
@@ -439,7 +456,7 @@ def test_o_bloco_INTERNO_nao_solta_a_tecla():
     entrada.key_down(TECLA)          # bloco interno: o par de cliques
     entrada.key_up(TECLA)            # o interno termina
 
-    assert not [e for e in entrada.enviadas if e[0] == "up"], (
+    assert not _soltas(entrada), (
         "o bloco interno soltou a tecla; o resto do processo ficou desprotegido"
     )
     assert entrada.teclas_presas() == {TECLA: 1}
@@ -453,7 +470,7 @@ def test_o_bloco_EXTERNO_solta():
     entrada.key_up(TECLA)
     entrada.key_up(TECLA)
 
-    assert [e for e in entrada.enviadas if e[0] == "up"] == [("up", 0x7B)]
+    assert _soltas(entrada) == [("up", VK_DA_TECLA)]
     assert entrada.teclas_presas() == {}
 
 
