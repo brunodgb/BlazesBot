@@ -135,6 +135,47 @@ def clientes_abertos(config: BotConfig) -> list[dict[str, Any]]:
     return achados
 
 
+def times_de_todos(config: BotConfig) -> list[dict[str, Any]]:
+    """O time que CADA cliente aberto enxerga, pela memória.
+
+    Existe para provar de uma vez a leitura nova (`Memory.time_do_jogo`), que é
+    a peça de que a Fada depende para saber qual retrato é de quem. Ler de
+    VÁRIOS clientes ao mesmo tempo é o que mostra o essencial: a ordem dos
+    nomes é a MESMA em todos eles.
+
+    Precisa de administrador, como toda leitura de memória deste bot.
+    """
+    from ...core.memory import Memory
+
+    linhas: list[dict[str, Any]] = []
+    for janela in clientes_abertos(config):
+        registro: dict[str, Any] = {"titulo": janela["titulo"],
+                                    "pid": janela["pid"]}
+        try:
+            memoria = Memory(janela["pid"])
+        except Exception as exc:
+            registro["erro"] = str(exc)
+            linhas.append(registro)
+            continue
+        try:
+            nome = memoria.char_name()
+            registro.update({
+                "nome": nome,
+                "tamanho": memoria.tamanho_do_time(),
+                "time": memoria.time_do_jogo(),
+                "companheiros": memoria.companheiros_de_time(nome),
+            })
+        except Exception as exc:
+            registro["erro"] = f"{type(exc).__name__}: {exc}"
+        finally:
+            try:
+                memoria.close()
+            except Exception:
+                pass
+        linhas.append(registro)
+    return linhas
+
+
 def em_andamento() -> bool:
     return _EM_ANDAMENTO.locked()
 
@@ -412,6 +453,24 @@ def main() -> int:
 
     logging.basicConfig(level=logging.INFO, format="%(message)s")
     config = BotConfig.load()
+
+    # `--so-time` mostra o que cada cliente enxerga do time e sai. É a
+    # verificação mais barata que existe: não clica em nada, não manda tecla.
+    if "--so-time" in sys.argv:
+        linhas = times_de_todos(config)
+        if not linhas:
+            dizer("Nenhuma janela de client.exe aberta.")
+            return 1
+        for r in linhas:
+            if r.get("erro"):
+                dizer(f"  {r['titulo']:<16} pid {r['pid']:<7} ERRO: {r['erro']}")
+                continue
+            dizer(f"  {r['titulo']:<16} pid {r['pid']:<7} tamanho={r['tamanho']}")
+            dizer(f"      time         = {r['time']}")
+            dizer(f"      companheiros = {r['companheiros']}   <- a ordem dos retratos")
+        dizer()
+        dizer("A MESMA ordem em clientes diferentes é o que prova a leitura.")
+        return 0
 
     janelas = clientes_abertos(config)
     if not janelas:

@@ -249,6 +249,39 @@ PASSO_DA_PROVA_DA_CAMERA = 0.05
 # Tamanho do time. ATENÇÃO: precisa do offset 0x3D8 -- ler o endereço direto
 # devolve outra coisa. Descoberto no GhostBot.
 ADDR_TEAM_SIZE = 0x0106D328
+
+# ===========================================================================
+# O TIME, PELO PONTEIRO REBASEADO -- medido em 31/08/2026
+# ===========================================================================
+#
+# `ADDR_TEAM_SIZE` acima NUNCA RESPONDEU, e o preço está medido em
+# `bot/team.py`: onze aceites falsos seguidos para um único convite, porque a
+# confirmação dependia dele.
+#
+# O motivo era o de sempre, e o `CLAUDE.md` manda testá-lo antes de descartar
+# endereço herdado: **o rebase +0x60 da virada 6139 -> 6400**. Ele foi aplicado
+# ao `TARGET_ID` e esquecido aqui.
+#
+#     0x0106D388 - 0x0106D328 = 0x60
+#
+# A prova é a saída do `read_client_direct.py` do usuário, lida em SEIS clientes
+# ao mesmo tempo (`_loop_all_clients.log`): `teamSize` bate com o time real e os
+# nomes saem na MESMA ORDEM lidos de clientes diferentes -- o que é justamente o
+# que a Fada precisa para saber qual retrato é de quem.
+ADDR_TEAM = ADDR_TEAM_SIZE + 0x60
+
+# Dentro da struct do time. Os nomes são uma tabela de passo UNIFORME: as
+# medições deram 0x144, 0x1CC, 0x254, 0x2DC -- diferença constante de 0x88.
+# Por isso o passo é UM número e não quatro offsets soltos.
+OFF_TAMANHO_DO_TIME = 0x3D8
+OFF_PRIMEIRO_MEMBRO = 0x144
+PASSO_ENTRE_MEMBROS = 0x88
+
+# O time do Talisman vai a cinco (o personagem mais quatro), mas a tabela lida
+# tem quatro entradas. `teamSize` CONTA O PRÓPRIO PERSONAGEM: com 3 no time, os
+# nomes 1..3 são válidos e o 4 vem lixo -- foi assim em todos os clientes do
+# log, e é por isso que a leitura se guia pelo tamanho e não pelo lixo.
+MAXIMO_DE_MEMBROS_LIDOS = 4
 OFF_TEAM_SIZE = 0x3D8
 # Primeiro resultado do painel "Surroundings". A string tem o formato
 #   ... text="Nome [x,y]" ...
@@ -1215,6 +1248,68 @@ class Memory:
         """
         return isinstance(valor, int) and 0 <= valor <= 5
 
+    def tamanho_do_time(self) -> int | None:
+        """Quantos estão no time, CONTANDO o próprio personagem. `0` = sem time.
+
+        Leitura NOVA (31/08/2026), pelo ponteiro rebaseado -- ver `ADDR_TEAM`.
+        A antiga (`team_size`) fica onde está porque o BC depende do
+        comportamento dela; esta não mexe em nada do que já roda.
+        """
+        base = self.read_int(ADDR_TEAM)
+        if not base:
+            return None
+        valor = self.read_int(base + OFF_TAMANHO_DO_TIME)
+        if valor is None or not (0 <= valor <= 8):
+            return None
+        return valor
+
+    def time_do_jogo(self) -> list[str] | None:
+        """Os nomes do time, NA ORDEM DO JOGO. `[]` = não está em time.
+
+        É a peça que a Fada precisa: ela diz qual retrato do painel é de quem,
+        sem OCR, sem template e sem clicar para descobrir.
+
+        A ORDEM É A MESMA EM TODOS OS CLIENTES -- medido lendo seis clientes ao
+        mesmo tempo. E o PRÓPRIO personagem está na lista, enquanto o painel da
+        tela o mostra separado, no retrato grande de cima. Então os retratos dos
+        companheiros são esta lista MENOS ele, na mesma ordem.
+
+        Devolve `None` quando não deu para ler -- que é diferente de `[]`, e a
+        diferença importa: `None` é "não sei", e quem não sabe não age.
+        """
+        base = self.read_int(ADDR_TEAM)
+        if not base:
+            return None
+        tamanho = self.read_int(base + OFF_TAMANHO_DO_TIME)
+        if tamanho is None or not (0 <= tamanho <= 8):
+            return None
+        if tamanho == 0:
+            return []
+        nomes: list[str] = []
+        for i in range(min(tamanho, MAXIMO_DE_MEMBROS_LIDOS)):
+            endereco = base + OFF_PRIMEIRO_MEMBRO + i * PASSO_ENTRE_MEMBROS
+            nome = (self.read_string_direct(endereco) or "").strip()
+            # NOME VAZIO ENCERRA A LISTA. Passado o tamanho real a tabela traz
+            # lixo (medido: o 4º nome com `teamSize=3` veio ilegível), e um
+            # nome inventado aqui viraria um retrato clicado à toa.
+            if not nome or not re.match(r"^[\w'\- ]+$", nome):
+                break
+            nomes.append(nome)
+        return nomes
+
+    def companheiros_de_time(self, meu_nome: str | None = None) -> list[str] | None:
+        """O time MENOS eu, na ordem -- é a ordem dos retratos na tela.
+
+        O painel desenha o próprio personagem no retrato grande de cima e os
+        companheiros abaixo dele; a lista da memória inclui todo mundo. Tirar-se
+        da lista é o que faz o índice bater com o slot clicável.
+        """
+        nomes = self.time_do_jogo()
+        if nomes is None:
+            return None
+        eu = (meu_nome or self.char_name() or "").strip().lower()
+        return [n for n in nomes if n.strip().lower() != eu]
+
     def team_size(self) -> int | None:
         """Quantidade de membros no time.
 
@@ -1225,8 +1320,12 @@ class Memory:
         e essa segunda via também está morta, porque o template
         `state_team_member.png` que ela carrega não existe em disco.
 
-        Ou seja: hoje o bot não sabe se está em time por caminho nenhum. Se o
-        candidato +0x60 responder, isto volta a ser um número exato e de graça.
+        RESOLVIDO EM 31/08/2026, e era o +0x60 mesmo: use
+        `tamanho_do_time()` e `time_do_jogo()`, que leem pelo `ADDR_TEAM`
+        rebaseado e foram provados ao vivo em seis clientes. Esta função fica
+        de pé só porque o BC depende do comportamento dela (ela devolve
+        `None`, e o BC trata `None` como "não sei"); trocá-la mudaria o farm
+        sem ninguém ter pedido.
         """
         base = self._seletor.escolher(
             "team_size", ADDR_TEAM_SIZE,

@@ -22,6 +22,7 @@ echo.
 echo  Ela vai LISTAR as janelas abertas e pedir para voce escolher a da
 echo  FADA -- e a tela DELA que mostra os companheiros dela.
 echo  Para repetir sem escolher: 18-AFERIR-ALVO-ALIADO.bat --pid 12345
+echo  Para SO ver o time que cada cliente enxerga: --so-time
 echo.
 .venv\Scripts\python.exe -m blazesbot.bot.app.afericao_do_aliado %*
 echo.
