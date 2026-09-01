@@ -185,8 +185,10 @@ def test_SAIR_de_batalha_corta_a_macro_no_meio():
     assert e.uma_volta() is True
 
     assert len(e.teclas) < 6, "rodou a macro inteira depois de sair da luta"
-    assert e.voltas == 0, "volta cortada não é volta completa"
     assert e.voltas_abortadas == 1
+    # SAIR DE BATALHA É UM MOB MORTO, E MOB MORTO CONTA -- ver
+    # `test_o_corte_por_batalha_CONTA_volta_e_o_corte_pelo_TIME_nao`.
+    assert e.voltas == 1
 
 
 def test_o_que_corta_e_a_TRANSICAO_e_nunca_o_NIVEL():
@@ -200,35 +202,96 @@ def test_o_que_corta_e_a_TRANSICAO_e_nunca_o_NIVEL():
     assert e.voltas == 1
 
 
-def test_a_volta_CORTADA_nao_conta_como_volta():
-    """`voltas` alimenta a limpeza de bolsa e o shuffle anti-AFK."""
+def test_o_corte_por_batalha_CONTA_volta_e_o_corte_pelo_TIME_nao():
+    """A REGRA DO CONTADOR, decidida em 01/09/2026.
+
+    *"Tire o `+= 1` somente nos casos onde foi abortado; caso entrou em
+    batalha deve contar mais 1 volta."* (usuário)
+
+    E é isso que o laço simples faz -- os dois cortes que contam exigem a
+    TRANSIÇÃO "estava em batalha -> saiu" (`_a_batalha_acabou`), que só
+    acontece depois de uma luta de verdade. Sair de batalha é o mob no chão:
+    a volta produziu loot, e é justamente `voltas` que marca a hora de limpar
+    a bolsa (o único lugar que DECIDE por este número -- o shuffle anti-AFK só
+    o escreve no log). Não contar a matança faria a limpeza atrasar
+    exatamente na conta que mata mais rápido.
+
+    O que NÃO conta é o corte pelo TIME: ali não houve luta nenhuma, só uma
+    ordem do líder para pular a volta.
+
+    ATENÇÃO -- O LAÇO COMPLEXO (`uma_volta`, com `LACO_SIMPLES = False`) SEGUE A
+    REGRA ANTIGA: lá só o fim natural conta. São contratos diferentes de
+    propósito, e `tests/test_tab_no_app.py` guarda o de lá.
+    """
     estados = iter([True, False, False, False])
     e = _executor(em_batalha=lambda: next(estados))
 
     e.uma_volta()
 
-    assert (e.voltas, e.voltas_abortadas) == (0, 1)
+    assert (e.voltas, e.voltas_abortadas) == (1, 1), (
+        "corte por batalha encerrada deixou de contar como volta")
+
+
+def test_o_corte_pelo_TIME_nao_conta_volta():
+    """A outra metade da regra -- sem ela, "toda passada conta" passaria neste
+    arquivo e o contador voltaria a inflar a limpeza de bolsa.
+
+    O líder mandou pular (`linha_a_enviar` < 0): não houve luta, não houve
+    loot, não há volta.
+    """
+    e = _executor(em_batalha=lambda: True, passos=6)
+    e.sincronia = SimpleNamespace(
+        deve_dar_tab_na_abertura=lambda: False,
+        volta_cega=lambda: False,
+        linha_a_enviar=lambda _i, _ms: -1,
+        espera_da_linha=lambda ms: ms,
+    )
+
+    assert e.uma_volta() is True
+
+    assert e.voltas_abortadas == 1
+    assert e.voltas == 0, "aborto do TIME contou como volta de macro"
 
 
 # ===========================================================================
 # O QUE O LAÇO SIMPLES NÃO FAZ
 # ===========================================================================
 
-def test_a_volta_simples_NAO_LE_O_ALVO_em_lugar_nenhum():
+def test_a_volta_simples_nao_olha_a_TELA_nem_mede_a_VIDA():
     """*"Não verifica mais vida, não verifica mais nada."*
 
-    Nem HP, nem id, nem nome, nem a barra desenhada. A única pergunta é
-    "estou em batalha?", e ela vem da struct do PERSONAGEM.
+    A PROMESSA FOI ESTREITADA EM 01/09/2026, e de propósito: o laço ganhou o
+    "Execution Gate" (Eixo 2), que lê o alvo UMA vez, logo depois da aquisição,
+    só para não rodar a macro inteira contra um cadáver ou contra nada. Uma
+    leitura de struct por volta é barata; era a régua de VIDA e a TELA que
+    custavam caro e erravam calado.
+
+    Então o que continua proibido aqui dentro é tudo que CUSTA CAPTURA ou
+    DECIDE POR APROXIMAÇÃO -- e é isso que este teste guarda. `_ler_alvo` e
+    `_adquirir_alvo` saíram da lista porque hoje são o portão; o resto não.
     """
     fonte = textwrap.dedent(
         inspect.getsource(mod.ExecutorDeMacro._uma_volta_simples))
     chamadas = {n.func.attr for n in ast.walk(ast.parse(fonte))
                 if isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute)}
 
-    for proibida in ("_ler_alvo", "_ler_id_do_alvo", "_alvo_morreu",
-                     "_alvo_intocavel", "_olhar_a_tela", "_vida_do_alvo",
-                     "_garantir_alvo", "_registrar_o_alvo"):
+    for proibida in ("_alvo_morreu", "_alvo_intocavel", "_olhar_a_tela",
+                     "_vida_do_alvo", "_registrar_o_alvo", "_comecar_a_regua",
+                     "_vida_do_alvo_pela_tela"):
         assert proibida not in chamadas, proibida
+
+
+def test_o_portao_do_laco_simples_le_o_alvo_UMA_vez_so():
+    """Duas leituras seriam duas fotos de instantes diferentes respondendo à
+    mesma pergunta -- e é assim que nascem as decisões irreproduzíveis."""
+    fonte = textwrap.dedent(
+        inspect.getsource(mod.ExecutorDeMacro._uma_volta_simples))
+    leituras = [n for n in ast.walk(ast.parse(fonte))
+                if isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute)
+                and n.func.attr == "_ler_alvo"]
+
+    assert len(leituras) == 1, (
+        f"o laço simples lê o alvo {len(leituras)} vezes; o portão é UM só")
 
 
 def test_o_corte_da_macro_NAO_LE_O_ALVO():
