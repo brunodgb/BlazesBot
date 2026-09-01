@@ -2616,12 +2616,35 @@ class ExecutorDeMacro:
         return True
 
     def _abortar_a_volta(self, morreu: bool = False) -> bool:
-        """A volta terminou ANTES do fim da sequência. NÃO conta como volta.
+        """A volta terminou ANTES do fim da sequência.
 
         Devolve `True` porque a interrupção é normal e o laço de `rodar()` deve
         seguir para a próxima -- o `False` é reservado para "é para parar".
 
         `morreu=True` abre a OBSERVAÇÃO: ver `_observar_depois_da_morte`.
+
+        =================================================================
+        QUEM CONTA COMO VOLTA NÃO SE DECIDE AQUI -- E OS DOIS LAÇOS DIFEREM
+        =================================================================
+
+        Esta função só incrementa `voltas_abortadas`. `self.voltas` é problema
+        de quem chama, e a regra NÃO é a mesma nos dois laços:
+
+          `uma_volta` (complexo, `LACO_SIMPLES = False`)
+              só o fim natural conta. Corte por morte e abandono por
+              inalcançável ficam de fora.
+
+          `_uma_volta_simples` (o que roda hoje)
+              o corte por BATALHA ENCERRADA conta, o corte pelo TIME não.
+              Decisão do usuário em 01/09/2026: *"caso entrou em batalha deve
+              contar mais 1 volta"*. `_a_batalha_acabou` exige a transição
+              "estava em batalha -> saiu", então esse corte é sempre um mob no
+              chão -- uma volta que produziu loot. E `voltas` decide UMA coisa
+              só: a hora de limpar a bolsa. Não contar a matança faria a
+              limpeza atrasar justamente na conta que mata mais rápido.
+
+        Travado por `tests/test_laco_simples_do_app.py` (as duas metades) e por
+        `tests/test_tab_no_app.py` (o contrato do laço complexo).
         """
         self.voltas_abortadas += 1
         if morreu and not LACO_SIMPLES:
