@@ -266,7 +266,7 @@ _LOCK_TIME = threading.Lock()
 # era um buraco: entre o terceiro e o oitavo segundo o seguidor "entrava" numa
 # largada que o líder já tinha abandonado, e os dois se contavam como juntos
 # estando cinco segundos fora de fase.
-LARGADA_VALIDA_SEGUNDOS = 3.0
+LARGADA_VALIDA_SEGUNDOS = 5.0
 
 # Quanto tempo o estado publicado por uma conta continua valendo.
 #
@@ -442,6 +442,160 @@ def esquecer_passo(lider: str) -> None:
         _COND_DO_PASSO.notify_all()
 
 
+# ===========================================================================
+# A FADA -- ids, fila de cura, batida e a limpeza de bolsa
+# ===========================================================================
+#
+# POR QUE OS IDS ESTÃO AQUI. A Fada mira a cura clicando no retrato do
+# companheiro, e precisa saber SE ACERTOU. A medição de 28/08/2026 fechou o
+# caminho óbvio: `alvo_atual()` devolve `nome`/`hp` NULOS para jogador -- a
+# varredura de entidades não acha gente, só mob.
+#
+# O que sobrou é melhor: o `TARGET_ID` responde para jogador, e a tecla de
+# AUTO-SELEÇÃO põe o próprio id da conta nele. Então cada conta lê o próprio id
+# uma vez e o publica aqui; a Fada clica, lê o id e COMPARA INTEIRO COM INTEIRO.
+#
+# E isso não é conferência de luxo: clicar num aliado LONGE não seleciona nada,
+# e o alvo continua o de antes. Curar sem conferir curaria o aliado ANTERIOR --
+# o pedido sairia da fila e a vítima continuaria ferida, sem erro na tela.
+_IDS: dict[str, int] = {}                     # login -> id da entidade
+_PEDIDOS: dict[str, tuple[float, float]] = {}  # login -> (vida_pct, quando)
+_FADAS: dict[str, float] = {}                 # login -> última batida
+_LIMPEZAS: dict[str, float] = {}              # lider -> quando anunciou
+_LOCK_FADA = threading.Lock()
+
+# Quanto silêncio já é "a Fada não está lá".
+#
+# Mesmo raciocínio (e mesmo valor) do `SILENCIO_MAXIMO` da conta de reset: a
+# batida sai de dentro do laço que cura, que gira várias vezes por segundo, e 5
+# s são muitas voltas dela. É o que separa "esperar a Fada" de "beber poção".
+SILENCIO_DA_FADA = 5.0
+
+
+def publicar_id(login: str, ident: int | None) -> None:
+    """"Eu sou o <id>" -- lido do `TARGET_ID` depois da auto-seleção."""
+    if not login or not ident:
+        return
+    with _LOCK_FADA:
+        _IDS[login.strip().lower()] = int(ident)
+
+
+def id_publicado(login: str) -> int | None:
+    if not login:
+        return None
+    with _LOCK_FADA:
+        return _IDS.get(login.strip().lower())
+
+
+def quem_e_o_id(ident: int | None) -> str:
+    """De quem é este id, ou "". É a pergunta que a Fada faz depois do clique."""
+    if not ident:
+        return ""
+    with _LOCK_FADA:
+        for login, publicado in _IDS.items():
+            if publicado == int(ident):
+                return login
+    return ""
+
+
+def pedir_cura(login: str, vida_pct: float) -> None:
+    """A vítima entra na fila. Repetir não a manda para o fim.
+
+    A ordem é de CHEGADA e ela é preservada de propósito: quem pediu primeiro é
+    atendido primeiro, e um pedido repetido (a vida continua baixa) não pode
+    empurrar a própria vítima para trás dos que chegaram depois.
+    """
+    if not login:
+        return
+    chave = login.strip().lower()
+    with _LOCK_FADA:
+        anterior = _PEDIDOS.get(chave)
+        quando = anterior[1] if anterior else time.monotonic()
+        _PEDIDOS[chave] = (float(vida_pct), quando)
+
+
+def cancelar_pedido(login: str) -> None:
+    if not login:
+        return
+    with _LOCK_FADA:
+        _PEDIDOS.pop(login.strip().lower(), None)
+
+
+def pedido_de(login: str) -> float | None:
+    """A vida com que esta conta pediu cura, ou `None` se não há pedido."""
+    if not login:
+        return None
+    with _LOCK_FADA:
+        dados = _PEDIDOS.get(login.strip().lower())
+    return dados[0] if dados else None
+
+
+def fila_de_cura(logins) -> list[str]:
+    """Quem está esperando, em ORDEM DE CHEGADA, restrito a estes logins.
+
+    O filtro por `logins` é o que impede a Fada de atender alguém de outro time
+    que por acaso esteja rodando no mesmo processo.
+    """
+    permitidos = {str(x).strip().lower() for x in logins if x}
+    with _LOCK_FADA:
+        itens = [(quando, login) for login, (_, quando) in _PEDIDOS.items()
+                 if login in permitidos]
+    itens.sort()
+    return [login for _, login in itens]
+
+
+def bater_fada(login: str) -> None:
+    """A Fada prova que está de pé. Chamada de DENTRO do laço que cura.
+
+    De dentro, e não de fora: uma Fada logada mas presa numa janela aberta passa
+    em qualquer checagem externa (processo vivo, hwnd válido, memória legível) e
+    não cura ninguém. É o falso positivo já medido na conta de reset.
+    """
+    if not login:
+        return
+    with _LOCK_FADA:
+        _FADAS[login.strip().lower()] = time.monotonic()
+
+
+def fada_de_pe(login: str) -> bool:
+    """Dá para contar com esta Fada agora? `False` ⇒ a vítima bebe poção."""
+    if not login:
+        return False
+    with _LOCK_FADA:
+        ultima = _FADAS.get(login.strip().lower())
+    if ultima is None:
+        return False
+    return (time.monotonic() - ultima) <= SILENCIO_DA_FADA
+
+
+def esquecer_fada(login: str) -> None:
+    if not login:
+        return
+    with _LOCK_FADA:
+        _FADAS.pop(login.strip().lower(), None)
+
+
+def anunciar_limpeza(lider: str) -> None:
+    """O líder limpou a bolsa. A Fada limpa quando tiver folga."""
+    if not lider:
+        return
+    with _LOCK_FADA:
+        _LIMPEZAS[lider.strip().lower()] = time.monotonic()
+
+
+def limpeza_pendente(lider: str, desde: float) -> bool:
+    """O líder anunciou limpeza depois de `desde`?
+
+    O anúncio FICA PENDURADO: a Fada só limpa com a fila vazia, e perder o
+    anúncio porque chegou um pedido de cura no meio faria a bolsa dela encher.
+    """
+    if not lider:
+        return False
+    with _LOCK_FADA:
+        quando = _LIMPEZAS.get(lider.strip().lower())
+    return quando is not None and quando > desde
+
+
 def zerar_o_time_para_teste() -> None:
     """Esvazia o quadro do time. SÓ para teste.
 
@@ -455,3 +609,8 @@ def zerar_o_time_para_teste() -> None:
         _ESTADOS.clear()
     with _COND_DO_PASSO:
         _PASSOS.clear()
+    with _LOCK_FADA:
+        _IDS.clear()
+        _PEDIDOS.clear()
+        _FADAS.clear()
+        _LIMPEZAS.clear()

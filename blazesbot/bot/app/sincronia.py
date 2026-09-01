@@ -94,10 +94,10 @@ TETO_DO_ALINHAMENTO_SEGUNDOS = max(0.5, TETO_DA_LARGADA_SEGUNDOS - 1.0)
 # 100 ms da macro, e não o piso: errar para o lado lento custa segundos, errar
 # para o rápido custa a funcionalidade inteira parecendo quebrada pelo motivo
 # errado.
-ESPERA_ENTRE_TABS_DO_ALINHAMENTO = 0.4
+ESPERA_ENTRE_TABS_DO_ALINHAMENTO = 0.5
 
 # De quanto em quanto tempo o seguidor confere se a largada saiu.
-PASSO_DA_ESPERA_DA_LARGADA = 0.05
+PASSO_DA_ESPERA_DA_LARGADA = 0.04
 
 # Sem trocar de estado de batalha por este tempo, dá TAB.
 #
@@ -105,7 +105,7 @@ PASSO_DA_ESPERA_DA_LARGADA = 0.05
 # batalha em 4 segundos, devem dar tab e virar no provável mob que está batendo
 # em algum dos personagens"*. Não é preciso identificar o mob: o TAB deste jogo
 # pega o mais perto, e o mais perto de quem está apanhando é justamente ele.
-SEGUNDOS_SEM_MUDANCA_PARA_TAB = 4.0
+SEGUNDOS_SEM_MUDANCA_PARA_TAB = 3.0
 
 # Quanto o seguidor espera a marca de UMA linha antes de mandar assim mesmo.
 #
@@ -390,37 +390,56 @@ class SincroniaDoTime:
         """TAB até o próprio alvo ser o do líder. Estourou o teto, bate no seu.
 
         NÃO EXISTE TECLA DE ASSIST neste jogo, então esta é a única via: dar
-        TAB e comparar o `TARGET_ID`. O mob do líder pode nem estar no ciclo de
-        TAB desta conta (longe, outro andar, já morto) -- daí o teto.
+        TAB e comparar o `TARGET_ID`.
         """
+        # Pega a tecla de alvo direto do executor
+        tecla = ((self._ex._tecla_de_alvo() or "").strip()
+                 if self._ex._tecla_de_alvo else "")
+        if not tecla:
+            self.log.info("Time: sem tecla de alvo configurada, impossível alinhar.")
+            return False
+
         limite = time.monotonic() + TETO_DO_ALINHAMENTO_SEGUNDOS
         comparacoes = 0
-        while time.monotonic() < limite:
+        
+        while time.monotonic() < limite and self._ex._continuar():
             try:
                 atual = self._ex._ler_id_do_alvo() or 0
             except Exception:
-                # Sem memória não há como perguntar. Esta conta cai para o
-                # comportamento do modo "largada": bate no que tiver.
                 self.log.info("Time: sem leitura de TARGET_ID -- volta sem alinhar")
                 return False
+                
             comparacoes += 1
-            igual = atual == alvo
-            # CADA COMPARAÇÃO VAI PARA O LOG, a pedido do usuário. É o único
-            # jeito de descobrir por que o alinhamento falha: o id do mesmo mob
-            # bate entre dois clientes? o mob do líder está no ciclo de TAB
-            # desta conta? quantos TABs custa? O valor comparado é o do
-            # `TARGET_ID_ADDR` (`core/target_hybrid`), lido de cada cliente.
+            igual = (atual == alvo)
+            
             self.log.info(
                 "Time: TARGET_ID %s x líder %s -> %s (comparação %d, %d TABs)",
                 atual or "0", alvo, "IGUAL" if igual else "diferente",
                 comparacoes, self.tabs_de_alinhamento)
+                
             if igual:
+                # ALINHOU COM SUCESSO! 
+                # Dá apenas o respiro final de 1s para o cliente assentar a mira
+                # antes de o líder puxar a linha 1 da macro para todos.
+                self._ex._dormir(self._ex._respiro_depois_do_tab())
                 return True
+                
             self.tabs_de_alinhamento += 1
-            if not self._ex._tab_simples():
+            
+            # =================================================================
+            # O SEGREDO DO ALINHAMENTO RÁPIDO
+            # =================================================================
+            # Mandamos a tecla diretamente e usamos a verificação rápida de memória.
+            # Se usássemos _tab_simples() aqui, pagaríamos quase 2 segundos POR TAB,
+            # o que estouraria o teto na primeira tentativa.
+            self._ex.input.key(tecla)
+            self._ex._esperar_o_alvo_trocar(atual)
+            
+            # Um micro-respiro de 50ms para não floodar o servidor/cliente
+            # Isso permite buscar de 10 a 15 mobs por segundo.
+            if not self._ex._dormir(0.05):
                 return False
-            if not self._ex._dormir(ESPERA_ENTRE_TABS_DO_ALINHAMENTO):
-                return False
+
         self.alinhamentos_falhos += 1
         self.log.info(
             "Time: não alinhei no alvo %s em %.1fs -- bato no meu nesta volta",

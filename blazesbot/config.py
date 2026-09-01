@@ -1231,6 +1231,27 @@ class BotConfig:
         self.accounts = nova
         return mudou
 
+    def garantir_uids_unicos(self) -> None:
+        """Todo `Account` com `uid` próprio, sem repetição. Idempotente.
+
+        POR QUE ISTO EXISTE, e por que é chamado também na LEITURA DA TABELA e
+        não só ao abrir o arquivo: a interface endereça conta por `uid`, então
+        duas contas com o mesmo uid são indistinguíveis PARA ELA -- arrastar a
+        segunda moveria a primeira, e uma escrita cairia na conta errada. A
+        desduplicação por identidade de objeto em `reordenar_contas` impede
+        PERDER conta, mas não resolve endereçar a certa; quem resolve é isto.
+
+        Uid repetido é cenário real: o `config.json` é editado à mão e o usuário
+        duplica conta copiando o bloco. Quem repete perde o valor e ganha outro
+        -- o primeiro a aparecer mantém o dele, para não invalidar referências.
+        """
+        vistos: set[str] = set()
+        for conta in self.accounts:
+            conta.garantir_uid()          # normaliza o tipo antes de comparar
+            if conta.uid in vistos:
+                conta.uid = ""
+            vistos.add(conta.garantir_uid())
+
     def conta_por_uid(self, uid: str) -> Account | None:
         """A conta com este `uid`, ou `None`. A busca das escritas da interface."""
         alvo = str(uid or "")
@@ -1641,17 +1662,8 @@ class BotConfig:
                 settings = AccountSettings()
             cfg.accounts.append(Account(settings=settings, **dados))
 
-        # UID PARA TODA CONTA, e SEM REPETIÇÃO. Arquivo antigo não tem o campo;
-        # arquivo copiado à mão (o usuário duplica conta editando o JSON) pode ter
-        # o MESMO uid em duas contas, e aí as escritas de uma cairiam na outra --
-        # exatamente o defeito que o uid existe para impedir. Quem repete perde o
-        # valor e ganha outro.
-        vistos: set[str] = set()
-        for conta in cfg.accounts:
-            conta.garantir_uid()          # normaliza o tipo antes de comparar
-            if conta.uid in vistos:
-                conta.uid = ""
-            vistos.add(conta.garantir_uid())
+        # UID PARA TODA CONTA, E SEM REPETIÇÃO -- ver `garantir_uids_unicos`.
+        cfg.garantir_uids_unicos()
 
         # SÓ AQUI, com TODAS as contas construídas: esta migração é a única que
         # olha uma conta a partir de OUTRA.

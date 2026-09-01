@@ -147,7 +147,8 @@ def _executor_do_app(**kw):
         debug=lambda *a, **k: None)
     padrao = dict(
         hwnd=1, fonte_dos_passos=lambda: [], continuar=lambda: False, log=log,
-        tecla_do_pet_food="6", feed_every_minutes=lambda: 51)
+        tecla_do_pet_food="6", feed_every_minutes=lambda: 51,
+        em_batalha=lambda: False)
     padrao.update(kw)
     e = app_mod.ExecutorDeMacro(**padrao)
     e.linhas_do_log = linhas

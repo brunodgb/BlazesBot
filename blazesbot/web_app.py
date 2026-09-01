@@ -248,10 +248,16 @@ class _App:
         em relação ao disco; ela NÃO é fonte de verdade de nada.
         O servidor vem NORMALIZADO (mesma regra dos combos da GUI).
         """
+        # ANTES DE A TELA RECEBER A LISTA. A leitura do arquivo já desfaz uid
+        # repetido, mas conta criada em MEMÓRIA nunca passa por lá -- e a tela
+        # endereça por uid, então duas iguais são indistinguíveis para ela:
+        # arrastar a segunda moveria a primeira. Barato (uma passada) e fecha o
+        # caminho de vez.
+        self.config.garantir_uids_unicos()
         out = []
         for i, c in enumerate(self.config.accounts):
             out.append({
-                "uid": c.garantir_uid(),
+                "uid": c.uid,
                 "ordem": i,
                 "grupo": c.grupo,
                 "login": c.login,

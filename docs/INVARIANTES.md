@@ -307,6 +307,16 @@ Cada item é o que **não pode ser violado**. O detalhe de cada área mora em
 - **O ATALHO DO PONTEIRO:** o SLOT do array muda durante a luta (30 → 29 → 28),
   o ENDEREÇO da entidade não — o caminho normal é UMA leitura conferindo o `obj`
   guardado; a varredura só roda quando o alvo troca.
+- **A CADEIA DIRETA DO ALVO É COMPLEMENTO, NÃO SUBSTITUTO** (item 42, 31/08/2026).
+  `Memory.alvo_hp_direto()` e `Memory.alvo_nome_direto()` entram em
+  `alvo_atual()` como **fallback** quando a struct falha ou atrasa: a struct
+  continua sendo a coluna vertebral porque é a única que tem `max_hp`,
+  `obj`, `pos` e `nivel` — a cadeia direta só responde HP e nome. Trocar a
+  struct pela cadeia é proibido: perderíamos posição e nível.
+- **A FLAG `ha_alvo_selecionado()` DISTINGUE TRÊS ESTADOS** (item 42) que
+  `id_do_alvo() != 0` confunde: sem mira / alvo normal da luta / id órfão
+  de 8 a 11 s. Disponível para quem quiser usar; mexer no consumidor
+  (`bot/bc/combat.py`) é assunto à parte, e exige placar de `alvo_morto_por_hp`.
 - **A ENTIDADE PODE DEMORAR UM CICLO A APARECER** no array logo depois de
   selecionar (medido: 1 em ~45) — por isso a tela continua como reserva.
 - **NOS GUARDAS, SÓ O CEMETERY GUARD PARA O GOLPE** (26/08,

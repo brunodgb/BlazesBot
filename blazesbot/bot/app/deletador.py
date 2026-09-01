@@ -73,6 +73,18 @@ if TYPE_CHECKING:
 # O caminho continua inteiro com ele em False -- desligado não é apagado.
 ATIVADO = True
 
+# ===========================================================================
+# A FILA QUE RETOMA DE ONDE PAROU (Isolada por Conta)
+# ===========================================================================
+#
+# O teto de 10 s pode acabar antes de todos os templates serem verificados. O
+# que sobrou vai PRIMEIRO na chamada seguinte -- senão os últimos da lista
+# nunca seriam olhados, e o lixo que eles pegam ficaria na bolsa para sempre.
+#
+# Usa um dicionário mapeado pelo login da conta para que threads simultâneas
+# (múltiplas contas rodando) não atropelem a fila umas das outras.
+_estado_das_filas: dict[str, int] = {}
+
 # Pasta com um PNG por item que PODE ser deletado. TODOS entram, sem peneira.
 #
 # É LISTA BRANCA e é a única: o que não tem modelo aqui nunca é apagado. Pôr um
@@ -109,7 +121,7 @@ PASTA_DO_LIXO = Path("data") / "templates" / "deletar"
 LIMIAR_EM_COR = 0.92
 
 # Teto de exclusões por chamada. Um template ruim não pode esvaziar a bolsa.
-MAXIMO_DE_EXCLUSOES = 12
+MAXIMO_DE_EXCLUSOES = 20
 
 # Dois casamentos a menos de tanto um do outro são o MESMO item, contado duas
 # vezes por templates parecidos. Clicar duas vezes no mesmo slot apagaria o que
@@ -135,15 +147,15 @@ DISTANCIA_QUE_E_O_MESMO_ITEM = 12
 TETO_DE_SEGUNDOS = 10.0
 
 # Espera pela caixa de confirmação aparecer, depois do clique no ícone.
-TETO_DA_CAIXA = 1.0
-PASSO_DA_ESPERA = 0.05
+TETO_DA_CAIXA = 1.2
+PASSO_DA_ESPERA = 0.08
 
 # Assentamento depois do Ok, para o item sumir antes do clique seguinte.
-DEPOIS_DO_OK = 0.15
+DEPOIS_DO_OK = 0.18
 
 # A janela do inventário terminar de pintar depois da tecla. A memória confirma
 # antes de a tela estar pronta, e aqui quem lê é a tela.
-ESPERA_DA_BOLSA_ABRIR = 0.35
+ESPERA_DA_BOLSA_ABRIR = 0.58
 
 # Quantas vezes insistir para FECHAR a bolsa. Duas, porque a tecla é síncrona:
 # se a segunda não fechou, o problema não é o toque ter se perdido.
@@ -398,7 +410,7 @@ def deletar_lixo(ctx: BotContext,
     Nunca levanta e nunca demora mais que `teto_segundos`: é um complemento da
     macro do APP, que roda por horas sozinha e não pode parar por causa dele.
     """
-    global _proximo_da_fila
+    global _estado_das_filas
 
     if not ATIVADO:
         return 0
@@ -421,9 +433,6 @@ def deletar_lixo(ctx: BotContext,
             "aberto. Pulando a limpeza desta volta.")
         return 0
 
-    # SÓ ABAIXO DAS ABAS. O que está acima é o equipamento em uso -- o jogo não
-    # deixaria apagar, mas tentar gasta clique e espera dentro dos 10 s, e esse
-    # tempo é item de lixo que ficou na bolsa.
     regioes = regioes_visiveis(ctx, quadro)
     if not regioes:
         ctx.log.info(
@@ -436,7 +445,11 @@ def deletar_lixo(ctx: BotContext,
         ctx.log.warning("Nenhum template em %s.", PASTA_DO_LIXO)
         return 0
 
-    nomes = ordem_da_fila(sorted(templates), _proximo_da_fila)
+    # Busca a posição da fila específica desta conta
+    login_da_conta = (ctx.account.login or "").strip().lower()
+    proximo_da_fila = _estado_das_filas.get(login_da_conta, 0)
+
+    nomes = ordem_da_fila(sorted(templates), proximo_da_fila)
     apagados = 0
     verificados = 0
     ja_clicados: list[tuple[int, int]] = []
@@ -451,9 +464,6 @@ def deletar_lixo(ctx: BotContext,
         for centro in centros:
             if time.perf_counter() >= limite or apagados >= MAXIMO_DE_EXCLUSOES:
                 break
-            # Mesma posição já clicada por outro template: o slot mudou de dono
-            # depois da primeira exclusão, e clicar de novo apagaria o item que
-            # entrou no lugar.
             if any(_sao_o_mesmo_item(centro, p) for p in ja_clicados):
                 continue
             ja_clicados.append(centro)
@@ -461,9 +471,8 @@ def deletar_lixo(ctx: BotContext,
                 apagados += 1
                 ctx.log.info("Item deletado: %s em %s", nome, centro)
 
-    # A FILA GUARDA ONDE PAROU. Sem isto os últimos templates da lista nunca
-    # seriam verificados, porque o teto de 10 s cai sempre antes de chegar neles.
-    _proximo_da_fila = (_proximo_da_fila + verificados) % max(1, len(templates))
+    # Atualiza a fila apenas para esta conta
+    _estado_das_filas[login_da_conta] = (proximo_da_fila + verificados) % max(1, len(templates))
 
     gasto = time.perf_counter() - comeco
     ctx.log.info(
@@ -471,6 +480,12 @@ def deletar_lixo(ctx: BotContext,
         "verificados em %.1f s%s", apagados, verificados, len(templates),
         gasto, " (teto atingido)" if gasto >= teto_segundos else "")
     return apagados
+
+
+def esquecer_a_fila() -> None:
+    """Volta a fila para o começo. Usado pelos testes."""
+    global _estado_das_filas
+    _estado_das_filas.clear()
 
 
 def inventario_esta_aberto(ctx: BotContext) -> bool | None:
@@ -547,12 +562,6 @@ def _fechar_a_bolsa(ctx: BotContext, tecla: str) -> None:
     ctx.log.warning(
         "Não consegui FECHAR o inventário. A macro vai mandar tecla com a "
         "bolsa aberta, e ela engole tudo — confira a tela.")
-
-
-def esquecer_a_fila() -> None:
-    """Volta a fila para o começo. Usado pelos testes."""
-    global _proximo_da_fila
-    _proximo_da_fila = 0
 
 
 # ===========================================================================

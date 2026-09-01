@@ -475,20 +475,23 @@ def test_o_respiro_so_e_pago_quando_um_TAB_SAIU(monkeypatch):
         f"os dois respiros do TAB deveriam somar {total}s: {sum(dormidas)}")
 
 
-def test_o_respiro_DEPOIS_do_TAB_e_de_UM_SEGUNDO():
-    """Dobrado em 26/08/2026: *"após o tab em vez de 500ms pode colocar 1
-    segundo inteiro"*. Meio segundo não estava assentando."""
-    assert RESPIRO_DEPOIS == 1.0
+def test_o_respiro_DEPOIS_do_TAB():
+    """Respiro entre o TAB e a primeira linha da macro.
+
+    O TESTE LÊ A CONSTANTE em vez de cravar o número: o valor é observação de
+    campo e já mudou mais de uma vez. O que se trava é que ele EXISTE e é o
+    respiro de baixo (ver `ESPERA_DEPOIS_DO_TAB`)."""
+    assert RESPIRO_DEPOIS > 0
 
 
-def test_o_respiro_ANTES_do_TAB_e_de_600ms():
-    """*"E adiciona 600ms antes do tab"* (usuário, 26/08/2026).
+def test_o_respiro_ANTES_do_TAB():
+    """A volta acabou de mandar a última linha da rotação e o TAB que chega em
+    cima se perde. O que se perde aqui é a PRÓPRIA AQUISIÇÃO, e um TAB engolido
+    custa uma volta inteira contra o cadáver.
 
-    Gêmeo do de baixo: a volta acabou de mandar a última linha da rotação e o
-    TAB que chega em cima se perde. O que se perde aqui é a PRÓPRIA AQUISIÇÃO,
-    e um TAB engolido custa uma volta inteira contra o cadáver.
-    """
-    assert RESPIRO_ANTES == 0.6
+    Lê a constante (`ESPERA_ANTES_DO_TAB`) em vez de cravar o número -- valor de
+    campo, já mudou."""
+    assert RESPIRO_ANTES > 0
 
 
 def test_o_respiro_ANTES_e_pago_UMA_VEZ_por_aquisicao_e_nao_por_tecla(

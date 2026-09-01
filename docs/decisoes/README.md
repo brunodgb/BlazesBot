@@ -12,12 +12,13 @@ medição. Regra sem porquê apodrece; porquê aqui dentro faz o arquivo voltar 
 |---|---|
 | `docs/decisoes/venda.md` | venda, vendedor, slot vazio, caixa "precious" |
 | `docs/decisoes/combate.md` | alvo, TAB, guardas, boss, memória |
+| `docs/decisoes/tab-unico-do-app.md` | a aquisição de alvo virou UMA função (`_adquirir_alvo`): fim do TAB duplo no time |
 | `docs/decisoes/alvo-continuar-daqui.md` | HISTÓRICO (21/08, resolvido): tentativas reprovadas e armadilhas de método |
 | `docs/decisoes/alvo-o-que-esta-medido.md` | MEDIDO / ABERTO / REFUTADO sobre o alvo |
 | `docs/decisoes/navegacao.md` | rota, destravamento, altar, saída, tempos |
 | **`docs/decisoes/janela-na-frente.md`** | **janela aberta engole o clique: guarda, painel, montaria** |
 | `docs/decisoes/cliques-e-resolucao.md` | clique, entrada da cave, resolução |
-| `docs/decisoes/interface.md` | web e GUI, quedas, cronômetros, Tailwind |
+| `docs/decisoes/interface.md` | web e GUI, quedas, cronômetros, Tailwind, log, campos numéricos, ordem/uid/grupo das contas, ícone |
 | `docs/decisoes/sistema.md` | pino de janela, log de dev, hotbar, testes |
 | `docs/decisoes/login-e-relogin.md` | queda, telas de login, matar janela, backoff, senha errada |
 | **`docs/decisoes/reset-de-time.md`** | **conta de reset: lista fechada, batida, trava na porta** |

@@ -66,7 +66,7 @@ ligar código não testado.
 
 ## Números medidos -- tolerância, limiar, teto, cadência
 
-464 constantes, agrupadas por arquivo.
+465 constantes, agrupadas por arquivo.
 
 | constante | valor | onde | quem lê | porquê (resumo) |
 |---|---|---|---|---|
@@ -346,6 +346,7 @@ ligar código não testado.
 | `CONVITE_VALIDO_SEGUNDOS` | `60.0` | [blazesbot/bot/mural.py:63](blazesbot/bot/mural.py#L63) | — | Validade do anúncio. Cobre a fila de resposta do outro cliente com folga; mais |
 | `ESTADO_VALIDO_SEGUNDOS` | `30.0` | [blazesbot/bot/mural.py:277](blazesbot/bot/mural.py#L277) | sincronia.py, supervisor.py | Quanto tempo o estado publicado por uma conta continua valendo. |
 | `LARGADA_VALIDA_SEGUNDOS` | `3.0` | [blazesbot/bot/mural.py:269](blazesbot/bot/mural.py#L269) | sincronia.py | Quanto tempo uma largada anunciada continua valendo. |
+| `SILENCIO_DA_FADA` | `5.0` | [blazesbot/bot/mural.py:472](blazesbot/bot/mural.py#L472) | — | Quanto silêncio já é "a Fada não está lá". |
 | `SILENCIO_MAXIMO` | `5.0` | [blazesbot/bot/mural.py:129](blazesbot/bot/mural.py#L129) | — | Quanto silêncio já é "caiu". |
 | `DESVIO_MINIMO` | `12.0` | [blazesbot/bot/recorte_do_time.py:109](blazesbot/bot/recorte_do_time.py#L109) | — | Recorte liso casa em todo lugar. `region_is_uniform` já é o teste que o |
 | `FOLGA_DO_ESPACAMENTO` | `6.0` | [blazesbot/bot/recorte_do_time.py:105](blazesbot/bot/recorte_do_time.py#L105) | — | Espaçamento vertical: desvio máximo aceito entre os intervalos, em pixels. As |

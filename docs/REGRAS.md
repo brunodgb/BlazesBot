@@ -816,6 +816,18 @@
 - **Tecla repetida é BARRADA na digitação, nas duas interfaces.** O jogo não
   permite a mesma tecla em duas funções. **As teclas do APP ficam de fora da
   conta de propósito** — lá a mesma tecla se repete por desenho.
+- **A ORDEM DAS CONTAS É A ORDEM DO ARRAY `accounts`** — não existe campo de
+  ordem, e não pode existir. Reordenar é `BotConfig.reordenar_contas(uids)`, que
+  desduplica por identidade de OBJETO, põe no fim quem a tela não citou e
+  **aborta** em vez de gravar lista menor (perder conta ali é perder senha
+  cifrada). **A identidade da conta na interface é `Account.uid`, NUNCA o
+  índice** — com a tabela reordenável, escrita por índice grava senha na conta
+  errada. A tela nunca recebe uid repetido (`garantir_uids_unicos`).
+- **`Account.grupo` É RÓTULO VISUAL e nenhum caminho do bot pode ler dele**
+  (travado por AST). Ordem, time do APP (`time_logins`) e grupo são ORTOGONAIS.
+  O arraste **não tem debounce**: grava no soltar e, se falhar, recarrega do
+  backend. Na GUI a reordenação é por BOTÃO — a `QTableWidget` tem seis
+  `setCellWidget` e o arraste do Qt não move widget de célula.
 - **A RODA DO MOUSE SOBE E DESCE TODO CAMPO NUMÉRICO** da web (`type="number"` e
   `type="range"`), incluindo os que a aba APP cria em tempo de execução — por
   isso o ouvinte é **delegado no `document`**, não instalado campo por campo.

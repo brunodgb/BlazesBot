@@ -1377,11 +1377,23 @@ class AccountSupervisor(threading.Thread):
             except Exception:
                 return None
 
+        def _ler_simples(funcao, *args):
+            """Leitura sem o portão critical_ok() -- para flags que não dependem
+            do estado do personagem (hp, posição). A flag de combate (in_battle)
+            é um byte direto no struct do jogador; não faz sentido vetar a leitura
+            porque a posição falhou."""
+            if memoria_do_pet is None:
+                return None
+            try:
+                return funcao(*args)
+            except Exception:
+                return None
+
         def vida_pct() -> float | None:
             return _ler(memoria_do_pet.vida_pct) if memoria_do_pet else None
 
         def em_batalha() -> bool | None:
-            return _ler(memoria_do_pet.in_battle) if memoria_do_pet else None
+            return _ler_simples(memoria_do_pet.in_battle) if memoria_do_pet else None
 
         def esta_sentado() -> bool | None:
             return _ler(memoria_do_pet.is_sitting) if memoria_do_pet else None

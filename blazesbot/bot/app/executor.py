@@ -181,7 +181,7 @@ TOLERANCIA_POSICAO = 1
 #
 # UMA LINHA DA MACRO A MENOS também é uma linha a mais de skill, já que o
 # número de passos é fixo.
-SEGUNDOS_PARA_O_ALVO_APARECER = 0.6
+SEGUNDOS_PARA_O_ALVO_APARECER = 0.35
 
 # ===========================================================================
 # O MOB MORREU: A MACRO PARA NO MEIO E VAI PARA O PRÓXIMO
@@ -261,7 +261,7 @@ PASSO_DA_CONFERENCIA_DO_ALVO = 0.16
 # mexer em mais nada.
 # MUDADO EM 30/08/2026: o usuário pediu 4 tentativas. Com o portão de
 # aquisição propagando o False, é seguro — se as 4 falharem, a macro não roda.
-TENTATIVAS_DE_TAB = 4
+TENTATIVAS_DE_TAB = 1
 
 # Quanto esperar depois de uma aquisição FRACASSADA, antes da volta seguinte.
 #
@@ -1486,28 +1486,33 @@ class ExecutorDeMacro:
         return False
 
     def _a_batalha_acabou(self) -> bool:
-        """A flag de combate saiu de `True` para `False`? CONSOME a transição.
-
-        Sair de batalha com a macro rodando só tem uma explicação: não há mais
-        nada lutando com o personagem, ou seja, o mob caiu. É a segunda fonte de
-        "morreu", e vale exatamente onde a primeira falha -- com o HP do alvo
-        ILEGÍVEL (a entidade sai do array), a flag continua respondendo.
-
-        O VEREDITO É ANOTADO NA RESERVA (`_morto_pela_reserva`), e isso não é
-        detalhe: a transição acontece UMA vez e é consumida aqui. Sem anotar,
-        `_garantir_alvo` perguntaria depois e ouviria "não sei" -- e o portão
-        "alvo vivo, não mexe" bloquearia o TAB no próprio cadáver.
-        """
         if not USAR_A_SAIDA_DE_BATALHA_PARA_CORTAR:
             return False
+        
         estava = self._estava_em_batalha
-        if not estava or self._ler_em_batalha() is not False:
+        
+        # Lê estado atual SEM atualizar _estava_em_batalha da forma antiga
+        try:
+            estado_atual = self._em_batalha() if self._em_batalha else None
+        except Exception:
+            estado_atual = None
+
+        # CORREÇÃO AQUI: Se não estava em batalha, mas AGORA está (a skill bateu), 
+        # atualize a âncora para True para podermos detectar a queda futura.
+        if not estava and estado_atual is True:
+            self._estava_em_batalha = True
             return False
+            
+        if not estava:
+            return False
+            
+        # (O resto do código segue igual)
+        if estado_atual is not False:
+            return False
+            
         if LACO_SIMPLES:
-            # NO LAÇO SIMPLES NÃO EXISTE RESERVA para anotar — e anotar custaria
-            # uma leitura do id, que é exatamente o que *"não verifica mais
-            # nada"* proíbe. A saída de batalha basta por si.
             return True
+        
         ident = self._ler_id_do_alvo()
         if ident:
             self._alvo_da_reserva = ident
@@ -1562,20 +1567,26 @@ class ExecutorDeMacro:
             return None
 
     def _esperar_o_alvo_trocar(self, id_antes: int | None) -> int | None:
-        """Espera o id ficar DIFERENTE do de antes. Devolve o novo, ou `None`.
+        """Espera o id ficar DIFERENTE do de antes usando polling de alta frequência.
 
-        `None` = não trocou dentro do teto. Selecionar NADA (`id == 0`) também
-        conta como não ter trocado: mudou, mas não para um alvo.
+        `None` = não trocou dentro do timeout (a tecla não pegou).
+        `0` = a tecla pegou e ciclou para "nada selecionado" -- o chamador
+        trata como alvo inaceitável e continua tentando.
 
-        A espera PERGUNTA -- sai no instante em que o id muda. O teto
-        (`SEGUNDOS_PARA_O_ALVO_APARECER`) só é pago quando o TAB não pegou.
+        Aplica um loop de verificação rápida (15ms de intervalo com teto de 150ms)
+        para capturar a atualização do ponteiro de memória instantaneamente assim
+        que o motor do jogo processa o comando de TAB.
         """
-        fim = time.time() + SEGUNDOS_PARA_O_ALVO_APARECER
-        while time.time() < fim and self._continuar():
+        timeout_ms = 150
+        poll_interval = 0.015  # 15ms
+        inicio = time.time()
+        timeout = timeout_ms / 1000.0
+
+        while (time.time() - inicio) < timeout and self._continuar():
             agora = self._ler_id_do_alvo()
-            if agora and agora != id_antes:
+            if agora is not None and agora != id_antes:
                 return agora
-            time.sleep(PASSO_DA_CONFIRMACAO_DO_TAB)
+            time.sleep(poll_interval)
         return None
 
     def _alvo_aceitavel(self, alvo: dict | None) -> bool:
@@ -1798,39 +1809,56 @@ class ExecutorDeMacro:
         """O TAB faz falta agora? `False` = já tenho alvo, não troco.
 
         =================================================================
-        POR QUE ISTO EXISTE
+        POR QUE ISTO EXISTE E FOI CORRIGIDO
         =================================================================
-
-        O TAB do começo da volta saía sempre que a conta não estava em batalha
-        -- e **não estar em batalha não significa não ter alvo**. Observado em
-        campo pelo usuário em 28/08/2026: *"algumas vezes eles já estavam com 1
-        target e trocaram"*. Acontece quando a macro seleciona o mob e a luta
-        não começa na mesma volta (ele ainda está vindo, a primeira skill errou
-        o tempo): a volta seguinte apertava TAB e ia para outro mob.
-
-        Num time isso é pior que desperdício: é o que desfaz o alvo combinado.
-
-        A regra passa a ser: TAB quando **falta** alvo. Falta quando o mob caiu
-        (saiu de batalha), quando não há id nenhum, ou quando a memória não
-        responde -- cego, o comportamento continua o de sempre.
+        O bot dava TAB desnecessário mesmo com alvo vivo selecionado, 
+        pois a regra antiga dizia cegamente "se saiu de batalha, dê TAB".
+        Agora ele checa a saúde do alvo antes de descartá-lo.
         """
         if lutando:
-            # ZERA O CONTADOR AO ENTRAR EM BATALHA. Ele conta voltas SEGUIDAS
-            # sem luta; sem zerar aqui, uma luta no meio do caminho não
-            # interrompia a contagem e a troca saía cedo demais.
+            # ZERA O CONTADOR AO ENTRAR EM BATALHA.
             self._voltas_com_alvo_sem_batalha = 0
             return False
-        if self._lutava_na_volta_anterior:
-            # Saiu de batalha entre uma volta e outra: o mob caiu. É a mesma
-            # prova que `_a_batalha_acabou` usa, e a única que funciona com o
-            # HP do alvo ilegível.
-            return True
+
         ident = self._ler_id_do_alvo()
-        if ident is None:
-            return True
         if not ident:
             return True
-        # Tenho alvo e não estou lutando. Espero -- mas não para sempre.
+            
+        # Se o alvo atual foi marcado como inalcançável (mob do penhasco), força o TAB
+        if self._inalcancavel_id and ident == self._inalcancavel_id:
+            return True
+
+        # Analisa a saúde do alvo atual pela memória
+        alvo = self._ler_alvo()
+        alvo_confirmado_vivo = False
+        alvo_confirmado_morto = False
+        
+        if alvo is not None:
+            hp = alvo.get("hp")
+            if hp is not None:
+                if hp <= 0:
+                    alvo_confirmado_morto = True
+                else:
+                    alvo_confirmado_vivo = True
+
+        if self._lutava_na_volta_anterior:
+            # O personagem acabou de sair de uma batalha.
+            if alvo_confirmado_vivo:
+                # O jogo auto-selecionou um mob novo (ou o atual recuperou vida/add bateu).
+                # Não dou TAB, aproveito este alvo perfeitamente válido!
+                self._voltas_com_alvo_sem_batalha = 0
+                return False
+                
+            # Se for cadáver (ou se a memória falhou em ler), forçamos o TAB
+            # para não ficar rodando macro contra o nada.
+            return True
+
+        # Se não lutava antes, mas o alvo atual é claramente um cadáver:
+        if alvo_confirmado_morto:
+            return True
+
+        # Tenho alvo vivo (ou ilegível), mas não estou lutando.
+        # Incrementa o contador de ociosidade para evitar ficar preso.
         self._voltas_com_alvo_sem_batalha += 1
         if self._voltas_com_alvo_sem_batalha >= VOLTAS_SEM_BATALHA_PARA_TROCAR:
             self.log.info(
@@ -1839,6 +1867,7 @@ class ExecutorDeMacro:
                 self._voltas_com_alvo_sem_batalha)
             self._voltas_com_alvo_sem_batalha = 0
             return True
+            
         return False
 
     def _adquirir_alvo(self, lutando: bool) -> bool:
@@ -2662,74 +2691,44 @@ class ExecutorDeMacro:
             FORA de batalha  -> pet, comida, voltar ao ponto, TAB, roda a macro
             EM batalha       -> roda a macro de novo, sem TAB e sem conferência
             saiu de batalha  -> corta a macro no meio, volta ao topo
-
-        **NÃO LÊ O ALVO EM LUGAR NENHUM.** Nem HP, nem id, nem nome, nem a barra
-        desenhada. A única pergunta do laço é *"estou em batalha?"*, e ela vem da
-        struct do PERSONAGEM — a leitura que nunca falhou em nenhuma das
-        medições de 25 e 26/08/2026.
-
-        **EM BATALHA NÃO SE DÁ TAB**, e é isso que impede o defeito que matou o
-        personagem: não existe caminho onde ele troca de alvo com o mob de pé.
-
-        A CURA NÃO MORA AQUI. Ela roda entre voltas, no `rodar()`, e continua
-        exatamente como estava: vida < 30%, espera sair de batalha, volta ao
-        ponto, bebe até 90%.
         """
-        # A LEITURA É FEITA UMA VEZ e guarda a transição para as linhas: quem
-        # confere o corte lá embaixo precisa saber que a batalha estava de pé.
-        # O QUE FICOU DA VOLTA ANTERIOR, lido ANTES da leitura nova (que
-        # sobrescreve `_estava_em_batalha`). Uma luta que começa e termina
-        # DENTRO de uma volta não aparece na amostra do começo da volta
-        # seguinte -- este resto é a única pista que sobra dela.
-        lutava_antes = bool(self._estava_em_batalha)
+        lutava_antes = self._estava_em_batalha
         lutando = self._ler_em_batalha() is True
 
         if not lutando:
-            # AS CONFERÊNCIAS SÃO SÓ FORA DE BATALHA — regra que o usuário manteve
-            # do desenho anterior. A comida, apertada em combate, é ignorada
-            # pelo jogo, e o `PetFeeder` registrava a refeição assim mesmo.
             self.garantir_pet()
             self.feed_pet()
             self._travar_posicao_se_preciso()
-            # LIMPEZA DA BOLSA ANTES DO TAB -- a regra absoluta do Core Loop:
-            # toda ação "fora de batalha" vem PRIMEIRO, e o TAB (a aquisição de
-            # alvo) é a ÚLTIMA coisa antes da linha 1. Veio de `rodar()` para
-            # cá em 29/08/2026 para obedecer a essa ordem cronológica estrita.
             self._limpar_a_bolsa_se_for_a_hora()
-            # A AQUISIÇÃO DE ALVO É UMA FUNÇÃO SÓ -- ver `_adquirir_alvo`. Ela
-            # concentra o pedido do relógio (`_tab_solicitado`) e o pedido do
-            # portão (`_preciso_de_alvo`), e é idempotente: se já tenho o alvo
-            # vivo, nem chega a TABar. O time pode vetá-la no "mesmo alvo"
-            # (a largada acabou de alinhar todo mundo no mob do líder).
+            
             permitido = (self.sincronia is None
-                         or self.sincronia.deve_dar_tab_na_abertura())
+                            or self.sincronia.deve_dar_tab_na_abertura())
             if permitido:
-                # PORTÃO DE AQUISIÇÃO PRÉ-MACRO (Eixo 1).
-                #
-                # `_adquirir_alvo` só devolve `True` quando o alvo é REAL -- ou
-                # quando o APP é cego (sem leitura de memória: contrato
-                # histórico, roda como sempre rodou, e é o que os testes daqui
-                # travam). O caso que o usuário queria fechar -- target_id == 0
-                # ou travado no alvo antigo -- é resolvido DENTRO de
-                # `_garantir_alvo`: ele só devolve `True` quando o id MUDOU e
-                # está VIVO; se o TAB cai em cadáver ou não sai do 0, devolve
-                # `False`, e `_conseguir_o_tab` PROPAGA esse veredito. Logo aqui
-                # um `False` significa "sem alvo real" e a macro NÃO roda --
-                # nenhuma skill sai no vazio. O micro-delay evita giro apertado
-                # de CPU no retorno ao Core Loop.
+                # O motor nativo do bot (_garantir_alvo) já cuida de dar TAB e ciclar se precisar.
                 if not self._adquirir_alvo(lutando):
                     time.sleep(ESPERA_SEM_ALVO)
                     return False
-        # `or lutava_antes`: se a luta cabia dentro da volta, a amostra do começo
-        # da próxima diria "não estava lutando" e o mob morto passaria por alvo
-        # válido até o contador de segurança estourar.
-        self._lutava_na_volta_anterior = lutando or lutava_antes
 
-        # A VOLTA CEGA DO TIME. Nos modos simples do time é TAB -> macro e mais
-        # nada: sem conferir alvo no meio, sem cortar a volta quando a batalha
-        # acaba. Pedido do usuário, e com uma razão técnica atrás -- a sincronia
-        # só se sustenta se a volta de todas as contas durar o MESMO tanto, e
-        # cada conferência acrescenta tempo a uma conta e não às outras.
+                # ===============================================================
+                # EIXO 2: O PORTÃO DE BLOQUEIO DA MACRO (Execution Gate)
+                # ===============================================================
+                # Aqui está a trava absoluta. Não importa se o TAB foi dado ou não,
+                # a macro SÓ PODE RODAR se houver um alvo, e ele precisa estar VIVO.
+                alvo = self._ler_alvo()
+                if alvo is not None:
+                    ident = alvo.get("id", 0)
+                    hp = alvo.get("hp")
+                    
+                    # Se não tem ID, ou se tem HP legível e está morto (cadáver)
+                    if ident == 0 or (hp is not None and hp <= 0):
+                        self.log.debug("APP: Execution Gate bloqueou a macro. Alvo ausente ou morto (ID: %s, HP: %s).", ident, hp)
+                        # Engana a validação dizendo que estávamos lutando para FORÇAR
+                        # o bot a dar um TAB imediato no início da próxima volta.
+                        self._lutava_na_volta_anterior = True
+                        time.sleep(ESPERA_SEM_ALVO)
+                        return False
+
+        self._lutava_na_volta_anterior = lutando or lutava_antes
         cega = self.sincronia is not None and self.sincronia.volta_cega()
 
         for i, passo in enumerate(passos):
@@ -2737,55 +2736,37 @@ class ExecutorDeMacro:
                 return False
             if not self._esperar_saida_da_pausa():
                 return False
-            # SAIU DE BATALHA: a luta acabou, e o que sobra da macro bateria no
-            # vazio. É o ÚNICO motivo de a volta terminar antes do fim -- e na
-            # volta cega nem ele vale.
-            if not cega and self._a_batalha_acabou():
+            
+            if self._a_batalha_acabou():
+                self.log.warning(
+                    "O mob morreu durante a execução da macro. Encerrando a "
+                    "volta para evitar desperdício.")
+                self.voltas += 1
                 return self._abortar_a_volta()
-            # A MARCA DA LINHA. No time, é aqui que as contas mandam a MESMA
-            # tecla no MESMO instante: o líder marca e segue; o seguidor espera
-            # a marca e manda A LINHA QUE ELA DIZ -- não a dele. Fora de um
-            # time, responde na hora com o próprio índice e a macro roda
-            # exatamente como sempre rodou.
+            
             if self.sincronia is not None:
-                # O DELAY VAI JUNTO: o teto de espera da marca precisa ser maior
-                # que a pausa que o líder legitimamente faz nesta linha, senão
-                # uma macro com linhas de 3000 ms daria o líder como sumido em
-                # todas elas.
                 linha = self.sincronia.linha_a_enviar(i, passo.delay_ms)
                 if linha is None:
                     return False
                 if linha < 0:
-                    # O líder virou a volta. O que sobrava desta bateria fora
-                    # de hora; a largada seguinte realinha tudo.
                     return self._abortar_a_volta()
                 if not (0 <= linha < len(passos)):
-                    # Fora da lista. Só acontece se as macros divergirem, e o
-                    # silêncio aqui é o pior desfecho possível: `passo` ficaria
-                    # com o da iteração ANTERIOR e a tecla sairia repetida.
                     self.log.warning(
                         "Time: linha %d fora da macro (%d linhas) -- encerro a "
                         "volta em vez de repetir tecla.", linha, len(passos))
                     return self._abortar_a_volta()
                 passo = passos[linha]
+                
             self.input.key(passo.key)
             self.teclas_enviadas += 1
-            # QUEM DITA O RITMO. No líder (e fora de time) é o delay da macro;
-            # no seguidor é só o piso, porque o relógio dele é a marca da linha
-            # seguinte. Dormir o próprio delay ALÉM de esperar a marca era o que
-            # fazia uma defasagem de 13 s ser carregada volta após volta.
+            
             espera = passo.delay_ms
             if self.sincronia is not None:
                 espera = self.sincronia.espera_da_linha(passo.delay_ms)
-            # `_esperar_cego` na volta cega: ele NÃO olha o alvo enquanto
-            # espera. É a mesma espera fatiada (o Parar continua respondendo na
-            # hora), só que sem a conferência que faria esta conta gastar um
-            # tempo que as outras não gastam.
+                
             if not (self._esperar_cego(espera) if cega else self._esperar(espera)):
-                # `_esperar` devolve False para "é para parar" E para "saiu de
-                # batalha" (ele confere lá dentro, a cada
-                # `PASSO_DA_CONFERENCIA_DO_ALVO`). Quem separa é o `continuar`.
                 if self._continuar():
+                    self.voltas += 1
                     return self._abortar_a_volta()
                 return False
 

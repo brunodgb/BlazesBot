@@ -56,66 +56,10 @@ user32 = ctypes.windll.user32
 #         durante cliques do bot. Hook WH_MOUSE_LL (não injeta DLL).
 # False = Desligado (comportamento original, mouse físico interfere)
 #
-# DESLIGADO com `postmessage_puro` (18/08/2026, decisão do usuário depois de
-# testar as duas configurações em produção).
-#
-# O MOTIVO É DE MECANISMO, e é o que ele observou: *"por ser assíncrono ele não
-# funciona como quando usa o SendMessage"*.
-#
-# No caminho SÍNCRONO o shield protege um intervalo CONHECIDO: do prime ao up, e
-# o retorno do `SendMessageW` prova quando acabou -- por isso o `liberar()` no
-# `finally` reduz os 80 ms de teto para ~5 ms de gasto real.
-#
-# No caminho POSTADO não há esse intervalo. As mensagens ficam na fila até o jogo
-# bombear, e não existe sinal de quando isso aconteceu. O bloqueio vira um chute
-# de 80 ms que pode terminar antes ou depois da hora -- e enquanto isso o mouse
-# do usuário fica preso os 80 ms INTEIROS dentro da janela, sem o desconto que o
-# caminho síncrono tem.
-#
-# Ou seja: com PostMessage o shield cobra o preço cheio e não entrega a
-# proteção precisa. Desligado, o mouse do usuário fica inteiramente livre e não
-# existe hook global nenhum no processo.
-#
-# A FIAÇÃO CONTINUA NO LUGAR (`_click_postmessage_puro` chama
-# `block_momentarily` sob `if self._shield`), no padrão de interruptor do
-# projeto: religar é trocar esta palavra, sem código morto e sem código novo.
-#
-# O shield existia para impedir que um `WM_MOUSEMOVE` FÍSICO furasse a ordem das
-# nossas mensagens. Com `postmessage_puro` esse mecanismo DEIXA DE EXISTIR: as
-# quatro mensagens são POSTADAS na fila, saem em FIFO, e um move físico que
-# chegue no meio entra na fila ATRÁS delas -- não fura nada.
-#
-# Medido com o mouse do usuário em movimento sobre a janela:
-#
-#     PostMessage, mouse LIVRE (sem bloqueio)   40/40, 0 andadas do personagem
-#     SendMessage + shield (o padrão anterior)  16/20, 4 andadas
-#     SendMessage sem shield                     6/20, 14 andadas
-#
-# (As 40 amostras vêm das duas fases de PostMessage da corrida: `block_momentarily`
-# só é chamado dentro de `_click_sendmessage_rapido`, então mesmo a fase rotulada
-# "com shield" rodou com o mouse físico inteiramente livre. As duas eram o mesmo
-# teste, e somam.)
-#
-# COM ISTO DESLIGADO NÃO EXISTE HOOK GLOBAL NENHUM: o `MouseShield` nem é criado,
-# e o mouse do usuário para de pagar a travessia do `WH_MOUSE_LL` a cada evento.
-#
-# FICA EM ABERTO, e não vale fingir que não: rodando com PostMessage sem shield
-# o usuário observou que *"ainda tem vezes que acaba não clicando todas as vezes
-# se eu mexo o mouse na janela do jogo"*. Melhor que SendMessage, não perfeito.
-# O shield foi testado como resposta a isso e não compensou (acima). A causa
-# dessas perdas residuais NÃO está explicada -- e não será chutada aqui.
-#
-# ATENÇÃO AO REVERTER PARA `sendmessage_rapido`: ele PRECISA deste interruptor em
-# `True` (sem shield deu 6/20), e custa MUITO mais caro do que se supunha.
-#
-# MEDIDO em 19/08/2026 (`instrumentar_clique.py`), com o mouse do usuário em
-# movimento: `SendMessageW` prende a thread do bot por **112 ms POR CLIQUE**, não
-# pelos ~5 ms que este arquivo estimava -- ele espera a thread do jogo, que está
-# ocupada com a enxurrada de eventos do mouse. Na venda, onde os cliques saem a
-# cada 65 ms, isso faria a sequência inteira rodar a um terço da velocidade.
-#
-# De ponta a ponta o PostMessage é MAIS RÁPIDO (105,8 ms contra 129,5 ms) e ainda
-# acerta mais (39/40 contra 37/40).
+# RELIGADO em 30/08/2026 (análise de Input Bleed, Eixo 2): com
+# `sendmessage_rapido` o shield É NECESSÁRIO (sem ele: 6/20, 14 andadas).
+# O shield custa ~5 ms REAIS (liberado no `finally`), não 80 ms de teto.
+# Medido 20/20 com mouse em movimento, 0 andadas.
 USAR_MOUSE_SHIELD = False
 
 # TETO do bloqueio do mouse físico, em milissegundos -- e TETO, não gasto: o
@@ -569,6 +513,19 @@ class Input:
         user32.PostMessageW(HWND(self.hwnd), mensagem, WPARAM(wparam),
                             LPARAM(0))
 
+    def _liberar_modificadores_fisicos(self) -> None:
+        """Envia WM_KEYUP sintético para SHIFT/CTRL/ALT antes de cada tecla alvo.
+
+        Mitigação de Input Bleed (Eixo 1): o jogo lê RawInput/GetKeyboardState
+        e vê modificadores físicos pressionados pelo usuário. Enviar KEYUP
+        para a fila da janela força estado "limpo" para WM_KEYDOWN/WM_CHAR.
+        Não afeta RawInput/hardware state, mas reduz janela de sangramento.
+        """
+        for mod in ("SHIFT", "CTRL", "ALT"):
+            vk = VK_CODES.get(mod)
+            if vk is not None:
+                self._enviar_tecla(WM_KEYUP, vk)
+
     def key_down(self, name: str) -> bool:
         """SEGURA a tecla, sem soltar. Quem chama É RESPONSÁVEL pelo `key_up`.
 
@@ -602,6 +559,9 @@ class Input:
         atual = self._teclas_presas.get(chave, 0)
         self._teclas_presas[chave] = atual + 1
         if atual == 0:
+            # Input Bleed Eixo 1: liberar modificadores físicos antes da tecla alvo
+            if chave not in ("SHIFT", "CTRL", "ALT"):
+                self._liberar_modificadores_fisicos()
             self._enviar_tecla(WM_KEYDOWN, vk)
         return True
 
