@@ -600,6 +600,25 @@
                    e dizendo por quê -- some da lista seria o usuário procurando
                    uma conta que ele sabe que existe. -->
               <div id="ed-app-time-lista" class="flex flex-col gap-0.5"></div>
+
+              <label class="campo-check w-full mt-2"
+                     title="Esta conta vira a FADA do time: ela não ataca e não roda a macro. Cura os aliados que pedirem, e senta para recuperar mana quando não há ninguém na fila. Fora de um time a marcação não faz nada.">
+                <input id="ed-app-fada" type="checkbox" class="chk" />
+                <span>Esta conta é a Fada do time</span>
+              </label>
+
+              <label class="campo linha-opcao mt-2"
+                     title="Abaixo desta vida o personagem para de atacar, volta ao ponto inicial e pede cura à Fada. Sem Fada de pé, bebe poção como sempre. Em time, vale a configuração do LÍDER.">
+                <span>Pedir cura abaixo de (%)</span>
+                <input id="ed-app-cura-pedir" type="number" min="1" max="100" step="5"
+                       class="campo-input campo-num" />
+              </label>
+              <label class="campo linha-opcao mt-1.5"
+                     title="A Fada cura até esta vida e passa para o próximo da fila. Em time, vale a configuração do LÍDER.">
+                <span>Parar de curar em (%)</span>
+                <input id="ed-app-cura-parar" type="number" min="1" max="100" step="5"
+                       class="campo-input campo-num" />
+              </label>
             </div>
 
           </aside>

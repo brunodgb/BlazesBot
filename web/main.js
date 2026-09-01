@@ -844,6 +844,9 @@ function preencherEditor(d) {
   $("#ed-app-travar").checked = !!d.app.travar_posicao;
   $("#ed-app-shuffle").value = String(d.app.shuffle_apos_n_voltas ?? 30);
   $("#ed-app-time-modo").value = d.app.time_modo || "largada";
+  $("#ed-app-fada").checked = !!d.app.fada;
+  $("#ed-app-cura-pedir").value = String(d.app.cura_pedir_pct ?? 30);
+  $("#ed-app-cura-parar").value = String(d.app.cura_parar_pct ?? 90);
   explicarModoDoTime();
   // Como a lista do reseter, as candidatas vêm do EDITOR e não do bloco `app`:
   // elas são as OUTRAS contas, e `app` só sabe de si mesmo.
@@ -1245,6 +1248,9 @@ function salvarEditor() {
         MINIMO_ESPERA_APP,
         Number(($("#ed-app-espera-tab") || {}).value) || 1000),
       time_modo: $("#ed-app-time-modo").value,
+      fada: $("#ed-app-fada").checked,
+      cura_pedir_pct: Math.max(1, Math.min(100, Number($("#ed-app-cura-pedir").value) || 30)),
+      cura_parar_pct: Math.max(1, Math.min(100, Number($("#ed-app-cura-parar").value) || 90)),
       time_logins: lerTimeDoApp(),
       steps: appSteps,
     },
