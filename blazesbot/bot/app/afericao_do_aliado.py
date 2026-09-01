@@ -164,6 +164,7 @@ def times_de_todos(config: BotConfig) -> list[dict[str, Any]]:
                 "tamanho": memoria.tamanho_do_time(),
                 "time": memoria.time_do_jogo(),
                 "companheiros": memoria.companheiros_de_time(nome),
+                "vidas": memoria.vida_do_time(),
             })
         except Exception as exc:
             registro["erro"] = f"{type(exc).__name__}: {exc}"
@@ -468,6 +469,7 @@ def main() -> int:
             dizer(f"  {r['titulo']:<16} pid {r['pid']:<7} tamanho={r['tamanho']}")
             dizer(f"      time         = {r['time']}")
             dizer(f"      companheiros = {r['companheiros']}   <- a ordem dos retratos")
+            dizer(f"      vidas        = {r.get('vidas')}")
         dizer()
         dizer("A MESMA ordem em clientes diferentes é o que prova a leitura.")
         return 0

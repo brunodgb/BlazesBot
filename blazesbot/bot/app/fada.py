@@ -440,8 +440,16 @@ def fada_factory(executor) -> FadaDoApp:
     - A Fada não conhece o executor, só usa o que recebe
     """
     from blazesbot.bot.mural import (
-        publicar_id, id_publicado, quem_e_o_id, pedir_cura, fila_de_cura,
-        bater_fada, fada_de_pe, anunciar_limpeza, limpeza_pendente, esquecer_fada
+        anunciar_limpeza,
+        bater_fada,
+        esquecer_fada,
+        fada_de_pe,
+        fila_de_cura,
+        id_publicado,
+        limpeza_pendente,
+        pedir_cura,
+        publicar_id,
+        quem_e_o_id,
     )
 
     # O executor tem acesso a: ctx.memory, ctx.input, ctx.janela, settings, etc.

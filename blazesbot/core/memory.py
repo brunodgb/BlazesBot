@@ -282,6 +282,21 @@ PASSO_ENTRE_MEMBROS = 0x88
 # nomes 1..3 são válidos e o 4 vem lixo -- foi assim em todos os clientes do
 # log, e é por isso que a leitura se guia pelo tamanho e não pelo lixo.
 MAXIMO_DE_MEMBROS_LIDOS = 4
+
+# Dentro do bloco de CADA membro (relativo ao começo dele, onde está o nome).
+#
+# MEDIDO em 31/08/2026 por cruzamento: lendo o cliente da `Tsuki69`, o bloco do
+# membro que É ela trouxe `+0x034 = 2758` e `+0x03C = 5534` -- exatamente o
+# `hp = 2758` e o `baseMana = 5534` que o mesmo cliente já entregava por outro
+# caminho. Dois valores independentes batendo no mesmo instante é o que separa
+# leitura de coincidência.
+#
+# A VIDA MÁXIMA NÃO ESTÁ NESTE BLOCO -- procurada e não achada. Ela não faz
+# falta: cada conta lê a PRÓPRIA vida máxima e a publica no mural, e a Fada
+# combina as duas (vida daqui, máximo de lá) para saber a porcentagem do
+# companheiro sem depender de ninguém avisar.
+OFF_MEMBRO_HP = 0x34
+OFF_MEMBRO_MANA_MAXIMA = 0x3C
 OFF_TEAM_SIZE = 0x3D8
 # Primeiro resultado do painel "Surroundings". A string tem o formato
 #   ... text="Nome [x,y]" ...
@@ -1296,6 +1311,38 @@ class Memory:
                 break
             nomes.append(nome)
         return nomes
+
+    def vida_do_time(self) -> list[dict] | None:
+        """Nome e VIDA ATUAL de cada membro, na ordem do jogo.
+
+        É o que deixa a Fada ver a cura fazer efeito em vez de esperar a vítima
+        avisar. A vida MÁXIMA não vive neste bloco (procurada, não achada), e
+        por isso não vem aqui: quem sabe o próprio máximo é cada conta, que o
+        publica no mural.
+
+        `None` = não deu para ler. `[]` = fora de time.
+        """
+        base = self.read_int(ADDR_TEAM)
+        if not base:
+            return None
+        tamanho = self.read_int(base + OFF_TAMANHO_DO_TIME)
+        if tamanho is None or not (0 <= tamanho <= 8):
+            return None
+        if tamanho == 0:
+            return []
+        membros: list[dict] = []
+        for i in range(min(tamanho, MAXIMO_DE_MEMBROS_LIDOS)):
+            inicio = base + OFF_PRIMEIRO_MEMBRO + i * PASSO_ENTRE_MEMBROS
+            nome = (self.read_string_direct(inicio) or "").strip()
+            if not nome or not re.match(r"^[\w'\- ]+$", nome):
+                break
+            hp = self.read_int(inicio + OFF_MEMBRO_HP)
+            # HP fora de faixa é struct inconsistente, e "não sei" é melhor que
+            # um número inventado -- a Fada decide curar em cima disto.
+            if hp is not None and not (0 <= hp <= 10_000_000):
+                hp = None
+            membros.append({"nome": nome, "hp": hp})
+        return membros
 
     def companheiros_de_time(self, meu_nome: str | None = None) -> list[str] | None:
         """O time MENOS eu, na ordem -- é a ordem dos retratos na tela.
