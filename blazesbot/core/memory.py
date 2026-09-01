@@ -291,10 +291,20 @@ MAXIMO_DE_MEMBROS_LIDOS = 4
 # caminho. Dois valores independentes batendo no mesmo instante é o que separa
 # leitura de coincidência.
 #
-# A VIDA MÁXIMA NÃO ESTÁ NESTE BLOCO -- procurada e não achada. Ela não faz
-# falta: cada conta lê a PRÓPRIA vida máxima e a publica no mural, e a Fada
-# combina as duas (vida daqui, máximo de lá) para saber a porcentagem do
-# companheiro sem depender de ninguém avisar.
+# ATENÇÃO -- ESTE CAMPO PARECE SER O MÁXIMO, NÃO A VIDA ATUAL.
+#
+# O cruzamento que o identificou foi feito com a `Tsuki69` de vida CHEIA, e ali
+# `hp` e `baseHp` valiam o mesmo (2758): o campo batia com os dois. O par dele,
+# `+0x3C`, deu 5534 -- que é o `baseMana`, e NÃO a mana atual (5327). Dois
+# máximos lado a lado.
+#
+# Confirmado em campo em 01/09/2026: a Fada lia "vida 4555 de 4555" de um aliado
+# ferido e concluía "já está com 100%" sem apertar a cura uma vez.
+#
+# POR ISSO ESTA LEITURA É RESERVA, não fonte. Quem manda é a própria vítima, que
+# lê o próprio `hp`/`max_hp` e publica no mural. A vida ATUAL do companheiro
+# ainda precisa ser achada -- use `read_client_direct.py --dump-team` com um
+# aliado FERIDO, que é a condição que separa os dois campos.
 OFF_MEMBRO_HP = 0x34
 OFF_MEMBRO_MANA_MAXIMA = 0x3C
 OFF_TEAM_SIZE = 0x3D8
@@ -1332,7 +1342,11 @@ class Memory:
         return nomes
 
     def vida_do_time(self) -> list[dict] | None:
-        """Nome e VIDA ATUAL de cada membro, na ordem do jogo.
+        """Nome e vida de cada membro, na ordem do jogo. **Ver o aviso abaixo.**
+
+        O `hp` daqui parece ser o MÁXIMO, e não a vida atual -- ver
+        `OFF_MEMBRO_HP`. Enquanto isso não for remedido, trate-o como reserva:
+        a fonte boa da vida de um companheiro é o que ele publica no mural.
 
         É o que deixa a Fada ver a cura fazer efeito em vez de esperar a vítima
         avisar. A vida MÁXIMA não vive neste bloco (procurada, não achada), e

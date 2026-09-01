@@ -51,7 +51,8 @@ class _Jogo:
     """O cliente falso: guarda o que a Fada mandou e o que ela veria."""
 
     def __init__(self, *, vida=100.0, mana=100.0, batalha=False,
-                 companheiros=("Aliado", "Outro"), vidas=None, alvo=0):
+                 companheiros=("Aliado", "Outro"), vidas=None, alvo=0,
+                 login_por_slot=None):
         self.vida = vida
         self.mana = mana
         self.batalha = batalha
@@ -59,6 +60,10 @@ class _Jogo:
         self.vidas = vidas if vidas is not None else [
             {"nome": "Aliado", "hp": 300}, {"nome": "Outro", "hp": 1000}]
         self.alvo = alvo
+        # De quem é cada retrato. Serve para o dublê simular a VÍTIMA
+        # republicando a própria vida enquanto é curada -- que é o que ela faz
+        # de verdade, e a fonte que a Fada usa.
+        self.login_por_slot = login_por_slot or {0: "aliado", 1: "outro"}
         self.cliques: list[int] = []
         self.curas = 0
         self.sentadas = 0
@@ -93,6 +98,14 @@ class _Jogo:
         for m in self.vidas:
             if m["nome"] == alvo:
                 m["hp"] = (m["hp"] or 0) + self.cura_sobe
+        # A VÍTIMA REPUBLICA. No bot de verdade ela faz isso a cada 0,2 s
+        # enquanto espera; sem simular, a vida anunciada nunca subiria e a Fada
+        # desistiria de todo mundo -- um falso negativo do dublê.
+        login = self.login_por_slot.get(slot)
+        if login:
+            atual = mural.pedido_de(login)
+            if atual is not None:
+                mural.pedir_cura(login, min(100.0, atual + 40.0))
 
     def sentar(self) -> None:
         self.sentadas += 1
@@ -470,4 +483,50 @@ def test_a_tentativa_bem_sucedida_zera_a_contagem():
     jogo.id_por_slot = {0: 777}           # agora pega
     f._uma_volta()
     assert f._tentativas.get("aliado") is None
+    assert f.curas == 1
+
+# ---------------------------------------------------------------------------
+# A FONTE DA VIDA DA VÍTIMA -- corrigido em 01/09/2026
+# ---------------------------------------------------------------------------
+#
+# A Fada lia a vida do aliado pela struct do time e concluía "já está com 100%"
+# sem apertar a cura uma vez. Medido no log:
+#
+#     FADA: curando BlazesAPP1 até 90% (vida 4555 de 4555)
+#     FADA: BlazesAPP1 curado (100%). Próximo.
+#
+# O campo lido (`+0x34`) bate com a vida MÁXIMA, não com a atual -- o par dele
+# (`+0x3C`) deu o `baseMana`, e não a mana. Enquanto o offset da vida atual não
+# for confirmado, quem manda é o que a VÍTIMA publica: ela lê o próprio hp e
+# max_hp com precisão de inteiro.
+
+def test_a_vida_anunciada_pela_vitima_manda():
+    """Mesmo com a struct dizendo vida cheia, o que vale é o anúncio."""
+    jogo = _Jogo(vidas=[{"nome": "Aliado", "hp": 99999}])   # struct diz "cheio"
+    f = _fada(jogo, membros=("fada", "aliado"))
+    mural.publicar_estado("aliado", max_hp=1000)
+    mural.pedir_cura("aliado", 25.0)
+    assert f._quanto_de_vida("aliado", "Aliado", 1000) == 25.0
+
+
+def test_sem_anuncio_cai_para_a_struct():
+    """A struct é RESERVA -- some quando a vítima fala, volta quando ela cala."""
+    jogo = _Jogo(vidas=[{"nome": "Aliado", "hp": 500}])
+    f = _fada(jogo, membros=("fada", "aliado"))
+    assert f._quanto_de_vida("aliado", "Aliado", 1000) == 50.0
+
+
+def test_aperta_a_cura_ate_a_vida_anunciada_chegar_no_alvo():
+    """O defeito era não apertar NENHUMA vez. Aqui tem de apertar."""
+    jogo = _Jogo(vidas=[{"nome": "Aliado", "hp": 300}])
+    jogo.id_por_slot = {0: 777}
+    jogo.cura_sobe = 1                    # liga a republicação do dublê
+    mural.publicar_id("aliado", 777)
+    mural.publicar_estado("aliado", max_hp=1000)
+    mural.pedir_cura("aliado", 20.0)      # 20% -> precisa de 2 curas para 90%
+    f = _fada(jogo, membros=("fada", "aliado"))
+
+    f._uma_volta()
+
+    assert jogo.curas >= 2
     assert f.curas == 1

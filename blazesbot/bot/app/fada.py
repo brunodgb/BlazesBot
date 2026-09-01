@@ -376,10 +376,11 @@ class FadaDoTime:
         alvo_pct = self._parar_pct()
         maximo = self._maximo_da_vitima(login_vitima)
         comeco = time.monotonic()
-        vida_no_comeco = self._vida_do_companheiro(nick)
+        vida_no_comeco = self._quanto_de_vida(login_vitima, nick, maximo)
 
-        self.log.info("FADA: curando %s até %.0f%% (vida %s de %s).",
-                      nick, alvo_pct, vida_no_comeco, maximo or "?")
+        self.log.info("FADA: curando %s até %.0f%% (vida %s%%).",
+                      nick, alvo_pct,
+                      f"{vida_no_comeco:.0f}" if vida_no_comeco is not None else "?")
 
         while time.monotonic() - comeco < TETO_DA_CURA_SEGUNDOS:
             if not self._continuar():
@@ -388,7 +389,7 @@ class FadaDoTime:
                 self.log.info("FADA: entrei em batalha durante a cura de %s.", nick)
                 return True
 
-            pct = self._pct_do_companheiro(nick, maximo)
+            pct = self._quanto_de_vida(login_vitima, nick, maximo)
             if pct is not None and pct >= alvo_pct:
                 self.curas += 1
                 self.mural.cancelar_pedido(login_vitima)
@@ -444,6 +445,22 @@ class FadaDoTime:
             if str(membro.get("nome", "")).strip().lower() == alvo:
                 return membro.get("hp")
         return None
+
+    def _quanto_de_vida(self, login_vitima: str, nick: str,
+                        maximo: int | None) -> float | None:
+        """A vida da vítima em %, pela fonte MAIS CONFIÁVEL disponível.
+
+        1. **O que ela mesma publicou.** A vítima lê o próprio `hp`/`max_hp` com
+           precisão de inteiro e republica enquanto espera. É a fonte boa.
+        2. **A struct do time**, como reserva -- e só como reserva: o offset da
+           vida do companheiro ainda NÃO está confirmado. A primeira tentativa
+           leu o campo errado (o MÁXIMO), e a Fada concluía "já está com 100%"
+           sem apertar a cura uma vez sequer. Foi assim em campo, 01/09/2026.
+        """
+        anunciado = self.mural.pedido_de(login_vitima)
+        if anunciado is not None:
+            return float(anunciado)
+        return self._pct_do_companheiro(nick, maximo)
 
     def _pct_do_companheiro(self, nick: str, maximo: int | None) -> float | None:
         """A vida do aliado em porcentagem.

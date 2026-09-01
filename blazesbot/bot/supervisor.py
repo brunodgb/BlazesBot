@@ -1692,10 +1692,23 @@ class AccountSupervisor(threading.Thread):
                                     fada_login)
                         return False
                     atual = vida_pct()
-                    if atual is not None and atual >= alvo:
-                        log.info("Curado pela Fada (%.0f%%). Voltando à macro.",
-                                 atual)
-                        return True
+                    if atual is not None:
+                        # A VÍTIMA REPUBLICA A PRÓPRIA VIDA enquanto espera.
+                        #
+                        # É ela quem sabe: lê `hp` e `max_hp` do próprio
+                        # personagem, com precisão de inteiro. A Fada lendo a
+                        # vida do aliado pela struct do time depende de um
+                        # offset que ainda não está confirmado -- e a primeira
+                        # tentativa saiu errada (o campo lido era o MÁXIMO, e a
+                        # Fada concluía "já está com 100%" sem curar nada).
+                        #
+                        # `pedir_cura` preserva a hora do primeiro pedido, então
+                        # republicar NÃO manda a vítima para o fim da fila.
+                        mural.pedir_cura(self.account.login, atual)
+                        if atual >= alvo:
+                            log.info("Curado pela Fada (%.0f%%). Voltando à "
+                                     "macro.", atual)
+                            return True
                     time.sleep(0.2)
             finally:
                 mural.cancelar_pedido(self.account.login)
