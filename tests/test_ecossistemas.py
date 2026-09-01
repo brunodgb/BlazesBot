@@ -4,6 +4,7 @@ O BlazesBot é UM sistema com vários ecossistemas:
 
     blazesbot/bot/bc/    o farm de boss-rush da Bewitcher Cave
     blazesbot/bot/app/   a macro de teclado
+    blazesbot/bot/hh/    o farm de boss-rush da Black Wind Camp Dungeon
 
 **UM ECOSSISTEMA NUNCA IMPORTA DO OUTRO.** O que eles compartilham desce para
 `blazesbot/bot/` (o sistema: supervisor, contexto, login, watchdog) e para
@@ -22,6 +23,7 @@ import pytest
 RAIZ = pathlib.Path(__file__).resolve().parent.parent / "blazesbot"
 BC = RAIZ / "bot" / "bc"
 APP = RAIZ / "bot" / "app"
+HH = RAIZ / "bot" / "hh"
 CORE = RAIZ / "core"
 
 
@@ -53,18 +55,33 @@ def _arquivos(pasta: pathlib.Path) -> list[pathlib.Path]:
     return sorted(p for p in pasta.glob("*.py"))
 
 
-@pytest.mark.parametrize("arquivo", _arquivos(BC), ids=lambda p: p.name)
-def test_o_ecossistema_bc_nao_importa_do_app(arquivo):
-    proibidos = [m for m in _modulos_importados(arquivo)
-                 if "bot.app" in m or m.endswith(".app")]
-    assert not proibidos, f"{arquivo.name} importa do APP: {proibidos}"
+# Os ecossistemas, por nome de pasta. A matriz abaixo cruza TODOS os pares, então
+# um quarto ecossistema entra aqui e ganha as verificações de graça -- em vez de
+# alguém precisar lembrar de escrever mais dois testes por pasta nova.
+ECOSSISTEMAS = {"bc": BC, "app": APP, "hh": HH}
 
 
-@pytest.mark.parametrize("arquivo", _arquivos(APP), ids=lambda p: p.name)
-def test_o_ecossistema_app_nao_importa_do_bc(arquivo):
-    proibidos = [m for m in _modulos_importados(arquivo)
-                 if "bot.bc" in m or m.endswith(".bc")]
-    assert not proibidos, f"{arquivo.name} importa do BC: {proibidos}"
+def _pares():
+    return [(dono, casa, outro) for dono, casa in ECOSSISTEMAS.items()
+            for outro in ECOSSISTEMAS if outro != dono]
+
+
+@pytest.mark.parametrize("dono,casa,outro", _pares(),
+                         ids=lambda v: v if isinstance(v, str) else "")
+def test_um_ecossistema_nunca_importa_do_outro(dono, casa, outro):
+    """A regra inteira, em uma verificação por par ordenado.
+
+    Um `from ..bc.combat import ...` escrito dentro do `hh/` funciona, passa em
+    todos os outros testes e só cobra o preço meses depois. Aqui reprova na hora,
+    com o nome do arquivo e o import que sobrou.
+    """
+    falhas = {}
+    for arquivo in _arquivos(casa):
+        proibidos = [mod for mod in _modulos_importados(arquivo)
+                     if f"bot.{outro}" in mod or mod.endswith(f".{outro}")]
+        if proibidos:
+            falhas[arquivo.name] = proibidos
+    assert not falhas, f"{dono}/ importa do {outro.upper()}: {falhas}"
 
 
 @pytest.mark.parametrize("arquivo", _arquivos(CORE), ids=lambda p: p.name)
@@ -76,9 +93,9 @@ def test_o_core_nao_conhece_ecossistema_nenhum(arquivo):
     assert not proibidos, f"core/{arquivo.name} importa de bot/: {proibidos}"
 
 
-def test_as_duas_pastas_de_ecossistema_existem_e_tem_dono():
+def test_toda_pasta_de_ecossistema_existe_e_tem_dono():
     """Se alguém apagar um `__init__.py`, a regra some junto com a explicação."""
-    for pasta in (BC, APP):
+    for pasta in ECOSSISTEMAS.values():
         inicial = pasta / "__init__.py"
         assert inicial.exists(), f"{pasta.name}/__init__.py sumiu"
         texto = inicial.read_text(encoding="utf-8")

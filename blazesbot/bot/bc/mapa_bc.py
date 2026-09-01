@@ -47,10 +47,11 @@ tentar um atalho: atalho ali não existe.
 """
 from __future__ import annotations
 
-import math
 from dataclasses import dataclass
 
 from ...core.lugares import AREAS_BC
+from ...core.rota import Waypoint, distancia
+from ...core.rota import montar as _wp
 
 # ---------------------------------------------------------------------------
 # Pontos de referência
@@ -260,31 +261,10 @@ PRECISAO_NO_PONTO_DO_VENDEDOR = 0.7
 # Waypoints
 # ---------------------------------------------------------------------------
 
-@dataclass(frozen=True)
-class Waypoint:
-    x: int
-    y: int
-    area: str
-
-    @property
-    def pos(self) -> tuple[int, int]:
-        return (self.x, self.y)
-
-
-def _wp(pares: list[tuple[int, int, str]]) -> tuple[Waypoint, ...]:
-    """Monta a lista removendo repetições consecutivas.
-
-    A medição no jogo produziu `[156,-406]` duas vezes seguidas. Waypoint
-    repetido não é inofensivo: o bot considera o primeiro alcançado, clica no
-    segundo (que é o mesmo ponto), não há movimento nenhum para observar e o
-    detector de travamento dispara sem haver trava.
-    """
-    saida: list[Waypoint] = []
-    for x, y, area in pares:
-        if saida and saida[-1].x == x and saida[-1].y == y:
-            continue
-        saida.append(Waypoint(x, y, area))
-    return tuple(saida)
+# `Waypoint` e `_wp` (o `montar`) vivem em `core/rota.py` desde 01/09/2026: a
+# chegada do ecossistema HH os transformou em modelo compartilhado, e um
+# ecossistema não importa do outro. Os nomes continuam disponíveis AQUI para todo
+# o código da BC que já os usa -- ver o cabeçalho de `core/rota.py`.
 
 
 # Da entrada da cave até o Altar Stone. Medido no jogo, waypoint por waypoint.
@@ -396,12 +376,8 @@ WAYPOINTS_PROBLEMATICOS: tuple[tuple[int, int], ...] = (
 # Reconhecimento de onde o personagem está
 # ---------------------------------------------------------------------------
 
-def distancia(a: tuple[int, int], b: tuple[int, int]) -> float:
-    """Distância em linha reta entre duas coordenadas de jogo."""
-    return math.hypot(a[0] - b[0], a[1] - b[1])
-
-
-# Nome curto usado internamente neste módulo.
+# `distancia` vem de `core/rota.py` (importada no topo). Nome curto usado
+# internamente neste módulo.
 _distancia = distancia
 
 

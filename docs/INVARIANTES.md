@@ -267,6 +267,60 @@ time a flag não faz nada.
   fixo. Nunca cinco literais soltos. O painel encolhe por baixo, e quantos
   slots varrer é "membros − ela" — mas quem confirma é a memória, não a conta.
 
+## HH (Black Wind Camp Dungeon) — `docs/decisoes/hh.md`
+
+> **Terceiro ecossistema, aberto em 01/09/2026.** Integração do bot de terceiros
+> em Lua/UoPilot (`OutrosBots/HH - cave full - ARVV3N`). O **porquê** de cada
+> item, incluindo o que daquele bot foi REPROVADO, está em
+> `docs/decisoes/hh.md`.
+
+### O que NÃO pode ser violado
+
+- **`hh/` NUNCA importa de `bc/` nem de `app/`**, e o contrário também não.
+  Travado por `tests/test_ecossistemas.py`, que agora cruza TODOS os pares de
+  ecossistema — pasta nova ganha as verificações de graça.
+- **NADA é recriado.** Diretiva do usuário (01/09/2026): *"tudo que já existir no
+  nosso BlazesBot você não precisa recriar, apenas utilizar onde necessário."*
+  Combate, navegação, painel de arredores, venda, catador, deletador, pet,
+  esconder jogadores, time e mural JÁ EXISTEM — a HH usa, não reescreve.
+- **Os 66 waypoints são o único ativo insubstituível.** Vieram do bot Lua que
+  roda esta cave hoje, em produção. Travados por `tests/test_mapa_hh.py`:
+  contagem por trecho, continuidade, clique calibrado em todos, e o ponto de luta
+  igual ao último waypoint do trecho.
+- **O `via` (clique calibrado) é RESERVA, nunca via principal.** Quem anda é o
+  motor de navegação, que calcula a partir da posição ATUAL e sabe destravar. Um
+  clique fixo foi calibrado numa posição e, usado de outra, aponta para o lugar
+  errado. Ver `core/rota.py`.
+- **A área interna da HH NÃO está medida** e vale o marcador
+  `AREA_INTERNA_NAO_MEDIDA`. Quem depender de área tem de tratar a ausência;
+  preencher com palpite reprova em `test_a_area_interna_continua_marcada_como_nao_medida`.
+- **O destino do Fay é `West Suburb of Stone City`, e ele SÓ APARECE ROLANDO a
+  lista.** A rolagem é um PASSO conferido pelo aparecimento do link — nunca um
+  número fixo de cliques na seta. Clique cego na seta é o vício do bot Lua.
+- **Não se clica de fora do ponto de conversa.** O painel de arredores caminha
+  até PERTO da `Mutual Quest Woman` (-358,-289); a conversa é em (-343,-289). É o
+  mesmo defeito já medido na BC em 25/08/2026, quando o clique a 2 passos pegou o
+  White Eagle.
+- **A cave PRECISA de reset** (regra do jogo): sem desfazer e refazer o time os
+  bosses não renascem. Dois modos: **HH solo** (igual à BC — reset aceita, o farm
+  entra, o time é desfeito) e **HH + Fada** (as duas entram, a Fada acompanha e
+  cura, e o desfaz-refaz acontece FORA, depois de sair).
+- **A Fada continua sendo conta do ecossistema APP** e é coordenada pelo
+  `mural`. Ela não passa a importar de `hh/`.
+- **O vendedor é o `Roaming Apothecary`, fora da cave** — a venda da BC com outro
+  NPC. Isso é dado de rota, não módulo de venda novo.
+
+### Promoções que a HH forçou — dependência cruzada
+
+Mexer nestes mexe nos DOIS ecossistemas:
+
+| módulo | veio de | o que NÃO subiu |
+|---|---|---|
+| `core/rota.py` *(feito)* | `bc/mapa_bc.py` | as rotas em si, o reconhecimento de lugar, a retomada |
+| `core/combate.py` *(pendente)* | `bc/combat.py` | as fases, a trava do Cemetery Guard, o Package Courage |
+| `core/navegacao.py` *(pendente)* | `bc/navigation.py` | as rotas, as áreas apertadas, os textos de busca |
+| `core/ui_do_jogo.py` *(pendente)* | `bc/ui_service.py` | quais NPCs, quais links, quais coordenadas |
+
 ## Estado atual relevante — as REGRAS
 
 Cada item é o que **não pode ser violado**. O detalhe de cada área mora em

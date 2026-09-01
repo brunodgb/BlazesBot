@@ -28,6 +28,7 @@ medição. Regra sem porquê apodrece; porquê aqui dentro faz o arquivo voltar 
 | **`docs/decisoes/fada.md`** | **a Fada: a conta que cura o time em vez de atacar** |
 | `docs/decisoes/ferramentas-temporarias.md` | Testar Venda, Amostrar Cliques, link |
 | **`docs/decisoes/memoria-primeiro.md`** | **o princípio: memória > imagem; o que ainda decide por imagem e como migrar** |
+| **`docs/decisoes/hh.md`** | **ecossistema HH (Black Wind Camp Dungeon): a engenharia reversa do bot Lua, o que foi reprovado, a rota de chegada, o reset com Fada** |
 | `docs/decisoes/transplante-ghostbot.md` | o que veio do GhostBot, rebase +0x60 |
 | `docs/decisoes/stuttering-mouse.md` | corrida do mouse shield / stuttering |
 | **`docs/TEMPOS.md`** *(gerado)* | **toda espera do bot: atual × original, natureza, arquivo, linha, função** |
