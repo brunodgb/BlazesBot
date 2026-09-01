@@ -661,3 +661,77 @@ def test_fora_do_painel_avisa_UMA_vez_e_espera():
     assert "Aliado" in f._avisei_fora_do_painel
     assert esperas, "não esperou entre as tentativas"
     assert jogo.cliques == []
+
+# ===========================================================================
+# O QUE A REVISÃO DO CODEX PEGOU -- 01/09/2026
+# ===========================================================================
+
+def test_a_confirmacao_espera_a_memoria_virar():
+    """O alvo ANTERIOR ainda aparece logo depois do clique (36-123 ms medidos).
+
+    A versão anterior condenava no primeiro olhar em que o id fosse diferente e
+    não-zero -- e nesse instante ele SEMPRE é o anterior. Ou seja, ela reprovava
+    toda cura em que já houvesse um alvo antes, que é o caso comum.
+    """
+    jogo = _Jogo(alvo=555, vidas=[{"nome": "Aliado", "hp": 300}])
+    mural.publicar_id("aliado", 777)
+    mural.publicar_estado("aliado", max_hp=1000)
+    mural.pedir_cura("aliado", 25.0)
+    f = _fada(jogo, membros=("fada", "aliado"))
+
+    # O clique pega, mas a memória só mostra o alvo novo na segunda leitura.
+    leituras = {"n": 0}
+
+    def id_atrasado():
+        leituras["n"] += 1
+        return 555 if leituras["n"] <= 1 else 777
+    f._id_do_alvo = id_atrasado
+
+    assert f._clique_saiu_errado("aliado", "Aliado") is False
+
+
+def test_quem_nao_esta_no_painel_nao_trava_a_fila():
+    """Parar no primeiro deixaria TODOS os de trás sem cura -- e como a Fada
+    continua batendo, eles esperariam para sempre."""
+    jogo = _Jogo(companheiros=["Outro"],          # "Aliado" não está no painel
+                 vidas=[{"nome": "Outro", "hp": 300}])
+    jogo.id_por_slot = {0: 888}
+    jogo.cura_sobe = 1
+    jogo.login_por_slot = {0: "outro"}
+    mural.publicar_id("outro", 888)
+    mural.publicar_estado("outro", max_hp=1000)
+    mural.pedir_cura("aliado", 25.0)              # chegou primeiro, mas não dá
+    mural.pedir_cura("outro", 25.0)
+    f = _fada(jogo, membros=("fada", "aliado", "outro"))
+
+    f._uma_volta()
+
+    assert f.curas == 1, "o segundo da fila ficou sem cura por causa do primeiro"
+
+
+def test_sair_da_fila_zera_a_contagem_de_tentativas():
+    """Um pedido cancelado e refeito não pode herdar a contagem do anterior."""
+    jogo = _Jogo(alvo=555)
+    jogo.id_por_slot = {0: None}
+    mural.publicar_id("aliado", 777)
+    mural.pedir_cura("aliado", 25.0)
+    f = _fada(jogo, membros=("fada", "aliado"))
+
+    f._uma_volta()
+    assert f._tentativas.get("aliado") == 1
+
+    mural.cancelar_pedido("aliado")
+    f._uma_volta()                                # fila vazia: limpa
+    assert "aliado" not in f._tentativas
+
+
+def test_o_aviso_de_fora_do_painel_nao_cresce_para_sempre():
+    jogo = _Jogo(companheiros=["Outro"])
+    mural.pedir_cura("aliado", 25.0)
+    f = _fada(jogo, membros=("fada", "aliado"))
+    f._uma_volta()
+    assert f._avisei_fora_do_painel == {"Aliado"}
+
+    mural.cancelar_pedido("aliado")
+    f._uma_volta()
+    assert f._avisei_fora_do_painel == set()

@@ -241,6 +241,7 @@ class FadaDoTime:
 
         fila = self.mural.fila_de_cura(self._membros_do_time())
         fila = [x for x in fila if x != self.meu_login]
+        self._esquecer_quem_saiu_da_fila(fila)
 
         # A AUTO-CURA VEM ANTES DA FILA. Fada morta não cura ninguém, e ela é a
         # única do time que não tem quem a cure.
@@ -254,7 +255,20 @@ class FadaDoTime:
         if not self._tenho_mana_para_curar():
             return self._descansar(por_falta_de_mana=True)
 
-        return self._atender(fila[0])
+        # PERCORRE A FILA, não trava no primeiro.
+        #
+        # Quem está na frente pode não dar para atender agora (fora do painel,
+        # ainda entrando no time). Parar nele deixaria TODOS os de trás sem
+        # cura -- e como a Fada continua batendo, eles esperariam para sempre
+        # achando que há Fada disponível. A ordem de chegada é respeitada: só
+        # se pula quem não dá para atender NESTE instante.
+        for login_vitima in fila:
+            atendido, seguir = self._atender(login_vitima)
+            if not seguir:
+                return False
+            if atendido:
+                return True
+        return True
 
     def _me_defender(self) -> bool:
         """Em batalha: seleciona a si mesma e cura até sair. `False` = parar.
@@ -355,14 +369,32 @@ class FadaDoTime:
 
     # -- atender a fila ----------------------------------------------------
 
-    def _atender(self, login_vitima: str) -> bool:
-        """Cura quem está na frente da fila. `False` = é para parar."""
+    def _esquecer_quem_saiu_da_fila(self, fila: list[str]) -> None:
+        """Limpa o estado de quem não está mais esperando.
+
+        Sem isto, duas coisas apodrecem: a contagem de tentativas de um pedido
+        antigo condena o pedido NOVO da mesma conta na primeira falha, e os dois
+        dicionários crescem para sempre com contas que nunca voltam.
+        """
+        na_fila = set(fila)
+        for login in [x for x in self._tentativas if x not in na_fila]:
+            self._tentativas.pop(login, None)
+        nicks = {self._nick_de(x) for x in na_fila}
+        self._avisei_fora_do_painel &= nicks
+
+    def _atender(self, login_vitima: str) -> tuple[bool, bool]:
+        """Tenta curar esta vítima. Devolve `(atendida, continuar)`.
+
+        `atendida=False` com `continuar=True` significa "não deu para esta
+        agora, tente a próxima da fila" -- e é o que impede um pedido que não
+        dá para atender de segurar todos os outros.
+        """
         nick = self._nick_de(login_vitima)
         if not nick:
             self.log.warning("FADA: %s não tem nick conhecido — não sei quem "
                              "clicar. Tirando da fila.", login_vitima)
             self.mural.cancelar_pedido(login_vitima)
-            return True
+            return False, True
 
         slot = self._slot_do_nick(nick)
         if slot is None:
@@ -377,12 +409,12 @@ class FadaDoTime:
                 self._avisei_fora_do_painel.add(nick)
                 self.log.info("FADA: %s não está no meu painel de time — "
                               "esperando ele aparecer.", nick)
-            return self._dormir(ESPERA_DEPOIS_DE_ERRAR)
+            return False, self._dormir(ESPERA_DEPOIS_DE_ERRAR)
         self._avisei_fora_do_painel.discard(nick)
 
         self._sair_do_descanso()
         if not self._clicar_no_retrato(slot):
-            return False
+            return False, False
 
         if self._clique_saiu_errado(login_vitima, nick):
             # ID QUE NÃO BATE NÃO CURA. O clique pode não ter pego, e o alvo
@@ -398,15 +430,15 @@ class FadaDoTime:
                 self.log.warning(
                     "FADA: %s não selecionou em %d tentativas — tirando da fila. "
                     "Ele se vira com poção.", nick, tentativas)
-                return True
+                return False, True
             self.log.warning(
                 "FADA: cliquei no slot %d esperando %s e caí em OUTRO alvo "
                 "(tentativa %d de %d). NÃO vou curar.",
                 slot + 1, nick, tentativas, MAXIMO_DE_TENTATIVAS_POR_VITIMA)
-            return self._dormir(ESPERA_DEPOIS_DE_ERRAR)
+            return False, self._dormir(ESPERA_DEPOIS_DE_ERRAR)
 
         self._tentativas.pop(login_vitima, None)
-        return self._curar(login_vitima, nick)
+        return True, self._curar(login_vitima, nick)
 
     def _slot_do_nick(self, nick: str) -> int | None:
         """Em que retrato do painel este nick está. `None` = não está lá.
@@ -455,16 +487,26 @@ class FadaDoTime:
         esperado = self.mural.id_publicado(login_vitima)
         if not esperado:
             return False                    # sem rede: o slot basta
+        # ESPERA O TETO INTEIRO ANTES DE CONDENAR.
+        #
+        # A versão anterior devolvia "errado" no PRIMEIRO olhar em que o id
+        # fosse diferente e não-zero -- e logo depois do clique ele SEMPRE é: a
+        # memória leva de 36 a 123 ms (medido) para mostrar o alvo novo, então o
+        # que se lê nesse instante é o alvo ANTERIOR. Ou seja, a conferência
+        # reprovava toda cura em que houvesse um alvo antes, que é o caso comum.
+        #
+        # Só é "outro alvo" o que continuar diferente depois de o teto passar.
         limite = time.monotonic() + TETO_PARA_O_ALVO_VIRAR
         while time.monotonic() < limite:
-            atual = self._id_do_alvo()
-            if atual == esperado:
+            if self._id_do_alvo() == esperado:
                 return False                # bateu
-            if atual:
-                # Já há alvo e é OUTRO: o clique pegou quem não devia.
-                return True
             if not self._dormir(PASSO_DA_CONFERENCIA_DO_ALVO):
                 return False
+        atual = self._id_do_alvo()
+        if atual and atual != esperado:
+            return True                     # deu tempo e ficou em outro
+        # Alvo zerado ou ilegível: não é prova de erro, e tratar "não sei" como
+        # erro foi o que travou tudo da primeira vez.
         # Nada foi lido a tempo. Não é prova de erro -- e tratar "não sei" como
         # erro é justamente o que travava tudo.
         self.log.debug("FADA: não li o alvo a tempo ao clicar em %s; sigo pelo "
