@@ -15,9 +15,11 @@ from __future__ import annotations
 import logging
 import math
 import re
+import struct
 import time
 
 import pymem
+import pymem.memory
 
 from .rebase import SeletorDeEndereco
 
@@ -324,6 +326,32 @@ LIMITE_DE_ENTIDADES = 512
 ADDR_ENTITY_SCAN_BASE = 0x0107C6B0
 
 # ===========================================================================
+# REGIÕES QUENTES -- a rota que fecha os 38% que o array de entidades perde
+# ===========================================================================
+#
+# INTERRUPTOR, não comentário: desligar volta o comportamento exato de antes
+# (só o array), e `tests/test_regioes_quentes.py` força este valor ligado.
+#
+# MEDIDO em 01/09/2026: o array acerta 62%; com esta rota atrás dele, 2.481 de
+# 2.481 leituras resolveram, com nome, HP e id conferindo em todas. Porquê e
+# alternativas reprovadas em `docs/decisoes/combate.md`.
+USAR_REGIOES_QUENTES = True
+
+# Tamanho do bloco lido por vez na varredura das regiões quentes. 1 MB é o
+# ponto onde a leitura deixa de ser dominada pelo custo por chamada sem passar
+# a alocar buffer grande à toa -- as regiões medidas têm 224 a 508 KB, então
+# quase sempre cabe uma região por bloco.
+PEDACO_DA_VARREDURA = 1024 * 1024
+
+# Constantes do `VirtualQueryEx`, para separar região legível de armadilha.
+# `MEM_PRIVATE` exclui a imagem e os arquivos mapeados: entidade mora no heap
+# privado, e varrer o resto seria pagar por onde ela nunca está.
+MEM_COMMIT = 0x1000
+MEM_PRIVATE = 0x20000
+PAGE_NOACCESS = 0x01
+PAGE_GUARD = 0x100
+
+# ===========================================================================
 # O ALVO: O ID É CHAVE ESTRANGEIRA PARA A TABELA DE ENTIDADES
 # ===========================================================================
 #
@@ -457,6 +485,12 @@ class Memory:
         # O endereço da entidade do alvo, guardado entre leituras. Ver
         # `alvo_atual` -- o SLOT do array muda durante a luta, o endereço não.
         self._obj_do_alvo: int | None = None
+        # Regiões de heap onde entidade já apareceu, e o mapa de regiões do
+        # processo. Os dois são POR PROCESSO: relogin troca o PID, e o `Memory`
+        # antigo morre com o cache dentro -- é justamente o que se quer.
+        self._regioes_quentes: dict[tuple[int, int], int] = {}
+        self._regioes_cache: list[tuple[int, int]] | None = None
+        self._semeou = False
         self.pm = pymem.Pymem()
         try:
             self.pm.open_process_from_id(pid)
@@ -1014,7 +1048,49 @@ class Memory:
         return self.read_int(ADDR_TARGET_ID)
 
     def _procurar_entidade(self, alvo_id: int) -> int | None:
-        """Varre o array de entidades atrás da que tem este id em `+0x8`."""
+        """A entidade que tem este id em `+0x8`. Duas rotas, nesta ordem.
+
+        =================================================================
+        POR QUE O ARRAY NÃO BASTA -- E ISSO É MEDIÇÃO
+        =================================================================
+
+        `ADDR_ENTITY_SCAN_BASE` acerta **62%** das vezes (600 amostras por conta,
+        01/09/2026). O resto NÃO é mob morto: uma varredura de força bruta dos
+        912 MB de heap achou o objeto VIVO, com nome certo e HP caindo, em
+        **6 de 6** casos em que o array falhou.
+
+        E a varredura de quem aponta para um objeto que o array perde deu
+        `0 na IMAGEM, 24 no heap`: **nenhuma referência estática**. Logo o array
+        não é o container de entidades, é uma tabela TRANSITÓRIA -- alargar de
+        512 para mais slots não resolve, porque o objeto não está em endereço
+        estático nenhum quando o array falha.
+
+        O desmonte de `client.exe+411A70` / `+4110A0` confirma pelo outro lado:
+        o container do jogo é uma ÁRVORE rubro-negra (`_Left/_Parent/_Right`,
+        chave em `+0x0C`, `_Isnil` em `+0x15`), e não um array. Mas a árvore
+        daquele lookup NÃO guarda o ponteiro da entidade em `nó+0x10` -- 23
+        referências ao objeto do alvo, zero em nó de árvore -- então descer por
+        ela ainda não é caminho.
+
+        =================================================================
+        ROTA 2: AS REGIÕES QUENTES
+        =================================================================
+
+        O que resolveu foi observar ONDE as entidades moram. Elas ficam em
+        POUCAS regiões do heap -- medido: 3 regiões, 960 KB de 914 MB (**0,1%**).
+        Varrer só essas custa **0,25 ms**, contra 3,2 ms do array e 741 ms da
+        varredura total.
+
+        As regiões são aprendidas: toda entidade encontrada marca a sua. E a
+        unidade é REGIÃO DO `VirtualQueryEx`, não intervalo `min..max` -- a
+        primeira tentativa usou intervalo e degradou para 6,6 ms quando dois
+        grupos distantes entraram nele (as entidades NÃO ficam num pool
+        contíguo: foram vistas em `0x2C8Axxxx`, `0x315Axxxx` e `0x3184Bxxxx`).
+
+        RESULTADO: **2.481 de 2.481 leituras** (100%), nome e HP em todas, id
+        conferindo em todas, zero divergência. Detalhe em
+        `Teste-Ponteiros/RESULTADOS.md` seção 13.
+        """
         vistos: set[int] = set()
         for i in range(LIMITE_DE_ENTIDADES):
             obj = self.read_uint(ADDR_ENTITY_SCAN_BASE + i * 4)
@@ -1022,7 +1098,135 @@ class Memory:
                 continue
             vistos.add(obj)
             if self.read_int(obj + OFF_ENTITY_ID) == alvo_id:
+                self._marcar_regiao_quente(obj)
                 return obj
+        if not USAR_REGIOES_QUENTES:
+            return None
+        # Semeia na PRIMEIRA falha do array, não no construtor: quem nunca
+        # perde uma entidade não paga nada por esta rota.
+        if not self._semeou:
+            self._semeou = True
+            self.semear_regioes_quentes()
+        return self._procurar_nas_regioes_quentes(alvo_id)
+
+    # -- regiões quentes: a rota que fecha os 38% que o array perde --------
+
+    def _regioes_do_heap(self) -> list[tuple[int, int]]:
+        """As regiões de heap comprometidas, do `VirtualQueryEx`. Uma vez só.
+
+        Não é cache de conveniência: enumerar 900 MB de regiões custa dezenas de
+        ms, e o mapa de regiões de um processo em regime não muda a ponto de
+        importar aqui. Quem precisa de frescor é a CONFERÊNCIA do id, e essa
+        roda a cada leitura.
+        """
+        if self._regioes_cache is not None:
+            return self._regioes_cache
+        regioes: list[tuple[int, int]] = []
+        addr = 0
+        try:
+            while addr < 0x7FFF0000:
+                mbi = pymem.memory.virtual_query(self.pm.process_handle, addr)
+                if mbi is None:
+                    break
+                base = int(mbi.BaseAddress)
+                tamanho = int(mbi.RegionSize)
+                if tamanho <= 0:
+                    break
+                comprometida = (mbi.State == MEM_COMMIT
+                                and not (mbi.Protect & PAGE_NOACCESS)
+                                and not (mbi.Protect & PAGE_GUARD)
+                                and mbi.Type == MEM_PRIVATE)
+                if comprometida:
+                    regioes.append((base, base + tamanho))
+                addr = base + tamanho
+        except Exception:
+            # Enumeração é otimização, nunca requisito: sem ela a rota 2 apenas
+            # não responde, e o bot segue com o array.
+            pass
+        self._regioes_cache = regioes
+        return regioes
+
+    def _marcar_regiao_quente(self, obj: int) -> None:
+        """Aprende que entidade mora na região deste endereço."""
+        if not USAR_REGIOES_QUENTES:
+            return
+        for ini, fim in self._regioes_do_heap():
+            if ini <= obj < fim:
+                self._regioes_quentes[(ini, fim)] = (
+                    self._regioes_quentes.get((ini, fim), 0) + 1)
+                return
+
+    def semear_regioes_quentes(self) -> int:
+        """Aprende as regiões a partir de TODAS as entidades do array.
+
+        Resolve o ARRANQUE A FRIO. Medido: numa bateria de 700 amostras, o
+        ÚNICO caso em que nenhuma rota barata respondeu foi a amostra 0 -- sem
+        região aprendida, a rota 2 não tem onde varrer, e só a força bruta
+        (741 ms) respondeu. Semeando, a bateria seguinte fechou 492/492 sem
+        nunca precisar da força bruta.
+
+        Não espera pelo ALVO: qualquer entidade do array serve para aprender a
+        região, e o array quase sempre tem várias (medido: 24 em 5,16 ms).
+        """
+        if not USAR_REGIOES_QUENTES:
+            return 0
+        achadas = 0
+        vistos: set[int] = set()
+        for i in range(LIMITE_DE_ENTIDADES):
+            obj = self.read_uint(ADDR_ENTITY_SCAN_BASE + i * 4)
+            if obj is None or obj < 0x10000 or obj % 4 or obj in vistos:
+                continue
+            vistos.add(obj)
+            ident = self.read_int(obj + OFF_ENTITY_ID)
+            if ident is None or ident == 0:
+                continue
+            nivel = self.read_byte(obj + OFF_LEVEL)
+            if nivel is None or not (1 <= nivel <= 250):
+                continue
+            self._marcar_regiao_quente(obj)
+            achadas += 1
+        return achadas
+
+    def _procurar_nas_regioes_quentes(self, alvo_id: int) -> int | None:
+        """Varre só as regiões onde entidade já apareceu, as mais povoadas antes.
+
+        Entidade nova quase sempre nasce onde as outras já estão, e é por isso
+        que a ordem é por povoamento.
+        """
+        if not self._regioes_quentes:
+            return None
+        agulha = struct.pack("<i", alvo_id)
+        ordem = sorted(self._regioes_quentes.items(), key=lambda kv: -kv[1])
+        for (ini, fim), _quantas in ordem:
+            pos = ini
+            while pos < fim:
+                tamanho = min(PEDACO_DA_VARREDURA, fim - pos)
+                try:
+                    dados = self.pm.read_bytes(pos, tamanho)
+                except Exception:
+                    pos += tamanho
+                    continue
+                de = 0
+                while True:
+                    i = dados.find(agulha, de)
+                    if i < 0:
+                        break
+                    de = i + 1
+                    if i % 4 or i < OFF_ENTITY_ID:
+                        continue
+                    obj = pos + i - OFF_ENTITY_ID
+                    # A conferência é o que impede devolver lixo: o id tem de
+                    # bater de novo na leitura direta, e o nível tem de ser de
+                    # nível.
+                    if self.read_int(obj + OFF_ENTITY_ID) != alvo_id:
+                        continue
+                    nivel = self.read_byte(obj + OFF_LEVEL)
+                    if nivel is None or not (1 <= nivel <= 250):
+                        continue
+                    return obj
+                # sobreposição: o id não pode ser cortado na fronteira do pedaço
+                pos += (tamanho - OFF_ENTITY_ID - 4
+                        if tamanho == PEDACO_DA_VARREDURA else tamanho)
         return None
 
     def alvo_atual(self) -> dict | None:

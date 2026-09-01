@@ -1520,3 +1520,172 @@ teria mostrado o defeito no primeiro log.
 
 Bancada, logs e matriz completa: `Teste-Ponteiros/RESULTADOS.md`, seções 11.3,
 12.5 e 13.6.
+
+## O array de entidades perde 38% dos alvos, e a saída são as REGIÕES QUENTES (01/09/2026)
+
+### O que estava errado, medido
+
+`ADDR_ENTITY_SCAN_BASE` (o array de 512 slots) acerta **62%** das leituras --
+600 amostras por conta, com o bot rodando. Isso NÃO era "mob morto, id velho",
+que foi a primeira explicação e estava errada.
+
+Uma varredura de força bruta dos 912 MB de heap, procurando objeto com
+`+0x8 == TARGET_ID` e campos de entidade plausíveis, achou o objeto **VIVO** em
+**6 de 6** casos em que o array falhou:
+
+```
+[caso 1] O OBJETO EXISTE -- obj=0x31870DB0 nv=63 hp=11/100 'Burning Deadwood'
+[caso 3] O OBJETO EXISTE -- obj=0x31870DB0 nv=63 hp=0/100  'Burning Deadwood'
+```
+
+Nome certo, HP legível caindo de 11 para 0. Não é desalocação: **é rota
+faltando**, e portanto 100% é alcançável.
+
+### Por que alargar o array não resolve
+
+Para um objeto que o array perde, a varredura de quem aponta para ele deu:
+
+```
+24 referencia(s): 0 na IMAGEM, 24 no heap
+REFERENCIAS NA IMAGEM (estaticos): (nenhuma)
+```
+
+**Zero referências estáticas.** O array não é o container de entidades, é uma
+tabela **transitória** -- a suspeita que já estava escrita aqui (*"a seleção
+visual é guardada em MÚLTIPLOS endereços estáticos"*) se confirmou. Passar de
+512 para 4096 slots não acha o que não está em endereço estático nenhum.
+
+### O que o código do jogo diz
+
+`client.exe+411A70` desmontado (`capstone`, lendo a seção de código do processo):
+
+```asm
+lea  esi, [ecx + 0x10]     ; o CONTAINER e this+0x10
+call 0x8110a0              ; a busca
+mov  edi, [eax]            ; \ retorno = PAR de iteradores
+mov  ebx, [eax+4]          ; /
+mov  ebp, [esi+4]          ; end() do container
+cmp  ebx, ebp              ; == end() -> nao achou
+```
+
+E `client.exe+4110A0` é descida de **árvore rubro-negra do MSVC**:
+
+```asm
+mov edx, [ecx+4]              ; container+0x04 = _Myhead
+mov eax, [edx+4]              ; _Myhead+0x04   = RAIZ
+cmp byte ptr [eax+0x15], 0    ; +0x15 = _Isnil
+  cmp [eax+0xc], esi          ; +0x0C = CHAVE
+  mov eax, [eax+8]            ; +0x08 = _Right
+  mov eax, [eax]              ; +0x00 = _Left
+```
+
+Layout do nó, lido do próprio jogo: `_Left/+0x00`, `_Parent/+0x04`,
+`_Right/+0x08`, chave em `+0x0C`, valor em `+0x10`, `_Color`/`_Isnil` em
+`+0x14`/`+0x15`.
+
+**Confirma que a estrutura é árvore, não array** -- e portanto que uma varredura
+linear de array não pode dar 100% por construção.
+
+### A árvore daquele lookup NÃO serve (hipótese reprovada)
+
+Descer por ela seria O(log n) e o caminho ideal. Mas **não é ela**: varrendo o
+heap por quem aponta para o objeto do alvo saíram 23 referências -- 11 com cara
+de slot de array, 12 campos, e **ZERO nós de árvore**. Três endereços tinham o
+`TARGET_ID` em `-0x4` do ponteiro, mas `_Color`/`_Isnil` traziam texto (`88`,
+`70` = `'X'`, `'F'`). Teste de passo fixo: os pares válidos caem em `k`
+irregulares (−307, −285, −242, −185, −143, −37), e um dos sítios estava dentro
+de um buffer XML da UI (`<Item type="TEXT" text="0/…`).
+
+O mapa de `client.exe+411A70` indexa outra coisa. **O que ele indexa segue
+desconhecido.**
+
+### A rota que resolveu
+
+Observar ONDE as entidades moram. Elas ficam em **POUCAS regiões do heap**:
+
+```
+3 regioes, 960 KB no total   (de 914 MB = 0,1% do heap)
+  0x3184B000..0x31884000   228 KB   508 entidades
+  0x2C8A8000..0x2C927000   508 KB     7 entidades
+  0x315AC000..0x315E4000   224 KB     1 entidade
+```
+
+Varrer só essas custa **0,25 ms**, contra 3,2 ms do array e 741 ms da varredura
+total. Resultado: **2.481 de 2.481** leituras (100%), nome e HP em todas, id
+conferindo em todas, zero divergência.
+
+### A UNIDADE é região, não intervalo -- e isso foi medido do jeito difícil
+
+A primeira versão modelou a localidade como **uma janela contígua** `min..max`
+dos endereços vistos. Funcionou enquanto as entidades estavam juntas. Então a
+semeadura achou 24 entidades em `0x2C4Cxxxx` com o alvo em `0x3186xxxx`: a
+janela esticou para cobrir as duas, bateu no teto de 8 MB, e a rota **piorou de
+0,55 para 6,6 ms** -- ficou mais lenta que o array que vinha substituir.
+
+A correção não foi calibrar o teto e a margem: foi trocar a **unidade** para
+REGIÃO do `VirtualQueryEx`. Naturalmente descontínua, não estica sobre espaço
+vazio, e os três parâmetros da v1 (margem, teto, recentragem) desapareceram
+junto com a abstração errada.
+
+**Fato corrigido:** eu havia escrito que as entidades ficavam "num pool contíguo
+de ~150 KB". Falso -- ficam em pelo menos **três** regiões espalhadas por 12 MB
+de espaço de endereço.
+
+### O arranque a frio, e a semeadura
+
+Numa bateria de 700 amostras o **único** caso em que nenhuma rota barata
+respondeu foi a **amostra 0**: sem região aprendida, não há onde varrer, e só a
+força bruta (741 ms) respondeu.
+
+Não era defeito da rota -- era arranque a frio. `semear_regioes_quentes()` varre
+o array **uma vez** e aprende de **todas** as entidades, não só do alvo: 24
+entidades e 3 regiões em **5,16 ms**. A semeadura é PREGUIÇOSA (roda na primeira
+falha do array, não no construtor), então quem nunca perde uma entidade não paga
+nada por esta rota.
+
+### O que impede devolver lixo
+
+A varredura acha o id em qualquer lugar do heap onde aqueles 4 bytes apareçam.
+Duas conferências separam entidade de coincidência: o id tem de **bater de novo
+numa leitura direta** de `+0x8`, e o **nível** tem de estar em 1..250. Sem
+isso, um inteiro casando por acaso viraria "alvo com HP inventado".
+
+### O LIMITE CONHECIDO, e por que ele fica
+
+A rota só varre onde entidade **já apareceu**. Alvo numa região virgem devolve
+`None` -- e `None` é a resposta certa: *"não sei"* é melhor que varrer 912 MB
+dentro do laço de combate. Não apareceu nas 2.481 leituras, porque a semeadura
+aprende de todas as entidades do array de uma vez. Se aparecer, o sintoma é
+`alvo_atual() -> None` com o mob visivelmente vivo, e a saída é **semear de
+novo**, não alargar a varredura. Travado em
+`tests/test_regioes_quentes.py::test_regiao_onde_entidade_nunca_apareceu_NAO_e_varrida`.
+
+### Relogin
+
+O cache de regiões é **por processo**, e morre com o `Memory` -- que é
+exatamente o desejado, porque relogin troca o PID e endereço de heap do processo
+morto não vale nada no novo. Prova indireta medida: as entidades da `BlazesAPP1`
+ficaram em `0x3184Bxxxx` e as da `WizzOfBlazes5` em `0x06E1xxxx`, faixas sem
+intersecção.
+
+Teste de reanexo a frio (duas vidas independentes no mesmo processo): as duas
+resolveram na **primeira tentativa**, aprenderam as **mesmas 3 regiões**, e o
+custo de voltar do zero foi **anexo 24,8 ms + semeadura 5,23 ms**. Uma troca de
+PID real não foi observada em 14 min de vigia -- isso não reprova nada, só não
+houve o evento.
+
+### Validação em campo, com o patch dentro
+
+`Memory.alvo_atual()` da produção, 200 amostras por conta:
+
+| | BlazesAPP1 | WizzOfBlazes5 |
+|---|---|---|
+| `alvo_atual()` respondeu | **200/200** | **191/191** |
+| com nome | **100%** | **100%** |
+| com HP | **100%** | **100%** |
+| nomes corrompidos | **nenhum** | **nenhum** |
+
+`'Odd Shaman'` sai limpo -- antes saía `'o1Shaman'`. Custo médio de
+`alvo_atual()`: **0,270 ms**; pior caso 24,97 ms (é a semeadura, uma vez).
+
+Bancada, scripts e logs: `Teste-Ponteiros/RESULTADOS.md` seções 12 e 13.
