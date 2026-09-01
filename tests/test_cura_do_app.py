@@ -442,24 +442,72 @@ def test_nenhuma_espera_cega_no_modulo():
 
 def test_a_cura_e_chamada_UMA_VEZ_por_volta_e_antes_do_lixo():
     """*"Ao terminar a macro você vai verificar a vida."* E antes da limpeza da
-    bolsa: com 30% de vida, apagar lixo primeiro é tempo que ele não tem."""
+    bolsa: com 30% de vida, apagar lixo primeiro é tempo que ele não tem.
+
+    A ORDEM ATRAVESSOU A FRONTEIRA DO LAÇO, e continua sendo a mesma. A limpeza
+    da bolsa saiu do `rodar` e foi para o começo da volta, então a sequência de
+    relógio virou:
+
+        uma_volta [ limpar a bolsa -> adquirir alvo -> macro ]
+        cura.cuidar()          <- "ao terminar a macro"
+        fada.cuidar()
+        uma_volta [ limpar a bolsa -> ... ]
+
+    A cura continua caindo IMEDIATAMENTE ANTES da limpeza seguinte -- só que
+    agora por ser a última coisa da volta, e não por ordem dentro do `rodar`.
+    Este teste guarda os dois lados dessa costura.
+    """
     import ast
     import inspect
     import textwrap
 
     from blazesbot.bot.app.executor import ExecutorDeMacro
 
-    fonte = textwrap.dedent(inspect.getsource(ExecutorDeMacro.rodar))
-    arvore = ast.parse(fonte)
+    def _arvore(metodo):
+        return ast.parse(textwrap.dedent(inspect.getsource(metodo)))
 
-    linha_da_cura = [n.lineno for n in ast.walk(arvore)
-                     if isinstance(n, ast.Attribute) and n.attr == "cuidar"]
-    linha_do_lixo = [n.lineno for n in ast.walk(arvore)
-                     if isinstance(n, ast.Attribute)
-                     and n.attr == "_limpar_a_bolsa_se_for_a_hora"]
+    rodar = _arvore(ExecutorDeMacro.rodar)
+
+    def _linhas_de(arvore, dono: str, metodo: str = "cuidar") -> list[int]:
+        """As chamadas `self.<dono>.<metodo>()`.
+
+        POR DONO, e não só por nome do método: `self.fada.cuidar()` também se
+        chama `cuidar`, e contar os dois juntos acusava "a cura é chamada duas
+        vezes" quando a Fada entrou. Este teste é sobre a CURA PESSOAL.
+        """
+        return [n.lineno for n in ast.walk(arvore)
+                if isinstance(n, ast.Attribute) and n.attr == metodo
+                and isinstance(n.value, ast.Attribute) and n.value.attr == dono]
+
+    linha_da_cura = _linhas_de(rodar, "cura")
+    linha_da_fada = _linhas_de(rodar, "fada")
+    linha_da_volta = [n.lineno for n in ast.walk(rodar)
+                      if isinstance(n, ast.Attribute) and n.attr == "uma_volta"]
 
     assert len(linha_da_cura) == 1, "a cura é chamada mais de uma vez por volta"
-    assert linha_da_cura[0] < linha_do_lixo[0], "o lixo vem antes da cura"
+    assert len(linha_da_fada) == 1, "a Fada é chamada mais de uma vez por volta"
+
+    # *"Ao TERMINAR a macro."* A cura vem depois da volta, nunca no meio dela.
+    assert linha_da_volta and linha_da_volta[0] < linha_da_cura[0], (
+        "a cura passou para ANTES da volta -- ela é a conferência do fim")
+    # Cura pessoal antes da Fada: quem está com 30% não fica esperando para
+    # atender os outros.
+    assert linha_da_cura[0] < linha_da_fada[0]
+
+    # A LIMPEZA MORA NA VOLTA, e no COMEÇO dela -- o que a mantém logo depois da
+    # cura da volta anterior, e fora do trecho entre pegar o alvo e bater nele.
+    volta = _arvore(ExecutorDeMacro._uma_volta_simples)
+    lixo = [n.lineno for n in ast.walk(volta) if isinstance(n, ast.Attribute)
+            and n.attr == "_limpar_a_bolsa_se_for_a_hora"]
+    alvo = [n.lineno for n in ast.walk(volta) if isinstance(n, ast.Attribute)
+            and n.attr == "_adquirir_alvo"]
+
+    assert len(lixo) == 1, "a limpeza da bolsa saiu do começo da volta"
+    assert alvo and lixo[0] < alvo[0], (
+        "a limpeza da bolsa caiu ENTRE pegar o alvo e bater nele")
+    assert not _linhas_de(rodar, "self", "_limpar_a_bolsa_se_for_a_hora"), (
+        "a limpeza voltou para o `rodar` -- se voltar, a ordem tem de ser "
+        "reconferida contra a cura")
 
 
 def test_a_cura_NAO_conta_como_volta():
