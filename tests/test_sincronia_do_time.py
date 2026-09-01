@@ -29,6 +29,8 @@ O QUE ESTES TESTES IMPEDEM DE VOLTAR
 """
 from __future__ import annotations
 
+from types import SimpleNamespace
+
 import pytest
 
 from blazesbot.bot import mural
@@ -99,6 +101,36 @@ class _ExecutorFalso:
     def _tab_simples(self) -> bool:
         self.tabs += 1
         return True
+
+    # -- o que o ALINHAMENTO passou a usar --------------------------------
+    #
+    # O alinhamento deixou de chamar `_tab_simples` e passou a mandar a tecla
+    # direto (`input.key`) e confirmar pela memória (`_esperar_o_alvo_trocar`).
+    # O motivo está no código: `_tab_simples` custa quase 2 s por TAB e
+    # estouraria o teto do alinhamento na primeira tentativa.
+    #
+    # O DUBLÊ DELEGA `input.key` PARA `_tab_simples` DE PROPÓSITO: ele continua
+    # sendo o único lugar onde este arquivo modela "um TAB aconteceu", então
+    # todo teste que troca `ex._tab_simples` para mover o alvo segue valendo
+    # sem alteração -- que é exatamente o que se quer de um dublê.
+
+    @property
+    def input(self):
+        return SimpleNamespace(key=lambda _tecla: self._tab_simples())
+
+    def _tecla_de_alvo(self) -> str:
+        return "TAB"
+
+    def _esperar_o_alvo_trocar(self, _id_antes: int | None) -> int | None:
+        """O id DEPOIS do TAB. `None` = a tecla não pegou.
+
+        Aqui a tecla sempre pega: quem decide se o alvo mudou é o
+        `_tab_simples` que o teste instalou.
+        """
+        return self.alvo or None
+
+    def _respiro_depois_do_tab(self) -> float:
+        return 0.0
 
     def _garantir_alvo(self, forcar: bool = False, urgente: bool = False) -> bool:
         self.garantiu += 1
