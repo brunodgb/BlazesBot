@@ -38,10 +38,22 @@ from .watchdog import kill_client
 # -- a tela específica do erro. Demora, fila e tela travada não somam aqui, e
 # cada uma delas tem seu próprio caminho.
 #
-# Cinco, e não mais: o contador nasce zerado a cada `LoginSequence` e o
-# `BadCredentials` encerra a conta na primeira vez que ele estoura, então cinco
-# aqui são cinco recusas NO TOTAL. Contar por ciclo de relogin multiplicaria isso
-# por cada tentativa e o servidor veria dezenas de senhas erradas da mesma conta.
+# Cinco, e não mais: o `BadCredentials` encerra a conta na primeira vez que ele
+# estoura. Contar por ciclo de relogin multiplicaria isso por cada tentativa e o
+# servidor veria dezenas de senhas erradas da mesma conta.
+#
+# O CONTADOR ZERA EM DOIS PONTOS, e o segundo é o que importa:
+#
+#   1. no `__init__` -- cada `LoginSequence` nasce com zero;
+#   2. quando o detector VÊ A LISTA DE SERVIDORES -- porque o servidor só a
+#      mostra depois de aceitar usuário e senha, e isso é prova de credencial
+#      correta. Ver o comentário longo no `SERVER_LIST` do laço principal.
+#
+# O ponto 2 nasceu de uma medição em 01/09/2026: numa sequência de 796 s com o
+# jogo no bug de "Conexão interrompida", a conta autenticou 85 vezes e recebeu 5
+# erros de credencial ESPORÁDICOS pelo caminho -- e foi desativada com a senha
+# certa. Sem o reset, "cinco recusas" virava "cinco erros somados ao longo de
+# horas", que é coisa diferente.
 MAX_CREDENTIAL_ERRORS = 5
 
 # NÃO EXISTE LIMITE DE TEMPO NA FILA.
@@ -1033,6 +1045,57 @@ class LoginSequence:
                 self.login_screen_since = 0.0
 
                 if det.screen is LoginScreen.SERVER_LIST:
+                    # E ZERA O CONTADOR DE ERRO DE CREDENCIAL.
+                    #
+                    # O servidor SÓ mostra a lista de servidores DEPOIS de
+                    # aceitar usuário e senha. Então chegar aqui é PROVA de que
+                    # as credenciais estão certas, e qualquer erro de credencial
+                    # contado antes disto era instabilidade, não recusa.
+                    #
+                    # ===============================================
+                    # O DEFEITO QUE ISTO CONSERTA, MEDIDO
+                    # ===============================================
+                    #
+                    # Medido em 01/09/2026, uma `LoginSequence` de 796 s na
+                    # conta `blazesofgamer`, com o jogo no bug de "Conexão
+                    # interrompida" que o usuário relatou durar semanas:
+                    #
+                    #     lista de servidores alcançada (= autenticou) ... 85
+                    #     conexão interrompida ........................... 85
+                    #     tela de erro de usuário/senha .................... 5
+                    #
+                    # E a ordem em que cada erro apareceu:
+                    #
+                    #      5 lista de servidores -> 1 erro de usuário/senha
+                    #     13 lista de servidores -> 1 erro de usuário/senha
+                    #     17 lista de servidores -> 1 erro de usuário/senha
+                    #     11 lista de servidores -> 1 erro de usuário/senha
+                    #     39 lista de servidores -> 1 erro de usuário/senha
+                    #
+                    # Cada erro veio DEPOIS de dezenas de autenticações
+                    # bem-sucedidas. A senha estava certa, e o bot concluiu
+                    # `BadCredentials` -- que em `supervisor.py` faz
+                    # `account.enabled = False` E GRAVA. A conta sai de rotação
+                    # com a senha correta, e só volta com intervenção manual.
+                    #
+                    # Antes deste reset o contador zerava só no `__init__`. Isso
+                    # é verdade e estava documentado, mas UMA sequência dura
+                    # horas e dezenas de ciclos de login: dentro dela o contador
+                    # nunca zerava, mesmo tendo autenticado 85 vezes.
+                    #
+                    # O LIMITE DE CINCO CONTINUA INTEIRO. Senha realmente errada
+                    # nunca alcança a lista de servidores, então nada zera e a
+                    # conta é desativada na quinta recusa, como antes -- que é o
+                    # comportamento certo, porque cada recusa real é uma
+                    # tentativa registrada no servidor.
+                    #
+                    # FORA DO `if` DA FASE, DE PROPÓSITO: `_do_credentials`
+                    # chuta `_set_phase(Phase.SERVER)` logo depois de clicar em
+                    # OK, sem prova nenhuma. Se o reset ficasse dentro do
+                    # `if self.phase is not Phase.SERVER`, ele seria pulado
+                    # exatamente nos ciclos em que o palpite otimista acertou a
+                    # fase -- ou seja, quase sempre.
+                    self.credential_errors = 0
                     if self.phase is not Phase.SERVER:
                         self._set_phase(Phase.SERVER)
                 elif det.screen is LoginScreen.CHAR_SELECT:

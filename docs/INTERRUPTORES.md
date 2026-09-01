@@ -348,20 +348,20 @@ ligar código não testado.
 | `PASSO_DA_SONDA` | `0.012` | [blazesbot/bot/instrumentar_clique.py:110](blazesbot/bot/instrumentar_clique.py#L110) | — | De quanto em quanto tempo a sonda fotografa o minimapa esperando o efeito. |
 | `TETO_DA_SONDA` | `1.2` | [blazesbot/bot/instrumentar_clique.py:113](blazesbot/bot/instrumentar_clique.py#L113) | — | Teto da espera pelo efeito. Passou disso, o clique é dado como PERDIDO. |
 | `WH_MOUSE_LL` | `14` | [blazesbot/bot/instrumentar_clique.py:127](blazesbot/bot/instrumentar_clique.py#L127) | supervisor.py, inputs.py, mouse_shield.py | O SENSOR — o mesmo WH_MOUSE_LL do shield, com o sinal trocado |
-| `ENTER_RETRY_SECONDS` | `10.0` | [blazesbot/bot/login.py:66](blazesbot/bot/login.py#L66) | — | Cadência de tentativa de entrar enquanto conectado. |
-| `ESPERA_CEGA_SEGUNDOS` | `90.0` | [blazesbot/bot/login.py:79](blazesbot/bot/login.py#L79) | — | Depois de esgotar as tentativas às cegas, o bot NÃO desiste -- ele espaça. |
-| `ESPERA_SERVIDOR_FORA` | `10.0` | [blazesbot/bot/login.py:95](blazesbot/bot/login.py#L95) | — | Espera depois de fechar "Acquiring server IP address." (servidores fora do ar). |
-| `ESPERA_SERVIDOR_FORA_MAX` | `60.0` | [blazesbot/bot/login.py:96](blazesbot/bot/login.py#L96) | — | — |
-| `FATIA_DA_ESPERA_DO_LOGIN` | `0.05` | [blazesbot/bot/login.py:127](blazesbot/bot/login.py#L127) | — | Fatia da espera do login. A espera é cumprida em pedaços para que Parar e |
-| `LOGIN_SCREEN_MAX_SECONDS` | `150.0` | [blazesbot/bot/login.py:104](blazesbot/bot/login.py#L104) | — | Tempo máximo parado na tela de usuário e senha antes de reabrir o cliente. |
-| `MAX_ANCHOR_DEVIATION` | `60` | [blazesbot/bot/login.py:84](blazesbot/bot/login.py#L84) | — | Divergência a partir da qual a âncora é considerada suspeita. É folgada de |
-| `MAX_BLIND_ENTER_ATTEMPTS` | `4` | [blazesbot/bot/login.py:72](blazesbot/bot/login.py#L72) | — | Quantas tentativas de "Enter Game" fazer sem conseguir confirmar a entrada. |
-| `MAX_CREDENTIAL_ERRORS` | `5` | [blazesbot/bot/login.py:45](blazesbot/bot/login.py#L45) | — | Recusas de usuário/senha antes de desistir da conta. |
-| `MODAL_CONFIRM_SECONDS` | `7.5` | [blazesbot/bot/login.py:86](blazesbot/bot/login.py#L86) | — | Persistência do flag de modal para concluir que há um aviso na tela. |
-| `MODAL_PRE_SERVER_SECONDS` | `3.5` | [blazesbot/bot/login.py:90](blazesbot/bot/login.py#L90) | — | O mesmo, mas ANTES de conectar ao servidor. Bem menor: as telas de login e de |
-| `PRE_SERVER_TIMEOUT` | `600.0` | [blazesbot/bot/login.py:63](blazesbot/bot/login.py#L63) | — | NÃO EXISTE LIMITE DE TEMPO NA FILA. |
-| `SEGUNDOS_CONECTANDO` | `6.0` | [blazesbot/bot/login.py:122](blazesbot/bot/login.py#L122) | — | "Connecting to the server, please wait a moment." -- espera LEGÍTIMA, com |
-| `WAIT_HEARTBEAT_SECONDS` | `150.0` | [blazesbot/bot/login.py:98](blazesbot/bot/login.py#L98) | — | Cadência do aviso de "continuo esperando", só para o log não ficar mudo. |
+| `ENTER_RETRY_SECONDS` | `10.0` | [blazesbot/bot/login.py:78](blazesbot/bot/login.py#L78) | — | Cadência de tentativa de entrar enquanto conectado. |
+| `ESPERA_CEGA_SEGUNDOS` | `90.0` | [blazesbot/bot/login.py:91](blazesbot/bot/login.py#L91) | — | Depois de esgotar as tentativas às cegas, o bot NÃO desiste -- ele espaça. |
+| `ESPERA_SERVIDOR_FORA` | `10.0` | [blazesbot/bot/login.py:107](blazesbot/bot/login.py#L107) | — | Espera depois de fechar "Acquiring server IP address." (servidores fora do ar). |
+| `ESPERA_SERVIDOR_FORA_MAX` | `60.0` | [blazesbot/bot/login.py:108](blazesbot/bot/login.py#L108) | — | — |
+| `FATIA_DA_ESPERA_DO_LOGIN` | `0.05` | [blazesbot/bot/login.py:139](blazesbot/bot/login.py#L139) | — | Fatia da espera do login. A espera é cumprida em pedaços para que Parar e |
+| `LOGIN_SCREEN_MAX_SECONDS` | `150.0` | [blazesbot/bot/login.py:116](blazesbot/bot/login.py#L116) | — | Tempo máximo parado na tela de usuário e senha antes de reabrir o cliente. |
+| `MAX_ANCHOR_DEVIATION` | `60` | [blazesbot/bot/login.py:96](blazesbot/bot/login.py#L96) | — | Divergência a partir da qual a âncora é considerada suspeita. É folgada de |
+| `MAX_BLIND_ENTER_ATTEMPTS` | `4` | [blazesbot/bot/login.py:84](blazesbot/bot/login.py#L84) | — | Quantas tentativas de "Enter Game" fazer sem conseguir confirmar a entrada. |
+| `MAX_CREDENTIAL_ERRORS` | `5` | [blazesbot/bot/login.py:57](blazesbot/bot/login.py#L57) | — | Recusas de usuário/senha antes de desistir da conta. |
+| `MODAL_CONFIRM_SECONDS` | `7.5` | [blazesbot/bot/login.py:98](blazesbot/bot/login.py#L98) | — | Persistência do flag de modal para concluir que há um aviso na tela. |
+| `MODAL_PRE_SERVER_SECONDS` | `3.5` | [blazesbot/bot/login.py:102](blazesbot/bot/login.py#L102) | — | O mesmo, mas ANTES de conectar ao servidor. Bem menor: as telas de login e de |
+| `PRE_SERVER_TIMEOUT` | `600.0` | [blazesbot/bot/login.py:75](blazesbot/bot/login.py#L75) | — | NÃO EXISTE LIMITE DE TEMPO NA FILA. |
+| `SEGUNDOS_CONECTANDO` | `6.0` | [blazesbot/bot/login.py:134](blazesbot/bot/login.py#L134) | — | "Connecting to the server, please wait a moment." -- espera LEGÍTIMA, com |
+| `WAIT_HEARTBEAT_SECONDS` | `150.0` | [blazesbot/bot/login.py:110](blazesbot/bot/login.py#L110) | — | Cadência do aviso de "continuo esperando", só para o log não ficar mudo. |
 | `THRESHOLD` | `0.8` | [blazesbot/bot/login_states.py:35](blazesbot/bot/login_states.py#L35) | — | — |
 | `ACEITE_VALIDO_SEGUNDOS` | `15.0` | [blazesbot/bot/mural.py:185](blazesbot/bot/mural.py#L185) | — | Validade do aceite. Curta de propósito: ele confirma UM convite recém-enviado, |
 | `CONVITE_VALIDO_SEGUNDOS` | `60.0` | [blazesbot/bot/mural.py:63](blazesbot/bot/mural.py#L63) | — | Validade do anúncio. Cobre a fila de resposta do outro cliente com folga; mais |

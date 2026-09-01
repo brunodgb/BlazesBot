@@ -314,3 +314,102 @@ chamam `watchdog.quadro_com_aviso_de_conexao(hwnd, templates)`.
 Travado por `tests/test_queda_por_aviso_de_conexao.py`, que roda contra os prints
 reais: os 10 falsos não podem passar, as 12 quedas reais não podem falhar, e a
 margem entre as duas populações não pode cair abaixo de +0.30.
+
+## O bug de conexão do jogo estava desativando conta com a senha CERTA (01/09/2026)
+
+### O que aconteceu
+
+Numa `LoginSequence` de **796 s** na conta `blazesofgamer`, com o jogo no bug de
+"Conexão interrompida" que o usuário relatou durar **semanas**:
+
+| evento | vezes |
+|---|---|
+| **lista de servidores alcançada** | **85** |
+| conexão interrompida | 85 |
+| tela de erro de usuário/senha | **5** |
+
+E a ordem em que cada erro apareceu:
+
+```
+ 5 lista de servidores  ->  1 erro de usuário ou senha
+13 lista de servidores  ->  1 erro de usuário ou senha
+17 lista de servidores  ->  1 erro de usuário ou senha
+11 lista de servidores  ->  1 erro de usuário ou senha
+39 lista de servidores  ->  1 erro de usuário ou senha
+```
+
+Desfecho:
+
+```
+BadCredentials: o servidor recusou a conta 'blazesofgamer' 5 vezes.
+                Confira usuário e senha.
+```
+
+### A prova de que a senha estava certa
+
+**O servidor só mostra a lista de servidores DEPOIS de aceitar usuário e senha.**
+A conta alcançou essa tela **85 vezes**. Cada um dos 5 erros veio depois de 5,
+13, 17, 11 e 39 autenticações consecutivas bem-sucedidas.
+
+Não era recusa: era erro esporádico do servidor, quase certamente parte da mesma
+instabilidade que produzia as 85 quedas de conexão.
+
+### Por que o estrago era grande
+
+`supervisor.py`, no `except BadCredentials`:
+
+```python
+self.account.enabled = False
+self.config.save()
+```
+
+A conta é **desativada e isso é persistido**. Ela sai de rotação e só volta com
+intervenção manual. Ou seja: um bug do JOGO desativava conta boa, em silêncio, e
+o aviso na interface dizia "confira usuário e senha" — apontando para o lugar
+errado.
+
+### O defeito, exatamente
+
+`credential_errors` zerava **só no `__init__`**. Isso estava correto e
+documentado — *"o contador nasce zerado a cada `LoginSequence`"* —, mas **uma
+sequência dura horas e dezenas de ciclos de login**. Dentro de uma única
+sequência o contador nunca zerava, mesmo tendo autenticado 85 vezes. "Cinco
+recusas" virava, na prática, "cinco erros somados ao longo de horas".
+
+### A correção
+
+Zerar `credential_errors` quando o detector **vê a lista de servidores**, porque
+isso é prova de credencial aceita. O idioma já existia no arquivo: o ramo do
+`CHAR_SELECT` logo abaixo já zera o contador de tentativas às cegas pelo mesmo
+tipo de raciocínio, e o `else` já zera `login_screen_since`.
+
+**O limite de cinco continua inteiro.** Senha realmente errada nunca alcança a
+lista de servidores, então nada zera e a conta é desativada na quinta recusa —
+que é o comportamento certo, porque cada recusa real é uma tentativa registrada
+no servidor e o custo de insistir é a conta.
+
+### O detalhe que quase passou
+
+O reset tem de ficar **FORA** do `if self.phase is not Phase.SERVER`.
+`_do_credentials` faz `_set_phase(Phase.SERVER)` logo depois de clicar em OK,
+**sem prova nenhuma** de que o servidor aceitou. Com o reset aninhado nesse `if`,
+ele seria pulado justamente nos ciclos em que o palpite otimista já acertou a
+fase — ou seja, quase sempre, e o defeito voltaria calado.
+
+Travado por `tests/test_contador_de_credenciais.py::test_o_reset_esta_FORA_do_if_da_fase`,
+que lê o AST do `run()` e exige o reset entre os comandos diretos do ramo.
+
+### Como isto foi descoberto
+
+Não foi procurando: caiu de um teste de relogin do resolvedor de alvo. Eu derrubei
+o cliente com `taskkill /F` e o login não voltou. Minha primeira explicação foi
+que o `taskkill` deixava a sessão presa no servidor — **e estava errada**. O
+usuário informou que a "Conexão interrompida" é bug do jogo há semanas, e foi
+essa informação que virou a leitura do log: 85 autenticações bem-sucedidas contra
+5 erros esporádicos.
+
+A lição: quando a explicação de uma falha é "artefato do meu método", vale
+contar as evidências antes de fechar. O log já tinha o número que separava as
+duas hipóteses.
+
+Log completo e contagens: `Teste-Ponteiros/RESULTADOS.md` seção 16.
