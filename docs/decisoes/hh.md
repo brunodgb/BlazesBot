@@ -340,3 +340,79 @@ Registrado aqui para não virar palpite depois:
    rolagem do diálogo.
 5. **O ponto de spawn interno.** O Lua usa `insidexY = {55, 33}`; não foi
    conferido na tela.
+
+---
+
+## 10. O QUE FOI CONSTRUÍDO (01–02/09/2026)
+
+### 10.1 As cinco promoções, e o que cada uma custou
+
+A HH não escreveu uma linha de motor. O que ela fez foi FORÇAR a separação
+entre "o que é do jogo" e "o que é da Bewitcher Cave" — separação que sempre
+devia existir e que só ficou visível quando apareceu um segundo leitor.
+
+| # | promoção | linhas movidas | atrito real |
+|---|---|---|---|
+| 1 | `core/rota.py` | ~250 | nenhum: função pura sobre coordenadas |
+| 2 | `bot/navegacao.py` | 1964 | UM ponto — `tolerancia_do_waypoint`, que virou `Navigator(ctx, mapa)` |
+| 3 | `bot/ui_do_jogo.py` | 2103 | nenhum: 29 métodos genéricos contra 13 da BC |
+| 4 | `bot/combate.py` | 3970 | CINCO métodos tocavam a cave, quatro deles só em constantes |
+| 5 | `bot/vendedor.py` | ~1200 | três ganchos: quem é o vendedor, de onde se clica, qual UI |
+
+**O acoplamento era muito menor do que parecia.** A estimativa inicial falava de
+"rachar dois arquivos de 4000 e 2000 linhas"; na prática, dos 50 métodos
+genéricos do combate, só um precisou de trabalho de verdade.
+
+### 10.2 Os defeitos que a promoção revelou — e um que ela criou
+
+Estes não são incidentes do processo: são o preço de mexer em código que roda
+por horas, e cada um deles ficou travado por teste.
+
+1. **`_ultimo_alvo_morto_id` desapareceu.** O primeiro fatiamento do combate
+   indexou os métodos por NOME num dicionário — e aquele nome existe duas vezes
+   (property e setter). O getter foi sobrescrito pelo setter, em silêncio.
+   *Trava:* um teste compara o conjunto de métodos antes e depois do split.
+
+2. **A BC importou os interruptores POR VALOR.** Ver a seção da armadilha da
+   reexportação em `docs/INVARIANTES.md`.
+
+3. **`_open_npc` ficou no motor chamando métodos que foram para a BC.**
+   `test_sem_chamada_orfa` pegou — ele varre `self.<nome>` sem `<nome>` na
+   classe, e existe exatamente para o defeito que só aparece com o jogo aberto.
+
+4. **`account_dialog.py` importava uma constante que mudou de módulo, e a suíte
+   inteira passou.** 1598 testes verdes, e a janela de editar conta não abriria.
+   Nenhum teste importava a GUI nem a ponte web. *Trava:*
+   `tests/test_as_interfaces_importam.py`, que também confere a PARIDADE entre
+   as duas interfaces — "fiz só num lado" agora reprova.
+
+### 10.3 O que a HH faz de diferente da BC, por desenho
+
+| | Bewitcher Cave | HH |
+|---|---|---|
+| bosses | 1, com duas fases | 4, em sequência |
+| forma na rotina | par de estados por fase | **LAÇO** sobre `TRECHOS_DOS_BOSSES` |
+| chegada | Fay → Ghost Din Woods → Skull Herald | Fay → **West Suburb** (rolando a lista) → Mutual Quest Woman → Elite Axe Monk Soldier |
+| vendedor | Rich Man, em Stone City (gasta pedra/token) | Roaming Apothecary, ao lado da porta |
+| ciclo de time | reset entra e sai antes da cave | **solo:** igual à BC · **fada:** as duas entram, o ciclo fecha ao sair |
+| alvo proibido | Cemetery Guard | nenhum conhecido |
+
+Os quatro bosses como LAÇO é a decisão de forma mais importante: acrescentar um
+quinto é **uma linha em `mapa_hh`**, e não dois estados novos mais um `if`.
+Travado por teste — nenhum nome de estado termina em dígito.
+
+### 10.4 O que AINDA FALTA para a HH rodar de ponta a ponta
+
+Em ordem de bloqueio:
+
+1. **Os três templates** (seção 9, item 4). Sem eles a entrada recusa. Recortar
+   de um print do jogo em 1024×768: a seta de rolagem para baixo do diálogo, o
+   link `West Suburb of Stone City` e o link de entrar da HH.
+2. **O modo HH+Fada.** A configuração existe e a rotina já sabe onde fechar o
+   ciclo de time; falta a Fada **viajar, entrar e seguir**. Ela é conta do
+   ecossistema APP e é coordenada pelo `mural` — não pode passar a importar de
+   `hh/`. O bot em Lua resolve o seguir com a tecla de follow
+   (`keys.follow = "p"`), e essa tecla ainda não existe em `KeyBinds`.
+   **O modo "solo" está completo** e é idêntico ao da BC.
+3. **A área interna** (seção 9, item 1) e **os nomes dos quatro bosses**
+   (item 2). Nenhum dos dois bloqueia; os dois melhoram o log e a retomada.

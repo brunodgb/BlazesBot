@@ -293,7 +293,18 @@ time a flag não faz nada.
   errado. Ver `core/rota.py`.
 - **A área interna da HH NÃO está medida** e vale o marcador
   `AREA_INTERNA_NAO_MEDIDA`. Quem depender de área tem de tratar a ausência;
-  preencher com palpite reprova em `test_a_area_interna_continua_marcada_como_nao_medida`.
+  preencher com palpite reprova em
+  `test_a_area_interna_continua_marcada_como_nao_medida`. Consequência prática:
+  a retomada de rota da HH volta ao waypoint mais próximo e **não** recua para o
+  início da área — recuar sobre um marcador devolveria o personagem ao waypoint
+  1 da cave a cada escorregão.
+- **FALTAM TRÊS TEMPLATES**, e sem eles a HH não entra. O bot RECUSA e diz no
+  log qual arquivo falta, em vez de clicar num pixel adivinhado:
+  `data/templates/dialogo_seta_baixo.png` (a seta de rolagem do diálogo),
+  `link_west_suburb.png` e `link_enter_hh.png`.
+- **A HH e a BC nunca rodam juntas.** O despacho é `APP → HH → BC`, com ordem
+  fixa: marcar as duas roda a HH, e o log diz isso. Ligar a HH com o BC rodando
+  devolve o controle no próximo ponto seguro.
 - **O destino do Fay é `West Suburb of Stone City`, e ele SÓ APARECE ROLANDO a
   lista.** A rolagem é um PASSO conferido pelo aparecimento do link — nunca um
   número fixo de cliques na seta. Clique cego na seta é o vício do bot Lua.
@@ -314,14 +325,60 @@ time a flag não faz nada.
 
 Mexer nestes mexe nos DOIS ecossistemas:
 
-Mexer nestes mexe nos DOIS ecossistemas:
+**MEXER EM QUALQUER UM DESTES MEXE NAS DUAS CAVES.** Todas feitas em
+01–02/09/2026.
 
-| módulo | veio de | o que NÃO subiu |
+| módulo | veio de | o que NÃO subiu, e por quê |
 |---|---|---|
-| `core/rota.py` *(feito)* | `bc/mapa_bc.py` | as rotas em si e o reconhecimento de lugar (caixa da cave, Stone City) |
-| `bot/navegacao.py` *(pendente)* | `bc/navigation.py` | as rotas, as áreas apertadas, os textos de busca |
-| `bot/combate.py` *(pendente)* | `bc/combat.py` | as fases, a trava do Cemetery Guard, o Package Courage |
-| `bot/ui_do_jogo.py` *(pendente)* | `bc/ui_service.py` | quais NPCs, quais links, quais coordenadas |
+| `core/rota.py` | `bc/mapa_bc.py` | as rotas em si (dados de duas caves diferentes) e o reconhecimento de lugar da BC (caixa da cave) |
+| `core/stone_city.py` | `bc/mapa_bc.py` | o **Rich Man** — vendedor é escolha do ecossistema, não da cidade |
+| `bot/navegacao.py` | `bc/navigation.py` | as rotas, as áreas apertadas, os textos de busca |
+| `bot/ui_do_jogo.py` | `bc/ui_service.py` | quais NPCs, quais links, quais coordenadas |
+| `bot/combate.py` | `bc/combat.py` | as FASES, a trava do Cemetery Guard, o Package Courage |
+| `bot/vendedor.py` | `bc/vendor.py` | o Rich Man, a volta para a cidade (pedra/token), a compra de suprimentos |
+| `bot/hotbar.py`, `bot/velocidade.py` | `bc/` | nada — subiram inteiros, sem alteração |
+
+### O CRITÉRIO, e ele é uma pergunta só
+
+*O que este módulo IMPORTA?*
+
+- não importa nada de `bot/` ⇒ cabe no **`core/`** (`rota`, `stone_city`);
+- recebe `BotContext` ⇒ vai para **`bot/`**, porque `core/` importar de `bot/`
+  inverteria a dependência e tiraria a reusabilidade do core.
+
+**"Parece genérico" NÃO é o critério.** O relatório inicial da HH mandou
+navegação, combate e UI para o `core/` exatamente por esse raciocínio, e estava
+errado — os três recebem `BotContext`. Ver `docs/decisoes/hh.md`, seção 8.0.
+
+### Como um ecossistema pede um dado da cave a um motor compartilhado
+
+**INJETA, nunca importa.** Travado por
+`test_o_sistema_nao_depende_de_ecossistema_nenhum`, que reprova qualquer arquivo
+de `bot/` que importe de `bc/`, `app/` ou `hh/`. O supervisor é a única exceção,
+porque ESCOLHER qual ecossistema roda é a função dele — e um segundo teste trava
+essa lista em um nome só.
+
+Três formas, todas em uso:
+
+| forma | exemplo | quando |
+|---|---|---|
+| o mapa no construtor | `Navigator(ctx, mapa_hh)` | o motor pergunta uma coisa ao mapa (`tolerancia_do_waypoint`) |
+| atributo de classe | `NOME_DO_ALVO_PROIBIDO` | a resposta é um dado, e `None` é resposta válida |
+| gancho com padrão neutro | `_esta_fora_da_cave()`, `_no_ponto_do_vendedor()` | a resposta exige lógica; o padrão nunca bloqueia |
+
+E o padrão neutro é regra: **"não sei" não bloqueia.** Não curar dentro da cave
+mata o personagem; um desmonte a mais fora dela custa alguns segundos.
+
+### A armadilha da reexportação — medida, não teórica
+
+`from ..combate import USAR_IMAGEM_DA_FASE_2` **copia o valor no import.** Trocar
+o interruptor no motor não chega ao ecossistema, e ele segue com a cópia, em
+silêncio. Foi o que `test_desligado_nao_le_a_tela` pegou: a leitura de tela
+desligada no motor continuou acontecendo.
+
+**Interruptor entra QUALIFICADO POR MÓDULO** (`combate.USAR_IMAGEM_DA_FASE_2`),
+para existir um valor só. A forma `X as X` só vale para nome que não muda em
+tempo de execução — classe, função, constante de dado.
 
 **`core/` vs `bot/` não é escolha de gosto.** `core/rota.py` é função pura sobre
 coordenadas e cabe no `core/`. Navegação, combate e UI recebem `BotContext`, que

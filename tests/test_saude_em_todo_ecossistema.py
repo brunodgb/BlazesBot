@@ -127,3 +127,102 @@ def test_a_queda_do_APP_entra_no_historico_de_quedas():
     fonte = inspect.getsource(mod_supervisor.AccountSupervisor._rodar_modo_app)
     assert "ultima_queda" in fonte, (
         "a queda no APP não é anotada; ela não vira cartão no histórico")
+
+
+# ===========================================================================
+# O TERCEIRO ECOSSISTEMA -- a HH, desde 02/09/2026
+# ===========================================================================
+#
+# A regra do `CLAUDE.md` é explícita: *"todo ecossistema -- presente e futuro --
+# é obrigado a perceber a queda ENQUANTO roda, usar a MESMA definição de queda,
+# ter o mesmo desfecho, e gravar no Histórico de Quedas."*
+#
+# A HH cumpre isso pelo mesmo caminho da BC, e não por um mecanismo próprio: ela
+# não trata `Disconnected`, deixa subir para o supervisor, e o `_guard` de cada
+# volta chama `ctx.check_watchdog()`. Estes testes travam justamente isso -- o
+# dia em que alguém "resolver" a queda dentro da rotina, as duas definições
+# divergem, e a da HH fica para trás em silêncio.
+
+
+def test_a_HH_confere_a_saude_ENTRE_estados():
+    """`_guard` roda a cada volta do laço, antes do handler do estado.
+
+    É o equivalente do `check_watchdog` do BC -- e é o que faltava no modo APP
+    no defeito de 18/08/2026, quando a conta ficou apertando teclas contra a
+    caixa de "Connection interrupted".
+    """
+    from blazesbot.bot.hh import routine as mod_hh
+
+    fonte = inspect.getsource(mod_hh.HHRoutine._guard)
+    assert "check_watchdog" in fonte, (
+        "a HH não confere a saúde entre estados -- é o defeito do APP de novo")
+
+    laco = inspect.getsource(mod_hh.HHRoutine.run)
+    assert "_guard()" in laco, "o `_guard` não é chamado no laço"
+
+
+def test_a_HH_NAO_trata_Disconnected():
+    """Quem sabe matar o cliente, relançar e relogar é o supervisor.
+
+    Uma rotina que engolisse `Disconnected` deixaria a conta presa numa janela
+    morta -- e o relogin, que é a fundação de todo ecossistema, nunca
+    aconteceria.
+    """
+    from blazesbot.bot.hh import routine as mod_hh
+
+    fonte = inspect.getsource(mod_hh)
+    arvore = ast.parse(fonte)
+    capturas = []
+    for no in ast.walk(arvore):
+        if isinstance(no, ast.ExceptHandler) and no.type is not None:
+            nomes = ast.unparse(no.type)
+            if "Disconnected" in nomes:
+                capturas.append(no.lineno)
+    assert not capturas, (
+        f"a HH captura Disconnected nas linhas {capturas}; ela tem que subir "
+        f"para o supervisor")
+
+
+def test_a_queda_na_HH_entra_no_historico_pelo_MESMO_caminho():
+    """`_registrar_queda` é do supervisor e serve os três ecossistemas.
+
+    O gatilho é `ctx.ultima_queda`, que só o watchdog escreve -- então a HH não
+    precisa de nada além de deixar a exceção subir.
+    """
+    fonte = inspect.getsource(mod_supervisor.AccountSupervisor._run_session)
+    assert "_registrar_queda" in fonte
+
+    # E o registro NÃO é por ecossistema: um `if` por cave aqui seria a terceira
+    # definição de "o que gravar quando cai".
+    registro = inspect.getsource(mod_supervisor.AccountSupervisor._registrar_queda)
+    for nome in ("bc_farm", "hh_farm", "app.enabled"):
+        assert nome not in registro, (
+            f"o registro da queda passou a olhar `{nome}` -- ele tem que ser "
+            f"igual para todo ecossistema")
+
+
+def test_os_TRES_ecossistemas_aparecem_no_despacho():
+    """Um ecossistema que não é despachado não roda -- e não cai, porque nunca
+    subiu. O teste existe para o quarto não ser esquecido."""
+    fonte = inspect.getsource(mod_supervisor.AccountSupervisor._operate)
+    for gatilho in ("app.enabled", "hh_farm", "bc_farm"):
+        assert gatilho in fonte, f"o despacho não consulta `{gatilho}`"
+
+
+def test_a_parada_do_usuario_vale_na_HH_como_nas_outras():
+    """`raise_if_stopped` no `_guard`, e `farming` protegido por `finally`.
+
+    Sem o `finally` o laço "online" seguinte re-detonaria a parada e derrubaria
+    a sessão -- o oposto do que o botão Parar deve fazer.
+    """
+    from blazesbot.bot.hh import routine as mod_hh
+
+    assert "raise_if_stopped" in inspect.getsource(mod_hh.HHRoutine._guard)
+
+    import textwrap
+
+    arvore = ast.parse(textwrap.dedent(inspect.getsource(mod_hh.HHRoutine.run)))
+    finallys = [n for n in ast.walk(arvore)
+                if isinstance(n, ast.Try) and n.finalbody]
+    corpo = " ".join(ast.unparse(x) for f in finallys for x in f.finalbody)
+    assert "farming = False" in corpo
