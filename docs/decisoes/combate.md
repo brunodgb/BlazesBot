@@ -1689,3 +1689,97 @@ houve o evento.
 `alvo_atual()`: **0,270 ms**; pior caso 24,97 ms (é a semeadura, uma vez).
 
 Bancada, scripts e logs: `Teste-Ponteiros/RESULTADOS.md` seções 12 e 13.
+
+## Painel de UI por memória, e a afirmação que o campo derrubou (02/09/2026)
+
+### O que motivou
+
+Medição de 600 leituras, 6 contas em operação, comparando um estático novo com
+todos os leitores de estado de UI da produção:
+
+| leitor da produção | resultado |
+|---|---|
+| `modal_open()` | `False` em 599 de 600 |
+| `dialog_open()` | **`None` em 600 de 600** — sempre *"não sei"* |
+| `loot_window_open()` | `False` em 600 |
+| `system_menu_open()` | `False` em 600 |
+
+`dialog_open()` responder `None` em 100% é consequência direta de
+`ADDR_DIALOG_ROOT` (`0x0117B27C`) estar **morto nos 6 clientes** — o `+0x60` da
+virada 6139 → 6400 é `0x0117B2DC`, e é esse que resolve. E a captura de tela, que
+seria a reserva, devolve **quadro preto** em cliente DirectX fora do primeiro
+plano — a condição **normal** deste bot, que roda várias contas ao mesmo tempo.
+
+O estático novo (`0x012CE3D8`) dizia *"algo aberto"* em **270 de 600 leituras
+(45%)** em que todos os leitores acima diziam nada, com **zero contradições** no
+sentido inverso.
+
+### O que eu afirmei, e o campo derrubou
+
+Escrevi duas regras, validadas em bancada com 3 rodadas de alternância de tecla:
+
+1. `bandeira == 0` ⇒ **nada aberto, com certeza**;
+2. `bandeira != 0` **e** `segunda fenda == 0` ⇒ é a **bolsa**.
+
+As duas caíram. Lendo os valores crus lado a lado com a cadeia de bolsa **já
+validada** (`CHAIN_BAG_OPEN`, 902 fechada / 903 aberta), em seis contas:
+
+```
+bandeira | segunda | cadeia | vezes
+---------+---------+--------+------
+   != 0  |   != 0  |   902  |  12    painel aberto, bolsa fechada
+   != 0  |   != 0  |   903  |  11    bolsa ABERTA, e `segunda` != 0   <- mata (2)
+   == 0  |   != 0  |   903  |   7    bolsa aberta, bandeira em ZERO   <- mata (1)
+   == 0  |   == 0  |   902  |   6    nada aberto
+```
+
+E a validação do patch inteiro contou **105 de 240 leituras** em desacordo com a
+cadeia. Depois de reduzir, o caso previsto pelo contraexemplo (`False` com a
+bolsa aberta) aparece em **73 de 240 (30,4%)** — exatamente o que o docstring
+agora avisa.
+
+### Por que o erro não foi para produção
+
+Porque a validação em campo comparava a regra nova com uma **segunda fonte
+independente** e **contava a discordância**. Um leitor sozinho devolveria
+`False` com confiança e ninguém saberia — que é o modo de falha que este projeto
+combate desde a barra de vida do alvo.
+
+Isso vale como regra: **capacidade nova de memória entra com uma segunda fonte
+ao lado e um contador de desacordo**, não com um teste de bancada só. Bancada
+prova que o campo responde ao estímulo; campo prova que ele responde à
+realidade, que é outra coisa.
+
+### O que entrou
+
+| entrou | o que é |
+|---|---|
+| `quest_aberto()` | discriminador validado: `1` só com o Quest aberto, `0` com os outros cinco painéis, em 3 de 3 rodadas, e `0` em 5 de 5 contas sem Quest lidas no mesmo instante |
+| `dialogo_de_ui_a_frente()` | **sinal de uma via**: o `True` afirma, o `False` não conclui nada |
+| `BAG_CLOSED_VALUE = 902` | o comentário herdado dizia *"0 or 903"*; o `0` nunca apareceu em 840 leituras |
+| valores crus no `probe()` | bandeira, 2ª fenda e a cadeia da bolsa lado a lado — num sinal de uma via, booleano não basta para investigar |
+
+### O que NÃO entrou, e por que
+
+**`modal_open()` não foi reescrito.** `ADDR_MODAL` existe para dizer *"há caixa
+de confirmação, erro de login ou DC na frente"*, e o watchdog conclui DC pela
+**persistência** desse sinal. A bandeira acende com a **bolsa** e com o **quest
+log**, que não são modais — trocar um pelo outro faria o watchdog ver "modal" a
+cada abertura de bolsa. Seria trocar um defeito conhecido por um pior. O
+problema do `ADDR_MODAL` fica registrado e sem conserto.
+
+E os leitores antigos seguem **independentes** de propósito: se algum passasse a
+ler a bandeira, as duas fontes viravam uma, e a discordância — que foi o que
+pegou este erro — deixaria de existir. Travado em
+`tests/test_paineis_por_memoria.py::test_os_leitores_antigos_seguem_independentes`.
+
+### O que fica em aberto
+
+Distinguir **Item, Skill, Attribute, Guild e System** entre si. O Quest saiu; o
+candidato do Guild (`0x012DC180`) respondeu também ao System em 1 de 3 rodadas e
+não passa. Duas hipóteses de identificar o painel por um campo **dentro** do
+objeto foram refutadas antes (texto de instância, e nome de formulário `.frm`, 1
+de 6) — e a vtable é a mesma nos seis (`client.exe+B33CC4`), então a classe não
+discrimina.
+
+Bancada, scripts e logs: `Teste-Ponteiros/RESULTADOS.md`, seções 20 e 22 a 24.

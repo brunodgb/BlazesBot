@@ -457,9 +457,70 @@ DIALOGO_ABERTO_VALOR = 16775
 # adivinhar, e aparecem no `2-DIAGNOSTICO.bat` para serem conferidos ANTES de
 # qualquer decisão do bot passar a depender deles.
 
+# ===========================================================================
+# ESTADO DE PAINEL DE UI POR MEMÓRIA -- o que sobreviveu ao campo
+# ===========================================================================
+#
+# INTERRUPTOR: desligado, tudo volta ao comportamento de antes. Travado ligado
+# por `tests/test_paineis_por_memoria.py`.
+USAR_PAINEL_POR_MEMORIA = True
+
+# O DISCRIMINADOR DO QUEST. Este é o achado sólido: `0` fechado, `1` aberto, e
+# `0` com os outros CINCO painéis abertos (Item, Skill, Attribute, Guild,
+# System), em 3 de 3 rodadas. Controle negativo: `0` em 5 de 5 contas que não
+# tinham o Quest aberto, lidas no MESMO instante.
+ADDR_QUEST_ABERTO = 0x012D0C78
+
+# A BANDEIRA DE DIÁLOGO. Vale `0` ou um ponteiro de heap, e alterna com a tecla
+# de qualquer um dos seis painéis testados.
+#
+# ELA É SINAL DE UMA VIA, E ISSO É MEDIÇÃO, NÃO CAUTELA:
+#
+#   ponteiro  ->  há um diálogo de UI na frente          (confiável)
+#   zero      ->  NÃO PROVA que não há nada aberto       (refutado em campo)
+#
+# O contraexemplo, medido em 02/09/2026 lendo os valores crus junto com a cadeia
+# de bolsa já validada (`CHAIN_BAG_OPEN`, 902 fechada / 903 aberta):
+#
+#     bandeira | segunda | cadeia | vezes
+#     ---------+---------+--------+------
+#        != 0  |   != 0  |   902  |  12    painel aberto, bolsa fechada
+#        != 0  |   != 0  |   903  |  11    bolsa ABERTA, e `segunda` != 0
+#        == 0  |   != 0  |   903  |   7    bolsa aberta com a bandeira em ZERO
+#        == 0  |   == 0  |   902  |   6    nada aberto
+#
+# A terceira linha é a que importa: a bolsa estava aberta e a bandeira valia
+# zero. Uma versão anterior deste patch chamava `bandeira == 0` de "o não com
+# certeza" e classificava a bolsa por `segunda == 0` -- as duas coisas caíram, e
+# caíram porque a validação em campo comparava com uma SEGUNDA FONTE. Sem essa
+# comparação, o erro teria ido para produção parecendo certo.
+#
+# O QUE ELA AINDA SERVE PARA: quando vale um ponteiro, há diálogo na frente --
+# e a §20 mediu que ela vê isso em 270 de 600 leituras nas quais `modal_open`,
+# `dialog_open`, `loot_window_open` e `system_menu_open` TODOS diziam nada, com
+# zero contradições no sentido inverso.
+ADDR_PAINEL_ABERTO = 0x012CE3D8
+
+# A "segunda fenda", vizinha da bandeira. Fica registrada porque aparece no
+# diagnóstico ao lado dela, e porque foi a hipótese reprovada acima -- quem
+# tentar de novo precisa saber que já foi tentado, e por que não deu.
+ADDR_PAINEL_SEGUNDA_FENDA = 0x012CE3E0
+
+# CUIDADO -- POR QUE ISTO **NÃO** SUBSTITUI `modal_open()`:
+#
+# `ADDR_MODAL` existe para dizer "há uma CAIXA DE CONFIRMAÇÃO, erro de login ou
+# DC na frente", e o watchdog conclui DC pela PERSISTÊNCIA desse sinal. A
+# bandeira acima é outra coisa: ela acende com a BOLSA e com o QUEST LOG, que
+# não são modais. Trocar um pelo outro faria o watchdog ver "modal" toda vez que
+# a bolsa abrisse -- trocaria um defeito conhecido por um pior.
+
 # Valores sentinela observados no cliente
 SIT_VALUE = 200
 BAG_OPEN_VALUE = 903
+# Valor da bolsa FECHADA. Medido em 02/09/2026 alternando a tecla `I` e lido em
+# campo em seis contas: a cadeia vai de 902 para 903 e volta. O comentário
+# herdado dizia "0 or 903", e o 0 nunca apareceu -- fechada é 902.
+BAG_CLOSED_VALUE = 902
 SYSTEM_MENU_VALUE = 1610612736
 
 # HP máximo padrão de inimigos do covil (Gun Witch, Cemetery Guard, etc.)
@@ -1778,6 +1839,45 @@ class Memory:
         """
         return isinstance(valor, int) and 0 <= valor <= 1
 
+    # -- estado de painel de UI, por memória -----------------------------
+
+    def quest_aberto(self) -> bool | None:
+        """O painel de Quest está aberto? `None` = não deu para ler.
+
+        O único discriminador de painel que passou no teste completo: vale `1`
+        só com o Quest aberto, `0` com os outros cinco painéis abertos, em 3 de
+        3 rodadas -- e `0` em 5 de 5 contas que não tinham o Quest, lidas no
+        mesmo instante.
+        """
+        if not USAR_PAINEL_POR_MEMORIA:
+            return None
+        v = self.read_int(ADDR_QUEST_ABERTO)
+        if v is None:
+            return None
+        return v == 1
+
+    def dialogo_de_ui_a_frente(self) -> bool | None:
+        """Há um diálogo de UI na frente? **SINAL DE UMA VIA.**
+
+        `True` é confiável: quando a bandeira vale um ponteiro, há diálogo.
+
+        `False` **NÃO PROVA** que não há nada aberto -- foi medido o contrário:
+        a bolsa estava aberta (cadeia em 903) com a bandeira em ZERO, 7 vezes.
+        Ver a tabela junto de `ADDR_PAINEL_ABERTO`.
+
+        Então: use o `True` para decidir; NÃO use o `False` para concluir que a
+        tela está livre. Para isso, quem responde é a cadeia da bolsa
+        (`bag_open`) e o template, como antes.
+
+        `None` = não deu para ler, que é diferente de `False`.
+        """
+        if not USAR_PAINEL_POR_MEMORIA:
+            return None
+        v = self.read_uint(ADDR_PAINEL_ABERTO)
+        if v is None:
+            return None
+        return bool(v)
+
     def loot_window_open(self) -> bool:
         return self.read_int(ADDR_LOOT_WINDOW) == 1
 
@@ -2088,6 +2188,25 @@ class Memory:
             (self.read_int(ADDR_MODAL) == 1, True)
             if self.read_int(ADDR_MODAL) is not None else (None, False)
         )
+
+        # Painel de UI por memória. Entra no diagnóstico AO LADO do
+        # `modal aberto` de propósito: é lado a lado que se vê o `modal aberto`
+        # respondendo False em quase tudo enquanto a bandeira responde.
+        quest = self.quest_aberto()
+        campos["quest aberto"] = (quest, quest is not None)
+        dialogo = self.dialogo_de_ui_a_frente()
+        campos["dialogo de UI a frente"] = (dialogo, dialogo is not None)
+        # Os valores CRUS, porque a bandeira é sinal de uma via: quem for
+        # investigar precisa dos números, não do booleano.
+        bandeira = self.read_uint(ADDR_PAINEL_ABERTO)
+        campos["bandeira (cru)"] = (bandeira, bandeira is not None)
+        segunda = self.read_uint(ADDR_PAINEL_SEGUNDA_FENDA)
+        campos["2a fenda (cru)"] = (segunda, segunda is not None)
+        endereco_bolsa = self.resolve(ADDR_UI_ROOT, CHAIN_BAG_OPEN)
+        valor_bolsa = (self.read_int(endereco_bolsa)
+                       if endereco_bolsa is not None else None)
+        campos["bolsa (cru: 902 fechada, 903 aberta)"] = (
+            valor_bolsa, valor_bolsa is not None)
 
         return campos
 
