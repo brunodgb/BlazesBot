@@ -27,7 +27,7 @@ import psutil
 import win32gui
 import win32process
 
-from ..config import Account, BotConfig
+from ..config import MODO_FADA_DA_HH, Account, BotConfig
 from ..core import logmodo, quedas
 from ..core.coords import coords_for_window
 from ..core.memory import Memory
@@ -963,6 +963,96 @@ class AccountSupervisor(threading.Thread):
             self.total_runs += ctx.runs_completed
             ctx.close()
 
+    # -- a Fada da HH ------------------------------------------------------
+
+    def _lider_da_hh(self) -> Account | None:
+        """A conta que está farmando a HH e me escolheu como Fada, se houver.
+
+        DUAS CONDIÇÕES, e as duas são obrigatórias:
+
+          1. a outra conta tem a HH ligada E o modo `fada`;
+          2. o `reset_nick` dela é o NICK desta conta.
+
+        A segunda é o que impede uma conta virar Fada de um time que não é o
+        dela. E é por NICK e não por login porque é o nick que aparece no painel
+        do time -- é o mesmo vocabulário que a Fada vai usar para clicar.
+        """
+        meu_nick = (self.account.last_char_name or "").strip().lower()
+        if not meu_nick:
+            return None
+        for conta in self.config.accounts:
+            if conta is self.account or not conta.enabled:
+                continue
+            hh = conta.settings.hh
+            if not conta.hh_farm or hh.modo_do_reset != MODO_FADA_DA_HH:
+                continue
+            if (hh.reset_nick or "").strip().lower() == meu_nick:
+                return conta
+        return None
+
+    def _rodar_fada_da_hh(self, ctx: BotContext,
+                          lider: Account) -> None:
+        """Acompanha o líder pela HH: porta, entrada, follow.
+
+        A CURA CONTINUA SENDO DA `FadaDoTime`, que é chamada por
+        `_rodar_fada()` -- este laço cuida só de a Fada estar PERTO o bastante
+        para a cura funcionar. Duas responsabilidades, dois lugares: quem cura
+        não precisa saber andar, e quem anda não precisa saber curar.
+
+        NÃO TRATA `Disconnected`: sobe para `_run_session`, que mata a janela e
+        reloga. Login e relogin são a fundação de todo ecossistema.
+        """
+        from .hh.fada import FadaDaHH
+
+        def selecionar_o_lider() -> bool:
+            """Clica no retrato do líder no painel do time.
+
+            O slot é descoberto pelo NICK, com o mesmo mecanismo que a Fada do
+            APP usa -- ver `_slot_do_nick_no_painel`.
+            """
+            slot = self._slot_do_nick_no_painel(ctx, lider.last_char_name)
+            if slot is None:
+                return False
+            ponto = getattr(ctx.coords, f"team_member_{slot + 1}", None)
+            if ponto is None:
+                return False
+            ctx.click(ponto)
+            return True
+
+        fada = FadaDaHH(
+            ctx,
+            lider_nick=(lider.last_char_name or "").strip(),
+            lider_login=lider.login,
+            selecionar_o_lider=selecionar_o_lider,
+        )
+        ctx.log.info("%s", fada.resumo())
+        fada.rodar(continuar=lambda: (
+            not self.stop_event.is_set()
+            and self._lider_da_hh() is not None
+            and ctx.memory.critical_ok()
+        ))
+
+    def _slot_do_nick_no_painel(self, ctx: BotContext,
+                                nick: str) -> int | None:
+        """Em que slot do painel do time aquele nick está (0-based).
+
+        A ordem do painel é a ordem que a memória devolve em
+        `companheiros_de_time` -- é a MESMA fonte que a Fada do APP usa, e ter
+        duas leituras da mesma lista seria ter duas ordens possíveis para o
+        mesmo painel.
+        """
+        alvo = (nick or "").strip().lower()
+        if not alvo:
+            return None
+        try:
+            companheiros = ctx.memory.companheiros_de_time() or []
+        except Exception:
+            return None
+        for i, quem in enumerate(companheiros):
+            if (quem or "").strip().lower() == alvo:
+                return i
+        return None
+
     def _rotina_da_hh(self, ctx: BotContext) -> HHRoutine:
         """A rotina da HH desta conta, criada na primeira vez que alguém pede.
 
@@ -1068,6 +1158,30 @@ class AccountSupervisor(threading.Thread):
             # decisão sobre farm.
             if ctx.settings.accept_team_invites:
                 aceitador.check_and_accept()
+
+            # A FADA DA HH VEM ANTES DE TUDO -- ela é CONVOCADA.
+            #
+            # Terceira porta do sistema, ao lado do modo APP e do time do APP: a
+            # conta pode não ter farm nenhum ligado, e ainda assim ter trabalho a
+            # fazer porque OUTRA conta a escolheu como curandeira. Quem manda é
+            # quem escolheu, não a caixa desta conta.
+            #
+            # Fica no topo pelo mesmo motivo do APP: se ela também tivesse farm
+            # ligado, as duas coisas disputariam o teclado.
+            lider_da_hh = self._lider_da_hh()
+            if lider_da_hh is not None:
+                if anunciado != "fada-hh":
+                    anunciado = "fada-hh"
+                    self._status(
+                        f"Fada da HH de {lider_da_hh.login}: acompanho e curo")
+                if not ctx.memory.critical_ok():
+                    # A Fada precisa saber quem está no time, onde cada um está
+                    # no painel e quanta vida tem. Sem memória ela clicaria às
+                    # cegas -- e clique às cegas cura o aliado errado.
+                    ctx.tick(2.5)
+                    continue
+                self._rodar_fada_da_hh(ctx, lider_da_hh)
+                continue
 
             # A HH VEM ANTES DA BC, e a ordem é escolha, não acidente.
             #
@@ -1306,7 +1420,7 @@ class AccountSupervisor(threading.Thread):
         from ..core.inputs import Input as _Input
         from . import mural
         from .app import deletador
-        from .app.fada import FadaDoTime
+        from .fada import FadaDoTime
 
         log = logging.getLogger(f"blazes.{self.account.login}")
         teclas = self.account.settings.keys

@@ -361,6 +361,7 @@ class _App:
                 "next_target": k.next_target,
                 "sit": k.sit,
                 "self_target": k.self_target,
+                "follow": k.follow,
                 "inventory": k.inventory,
                 "friend_list": k.friend_list,
                 "hotbar_page_1": k.hotbar_page_1,
@@ -659,6 +660,7 @@ class _App:
         st.keys.next_target = str(k.get("next_target", "") or "").upper()
         st.keys.sit = str(k.get("sit", "") or "").upper()
         st.keys.self_target = str(k.get("self_target", "") or "").upper()
+        st.keys.follow = str(k.get("follow", "") or "").upper()
         st.keys.inventory = str(k.get("inventory", "") or "").upper()
         st.keys.friend_list = str(k.get("friend_list", "") or "").upper()
         st.keys.hotbar_page_1 = str(

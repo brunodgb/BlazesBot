@@ -107,6 +107,17 @@ class KeyBinds:
     #
     # Serve também para a auto-cura da própria Fada.
     self_target: str = "F1"
+    # A tecla de SEGUIR o alvo selecionado (o "follow" do jogo).
+    #
+    # VAZIA POR PADRÃO, e isso é decisão: ela não tem atalho padrão no cliente,
+    # e chutar uma faria a Fada apertar uma tecla que faz outra coisa. Enquanto
+    # estiver vazia, a Fada da HH avisa no log e não tenta seguir.
+    #
+    # Quem usa: `bot/hh/fada.py`, no modo HH+Fada -- a curandeira clica no
+    # retrato do líder e aperta isto, e o JOGO caminha por ela. É o que o bot em
+    # Lua faz (`keys.follow = "p"`), e é muito melhor que a Fada refazer os 66
+    # waypoints por conta própria: seguir não tem como sair da rota.
+    follow: str = ""
     next_target: str = "TAB"
     inventory: str = "I"
     friend_list: str = "F"

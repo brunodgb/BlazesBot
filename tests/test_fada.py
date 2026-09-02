@@ -27,8 +27,8 @@ import logging
 
 import pytest
 
+from blazesbot.bot import fada as mod
 from blazesbot.bot import mural
-from blazesbot.bot.app import fada as mod
 
 
 @pytest.fixture(autouse=True)

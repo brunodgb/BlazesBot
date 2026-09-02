@@ -912,6 +912,7 @@ const CAMPO_TECLA = [
   ["ed-k-guild", "guild_token"], ["ed-k-pet", "pet_summon"],
   ["ed-k-sit", "sit"], ["ed-k-next", "next_target"],
   ["ed-k-self", "self_target"],
+  ["ed-k-follow", "follow"],
   ["ed-k-inv", "inventory"], ["ed-k-fl", "friend_list"],
   ["ed-k-hotbar", "hotbar_page_1"],
   ["ed-k-esconder", "hide_players"],

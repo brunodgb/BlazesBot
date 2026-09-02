@@ -54,6 +54,7 @@ from enum import Enum, auto
 from ...config import MODO_FADA_DA_HH
 from ...core import catador, esconder_jogadores, logmodo
 from ...core.vision import capture_window, find_template
+from .. import mural
 from ..combate import CombatEngine
 from ..context import BotContext, StopRequested
 from ..navegacao import Navigator
@@ -416,6 +417,10 @@ class HHRoutine:
         else:
             ctx.log.info("HH+Fada: mantendo o time; ela entra junto e acompanha")
 
+        # AVISA A FADA. Ela espera na porta e NÃO entra primeiro: cada entrada
+        # abre uma cópia da instância, e entrar antes do líder gastaria a dela
+        # numa cópia onde ele não está. Ver `bot/hh/fada.py`.
+        self._publicar_onde_estou(dentro=True)
         self._ir_para(State.ATE_O_BOSS, "dentro da cave")
 
     def _garantir_o_time(self) -> bool:
@@ -562,6 +567,7 @@ class HHRoutine:
             return
 
         ctx.stats.end_run(ok=True)
+        self._publicar_onde_estou(dentro=False)
         self._ir_para(State.MANUTENCAO, "run concluída")
 
     # ==================================================================
@@ -592,6 +598,22 @@ class HHRoutine:
         ctx.log.info("HH: indo vender no %s", self.vendedor.NOME_DO_VENDEDOR)
         vendidos = self.vendedor.vender()
         ctx.log.info("HH: %s slot(s) vendido(s)", vendidos)
+
+    def _publicar_onde_estou(self, *, dentro: bool) -> None:
+        """Conta à Fada se o líder está dentro da cave.
+
+        É o único sinal que ela precisa do líder, e ele existe porque a ordem de
+        entrada importa: a Fada espera este aviso para entrar atrás.
+
+        NUNCA LEVANTA. O mural é conveniência entre contas; falhar em publicar
+        faz a Fada esperar o teto dela e entrar de qualquer forma -- que é o
+        comportamento certo, e está documentado lá.
+        """
+        try:
+            mural.publicar_estado(self.ctx.account_login,
+                                  dentro_da_hh=bool(dentro))
+        except Exception as exc:
+            self.ctx.log.debug("HH: não publiquei o estado no mural (%s)", exc)
 
     def _reciclar_o_time(self) -> None:
         """Desfaz e refaz o time. É o que faz os bosses renascerem.

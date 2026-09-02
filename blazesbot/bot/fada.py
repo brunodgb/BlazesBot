@@ -43,7 +43,27 @@ O LAÇO
 
 Bolsa e pet **só com a fila vazia**: abrir inventário com alguém esperando cura
 mata o alguém.
-"""
+
+
+=========================================================================
+POR QUE ISTO MORA EM `bot/` E NÃO EM `bot/app/`
+=========================================================================
+
+Subiu em 02/09/2026, quando a HH ganhou o modo em que a Fada ENTRA na cave e
+acompanha o personagem. A partir dali ela passou a ter dois chamadores -- o time
+do APP e a HH --, e um ecossistema não importa do outro.
+
+A promoção foi a mais barata de todas as seis: esta classe **já era
+completamente injetada**. Ela não recebe `BotContext`, não abre memória, não
+conhece supervisor. Tudo -- ler vida, clicar no retrato, apertar a cura,
+dormir -- chega como função. Mover foi trocar `...core` por `..core`.
+
+**DEPENDÊNCIA CRUZADA: mexer aqui mexe no time do APP E na HH+Fada.**
+
+O que NÃO subiu, e por quê: o **deslocamento**. Esta Fada cura de onde está. Quem
+sabe viajar, entrar na cave e seguir o líder é `bot/hh/fada.py`, porque isso
+depende de `BotContext` (navegação e UI do jogo) -- e é dado da cave, não da
+curandeira."""
 from __future__ import annotations
 
 import time
