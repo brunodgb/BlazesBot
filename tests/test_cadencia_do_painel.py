@@ -15,6 +15,7 @@ intervalo. Se ela fosse o intervalo cheio, toda run pagaria 6 segundos parados
 """
 from types import SimpleNamespace
 
+from blazesbot.bot import ui_do_jogo
 from blazesbot.bot.bc import ui_service
 
 
@@ -33,7 +34,7 @@ def _servico(agora):
 
 def test_o_primeiro_uso_NAO_espera(monkeypatch):
     """A run não pode começar pagando por um problema que ainda não houve."""
-    monkeypatch.setattr(ui_service.time, "time", lambda: 1000.0)
+    monkeypatch.setattr(ui_do_jogo.time, "time", lambda: 1000.0)
     s = _servico(1000.0)
 
     s._respeitar_a_cadencia_do_painel()
@@ -45,8 +46,8 @@ def test_o_primeiro_uso_NAO_espera(monkeypatch):
 def test_reabrir_LOGO_em_seguida_espera_o_RESTO(monkeypatch):
     """Foi o que o usuário viu: três aberturas em poucos segundos."""
     relogio = [1000.0]
-    monkeypatch.setattr(ui_service.time, "time", lambda: relogio[0])
-    monkeypatch.setattr(ui_service, "INTERVALO_ENTRE_USOS_DO_PAINEL", 2.0)
+    monkeypatch.setattr(ui_do_jogo.time, "time", lambda: relogio[0])
+    monkeypatch.setattr(ui_do_jogo, "INTERVALO_ENTRE_USOS_DO_PAINEL", 2.0)
 
     s = _servico(1000.0)
     s._respeitar_a_cadencia_do_painel()          # primeiro uso
@@ -62,8 +63,8 @@ def test_depois_de_MUITO_tempo_nao_espera_nada(monkeypatch):
     """Entre um uso e o seguinte costumam passar MINUTOS -- Fay, entrada da
     cave e vendedor são três usos por run. O caminho feliz não paga nada."""
     relogio = [1000.0]
-    monkeypatch.setattr(ui_service.time, "time", lambda: relogio[0])
-    monkeypatch.setattr(ui_service, "INTERVALO_ENTRE_USOS_DO_PAINEL", 2.0)
+    monkeypatch.setattr(ui_do_jogo.time, "time", lambda: relogio[0])
+    monkeypatch.setattr(ui_do_jogo, "INTERVALO_ENTRE_USOS_DO_PAINEL", 2.0)
 
     s = _servico(1000.0)
     s._respeitar_a_cadencia_do_painel()

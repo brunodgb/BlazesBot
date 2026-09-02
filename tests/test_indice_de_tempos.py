@@ -41,6 +41,7 @@ def test_todo_tempo_do_projeto_esta_no_catalogo():
     arquivos = {t.arquivo for t in tempos}
     for esperado in ("blazesbot/bot/bc/vendor.py",
                      "blazesbot/bot/bc/ui_service.py",
+                     "blazesbot/bot/ui_do_jogo.py",
                      "blazesbot/bot/navegacao.py",
                      "blazesbot/bot/app/cura.py"):
         assert esperado in arquivos, f"nenhum tempo achado em {esperado}"

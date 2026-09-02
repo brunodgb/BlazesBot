@@ -33,6 +33,7 @@ from types import SimpleNamespace
 
 import numpy as np
 
+from blazesbot.bot import ui_do_jogo
 from blazesbot.bot.bc import ui_service
 from blazesbot.core import janelas_abertas as ja
 from blazesbot.core.vision import TemplateLibrary
@@ -319,7 +320,7 @@ def test_o_trajeto_fecha_o_painel_ATE_por_excecao():
 
 def test_os_trajetos_pelo_painel_usam_o_dono():
     """Quem busca NPC e sai andando é dono do painel do começo ao fim."""
-    for metodo in (ui_service.UIService._viajar_para_ghost_din_woods,
+    for metodo in (ui_do_jogo.UIDoJogo._viajar_pelo_transporte,
                    ui_service.UIService.ir_ate_o_npc_da_cave):
         fonte = inspect.getsource(metodo)
         assert "trajeto_pelo_painel" in fonte, metodo.__name__
@@ -332,7 +333,7 @@ def test_o_orcamento_recusa_a_quinta_abertura():
     pararem sozinhos, sem precisar desmontar nenhum deles.
     """
     s = _servico()
-    s._aberturas_do_trajeto = ui_service.ABERTURAS_POR_TRAJETO
+    s._aberturas_do_trajeto = ui_do_jogo.ABERTURAS_POR_TRAJETO
     assert s.abrir_surroundings() is None
     assert s.cliques == [], "recusou sem tocar no interruptor do painel"
 

@@ -1,5 +1,9 @@
 """A espera pelo teleporte da Fay (Stone City -> Ghost Din Woods).
 
+A ESPERA mora em `bot/ui_do_jogo.esperar_a_chegada` desde 01/09/2026 (a HH
+usa a mesma); a PERGUNTA "cheguei?" continua na BC, porque é a coordenada
+dela que responde. Este teste exercita os dois juntos, que é como rodam.
+
 Era `ctx.tick(4.0)` cego. Medido no log de dev de 13/08/2026: 6,1 s entre o
 clique no link e o "Teleportado", e o painel de arredores abrindo 40 ms depois
 disso — ou seja, a demora inteira era espera, não trabalho.
@@ -10,6 +14,7 @@ defeito aqui.
 """
 import pytest
 
+from blazesbot.bot import ui_do_jogo
 from blazesbot.bot.bc import mapa_bc, ui_service
 from blazesbot.bot.bc.ui_service import UIService
 
@@ -72,7 +77,7 @@ def _ui(monkeypatch, posicoes):
     relogio = _Relogio()
     ui = object.__new__(UIService)
     ui.ctx = _Ctx(relogio, posicoes)
-    monkeypatch.setattr(ui_service.time, "time", relogio)
+    monkeypatch.setattr(ui_do_jogo.time, "time", relogio)
     return ui, relogio
 
 

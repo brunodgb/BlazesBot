@@ -507,9 +507,13 @@ def test_os_tres_processos_seguram_a_tecla():
 
     from blazesbot.bot.bc.ui_service import UIService
     from blazesbot.bot.bc.vendor import VendorService
+    from blazesbot.bot.ui_do_jogo import UIDoJogo
 
+    # `viajar_pelo_transporte` subiu para `UIDoJogo` em 01/09/2026: a viagem pelo
+    # NPC de transporte é a mesma nas duas caves, então segurar o F12 durante
+    # ela passou a valer para as duas de uma vez.
     for dono, nome in ((UIService, "tentar_entrar_na_cave"),
-                       (UIService, "viajar_para_ghost_din_woods"),
+                       (UIDoJogo, "viajar_pelo_transporte"),
                        (VendorService, "_open_npc")):
         fonte = inspect.getsource(getattr(dono, nome))
         withs = [n for n in ast.walk(ast.parse(fonte.lstrip()))

@@ -428,9 +428,9 @@ def test_o_DENTE_parar_longe_NAO_reabre_o_painel():
     Fay, com o bot em loop andando para o lugar errado. Se este teste passar a
     falhar, alguém religou a confirmação sem a medição que a autoriza.
     """
-    from blazesbot.bot.bc import ui_service
+    from blazesbot.bot import ui_do_jogo
 
-    assert ui_service.CONFIRMAR_CHEGADA_POR_COORDENADA is False
+    assert ui_do_jogo.CONFIRMAR_CHEGADA_POR_COORDENADA is False
 
 
 def test_a_distancia_volta_para_o_LOG_mesmo_sem_decidir():
@@ -536,11 +536,15 @@ def test_sem_leitura_de_posicao_segue_em_vez_de_travar():
 
 
 def test_a_viagem_encosta_ANTES_de_falar_com_o_npc():
-    """A ordem é o ponto: encostar depois de clicar não conserta nada."""
-    from blazesbot.bot.bc.ui_service import UIService
+    """A ordem é o ponto: encostar depois de clicar não conserta nada.
 
-    passos = _chamadas(UIService._viajar_para_ghost_din_woods)
-    assert passos.index("_encostar_na_fay") < passos.index("falar_com_npc")
+    A sequência subiu para `UIDoJogo` em 01/09/2026 e agora protege as DUAS
+    caves: a HH percorre exatamente estes passos com outros nomes.
+    """
+    from blazesbot.bot.ui_do_jogo import UIDoJogo
+
+    passos = _chamadas(UIDoJogo._viajar_pelo_transporte)
+    assert passos.index("encostar_no_ponto") < passos.index("falar_com_npc")
 
 
 def test_em_Stone_City_a_falha_NAO_gasta_item_de_retorno():
