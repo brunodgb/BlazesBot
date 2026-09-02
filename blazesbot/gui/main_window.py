@@ -68,8 +68,8 @@ from .widgets import SideNav, StatCard, formata_duracao
 
 POSITIONS = ["Left", "Center", "Right"]
 ACCOUNT_ROLE = Qt.ItemDataRole.UserRole + 1
-(COL_ATIVA, COL_LOGIN, COL_SENHA, COL_POS, COL_SERVIDOR, COL_FARM, COL_APP,
- COL_EDITAR) = range(8)
+(COL_ATIVA, COL_LOGIN, COL_SENHA, COL_POS, COL_SERVIDOR, COL_FARM, COL_HH,
+ COL_APP, COL_EDITAR) = range(9)
 
 # Largura das colunas que só têm uma caixa de marcar. É o tamanho da caixa
 # mais uma folga mínima para o cabeçalho -- essas colunas não precisam de mais
@@ -355,9 +355,9 @@ class MainWindow(QMainWindow):
             else "AVISO: pywin32 ausente — senhas ficariam em texto puro."
         ))
 
-        self.tbl = QTableWidget(0, 8)
+        self.tbl = QTableWidget(0, 9)
         self.tbl.setHorizontalHeaderLabels(
-            ["Ativa", "Login", "Senha", "Posição", "Servidor", "BC", "APP", ""]
+            ["Ativa", "Login", "Senha", "Posição", "Servidor", "BC", "HH", "APP", ""]
         )
         h = self.tbl.horizontalHeader()
         h.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
@@ -366,13 +366,14 @@ class MainWindow(QMainWindow):
         for coluna, largura in ((COL_ATIVA, LARGURA_DA_CAIXA),
                                 (COL_POS, 110), (COL_SERVIDOR, 185),
                                 (COL_FARM, LARGURA_DA_CAIXA),
+                                (COL_HH, LARGURA_DA_CAIXA),
                                 (COL_APP, LARGURA_DA_CAIXA),
                                 (COL_EDITAR, 92)):
             self.tbl.setColumnWidth(coluna, largura)
         # As colunas de caixa ficam FIXAS. Interativas, elas voltavam a esticar
         # quando a janela era redimensionada, e o espaço ia para onde não faz
         # falta.
-        for coluna in (COL_ATIVA, COL_FARM, COL_APP):
+        for coluna in (COL_ATIVA, COL_FARM, COL_HH, COL_APP):
             h.setSectionResizeMode(coluna, QHeaderView.ResizeMode.Fixed)
         # Linhas altas o bastante para o campo de senha e os seletores caberem
         # inteiros. Com a altura padrão, clicar num campo o cortava pela metade.
@@ -543,6 +544,25 @@ class MainWindow(QMainWindow):
         lay.addWidget(farm, 0, Qt.AlignmentFlag.AlignCenter)
         tbl.setCellWidget(linha, COL_FARM, wrap)
 
+        # HH na lista, ao lado do BC: são duas caves, e a troca entre elas é o
+        # que se faz o tempo todo. Marcar as DUAS roda a HH -- o supervisor tem
+        # ordem fixa de propósito, para a escolha ser previsível.
+        hh = QCheckBox()
+        hh.setChecked(conta.hh_farm)
+        hh.setToolTip(
+            "HH (Black Wind Camp Dungeon): quatro bosses em sequência.\n"
+            "Pode marcar e desmarcar com o bot rodando.\n"
+            "Marcada junto com BC, roda a HH.\n"
+            "A conta de reset fica em Editar conta > HH -- sem ela os bosses\n"
+            "não renascem e a cave vem vazia da segunda run em diante."
+        )
+        hh.stateChanged.connect(lambda _v, c=conta: self._toggle_hh(c, hh))
+        wrap_hh = QWidget()
+        lay_hh = QHBoxLayout(wrap_hh)
+        lay_hh.setContentsMargins(0, 0, 0, 0)
+        lay_hh.addWidget(hh, 0, Qt.AlignmentFlag.AlignCenter)
+        tbl.setCellWidget(linha, COL_HH, wrap_hh)
+
         # MODO APP na lista, e não só dentro do editor: ligar e desligar é o que
         # se faz o tempo todo, e abrir uma janela para isso era um passo a mais em
         # cada troca. A CONFIGURAÇÃO da sequência continua em Editar conta > APP.
@@ -573,6 +593,19 @@ class MainWindow(QMainWindow):
         if self.manager and self.manager.running():
             estado = "LIGADO" if conta.bc_farm else "desligado"
             self.log_line.emit(f"[{conta.login}] BC farm {estado} em tempo real")
+        self._apply_live()
+
+    def _toggle_hh(self, conta: Account, caixa: QCheckBox) -> None:
+        """Liga/desliga a HH direto da lista, valendo em tempo real.
+
+        Espelha `_toggle_farm`. A rotina consulta `hh_farm` a cada volta e entre
+        estados, então desmarcar aqui devolve o controle no próximo ponto seguro
+        -- sem interromper uma ação pela metade.
+        """
+        conta.hh_farm = caixa.isChecked()
+        if self.manager and self.manager.running():
+            estado = "LIGADA" if conta.hh_farm else "desligada"
+            self.log_line.emit(f"[{conta.login}] HH {estado} em tempo real")
         self._apply_live()
 
     def _toggle_app(self, conta: Account, caixa: QCheckBox) -> None:
@@ -1710,6 +1743,11 @@ class MainWindow(QMainWindow):
             if item is None:
                 continue
             conta = item.data(ACCOUNT_ROLE)
+            wrap_hh = self.tbl.cellWidget(linha, COL_HH)
+            if wrap_hh is not None:
+                caixa_hh = wrap_hh.findChild(QCheckBox)
+                if caixa_hh is not None and caixa_hh.isChecked() != conta.hh_farm:
+                    caixa_hh.setChecked(conta.hh_farm)
             wrap = self.tbl.cellWidget(linha, COL_FARM)
             caixa = wrap.findChild(QCheckBox) if wrap else None
             if caixa is not None and caixa.isChecked() != conta.bc_farm:

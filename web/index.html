@@ -121,6 +121,7 @@
                 <th>Posição</th>
                 <th>Servidor</th>
                 <th>BC</th>
+                <th>HH</th>
                 <th>APP</th>
                 <th>Editar</th>
               </tr>
@@ -341,6 +342,7 @@
         <button class="aba" data-aba="aba-teclas">Teclas</button>
         <button class="aba" data-aba="aba-app">APP</button>
         <button class="aba" data-aba="aba-bc">Bewitcher Cave</button>
+        <button class="aba" data-aba="aba-hh">HH</button>
       </div>
 
       <!-- aba Personagem (Mais respirável) -->
@@ -681,6 +683,79 @@
           </div>
         </div>
       </div>
+      <div id="aba-hh" class="painel-aba scroll-thin">
+        <div class="grupo">
+          <div class="grupo-titulo">Reset da cave (obrigatório)</div>
+          <p class="text-[12px] text-slate-400 mb-3">
+            <b>A cave NÃO renasce sozinha.</b> Sem desfazer e refazer o time, os
+            quatro bosses não voltam e a run seguinte vem vazia — isso é regra do
+            jogo, não do bot. Sem conta de reset o bot roda, mas avisa no log.
+          </p>
+          <div class="grid grid-cols-2 gap-6">
+            <div class="campo">
+              <span>Modo</span>
+              <select id="ed-hh-modo" class="campo-input">
+                <option value="solo">Solo — a conta de reset não entra</option>
+                <option value="fada">Com a Fada — ela entra e cura</option>
+              </select>
+              <span class="ajuda" data-ajuda="SOLO: a conta de reset aceita o convite, o personagem entra e o time é desfeito na hora. Ela nunca entra na cave — é o mesmo que a Bewitcher Cave já faz.&#10;&#10;COM A FADA: as duas entram juntas. A Fada acompanha o personagem e cura quando precisa; ao sair, o time é desfeito e refeito, e só então dá para entrar de novo.">?</span>
+            </div>
+            <div class="campo">
+              <span>Conta de reset</span>
+              <select id="ed-hh-reset" class="campo-input"></select>
+              <span class="ajuda" data-ajuda="Só contas cadastradas NESTE bot. É isso que permite ao bot saber que ela caiu e segurar a entrada da cave, em vez de entrar sem reset e perder a run.">?</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="grupo">
+          <div class="grupo-titulo">Combate</div>
+          <p class="text-[12px] text-slate-400 mb-3">
+            São <b>quatro bosses</b> em sequência, um por trecho da cave. O bot
+            desmonta antes de cada luta (montado o jogo recusa as skills) e
+            remonta para andar. Quem encerra cada luta é a flag de combate do
+            jogo, não um cronômetro.
+          </p>
+          <div class="grid grid-cols-2 gap-6">
+            <div class="campo">
+              <span>Intervalo de ataque (ms)</span>
+              <input id="ed-hh-delay" type="number" min="100" max="5000" step="100" class="campo-input" />
+              <span class="ajuda" data-ajuda="Tempo entre duas teclas da rotação de ataque. O medido no jogo é 500 ms. Não é limite de recarga: skill em recarga não sai e a rotação segue para a próxima.">?</span>
+            </div>
+            <label class="campo">AoE até mana (%)
+              <input id="ed-hh-aoe" type="range" min="1" max="100" step="1" data-passo-roda="5" class="accent-blue-500" />
+              <span class="valor-range text-[12px] text-blue-400 font-bold" id="val-hh-aoe"></span>
+            </label>
+            <div class="campo">
+              <span>Limpar mobs a cada (a pé)</span>
+              <input id="ed-hh-limpar" type="number" min="0" max="20" step="1" class="campo-input" />
+              <span class="ajuda" data-ajuda="A pé, o bot para a cada N waypoints e limpa os mobs do caminho. Montado ele não para — e atravessar montado é a forma normal. 0 desliga a limpeza.">?</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="grupo">
+          <div class="grupo-titulo">Venda</div>
+          <p class="text-[12px] text-slate-400 mb-3">
+            O vendedor da HH é o <b>Roaming Apothecary</b>, do lado de FORA da
+            cave — a poucos passos da porta. Não gasta pedra de retorno nem token
+            de guilda. Quem manda ir vender é a <b>bolsa</b> (aba Personagem); o
+            número de runs abaixo é o teto para quando a leitura da bolsa falhar.
+          </p>
+          <div class="grid grid-cols-2 gap-6">
+            <div class="campo">
+              <span>Vender a partir do slot</span>
+              <input id="ed-hh-slot" type="number" min="1" max="40" step="1" class="campo-input" />
+              <span class="ajuda" data-ajuda="Os primeiros slots são equipamento e consumível. Vender a partir deles seria vender o que o bot precisa.">?</span>
+            </div>
+            <div class="campo">
+              <span>Vender no máximo a cada (runs)</span>
+              <input id="ed-hh-runs" type="number" min="1" max="50" step="1" class="campo-input" />
+            </div>
+          </div>
+        </div>
+      </div>
+
 
       <div class="flex shrink-0 items-center justify-end gap-3 border-t border-line bg-panel px-4 py-3">
         <button id="btn-cancelar-modal" class="bt bt-secundario">Cancelar</button>

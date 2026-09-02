@@ -59,6 +59,7 @@ from .config import (
     Account,
     BotConfig,
     mount_multiplier,
+    normalizar_modo_do_reset,
     normalizar_pct,
     normalizar_time_logins,
     normalizar_time_modo,
@@ -265,6 +266,7 @@ class _App:
                 "position": c.position,
                 "server": _COORDS.normalize_server(c.server),
                 "bc_farm": c.bc_farm,
+                "hh_farm": c.hh_farm,
                 "app_enabled": c.settings.app.enabled,
                 "nick": _nick(c),
                 "tem_senha": bool(c.password_enc),
@@ -306,6 +308,7 @@ class _App:
                 {"login": o.login,
                  "nick": o.last_char_name.strip(),
                  "farmando_bc": bool(o.bc_farm),
+                 "farmando_hh": bool(o.hh_farm),
                  "lider_de_outro": self.config.lider_do_time_do_app(
                      o.login, ignorar=c.login)}
                 for o in self.config.accounts if o is not c and o.login
@@ -313,6 +316,7 @@ class _App:
             "usar_catador": st.usar_catador,
             "mount_speed_pct": st.mount_speed_pct,
             "farm": c.bc_farm,
+            "farm_hh": c.hh_farm,
             "pet": {
                 "summon_on_login": st.pet.summon_on_login,
                 "feed_on_start": st.pet.feed_on_start,
@@ -374,6 +378,20 @@ class _App:
                     "sell_start_slot": st.bc.vendor.sell_start_slot,
                     "sell_clicks": st.bc.vendor.sell_clicks,
                     "buy_return_charm": st.bc.vendor.buy_return_charm,
+                },
+            },
+            # A HH é ecossistema próprio: bloco próprio, e não campos dentro do
+            # `bc`. Misturar os dois faria a interface parecer que a HH é um
+            # "modo" da Bewitcher Cave -- e ela não é.
+            "hh": {
+                "modo_do_reset": st.hh.modo_do_reset,
+                "reset_nick": st.hh.reset_nick,
+                "attack_delay": st.hh.attack_delay,
+                "aoe_until_mana_pct": st.hh.aoe_until_mana_pct,
+                "limpar_mobs_a_cada": st.hh.limpar_mobs_a_cada,
+                "vendor": {
+                    "sell_start_slot": st.hh.vendor.sell_start_slot,
+                    "runs_before_selling": st.hh.vendor.runs_before_selling,
                 },
             },
         }
@@ -523,6 +541,21 @@ class _App:
                          "em tempo real")
         self._aplicar()
 
+    def alternar_hh(self, uid: str, ligado: bool) -> None:
+        """Liga/desliga a HH desta conta, valendo com o bot rodando.
+
+        Espelha `alternar_farm`. A rotina consulta `hh_farm` a cada volta e
+        entre estados, então desligar aqui devolve o controle no próximo ponto
+        seguro.
+        """
+        c = self._conta(uid)
+        c.hh_farm = bool(ligado)
+        if self.manager and self.manager.running():
+            self._status(c.login,
+                         f"HH {'LIGADA' if c.hh_farm else 'desligada'} "
+                         "em tempo real")
+        self._aplicar()
+
     def alternar_app(self, uid: str, ligado: bool) -> None:
         c = self._conta(uid)
         c.settings.app.enabled = bool(ligado)
@@ -642,6 +675,21 @@ class _App:
         st.bc.usar_skill_de_velocidade = bool(
             bc.get("usar_skill_de_velocidade", True))
         st.bc.reset_nick = str(bc.get("reset_nick", "")).strip()
+
+        # --- HH -----------------------------------------------------------
+        # Sem esta leitura os campos voltam ao padrão a cada abertura do editor
+        # -- a mesma armadilha que o `apagar_lixo_a_cada` e o `usar_catador` já
+        # pagaram. Travado por `test_config_ida_e_volta.py`.
+        hh = dados.get("hh", {})
+        st.hh.modo_do_reset = normalizar_modo_do_reset(hh.get("modo_do_reset"))
+        st.hh.reset_nick = str(hh.get("reset_nick", "")).strip()
+        st.hh.attack_delay = float(hh.get("attack_delay", 0.5) or 0.5)
+        st.hh.aoe_until_mana_pct = int(hh.get("aoe_until_mana_pct", 30))
+        st.hh.limpar_mobs_a_cada = int(hh.get("limpar_mobs_a_cada", 3))
+        VH = hh.get("vendor", {})
+        st.hh.vendor.sell_start_slot = int(VH.get("sell_start_slot", 3))
+        st.hh.vendor.runs_before_selling = int(
+            VH.get("runs_before_selling", 5))
 
         V = bc.get("vendor", {})
         st.bc.vendor.runs_before_selling = int(V.get("runs_before_selling", 5))

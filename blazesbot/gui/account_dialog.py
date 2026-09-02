@@ -36,12 +36,14 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from ..bot.bc.combat import SEGUNDOS_DA_POCAO_DE_VIDA
+from ..bot.combate import SEGUNDOS_DA_POCAO_DE_VIDA
 from ..config import (
     LIMITE_DO_NOME_DO_GRUPO,
     MAX_BOLSAS,
     MINIMO_DE_ESPERA_DO_APP_MS,
     MINIMO_DELAY_MS,
+    MODO_FADA_DA_HH,
+    MODO_SOLO_DA_HH,
     MOUNT_SPEEDS,
     PASSOS_DO_APP,
     PET_FEED_MINUTES,
@@ -53,6 +55,7 @@ from ..config import (
     BotConfig,
     mount_multiplier,
     ms_para_segundos,
+    normalizar_modo_do_reset,
     segundos_para_ms,
 )
 from .help_tip import HelpTip
@@ -137,6 +140,7 @@ class AccountDialog(QDialog):
         self.tabs.addTab(self._scroll(self._aba_teclas()), "⌨  Teclas")
         self.tabs.addTab(self._scroll(self._aba_app()), "⚡  APP")
         self.tabs.addTab(self._scroll(self._aba_bc()), "🕯  Bewitcher Cave")
+        self.tabs.addTab(self._scroll(self._aba_hh()), "🗡  HH")
         raiz.addWidget(self.tabs, 1)
 
         botoes = QDialogButtonBox(
@@ -1045,7 +1049,106 @@ class AccountDialog(QDialog):
     # Carregar / aplicar
     # ==================================================================
 
-    def _montar_lista_de_reset(self, atual: str) -> None:
+    def _aba_hh(self) -> QWidget:
+        """A HH (Black Wind Camp Dungeon): quatro bosses e o reset.
+
+        MENOR QUE A ABA DA BC DE PROPÓSITO. A rota não entra aqui -- ela é
+        propriedade do jogo e mora em `bot/hh/mapa_hh.py`, medida waypoint por
+        waypoint. Enquanto o caminho da BC morou no `config.json`, uma rota
+        antiga gravada continuou sendo usada depois de a certa ser medida, e era
+        impossível perceber porque tudo parecia configurado.
+        """
+        page = QWidget()
+        outer = QVBoxLayout(page)
+
+        # -- Reset ------------------------------------------------------
+        box, f = self._grupo("Reset da cave (obrigatório)", (
+            "A CAVE NÃO RENASCE SOZINHA. Sem desfazer e refazer o time, os\n"
+            "quatro bosses não voltam e a run seguinte vem vazia. Isso é\n"
+            "regra do jogo, não do bot.\n"
+            "\n"
+            "SOLO -- a conta de reset aceita o convite, o personagem entra e\n"
+            "o time é desfeito na hora. Ela nunca entra na cave. É o mesmo\n"
+            "que a Bewitcher Cave já faz.\n"
+            "\n"
+            "COM A FADA -- as duas entram juntas. A Fada acompanha o\n"
+            "personagem e cura quando precisa; ao sair, o time é desfeito e\n"
+            "refeito, e só então dá para entrar de novo.\n"
+            "\n"
+            "Sem conta de reset o bot roda, mas avisa no log: da segunda run\n"
+            "em diante você entra numa cave sem boss."
+        ))
+        self.cb_hh_modo = QComboBox()
+        self.cb_hh_modo.addItem("Solo — a conta de reset não entra",
+                                MODO_SOLO_DA_HH)
+        self.cb_hh_modo.addItem("Com a Fada — ela entra e cura",
+                                MODO_FADA_DA_HH)
+        f.addRow("Modo:", self.cb_hh_modo)
+        self.in_hh_reset = QComboBox()
+        self.in_hh_reset.setToolTip(
+            "Só contas cadastradas NESTE bot. É isso que permite ao bot saber "
+            "que ela caiu e segurar a entrada, em vez de entrar sem reset e "
+            "perder a run."
+        )
+        f.addRow("Conta de reset:", self.in_hh_reset)
+        outer.addWidget(box)
+
+        # -- Combate ----------------------------------------------------
+        box, f = self._grupo("Combate", (
+            "São QUATRO bosses em sequência, um por trecho da cave. O bot\n"
+            "desmonta antes de cada luta (montado o jogo recusa as skills) e\n"
+            "remonta para andar.\n"
+            "\n"
+            "Quem encerra cada luta é a flag de combate do jogo, não um\n"
+            "cronômetro. O limite abaixo é rede de segurança para o caso de a\n"
+            "flag ficar presa em ligado."
+        ))
+        self.sp_hh_delay = QSpinBox()
+        self.sp_hh_delay.setRange(MINIMO_DELAY_MS, 5000)
+        self.sp_hh_delay.setSingleStep(100)
+        self.sp_hh_delay.setSuffix(" ms")
+        self.sp_hh_delay.setToolTip(
+            "Tempo entre duas teclas da rotação de ataque. O medido no jogo é "
+            "500 ms."
+        )
+        f.addRow("Intervalo entre skills:", self.sp_hh_delay)
+        self.bar_hh_aoe = PercentBar("Mana", 30, tipo="mp")
+        f.addRow("Usar AoE com mana acima de:", self.bar_hh_aoe)
+        self.sp_hh_limpar = QSpinBox()
+        self.sp_hh_limpar.setRange(0, 20)
+        self.sp_hh_limpar.setToolTip(
+            "A pé, o bot para a cada N waypoints e limpa os mobs do caminho.\n"
+            "Montado ele não para -- e atravessar montado é a forma normal.\n"
+            "0 desliga a limpeza."
+        )
+        f.addRow("Limpar mobs a cada (a pé):", self.sp_hh_limpar)
+        outer.addWidget(box)
+
+        # -- Venda ------------------------------------------------------
+        box, f = self._grupo("Venda", (
+            "O vendedor da HH é o Roaming Apothecary, do lado de FORA da\n"
+            "cave -- a poucos passos da porta. Não gasta pedra de retorno\n"
+            "nem token de guilda, diferente da Bewitcher Cave.\n"
+            "\n"
+            "Quem manda ir vender é a BOLSA (aba Personagem). O número de\n"
+            "runs abaixo é o teto para quando a leitura da bolsa falhar."
+        ))
+        self.sp_hh_slot = QSpinBox()
+        self.sp_hh_slot.setRange(1, 40)
+        self.sp_hh_slot.setToolTip(
+            "Os primeiros slots são equipamento e consumível. Vender a partir "
+            "deles seria vender o que o bot precisa."
+        )
+        f.addRow("Vender a partir do slot:", self.sp_hh_slot)
+        self.sp_hh_runs = QSpinBox()
+        self.sp_hh_runs.setRange(1, 50)
+        f.addRow("Vender no máximo a cada:", self.sp_hh_runs)
+        outer.addWidget(box)
+
+        outer.addStretch(1)
+        return page
+
+    def _montar_lista_de_reset(self, atual: str, combo=None) -> None:
         """Preenche o seletor de reseter e seleciona o que já está gravado.
 
         =================================================================
@@ -1073,7 +1176,7 @@ class AccountDialog(QDialog):
            seria eu apagando a configuração de alguém sem avisar; mostrando, o
            usuário vê o que está errado e troca num clique.
         """
-        combo = self.in_reset
+        combo = combo if combo is not None else self.in_reset
         combo.clear()
         combo.addItem("Nenhuma (sem reset de time)", "")
 
@@ -1172,6 +1275,17 @@ class AccountDialog(QDialog):
 
         self.ck_speed.setChecked(bc.usar_skill_de_velocidade)
         self._montar_lista_de_reset(bc.reset_nick)
+
+        # --- HH -----------------------------------------------------------
+        hh = st.hh
+        i = self.cb_hh_modo.findData(hh.modo_do_reset)
+        self.cb_hh_modo.setCurrentIndex(i if i >= 0 else 0)
+        self._montar_lista_de_reset(hh.reset_nick, self.in_hh_reset)
+        self.sp_hh_delay.setValue(int(round(hh.attack_delay * 1000)))
+        self.bar_hh_aoe.setValue(hh.aoe_until_mana_pct)
+        self.sp_hh_limpar.setValue(hh.limpar_mobs_a_cada)
+        self.sp_hh_slot.setValue(hh.vendor.sell_start_slot)
+        self.sp_hh_runs.setValue(hh.vendor.runs_before_selling)
 
         self.sp_runs.setValue(bc.vendor.runs_before_selling)
         self.sp_slot.setValue(bc.vendor.sell_start_slot)
@@ -1279,6 +1393,16 @@ class AccountDialog(QDialog):
         bc.aoe_until_mana_pct = self.bar_aoe_mana.value()
         bc.usar_skill_de_velocidade = self.ck_speed.isChecked()
         bc.reset_nick = (self.in_reset.currentData() or "").strip()
+
+        # --- HH -----------------------------------------------------------
+        hh = st.hh
+        hh.modo_do_reset = normalizar_modo_do_reset(self.cb_hh_modo.currentData())
+        hh.reset_nick = (self.in_hh_reset.currentData() or "").strip()
+        hh.attack_delay = self.sp_hh_delay.value() / 1000.0
+        hh.aoe_until_mana_pct = self.bar_hh_aoe.value()
+        hh.limpar_mobs_a_cada = self.sp_hh_limpar.value()
+        hh.vendor.sell_start_slot = self.sp_hh_slot.value()
+        hh.vendor.runs_before_selling = self.sp_hh_runs.value()
         bc.vendor.runs_before_selling = self.sp_runs.value()
         bc.vendor.sell_start_slot = self.sp_slot.value()
         bc.vendor.sell_clicks = self.cb_cliques.currentData() or 24

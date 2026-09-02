@@ -381,7 +381,20 @@ function renderContas() {
     const chkBC = document.createElement("input");
     chkBC.type = "checkbox"; chkBC.className = "chk";
     chkBC.dataset.acao = "bc"; chkBC.checked = c.bc_farm;
+    chkBC.title = "Bewitcher Cave: um boss por run.";
     tdBC.appendChild(chkBC);
+
+    // HH ao lado do BC: são duas caves, e trocar entre elas é o que se faz o
+    // tempo todo. Marcar as duas roda a HH -- o supervisor tem ordem fixa.
+    const tdHH = document.createElement("td");
+    tdHH.className = "ctr";
+    const chkHH = document.createElement("input");
+    chkHH.type = "checkbox"; chkHH.className = "chk";
+    chkHH.dataset.acao = "hh"; chkHH.checked = c.hh_farm;
+    chkHH.title = "HH (Black Wind Camp Dungeon): quatro bosses em sequência.\n"
+      + "Marcada junto com BC, roda a HH.\n"
+      + "A conta de reset fica em Editar conta > HH.";
+    tdHH.appendChild(chkHH);
 
     const tdAPP = document.createElement("td");
     tdAPP.className = "ctr";
@@ -397,7 +410,7 @@ function renderContas() {
     btnEdit.dataset.acao = "editar";
     tdEdit.appendChild(btnEdit);
 
-    [tdAlca, tdAtiva, tdLogin, tdSenha, tdPos, tdServ, tdBC, tdAPP, tdEdit]
+    [tdAlca, tdAtiva, tdLogin, tdSenha, tdPos, tdServ, tdBC, tdHH, tdAPP, tdEdit]
       .forEach((td) => tr.appendChild(td));
     frag.appendChild(tr);
   });
@@ -672,6 +685,11 @@ $("#corpo-contas").addEventListener("change", (e) => {
       toast(ligado ? "BC farm ligado" : "BC farm desligado");
       carregarContas();
     });
+  } else if (acao === "hh") {
+    chamar("alternar_hh", uid, ligado).then(() => {
+      toast(ligado ? "HH ligada" : "HH desligada");
+      carregarContas();
+    });
   } else if (acao === "app") {
     chamar("alternar_app", uid, ligado).then(() => {
       toast(ligado ? "Modo APP ligado" : "Modo APP desligado");
@@ -858,6 +876,19 @@ function preencherEditor(d) {
   // partir das OUTRAS contas, e `bc` só sabe de si mesmo. Tem que vir ANTES
   // de `preencherBC`, que é quem seleciona o valor gravado.
   montarListaDeReset(d.contas_de_reset || [], (d.bc && d.bc.reset_nick) || "");
+
+  // --- HH ---------------------------------------------------------------
+  // `reset_nick` da HH usa a MESMA lista de contas de reset da BC: a regra de
+  // quem pode resetar é a mesma (conta cadastrada neste bot).
+  const hh = d.hh || {};
+  $("#ed-hh-modo").value = hh.modo_do_reset || "solo";
+  $("#ed-hh-delay").value = Math.round((hh.attack_delay || 0.5) * 1000);
+  $("#ed-hh-aoe").value = hh.aoe_until_mana_pct ?? 30;
+  $("#ed-hh-limpar").value = hh.limpar_mobs_a_cada ?? 3;
+  $("#ed-hh-slot").value = (hh.vendor && hh.vendor.sell_start_slot) ?? 3;
+  $("#ed-hh-runs").value = (hh.vendor && hh.vendor.runs_before_selling) ?? 5;
+  montarListaDeReset(d.contas_de_reset || [], hh.reset_nick || "",
+                     "#ed-hh-reset");
   preencherBC(d.bc);
 
   const senhaForte = $("#ed-senha");
@@ -1037,8 +1068,12 @@ $("#corpo-app").addEventListener("input", atualizarPreviaApp);
  *      como problema, e continua SELECIONADO. Sumir com ele seria apagar a
  *      configuração de alguém sem avisar.
  */
-function montarListaDeReset(candidatas, atual) {
-  const sel = $("#ed-reset-nick");
+function montarListaDeReset(candidatas, atual, seletor) {
+  // `seletor` diz EM QUAL select montar. A BC e a HH usam a mesma lista de
+  // candidatas -- a regra de quem pode resetar é a mesma nas duas (conta
+  // cadastrada neste bot, para o bot saber que ela caiu) -- então a função é
+  // uma e o destino é parâmetro. O padrão é o campo da BC, que já existia.
+  const sel = $(seletor || "#ed-reset-nick");
   sel.innerHTML = "";
   const opcao = (texto, valor, ativa) => {
     const o = document.createElement("option");
@@ -1132,6 +1167,7 @@ function montarListaDoTime(candidatas, escolhidos) {
     // a run (teleporte gasto, boss vivo). Ver docs/INVARIANTES.md, "Time do APP".
     let motivo = "";
     if (c.farmando_bc) motivo = "farmando a cave";
+    else if (c.farmando_hh) motivo = "farmando a HH";
     else if (c.lider_de_outro) motivo = `já no time de ${c.lider_de_outro}`;
     if (motivo) {
       cx.checked = false;
@@ -1267,6 +1303,18 @@ function salvarEditor() {
         sell_start_slot: Number($("#ed-slot-venda").value),
         sell_clicks: Number($("#ed-cliques-venda").value),
         buy_return_charm: $("#ed-recomprar-charm").checked,
+      },
+    },
+    // A HH é um ecossistema próprio: bloco próprio, e não campos dentro do `bc`.
+    hh: {
+      modo_do_reset: $("#ed-hh-modo").value,
+      reset_nick: ($("#ed-hh-reset").value || "").trim(),
+      attack_delay: Number($("#ed-hh-delay").value || 500) / 1000,
+      aoe_until_mana_pct: Number($("#ed-hh-aoe").value || 30),
+      limpar_mobs_a_cada: Number($("#ed-hh-limpar").value || 0),
+      vendor: {
+        sell_start_slot: Number($("#ed-hh-slot").value || 3),
+        runs_before_selling: Number($("#ed-hh-runs").value || 5),
       },
     },
   };
@@ -2021,6 +2069,8 @@ function atualizarEstado(est) {
     if (!tr) return;
     const chkBC = tr.querySelector('input[data-acao="bc"]');
     if (chkBC && chkBC.checked !== !!c.farm) chkBC.checked = !!c.farm;
+    const chkHH = linha.querySelector('input[data-acao="hh"]');
+    if (chkHH && chkHH.checked !== !!c.farm_hh) chkHH.checked = !!c.farm_hh;
   });
 
   // Toggle "log detalhado": só existe no ambiente dev (`BLAZES_MODO=dev`). Em

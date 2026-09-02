@@ -19,10 +19,18 @@ import pytest
 RAIZ = Path(__file__).resolve().parents[1]
 HTML = (RAIZ / "web" / "index.html").read_text(encoding="utf-8")
 
-# O ÚNICO campo que aceita 0, e o 0 ali é um MODO: "nunca apagar o lixo".
-# Apagar item não tem desfazer, então tirar essa saída seria pior que a
-# inconsistência. Decisão do usuário em 26/08/2026.
-EXCECAO_QUE_ACEITA_ZERO = "ed-app-limpar"
+# Os campos que aceitam 0, e em TODOS eles o 0 é um MODO -- nunca um zero por
+# descuido. Cada um tem que aparecer aqui com o motivo, e é essa exigência que
+# faz a exceção ser decisão em vez de esquecimento.
+EXCECOES_QUE_ACEITAM_ZERO = {
+    # "nunca apagar o lixo". Apagar item não tem desfazer, então tirar essa
+    # saída seria pior que a inconsistência. Decisão do usuário em 26/08/2026.
+    "ed-app-limpar",
+    # "não limpar os mobs do caminho" na HH. A limpeza só acontece A PÉ, e
+    # atravessar a cave montado é a forma normal -- montado o personagem não
+    # para. Quem monta não quer o passo, e 1 seria parar a cada waypoint.
+    "ed-hh-limpar",
+}
 
 
 def _campos_numericos() -> list[tuple[str, dict[str, str]]]:
@@ -49,10 +57,10 @@ def test_todo_campo_numerico_declara_min_e_step(campo: str, attrs: dict):
 
 @pytest.mark.parametrize("campo, attrs", _campos_numericos())
 def test_nenhum_campo_aceita_zero(campo: str, attrs: dict):
-    """Mínimo 1, ou 100 se for tempo. Uma exceção, e ela é declarada."""
+    """Mínimo 1, ou 100 se for tempo. As exceções são declaradas e explicadas."""
     minimo = float(attrs["min"])
-    if campo == EXCECAO_QUE_ACEITA_ZERO:
-        assert minimo == 0, "a exceção existe para o modo 'nunca apagar'"
+    if campo in EXCECOES_QUE_ACEITAM_ZERO:
+        assert minimo == 0, f"{campo} está na lista de exceções mas não aceita 0"
         return
     assert minimo >= 1, f"{campo} aceita {minimo}"
 
