@@ -122,7 +122,7 @@ class MorteDoAlvo:
     PECA COMPARTILHADA -- DEPENDENCIA CRUZADA BC <-> APP
     =========================================================================
 
-    **Quem usa:** `bot/bc/combat.py` (`CombatEngine._alvo_morreu_pela_memoria`)
+    **Quem usa:** `bot/combate.py` (`CombatEngine._alvo_morreu_pela_memoria`)
     e `bot/app/executor.py` (`ExecutorDeMacro._alvo_morreu` /
     `_cortar_a_volta`). Mexer aqui mexe nos DOIS -- rode a suite inteira.
 

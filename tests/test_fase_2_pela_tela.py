@@ -44,7 +44,7 @@ import cv2
 import numpy as np
 import pytest
 
-from blazesbot.bot.bc import combat
+from blazesbot.bot import combate as motor_de_combate
 from blazesbot.bot.bc.combat import CombatEngine
 from blazesbot.core import vision
 
@@ -329,8 +329,8 @@ def _motor(monkeypatch, modelo, quadro, break_soul="4"):
                             warning=lambda *a, **k: None,
                             error=lambda *a, **k: None),
     )
-    monkeypatch.setattr(combat.vision, "capture_window", lambda _h: quadro)
-    monkeypatch.setattr(combat.vision, "frame_is_blank", lambda _q: False)
+    monkeypatch.setattr(motor_de_combate.vision, "capture_window", lambda _h: quadro)
+    monkeypatch.setattr(motor_de_combate.vision, "frame_is_blank", lambda _q: False)
 
     motor = CombatEngine.__new__(CombatEngine)
     motor.ctx = ctx
@@ -368,7 +368,7 @@ def test_a_bandeira_NUNCA_baixa_quando_o_amarelo_acaba(monkeypatch, modelo):
     assert motor._na_segunda_fase_do_boss is True
 
     # o amarelo terminou; agora a tela é a barra vermelha de sempre
-    monkeypatch.setattr(combat.vision, "capture_window",
+    monkeypatch.setattr(motor_de_combate.vision, "capture_window",
                         lambda _h: _quadro_com(_fase_1_sintetica(modelo)))
     motor._conferir_fase_2_na_tela()
 
@@ -380,7 +380,7 @@ def test_com_a_bandeira_LEVANTADA_nem_captura_a_tela(monkeypatch, modelo):
     não há mais nada a descobrir, e a captura para de acontecer."""
     capturas = []
     motor = _motor(monkeypatch, modelo, _quadro_com(modelo))
-    monkeypatch.setattr(combat.vision, "capture_window",
+    monkeypatch.setattr(motor_de_combate.vision, "capture_window",
                         lambda h: capturas.append(h) or _quadro_com(modelo))
     motor._na_segunda_fase_do_boss = True
 
@@ -396,13 +396,13 @@ def test_pede_o_modelo_EM_COR_e_nunca_em_cinza(monkeypatch, modelo):
     motor = _motor(monkeypatch, modelo, _quadro_com(modelo))
     motor._conferir_fase_2_na_tela()
 
-    assert motor.ctx.templates.pedidos_em_cor == [combat.TEMPLATE_FASE_2_DO_BOSS]
+    assert motor.ctx.templates.pedidos_em_cor == [motor_de_combate.TEMPLATE_FASE_2_DO_BOSS]
     assert motor.ctx.templates.pedidos_em_cinza == []
 
 
 def test_captura_que_falha_nao_derruba_a_luta(monkeypatch, modelo):
     motor = _motor(monkeypatch, modelo, _quadro_com(modelo))
-    monkeypatch.setattr(combat.vision, "capture_window",
+    monkeypatch.setattr(motor_de_combate.vision, "capture_window",
                         lambda _h: (_ for _ in ()).throw(RuntimeError("boom")))
 
     motor._conferir_fase_2_na_tela()          # não levanta
@@ -411,10 +411,10 @@ def test_captura_que_falha_nao_derruba_a_luta(monkeypatch, modelo):
 
 
 def test_desligado_nao_le_a_tela(monkeypatch, modelo):
-    monkeypatch.setattr(combat, "USAR_IMAGEM_DA_FASE_2", False)
+    monkeypatch.setattr(motor_de_combate, "USAR_IMAGEM_DA_FASE_2", False)
     capturas = []
     motor = _motor(monkeypatch, modelo, _quadro_com(modelo))
-    monkeypatch.setattr(combat.vision, "capture_window",
+    monkeypatch.setattr(motor_de_combate.vision, "capture_window",
                         lambda h: capturas.append(h) or _quadro_com(modelo))
 
     motor._conferir_fase_2_na_tela()

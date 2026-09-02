@@ -454,7 +454,7 @@ Cada item é o que **não pode ser violado**. O detalhe de cada área mora em
   - **`False` NÃO encerra nada:** o portão da montaria continua insistindo e
     chama de novo. O teto limita quanto tempo o bot passa BATENDO, não quanto
     insiste em montar.
-  - **AQUI o Cemetery Guard APANHA** (`DESTRAVAMENTO_BATE_NO_CEMETERY_GUARD`).
+  - **AQUI o Cemetery Guard APANHA** (`DESTRAVAMENTO_BATE_NO_ALVO_PROIBIDO`).
     A trava abaixo existe para EVITAR puxá-lo; se o destravamento está rodando é
     porque o ESC e a espera já falharam — e foi essa espera que produziu os 24
     minutos. Sai WARNING e registro no diário. **Fora do destravamento a trava
@@ -462,9 +462,9 @@ Cada item é o que **não pode ser violado**. O detalhe de cada área mora em
   - **Manutenção (poção/cura) roda DENTRO**, a cada 1 s, e morte do personagem
     encerra a rodada. O portão da montaria não tinha nenhuma das duas.
 - **NOS GUARDAS, SÓ O CEMETERY GUARD PARA O GOLPE** (26/08,
-  `SO_O_CEMETERY_GUARD_PARA_O_GOLPE_NOS_GUARDAS`): outro nome não para nada —
+  `SO_O_ALVO_PROIBIDO_PARA_O_GOLPE`): outro nome não para nada —
   rotaciona skill **até sair de batalha**. Cemetery Guard na mira ⇒ ESC (uma
-  vez) e espera a saída, por UMA porta (`_travar_no_cemetery_guard`) que serve
+  vez) e espera a saída, por UMA porta (`_travar_no_alvo_proibido`) que serve
   memória e tela. E o teto de TAB não barra a troca com a flag ALTA
   (`TAB_ATE_SAIR_DE_COMBATE_NOS_GUARDAS`): TAB em cadáver era a outra porta do
   mesmo defeito. O portão de nome segue LIGADO (`USAR_PORTAO_DE_NOME`, ~3

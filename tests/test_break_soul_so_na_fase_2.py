@@ -31,7 +31,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from blazesbot.bot.bc import combat
+from blazesbot.bot import combate as motor_de_combate
 from blazesbot.bot.bc.combat import CombatEngine
 
 BREAK_SOUL = "R"
@@ -105,7 +105,7 @@ def test_sem_tecla_configurada_nada_acontece_na_fase_2():
 
 def test_o_interruptor_devolve_o_comportamento_antigo(monkeypatch):
     """Reverter é trocar uma palavra, não ligar código não testado."""
-    monkeypatch.setattr(combat, "USAR_BREAK_SOUL_SO_NA_FASE_2", False)
+    monkeypatch.setattr(motor_de_combate, "USAR_BREAK_SOUL_SO_NA_FASE_2", False)
 
     motor = _motor()
     assert BREAK_SOUL in motor._rotacao_de_ataque(_estado(), usar_aoe=True), (

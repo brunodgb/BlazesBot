@@ -220,9 +220,9 @@ def test_sem_entidade_o_veredito_e_ILEGIVEL_e_isso_e_NAO_SEI():
 def test_o_portao_de_nome_esta_LIGADO():
     """Ele foi aposentado por falta de fonte de nome -- 14/14 lutas gritando
     `ilegivel` sem decidir nada. A fonte apareceu."""
-    from blazesbot.bot.bc import combat
+    from blazesbot.bot import combate as motor_de_combate
 
-    assert combat.USAR_PORTAO_DE_NOME is True
+    assert motor_de_combate.USAR_PORTAO_DE_NOME is True
 
 
 # ===========================================================================
@@ -290,12 +290,16 @@ def test_existem_exatamente_DOIS_lugares_que_apertam_a_tecla_de_alvo():
     import ast
     from pathlib import Path
 
-    caminho = (Path(__file__).resolve().parent.parent
-               / "blazesbot" / "bot" / "bc" / "combat.py")
-    fonte = ast.parse(caminho.read_text(encoding="utf-8"))
-
-    linhas = [n.lineno for n in ast.walk(fonte)
-              if isinstance(n, ast.Attribute) and n.attr == "next_target"]
+    # OS DOIS MORAM EM ARQUIVOS DIFERENTES desde 01/09/2026: `_trocar_de_alvo`
+    # é do MOTOR (trocar de alvo por morte é do jogo, não da cave) e
+    # `_fase_boss` é do ROTEIRO da Bewitcher Cave. A conta continua sendo DOIS
+    # -- é o total que importa, não onde cada um está.
+    raiz = Path(__file__).resolve().parent.parent / "blazesbot" / "bot"
+    linhas = []
+    for caminho in (raiz / "combate.py", raiz / "bc" / "combat.py"):
+        fonte = ast.parse(caminho.read_text(encoding="utf-8"))
+        linhas += [f"{caminho.name}:{n.lineno}" for n in ast.walk(fonte)
+                   if isinstance(n, ast.Attribute) and n.attr == "next_target"]
 
     assert len(linhas) == 2, (
         f"o número de TABs mudou: {len(linhas)} em {linhas}. Todo TAB novo "
@@ -340,9 +344,9 @@ def test_o_TAB_por_morte_so_sai_com_morreu_True():
 
 
 def test_so_a_memoria_declara_morte_esta_LIGADO():
-    from blazesbot.bot.bc import combat
+    from blazesbot.bot import combate as motor_de_combate
 
-    assert combat.SO_A_MEMORIA_DECLARA_MORTE is True
+    assert motor_de_combate.SO_A_MEMORIA_DECLARA_MORTE is True
 
 
 # ===========================================================================

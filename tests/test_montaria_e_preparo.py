@@ -21,8 +21,9 @@ from types import SimpleNamespace
 
 import pytest
 
+from blazesbot.bot import combate as motor_de_combate
 from blazesbot.bot import navegacao as navigation
-from blazesbot.bot.bc import combat
+from blazesbot.bot.bc import mapa_bc
 from blazesbot.bot.bc.combat import CombatEngine
 from blazesbot.core.pet import PetFeeder
 
@@ -171,7 +172,7 @@ def _motor(montado=True, pet_ativo=True, fora_da_cave=True, linhas=None):
 def test_fora_da_cave_com_pet_ativo_NAO_desmonta(monkeypatch):
     """O sintoma relatado: em Stone City, indo ao vendedor e à Fay, o bot descia
     da montaria no meio do caminho."""
-    monkeypatch.setattr(combat.mapa_bc, "posicao_esta_fora_da_cave",
+    monkeypatch.setattr(mapa_bc, "posicao_esta_fora_da_cave",
                         lambda _pos: True)
     motor = _motor(pet_ativo=True)
 
@@ -182,7 +183,7 @@ def test_fora_da_cave_com_pet_ativo_NAO_desmonta(monkeypatch):
 def test_fora_da_cave_com_pet_INATIVO_desmonta(monkeypatch):
     """A exceção certa: entrar sem pet obriga a invocar lá dentro, parado no
     trem de mobs."""
-    monkeypatch.setattr(combat.mapa_bc, "posicao_esta_fora_da_cave",
+    monkeypatch.setattr(mapa_bc, "posicao_esta_fora_da_cave",
                         lambda _pos: True)
     motor = _motor(pet_ativo=False)
 
@@ -192,7 +193,7 @@ def test_fora_da_cave_com_pet_INATIVO_desmonta(monkeypatch):
 
 def test_DENTRO_da_cave_desmonta_normalmente(monkeypatch):
     """A regra é só para fora. Dentro, curar exige estar a pé."""
-    monkeypatch.setattr(combat.mapa_bc, "posicao_esta_fora_da_cave",
+    monkeypatch.setattr(mapa_bc, "posicao_esta_fora_da_cave",
                         lambda _pos: False)
     motor = _motor(pet_ativo=True)
 
@@ -203,7 +204,7 @@ def test_DENTRO_da_cave_desmonta_normalmente(monkeypatch):
 def test_sem_saber_onde_esta_a_acao_PASSA(monkeypatch):
     """"Não sei" não bloqueia: não curar dentro da cave mata o personagem, e um
     desmonte a mais fora dela custa segundos."""
-    monkeypatch.setattr(combat.mapa_bc, "posicao_esta_fora_da_cave",
+    monkeypatch.setattr(mapa_bc, "posicao_esta_fora_da_cave",
                         lambda _pos: False)          # é o que ela devolve sem leitura
     motor = _motor(pet_ativo=True)
 
@@ -211,8 +212,8 @@ def test_sem_saber_onde_esta_a_acao_PASSA(monkeypatch):
 
 
 def test_o_interruptor_devolve_o_comportamento_antigo(monkeypatch):
-    monkeypatch.setattr(combat, "DESMONTAR_FORA_DA_CAVE_SO_SEM_PET", False)
-    monkeypatch.setattr(combat.mapa_bc, "posicao_esta_fora_da_cave",
+    monkeypatch.setattr(motor_de_combate, "DESMONTAR_FORA_DA_CAVE_SO_SEM_PET", False)
+    monkeypatch.setattr(mapa_bc, "posicao_esta_fora_da_cave",
                         lambda _pos: True)
     motor = _motor(pet_ativo=True)
 

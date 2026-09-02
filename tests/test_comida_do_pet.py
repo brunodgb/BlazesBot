@@ -41,6 +41,7 @@ from types import SimpleNamespace
 
 import pytest
 
+from blazesbot.bot import combate as motor_de_combate
 from blazesbot.bot import hotbar
 from blazesbot.bot.app import executor as app_mod
 from blazesbot.bot.bc import combat as combat_mod
@@ -342,7 +343,7 @@ def test_tecla_recusada_pelo_input_NAO_avanca_a_grade_no_BC(
     monkeypatch.setattr(time, "time", lambda: 2000.0)
     motor = _motor_bc()
     motor.ctx.press = lambda _k: False
-    monkeypatch.setattr(combat_mod.diario, "registrar_evento",
+    monkeypatch.setattr(motor_de_combate.diario, "registrar_evento",
                         lambda *a, **k: None)
 
     assert motor.feed_pet() is False

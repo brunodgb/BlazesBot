@@ -24,6 +24,7 @@ Os interruptores são exercitados LIGADOS, como manda a regra da casa.
 """
 import pytest
 
+from blazesbot.bot import combate as motor_de_combate
 from blazesbot.bot import navegacao as navigation
 from blazesbot.bot.bc import combat
 
@@ -153,8 +154,8 @@ def _motor(monkeypatch, relogio, mundo, *, nomes=("Gun Witch",)):
     motor.ctx = ctx
     motor._ultimos_nomes_do_alvo = []
 
-    monkeypatch.setattr(combat.time, "time", lambda: relogio.agora)
-    monkeypatch.setattr(combat.diario, "registrar_evento",
+    monkeypatch.setattr(motor_de_combate.time, "time", lambda: relogio.agora)
+    monkeypatch.setattr(motor_de_combate.diario, "registrar_evento",
                         lambda *a, **kw: None)
     monkeypatch.setattr(combat.CombatEngine, "_descer_para_lutar",
                         lambda self, o_que: True)
@@ -195,9 +196,9 @@ def _motor(monkeypatch, relogio, mundo, *, nomes=("Gun Witch",)):
 # ---------------------------------------------------------------------------
 
 def test_os_interruptores_estao_ligados():
-    assert combat.DESTRAVAMENTO_BATE_NO_CEMETERY_GUARD is True
-    assert combat.TETO_DO_DESTRAVAMENTO == 60.0
-    assert combat.ESPERA_APOS_A_MORTE_ANTES_DO_TAB == 3.0
+    assert motor_de_combate.DESTRAVAMENTO_BATE_NO_ALVO_PROIBIDO is True
+    assert motor_de_combate.TETO_DO_DESTRAVAMENTO == 60.0
+    assert motor_de_combate.ESPERA_APOS_A_MORTE_ANTES_DO_TAB == 3.0
     assert navigation.CICLOS_ANTES_DE_DESTRAVAR == 2
 
 
@@ -226,7 +227,7 @@ def test_flag_ilegivel_nao_conta_como_fora_de_batalha(monkeypatch):
                         lambda self: None)
 
     assert motor.limpar_o_combate("ir até o boss") is False
-    assert relogio.agora >= combat.TETO_DO_DESTRAVAMENTO
+    assert relogio.agora >= motor_de_combate.TETO_DO_DESTRAVAMENTO
 
 
 # ---------------------------------------------------------------------------
@@ -278,9 +279,9 @@ def test_a_pausa_nao_gasta_TAB_antes_dos_3_segundos(monkeypatch):
     assert motor.limpar_o_combate("ir até o boss") is True
     # Saiu pela confirmação (2,5 s), não pelo prazo da pausa (3,0 s), e sem TAB.
     gasto = relogio.agora - momento_da_morte[0]
-    assert combat.CONFIRMACAO_DE_SAIDA_DE_COMBATE <= gasto < (
-        combat.ESPERA_APOS_A_MORTE_ANTES_DO_TAB
-        + combat.CONFIRMACAO_DE_SAIDA_DE_COMBATE)
+    assert motor_de_combate.CONFIRMACAO_DE_SAIDA_DE_COMBATE <= gasto < (
+        motor_de_combate.ESPERA_APOS_A_MORTE_ANTES_DO_TAB
+        + motor_de_combate.CONFIRMACAO_DE_SAIDA_DE_COMBATE)
     assert ctx.teclas.count("tab") == 0
 
 
@@ -324,7 +325,7 @@ def test_o_destravamento_bate_no_cemetery_guard(monkeypatch):
     motor, _ = _motor(monkeypatch, relogio, mundo,
                       nomes=(combat.NOME_DO_CEMETERY_GUARD,))
     motor._avisou_o_guarda_no_destravamento = False
-    motor._cemetery_guard_encontrado = False
+    motor._alvo_proibido_encontrado = False
 
     assert motor._pode_bater_no_destravamento() is True
 
@@ -334,8 +335,8 @@ def test_com_o_interruptor_desligado_o_guarda_continua_intocado(monkeypatch):
     mundo = _Mundo(relogio, [2])
     motor, ctx = _motor(monkeypatch, relogio, mundo,
                         nomes=(combat.NOME_DO_CEMETERY_GUARD,))
-    motor._cemetery_guard_encontrado = False
-    monkeypatch.setattr(combat, "DESTRAVAMENTO_BATE_NO_CEMETERY_GUARD", False)
+    motor._alvo_proibido_encontrado = False
+    monkeypatch.setattr(motor_de_combate, "DESTRAVAMENTO_BATE_NO_ALVO_PROIBIDO", False)
 
     assert motor._pode_bater_no_destravamento() is False
     assert "esc" in ctx.teclas
@@ -345,7 +346,7 @@ def test_gun_witch_na_mira_apanha_sem_pergunta(monkeypatch):
     relogio = _Relogio()
     mundo = _Mundo(relogio, [2])
     motor, _ = _motor(monkeypatch, relogio, mundo, nomes=("Gun Witch",))
-    motor._cemetery_guard_encontrado = False
+    motor._alvo_proibido_encontrado = False
 
     assert motor._pode_bater_no_destravamento() is True
 
@@ -366,10 +367,10 @@ def test_o_teto_e_de_um_minuto_e_devolve_False(monkeypatch):
     motor, _ = _motor(monkeypatch, relogio, mundo)
 
     assert motor.limpar_o_combate("ir até o boss") is False
-    assert relogio.agora >= combat.TETO_DO_DESTRAVAMENTO
+    assert relogio.agora >= motor_de_combate.TETO_DO_DESTRAVAMENTO
     # "No máximo atrasar 1 minuto": o teto vale de verdade, e o que passa dele
     # é só a última pausa. Medido nesta simulação: 63,1 s. Contra 1465 s no log.
-    assert relogio.agora < combat.TETO_DO_DESTRAVAMENTO + 10.0
+    assert relogio.agora < motor_de_combate.TETO_DO_DESTRAVAMENTO + 10.0
 
 
 def test_morrer_no_meio_do_destravamento_encerra_a_rodada(monkeypatch):
@@ -381,7 +382,7 @@ def test_morrer_no_meio_do_destravamento_encerra_a_rodada(monkeypatch):
     assert motor.limpar_o_combate("ir até o boss") is False
     # Não ficou girando a rotação contra o nada com o personagem morto: cada
     # rodada sai na primeira manutenção.
-    assert relogio.agora < 2 * combat.TETO_DO_DESTRAVAMENTO
+    assert relogio.agora < 2 * motor_de_combate.TETO_DO_DESTRAVAMENTO
 
 
 # ===========================================================================

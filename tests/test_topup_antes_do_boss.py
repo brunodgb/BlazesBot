@@ -36,7 +36,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from blazesbot.bot.bc import combat
+from blazesbot.bot import combate as motor_de_combate
 from blazesbot.bot.bc.combat import CombatEngine
 
 TECLA_DA_POCAO = "9"
@@ -121,7 +121,7 @@ def _motor(monkeypatch, cliente, relogio):
     motor = CombatEngine.__new__(CombatEngine)
     motor.ctx = cliente
     motor._precisou_de_pocao_antes_do_boss = False
-    monkeypatch.setattr(combat.time, "time", relogio)
+    monkeypatch.setattr(motor_de_combate.time, "time", relogio)
     return motor
 
 
@@ -153,9 +153,9 @@ def test_a_espera_nunca_sai_CURTA(monkeypatch):
     assert len(cliente.pocoes) >= 2, "precisa de mais de uma poção no cenário"
     entre_pocoes = [b - a for a, b in zip(cliente.pocoes, cliente.pocoes[1:])]
     for gasto in entre_pocoes:
-        assert gasto >= combat.SEGUNDOS_DA_POCAO_DE_VIDA, (
+        assert gasto >= motor_de_combate.SEGUNDOS_DA_POCAO_DE_VIDA, (
             f"esperou {gasto:.2f}s entre poções, e a poção dura "
-            f"{combat.SEGUNDOS_DA_POCAO_DE_VIDA}s -- a espera saiu curta"
+            f"{motor_de_combate.SEGUNDOS_DA_POCAO_DE_VIDA}s -- a espera saiu curta"
         )
 
 
@@ -171,7 +171,7 @@ def test_sai_CEDO_quando_a_vida_enche(monkeypatch):
     gasto = relogio.agora - inicio
 
     assert cliente.hp_pct == 100.0
-    assert gasto < combat.SEGUNDOS_DA_POCAO_DE_VIDA, (
+    assert gasto < motor_de_combate.SEGUNDOS_DA_POCAO_DE_VIDA, (
         f"gastou {gasto:.2f}s depois de a vida encher; devia sair na hora"
     )
 
@@ -224,7 +224,7 @@ def test_uma_de_cada_vez(monkeypatch):
                         max_heal_seconds=40)
 
     for a, b in zip(cliente.pocoes, cliente.pocoes[1:]):
-        assert b - a >= combat.SEGUNDOS_DA_POCAO_DE_VIDA
+        assert b - a >= motor_de_combate.SEGUNDOS_DA_POCAO_DE_VIDA
 
 
 def test_o_teto_impede_prender_a_run(monkeypatch):
@@ -239,7 +239,7 @@ def test_o_teto_impede_prender_a_run(monkeypatch):
     motor._beber_ate_encher(TECLA_DA_POCAO, 20.0)
     gasto = relogio.agora - inicio
 
-    assert gasto < 45 + combat.SEGUNDOS_DA_POCAO_DE_VIDA + 5
+    assert gasto < 45 + motor_de_combate.SEGUNDOS_DA_POCAO_DE_VIDA + 5
     assert cliente.hp_pct == 20.0
 
 
@@ -289,7 +289,7 @@ def _motor_com_conta(precisou):
 def test_precisou_de_pocao_e_morreu_DESLIGA_o_bc(monkeypatch):
     """Regra do usuário: morrer depois de ter precisado de poção aponta falta de
     item essencial, e uma conta sem poção não termina run nenhuma."""
-    monkeypatch.setattr(combat.diario, "registrar_evento",
+    monkeypatch.setattr(motor_de_combate.diario, "registrar_evento",
                         lambda *a, **k: None)
     motor, conta, salvou = _motor_com_conta(precisou=True)
 
@@ -301,7 +301,7 @@ def test_precisou_de_pocao_e_morreu_DESLIGA_o_bc(monkeypatch):
 
 def test_morreu_SEM_ter_precisado_de_pocao_nao_desliga(monkeypatch):
     """Morte pode ter mil causas. Só a que aponta ESTOQUE para a conta."""
-    monkeypatch.setattr(combat.diario, "registrar_evento",
+    monkeypatch.setattr(motor_de_combate.diario, "registrar_evento",
                         lambda *a, **k: None)
     motor, conta, salvou = _motor_com_conta(precisou=False)
 
@@ -312,7 +312,7 @@ def test_morreu_SEM_ter_precisado_de_pocao_nao_desliga(monkeypatch):
 
 
 def test_falha_ao_salvar_nao_derruba_a_parada(monkeypatch):
-    monkeypatch.setattr(combat.diario, "registrar_evento",
+    monkeypatch.setattr(motor_de_combate.diario, "registrar_evento",
                         lambda *a, **k: None)
     motor, conta, _ = _motor_com_conta(precisou=True)
     motor.ctx.config.save = lambda: (_ for _ in ()).throw(OSError("disco"))
@@ -325,7 +325,7 @@ def test_falha_ao_salvar_nao_derruba_a_parada(monkeypatch):
 def test_o_alvo_e_vida_CHEIA():
     """100%, e é decisão do usuário: "depende de estar full vida para começar a
     luta contra o boss"."""
-    assert combat.ALVO_DO_TOPUP_ANTES_DO_BOSS == 100.0
+    assert motor_de_combate.ALVO_DO_TOPUP_ANTES_DO_BOSS == 100.0
 
 
 if __name__ == "__main__":

@@ -30,7 +30,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from blazesbot.bot.bc import combat
+from blazesbot.bot import combate as motor_de_combate
 from blazesbot.bot.bc.combat import CombatEngine
 
 TECLA_DE_CURA = "E"
@@ -99,7 +99,7 @@ class ClienteFalso:
 
     @property
     def efes1(self) -> int:
-        return self.apertos.count(combat.TECLA_AUTO_SELECAO)
+        return self.apertos.count(motor_de_combate.TECLA_AUTO_SELECAO)
 
 
 def _motor(cliente) -> CombatEngine:
@@ -130,7 +130,7 @@ def test_em_batalha_nunca_aperta_F1():
     cliente = ClienteFalso(hp_pct=10.0)
     _motor(cliente).maintain(_estado(10.0), em_luta=True)
 
-    assert combat.TECLA_AUTO_SELECAO not in cliente.apertos, (
+    assert motor_de_combate.TECLA_AUTO_SELECAO not in cliente.apertos, (
         "F1 em batalha troca o alvo para o próprio personagem e o bot bate no vazio"
     )
 
@@ -237,8 +237,8 @@ def test_desiste_depois_de_tres_conjuracoes_sem_efeito():
     cliente = ClienteFalso(hp_pct=50.0, ticks_ate_curar=None)
     assert _motor(cliente).curar_com_skill(85.0) is False
 
-    assert cliente.curas == combat.TENTATIVAS_SEM_EFEITO, (
-        f"apertou {cliente.curas} vezes, o teto é {combat.TENTATIVAS_SEM_EFEITO}"
+    assert cliente.curas == motor_de_combate.TENTATIVAS_SEM_EFEITO, (
+        f"apertou {cliente.curas} vezes, o teto é {motor_de_combate.TENTATIVAS_SEM_EFEITO}"
     )
 
 
@@ -277,7 +277,7 @@ def test_sem_leitura_de_hp_devolve_false():
 
 def test_modo_pocao_devolve_o_comportamento_antigo(monkeypatch):
     """Reverter tem que ser trocar uma palavra, não ligar código não testado."""
-    monkeypatch.setattr(combat, "MODO_DE_CURA", "pocao")
+    monkeypatch.setattr(motor_de_combate, "MODO_DE_CURA", "pocao")
 
     cliente = ClienteFalso(hp_pct=10.0)
     _motor(cliente).maintain(_estado(10.0), em_luta=True)
@@ -290,7 +290,7 @@ def test_modo_pocao_devolve_o_comportamento_antigo(monkeypatch):
 
 
 def test_modo_pocao_desliga_o_laco(monkeypatch):
-    monkeypatch.setattr(combat, "MODO_DE_CURA", "pocao")
+    monkeypatch.setattr(motor_de_combate, "MODO_DE_CURA", "pocao")
 
     cliente = ClienteFalso(hp_pct=50.0)
     assert _motor(cliente).curar_com_skill(85.0) is False
@@ -304,17 +304,17 @@ def test_modo_pocao_desliga_o_laco(monkeypatch):
 def test_a_conjuracao_e_a_informada_pelo_usuario():
     """1,6 s veio do usuário em 19/08/2026. Mudar sem medir de novo desfaz a
     única coisa medida deste conjunto."""
-    assert combat.SEGUNDOS_DE_CONJURACAO_DA_CURA == 1.6
+    assert motor_de_combate.SEGUNDOS_DE_CONJURACAO_DA_CURA == 1.6
 
 
 def test_conferir_e_mais_rapido_que_conjurar():
     """Se a conferência ficasse maior que a conjuração, a saída antecipada
     deixaria de existir e o laço voltaria a ser espera cega."""
-    assert combat.INTERVALO_DE_CONFERENCIA < combat.SEGUNDOS_DE_CONJURACAO_DA_CURA
+    assert motor_de_combate.INTERVALO_DE_CONFERENCIA < motor_de_combate.SEGUNDOS_DE_CONJURACAO_DA_CURA
 
 
 def test_a_margem_da_conjuracao_e_positiva():
-    assert combat.MARGEM_DA_CONJURACAO > 0
+    assert motor_de_combate.MARGEM_DA_CONJURACAO > 0
 
 
 if __name__ == "__main__":

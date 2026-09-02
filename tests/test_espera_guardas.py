@@ -6,6 +6,7 @@ boss é sempre melhor que bloquear a run por 30 s (o prazo anterior).
 
 Testa que `esperar_entrar_em_combate("guardas")` desiste em 5 s, não em 30.
 """
+from blazesbot.bot import combate as motor_de_combate
 from blazesbot.bot.bc import combat
 
 
@@ -48,7 +49,7 @@ class _Stopwatch:
 
 
 def test_constante_guardas_e_5seg():
-    assert combat.ESPERA_ENTRAR_EM_COMBATE_GUARDAS == 5.0
+    assert motor_de_combate.ESPERA_ENTRAR_EM_COMBATE_GUARDAS == 5.0
 
 
 def test_guardas_usa_timeout_de_5s_nao_30s(monkeypatch):
@@ -66,7 +67,7 @@ def test_guardas_usa_timeout_de_5s_nao_30s(monkeypatch):
         combat.CombatEngine, "_ler_flag_de_combate", lambda self: False)
 
     # Mocka time.time para o relógio acelerado.
-    monkeypatch.setattr(combat.time, "time", lambda: relogio.now)
+    monkeypatch.setattr(motor_de_combate.time, "time", lambda: relogio.now)
 
     # Mocka ctx.tick para avançar o relógio virtual.
     def _tick(seconds):
@@ -82,13 +83,13 @@ def test_guardas_usa_timeout_de_5s_nao_30s(monkeypatch):
     # Testa o comportamento com limite de 5s diretamente:
     inicio = relogio.now
     ok = motor.esperar_entrar_em_combate(
-        "guardas", limite=combat.ESPERA_ENTRAR_EM_COMBATE_GUARDAS)
+        "guardas", limite=motor_de_combate.ESPERA_ENTRAR_EM_COMBATE_GUARDAS)
     fim = relogio.now
 
     assert ok is False
     # Avançou pelo menos 5 s de relógio virtual.
-    assert fim - inicio >= combat.ESPERA_ENTRAR_EM_COMBATE_GUARDAS
+    assert fim - inicio >= motor_de_combate.ESPERA_ENTRAR_EM_COMBATE_GUARDAS
     # E NÃO atingiu os 30 s — se estourasse, o padrão estaria vazando.
     # Small epsilon for floating point precision
     epsilon = 0.1
-    assert fim - inicio < combat.ESPERA_PARA_ENTRAR_EM_COMBATE + epsilon
+    assert fim - inicio < motor_de_combate.ESPERA_PARA_ENTRAR_EM_COMBATE + epsilon

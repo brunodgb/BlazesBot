@@ -338,11 +338,14 @@ def test_a_trava_por_IDENTIDADE_e_uma_so_para_os_dois():
 
 def test_os_DOIS_ecossistemas_usam_a_MESMA_peca():
     """O teste que a diretiva pede: rastreabilidade entre os dois ambientes."""
-    bc = _fonte("blazesbot/bot/bc/combat.py")
+    # O motor de combate saiu de `bc/` para `bot/` em 01/09/2026 e passou a
+    # servir os dois ecossistemas de cave -- a peça compartilhada com o APP
+    # continua sendo a mesma, e agora tem três usuários em vez de dois.
+    motor = _fonte("blazesbot/bot/combate.py")
     app = _fonte("blazesbot/bot/app/executor.py")
 
-    for arquivo, fonte in (("bc/combat.py", bc), ("app/executor.py", app)):
-        assert "from ...core.target_hybrid import" in fonte, arquivo
+    for arquivo, fonte in (("bot/combate.py", motor), ("app/executor.py", app)):
+        assert "core.target_hybrid import" in fonte, arquivo
         assert "MorteDoAlvo" in fonte, arquivo
         assert "self._morte_do_alvo = MorteDoAlvo()" in fonte, arquivo
 
@@ -350,7 +353,7 @@ def test_os_DOIS_ecossistemas_usam_a_MESMA_peca():
 def test_NENHUM_dos_dois_reimplementa_a_trava():
     """A duplicata que esta peça desfez: os dois tinham o mesmo atributo, a
     mesma regra e o mesmo comentário explicando que a trava é por identidade."""
-    for caminho in ("blazesbot/bot/bc/combat.py",
+    for caminho in ("blazesbot/bot/combate.py",
                     "blazesbot/bot/app/executor.py"):
         fonte = _fonte(caminho)
         assert "_ultimo_alvo_morto_id: int | None = None" not in fonte, caminho
@@ -363,11 +366,11 @@ def test_o_reuso_esta_DOCUMENTADO_como_dependencia_cruzada():
     core = _fonte("blazesbot/core/target_hybrid.py")
 
     assert "DEPENDENCIA CRUZADA" in core
-    assert "bot/bc/combat.py" in core, "não diz QUEM usa"
+    assert "bot/combate.py" in core, "não diz QUEM usa"
     assert "bot/app/executor.py" in core, "não diz QUEM usa"
     assert "O que NAO subiu" in core, "não diz o que ficou de fora, e por quê"
 
-    for caminho in ("blazesbot/bot/bc/combat.py",
+    for caminho in ("blazesbot/bot/combate.py",
                     "blazesbot/bot/app/executor.py"):
         fonte = _fonte(caminho)
         assert "COMPARTILHAD" in fonte.upper(), caminho

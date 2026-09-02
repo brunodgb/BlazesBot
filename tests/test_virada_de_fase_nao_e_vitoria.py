@@ -51,6 +51,7 @@ from types import SimpleNamespace
 
 import pytest
 
+from blazesbot.bot import combate as motor_de_combate
 from blazesbot.bot.bc import combat
 from blazesbot.bot.bc.combat import CombatEngine
 
@@ -137,7 +138,7 @@ class ClienteDeLuta:
 
 
 def _motor(monkeypatch, cliente):
-    monkeypatch.setattr(combat.time, "time", lambda: cliente.agora)
+    monkeypatch.setattr(motor_de_combate.time, "time", lambda: cliente.agora)
     motor = CombatEngine.__new__(CombatEngine)
     motor.ctx = cliente
     motor._skill_index = 0
@@ -198,7 +199,7 @@ def test_o_golpe_PARADO_e_o_que_produzia_o_defeito(monkeypatch):
     assert fim.saiu_de_combate is True, "o caminho antigo declarava VITÓRIA"
     assert fim.segundos < 30.0, (
         f"o caminho antigo encerrava na confirmação de "
-        f"{combat.CONFIRMACAO_DE_SAIDA_DE_COMBATE}s, e levou {fim.segundos:.1f}s"
+        f"{motor_de_combate.CONFIRMACAO_DE_SAIDA_DE_COMBATE}s, e levou {fim.segundos:.1f}s"
     )
     assert not any(g > 22.2 for g in cliente.golpes), (
         "o caminho antigo fica PASSIVO com a flag baixa -- e é essa passividade "

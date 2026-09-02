@@ -1453,7 +1453,7 @@ class Memory:
         POR QUE ISSO NÃO ERA COSMÉTICO: `combat.py` tem
         `USAR_PORTAO_DE_NOME = True`, e o nome alimenta `_veredito_do_alvo`
         (o portão que existe para evitar "atacando mob que não é o esperado")
-        e `_e_o_cemetery_guard`. Nome errado em 79% das leituras estava
+        e `_e_o_alvo_proibido`. Nome errado em 79% das leituras estava
         decidindo combate.
         """
         ponteiro = self.read_uint(obj + OFF_NAME)

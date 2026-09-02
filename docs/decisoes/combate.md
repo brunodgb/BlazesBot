@@ -1095,15 +1095,15 @@ agora:  nome == 'Cemetery Guard'  -> ESC, para o golpe, espera a saída de comba
         qualquer outro nome       -> CONTINUA batendo
 ```
 
-* **`SO_O_CEMETERY_GUARD_PARA_O_GOLPE_NOS_GUARDAS`** — o portão de nome só para a
+* **`SO_O_ALVO_PROIBIDO_PARA_O_GOLPE`** — o portão de nome só para a
   luta pelo nome que foi medido como perigoso.
 * **`TAB_ATE_SAIR_DE_COMBATE_NOS_GUARDAS`** — com a flag **`is True`** e o alvo
   morto, o TAB continua saindo depois do teto. `is True` e não `flag`: ilegível
   (`None`) é NÃO SEI, e não sei nunca gastou TAB nesta casa.
-* **`_travar_no_cemetery_guard`** — UMA porta para as duas fontes. A da MEMÓRIA
+* **`_travar_no_alvo_proibido`** — UMA porta para as duas fontes. A da MEMÓRIA
   (nome da entidade selecionada, no portão de nome) e a da TELA
   (`cemetery_guard.png`, no `pos_tab_callback`) chegam no mesmo lugar: ESC uma
-  vez, `_cemetery_guard_encontrado = True`, e o laço segue esperando a flag
+  vez, `_alvo_proibido_encontrado = True`, e o laço segue esperando a flag
   baixar. Duas cópias do ESC divergiriam em silêncio, e a que ficasse para trás
   deixaria o bot puxando o guarda por uma das duas fontes.
 
@@ -1504,7 +1504,7 @@ nome só aparece em diagnóstico e log."* **Isso deixou de ser verdade** quando
 
 - `_veredito_do_alvo(alvo_esperado)` — o portão que existe justamente para
   evitar *"atacando mob que não é o esperado"*;
-- `_e_o_cemetery_guard()` — decide travar ou destravar.
+- `_e_o_alvo_proibido()` — decide travar ou destravar.
 
 Um nome errado em 79% das leituras estava alimentando essas duas decisões.
 

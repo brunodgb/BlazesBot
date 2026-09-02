@@ -317,9 +317,9 @@
   ser do cadáver. O TAB FECHA o portão de novo, e o vigia é POR LUTA.
   `LIMIAR_DE_VIDA_DO_ALVO = 0.01` (mob a 2% lê 0.0136 = VIVO).
 - **Nos guardas há portão de NOME; no boss NÃO há.** E desde **26/08/2026** o
-  portão tem UM nome só: **`SO_O_CEMETERY_GUARD_PARA_O_GOLPE_NOS_GUARDAS`**.
+  portão tem UM nome só: **`SO_O_ALVO_PROIBIDO_PARA_O_GOLPE`**.
   - **Cemetery Guard na mira ⇒ ESC, para o golpe, ESPERA a saída de combate.**
-    Uma porta só (`_travar_no_cemetery_guard`) para as duas fontes: a MEMÓRIA
+    Uma porta só (`_travar_no_alvo_proibido`) para as duas fontes: a MEMÓRIA
     (nome da entidade selecionada) e a TELA (`cemetery_guard.png`, depois de
     cada TAB). ESC sai **uma vez** — repetido fecha janela do jogo.
   - **Qualquer outro nome ⇒ CONTINUA batendo.** *"Rotaciona skill até sair de

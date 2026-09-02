@@ -9,7 +9,7 @@ batalha ou até identificar o Cemetery Guard como target."*
 O defeito tinha duas portas, e as duas estão travadas aqui:
 
   1. o portão de nome dava `acabaram` para QUALQUER nome != `Gun Witch` e
-     segurava o golpe até o fim da fase (`_cemetery_guard_encontrado` era só
+     segurava o golpe até o fim da fase (`_alvo_proibido_encontrado` era só
      uma das formas de chegar lá);
   2. o teto de `TABS_NOS_GUARDAS` barrava a troca de alvo mesmo com a flag de
      combate ALTA e o alvo MORTO -- a rotação saía contra um cadáver.
@@ -17,6 +17,7 @@ O defeito tinha duas portas, e as duas estão travadas aqui:
 Os interruptores são exercitados LIGADOS, como manda a regra da casa: o
 caminho antigo continua no arquivo e voltar é trocar um `True` por `False`.
 """
+from blazesbot.bot import combate as motor_de_combate
 from blazesbot.bot.bc import combat
 
 
@@ -73,7 +74,7 @@ def _motor(monkeypatch, relogio, *, flag, nomes, morreu=False):
     motor.ctx = ctx
     motor._ultimos_nomes_do_alvo = []
 
-    monkeypatch.setattr(combat.time, "time", lambda: relogio.agora)
+    monkeypatch.setattr(motor_de_combate.time, "time", lambda: relogio.agora)
     monkeypatch.setattr(combat.CombatEngine, "_ler_flag_de_combate",
                         lambda self: flag(relogio.agora))
     monkeypatch.setattr(combat.CombatEngine, "maintain",
@@ -98,8 +99,8 @@ def _motor(monkeypatch, relogio, *, flag, nomes, morreu=False):
 # ---------------------------------------------------------------------------
 
 def test_os_interruptores_estao_ligados():
-    assert combat.SO_O_CEMETERY_GUARD_PARA_O_GOLPE_NOS_GUARDAS is True
-    assert combat.TAB_ATE_SAIR_DE_COMBATE_NOS_GUARDAS is True
+    assert motor_de_combate.SO_O_ALVO_PROIBIDO_PARA_O_GOLPE is True
+    assert motor_de_combate.TAB_ATE_SAIR_DE_COMBATE_NOS_GUARDAS is True
     assert combat.NOME_DO_CEMETERY_GUARD == "Cemetery Guard"
 
 
@@ -149,14 +150,14 @@ def test_cemetery_guard_para_o_golpe_e_aperta_esc_uma_vez(monkeypatch):
 
 
 def test_a_trava_do_cemetery_guard_e_uma_porta_so(monkeypatch):
-    """Tela e memória chegam no MESMO `_travar_no_cemetery_guard`."""
+    """Tela e memória chegam no MESMO `_travar_no_alvo_proibido`."""
     relogio = _Relogio()
     motor, ctx = _motor(monkeypatch, relogio, flag=lambda t: True, nomes=[])
 
-    motor._travar_no_cemetery_guard("Cemetery Guard", "memória")
-    motor._travar_no_cemetery_guard("tela, match em (10, 20)", "após o TAB 2")
+    motor._travar_no_alvo_proibido("Cemetery Guard", "memória")
+    motor._travar_no_alvo_proibido("tela, match em (10, 20)", "após o TAB 2")
 
-    assert motor._cemetery_guard_encontrado is True
+    assert motor._alvo_proibido_encontrado is True
     assert ctx.teclas.count("esc") == 1
 
 
@@ -172,13 +173,13 @@ def test_tab_continua_depois_do_teto_enquanto_a_flag_estiver_alta(monkeypatch):
 
     fim = motor.atacar_ate_sair_de_combate(
         "guardas", usar_aoe=True, limite=20.0,
-        tabs_ao_morrer=combat.TABS_NOS_GUARDAS,
+        tabs_ao_morrer=motor_de_combate.TABS_NOS_GUARDAS,
         alvo_esperado=combat.NOME_DOS_GUARDAS)
 
     # A flag nunca baixou: a fase estoura o prazo e devolve DERROTA -- o que
     # não pode acontecer é o bot ter parado de trocar de alvo no teto.
     assert fim.saiu_de_combate is False
-    assert ctx.teclas.count("tab") > combat.TABS_NOS_GUARDAS
+    assert ctx.teclas.count("tab") > motor_de_combate.TABS_NOS_GUARDAS
 
 
 def test_flag_ilegivel_nao_autoriza_tab_alem_do_teto(monkeypatch):
@@ -190,7 +191,7 @@ def test_flag_ilegivel_nao_autoriza_tab_alem_do_teto(monkeypatch):
 
     motor.atacar_ate_sair_de_combate(
         "guardas", usar_aoe=True, limite=20.0,
-        tabs_ao_morrer=combat.TABS_NOS_GUARDAS,
+        tabs_ao_morrer=motor_de_combate.TABS_NOS_GUARDAS,
         alvo_esperado=combat.NOME_DOS_GUARDAS)
 
-    assert ctx.teclas.count("tab") <= combat.TABS_NOS_GUARDAS
+    assert ctx.teclas.count("tab") <= motor_de_combate.TABS_NOS_GUARDAS

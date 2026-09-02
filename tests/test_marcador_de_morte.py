@@ -130,7 +130,7 @@ def test_o_template_do_usuario_existe_e_tem_contraste():
     """Template liso casaria em qualquer lugar da faixa."""
     import cv2
 
-    from blazesbot.bot.bc.combat import TEMPLATE_INIMIGO_MORTO
+    from blazesbot.bot.combate import TEMPLATE_INIMIGO_MORTO
     from blazesbot.core.vision import TemplateLibrary
 
     template = TemplateLibrary("data/templates").load(TEMPLATE_INIMIGO_MORTO)

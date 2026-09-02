@@ -36,7 +36,7 @@ from types import SimpleNamespace
 import numpy as np
 import pytest
 
-from blazesbot.bot.bc import combat
+from blazesbot.bot import combate as motor_de_combate
 from blazesbot.bot.bc.combat import CombatEngine
 from blazesbot.core import target_hybrid as th
 from blazesbot.core import vision
@@ -175,9 +175,9 @@ class _Tela:
         monkeypatch.setattr(vision, "capture_window", capturar)
         monkeypatch.setattr(vision, "frame_is_blank", lambda _q: False)
         monkeypatch.setattr(vision, "marcador_de_morte", marcador)
-        monkeypatch.setattr(combat.vision, "capture_window", capturar)
-        monkeypatch.setattr(combat.vision, "frame_is_blank", lambda _q: False)
-        monkeypatch.setattr(combat.vision, "marcador_de_morte", marcador)
+        monkeypatch.setattr(motor_de_combate.vision, "capture_window", capturar)
+        monkeypatch.setattr(motor_de_combate.vision, "frame_is_blank", lambda _q: False)
+        monkeypatch.setattr(motor_de_combate.vision, "marcador_de_morte", marcador)
 
 
 def _motor(monkeypatch, tela, alvo_id=4823):
@@ -254,7 +254,7 @@ def test_a_tela_NAO_declara_morte_sozinha(monkeypatch):
 def test_com_o_interruptor_DESLIGADO_a_tela_volta_a_matar(monkeypatch):
     """O caminho antigo continua inteiro, e é ele que prova de onde vinha o TAB
     fantasma: desligado o interruptor, a mesma leitura vira morte."""
-    monkeypatch.setattr(combat, "SO_A_MEMORIA_DECLARA_MORTE", False)
+    monkeypatch.setattr(motor_de_combate, "SO_A_MEMORIA_DECLARA_MORTE", False)
     tela = _Tela(vida=0.0, marcador=True, escore=0.97)
     motor = _motor(monkeypatch, tela)
 
@@ -279,7 +279,7 @@ def test_a_MESMA_morte_nao_sai_duas_vezes(monkeypatch):
     Pela TELA, com o interruptor desligado -- ver
     `test_a_tela_NAO_declara_morte_sozinha`. O mesmo pela MEMÓRIA está em
     `tests/test_alvo_pela_memoria.py`."""
-    monkeypatch.setattr(combat, "SO_A_MEMORIA_DECLARA_MORTE", False)
+    monkeypatch.setattr(motor_de_combate, "SO_A_MEMORIA_DECLARA_MORTE", False)
     tela = _Tela(vida=0.0, marcador=True, escore=0.97)
     motor = _motor(monkeypatch, tela)
 
@@ -293,7 +293,7 @@ def test_alvo_NOVO_pode_morrer_de_novo(monkeypatch):
     nunca poderia ser declarado morto.
 
     Pela TELA, com o interruptor desligado."""
-    monkeypatch.setattr(combat, "SO_A_MEMORIA_DECLARA_MORTE", False)
+    monkeypatch.setattr(motor_de_combate, "SO_A_MEMORIA_DECLARA_MORTE", False)
     tela = _Tela(vida=0.0, marcador=True, escore=0.97)
     motor = _motor(monkeypatch, tela)
     assert motor._alvo_morreu() is True
@@ -312,7 +312,7 @@ def test_sem_alvo_nao_e_morte(monkeypatch):
 def test_barra_ilegivel_e_NAO_SEI_e_nao_gasta_TAB(monkeypatch):
     tela = _Tela()
     motor = _motor(monkeypatch, tela)
-    monkeypatch.setattr(combat.vision, "capture_window",
+    monkeypatch.setattr(motor_de_combate.vision, "capture_window",
                         lambda _h: np.zeros((768, 1024, 3), np.uint8))
 
     assert motor._alvo_morreu() is None
@@ -322,7 +322,7 @@ def test_marcador_ilegivel_e_NAO_SEI(monkeypatch):
     """Falha ao olhar o marcador não é "não morreu" -- é "não sei"."""
     tela = _Tela(vida=0.0)
     motor = _motor(monkeypatch, tela)
-    monkeypatch.setattr(combat.vision, "marcador_de_morte",
+    monkeypatch.setattr(motor_de_combate.vision, "marcador_de_morte",
                         lambda _q, _t: (None, None))
 
     assert motor._alvo_morreu() is None
@@ -367,7 +367,7 @@ def test_o_log_mostra_o_ESCORE_do_marcador(monkeypatch):
 
     O escore continua indo para o log mesmo quando a tela não pode declarar
     morte -- é ele que diz se o template ainda serve."""
-    monkeypatch.setattr(combat, "SO_A_MEMORIA_DECLARA_MORTE", False)
+    monkeypatch.setattr(motor_de_combate, "SO_A_MEMORIA_DECLARA_MORTE", False)
     tela = _Tela(vida=0.0, marcador=True, escore=0.97)
     motor = _motor(monkeypatch, tela)
 
@@ -382,7 +382,7 @@ def test_o_log_avisa_quando_nao_consegue_ler_a_barra(monkeypatch):
     régua quebrada por semanas."""
     tela = _Tela()
     motor = _motor(monkeypatch, tela)
-    monkeypatch.setattr(combat.vision, "capture_window",
+    monkeypatch.setattr(motor_de_combate.vision, "capture_window",
                         lambda _h: np.zeros((768, 1024, 3), np.uint8))
 
     motor._alvo_morreu()
