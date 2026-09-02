@@ -104,9 +104,9 @@ from typing import Any
 from ...config import Account, BotConfig
 from ...core import logmodo
 from ..context import BotContext, StopRequested
+from ..navegacao import Navigator
 from ..supervisor import AccountSupervisor
 from . import mapa_bc
-from .navigation import Navigator
 from .ui_service import UIService
 
 # ===========================================================================
@@ -476,7 +476,7 @@ class _Amostrador:
     def __init__(self, ctx: BotContext, ponto: PontoDeAmostragem) -> None:
         self.ctx = ctx
         self.ponto = ponto
-        self.nav = Navigator(ctx)
+        self.nav = Navigator(ctx, mapa_bc)
         self.ui = UIService(ctx, navigator=self.nav)
         self.ancora = ponto.posicao(ctx)
         self.ancora_exata = True

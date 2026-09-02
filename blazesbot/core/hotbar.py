@@ -16,7 +16,7 @@ POR QUE ISTO MORA NO `core/`
 
 **DEPENDÊNCIA CRUZADA -- leia antes de mexer.**
 
-Isto nasceu em `bot/bc/hotbar.py`, no farm da cave. Mas a pergunta que ele
+Isto nasceu em `bot/hotbar.py`, no farm da cave. Mas a pergunta que ele
 responde é sobre o JOGO ("em que página está a barra?"), não sobre o que um
 ecossistema faz -- e o modo APP precisa da mesma resposta. Enquanto morava no
 `bc/`, o `supervisor` tentava importá-lo de `bot/` e falhava calado: 44 vezes

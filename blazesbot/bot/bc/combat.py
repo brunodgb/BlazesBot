@@ -61,9 +61,10 @@ from ...core import calibracao, diario, vision
 from ...core.pet import SEGUNDOS_PARA_A_COMIDA_SER_USADA, PetFeeder
 from ...core.target_hybrid import MorteDoAlvo, TargetHybrid
 from ...core.vision import capture_window, find_template
+from .. import hotbar
 from ..context import BotContext, Disconnected
-from . import hotbar, mapa_bc
-from .navigation import Navigator
+from ..navegacao import Navigator
+from . import mapa_bc
 
 # Tecla que seleciona o PRÓPRIO personagem. É padrão do cliente e não é
 # configurável de propósito: não é preferência, é como o jogo funciona.

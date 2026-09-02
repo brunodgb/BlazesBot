@@ -137,7 +137,7 @@ def tolerancia_do_altar() -> int:
     no módulo de navegação -- e importar navegação aqui criaria ciclo. Resolvendo
     na chamada, os dois lados leem o mesmo número por construção.
     """
-    from .navigation import TOLERANCIA_ROTA, TRICKY_TOLERANCE
+    from ..navegacao import TOLERANCIA_ROTA, TRICKY_TOLERANCE
 
     return tolerancia_do_waypoint(
         Waypoint(*ULTIMO_ANTES_DO_ALTAR, "Secret Altar"),

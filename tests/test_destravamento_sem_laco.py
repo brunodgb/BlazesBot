@@ -33,7 +33,8 @@ from __future__ import annotations
 
 import pytest
 
-from blazesbot.bot.bc import navigation as nav
+from blazesbot.bot import navegacao as nav
+from blazesbot.bot.bc import mapa_bc
 
 
 class RotaFalsa(tuple):
@@ -41,7 +42,7 @@ class RotaFalsa(tuple):
 
 
 class Waypoint:
-    """O mínimo que a manobra e `mapa_bc.tolerancia_do_waypoint` leem."""
+    """O mínimo que a manobra e a tolerância do mapa injetado leem."""
 
     def __init__(self, pos):
         self.pos = pos
@@ -58,6 +59,11 @@ def _rota(n=8):
 def _navegador(monkeypatch, rota, intransitaveis, posicao=(203, 30)):
     """Um `Navigator` com o mundo dublado no nível do próprio objeto."""
     servico = nav.Navigator.__new__(nav.Navigator)
+    # O MAPA É INJETADO desde 01/09/2026: o navegador mora em `bot/` e serve os
+    # dois ecossistemas, então quem responde "quanta folga neste waypoint" é o
+    # mapa da cave, não um import fixo da BC. Como este dublê constrói o objeto
+    # por `__new__`, o campo tem que ser posto à mão.
+    servico.mapa = mapa_bc
     servico._retrocessos_feitos = set()
     servico._candidatos_que_falharam = set()
     servico._retrocesso_bloqueado = False
@@ -121,7 +127,7 @@ def test_o_candidato_que_falhou_NAO_e_tentado_de_novo(monkeypatch):
     # Tudo intransitável: a manobra falha e anota todos os candidatos.
     servico, tentativas = _navegador(monkeypatch, rota,
                                      intransitaveis={w.pos for w in rota})
-    monkeypatch.setattr(nav.mapa_bc, "vizinhos_na_rota",
+    monkeypatch.setattr(nav, "vizinhos_na_rota",
                         lambda *a, **k: (None, base, base + 1))
 
     assert servico.destravar_pelos_vizinhos(rota) is None
@@ -141,11 +147,11 @@ def test_a_manobra_se_AFASTA_quando_os_imediatos_falham(monkeypatch):
     # Intransitáveis: o próprio, o seguinte e o anterior. Livre: base+2.
     ruins = {rota[base].pos, rota[base + 1].pos, rota[base - 1].pos}
     servico, tentativas = _navegador(monkeypatch, rota, intransitaveis=ruins)
-    monkeypatch.setattr(nav.mapa_bc, "vizinhos_na_rota",
+    monkeypatch.setattr(nav, "vizinhos_na_rota",
                         lambda *a, **k: (base - 1, base, base + 1))
-    monkeypatch.setattr(nav.mapa_bc, "tolerancia_do_waypoint",
+    monkeypatch.setattr(mapa_bc, "tolerancia_do_waypoint",
                         lambda *a, **k: 8)
-    monkeypatch.setattr(nav.mapa_bc, "distancia", lambda a, b: 50.0)
+    monkeypatch.setattr(nav, "distancia", lambda a, b: 50.0)
 
     alcancado = servico.destravar_pelos_vizinhos(rota)
     assert alcancado is not None, (
@@ -166,11 +172,11 @@ def test_a_expansao_segue_a_ORDEM_DA_ROTA_e_nao_a_distancia(monkeypatch):
     base = 5
     servico, tentativas = _navegador(monkeypatch, rota,
                                      intransitaveis={w.pos for w in rota})
-    monkeypatch.setattr(nav.mapa_bc, "vizinhos_na_rota",
+    monkeypatch.setattr(nav, "vizinhos_na_rota",
                         lambda *a, **k: (base - 1, base, base + 1))
-    monkeypatch.setattr(nav.mapa_bc, "tolerancia_do_waypoint",
+    monkeypatch.setattr(mapa_bc, "tolerancia_do_waypoint",
                         lambda *a, **k: 8)
-    monkeypatch.setattr(nav.mapa_bc, "distancia", lambda a, b: 50.0)
+    monkeypatch.setattr(nav, "distancia", lambda a, b: 50.0)
 
     servico.destravar_pelos_vizinhos(rota)
     indices = [next(i for i, w in enumerate(rota) if w.pos == p)
@@ -194,11 +200,11 @@ def test_chegar_ESQUECE_as_falhas(monkeypatch):
     base = 2
     servico, _ = _navegador(monkeypatch, rota, intransitaveis=set())
     servico._candidatos_que_falharam = {0, 1, 7}
-    monkeypatch.setattr(nav.mapa_bc, "vizinhos_na_rota",
+    monkeypatch.setattr(nav, "vizinhos_na_rota",
                         lambda *a, **k: (None, base, base + 1))
-    monkeypatch.setattr(nav.mapa_bc, "tolerancia_do_waypoint",
+    monkeypatch.setattr(mapa_bc, "tolerancia_do_waypoint",
                         lambda *a, **k: 8)
-    monkeypatch.setattr(nav.mapa_bc, "distancia", lambda a, b: 50.0)
+    monkeypatch.setattr(nav, "distancia", lambda a, b: 50.0)
 
     assert servico.destravar_pelos_vizinhos(rota) is not None
     assert servico._candidatos_que_falharam == set(), (
@@ -215,11 +221,11 @@ def test_todos_ruins_NAO_devolve_None_para_sempre(monkeypatch):
     base = 3
     servico, tentativas = _navegador(monkeypatch, rota, intransitaveis=set())
     servico._candidatos_que_falharam = set(range(len(rota)))
-    monkeypatch.setattr(nav.mapa_bc, "vizinhos_na_rota",
+    monkeypatch.setattr(nav, "vizinhos_na_rota",
                         lambda *a, **k: (base - 1, base, base + 1))
-    monkeypatch.setattr(nav.mapa_bc, "tolerancia_do_waypoint",
+    monkeypatch.setattr(mapa_bc, "tolerancia_do_waypoint",
                         lambda *a, **k: 8)
-    monkeypatch.setattr(nav.mapa_bc, "distancia", lambda a, b: 50.0)
+    monkeypatch.setattr(nav, "distancia", lambda a, b: 50.0)
 
     assert servico.destravar_pelos_vizinhos(rota) is not None
     assert tentativas, "não tentou nada; a manobra ficou paralisada"
@@ -239,7 +245,7 @@ def test_DENTE_sem_a_memoria_a_manobra_repete_o_mesmo_candidato(monkeypatch):
     base = 0
     servico, tentativas = _navegador(monkeypatch, rota,
                                      intransitaveis={w.pos for w in rota})
-    monkeypatch.setattr(nav.mapa_bc, "vizinhos_na_rota",
+    monkeypatch.setattr(nav, "vizinhos_na_rota",
                         lambda *a, **k: (None, base, base + 1))
 
     servico.destravar_pelos_vizinhos(rota)

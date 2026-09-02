@@ -74,7 +74,7 @@ CHAMADAS_QUE_ESPERAM = ("tick", "sleep", "_sleep_interruptible", "esperar",
 AREAS = (
     ("blazesbot/bot/bc/vendor.py", "FORA DA CAVE — venda em Stone City"),
     ("blazesbot/bot/bc/ui_service.py", "FORA DA CAVE — painel, diálogos, Fay"),
-    ("blazesbot/bot/bc/navigation.py", "FORA DA CAVE — montaria e trajeto"),
+    ("blazesbot/bot/navegacao.py", "FORA DA CAVE — montaria e trajeto"),
     ("blazesbot/bot/bc/mapa_bc.py", "FORA DA CAVE — pontos exatos"),
     ("blazesbot/bot/bc/routine.py", "A RUN — passos da rotina"),
     ("blazesbot/bot/bc/combat.py", "DENTRO DA CAVE — combate"),

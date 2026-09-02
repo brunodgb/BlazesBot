@@ -24,7 +24,8 @@ Os interruptores são exercitados LIGADOS, como manda a regra da casa.
 """
 import pytest
 
-from blazesbot.bot.bc import combat, navigation
+from blazesbot.bot import navegacao as navigation
+from blazesbot.bot.bc import combat
 
 
 class _Relogio:

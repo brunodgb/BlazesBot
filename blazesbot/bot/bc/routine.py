@@ -80,14 +80,15 @@ from ...core import (
 from ...core.lugares import LUGAR_FORA_DA_CAVE
 from ...core.quedas import frase_do_tempo
 from ...core.vision import capture_window, find_template, frame_is_blank
+from .. import hotbar
 from ..context import BotContext, Disconnected, FarmDesligado, StopRequested
 from ..mural import reseter_online, silencio_do_reseter
+from ..navegacao import Navigator, PersonagemMortoNoPortao
 from ..team import TeamService
 from ..watchdog import DcReason, Watchdog
-from . import hotbar, mapa_bc
+from . import mapa_bc
 from .combat import CombatEngine
 from .localizacao import RastreadorDeLocal
-from .navigation import Navigator, PersonagemMortoNoPortao
 from .ui_service import TOLERANCIA_DO_NPC_DA_ENTRADA, UIService
 from .vendor import VendorService
 
@@ -412,7 +413,7 @@ class BossRushRoutine:
     def __init__(self, ctx: BotContext) -> None:
         self.ctx = ctx
         self.local = RastreadorDeLocal(ctx.memory, ctx.log, ctx.account_login)
-        self.nav = Navigator(ctx)
+        self.nav = Navigator(ctx, mapa_bc)
         self.combat = CombatEngine(ctx, self.nav)
         # LIGA O PORTAO DA MONTARIA NO COMBATE. Em batalha o jogo recusa montar,
         # e o portao insiste sem teto -- foi assim que a run de 31/08 ficou 24

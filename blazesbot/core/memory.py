@@ -1022,7 +1022,7 @@ class Memory:
         futuro pergunta a mesma coisa, e por isso a resposta mora aqui, no
         `core`, e não em nenhum dos dois.
 
-        Antes desta função o cálculo estava escrito inline em `bc/navigation.py`,
+        Antes desta função o cálculo estava escrito inline em `bot/navegacao.py`,
         e o APP ia escrever um terceiro. Ver `docs/decisoes/memoria-primeiro.md`,
         seção "Compartilhado e específico".
 

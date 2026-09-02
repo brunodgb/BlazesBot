@@ -7,8 +7,13 @@ O BlazesBot é UM sistema com vários ecossistemas:
     blazesbot/bot/hh/    o farm de boss-rush da Black Wind Camp Dungeon
 
 **UM ECOSSISTEMA NUNCA IMPORTA DO OUTRO.** O que eles compartilham desce para
-`blazesbot/bot/` (o sistema: supervisor, contexto, login, watchdog) e para
-`blazesbot/core/` (capacidades que não sabem que ecossistema existe).
+`blazesbot/bot/` (o sistema: supervisor, contexto, login, watchdog, navegação)
+e para `blazesbot/core/` (capacidades que não sabem que ecossistema existe).
+
+E A DESCIDA TEM MÃO ÚNICA: `bot/` não pode depender de ecossistema (só o
+supervisor, que escolhe qual roda), e `core/` não pode depender de `bot/`.
+Quando a camada de baixo precisa de um dado da cave, ela RECEBE -- é o que
+`Navigator(ctx, mapa)` faz.
 
 ESTE TESTE EXISTE PORQUE A REGRA É INVISÍVEL NO DIA A DIA. Um `from ..bc.combat
 import ...` escrito dentro do `app/` funciona, passa em todos os outros testes e
@@ -82,6 +87,50 @@ def test_um_ecossistema_nunca_importa_do_outro(dono, casa, outro):
         if proibidos:
             falhas[arquivo.name] = proibidos
     assert not falhas, f"{dono}/ importa do {outro.upper()}: {falhas}"
+
+
+# ===========================================================================
+# A CAMADA DO MEIO: `bot/` serve TODOS os ecossistemas
+# ===========================================================================
+
+
+@pytest.mark.parametrize("arquivo", _arquivos(RAIZ / "bot"), ids=lambda p: p.name)
+def test_o_sistema_nao_depende_de_ecossistema_nenhum(arquivo):
+    """`bot/` é o SISTEMA -- supervisor, contexto, login, watchdog, navegação.
+
+    Ele serve os três ecossistemas, então não pode depender de um. Um
+    `from .bc.mapa_bc import ...` dentro de `bot/navegacao.py` funcionaria hoje e
+    quebraria a HH amanhã: a navegação passaria a saber o formato da rota de UMA
+    cave e a exigir dela coisas que a outra não tem.
+
+    A SAÍDA QUANDO PRECISAR DO DADO DE UMA CAVE É INJETAR, não importar. É o que
+    `Navigator(ctx, mapa)` faz: quem constrói o navegador entrega o mapa, e o
+    navegador só pergunta a ele a tolerância do waypoint.
+
+    O SUPERVISOR É A EXCEÇÃO, e é a única: é ele que ESCOLHE qual ecossistema
+    roda para cada conta, então conhecer os três é a função dele. Sem essa
+    exceção não haveria como despachar.
+    """
+    if arquivo.name == "supervisor.py":
+        return
+    proibidos = [m for m in _modulos_importados(arquivo)
+                 if any(f"bot.{nome}" in m or m.endswith(f".{nome}")
+                        for nome in ECOSSISTEMAS)]
+    assert not proibidos, (
+        f"bot/{arquivo.name} depende de ecossistema: {proibidos}. "
+        f"Injete o dado em vez de importar -- ver `Navigator(ctx, mapa)`.")
+
+
+def test_o_supervisor_e_a_unica_excecao():
+    """Se um segundo arquivo de `bot/` precisar conhecer ecossistema, a decisão
+    tem que ser consciente -- este teste é onde ela aparece."""
+    conhecem = []
+    for arquivo in _arquivos(RAIZ / "bot"):
+        if any(f"bot.{nome}" in m or m.endswith(f".{nome}")
+               for m in _modulos_importados(arquivo) for nome in ECOSSISTEMAS):
+            conhecem.append(arquivo.name)
+    assert conhecem == ["supervisor.py"], (
+        f"quem conhece ecossistema em bot/: {conhecem}")
 
 
 @pytest.mark.parametrize("arquivo", _arquivos(CORE), ids=lambda p: p.name)
@@ -237,7 +286,7 @@ def test_os_cliques_de_ANDAR_do_minimapa_passam_repetir_False():
     """
     import re
 
-    fonte = (RAIZ / "bot" / "bc" / "navigation.py").read_text(encoding="utf-8")
+    fonte = (RAIZ / "bot" / "navegacao.py").read_text(encoding="utf-8")
     chamadas = re.findall(r"ctx\.right_click\(([^\n]*)", fonte)
     do_minimapa = [c for c in chamadas if "pixel" in c or "ponto" in c]
     assert do_minimapa, "as chamadas do minimapa sumiram do navigation"

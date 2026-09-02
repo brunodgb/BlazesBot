@@ -41,9 +41,9 @@ from types import SimpleNamespace
 
 import pytest
 
+from blazesbot.bot import hotbar
 from blazesbot.bot.app import executor as app_mod
 from blazesbot.bot.bc import combat as combat_mod
-from blazesbot.bot.bc import hotbar
 from blazesbot.bot.bc.combat import CombatEngine
 from blazesbot.core.pet import SEGUNDOS_PARA_A_COMIDA_SER_USADA, PetFeeder
 

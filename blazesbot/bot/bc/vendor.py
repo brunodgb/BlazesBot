@@ -65,7 +65,7 @@ from ...core.vision import (
     frame_is_blank,
 )
 from ..context import BotContext, Disconnected
-from .navigation import Navigator
+from ..navegacao import Navigator
 
 # ===========================================================================
 # O RICH É PROCURADO NA TELA, NÃO DECORADO NUMA COORDENADA

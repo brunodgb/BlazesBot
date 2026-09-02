@@ -74,7 +74,7 @@ from ...core.coords import TEMPLATE_ANCHORS
 from ...core.vision import capture_window, find_template
 from ...core.zones import distancia_linear
 from ..context import BotContext, StopRequested
-from .navigation import Navigator
+from ..navegacao import Navigator
 
 ANCHOR_THRESHOLD = 0.80
 

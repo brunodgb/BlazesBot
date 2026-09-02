@@ -36,7 +36,7 @@ from __future__ import annotations
 
 import time
 
-from ...config import SPEED_DURACAO_SEGUNDOS, SPEED_RECARGA_SEGUNDOS
+from ..config import SPEED_DURACAO_SEGUNDOS, SPEED_RECARGA_SEGUNDOS
 
 # Quanto o personagem precisa ter andado antes de valer a pena acionar.
 #

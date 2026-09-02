@@ -99,35 +99,35 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 
 | tempo | atual | original | natureza | onde | função | para que serve |
 |---|---|---|---|---|---|---|
-| `INTERVALO_RECLIQUE` | 1.1 s | = | FIXO | [navigation.py:95](blazesbot/bot/bc/navigation.py#L95) | `follow_path` | Intervalo MÁXIMO entre cliques enquanto anda. Não é a cadência normal -- o |
-| `SEM_PROGRESSO_SEGUNDOS` | 1.2 s | = | FIXO | [navigation.py:109](blazesbot/bot/bc/navigation.py#L109) | `follow_path` | Sem aproximar-se do alvo por este tempo, considera travado. |
-| `SEGUNDOS_PARADO_DE_VERDADE` | 1.5 s | = | FIXO | [navigation.py:139](blazesbot/bot/bc/navigation.py#L139) | `follow_path` | PERSONAGEM COMPLETAMENTE PARADO DENTRO DA CAVE |
-| `SEGUNDOS_POR_TENTATIVA_DE_DESTRAVAR` | 4 s | = | FIXO | [navigation.py:167](blazesbot/bot/bc/navigation.py#L167) | `destravar_pelos_vizinhos, _tentar_circulo` | Prazo para alcançar CADA candidato da manobra de destravamento. |
-| `CIRCULO_TETO_SEGUNDOS` | 6.5 s | = | TETO | [navigation.py:249](blazesbot/bot/bc/navigation.py#L249) | `_tentar_circulo` | Teto de tempo TOTAL do círculo antes de desistir e devolver o controle. É a |
-| `SEGUNDOS_POR_CLIQUE_CIRCULO` | 1 s | = | FIXO | [navigation.py:251](blazesbot/bot/bc/navigation.py#L251) | `_clicar_offset_e_verificar` | Janela por ponto do círculo para saber se o clique fez o personagem andar. |
-| `INTERVALO_MANUTENCAO` | 0.6 s | = | FIXO | [navigation.py:253](blazesbot/bot/bc/navigation.py#L253) | `follow_path` | Cadência da manutenção durante o deslocamento (poção). |
-| `INTERVALO_REMONTAR` | 3 s | = | FIXO | [navigation.py:289](blazesbot/bot/bc/navigation.py#L289) | `_pode_tocar_na_montaria, _manter_montaria` | A MONTARIA É PRÉ-REQUISITO DE ANDAR, NÃO UMA OTIMIZAÇÃO |
-| `TETO_DO_PORTAO` | 6 s | = | TETO | [navigation.py:316](blazesbot/bot/bc/navigation.py#L316) | `garantir_montaria_para_andar` | A ORDEM DO PORTÃO: CONFERIR -> ATIVAR -> CONFIRMAR -> ANDAR |
-| `INTERVALO_PARADA_POCAO` | 10 s | = | FIXO | [navigation.py:388](blazesbot/bot/bc/navigation.py#L388) | `_manutencao_em_movimento` | Recarga da PARADA para tomar poção durante o trajeto. |
-| *literal em* `wait_until_still` | 0.25 s | = | FIXO | [navigation.py:471](blazesbot/bot/bc/navigation.py#L471) | `wait_until_still` | Espera o personagem parar de andar. |
-| *literal em* `_abrir_mapa` | 0.5 s | = | FIXO | [navigation.py:495](blazesbot/bot/bc/navigation.py#L495) | `_abrir_mapa` |  |
-| *literal em* `_fechar_mapa` | 0.3 s | = | FIXO | [navigation.py:501](blazesbot/bot/bc/navigation.py#L501) | `_fechar_mapa` |  |
-| *literal em* `_mover_pelo_mapa` | 0.2 s | = | FIXO | [navigation.py:539](blazesbot/bot/bc/navigation.py#L539) | `_mover_pelo_mapa` | Anda até `alvo` usando o mapa-múndi. |
-| *literal em* `_mover_pelo_mapa` | 1 s | = | FIXO | [navigation.py:545](blazesbot/bot/bc/navigation.py#L545) | `_mover_pelo_mapa` | Anda até `alvo` usando o mapa-múndi. |
-| *literal em* `_clicar_offset_e_verificar` | 0.1 s | = | FIXO | [navigation.py:845](blazesbot/bot/bc/navigation.py#L845) | `_clicar_offset_e_verificar` | Clique curto num offset e medição: o personagem andou? |
-| *literal em* `_parada_para_pocao` | 0.25 s | = | FIXO | [navigation.py:943](blazesbot/bot/bc/navigation.py#L943) | `_parada_para_pocao` | Desmonta, toma poção e remonta. É a ÚNICA forma que funciona. |
-| *literal em* `_parada_para_pocao` | 0.2 s | = | FIXO | [navigation.py:954](blazesbot/bot/bc/navigation.py#L954) | `_parada_para_pocao` | Desmonta, toma poção e remonta. É a ÚNICA forma que funciona. |
-| *literal em* `follow_path` | 0.25 s | = | FIXO | [navigation.py:1212](blazesbot/bot/bc/navigation.py#L1212) | `follow_path` | Percorre waypoints em ordem, SEM parar entre eles. |
-| *literal em* `travel_via_surroundings` | 0.5 s | = | FIXO | [navigation.py:1510](blazesbot/bot/bc/navigation.py#L1510) | `travel_via_surroundings` | Usa o painel Surroundings como teleporte por nome. |
-| *literal em* `travel_via_surroundings` | 0.2 s | = | FIXO | [navigation.py:1512](blazesbot/bot/bc/navigation.py#L1512) | `travel_via_surroundings` | Usa o painel Surroundings como teleporte por nome. |
-| *literal em* `travel_via_surroundings` | 0.15 s | = | FIXO | [navigation.py:1514](blazesbot/bot/bc/navigation.py#L1514) | `travel_via_surroundings` | Usa o painel Surroundings como teleporte por nome. |
-| *literal em* `travel_via_surroundings` | 0.4 s | = | FIXO | [navigation.py:1516](blazesbot/bot/bc/navigation.py#L1516) | `travel_via_surroundings` | Usa o painel Surroundings como teleporte por nome. |
-| *literal em* `travel_via_surroundings` | 0.25 s | = | FIXO | [navigation.py:1529](blazesbot/bot/bc/navigation.py#L1529) | `travel_via_surroundings` | Usa o painel Surroundings como teleporte por nome. |
-| *literal em* `travel_via_surroundings` | 0.5 s | = | FIXO | [navigation.py:1535](blazesbot/bot/bc/navigation.py#L1535) | `travel_via_surroundings` | Usa o painel Surroundings como teleporte por nome. |
-| *literal em* `travel_via_surroundings` | 0.25 s | = | FIXO | [navigation.py:1537](blazesbot/bot/bc/navigation.py#L1537) | `travel_via_surroundings` | Usa o painel Surroundings como teleporte por nome. |
-| *literal em* `ensure_mounted` | 1 s | = | FIXO | [navigation.py:1902](blazesbot/bot/bc/navigation.py#L1902) | `ensure_mounted` |  |
-| *literal em* `ensure_mounted` | 1 s | = | FIXO | [navigation.py:1913](blazesbot/bot/bc/navigation.py#L1913) | `ensure_mounted` |  |
-| *literal em* `ensure_dismounted` | 0.75 s | = | FIXO | [navigation.py:1961](blazesbot/bot/bc/navigation.py#L1961) | `ensure_dismounted` |  |
+| `INTERVALO_RECLIQUE` | 1.1 s | *novo* | FIXO | [navegacao.py:96](blazesbot/bot/navegacao.py#L96) | `follow_path` | Intervalo MÁXIMO entre cliques enquanto anda. Não é a cadência normal -- o |
+| `SEM_PROGRESSO_SEGUNDOS` | 1.2 s | *novo* | FIXO | [navegacao.py:110](blazesbot/bot/navegacao.py#L110) | `follow_path` | Sem aproximar-se do alvo por este tempo, considera travado. |
+| `SEGUNDOS_PARADO_DE_VERDADE` | 1.5 s | *novo* | FIXO | [navegacao.py:140](blazesbot/bot/navegacao.py#L140) | `follow_path` | PERSONAGEM COMPLETAMENTE PARADO DENTRO DA CAVE |
+| `SEGUNDOS_POR_TENTATIVA_DE_DESTRAVAR` | 4 s | *novo* | FIXO | [navegacao.py:168](blazesbot/bot/navegacao.py#L168) | `destravar_pelos_vizinhos, _tentar_circulo` | Prazo para alcançar CADA candidato da manobra de destravamento. |
+| `CIRCULO_TETO_SEGUNDOS` | 6.5 s | *novo* | TETO | [navegacao.py:250](blazesbot/bot/navegacao.py#L250) | `_tentar_circulo` | Teto de tempo TOTAL do círculo antes de desistir e devolver o controle. É a |
+| `SEGUNDOS_POR_CLIQUE_CIRCULO` | 1 s | *novo* | FIXO | [navegacao.py:252](blazesbot/bot/navegacao.py#L252) | `_clicar_offset_e_verificar` | Janela por ponto do círculo para saber se o clique fez o personagem andar. |
+| `INTERVALO_MANUTENCAO` | 0.6 s | *novo* | FIXO | [navegacao.py:254](blazesbot/bot/navegacao.py#L254) | `follow_path` | Cadência da manutenção durante o deslocamento (poção). |
+| `INTERVALO_REMONTAR` | 3 s | *novo* | FIXO | [navegacao.py:290](blazesbot/bot/navegacao.py#L290) | `_pode_tocar_na_montaria, _manter_montaria` | A MONTARIA É PRÉ-REQUISITO DE ANDAR, NÃO UMA OTIMIZAÇÃO |
+| `TETO_DO_PORTAO` | 6 s | *novo* | TETO | [navegacao.py:317](blazesbot/bot/navegacao.py#L317) | `garantir_montaria_para_andar` | A ORDEM DO PORTÃO: CONFERIR -> ATIVAR -> CONFIRMAR -> ANDAR |
+| `INTERVALO_PARADA_POCAO` | 10 s | *novo* | FIXO | [navegacao.py:389](blazesbot/bot/navegacao.py#L389) | `_manutencao_em_movimento` | Recarga da PARADA para tomar poção durante o trajeto. |
+| *literal em* `wait_until_still` | 0.25 s | *novo* | FIXO | [navegacao.py:497](blazesbot/bot/navegacao.py#L497) | `wait_until_still` | Espera o personagem parar de andar. |
+| *literal em* `_abrir_mapa` | 0.5 s | *novo* | FIXO | [navegacao.py:521](blazesbot/bot/navegacao.py#L521) | `_abrir_mapa` |  |
+| *literal em* `_fechar_mapa` | 0.3 s | *novo* | FIXO | [navegacao.py:527](blazesbot/bot/navegacao.py#L527) | `_fechar_mapa` |  |
+| *literal em* `_mover_pelo_mapa` | 0.2 s | *novo* | FIXO | [navegacao.py:565](blazesbot/bot/navegacao.py#L565) | `_mover_pelo_mapa` | Anda até `alvo` usando o mapa-múndi. |
+| *literal em* `_mover_pelo_mapa` | 1 s | *novo* | FIXO | [navegacao.py:571](blazesbot/bot/navegacao.py#L571) | `_mover_pelo_mapa` | Anda até `alvo` usando o mapa-múndi. |
+| *literal em* `_clicar_offset_e_verificar` | 0.1 s | *novo* | FIXO | [navegacao.py:871](blazesbot/bot/navegacao.py#L871) | `_clicar_offset_e_verificar` | Clique curto num offset e medição: o personagem andou? |
+| *literal em* `_parada_para_pocao` | 0.25 s | *novo* | FIXO | [navegacao.py:969](blazesbot/bot/navegacao.py#L969) | `_parada_para_pocao` | Desmonta, toma poção e remonta. É a ÚNICA forma que funciona. |
+| *literal em* `_parada_para_pocao` | 0.2 s | *novo* | FIXO | [navegacao.py:980](blazesbot/bot/navegacao.py#L980) | `_parada_para_pocao` | Desmonta, toma poção e remonta. É a ÚNICA forma que funciona. |
+| *literal em* `follow_path` | 0.25 s | *novo* | FIXO | [navegacao.py:1238](blazesbot/bot/navegacao.py#L1238) | `follow_path` | Percorre waypoints em ordem, SEM parar entre eles. |
+| *literal em* `travel_via_surroundings` | 0.5 s | *novo* | FIXO | [navegacao.py:1536](blazesbot/bot/navegacao.py#L1536) | `travel_via_surroundings` | Usa o painel Surroundings como teleporte por nome. |
+| *literal em* `travel_via_surroundings` | 0.2 s | *novo* | FIXO | [navegacao.py:1538](blazesbot/bot/navegacao.py#L1538) | `travel_via_surroundings` | Usa o painel Surroundings como teleporte por nome. |
+| *literal em* `travel_via_surroundings` | 0.15 s | *novo* | FIXO | [navegacao.py:1540](blazesbot/bot/navegacao.py#L1540) | `travel_via_surroundings` | Usa o painel Surroundings como teleporte por nome. |
+| *literal em* `travel_via_surroundings` | 0.4 s | *novo* | FIXO | [navegacao.py:1542](blazesbot/bot/navegacao.py#L1542) | `travel_via_surroundings` | Usa o painel Surroundings como teleporte por nome. |
+| *literal em* `travel_via_surroundings` | 0.25 s | *novo* | FIXO | [navegacao.py:1555](blazesbot/bot/navegacao.py#L1555) | `travel_via_surroundings` | Usa o painel Surroundings como teleporte por nome. |
+| *literal em* `travel_via_surroundings` | 0.5 s | *novo* | FIXO | [navegacao.py:1561](blazesbot/bot/navegacao.py#L1561) | `travel_via_surroundings` | Usa o painel Surroundings como teleporte por nome. |
+| *literal em* `travel_via_surroundings` | 0.25 s | *novo* | FIXO | [navegacao.py:1563](blazesbot/bot/navegacao.py#L1563) | `travel_via_surroundings` | Usa o painel Surroundings como teleporte por nome. |
+| *literal em* `ensure_mounted` | 1 s | *novo* | FIXO | [navegacao.py:1928](blazesbot/bot/navegacao.py#L1928) | `ensure_mounted` |  |
+| *literal em* `ensure_mounted` | 1 s | *novo* | FIXO | [navegacao.py:1939](blazesbot/bot/navegacao.py#L1939) | `ensure_mounted` |  |
+| *literal em* `ensure_dismounted` | 0.75 s | *novo* | FIXO | [navegacao.py:1987](blazesbot/bot/navegacao.py#L1987) | `ensure_dismounted` |  |
 
 
 ## FORA DA CAVE — pontos exatos
@@ -143,65 +143,65 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 
 | tempo | atual | original | natureza | onde | função | para que serve |
 |---|---|---|---|---|---|---|
-| `PASSO_DO_RECONHECIMENTO` | 0.04 s | = | PASSO | [routine.py:119](blazesbot/bot/bc/routine.py#L119) | `_reconhecer_entrada` | PASSO: de quanto em quanto tempo perguntar, dentro da janela. A pergunta é uma |
-| `ESPERA_ENTRE_TENTATIVAS` | 0.025 s | = | FIXO | [routine.py:129](blazesbot/bot/bc/routine.py#L129) | `_do_entrar` | E O INTERVALO ENTRE TENTATIVAS quase desaparece: a janela de reconhecimento já |
-| `PASSO_DA_ESPERA_DO_RESETER` | 1 s | *novo* | PASSO | [routine.py:143](blazesbot/bot/bc/routine.py#L143) | `_esperar_o_reseter` | Cadência da espera pela conta de reset (ver `_esperar_o_reseter`). |
-| `INTERVALO_DO_AVISO_DO_RESETER` | 300 s (5 min) | *novo* | FIXO | [routine.py:150](blazesbot/bot/bc/routine.py#L150) | `_esperar_o_reseter` | De quanto em quanto tempo repetir o aviso enquanto a trava dura. |
-| `SEGUNDOS_POR_TENTATIVA_NO_ALTAR` | 1.5 s | = | FIXO | [routine.py:180](blazesbot/bot/bc/routine.py#L180) | `_encostar_exato_no_patamar` |  |
-| `SEGUNDOS_ESPERANDO_A_BOLSA` | 0.2 s | = | FIXO | [routine.py:299](blazesbot/bot/bc/routine.py#L299) | `_usar_package_courage` | Quanto esperar a bolsa CONFIRMAR que abriu, lendo a memória. |
-| `PASSO_DA_ESPERA_DA_BOLSA` | 0.05 s | = | PASSO | [routine.py:324](blazesbot/bot/bc/routine.py#L324) | `_usar_package_courage` | De quanto em quanto tempo perguntar se a bolsa já abriu. Era 0,15 s, o que |
-| `ASSENTAMENTO_DA_BOLSA` | 0.14 s | = | FIXO | [routine.py:330](blazesbot/bot/bc/routine.py#L330) | `_usar_package_courage` | Depois que a MEMÓRIA confirma a bolsa aberta, o quanto esperar o DESENHO dela. |
-| *literal em* `_do_situar` | 1 s | = | FIXO | [routine.py:533](blazesbot/bot/bc/routine.py#L533) | `_do_situar` | Olha onde o personagem está e entra no estado que faz sentido. |
-| *literal em* `_do_preparar` | 0.2 s | = | FIXO | [routine.py:626](blazesbot/bot/bc/routine.py#L626) | `_do_preparar` |  |
-| *literal em* `_do_recuperar` | 3 s | = | FIXO | [routine.py:2348](blazesbot/bot/bc/routine.py#L2348) | `_do_recuperar` | Recuperação após morte ou falhas em sequência. |
+| `PASSO_DO_RECONHECIMENTO` | 0.04 s | = | PASSO | [routine.py:120](blazesbot/bot/bc/routine.py#L120) | `_reconhecer_entrada` | PASSO: de quanto em quanto tempo perguntar, dentro da janela. A pergunta é uma |
+| `ESPERA_ENTRE_TENTATIVAS` | 0.025 s | = | FIXO | [routine.py:130](blazesbot/bot/bc/routine.py#L130) | `_do_entrar` | E O INTERVALO ENTRE TENTATIVAS quase desaparece: a janela de reconhecimento já |
+| `PASSO_DA_ESPERA_DO_RESETER` | 1 s | *novo* | PASSO | [routine.py:144](blazesbot/bot/bc/routine.py#L144) | `_esperar_o_reseter` | Cadência da espera pela conta de reset (ver `_esperar_o_reseter`). |
+| `INTERVALO_DO_AVISO_DO_RESETER` | 300 s (5 min) | *novo* | FIXO | [routine.py:151](blazesbot/bot/bc/routine.py#L151) | `_esperar_o_reseter` | De quanto em quanto tempo repetir o aviso enquanto a trava dura. |
+| `SEGUNDOS_POR_TENTATIVA_NO_ALTAR` | 1.5 s | = | FIXO | [routine.py:181](blazesbot/bot/bc/routine.py#L181) | `_encostar_exato_no_patamar` |  |
+| `SEGUNDOS_ESPERANDO_A_BOLSA` | 0.2 s | = | FIXO | [routine.py:300](blazesbot/bot/bc/routine.py#L300) | `_usar_package_courage` | Quanto esperar a bolsa CONFIRMAR que abriu, lendo a memória. |
+| `PASSO_DA_ESPERA_DA_BOLSA` | 0.05 s | = | PASSO | [routine.py:325](blazesbot/bot/bc/routine.py#L325) | `_usar_package_courage` | De quanto em quanto tempo perguntar se a bolsa já abriu. Era 0,15 s, o que |
+| `ASSENTAMENTO_DA_BOLSA` | 0.14 s | = | FIXO | [routine.py:331](blazesbot/bot/bc/routine.py#L331) | `_usar_package_courage` | Depois que a MEMÓRIA confirma a bolsa aberta, o quanto esperar o DESENHO dela. |
+| *literal em* `_do_situar` | 1 s | = | FIXO | [routine.py:534](blazesbot/bot/bc/routine.py#L534) | `_do_situar` | Olha onde o personagem está e entra no estado que faz sentido. |
+| *literal em* `_do_preparar` | 0.2 s | = | FIXO | [routine.py:627](blazesbot/bot/bc/routine.py#L627) | `_do_preparar` |  |
+| *literal em* `_do_recuperar` | 3 s | = | FIXO | [routine.py:2349](blazesbot/bot/bc/routine.py#L2349) | `_do_recuperar` | Recuperação após morte ou falhas em sequência. |
 
 
 ## DENTRO DA CAVE — combate
 
 | tempo | atual | original | natureza | onde | função | para que serve |
 |---|---|---|---|---|---|---|
-| `SEGUNDOS_SENTADO_APOS_GUARDAS` | 4 s | = | FIXO | [combat.py:75](blazesbot/bot/bc/combat.py#L75) | `sentar_para_recuperar` | Quatro segundos sentado recuperam vida e mana de graça, e é o único momento da |
-| `SEGUNDOS_DA_POCAO_DE_VIDA` | 15 s | = | FIXO | [combat.py:91](blazesbot/bot/bc/combat.py#L91) | `curar_ao_entrar, _beber_ate_encher (+1)` | A POÇÃO DE VIDA LEVA 15 SEGUNDOS, E ANDAR CANCELA |
-| `SEGUNDOS_DEPOIS_DA_SUPER_SKILL` | 12 s | = | FIXO | [combat.py:95](blazesbot/bot/bc/combat.py#L95) | `curar_ao_entrar, curar_antes_do_boss` | Respiro depois da Super Skill de cura. Ela é instantânea; isto é só o tempo de |
-| `ESPERA_DEPOIS_DO_TAB` | 0.6 s | = | FIXO | [combat.py:115](blazesbot/bot/bc/combat.py#L115) | `_trocar_de_alvo, fase_do_boss_por_combate` | Espera depois de UM TAB, para a seleção chegar da rede antes de conferir. |
-| `FATIA_DA_ESPERA_DA_POCAO` | 0.5 s | = | PASSO | [combat.py:147](blazesbot/bot/bc/combat.py#L147) | `_esperar_o_efeito_da_pocao` | Fatia da espera da poção. O TOTAL é medido por relógio (ver acima), então esta |
-| `SEGUNDOS_DE_CONJURACAO_DA_CURA` | 1.6 s | = | FIXO | [combat.py:237](blazesbot/bot/bc/combat.py#L237) | `_a_cura_subiu` | Conjuração da skill de cura. Informado pelo usuário em 19/08/2026. |
-| `INTERVALO_DE_CONFERENCIA` | 0.1 s | = | FIXO | [combat.py:243](blazesbot/bot/bc/combat.py#L243) | `_a_cura_subiu` | De quanto em quanto tempo perguntar se a vida subiu. É leitura de memória -- |
-| `SEGUNDOS_SEM_ALVO_PARA_MORTE` | 3 s | = | FIXO | [combat.py:295](blazesbot/bot/bc/combat.py#L295) |  | 2. TEMPO -- segundos contínuos sem nada vivo selecionado. Dá lastro à contagem: |
-| `PASSO_DA_VIGIA_DE_COMBATE` | 0.05 s | = | PASSO | [combat.py:375](blazesbot/bot/bc/combat.py#L375) | `esperar_entrar_em_combate, atacar_ate_sair_de_combate (+2)` | Passo da vigia da flag. É o que "não bloqueante" significa na prática: o laço |
-| `ESPERA_PARA_ENTRAR_EM_COMBATE` | 5 s | = | FIXO | [combat.py:382](blazesbot/bot/bc/combat.py#L382) | `esperar_entrar_em_combate` | Quanto esperar a flag LIGAR depois de chegar no waypoint. |
-| `ESPERA_ENTRAR_EM_COMBATE_GUARDAS` | 5 s | = | FIXO | [combat.py:391](blazesbot/bot/bc/combat.py#L391) | `_fase_dos_guardas_com_tab, _fase_dos_guardas_sem_tab` | Prazo curto para os GUARDAS (os 4 mobs no waypoint antes do boss). |
-| `AVISO_DA_ESPERA_SEM_PRAZO` | 10 s | = | TETO | [combat.py:408](blazesbot/bot/bc/combat.py#L408) | `esperar_entrar_em_combate` | Cadência do aviso enquanto espera sem prazo. Uma espera sem limite PRECISA |
-| `CARENCIA_SEM_LER_O_NOME` | 3 s | = | FIXO | [combat.py:679](blazesbot/bot/bc/combat.py#L679) | `atacar_ate_sair_de_combate` | Quantos TAB gastar tentando SAIR de um alvo errado, por luta. |
-| `TETO_DO_DESTRAVAMENTO` | 60 s (1 min) | *novo* | TETO | [combat.py:739](blazesbot/bot/bc/combat.py#L739) | `limpar_o_combate` | Teto de UMA rodada de destravamento. Palavra do usuario: *"no maximo atrasar 1 |
-| `ESPERA_APOS_A_MORTE_ANTES_DO_TAB` | 3 s | *novo* | FIXO | [combat.py:753](blazesbot/bot/bc/combat.py#L753) | `limpar_o_combate` | Quanto esperar PARADO, sem bater, depois de cada morte, antes de gastar o TAB |
-| `CADENCIA_DA_LEITURA_DO_ALVO` | 0.15 s | = | PASSO | [combat.py:883](blazesbot/bot/bc/combat.py#L883) | `atacar_ate_sair_de_combate, _bater_ate_o_alvo_cair` | De quanto em quanto tempo olhar a barra do alvo durante a luta. |
-| `CARENCIA_APOS_O_TAB` | 2.4 s | = | FIXO | [combat.py:892](blazesbot/bot/bc/combat.py#L892) | `atacar_ate_sair_de_combate, _bater_ate_o_alvo_cair` | Depois de apertar TAB, quanto tempo ignorar a leitura. |
-| `SEGUNDOS_ANTES_DO_TAB_NO_BOSS` | 4 s | = | FIXO | [combat.py:893](blazesbot/bot/bc/combat.py#L893) | `fase_do_boss_por_combate` |  |
-| *literal em* `auto_selecionar` | 0.125 s | = | FIXO | [combat.py:1098](blazesbot/bot/bc/combat.py#L1098) | `auto_selecionar` | Seleciona o próprio personagem (F1), para skill em si mesmo. |
-| *literal em* `maintain` | 0.15 s | = | FIXO | [combat.py:1228](blazesbot/bot/bc/combat.py#L1228) | `maintain` | Poções e cura, escolhendo o item certo para a situação. |
-| *literal em* `maintain` | 0.2 s | = | FIXO | [combat.py:1250](blazesbot/bot/bc/combat.py#L1250) | `maintain` | Poções e cura, escolhendo o item certo para a situação. |
-| *literal em* `maintain` | 0.15 s | = | FIXO | [combat.py:1255](blazesbot/bot/bc/combat.py#L1255) | `maintain` | Poções e cura, escolhendo o item certo para a situação. |
-| *literal em* `_manter_vida_caminho_antigo` | 0.2 s | = | FIXO | [combat.py:1285](blazesbot/bot/bc/combat.py#L1285) | `_manter_vida_caminho_antigo` | O comportamento anterior a 19/08/2026, inteiro. |
-| *literal em* `_manter_vida_caminho_antigo` | 0.15 s | = | FIXO | [combat.py:1292](blazesbot/bot/bc/combat.py#L1292) | `_manter_vida_caminho_antigo` | O comportamento anterior a 19/08/2026, inteiro. |
-| *literal em* `_manter_vida_caminho_antigo` | 0.15 s | = | FIXO | [combat.py:1297](blazesbot/bot/bc/combat.py#L1297) | `_manter_vida_caminho_antigo` | O comportamento anterior a 19/08/2026, inteiro. |
-| *literal em* `esperar_entrar_em_combate` | 0.2 s | = | FIXO | [combat.py:1680](blazesbot/bot/bc/combat.py#L1680) | `esperar_entrar_em_combate` | Espera a flag de combate LIGAR. NÃO aperta TAB, não mira nada. |
-| *literal em* `_travar_no_cemetery_guard` | 0.28 s | *novo* | FIXO | [combat.py:1912](blazesbot/bot/bc/combat.py#L1912) | `_travar_no_cemetery_guard` | A ÚNICA trava do waypoint dos guardas -- UMA porta, duas fontes. |
-| *literal em* `sentar_para_recuperar` | 0.25 s | = | FIXO | [combat.py:3216](blazesbot/bot/bc/combat.py#L3216) | `sentar_para_recuperar` | Senta alguns segundos para recuperar vida e mana, e levanta. |
-| *literal em* `_curar_antes_da_segunda_fase` | 0.3 s | = | FIXO | [combat.py:3235](blazesbot/bot/bc/combat.py#L3235) | `_curar_antes_da_segunda_fase` | Cura antes de encostar na fase seguinte, se a conta pedir. |
-| *literal em* `heal_to_full` | 0.125 s | = | FIXO | [combat.py:3603](blazesbot/bot/bc/combat.py#L3603) | `heal_to_full` | Recuperação longa, com poção, Super Skill e sentar. |
-| *literal em* `heal_to_full` | 0.125 s | = | FIXO | [combat.py:3606](blazesbot/bot/bc/combat.py#L3606) | `heal_to_full` | Recuperação longa, com poção, Super Skill e sentar. |
-| *literal em* `heal_to_full` | 0.125 s | = | FIXO | [combat.py:3609](blazesbot/bot/bc/combat.py#L3609) | `heal_to_full` | Recuperação longa, com poção, Super Skill e sentar. |
-| *literal em* `heal_to_full` | 0.3 s | = | FIXO | [combat.py:3612](blazesbot/bot/bc/combat.py#L3612) | `heal_to_full` | Recuperação longa, com poção, Super Skill e sentar. |
-| *literal em* `heal_to_full` | 0.25 s | = | FIXO | [combat.py:3641](blazesbot/bot/bc/combat.py#L3641) | `heal_to_full` | Recuperação longa, com poção, Super Skill e sentar. |
-| *literal em* `heal_to_full` | 0.6 s | = | FIXO | [combat.py:3654](blazesbot/bot/bc/combat.py#L3654) | `heal_to_full` | Recuperação longa, com poção, Super Skill e sentar. |
-| *literal em* `heal_to_full` | 0.15 s | = | FIXO | [combat.py:3663](blazesbot/bot/bc/combat.py#L3663) | `heal_to_full` | Recuperação longa, com poção, Super Skill e sentar. |
-| *literal em* `heal_to_full` | 0.15 s | = | FIXO | [combat.py:3667](blazesbot/bot/bc/combat.py#L3667) | `heal_to_full` | Recuperação longa, com poção, Super Skill e sentar. |
-| *literal em* `heal_to_full` | 0.4 s | = | FIXO | [combat.py:3671](blazesbot/bot/bc/combat.py#L3671) | `heal_to_full` | Recuperação longa, com poção, Super Skill e sentar. |
-| *literal em* `heal_to_full` | 0.5 s | = | FIXO | [combat.py:3673](blazesbot/bot/bc/combat.py#L3673) | `heal_to_full` | Recuperação longa, com poção, Super Skill e sentar. |
-| *literal em* `ensure_pet` | 1.5 s | = | FIXO | [combat.py:3701](blazesbot/bot/bc/combat.py#L3701) | `ensure_pet` | Garante que o pet está invocado. |
-| *literal em* `ensure_pet` | 1.5 s | = | FIXO | [combat.py:3714](blazesbot/bot/bc/combat.py#L3714) | `ensure_pet` | Garante que o pet está invocado. |
-| *literal em* `apply_buffs` | 0.6 s | = | FIXO | [combat.py:3741](blazesbot/bot/bc/combat.py#L3741) | `apply_buffs` | Aplica os buffs configurados, em si mesmo. |
+| `SEGUNDOS_SENTADO_APOS_GUARDAS` | 4 s | = | FIXO | [combat.py:76](blazesbot/bot/bc/combat.py#L76) | `sentar_para_recuperar` | Quatro segundos sentado recuperam vida e mana de graça, e é o único momento da |
+| `SEGUNDOS_DA_POCAO_DE_VIDA` | 15 s | = | FIXO | [combat.py:92](blazesbot/bot/bc/combat.py#L92) | `curar_ao_entrar, _beber_ate_encher (+1)` | A POÇÃO DE VIDA LEVA 15 SEGUNDOS, E ANDAR CANCELA |
+| `SEGUNDOS_DEPOIS_DA_SUPER_SKILL` | 12 s | = | FIXO | [combat.py:96](blazesbot/bot/bc/combat.py#L96) | `curar_ao_entrar, curar_antes_do_boss` | Respiro depois da Super Skill de cura. Ela é instantânea; isto é só o tempo de |
+| `ESPERA_DEPOIS_DO_TAB` | 0.6 s | = | FIXO | [combat.py:116](blazesbot/bot/bc/combat.py#L116) | `_trocar_de_alvo, fase_do_boss_por_combate` | Espera depois de UM TAB, para a seleção chegar da rede antes de conferir. |
+| `FATIA_DA_ESPERA_DA_POCAO` | 0.5 s | = | PASSO | [combat.py:148](blazesbot/bot/bc/combat.py#L148) | `_esperar_o_efeito_da_pocao` | Fatia da espera da poção. O TOTAL é medido por relógio (ver acima), então esta |
+| `SEGUNDOS_DE_CONJURACAO_DA_CURA` | 1.6 s | = | FIXO | [combat.py:238](blazesbot/bot/bc/combat.py#L238) | `_a_cura_subiu` | Conjuração da skill de cura. Informado pelo usuário em 19/08/2026. |
+| `INTERVALO_DE_CONFERENCIA` | 0.1 s | = | FIXO | [combat.py:244](blazesbot/bot/bc/combat.py#L244) | `_a_cura_subiu` | De quanto em quanto tempo perguntar se a vida subiu. É leitura de memória -- |
+| `SEGUNDOS_SEM_ALVO_PARA_MORTE` | 3 s | = | FIXO | [combat.py:296](blazesbot/bot/bc/combat.py#L296) |  | 2. TEMPO -- segundos contínuos sem nada vivo selecionado. Dá lastro à contagem: |
+| `PASSO_DA_VIGIA_DE_COMBATE` | 0.05 s | = | PASSO | [combat.py:376](blazesbot/bot/bc/combat.py#L376) | `esperar_entrar_em_combate, atacar_ate_sair_de_combate (+2)` | Passo da vigia da flag. É o que "não bloqueante" significa na prática: o laço |
+| `ESPERA_PARA_ENTRAR_EM_COMBATE` | 5 s | = | FIXO | [combat.py:383](blazesbot/bot/bc/combat.py#L383) | `esperar_entrar_em_combate` | Quanto esperar a flag LIGAR depois de chegar no waypoint. |
+| `ESPERA_ENTRAR_EM_COMBATE_GUARDAS` | 5 s | = | FIXO | [combat.py:392](blazesbot/bot/bc/combat.py#L392) | `_fase_dos_guardas_com_tab, _fase_dos_guardas_sem_tab` | Prazo curto para os GUARDAS (os 4 mobs no waypoint antes do boss). |
+| `AVISO_DA_ESPERA_SEM_PRAZO` | 10 s | = | TETO | [combat.py:409](blazesbot/bot/bc/combat.py#L409) | `esperar_entrar_em_combate` | Cadência do aviso enquanto espera sem prazo. Uma espera sem limite PRECISA |
+| `CARENCIA_SEM_LER_O_NOME` | 3 s | = | FIXO | [combat.py:680](blazesbot/bot/bc/combat.py#L680) | `atacar_ate_sair_de_combate` | Quantos TAB gastar tentando SAIR de um alvo errado, por luta. |
+| `TETO_DO_DESTRAVAMENTO` | 60 s (1 min) | *novo* | TETO | [combat.py:740](blazesbot/bot/bc/combat.py#L740) | `limpar_o_combate` | Teto de UMA rodada de destravamento. Palavra do usuario: *"no maximo atrasar 1 |
+| `ESPERA_APOS_A_MORTE_ANTES_DO_TAB` | 3 s | *novo* | FIXO | [combat.py:754](blazesbot/bot/bc/combat.py#L754) | `limpar_o_combate` | Quanto esperar PARADO, sem bater, depois de cada morte, antes de gastar o TAB |
+| `CADENCIA_DA_LEITURA_DO_ALVO` | 0.15 s | = | PASSO | [combat.py:884](blazesbot/bot/bc/combat.py#L884) | `atacar_ate_sair_de_combate, _bater_ate_o_alvo_cair` | De quanto em quanto tempo olhar a barra do alvo durante a luta. |
+| `CARENCIA_APOS_O_TAB` | 2.4 s | = | FIXO | [combat.py:893](blazesbot/bot/bc/combat.py#L893) | `atacar_ate_sair_de_combate, _bater_ate_o_alvo_cair` | Depois de apertar TAB, quanto tempo ignorar a leitura. |
+| `SEGUNDOS_ANTES_DO_TAB_NO_BOSS` | 4 s | = | FIXO | [combat.py:894](blazesbot/bot/bc/combat.py#L894) | `fase_do_boss_por_combate` |  |
+| *literal em* `auto_selecionar` | 0.125 s | = | FIXO | [combat.py:1099](blazesbot/bot/bc/combat.py#L1099) | `auto_selecionar` | Seleciona o próprio personagem (F1), para skill em si mesmo. |
+| *literal em* `maintain` | 0.15 s | = | FIXO | [combat.py:1229](blazesbot/bot/bc/combat.py#L1229) | `maintain` | Poções e cura, escolhendo o item certo para a situação. |
+| *literal em* `maintain` | 0.2 s | = | FIXO | [combat.py:1251](blazesbot/bot/bc/combat.py#L1251) | `maintain` | Poções e cura, escolhendo o item certo para a situação. |
+| *literal em* `maintain` | 0.15 s | = | FIXO | [combat.py:1256](blazesbot/bot/bc/combat.py#L1256) | `maintain` | Poções e cura, escolhendo o item certo para a situação. |
+| *literal em* `_manter_vida_caminho_antigo` | 0.2 s | = | FIXO | [combat.py:1286](blazesbot/bot/bc/combat.py#L1286) | `_manter_vida_caminho_antigo` | O comportamento anterior a 19/08/2026, inteiro. |
+| *literal em* `_manter_vida_caminho_antigo` | 0.15 s | = | FIXO | [combat.py:1293](blazesbot/bot/bc/combat.py#L1293) | `_manter_vida_caminho_antigo` | O comportamento anterior a 19/08/2026, inteiro. |
+| *literal em* `_manter_vida_caminho_antigo` | 0.15 s | = | FIXO | [combat.py:1298](blazesbot/bot/bc/combat.py#L1298) | `_manter_vida_caminho_antigo` | O comportamento anterior a 19/08/2026, inteiro. |
+| *literal em* `esperar_entrar_em_combate` | 0.2 s | = | FIXO | [combat.py:1681](blazesbot/bot/bc/combat.py#L1681) | `esperar_entrar_em_combate` | Espera a flag de combate LIGAR. NÃO aperta TAB, não mira nada. |
+| *literal em* `_travar_no_cemetery_guard` | 0.28 s | *novo* | FIXO | [combat.py:1913](blazesbot/bot/bc/combat.py#L1913) | `_travar_no_cemetery_guard` | A ÚNICA trava do waypoint dos guardas -- UMA porta, duas fontes. |
+| *literal em* `sentar_para_recuperar` | 0.25 s | = | FIXO | [combat.py:3217](blazesbot/bot/bc/combat.py#L3217) | `sentar_para_recuperar` | Senta alguns segundos para recuperar vida e mana, e levanta. |
+| *literal em* `_curar_antes_da_segunda_fase` | 0.3 s | = | FIXO | [combat.py:3236](blazesbot/bot/bc/combat.py#L3236) | `_curar_antes_da_segunda_fase` | Cura antes de encostar na fase seguinte, se a conta pedir. |
+| *literal em* `heal_to_full` | 0.125 s | = | FIXO | [combat.py:3604](blazesbot/bot/bc/combat.py#L3604) | `heal_to_full` | Recuperação longa, com poção, Super Skill e sentar. |
+| *literal em* `heal_to_full` | 0.125 s | = | FIXO | [combat.py:3607](blazesbot/bot/bc/combat.py#L3607) | `heal_to_full` | Recuperação longa, com poção, Super Skill e sentar. |
+| *literal em* `heal_to_full` | 0.125 s | = | FIXO | [combat.py:3610](blazesbot/bot/bc/combat.py#L3610) | `heal_to_full` | Recuperação longa, com poção, Super Skill e sentar. |
+| *literal em* `heal_to_full` | 0.3 s | = | FIXO | [combat.py:3613](blazesbot/bot/bc/combat.py#L3613) | `heal_to_full` | Recuperação longa, com poção, Super Skill e sentar. |
+| *literal em* `heal_to_full` | 0.25 s | = | FIXO | [combat.py:3642](blazesbot/bot/bc/combat.py#L3642) | `heal_to_full` | Recuperação longa, com poção, Super Skill e sentar. |
+| *literal em* `heal_to_full` | 0.6 s | = | FIXO | [combat.py:3655](blazesbot/bot/bc/combat.py#L3655) | `heal_to_full` | Recuperação longa, com poção, Super Skill e sentar. |
+| *literal em* `heal_to_full` | 0.15 s | = | FIXO | [combat.py:3664](blazesbot/bot/bc/combat.py#L3664) | `heal_to_full` | Recuperação longa, com poção, Super Skill e sentar. |
+| *literal em* `heal_to_full` | 0.15 s | = | FIXO | [combat.py:3668](blazesbot/bot/bc/combat.py#L3668) | `heal_to_full` | Recuperação longa, com poção, Super Skill e sentar. |
+| *literal em* `heal_to_full` | 0.4 s | = | FIXO | [combat.py:3672](blazesbot/bot/bc/combat.py#L3672) | `heal_to_full` | Recuperação longa, com poção, Super Skill e sentar. |
+| *literal em* `heal_to_full` | 0.5 s | = | FIXO | [combat.py:3674](blazesbot/bot/bc/combat.py#L3674) | `heal_to_full` | Recuperação longa, com poção, Super Skill e sentar. |
+| *literal em* `ensure_pet` | 1.5 s | = | FIXO | [combat.py:3702](blazesbot/bot/bc/combat.py#L3702) | `ensure_pet` | Garante que o pet está invocado. |
+| *literal em* `ensure_pet` | 1.5 s | = | FIXO | [combat.py:3715](blazesbot/bot/bc/combat.py#L3715) | `ensure_pet` | Garante que o pet está invocado. |
+| *literal em* `apply_buffs` | 0.6 s | = | FIXO | [combat.py:3742](blazesbot/bot/bc/combat.py#L3742) | `apply_buffs` | Aplica os buffs configurados, em si mesmo. |
 
 
 ## DENTRO DA CAVE — outros
@@ -214,11 +214,9 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | `ASSENTAMENTO_APOS_O_CLIQUE` | 0.125 s | = | FIXO | [amostragem_de_cliques.py:150](blazesbot/bot/bc/amostragem_de_cliques.py#L150) | `amostrar` | Assentamento depois da amostra, antes de reler a posição. É o tempo de o |
 | `ESPERA_APOS_O_ESC` | 0.075 s | = | FIXO | [amostragem_de_cliques.py:153](blazesbot/bot/bc/amostragem_de_cliques.py#L153) | `fechar_dialogo` | Espera depois de cada ESC, antes de reconferir se o diálogo fechou. |
 | `SEGUNDOS_POR_TENTATIVA_DE_ANCORAR` | 3 s | = | FIXO | [amostragem_de_cliques.py:168](blazesbot/bot/bc/amostragem_de_cliques.py#L168) | `ancorar` |  |
-| `RECARGA` | 5 s | = | FIXO | [hotbar.py:57](blazesbot/bot/bc/hotbar.py#L57) | `garantir_pagina_1` | Recarga do caminho com `ctx`. Os momentos-chave acontecem em rajada -- o portão |
 | `INTERVALO_DO_BATIMENTO` | 15 s | = | FIXO | [localizacao.py:67](blazesbot/bot/bc/localizacao.py#L67) | `_registrar` | Cadência do batimento no diário. Uma linha a cada meio minuto dá uma trilha |
 | `SEGUNDOS_PARA_DESCONFIAR` | 3 s | = | FIXO | [localizacao.py:72](blazesbot/bot/bc/localizacao.py#L72) | `_registrar_falha` | Tempo com o nome ilegível a partir do qual o bot passa a tratar a fonte de |
 | *literal em* `rodar` | 0.2 s | = | FIXO | [teste_venda.py:125](blazesbot/bot/bc/teste_venda.py#L125) | `rodar` | Executa a venda na janela JÁ ABERTA desta conta. Bloqueia até terminar. |
-| `SEGUNDOS_ANDANDO_ANTES` | 0.5 s | = | FIXO | [velocidade.py:45](blazesbot/bot/bc/velocidade.py#L45) | `usar_se_puder` | Quanto o personagem precisa ter andado antes de valer a pena acionar. |
 
 
 ## ECOSSISTEMA APP
@@ -314,6 +312,7 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 |---|---|---|---|---|---|---|
 | `FATIA_DA_ESPERA` | 0.25 s | = | PASSO | [context.py:211](blazesbot/bot/context.py#L211) | `tick` | Fatia máxima de sono dentro de um `tick`. |
 | *literal em* `wait_if_paused` | 0.075 s | = | FIXO | [context.py:471](blazesbot/bot/context.py#L471) | `wait_if_paused` | Bloqueia enquanto a pausa estiver ativa. |
+| `RECARGA` | 5 s | *novo* | FIXO | [hotbar.py:63](blazesbot/bot/hotbar.py#L63) | `garantir_pagina_1` | Recarga do caminho com `ctx`. Os momentos-chave acontecem em rajada -- o portão |
 | `PASSO_DA_SONDA` | 0.012 s | = | PASSO | [instrumentar_clique.py:110](blazesbot/bot/instrumentar_clique.py#L110) | `_sondar_ate_mudar` | De quanto em quanto tempo a sonda fotografa o minimapa esperando o efeito. |
 | `TETO_DA_SONDA` | 1.2 s | = | TETO | [instrumentar_clique.py:113](blazesbot/bot/instrumentar_clique.py#L113) | `_sondar_ate_mudar, _um_modo` | Teto da espera pelo efeito. Passou disso, o clique é dado como PERDIDO. |
 | *literal em* `rodar` | 0.05 s | = | FIXO | [instrumentar_clique.py:390](blazesbot/bot/instrumentar_clique.py#L390) | `rodar` |  |
@@ -354,6 +353,7 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | *literal em* `_recusar` | 0.5 s | = | FIXO | [team.py:943](blazesbot/bot/team.py#L943) | `_recusar` |  |
 | `ESPERA_DEPOIS_DO_CLIQUE` | 0.35 s | = | FIXO | [teste_do_cursor.py:100](blazesbot/bot/teste_do_cursor.py#L100) | `_uma_fase` |  |
 | *literal em* `main` | 8 s | = | FIXO | [teste_do_cursor.py:476](blazesbot/bot/teste_do_cursor.py#L476) | `main` |  |
+| `SEGUNDOS_ANDANDO_ANTES` | 0.5 s | *novo* | FIXO | [velocidade.py:45](blazesbot/bot/velocidade.py#L45) | `usar_se_puder` | Quanto o personagem precisa ter andado antes de valer a pena acionar. |
 
 
 ## CORE — capacidades compartilhadas

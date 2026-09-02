@@ -21,7 +21,8 @@ from types import SimpleNamespace
 
 import pytest
 
-from blazesbot.bot.bc import combat, navigation
+from blazesbot.bot import navegacao as navigation
+from blazesbot.bot.bc import combat
 from blazesbot.bot.bc.combat import CombatEngine
 from blazesbot.core.pet import PetFeeder
 
