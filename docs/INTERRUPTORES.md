@@ -248,9 +248,9 @@ ligar código não testado.
 | `TENTATIVAS_DE_POSICIONAR` | `3` | [blazesbot/bot/hh/entrada.py:62](blazesbot/bot/hh/entrada.py#L62) | — | Quantas vezes refazer a caminhada pelo painel de arredores antes de desistir |
 | `TETO_DA_ENTRADA` | `2.0` | [blazesbot/bot/hh/entrada.py:72](blazesbot/bot/hh/entrada.py#L72) | — | Teto da espera pela troca de mapa depois de clicar no link de entrar. |
 | `TETO_DO_TELEPORTE` | `2.0` | [blazesbot/bot/hh/entrada.py:76](blazesbot/bot/hh/entrada.py#L76) | — | Teto da espera pelo teleporte do Fay. |
-| `INTERVALO_DE_REAFIRMAR_O_FOLLOW` | `4.0` | [blazesbot/bot/hh/fada.py:76](blazesbot/bot/hh/fada.py#L76) | — | De quanto em quanto tempo reafirmar a tecla de seguir. |
-| `PASSO_DO_ACOMPANHAMENTO` | `0.3` | [blazesbot/bot/hh/fada.py:69](blazesbot/bot/hh/fada.py#L69) | — | Quanto esperar entre duas leituras enquanto acompanha o líder. |
-| `PASSO_ESPERANDO_O_LIDER` | `0.5` | [blazesbot/bot/hh/fada.py:83](blazesbot/bot/hh/fada.py#L83) | — | — |
+| `INTERVALO_DE_REAFIRMAR_O_FOLLOW` | `4.0` | [blazesbot/bot/hh/fada.py:80](blazesbot/bot/hh/fada.py#L80) | — | De quanto em quanto tempo reafirmar a tecla de seguir. |
+| `PASSO_DO_ACOMPANHAMENTO` | `0.3` | [blazesbot/bot/hh/fada.py:73](blazesbot/bot/hh/fada.py#L73) | — | Quanto esperar entre duas leituras enquanto acompanha o líder. |
+| `PASSO_ESPERANDO_O_LIDER` | `0.5` | [blazesbot/bot/hh/fada.py:87](blazesbot/bot/hh/fada.py#L87) | — | — |
 | `AREA_INTERNA_NAO_MEDIDA` | `'HH (área não medida)'` | [blazesbot/bot/hh/mapa_hh.py:77](blazesbot/bot/hh/mapa_hh.py#L77) | — | Marcador para a área que ainda não foi medida. Ver o cabeçalho do módulo: é |
 | `BOSS_1` | `'Fa-Yuan'` | [blazesbot/bot/hh/mapa_hh.py:156](blazesbot/bot/hh/mapa_hh.py#L156) | — | Os quatro bosses |
 | `BOSS_2` | `'Dupla'` | [blazesbot/bot/hh/mapa_hh.py:157](blazesbot/bot/hh/mapa_hh.py#L157) | — | — |

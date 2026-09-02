@@ -15,8 +15,12 @@ UI do jogo, ou seja, de `BotContext`.
 Então este módulo COMPÕE em vez de herdar:
 
     EntradaDaHH    viajar até a porta e entrar          (a mesma do líder)
-    FadaDoTime     o laço de cura, injetado             (a mesma do APP)
+    FadaDoTime     UM GIRO do laço de cura, injetado    (a mesma do APP)
     seguir()       a peça nova, e é só uma tecla
+
+E as duas últimas rodam NA MESMA VOLTA (`acompanhar`). Dois laços concorrentes
+na mesma conta seriam duas mãos no mesmo teclado -- e o `_uma_volta` da
+`FadaDoTime` existe exatamente para ser chamado de fora assim.
 
 =========================================================================
 POR QUE SEGUIR COM A TECLA DO JOGO, E NÃO COM WAYPOINTS
@@ -113,6 +117,7 @@ class FadaDaHH:
         self._seguindo_desde = 0.0
         self._avisou_sem_tecla = False
         self._avisou_sem_slot = False
+        self._avisou_sem_cura = False
 
     # ==================================================================
     # A tecla
@@ -246,19 +251,35 @@ class FadaDaHH:
     # Dentro
     # ==================================================================
 
-    def acompanhar(self, continuar) -> None:
-        """Segue o líder e mantém o follow de pé enquanto ele estiver na cave.
+    def acompanhar(self, continuar, curar_uma_volta=None) -> None:
+        """Segue o líder e CURA, no mesmo laço, enquanto ele estiver na cave.
 
-        `continuar` é consultado a cada volta -- é assim que a parada do usuário
-        e a queda do time encerram o acompanhamento num ponto seguro.
+        AS DUAS COISAS NA MESMA VOLTA, e isso é o ponto. Andar e curar são
+        responsabilidades diferentes -- o deslocamento é desta classe, a cura é
+        da `FadaDoTime` -- mas elas acontecem ao mesmo tempo, e dois laços
+        concorrentes na mesma conta seriam duas mãos no mesmo teclado.
 
-        NÃO CURA AQUI. Curar é da `FadaDoTime`, que roda pela fila do mural e é
-        chamada pelo supervisor. Esta função cuida só de a Fada estar PERTO o
-        bastante para a cura funcionar -- e perto é responsabilidade do follow.
+        `curar_uma_volta` é UM GIRO do laço da Fada (`FadaDoTime._uma_volta`),
+        injetado pelo supervisor. Devolver `False` significa "é para parar", e
+        aqui isso encerra o acompanhamento também: se ela não pode mais curar,
+        seguir o líder não serve para nada.
+
+        `None` = ninguém injetou a cura. Ela AINDA acompanha -- estar perto é
+        útil por si, e o líder pode estar usando poção --, mas isso é bug de
+        ligação e vai para o log.
+
+        `continuar` é consultado a cada volta: é assim que a parada do usuário e
+        a queda do time encerram o acompanhamento num ponto seguro.
         """
         import time
 
         ctx = self.ctx
+        if curar_uma_volta is None and not self._avisou_sem_cura:
+            self._avisou_sem_cura = True
+            ctx.log.warning(
+                "HH+Fada: não recebi o laço de cura, então vou acompanhar o "
+                "líder sem curar. É injeção do supervisor.")
+
         self.seguir_o_lider()
 
         while continuar():
@@ -268,6 +289,13 @@ class FadaDaHH:
 
             if not mapa_hh.esta_dentro_da_hh(ctx.memory.position()):
                 ctx.log.info("HH+Fada: saí da cave; encerrando o acompanhamento")
+                return
+
+            # A CURA VEM ANTES DO FOLLOW na volta, e a ordem é escolha: quem
+            # está esperando cura está tomando dano AGORA, e um quadro de atraso
+            # na cura custa mais que um quadro de atraso no seguir.
+            if curar_uma_volta is not None and curar_uma_volta() is False:
+                ctx.log.info("HH+Fada: o laço de cura pediu para parar")
                 return
 
             agora = time.time()
@@ -282,8 +310,8 @@ class FadaDaHH:
     # O ciclo inteiro
     # ==================================================================
 
-    def rodar(self, continuar) -> None:
-        """Porta -> espera o líder -> entra -> acompanha. Uma passada.
+    def rodar(self, continuar, curar_uma_volta=None) -> None:
+        """Porta -> espera o líder -> entra -> acompanha e cura. Uma passada.
 
         Chamado em laço pelo supervisor. Uma passada por run da cave: ao sair, o
         líder desfaz e refaz o time, e a passada seguinte começa da porta.
@@ -297,7 +325,7 @@ class FadaDaHH:
             # morreu e reviveu lá. Não tenta entrar de novo: o clique cairia no
             # chão e a tiraria do lugar.
             ctx.log.info("HH+Fada: já estou dentro; acompanhando")
-            self.acompanhar(continuar)
+            self.acompanhar(continuar, curar_uma_volta)
             return
 
         if not self.ir_para_a_porta():
@@ -305,7 +333,7 @@ class FadaDaHH:
         self.esperar_o_lider_entrar()
         if not self.entrar():
             return
-        self.acompanhar(continuar)
+        self.acompanhar(continuar, curar_uma_volta)
 
     # ==================================================================
     # Diagnóstico

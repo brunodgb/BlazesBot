@@ -107,6 +107,7 @@ def _fada(follow="", pos=None, selecionar=None):
     fada._seguindo_desde = 0.0
     fada._avisou_sem_tecla = False
     fada._avisou_sem_slot = False
+    fada._avisou_sem_cura = False
     return fada
 
 
@@ -395,3 +396,85 @@ def test_o_ponto_de_entrada_da_fada_e_o_MESMO_do_lider():
     fonte = _fonte(FadaDaHH.ir_para_a_porta)
     assert "PONTO_DA_ENTRADA" in fonte
     assert mapa_hh.PONTO_DA_ENTRADA == (-343, -289)
+
+
+# ===========================================================================
+# ELA CURA ENQUANTO ACOMPANHA -- a lacuna que existia e foi fechada
+# ===========================================================================
+#
+# A primeira versão do portão chamava só o acompanhamento e dava `continue`.
+# Resultado: a Fada seguiria o líder pela cave inteira e NUNCA CURARIA. A
+# docstring dizia que compunha com a `FadaDoTime`, e a ligação não existia --
+# nenhum teste de comportamento pegaria isso, porque não há comportamento
+# errado: há uma peça que simplesmente não é chamada.
+
+
+def test_o_laco_de_acompanhar_CHAMA_a_cura():
+    """As duas coisas na MESMA volta. Dois laços concorrentes na mesma conta
+    seriam duas mãos no mesmo teclado."""
+    fonte = _fonte(FadaDaHH.acompanhar)
+    assert "curar_uma_volta" in fonte
+    assert "curar_uma_volta()" in fonte
+
+
+def test_a_cura_vem_ANTES_do_follow_na_volta():
+    """Quem está esperando cura está tomando dano AGORA. Um quadro de atraso na
+    cura custa mais que um quadro de atraso no seguir."""
+    fonte = _fonte(FadaDaHH.acompanhar)
+    i_cura = fonte.index("curar_uma_volta()")
+    i_follow = fonte.index("INTERVALO_DE_REAFIRMAR_O_FOLLOW")
+    assert i_cura < i_follow
+
+
+def test_a_cura_pedindo_para_parar_ENCERRA_o_acompanhamento():
+    """Se ela não pode mais curar, seguir o líder não serve para nada."""
+    fada = _fada(follow="P", pos=mapa_hh.POSICAO_DO_BOSS_1,
+                 selecionar=lambda: True)
+    voltas = {"n": 0}
+
+    def curar():
+        voltas["n"] += 1
+        return False          # "é para parar"
+
+    fada.acompanhar(continuar=lambda: True, curar_uma_volta=curar)
+    assert voltas["n"] == 1, "não parou quando a cura pediu"
+
+
+def test_sem_a_cura_injetada_ela_AVISA_e_ainda_acompanha():
+    """Estar perto é útil por si (o líder pode estar de poção), mas faltar a
+    cura é bug de ligação -- e bug de ligação vai para o log."""
+    fada = _fada(follow="P", pos=mapa_hh.POSICAO_DO_BOSS_1,
+                 selecionar=lambda: True)
+    voltas = {"n": 0}
+
+    def continuar():
+        voltas["n"] += 1
+        return voltas["n"] <= 2
+
+    fada.acompanhar(continuar=continuar, curar_uma_volta=None)
+    assert "laço de cura" in fada.ctx.log.texto()
+
+
+def test_o_supervisor_injeta_UM_GIRO_da_MESMA_fada():
+    """Uma segunda montagem teria outros pontos de clique e outras barras de
+    cura, e as duas divergiriam na primeira manutenção."""
+    from blazesbot.bot.supervisor import AccountSupervisor
+
+    fonte = _fonte(AccountSupervisor._rodar_fada_da_hh)
+    assert "_montar_a_fada" in fonte
+    assert "_uma_volta" in fonte
+
+    # E o montar é o MESMO caminho do `_rodar_fada`, não uma cópia dele.
+    montar = _fonte(AccountSupervisor._montar_a_fada)
+    assert "_rodar_fada" in montar
+    assert "FadaDoTime(" not in montar, "montou uma segunda Fada"
+
+
+def test_falhar_em_montar_a_fada_nao_derruba_a_conta():
+    """Ela acompanha sem curar, e o log diz. Derrubar seria trocar "cura pior"
+    por "conta parada"."""
+    from blazesbot.bot.supervisor import AccountSupervisor
+
+    montar = _fonte(AccountSupervisor._montar_a_fada)
+    assert "return None" in montar
+    assert "except Exception" in montar

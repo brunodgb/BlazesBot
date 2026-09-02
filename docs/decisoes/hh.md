@@ -408,11 +408,37 @@ Em ordem de bloqueio:
 1. **Os três templates** (seção 9, item 4). Sem eles a entrada recusa. Recortar
    de um print do jogo em 1024×768: a seta de rolagem para baixo do diálogo, o
    link `West Suburb of Stone City` e o link de entrar da HH.
-2. **O modo HH+Fada.** A configuração existe e a rotina já sabe onde fechar o
-   ciclo de time; falta a Fada **viajar, entrar e seguir**. Ela é conta do
-   ecossistema APP e é coordenada pelo `mural` — não pode passar a importar de
-   `hh/`. O bot em Lua resolve o seguir com a tecla de follow
-   (`keys.follow = "p"`), e essa tecla ainda não existe em `KeyBinds`.
-   **O modo "solo" está completo** e é idêntico ao da BC.
+2. **A TECLA DE SEGUIR**, para o modo HH+Fada. `KeyBinds.follow` nasce VAZIA
+   porque o cliente não tem atalho padrão para o follow: configure no jogo e
+   repita em *Editar conta > Teclas > Seguir*. Sem ela a Fada avisa uma vez e
+   acompanha sem seguir — ela continua curando de onde estiver.
 3. **A área interna** (seção 9, item 1) e **os nomes dos quatro bosses**
    (item 2). Nenhum dos dois bloqueia; os dois melhoram o log e a retomada.
+
+### 10.5 O modo HH+Fada, e a lacuna que ele quase teve
+
+**Está completo.** A Fada viaja pela MESMA rota do líder, espera o aviso dele no
+mural, entra atrás, e acompanha pela tecla de seguir do jogo — que é o que o bot
+em Lua faz, e é a parte dele que estava certa.
+
+A sexta promoção saiu daqui: `app/fada.py` → **`bot/fada.py`**. Foi a mais
+barata das seis, porque a `FadaDoTime` **já era completamente injetada** — não
+recebe `BotContext`, não abre memória, não conhece supervisor. Mover foi trocar
+`...core` por `..core`.
+
+**A LACUNA, e ela é instrutiva.** A primeira versão do portão chamava só o
+acompanhamento e dava `continue`. A Fada seguiria o líder pela cave inteira e
+**nunca curaria** — e a docstring dizia que compunha com a `FadaDoTime`, o que
+tornava a leitura do código *mais* enganosa, não menos.
+
+Nenhum teste de comportamento pegaria isso: não havia comportamento errado,
+havia uma peça que simplesmente não era chamada. O que fechou foi
+`FadaDoTime._uma_volta` — um giro do laço de cura, chamado de dentro do laço de
+seguir. **As duas na mesma volta**, porque dois laços concorrentes na mesma conta
+seriam duas mãos no mesmo teclado. E a cura vem ANTES do follow na volta: quem
+espera cura está tomando dano agora.
+
+O ciclo de time continua sendo do LÍDER, e não dela. Duas contas decidindo
+desfazer o mesmo time é uma corrida cujo resultado é um time desfeito no meio da
+cave — testes proíbem a Fada de chamar `sair_do_time`, de percorrer waypoints e
+de lutar.

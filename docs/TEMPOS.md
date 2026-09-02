@@ -280,11 +280,11 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | `PASSO_DA_ESPERA_DA_ENTRADA` | 0.08 s | *novo* | PASSO | [entrada.py:73](blazesbot/bot/hh/entrada.py#L73) | `esperar_entrar` |  |
 | `TETO_DO_TELEPORTE` | 2 s | *novo* | TETO | [entrada.py:76](blazesbot/bot/hh/entrada.py#L76) | `viajar_para_a_hh` | Teto da espera pelo teleporte do Fay. |
 | `PASSO_DA_ESPERA_DO_TELEPORTE` | 0.08 s | *novo* | PASSO | [entrada.py:77](blazesbot/bot/hh/entrada.py#L77) | `viajar_para_a_hh` |  |
-| `PASSO_DO_ACOMPANHAMENTO` | 0.3 s | *novo* | PASSO | [fada.py:69](blazesbot/bot/hh/fada.py#L69) | `acompanhar` | Quanto esperar entre duas leituras enquanto acompanha o líder. |
-| `INTERVALO_DE_REAFIRMAR_O_FOLLOW` | 4 s | *novo* | FIXO | [fada.py:76](blazesbot/bot/hh/fada.py#L76) | `acompanhar` | De quanto em quanto tempo reafirmar a tecla de seguir. |
-| `PASSO_ESPERANDO_O_LIDER` | 0.5 s | *novo* | PASSO | [fada.py:83](blazesbot/bot/hh/fada.py#L83) | `esperar_o_lider_entrar` |  |
-| *literal em* `seguir_o_lider` | 0.15 s | *novo* | FIXO | [fada.py:155](blazesbot/bot/hh/fada.py#L155) | `seguir_o_lider` | Clica no retrato do líder e aperta a tecla de seguir. |
-| *literal em* `entrar` | 0.25 s | *novo* | FIXO | [fada.py:241](blazesbot/bot/hh/fada.py#L241) | `entrar` | Entra na cave. Mesma porta, mesma máquina, mesmo NPC do líder. |
+| `PASSO_DO_ACOMPANHAMENTO` | 0.3 s | *novo* | PASSO | [fada.py:73](blazesbot/bot/hh/fada.py#L73) | `acompanhar` | Quanto esperar entre duas leituras enquanto acompanha o líder. |
+| `INTERVALO_DE_REAFIRMAR_O_FOLLOW` | 4 s | *novo* | FIXO | [fada.py:80](blazesbot/bot/hh/fada.py#L80) | `acompanhar` | De quanto em quanto tempo reafirmar a tecla de seguir. |
+| `PASSO_ESPERANDO_O_LIDER` | 0.5 s | *novo* | PASSO | [fada.py:87](blazesbot/bot/hh/fada.py#L87) | `esperar_o_lider_entrar` |  |
+| *literal em* `seguir_o_lider` | 0.15 s | *novo* | FIXO | [fada.py:160](blazesbot/bot/hh/fada.py#L160) | `seguir_o_lider` | Clica no retrato do líder e aperta a tecla de seguir. |
+| *literal em* `entrar` | 0.25 s | *novo* | FIXO | [fada.py:246](blazesbot/bot/hh/fada.py#L246) | `entrar` | Entra na cave. Mesma porta, mesma máquina, mesmo NPC do líder. |
 | `PASSO_DENTRO_DA_CAVE` | 0.05 s | *novo* | PASSO | [routine.py:90](blazesbot/bot/hh/routine.py#L90) | `run` | Quanto esperar entre estados DENTRO da cave. |
 | `PASSO_FORA_DA_CAVE` | 0.4 s | *novo* | PASSO | [routine.py:91](blazesbot/bot/hh/routine.py#L91) | `run` |  |
 | *literal em* `_do_situar` | 1 s | *novo* | FIXO | [routine.py:255](blazesbot/bot/hh/routine.py#L255) | `_do_situar` | Descobre em que ponto do ciclo a conta está, e entra por ali. |
@@ -305,11 +305,11 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | *literal em* `_launch_client` | 1 s | = | FIXO | [supervisor.py:336](blazesbot/bot/supervisor.py#L336) | `_launch_client` | Lança o Client.bat e devolve o PID da nova instância. |
 | *literal em* `_find_window` | 1 s | = | FIXO | [supervisor.py:353](blazesbot/bot/supervisor.py#L353) | `_find_window` | Localiza a janela de nível superior pertencente ao PID. |
 | *literal em* `_run_session` | 1.5 s | = | FIXO | [supervisor.py:920](blazesbot/bot/supervisor.py#L920) | `_run_session` | Uma sessão: obter uma janela, logar se preciso, e operar. |
-| *literal em* `_operate` | 2.5 s | *novo* | FIXO | [supervisor.py:1181](blazesbot/bot/supervisor.py#L1181) | `_operate` | Opera a conta logada, respeitando o farm ligado/desligado ao vivo. |
-| *literal em* `_operate` | 2.5 s | *novo* | FIXO | [supervisor.py:1202](blazesbot/bot/supervisor.py#L1202) | `_operate` | Opera a conta logada, respeitando o farm ligado/desligado ao vivo. |
-| *literal em* `_operate` | 0.5 s | = | FIXO | [supervisor.py:1301](blazesbot/bot/supervisor.py#L1301) | `_operate` | Opera a conta logada, respeitando o farm ligado/desligado ao vivo. |
-| *literal em* `_publicar_o_proprio_id` | 0.3 s | *novo* | FIXO | [supervisor.py:1577](blazesbot/bot/supervisor.py#L1577) | `_publicar_o_proprio_id` | o alvo leva ~0,1 s para virar |
-| *literal em* `chamar_a_fada` | 0.2 s | *novo* | FIXO | [supervisor.py:1968](blazesbot/bot/supervisor.py#L1968) | `chamar_a_fada` | Pede cura à Fada do time e espera. `False` = não há Fada, beba poção. |
+| *literal em* `_operate` | 2.5 s | *novo* | FIXO | [supervisor.py:1195](blazesbot/bot/supervisor.py#L1195) | `_operate` | Opera a conta logada, respeitando o farm ligado/desligado ao vivo. |
+| *literal em* `_operate` | 2.5 s | *novo* | FIXO | [supervisor.py:1216](blazesbot/bot/supervisor.py#L1216) | `_operate` | Opera a conta logada, respeitando o farm ligado/desligado ao vivo. |
+| *literal em* `_operate` | 0.5 s | = | FIXO | [supervisor.py:1315](blazesbot/bot/supervisor.py#L1315) | `_operate` | Opera a conta logada, respeitando o farm ligado/desligado ao vivo. |
+| *literal em* `_publicar_o_proprio_id` | 0.3 s | *novo* | FIXO | [supervisor.py:1616](blazesbot/bot/supervisor.py#L1616) | `_publicar_o_proprio_id` | o alvo leva ~0,1 s para virar |
+| *literal em* `chamar_a_fada` | 0.2 s | *novo* | FIXO | [supervisor.py:2007](blazesbot/bot/supervisor.py#L2007) | `chamar_a_fada` | Pede cura à Fada do time e espera. `False` = não há Fada, beba poção. |
 | `ESPERA_DO_MENU` | 0.35 s | = | FIXO | [team.py:134](blazesbot/bot/team.py#L134) | `_enviar_convite` | Tempo para o menu de contexto aparecer depois do clique direito. |
 | `ESPERA_PELA_RESPOSTA` | 4 s | = | FIXO | [team.py:139](blazesbot/bot/team.py#L139) | `montar_time` | Quanto esperar a outra conta aceitar. Ela recebe o anúncio interno e clica no |
 | `PASSO_DA_ESPERA_DO_TIME` | 0.1 s | = | PASSO | [team.py:147](blazesbot/bot/team.py#L147) | `montar_time` | De quanto em quanto tempo conferir se o time já formou. |

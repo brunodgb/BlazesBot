@@ -1025,12 +1025,26 @@ class AccountSupervisor(threading.Thread):
             lider_login=lider.login,
             selecionar_o_lider=selecionar_o_lider,
         )
+
+        # A CURA VEM DA MESMA `FadaDoTime` DO TIME DO APP.
+        #
+        # Não é uma segunda curandeira: é a mesma peça, e é por isso que ela foi
+        # promovida para `bot/fada.py`. Aqui se pega UM GIRO dela
+        # (`_uma_volta`), que o `FadaDaHH.acompanhar` chama a cada volta do laço
+        # de seguir -- as duas coisas na mesma volta, porque dois laços na mesma
+        # conta seriam duas mãos no mesmo teclado.
+        curandeira = self._montar_a_fada(ctx)
+
         ctx.log.info("%s", fada.resumo())
-        fada.rodar(continuar=lambda: (
-            not self.stop_event.is_set()
-            and self._lider_da_hh() is not None
-            and ctx.memory.critical_ok()
-        ))
+        fada.rodar(
+            continuar=lambda: (
+                not self.stop_event.is_set()
+                and self._lider_da_hh() is not None
+                and ctx.memory.critical_ok()
+            ),
+            curar_uma_volta=(curandeira._uma_volta if curandeira is not None
+                             else None),
+        )
 
     def _slot_do_nick_no_painel(self, ctx: BotContext,
                                 nick: str) -> int | None:
@@ -1405,7 +1419,7 @@ class AccountSupervisor(threading.Thread):
 
     # -- a Fada ------------------------------------------------------------
 
-    def _rodar_fada(self) -> None:
+    def _rodar_fada(self, so_montar: bool = False):
         """Roda o laço da Fada enquanto o time estiver de pé.
 
         MESMO ISOLAMENTO DO MODO APP: a `FadaDoTime` não recebe `BotContext`,
@@ -1543,6 +1557,12 @@ class AccountSupervisor(threading.Thread):
         # mesma na auto-cura.
         self._publicar_o_proprio_id(memoria, entrada, log)
 
+        # SÓ MONTAR: quem pediu vai chamar `_uma_volta` dentro do laço dele.
+        # A memória fica aberta de propósito -- é ela que a Fada lê a cada giro,
+        # e quem chamou é dono do ciclo de vida dela.
+        if so_montar:
+            return fada
+
         try:
             fada.rodar()
         finally:
@@ -1552,6 +1572,25 @@ class AccountSupervisor(threading.Thread):
                 pass
         if not app.fada:
             self._status("Fada desligada")
+        return None
+
+    def _montar_a_fada(self, ctx: BotContext):
+        """A MESMA `FadaDoTime` do time do APP, montada para outro chamador.
+
+        A HH+Fada precisa de UM GIRO do laço de cura para chamar dentro do laço
+        de seguir (ver `bot/hh/fada.py`). Montar aqui, em vez de dentro do
+        `_rodar_fada_da_hh`, é o que garante que existe UMA Fada: uma segunda
+        montagem teria outros pontos de clique e outras barras de cura, e as
+        duas divergiriam na primeira manutenção.
+
+        Devolve `None` quando não deu para montar -- e aí a Fada da HH avisa e
+        acompanha sem curar, em vez de derrubar a conta.
+        """
+        try:
+            return self._rodar_fada(so_montar=True)
+        except Exception as exc:
+            ctx.log.warning("Não consegui montar a Fada (%s)", exc)
+            return None
 
     def _publicar_o_proprio_id(self, memoria, entrada, log) -> None:
         """Aperta a auto-seleção, lê o `TARGET_ID` e publica no mural.

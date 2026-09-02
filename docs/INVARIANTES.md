@@ -316,8 +316,17 @@ time a flag não faz nada.
   bosses não renascem. Dois modos: **HH solo** (igual à BC — reset aceita, o farm
   entra, o time é desfeito) e **HH + Fada** (as duas entram, a Fada acompanha e
   cura, e o desfaz-refaz acontece FORA, depois de sair).
-- **A Fada continua sendo conta do ecossistema APP** e é coordenada pelo
-  `mural`. Ela não passa a importar de `hh/`.
+- **A Fada é uma peça só, em `bot/fada.py`.** Ela cura de onde está e não sabe
+  andar. Quem viaja, entra na cave e segue o líder é `bot/hh/fada.py`, que a
+  COMPÕE: um giro do laço de cura (`_uma_volta`) é chamado de dentro do laço de
+  seguir. **As duas na MESMA volta** — dois laços concorrentes na mesma conta
+  seriam duas mãos no mesmo teclado.
+- **No modo HH+Fada, o ciclo de time é do LÍDER.** A Fada só acompanha. Duas
+  contas decidindo desfazer o mesmo time é uma corrida cujo resultado é um time
+  desfeito no meio da cave.
+- **A tecla de SEGUIR nasce vazia**, porque o cliente não tem atalho padrão para
+  o follow. Vazia = não configurada: a Fada avisa uma vez e continua curando de
+  onde está. Chutar um padrão faria ela apertar algo que faz outra coisa.
 - **O vendedor é o `Roaming Apothecary`, fora da cave** — a venda da BC com outro
   NPC. Isso é dado de rota, não módulo de venda novo.
 
@@ -337,6 +346,7 @@ Mexer nestes mexe nos DOIS ecossistemas:
 | `bot/combate.py` | `bc/combat.py` | as FASES, a trava do Cemetery Guard, o Package Courage |
 | `bot/vendedor.py` | `bc/vendor.py` | o Rich Man, a volta para a cidade (pedra/token), a compra de suprimentos |
 | `bot/hotbar.py`, `bot/velocidade.py` | `bc/` | nada — subiram inteiros, sem alteração |
+| `bot/fada.py` | `bc/`→ não: de `app/fada.py` | o DESLOCAMENTO — esta Fada cura de onde está; quem viaja e segue é `bot/hh/fada.py` |
 
 ### O CRITÉRIO, e ele é uma pergunta só
 
