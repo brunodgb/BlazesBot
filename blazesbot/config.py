@@ -871,6 +871,103 @@ class BCConfig:
     vendor: BCVendor = field(default_factory=BCVendor)
 
 
+
+# Os dois modos de reset da HH. A cave não renasce sozinha -- regra do jogo.
+MODO_SOLO_DA_HH = "solo"
+MODO_FADA_DA_HH = "fada"
+MODOS_DO_RESET_DA_HH = (MODO_SOLO_DA_HH, MODO_FADA_DA_HH)
+
+
+def normalizar_modo_do_reset(bruto: object) -> str:
+    """O modo escolhido, ou "solo". Valor desconhecido NUNCA entra.
+
+    Mesma razão de `normalizar_time_modo`: um arquivo editado à mão (ou uma
+    interface com um campo livre) colocaria qualquer string aqui, e quem lê o
+    modo faria a comparação falhar em silêncio -- a Fada simplesmente não
+    entraria na cave, sem nada no log dizendo por quê.
+    """
+    modo = str(bruto or "").strip().lower()
+    return modo if modo in MODOS_DO_RESET_DA_HH else MODO_SOLO_DA_HH
+
+
+# ---------------------------------------------------------------------------
+# HH -- Black Wind Camp Dungeon
+# ---------------------------------------------------------------------------
+
+@dataclass
+class HHRoute:
+    """Os NOMES da rota da HH. As coordenadas moram em `bot/hh/mapa_hh.py`.
+
+    O CAMINHO NÃO ENTRA AQUI, e é a mesma regra da BC: um waypoint errado não
+    deixa o bot "mais lento", faz o personagem bater na parede até o tempo
+    estourar. Enquanto ele morou no `config.json`, uma rota antiga gravada por
+    uma execução anterior continuou sendo usada depois de a certa ser medida, e
+    era impossível perceber porque tudo parecia configurado.
+
+    O que sobra aqui é o que realmente varia entre servidores e traduções: os
+    TEXTOS de busca do painel de arredores.
+    """
+
+    # O MESMO NPC de transporte da Bewitcher Cave.
+    transport_search_text: str = "Fay"
+    # A NPC que fica perto da porta da HH, encontrada pelo painel de arredores.
+    npc_search_text: str = "Mutual"
+    # O vendedor, do lado de FORA da cave.
+    vendor_search_text: str = "Roaming"
+
+
+@dataclass
+class HHVendor:
+    """A venda da HH: o `Roaming Apothecary`, do lado de fora da cave.
+
+    A JANELA É A MESMA DA BC -- mesma moldura, mesma grade, mesma paginação 1/3,
+    mesmo par Sell/Cancel. Então a máquina de vender vale sem alteração e o que
+    muda é só qual NPC e a partir de que slot.
+    """
+
+    # De que slot da bolsa começar a vender. Os primeiros são equipamento e
+    # consumível; vender a partir deles seria vender o que o bot precisa.
+    sell_start_slot: int = 3
+    # Quantas runs antes de ir vender. A conta de verdade é a bolsa
+    # (`BagConfig`); isto é o teto de segurança para quando a leitura falhar.
+    runs_before_selling: int = 5
+    sell_clicks: int = 24
+    max_sell_passes: int = 4
+
+
+@dataclass
+class HHConfig:
+    """Tudo que é específico da Black Wind Camp Dungeon."""
+
+    # O modo do reset. A cave NÃO renasce sozinha: sem desfazer e refazer o
+    # time, os bosses não voltam e a run seguinte não tem o que matar.
+    #
+    #   "solo"  -- igual à BC: convida a conta de reset, ela aceita, o
+    #              personagem entra e o time é DESFEITO. A reset nunca entra.
+    #   "fada"  -- as DUAS entram, a Fada acompanha e cura, e o desfaz-refaz
+    #              acontece FORA, depois de sair.
+    modo_do_reset: str = MODO_SOLO_DA_HH
+    # Nick da conta que reseta (ou da Fada, no modo "fada").
+    #
+    # Vazio = sem reset, e aí a cave só rende na primeira run. Não há liga e
+    # desliga separado: o campo em branco já diz tudo.
+    reset_nick: str = ""
+    # Intervalo entre duas teclas da rotação de ataque.
+    attack_delay: float = 0.5
+    # Rede de segurança contra a flag de combate presa em ligado.
+    max_fight_seconds: int = 300
+    aoe_until_mana_pct: int = 30
+    usar_skill_de_velocidade: bool = True
+    # Limpar os mobs do caminho a cada N waypoints quando NÃO está montado.
+    #
+    # Vem do bot em Lua, que limpa a cada 3 passos a pé e não limpa nada
+    # montado -- montado o personagem não para, e é isso que torna a montaria a
+    # forma normal de atravessar. `0` desliga.
+    limpar_mobs_a_cada: int = 3
+    route: HHRoute = field(default_factory=HHRoute)
+    vendor: HHVendor = field(default_factory=HHVendor)
+
+
 # ---------------------------------------------------------------------------
 # Personagem
 # ---------------------------------------------------------------------------
@@ -893,6 +990,7 @@ class AccountSettings:
     bags: BagConfig = field(default_factory=BagConfig)
     app: AppConfig = field(default_factory=AppConfig)
     bc: BCConfig = field(default_factory=BCConfig)
+    hh: HHConfig = field(default_factory=HHConfig)
     # Marque na conta que fica parada só para as outras resetarem a cave.
     accept_team_invites: bool = False
     # Catar o loot do chão na mão, para a conta cujo pet NÃO tem a skill de
@@ -993,6 +1091,13 @@ class Account:
     server: str = "Light in the Darkness"
     enabled: bool = True
     bc_farm: bool = False
+    # Farmar a HH (Black Wind Camp Dungeon) nesta conta.
+    #
+    # SEPARADA do `bc_farm` de propósito: são duas caves, e ligar as duas
+    # na mesma conta não é "farmar mais" -- é duas rotinas disputando o
+    # teclado. O supervisor consulta as duas e a HH tem precedência, para a
+    # escolha ser previsível em vez de depender de qual laço chegou antes.
+    hh_farm: bool = False
     # NICK DO PERSONAGEM desta conta. É a chave de reconhecimento da janela.
     #
     # O bot batiza a janela do jogo com o nick e guarda o nick aqui, no
@@ -1062,7 +1167,13 @@ class Account:
 
     @property
     def farms(self) -> bool:
-        return bool(self.bc_farm)
+        """Esta conta farma alguma cave?
+
+        Vale para as DUAS. Quem decide QUAL roda é o supervisor -- ver
+        `AccountSupervisor._operate`. Aqui a pergunta é só "tem farm ligado",
+        que é o que o painel e o laço de status precisam saber.
+        """
+        return bool(self.bc_farm or self.hh_farm)
 
     def remember_char_name(self, nome: str) -> bool:
         """Guarda o nick visto nesta conta. Devolve True se o valor MUDOU.
@@ -1578,6 +1689,20 @@ class BotConfig:
                 bc.route.cave_search_text = BCRoute.cave_search_text
         if "vendor" in bruto_bc:
             bc.vendor = BCVendor(**cls._filtra(BCVendor, bruto_bc["vendor"]))
+
+        # --- HH (Black Wind Camp Dungeon) ---
+        #
+        # Mesma armadilha que o `usar_catador` já pagou: a leitura reconstrói
+        # campo a campo, então gravar certo não basta -- o que não é LIDO aqui é
+        # silenciosamente descartado e o usuário vê a opção voltar ao padrão.
+        bruto_hh = dados.get("hh", {})
+        hh = HHConfig(**cls._filtra(HHConfig, bruto_hh))
+        hh.modo_do_reset = normalizar_modo_do_reset(hh.modo_do_reset)
+        if "route" in bruto_hh:
+            hh.route = HHRoute(**cls._filtra(HHRoute, bruto_hh["route"]))
+        if "vendor" in bruto_hh:
+            hh.vendor = HHVendor(**cls._filtra(HHVendor, bruto_hh["vendor"]))
+        st.hh = hh
 
         # --- MIGRAÇÃO das versões 1 e 2 ---
         # Antes, combate/rota/venda/time viviam soltos no mesmo nível. Aqui o que

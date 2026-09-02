@@ -31,6 +31,7 @@ from types import SimpleNamespace
 import numpy as np
 import pytest
 
+from blazesbot.bot import vendedor as janela_de_venda
 from blazesbot.bot.bc import vendor as v
 
 FIXA = (284, 336)
@@ -45,7 +46,7 @@ class _Templates:
 
 
 def _servico(template=None, quadro="padrao", achado="nao-mexer"):
-    """`VendorService` sem `__init__`: só o que `_onde_clicar_no_rich` toca."""
+    """`VendorService` sem `__init__`: só o que `_onde_clicar_no_vendedor` toca."""
     servico = v.VendorService.__new__(v.VendorService)
     servico.ctx = SimpleNamespace(
         coords=SimpleNamespace(vendor_npc=FIXA),
@@ -73,18 +74,18 @@ def _template_falso():
 
 def test_sem_template_cai_na_coordenada_fixa(monkeypatch):
     monkeypatch.setattr(v, "capture_window", lambda _h: _quadro())
-    assert _servico(template=None)._onde_clicar_no_rich() == FIXA
+    assert _servico(template=None)._onde_clicar_no_vendedor() == FIXA
 
 
 def test_sem_captura_cai_na_coordenada_fixa(monkeypatch):
     monkeypatch.setattr(v, "capture_window", lambda _h: None)
-    assert _servico(template=_template_falso())._onde_clicar_no_rich() == FIXA
+    assert _servico(template=_template_falso())._onde_clicar_no_vendedor() == FIXA
 
 
 def test_quadro_em_branco_cai_na_coordenada_fixa(monkeypatch):
     monkeypatch.setattr(v, "capture_window", lambda _h: _quadro())
     monkeypatch.setattr(v, "frame_is_blank", lambda _q: True)
-    assert _servico(template=_template_falso())._onde_clicar_no_rich() == FIXA
+    assert _servico(template=_template_falso())._onde_clicar_no_vendedor() == FIXA
 
 
 def test_sem_casamento_cai_na_coordenada_fixa(monkeypatch):
@@ -93,7 +94,7 @@ def test_sem_casamento_cai_na_coordenada_fixa(monkeypatch):
     monkeypatch.setattr(v, "frame_is_blank", lambda _q: False)
     monkeypatch.setattr(v, "find_template", lambda *a, **k: None)
 
-    assert _servico(template=_template_falso())._onde_clicar_no_rich() == FIXA
+    assert _servico(template=_template_falso())._onde_clicar_no_vendedor() == FIXA
 
 
 def test_nunca_devolve_None():
@@ -101,7 +102,7 @@ def test_nunca_devolve_None():
     lugar nenhum, ou um `TypeError` no meio da venda."""
     for cenario in ({}, {"template": _template_falso()}):
         servico = _servico(**cenario)
-        assert servico._onde_clicar_no_rich() is not None
+        assert servico._onde_clicar_no_vendedor() is not None
 
 
 # ---------------------------------------------------------------------------
@@ -115,7 +116,7 @@ def test_achou_usa_a_posicao_encontrada(monkeypatch):
     monkeypatch.setattr(v, "find_template", lambda *a, **k: encontrado)
 
     servico = _servico(template=_template_falso())
-    assert servico._onde_clicar_no_rich() == encontrado, (
+    assert servico._onde_clicar_no_vendedor() == encontrado, (
         "achou o Rich na tela e clicou na coordenada decorada mesmo assim"
     )
 
@@ -129,13 +130,13 @@ def test_a_busca_e_LIMITADA_a_uma_regiao_em_volta_do_esperado(monkeypatch):
     monkeypatch.setattr(v, "find_template",
                         lambda *a, region=None, **k: regioes.append(region))
 
-    _servico(template=_template_falso())._onde_clicar_no_rich()
+    _servico(template=_template_falso())._onde_clicar_no_vendedor()
 
     assert regioes and regioes[0] is not None, "buscou na tela inteira"
     x, y, largura, altura = regioes[0]
     assert x <= FIXA[0] <= x + largura
     assert y <= FIXA[1] <= y + altura
-    assert largura <= 2 * v.RAIO_DA_BUSCA_DO_VENDEDOR + 1
+    assert largura <= 2 * janela_de_venda.RAIO_DA_BUSCA_DO_VENDEDOR + 1
 
 
 def test_a_regiao_nao_sai_do_quadro(monkeypatch):
@@ -147,7 +148,7 @@ def test_a_regiao_nao_sai_do_quadro(monkeypatch):
     monkeypatch.setattr(v, "find_template",
                         lambda *a, region=None, **k: regioes.append(region))
 
-    _servico(template=_template_falso())._onde_clicar_no_rich()
+    _servico(template=_template_falso())._onde_clicar_no_vendedor()
 
     x, y, largura, altura = regioes[0]
     assert x >= 0 and y >= 0
@@ -161,7 +162,7 @@ def test_a_regiao_nao_sai_do_quadro(monkeypatch):
 def test_o_limiar_erra_para_MENOS():
     """Falso negativo cai na reserva (o comportamento de hoje); falso positivo
     manda o clique direito para o lugar errado. Na dúvida, erra para menos."""
-    assert v.LIMIAR_DO_VENDEDOR <= 0.85
+    assert janela_de_venda.LIMIAR_DO_VENDEDOR <= 0.85
 
 
 def test_o_raio_cobre_com_folga_o_erro_que_a_tolerancia_permite():
@@ -171,8 +172,8 @@ def test_o_raio_cobre_com_folga_o_erro_que_a_tolerancia_permite():
     from blazesbot.bot.bc.mapa_bc import PRECISAO_NO_PONTO_DO_VENDEDOR
 
     pior_erro = PRECISAO_NO_PONTO_DO_VENDEDOR * px_por_unidade
-    assert v.RAIO_DA_BUSCA_DO_VENDEDOR >= 2 * pior_erro, (
-        f"raio {v.RAIO_DA_BUSCA_DO_VENDEDOR} px contra erro possível de "
+    assert janela_de_venda.RAIO_DA_BUSCA_DO_VENDEDOR >= 2 * pior_erro, (
+        f"raio {janela_de_venda.RAIO_DA_BUSCA_DO_VENDEDOR} px contra erro possível de "
         f"{pior_erro:.0f} px"
     )
 

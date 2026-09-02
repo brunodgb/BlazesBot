@@ -36,7 +36,6 @@ ligar código não testado.
 | `USAR_A_TELA_COMO_SEGUNDA_PORTA` | `True` | [blazesbot/bot/app/executor.py:610](blazesbot/bot/app/executor.py#L610) | — | A SEGUNDA PORTA: A VIDA PELA TELA -- 26/08/2026 |
 | `USAR_COMBATE_COMO_RESERVA_DE_MORTE` | `True` | [blazesbot/bot/app/executor.py:442](blazesbot/bot/app/executor.py#L442) | supervisor.py | A RESERVA: QUANDO O HP É ILEGÍVEL, QUEM RESPONDE É A FLAG DE COMBATE |
 | `ATIVADO` | `True` | [blazesbot/bot/bc/diagnostico_do_link.py:62](blazesbot/bot/bc/diagnostico_do_link.py#L62) | deletador.py, supervisor.py, esconder_jogadores.py, petbug.py | Interruptor, no padrão do `USAR_TAB_NOS_GUARDAS`: desligar é trocar uma |
-| `CONFERIR_SLOT_VAZIO` | `False` | [blazesbot/bot/bc/vendor.py:252](blazesbot/bot/bc/vendor.py#L252) | — | INTERRUPTOR -- A CONFERÊNCIA DE SLOT VAZIO ESTÁ DESLIGADA (decisão do usuário, |
 | `ATACAR_DURANTE_A_CONFIRMACAO_NO_BOSS` | `True` | [blazesbot/bot/combate.py:468](blazesbot/bot/combate.py#L468) | — | SÓ NO BOSS, e a razão é o motivo pelo qual o golpe parava |
 | `DESMONTAR_FORA_DA_CAVE_SO_SEM_PET` | `True` | [blazesbot/bot/combate.py:954](blazesbot/bot/combate.py#L954) | — | FORA DA CAVE, SÓ DESMONTA SE O PET NÃO ESTIVER ATIVO |
 | `DESTRAVAMENTO_BATE_NO_ALVO_PROIBIDO` | `True` | [blazesbot/bot/combate.py:769](blazesbot/bot/combate.py#L769) | — | O DESTRAVAMENTO BATE NO CEMETERY GUARD? Decisao do usuario, 01/09/2026. |
@@ -51,8 +50,11 @@ ligar código não testado.
 | `USAR_TAB_NOS_GUARDAS` | `True` | [blazesbot/bot/combate.py:630](blazesbot/bot/combate.py#L630) | combat.py, diagnostico_do_link.py, inputs.py | >>>  INTERRUPTOR DO EXPERIMENTO -- TROCA DE ALVO POR TAB NOS GUARDAS  <<< |
 | `CIRCULO_POR_RAIO` | `True` | [blazesbot/bot/navegacao.py:247](blazesbot/bot/navegacao.py#L247) | — | True = raio por raio (1,2,3,5; em cada raio os 8 pontos); False = bússola por |
 | `CONFIRMAR_CHEGADA_POR_COORDENADA` | `False` | [blazesbot/bot/ui_do_jogo.py:430](blazesbot/bot/ui_do_jogo.py#L430) | — | INTERRUPTOR: a coordenada do painel CONFIRMA a chegada? |
+| `CONFERIR_SLOT_VAZIO` | `False` | [blazesbot/bot/vendedor.py:236](blazesbot/bot/vendedor.py#L236) | — | INTERRUPTOR -- A CONFERÊNCIA DE SLOT VAZIO ESTÁ DESLIGADA (decisão do usuário, |
+| `MODO_FADA_DA_HH` | `'fada'` | [blazesbot/config.py:877](blazesbot/config.py#L877) | routine.py | — |
 | `MODO_PADRAO_DO_TIME` | `'largada'` | [blazesbot/config.py:573](blazesbot/config.py#L573) | — | — |
-| `ATIVADA` | `True` | [blazesbot/core/calibracao.py:82](blazesbot/core/calibracao.py#L82) | routine.py, vendor.py | INTERRUPTOR |
+| `MODO_SOLO_DA_HH` | `'solo'` | [blazesbot/config.py:876](blazesbot/config.py#L876) | — | Os dois modos de reset da HH. A cave não renasce sozinha -- regra do jogo. |
+| `ATIVADA` | `True` | [blazesbot/core/calibracao.py:82](blazesbot/core/calibracao.py#L82) | routine.py, vendedor.py | INTERRUPTOR |
 | `ATIVADO` | `False` | [blazesbot/core/esconder_jogadores.py:84](blazesbot/core/esconder_jogadores.py#L84) | deletador.py, diagnostico_do_link.py, supervisor.py, petbug.py | INTERRUPTOR -- DESLIGADO EM 19/08/2026 |
 | `SEGURAR_ATIVADO` | `False` | [blazesbot/core/esconder_jogadores.py:102](blazesbot/core/esconder_jogadores.py#L102) | petbug.py | INTERRUPTOR DO F12 PRESO -- DESLIGADO EM 19/08/2026 |
 | `CONFERIR_A_JANELA_ANTES_DE_ENVIAR` | `True` | [blazesbot/core/inputs.py:293](blazesbot/core/inputs.py#L293) | — | INTERRUPTOR. Desligar volta ao comportamento anterior (mandar sem conferir), e |
@@ -68,7 +70,7 @@ ligar código não testado.
 
 ## Números medidos -- tolerância, limiar, teto, cadência
 
-496 constantes, agrupadas por arquivo.
+511 constantes, agrupadas por arquivo.
 
 | constante | valor | onde | quem lê | porquê (resumo) |
 |---|---|---|---|---|
@@ -161,19 +163,14 @@ ligar código não testado.
 | `RAIO_DA_CHEGADA` | `40.0` | [blazesbot/bot/bc/localizacao.py:79](blazesbot/bot/bc/localizacao.py#L79) | — | Quão perto da coordenada de chegada da cave conta como "entrei". |
 | `SALTO_DE_TELEPORTE` | `150.0` | [blazesbot/bot/bc/localizacao.py:76](blazesbot/bot/bc/localizacao.py#L76) | — | Salto de posição que caracteriza teleporte (entrada na cave, portal do altar, |
 | `SEGUNDOS_PARA_DESCONFIAR` | `3.0` | [blazesbot/bot/bc/localizacao.py:72](blazesbot/bot/bc/localizacao.py#L72) | — | Tempo com o nome ilegível a partir do qual o bot passa a tratar a fonte de |
-| `FOLGA_DA_CAIXA` | `25` | [blazesbot/bot/bc/mapa_bc.py:419](blazesbot/bot/bc/mapa_bc.py#L419) | mapa_hh.py | Caixa que contém TODO o interior da cave, com folga. |
-| `MARGEM_PARA_CONTRADIZER` | `40` | [blazesbot/bot/bc/mapa_bc.py:455](blazesbot/bot/bc/mapa_bc.py#L455) | — | Folga exigida para a coordenada CONTRADIZER o nome lido da memória. Estar um |
-| `NOME_DE_STONE_CITY` | `'Stone City'` | [blazesbot/bot/bc/mapa_bc.py:481](blazesbot/bot/bc/mapa_bc.py#L481) | — | — |
-| `PRECISAO_NO_PATAMAR_DO_ALTAR` | `0.7` | [blazesbot/bot/bc/mapa_bc.py:130](blazesbot/bot/bc/mapa_bc.py#L130) | routine.py, ui_service.py | Quão perto de (220,43) o clique no Altar Stone ainda acerta. |
-| `PRECISAO_NO_PONTO_DA_FAY` | `1.5` | [blazesbot/bot/bc/mapa_bc.py:243](blazesbot/bot/bc/mapa_bc.py#L243) | ui_service.py | O DEFEITO MEDIDO, 25/08/2026 -- COM PRINT |
-| `PRECISAO_NO_PONTO_DA_SAIDA` | `0.7` | [blazesbot/bot/bc/mapa_bc.py:197](blazesbot/bot/bc/mapa_bc.py#L197) | routine.py, ui_service.py | Precisão EXIGIDA no ponto da saída, e ela é UMA SÓ. |
-| `PRECISAO_NO_PONTO_DO_VENDEDOR` | `0.7` | [blazesbot/bot/bc/mapa_bc.py:269](blazesbot/bot/bc/mapa_bc.py#L269) | amostragem_de_cliques.py, vendor.py, coords.py | Precisão EXIGIDA no ponto do vendedor, e ela é UMA SÓ. |
-| `SEGUNDOS_DESENCALHANDO_O_ALTAR` | `3` | [blazesbot/bot/bc/mapa_bc.py:157](blazesbot/bot/bc/mapa_bc.py#L157) | routine.py | Quanto esperar no ponto de vai-e-volta antes de retornar. |
-| `SEGUNDOS_POR_TENTATIVA_NA_FAY` | `1.8` | [blazesbot/bot/bc/mapa_bc.py:250](blazesbot/bot/bc/mapa_bc.py#L250) | ui_service.py | — |
-| `SEGUNDOS_POR_TENTATIVA_NA_SAIDA` | `1.8` | [blazesbot/bot/bc/mapa_bc.py:203](blazesbot/bot/bc/mapa_bc.py#L203) | routine.py | — |
-| `TENTATIVAS_DE_ENCOSTAR_NA_FAY` | `6` | [blazesbot/bot/bc/mapa_bc.py:249](blazesbot/bot/bc/mapa_bc.py#L249) | ui_service.py | Quantas tentativas de encostar no ponto da Fay antes de desistir. |
-| `TENTATIVAS_DE_ENCOSTAR_NA_SAIDA` | `6` | [blazesbot/bot/bc/mapa_bc.py:202](blazesbot/bot/bc/mapa_bc.py#L202) | routine.py | Orçamento para encostar no ponto da saída. Mesmo desenho do patamar do Altar |
-| `X_MAXIMO_DENTRO_DA_CAVE` | `500` | [blazesbot/bot/bc/mapa_bc.py:437](blazesbot/bot/bc/mapa_bc.py#L437) | — | O X MÁXIMO QUE PODE EXISTIR DENTRO DA CAVE. |
+| `FOLGA_DA_CAIXA` | `25` | [blazesbot/bot/bc/mapa_bc.py:399](blazesbot/bot/bc/mapa_bc.py#L399) | mapa_hh.py | Caixa que contém TODO o interior da cave, com folga. |
+| `MARGEM_PARA_CONTRADIZER` | `40` | [blazesbot/bot/bc/mapa_bc.py:434](blazesbot/bot/bc/mapa_bc.py#L434) | — | Folga exigida para a coordenada CONTRADIZER o nome lido da memória. Estar um |
+| `PRECISAO_NO_PATAMAR_DO_ALTAR` | `0.7` | [blazesbot/bot/bc/mapa_bc.py:156](blazesbot/bot/bc/mapa_bc.py#L156) | routine.py, ui_service.py | Quão perto de (220,43) o clique no Altar Stone ainda acerta. |
+| `PRECISAO_NO_PONTO_DA_SAIDA` | `0.7` | [blazesbot/bot/bc/mapa_bc.py:223](blazesbot/bot/bc/mapa_bc.py#L223) | routine.py, ui_service.py | Precisão EXIGIDA no ponto da saída, e ela é UMA SÓ. |
+| `PRECISAO_NO_PONTO_DO_VENDEDOR` | `0.7` | [blazesbot/bot/bc/mapa_bc.py:249](blazesbot/bot/bc/mapa_bc.py#L249) | amostragem_de_cliques.py, vendor.py, vendedor.py, coords.py | Precisão EXIGIDA no ponto do vendedor, e ela é UMA SÓ. |
+| `SEGUNDOS_DESENCALHANDO_O_ALTAR` | `3` | [blazesbot/bot/bc/mapa_bc.py:183](blazesbot/bot/bc/mapa_bc.py#L183) | routine.py | Quanto esperar no ponto de vai-e-volta antes de retornar. |
+| `SEGUNDOS_POR_TENTATIVA_NA_SAIDA` | `1.8` | [blazesbot/bot/bc/mapa_bc.py:229](blazesbot/bot/bc/mapa_bc.py#L229) | routine.py | — |
+| `TENTATIVAS_DE_ENCOSTAR_NA_SAIDA` | `6` | [blazesbot/bot/bc/mapa_bc.py:228](blazesbot/bot/bc/mapa_bc.py#L228) | routine.py | Orçamento para encostar no ponto da saída. Mesmo desenho do patamar do Altar |
 | `ASSENTAMENTO_DA_BOLSA` | `0.14` | [blazesbot/bot/bc/routine.py:331](blazesbot/bot/bc/routine.py#L331) | — | Depois que a MEMÓRIA confirma a bolsa aberta, o quanto esperar o DESENHO dela. |
 | `CAPTURAS_INVALIDAS_PACKAGE` | `3` | [blazesbot/bot/bc/routine.py:263](blazesbot/bot/bc/routine.py#L263) | — | Se a captura do inventário vier preta/None por estas vezes seguidas, NÃO é |
 | `DEPOIS_DE_FECHAR_A_BOLSA` | `0.05` | [blazesbot/bot/bc/routine.py:342](blazesbot/bot/bc/routine.py#L342) | — | Depois de fechar o inventário. Nada depende deste tempo -- o passo seguinte é |
@@ -183,7 +180,7 @@ ligar código não testado.
 | `JANELA_DE_RECONHECIMENTO` | `0.25` | [blazesbot/bot/bc/routine.py:115](blazesbot/bot/bc/routine.py#L115) | — | para reconhecer e reagir ..........   0,607 s |
 | `LIMIAR_DO_CHAT_ABERTO` | `0.9` | [blazesbot/bot/bc/routine.py:242](blazesbot/bot/bc/routine.py#L242) | — | Limiar do casamento da carinha. Alto porque ela é um ícone pequeno e fixo: no |
 | `LIMIAR_DO_PACKAGE_EM_COR` | `0.92` | [blazesbot/bot/bc/routine.py:284](blazesbot/bot/bc/routine.py#L284) | — | Limiar do casamento EM COR do ícone do item. |
-| `LIMIAR_DO_PICK_UP_ALL` | `0.85` | [blazesbot/bot/bc/routine.py:237](blazesbot/bot/bc/routine.py#L237) | — | Limiar do botão. 0.85 e não 0.90: é um botão de UI com texto, e o fundo atrás |
+| `LIMIAR_DO_PICK_UP_ALL` | `0.85` | [blazesbot/bot/bc/routine.py:237](blazesbot/bot/bc/routine.py#L237) | routine.py | Limiar do botão. 0.85 e não 0.90: é um botão de UI com texto, e o fundo atrás |
 | `PASSO_DA_ESPERA_DA_BOLSA` | `0.05` | [blazesbot/bot/bc/routine.py:325](blazesbot/bot/bc/routine.py#L325) | — | De quanto em quanto tempo perguntar se a bolsa já abriu. Era 0,15 s, o que |
 | `PASSO_DA_ESPERA_DO_RESETER` | `1.0` | [blazesbot/bot/bc/routine.py:144](blazesbot/bot/bc/routine.py#L144) | — | Cadência da espera pela conta de reset (ver `_esperar_o_reseter`). |
 | `PASSO_DO_RECONHECIMENTO` | `0.04` | [blazesbot/bot/bc/routine.py:120](blazesbot/bot/bc/routine.py#L120) | — | PASSO: de quanto em quanto tempo perguntar, dentro da janela. A pergunta é uma |
@@ -193,7 +190,7 @@ ligar código não testado.
 | `SEGUNDOS_POR_TENTATIVA_NO_ALTAR` | `1.5` | [blazesbot/bot/bc/routine.py:181](blazesbot/bot/bc/routine.py#L181) | — | — |
 | `TEMPLATE_CHAT_ABERTO` | `'state_chat_aberto.png'` | [blazesbot/bot/bc/routine.py:210](blazesbot/bot/bc/routine.py#L210) | — | Carinha amarela no fim da barra de digitação do chat. Ela SÓ existe com o chat |
 | `TEMPLATE_PACKAGE_COURAGE` | `'package_courage.png'` | [blazesbot/bot/bc/routine.py:204](blazesbot/bot/bc/routine.py#L204) | — | USO DO PACKAGE_COURAGE (pós-boss, ANTES de ativar a montaria e sair) |
-| `TEMPLATE_PICK_UP_ALL` | `'btn_pick_up_all.png'` | [blazesbot/bot/bc/routine.py:216](blazesbot/bot/bc/routine.py#L216) | — | Botão "Pick up all" da janela de loot. É ELE que autoriza o clique esquerdo do |
+| `TEMPLATE_PICK_UP_ALL` | `'btn_pick_up_all.png'` | [blazesbot/bot/bc/routine.py:216](blazesbot/bot/bc/routine.py#L216) | routine.py | Botão "Pick up all" da janela de loot. É ELE que autoriza o clique esquerdo do |
 | `TENTATIVAS_ANTES_DE_DESENCALHAR` | `6` | [blazesbot/bot/bc/routine.py:166](blazesbot/bot/bc/routine.py#L166) | — | Quantas tentativas de clique no Altar Stone por CICLO, antes do vai-e-volta. |
 | `TENTATIVAS_DE_ENCOSTAR_NO_ALTAR` | `6` | [blazesbot/bot/bc/routine.py:180](blazesbot/bot/bc/routine.py#L180) | — | Orçamento do ajuste fino do patamar: quantos `goto` apertados tentamos e por |
 | `TENTATIVAS_POR_LINHA_DE_LOG` | `15` | [blazesbot/bot/bc/routine.py:155](blazesbot/bot/bc/routine.py#L155) | indice_de_tempos.py | A cada quantas tentativas o log conta como vai a disputa. Uma linha por |
@@ -201,32 +198,10 @@ ligar código não testado.
 | `TOLERANCIA_DO_PONTO_DO_BOSS` | `15` | [blazesbot/bot/bc/routine.py:190](blazesbot/bot/bc/routine.py#L190) | — | Quão perto do ponto do boss conta como "estou no waypoint". |
 | `LINK_ENTRAR_BC` | `'link_enter_bc.png'` | [blazesbot/bot/bc/ui_service.py:31](blazesbot/bot/bc/ui_service.py#L31) | — | — |
 | `LINK_GHOST_DIN_WOODS` | `'link_ghost_din_woods.png'` | [blazesbot/bot/bc/ui_service.py:30](blazesbot/bot/bc/ui_service.py#L30) | — | Links dentro dos diálogos, localizados por imagem. |
-| `PASSO_DA_ESPERA_DO_TELEPORTE` | `0.08` | [blazesbot/bot/bc/ui_service.py:53](blazesbot/bot/bc/ui_service.py#L53) | vendor.py | — |
+| `PASSO_DA_ESPERA_DO_TELEPORTE` | `0.08` | [blazesbot/bot/bc/ui_service.py:53](blazesbot/bot/bc/ui_service.py#L53) | entrada.py, vendedor.py | — |
 | `TENTATIVAS_DE_POSICIONAR_NA_ENTRADA` | `3` | [blazesbot/bot/bc/ui_service.py:80](blazesbot/bot/bc/ui_service.py#L80) | — | Quantas vezes refazer a caminhada pelo painel de arredores antes de desistir de |
 | `TETO_DO_TELEPORTE_DA_FAY` | `2.0` | [blazesbot/bot/bc/ui_service.py:52](blazesbot/bot/bc/ui_service.py#L52) | — | TELEPORTE DA FAY (Stone City -> Ghost Din Woods) |
 | `TOLERANCIA_DO_NPC_DA_ENTRADA` | `2` | [blazesbot/bot/bc/ui_service.py:75](blazesbot/bot/bc/ui_service.py#L75) | routine.py | O SKULL HERALD DA ENTRADA EXIGE A COORDENADA EXATA |
-| `CICLOS_DE_VENDA` | `10` | [blazesbot/bot/bc/vendor.py:173](blazesbot/bot/bc/vendor.py#L173) | — | Quantos CICLOS COMPLETOS de venda (reposicionar -> abrir diálogo -> vender) |
-| `CONTRASTE_QUE_E_SLOT_VAZIO` | `25.0` | [blazesbot/bot/bc/vendor.py:287](blazesbot/bot/bc/vendor.py#L287) | — | Abaixo disto o slot está vazio. Fica a 2,5x do pior vazio (9.76) e a menos da |
-| `ESPERA_ANTES_DO_SELL` | `0.4` | [blazesbot/bot/bc/vendor.py:332](blazesbot/bot/bc/vendor.py#L332) | — | O RESPIRO EM VOLTA DO BOTÃO "SELL" |
-| `ESPERA_DEPOIS_DO_SELL` | `0.6` | [blazesbot/bot/bc/vendor.py:333](blazesbot/bot/bc/vendor.py#L333) | — | — |
-| `ESPERA_DO_TELEPORTE` | `5.0` | [blazesbot/bot/bc/vendor.py:115](blazesbot/bot/bc/vendor.py#L115) | indice_de_tempos.py | TETO da espera do teleporte -- não é mais o tempo gasto, é o limite. |
-| `ESPERA_ENTRE_CLIQUES_DA_VENDA` | `0.065` | [blazesbot/bot/bc/vendor.py:229](blazesbot/bot/bc/vendor.py#L229) | — | Espera entre um clique e o seguinte na grade. Era 200 ms. |
-| `ESPERA_ENTRE_TENTATIVAS_DE_RETORNO` | `8.0` | [blazesbot/bot/bc/vendor.py:151](blazesbot/bot/bc/vendor.py#L151) | — | — |
-| `ESPERA_PARA_CONFIRMAR_VAZIO` | `0.5` | [blazesbot/bot/bc/vendor.py:300](blazesbot/bot/bc/vendor.py#L300) | — | As leituras de confirmação são ESPAÇADAS, não coladas: veja |
-| `LADO_DO_MIOLO_DA_CELULA` | `24` | [blazesbot/bot/bc/vendor.py:283](blazesbot/bot/bc/vendor.py#L283) | — | COMO SE SABE QUE O SLOT ESTÁ VAZIO: pelo CONTRASTE DO MIOLO da célula. |
-| `LEITURAS_VAZIAS_PARA_PARAR` | `6` | [blazesbot/bot/bc/vendor.py:296](blazesbot/bot/bc/vendor.py#L296) | — | Quantas leituras VAZIAS SEGUIDAS encerram a venda. **SEMPRE NO MESMO SLOT** -- |
-| `LIMIAR_DA_CAIXA_PRECIOSA` | `0.8` | [blazesbot/bot/bc/vendor.py:183](blazesbot/bot/bc/vendor.py#L183) | — | Limiar do template do TEXTO da caixa "It's precious item, please confirm!". |
-| `LIMIAR_DO_VENDEDOR` | `0.8` | [blazesbot/bot/bc/vendor.py:102](blazesbot/bot/bc/vendor.py#L102) | indice_de_tempos.py | Limiar do casamento. Sprite de NPC contra cenário 3D é mais difícil que ícone |
-| `PASSO_DA_ESPERA_DO_TELEPORTE` | `0.12` | [blazesbot/bot/bc/vendor.py:119](blazesbot/bot/bc/vendor.py#L119) | ui_service.py | Entre leituras. A posição vem da memória e custa microssegundos; o passo é |
-| `RAIO_DA_BUSCA_DO_VENDEDOR` | `200` | [blazesbot/bot/bc/vendor.py:96](blazesbot/bot/bc/vendor.py#L96) | — | Onde procurar: um retângulo em volta de onde ele DEVERIA estar. Não é a posição |
-| `SALTO_QUE_CONFIRMA` | `200.0` | [blazesbot/bot/bc/vendor.py:128](blazesbot/bot/bc/vendor.py#L128) | — | Salto de posição que confirma o teleporte para a cidade. |
-| `SEGUNDOS_POR_TENTATIVA_NO_VENDEDOR` | `4` | [blazesbot/bot/bc/vendor.py:160](blazesbot/bot/bc/vendor.py#L160) | — | — |
-| `TEMPLATE_VENDEDOR` | `'vendedor.png'` | [blazesbot/bot/bc/vendor.py:87](blazesbot/bot/bc/vendor.py#L87) | — | O RICH É PROCURADO NA TELA, NÃO DECORADO NUMA COORDENADA |
-| `TENTATIVAS_DA_PEDRA` | `3` | [blazesbot/bot/bc/vendor.py:150](blazesbot/bot/bc/vendor.py#L150) | — | — |
-| `TENTATIVAS_DE_ENCOSTAR_NO_VENDEDOR` | `6` | [blazesbot/bot/bc/vendor.py:159](blazesbot/bot/bc/vendor.py#L159) | — | Orçamento do ajuste fino no ponto do vendedor. Pequeno porque o passo real é |
-| `TENTATIVAS_DO_TOKEN` | `10` | [blazesbot/bot/bc/vendor.py:149](blazesbot/bot/bc/vendor.py#L149) | — | CHEGAR A STONE CITY -- números do usuário (18/08/2026) |
-| `TENTATIVAS_NO_OK` | `3` | [blazesbot/bot/bc/vendor.py:178](blazesbot/bot/bc/vendor.py#L178) | — | Quantas vezes reclicar o Ok da caixa "It's precious item" antes de desistir. |
-| `TOLERANCIA_DA_CAMINHADA_ATE_O_VENDEDOR` | `2` | [blazesbot/bot/bc/vendor.py:155](blazesbot/bot/bc/vendor.py#L155) | — | Folga da CAMINHADA até o vendedor. O painel de arredores caminha até perto e |
 | `ALVO_DO_TOPUP_ANTES_DO_BOSS` | `100.0` | [blazesbot/bot/combate.py:141](blazesbot/bot/combate.py#L141) | — | TOP-UP ANTES DO BOSS: ATÉ 100%, SENTADO, E OS 15 s INTEIROS |
 | `AVISO_DA_ESPERA_SEM_PRAZO` | `10` | [blazesbot/bot/combate.py:407](blazesbot/bot/combate.py#L407) | — | Cadência do aviso enquanto espera sem prazo. Uma espera sem limite PRECISA |
 | `CADENCIA_DA_LEITURA_DO_ALVO` | `0.15` | [blazesbot/bot/combate.py:875](blazesbot/bot/combate.py#L875) | — | De quanto em quanto tempo olhar a barra do alvo durante a luta. |
@@ -265,6 +240,14 @@ ligar código não testado.
 | `TETO_DO_DESTRAVAMENTO` | `60.0` | [blazesbot/bot/combate.py:731](blazesbot/bot/combate.py#L731) | — | Teto de UMA rodada de destravamento. Palavra do usuario: *"no maximo atrasar 1 |
 | `FATIA_DA_ESPERA` | `0.25` | [blazesbot/bot/context.py:211](blazesbot/bot/context.py#L211) | petbug.py | Fatia máxima de sono dentro de um `tick`. |
 | `TENTATIVAS_DE_AJUSTE_DA_CAMERA` | `3` | [blazesbot/bot/context.py:244](blazesbot/bot/context.py#L244) | — | Quantas vezes insistir para a câmera ficar no ângulo certo. |
+| `LINK_ENTRAR_HH` | `'link_enter_hh.png'` | [blazesbot/bot/hh/entrada.py:57](blazesbot/bot/hh/entrada.py#L57) | — | — |
+| `LINK_WEST_SUBURB` | `'link_west_suburb.png'` | [blazesbot/bot/hh/entrada.py:56](blazesbot/bot/hh/entrada.py#L56) | — | Links dentro dos diálogos, localizados por imagem. |
+| `PASSO_DA_ESPERA_DA_ENTRADA` | `0.08` | [blazesbot/bot/hh/entrada.py:73](blazesbot/bot/hh/entrada.py#L73) | — | — |
+| `PASSO_DA_ESPERA_DO_TELEPORTE` | `0.08` | [blazesbot/bot/hh/entrada.py:77](blazesbot/bot/hh/entrada.py#L77) | ui_service.py, vendedor.py | — |
+| `SEGUNDOS_POR_TENTATIVA_DE_ENCOSTAR` | `1.8` | [blazesbot/bot/hh/entrada.py:65](blazesbot/bot/hh/entrada.py#L65) | — | Quanto tempo dar a cada tentativa de encostar no ponto exato. |
+| `TENTATIVAS_DE_POSICIONAR` | `3` | [blazesbot/bot/hh/entrada.py:62](blazesbot/bot/hh/entrada.py#L62) | — | Quantas vezes refazer a caminhada pelo painel de arredores antes de desistir |
+| `TETO_DA_ENTRADA` | `2.0` | [blazesbot/bot/hh/entrada.py:72](blazesbot/bot/hh/entrada.py#L72) | — | Teto da espera pela troca de mapa depois de clicar no link de entrar. |
+| `TETO_DO_TELEPORTE` | `2.0` | [blazesbot/bot/hh/entrada.py:76](blazesbot/bot/hh/entrada.py#L76) | — | Teto da espera pelo teleporte do Fay. |
 | `AREA_INTERNA_NAO_MEDIDA` | `'HH (área não medida)'` | [blazesbot/bot/hh/mapa_hh.py:77](blazesbot/bot/hh/mapa_hh.py#L77) | — | Marcador para a área que ainda não foi medida. Ver o cabeçalho do módulo: é |
 | `BOSS_1` | `'Fa-Yuan'` | [blazesbot/bot/hh/mapa_hh.py:156](blazesbot/bot/hh/mapa_hh.py#L156) | — | Os quatro bosses |
 | `BOSS_2` | `'Dupla'` | [blazesbot/bot/hh/mapa_hh.py:157](blazesbot/bot/hh/mapa_hh.py#L157) | — | — |
@@ -274,8 +257,15 @@ ligar código não testado.
 | `FOLGA_DA_CAIXA` | `25` | [blazesbot/bot/hh/mapa_hh.py:355](blazesbot/bot/hh/mapa_hh.py#L355) | mapa_bc.py | A caixa que envolve o interior da cave |
 | `GRUPO_DOS_ARREDORES` | `'Outside Black Wind Camp'` | [blazesbot/bot/hh/mapa_hh.py:73](blazesbot/bot/hh/mapa_hh.py#L73) | — | O grupo do painel de arredores naquele lugar. Serve para conferir que o painel |
 | `LUGAR_FORA_DA_HH` | `'Black Wind Camp Dungeon'` | [blazesbot/bot/hh/mapa_hh.py:69](blazesbot/bot/hh/mapa_hh.py#L69) | — | A zona de FORA da cave, lida da tela em 01/09/2026 (o rótulo do canto superior |
-| `NPC_DA_ENTRADA` | `'Elite Axe Monk Soldier'` | [blazesbot/bot/hh/mapa_hh.py:128](blazesbot/bot/hh/mapa_hh.py#L128) | — | O NPC com quem se fala para entrar na cave. |
-| `PRECISAO_NO_PONTO_DA_ENTRADA` | `1.5` | [blazesbot/bot/hh/mapa_hh.py:125](blazesbot/bot/hh/mapa_hh.py#L125) | — | Folga aceita para considerar que já se está no ponto de conversa. |
+| `NPC_DA_ENTRADA` | `'Elite Axe Monk Soldier'` | [blazesbot/bot/hh/mapa_hh.py:128](blazesbot/bot/hh/mapa_hh.py#L128) | entrada.py | O NPC com quem se fala para entrar na cave. |
+| `PRECISAO_NO_PONTO_DA_ENTRADA` | `1.5` | [blazesbot/bot/hh/mapa_hh.py:125](blazesbot/bot/hh/mapa_hh.py#L125) | entrada.py | Folga aceita para considerar que já se está no ponto de conversa. |
+| `ENTRE_TENTATIVAS_DE_ENTRAR` | `0.25` | [blazesbot/bot/hh/routine.py:79](blazesbot/bot/hh/routine.py#L79) | — | Entre uma tentativa de entrada e a seguinte. É o RESTO do orçamento, não um |
+| `LIMIAR_DO_PICK_UP_ALL` | `0.85` | [blazesbot/bot/hh/routine.py:101](blazesbot/bot/hh/routine.py#L101) | routine.py | — |
+| `PASSO_DENTRO_DA_CAVE` | `0.05` | [blazesbot/bot/hh/routine.py:89](blazesbot/bot/hh/routine.py#L89) | — | Quanto esperar entre estados DENTRO da cave. |
+| `PASSO_FORA_DA_CAVE` | `0.4` | [blazesbot/bot/hh/routine.py:90](blazesbot/bot/hh/routine.py#L90) | — | — |
+| `TEMPLATE_PICK_UP_ALL` | `'btn_pick_up_all.png'` | [blazesbot/bot/hh/routine.py:100](blazesbot/bot/hh/routine.py#L100) | routine.py | O botão "Pick up all" da janela de loot, achado por template. |
+| `VOLTAS_ANTES_DE_RECUPERAR` | `3` | [blazesbot/bot/hh/routine.py:93](blazesbot/bot/hh/routine.py#L93) | — | Quantas voltas do laço sem sair do estado antes de desconfiar. |
+| `MAX_SEGUNDOS_ATE_O_VENDEDOR` | `90.0` | [blazesbot/bot/hh/vendedor.py:26](blazesbot/bot/hh/vendedor.py#L26) | — | Teto da caminhada até o vendedor. Ele fica ao lado da porta; acima disto o |
 | `RECARGA` | `5.0` | [blazesbot/bot/hotbar.py:63](blazesbot/bot/hotbar.py#L63) | velocidade.py, hotbar.py, indice_de_tempos.py | Recarga do caminho com `ctx`. Os momentos-chave acontecem em rajada -- o portão |
 | `CLIQUES_POR_MODO` | `40` | [blazesbot/bot/instrumentar_clique.py:105](blazesbot/bot/instrumentar_clique.py#L105) | — | Quantos cliques por modo. 40 e não 20: aqui não se está separando "funciona" de |
 | `DIFERENCA_QUE_E_EFEITO` | `3.0` | [blazesbot/bot/instrumentar_clique.py:118](blazesbot/bot/instrumentar_clique.py#L118) | teste_do_cursor.py | — |
@@ -338,7 +328,7 @@ ligar código não testado.
 | `MINIMO_DE_LINHAS` | `2` | [blazesbot/bot/recorte_do_time.py:99](blazesbot/bot/recorte_do_time.py#L99) | — | Menos de dois casamentos não prova repetição -- prova que o recorte se achou a |
 | `NOME_DO_TEMPLATE` | `'state_team_member.png'` | [blazesbot/bot/recorte_do_time.py:73](blazesbot/bot/recorte_do_time.py#L73) | — | Nome que `bot/team.py` procura. Mudar aqui sem mudar lá deixa o arquivo |
 | `PASSO_VERTICAL` | `4` | [blazesbot/bot/recorte_do_time.py:90](blazesbot/bot/recorte_do_time.py#L90) | — | — |
-| `TETO_DA_FATIA_DE_ESPERA` | `0.25` | [blazesbot/bot/supervisor.py:70](blazesbot/bot/supervisor.py#L70) | — | Teto de uma fatia dentro de `_AnyEvent.wait`. É REDE, não o caminho normal -- |
+| `TETO_DA_FATIA_DE_ESPERA` | `0.25` | [blazesbot/bot/supervisor.py:71](blazesbot/bot/supervisor.py#L71) | — | Teto de uma fatia dentro de `_AnyEvent.wait`. É REDE, não o caminho normal -- |
 | `ANCHOR_THRESHOLD` | `0.8` | [blazesbot/bot/team.py:91](blazesbot/bot/team.py#L91) | ui_do_jogo.py, janelas_abertas.py | — |
 | `ESPERA_DO_MENU` | `0.35` | [blazesbot/bot/team.py:134](blazesbot/bot/team.py#L134) | — | Tempo para o menu de contexto aparecer depois do clique direito. |
 | `ESPERA_PELA_RESPOSTA` | `4.0` | [blazesbot/bot/team.py:139](blazesbot/bot/team.py#L139) | — | Quanto esperar a outra conta aceitar. Ela recebe o anúncio interno e clica no |
@@ -397,11 +387,33 @@ ligar código não testado.
 | `TEMPLATE_DA_SETA_DE_ROLAGEM` | `'dialogo_seta_baixo.png'` | [blazesbot/bot/ui_do_jogo.py:520](blazesbot/bot/ui_do_jogo.py#L520) | — | A seta de rolagem PARA BAIXO do diálogo, achada por template como os links. |
 | `TOLERANCIA_DA_POSICAO` | `4` | [blazesbot/bot/ui_do_jogo.py:556](blazesbot/bot/ui_do_jogo.py#L556) | — | NUNCA CLICAR NO LINK SEM O DIÁLOGO ABERTO |
 | `SEGUNDOS_ANDANDO_ANTES` | `0.5` | [blazesbot/bot/velocidade.py:45](blazesbot/bot/velocidade.py#L45) | — | Quanto o personagem precisa ter andado antes de valer a pena acionar. |
+| `CICLOS_DE_VENDA` | `10` | [blazesbot/bot/vendedor.py:157](blazesbot/bot/vendedor.py#L157) | vendor.py | Quantos CICLOS COMPLETOS de venda (reposicionar -> abrir diálogo -> vender) |
+| `CONTRASTE_QUE_E_SLOT_VAZIO` | `25.0` | [blazesbot/bot/vendedor.py:271](blazesbot/bot/vendedor.py#L271) | — | Abaixo disto o slot está vazio. Fica a 2,5x do pior vazio (9.76) e a menos da |
+| `ESPERA_ANTES_DO_SELL` | `0.4` | [blazesbot/bot/vendedor.py:316](blazesbot/bot/vendedor.py#L316) | — | O RESPIRO EM VOLTA DO BOTÃO "SELL" |
+| `ESPERA_DEPOIS_DO_SELL` | `0.6` | [blazesbot/bot/vendedor.py:317](blazesbot/bot/vendedor.py#L317) | — | — |
+| `ESPERA_DO_TELEPORTE` | `5.0` | [blazesbot/bot/vendedor.py:99](blazesbot/bot/vendedor.py#L99) | indice_de_tempos.py | TETO da espera do teleporte -- não é mais o tempo gasto, é o limite. |
+| `ESPERA_ENTRE_CLIQUES_DA_VENDA` | `0.065` | [blazesbot/bot/vendedor.py:213](blazesbot/bot/vendedor.py#L213) | — | Espera entre um clique e o seguinte na grade. Era 200 ms. |
+| `ESPERA_ENTRE_TENTATIVAS_DE_RETORNO` | `8.0` | [blazesbot/bot/vendedor.py:135](blazesbot/bot/vendedor.py#L135) | vendor.py | — |
+| `ESPERA_PARA_CONFIRMAR_VAZIO` | `0.5` | [blazesbot/bot/vendedor.py:284](blazesbot/bot/vendedor.py#L284) | — | As leituras de confirmação são ESPAÇADAS, não coladas: veja |
+| `LADO_DO_MIOLO_DA_CELULA` | `24` | [blazesbot/bot/vendedor.py:267](blazesbot/bot/vendedor.py#L267) | — | COMO SE SABE QUE O SLOT ESTÁ VAZIO: pelo CONTRASTE DO MIOLO da célula. |
+| `LEITURAS_VAZIAS_PARA_PARAR` | `6` | [blazesbot/bot/vendedor.py:280](blazesbot/bot/vendedor.py#L280) | — | Quantas leituras VAZIAS SEGUIDAS encerram a venda. **SEMPRE NO MESMO SLOT** -- |
+| `LIMIAR_DA_CAIXA_PRECIOSA` | `0.8` | [blazesbot/bot/vendedor.py:167](blazesbot/bot/vendedor.py#L167) | — | Limiar do template do TEXTO da caixa "It's precious item, please confirm!". |
+| `LIMIAR_DO_VENDEDOR` | `0.8` | [blazesbot/bot/vendedor.py:86](blazesbot/bot/vendedor.py#L86) | vendor.py, indice_de_tempos.py | Limiar do casamento. Sprite de NPC contra cenário 3D é mais difícil que ícone |
+| `PASSO_DA_ESPERA_DO_TELEPORTE` | `0.12` | [blazesbot/bot/vendedor.py:103](blazesbot/bot/vendedor.py#L103) | ui_service.py, entrada.py | Entre leituras. A posição vem da memória e custa microssegundos; o passo é |
+| `RAIO_DA_BUSCA_DO_VENDEDOR` | `200` | [blazesbot/bot/vendedor.py:80](blazesbot/bot/vendedor.py#L80) | vendor.py | Onde procurar: um retângulo em volta de onde ele DEVERIA estar. Não é a posição |
+| `SALTO_QUE_CONFIRMA` | `200.0` | [blazesbot/bot/vendedor.py:112](blazesbot/bot/vendedor.py#L112) | — | Salto de posição que confirma o teleporte para a cidade. |
+| `SEGUNDOS_POR_TENTATIVA_NO_VENDEDOR` | `4` | [blazesbot/bot/vendedor.py:144](blazesbot/bot/vendedor.py#L144) | vendor.py | — |
+| `TEMPLATE_VENDEDOR` | `'vendedor.png'` | [blazesbot/bot/vendedor.py:71](blazesbot/bot/vendedor.py#L71) | vendor.py | O RICH É PROCURADO NA TELA, NÃO DECORADO NUMA COORDENADA |
+| `TENTATIVAS_DA_PEDRA` | `3` | [blazesbot/bot/vendedor.py:134](blazesbot/bot/vendedor.py#L134) | vendor.py | — |
+| `TENTATIVAS_DE_ENCOSTAR_NO_VENDEDOR` | `6` | [blazesbot/bot/vendedor.py:143](blazesbot/bot/vendedor.py#L143) | vendor.py | Orçamento do ajuste fino no ponto do vendedor. Pequeno porque o passo real é |
+| `TENTATIVAS_DO_TOKEN` | `10` | [blazesbot/bot/vendedor.py:133](blazesbot/bot/vendedor.py#L133) | vendor.py | CHEGAR A STONE CITY -- números do usuário (18/08/2026) |
+| `TENTATIVAS_NO_OK` | `3` | [blazesbot/bot/vendedor.py:162](blazesbot/bot/vendedor.py#L162) | — | Quantas vezes reclicar o Ok da caixa "It's precious item" antes de desistir. |
+| `TOLERANCIA_DA_CAMINHADA_ATE_O_VENDEDOR` | `2` | [blazesbot/bot/vendedor.py:139](blazesbot/bot/vendedor.py#L139) | vendor.py | Folga da CAMINHADA até o vendedor. O painel de arredores caminha até perto e |
 | `RAIO_DA_BUSCA_DO_AVISO` | `120` | [blazesbot/bot/watchdog.py:73](blazesbot/bot/watchdog.py#L73) | — | Meio-lado da janela de busca, em volta de `coords.aviso_de_conexao`. A caixa |
 | `RECONNECT_TEMPLATE` | `'state_conn_prefix.png'` | [blazesbot/bot/watchdog.py:36](blazesbot/bot/watchdog.py#L36) | coords.py | Template do aviso "Connection interrupted[, please open client again]". |
 | `RECONNECT_THRESHOLD` | `0.92` | [blazesbot/bot/watchdog.py:68](blazesbot/bot/watchdog.py#L68) | — | POR QUE A BUSCA É PRESA À CAIXA, E NÃO NA TELA INTEIRA |
 | `VISUAL_CHECK_SECONDS` | `10.0` | [blazesbot/bot/watchdog.py:76](blazesbot/bot/watchdog.py#L76) | executor.py, context.py, supervisor.py, target_hybrid.py | Este virou o sinal principal de queda, então roda numa cadência curta. |
-| `CLIQUES_POR_PASSADA` | `24` | [blazesbot/config.py:767](blazesbot/config.py#L767) | vendor.py | Limite do jogo: a janela mostra 24 itens e só dá para marcar 24 por venda. |
+| `CLIQUES_POR_PASSADA` | `24` | [blazesbot/config.py:767](blazesbot/config.py#L767) | vendedor.py | Limite do jogo: a janela mostra 24 itens e só dá para marcar 24 por venda. |
 | `CONFIG_VERSION` | `4` | [blazesbot/config.py:34](blazesbot/config.py#L34) | — | Versão 4: o caminho da cave saiu do arquivo e passou a viver em |
 | `CURA_PARAR_PCT_PADRAO` | `90` | [blazesbot/config.py:611](blazesbot/config.py#L611) | — | — |
 | `CURA_PEDIR_PCT_PADRAO` | `30` | [blazesbot/config.py:610](blazesbot/config.py#L610) | — | Padrões das duas barras de cura do time. Pedido do usuário em 28/08/2026: |
@@ -511,6 +523,11 @@ ligar código não testado.
 | `NA_ROTA` | `12.0` | [blazesbot/core/rota.py:137](blazesbot/core/rota.py#L137) | mapa_bc.py, routine.py | Distância até o waypoint mais próximo abaixo da qual o personagem é considerado |
 | `RAIO_DA_AREA` | `55.0` | [blazesbot/core/rota.py:131](blazesbot/core/rota.py#L131) | mapa_bc.py | Distância máxima até um waypoint para aceitar a área dele como resposta. |
 | `DIAS_RETIDOS` | `7` | [blazesbot/core/stats_diarias.py:49](blazesbot/core/stats_diarias.py#L49) | — | Quantos dias de histórico manter (hoje + os 6 anteriores = uma semana). |
+| `NOME_DE_STONE_CITY` | `'Stone City'` | [blazesbot/core/stone_city.py:64](blazesbot/core/stone_city.py#L64) | mapa_bc.py | — |
+| `PRECISAO_NO_PONTO_DA_FAY` | `1.5` | [blazesbot/core/stone_city.py:51](blazesbot/core/stone_city.py#L51) | mapa_bc.py, ui_service.py, entrada.py | Folga aceita para considerar que já se está no ponto de falar com ela. |
+| `SEGUNDOS_POR_TENTATIVA_NA_FAY` | `1.8` | [blazesbot/core/stone_city.py:55](blazesbot/core/stone_city.py#L55) | mapa_bc.py, ui_service.py, entrada.py | — |
+| `TENTATIVAS_DE_ENCOSTAR_NA_FAY` | `6` | [blazesbot/core/stone_city.py:54](blazesbot/core/stone_city.py#L54) | mapa_bc.py, ui_service.py, entrada.py | Quantas vezes tentar encostar no ponto exato antes de desistir da viagem. |
+| `X_MAXIMO_DENTRO_DA_CAVE` | `500` | [blazesbot/core/stone_city.py:72](blazesbot/core/stone_city.py#L72) | mapa_bc.py | O X MÁXIMO QUE PODE EXISTIR NUMA INSTÂNCIA. |
 | `CASAS_DO_DESENHO` | `10` | [blazesbot/core/target_hybrid.py:115](blazesbot/core/target_hybrid.py#L115) | — | Casas do desenho da barra no log. |
 | `FAIXA_PARA_OLHAR_O_MARCADOR` | `0.1` | [blazesbot/core/target_hybrid.py:104](blazesbot/core/target_hybrid.py#L104) | — | Abaixo desta fração de vida vale a pena procurar o `EnemyDead.png`. |
 | `LIMIAR_VIDA_TELA` | `0.02` | [blazesbot/core/target_hybrid.py:93](blazesbot/core/target_hybrid.py#L93) | executor.py | Abaixo desta fração a barra conta como VAZIA. |

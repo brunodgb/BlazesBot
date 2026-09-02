@@ -38,6 +38,7 @@ from .app import ExecutorDeMacro
 from .app.sincronia import SincroniaDoTime
 from .bc.routine import BossRushRoutine
 from .context import BotContext, Disconnected, StopRequested
+from .hh.routine import HHRoutine
 from .login import (
     BadCredentials,
     ClientClosed,
@@ -962,6 +963,17 @@ class AccountSupervisor(threading.Thread):
             self.total_runs += ctx.runs_completed
             ctx.close()
 
+    def _rotina_da_hh(self, ctx: BotContext) -> HHRoutine:
+        """A rotina da HH desta conta, criada na primeira vez que alguém pede.
+
+        GUARDADA, e não recriada a cada volta: o estado dela diz em que trecho
+        dos quatro bosses a run está, e recriar significaria voltar ao primeiro
+        boss cada vez que o laço externo dá uma volta.
+        """
+        if self._hh is None:
+            self._hh = HHRoutine(ctx)
+        return self._hh
+
     def _registrar_queda(self, ctx: BotContext) -> None:
         """Grava a queda no histórico que a interface mostra.
 
@@ -1011,6 +1023,14 @@ class AccountSupervisor(threading.Thread):
         controle num ponto seguro quando a caixa é desmarcada.
         """
         routine = BossRushRoutine(ctx)
+        # A rotina da HH é criada PREGUIÇOSAMENTE, e não junto da BC.
+        #
+        # Ela monta navegador, combate, UI, vendedor e serviço de time -- e a
+        # esmagadora maioria das contas nunca liga a HH. Construir sempre seria
+        # pagar isso em toda sessão para nada. `_rotina_da_hh` cria na primeira
+        # vez que alguém pede e guarda: o estado dela (em que trecho a run está)
+        # tem que sobreviver entre voltas do laço.
+        self._hh: HHRoutine | None = None
         watchdog = Watchdog(ctx)
         aceitador = InviteAcceptor(ctx)
         anunciado: str | None = None
@@ -1049,7 +1069,53 @@ class AccountSupervisor(threading.Thread):
             if ctx.settings.accept_team_invites:
                 aceitador.check_and_accept()
 
-            quer_farmar = self.account.farms
+            # A HH VEM ANTES DA BC, e a ordem é escolha, não acidente.
+            #
+            # As duas são farm de cave e disputariam o teclado se rodassem
+            # juntas. Com uma ordem fixa a escolha é PREVISÍVEL -- ligar as duas
+            # roda a HH, e o log diz isso -- em vez de depender de qual laço
+            # chegou primeiro. Quem quer a BC desliga a HH.
+            if self.account.hh_farm:
+                if not ctx.memory.critical_ok():
+                    if not avisou_memoria:
+                        avisou_memoria = True
+                        self._status(
+                            "HH pedida, mas NÃO consigo ler a memória do "
+                            "cliente. Sem isso o bot não sabe se andou, se "
+                            "montou ou se o alvo caiu -- e farmar às cegas só "
+                            "gera ação repetida no vazio. Mantendo a conta "
+                            "online e verificando.")
+                    ctx.tick(2.5)
+                    continue
+                if avisou_memoria:
+                    avisou_memoria = False
+                    self._status("Memória legível novamente; retomando a HH")
+                if anunciado != "hh":
+                    anunciado = "hh"
+                    if self.account.bc_farm:
+                        self._status(
+                            "HH e BC estão as DUAS ligadas nesta conta: rodando "
+                            "a HH. Desligue a HH para o BC voltar a rodar.")
+                    else:
+                        self._status("HH LIGADA")
+                self._rotina_da_hh(ctx).run(
+                    max_runs=self.max_runs,
+                    should_continue=lambda: (
+                        self.account.hh_farm
+                        and not self.stop_event.is_set()
+                        # Ligar o modo APP com a HH rodando devolve o controle
+                        # no próximo ponto seguro, em vez de os dois disputarem
+                        # o teclado.
+                        and not self.account.settings.app.enabled
+                        and ctx.memory.critical_ok()
+                    ),
+                )
+                if (self.max_runs is not None
+                        and ctx.runs_completed >= self.max_runs):
+                    return
+                continue
+
+            quer_farmar = self.account.bc_farm
             memoria_ok = ctx.memory.critical_ok()
 
             # PORTÃO DE MEMÓRIA. O farm da cave lê HP, posição e alvo da memória
@@ -1091,8 +1157,11 @@ class AccountSupervisor(threading.Thread):
                 routine.run(
                     max_runs=self.max_runs,
                     should_continue=lambda: (
-                        self.account.farms
+                        self.account.bc_farm
                         and not self.stop_event.is_set()
+                        # Ligar a HH com o BC rodando devolve o controle no
+                        # próximo ponto seguro -- a HH tem precedência.
+                        and not self.account.hh_farm
                         # Ligar o modo APP com o farm rodando devolve o controle
                         # no próximo ponto seguro da rotina, em vez de os dois
                         # disputarem o teclado.

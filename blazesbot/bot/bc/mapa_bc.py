@@ -49,13 +49,6 @@ from __future__ import annotations
 
 from ...core import rota
 from ...core.lugares import AREAS_BC
-
-# REEXPORTAÇÃO PROPOSITAL (a forma `X as X` é o que diz isso ao ruff).
-#
-# Estes nomes moram em `core/rota.py` desde 01/09/2026, mas o código da BC os
-# chama por `mapa_bc.` -- e continuar assim é o objetivo: a promoção não deve
-# aparecer em nenhum ponto de chamada. `Waypoint` e `_wp` são o modelo; os outros
-# são a regra de rota que não precisa de dado nenhum da cave.
 from ...core.rota import NA_ROTA as NA_ROTA
 from ...core.rota import Retomada as Retomada
 from ...core.rota import Waypoint as Waypoint
@@ -64,6 +57,39 @@ from ...core.rota import distancia as distancia
 from ...core.rota import mais_proximos as mais_proximos
 from ...core.rota import montar as _wp
 from ...core.rota import vizinhos_na_rota as vizinhos_na_rota
+
+# REEXPORTAÇÃO PROPOSITAL (a forma `X as X` é o que diz isso ao ruff).
+#
+# Estes nomes moram em `core/rota.py` desde 01/09/2026, mas o código da BC os
+# chama por `mapa_bc.` -- e continuar assim é o objetivo: a promoção não deve
+# aparecer em nenhum ponto de chamada. `Waypoint` e `_wp` são o modelo; os outros
+# são a regra de rota que não precisa de dado nenhum da cave.
+# REEXPORTAÇÃO PROPOSITAL, parte 2: Stone City e o Transport Fay.
+#
+# Eles não são da Bewitcher Cave -- a cidade é o ponto de partida das DUAS caves,
+# e é o mesmo Fay no mesmo ponto que leva às duas. Subiram para
+# `core/stone_city.py` em 02/09/2026, quando a HH precisou deles e importar de
+# `bc/` estaria proibido. Ver o cabeçalho de lá.
+from ...core.stone_city import NOME_DE_STONE_CITY as NOME_DE_STONE_CITY
+from ...core.stone_city import POSICAO_DA_FAY as POSICAO_DA_FAY
+from ...core.stone_city import (
+    PRECISAO_NO_PONTO_DA_FAY as PRECISAO_NO_PONTO_DA_FAY,
+)
+from ...core.stone_city import (
+    SEGUNDOS_POR_TENTATIVA_NA_FAY as SEGUNDOS_POR_TENTATIVA_NA_FAY,
+)
+from ...core.stone_city import (
+    TENTATIVAS_DE_ENCOSTAR_NA_FAY as TENTATIVAS_DE_ENCOSTAR_NA_FAY,
+)
+from ...core.stone_city import (
+    X_MAXIMO_DENTRO_DA_CAVE as X_MAXIMO_DENTRO_DA_CAVE,
+)
+from ...core.stone_city import Y_DE_STONE_CITY as Y_DE_STONE_CITY
+from ...core.stone_city import esta_em_stone_city as esta_em_stone_city
+from ...core.stone_city import nome_e_stone_city as nome_e_stone_city
+from ...core.stone_city import (
+    posicao_esta_em_stone_city as posicao_esta_em_stone_city,
+)
 
 # ---------------------------------------------------------------------------
 # Pontos de referência
@@ -202,52 +228,6 @@ PRECISAO_NO_PONTO_DA_SAIDA = 0.7
 TENTATIVAS_DE_ENCOSTAR_NA_SAIDA = 6
 SEGUNDOS_POR_TENTATIVA_NA_SAIDA = 1.8
 
-# Coordenada do NPC Transport Fay, em Stone City.
-POSICAO_DA_FAY = (178, -518)
-
-# Precisão exigida no ponto da Fay, e por que ela existe.
-#
-# ===========================================================================
-# O DEFEITO MEDIDO, 25/08/2026 -- COM PRINT
-# ===========================================================================
-#
-# O bot parava onde o auto-path do painel de arredores largasse (no print,
-# `Stone City [180,-516]`, uns 2 passos antes) e clicava no ponto GENÉRICO de
-# NPC da tela. De lá, esse ponto caía no **White Eagle** que estava no caminho:
-#
-#   1. o clique direito pega o White Eagle em vez da Fay -> diálogo não abre
-#   2. `viajar_para_ghost_din_woods` devolve False
-#   3. a rotina conclui "não estou em Stone City" e USA O ITEM DE RETORNO
-#      -> desmonta, usa (já estava em Stone City: nada acontece), remonta
-#   4. tenta de novo, o painel leva os 2 passos que faltavam, e aí funciona
-#
-# Palavras do usuário: *"não deveria existir isso, deveria ir para a coordenada
-# 178,-517, que é a configurada como coordenada onde pode clicar na Fay"*.
-#
-# É EXATAMENTE O QUE O VENDEDOR JÁ FAZIA. `travel_to_vendor` anda até o ponto
-# medido e se recusa a clicar de fora dele -- *"o clique cairia no chão e o
-# personagem andaria, piorando a tentativa seguinte"*. A Fay tinha a coordenada
-# (esta constante, usada só pela ferramenta de amostragem e pelos testes) e não
-# tinha o passo de encostar nela.
-#
-# 1.5 E NÃO 0.7 COMO O VENDEDOR, e a diferença é honestidade: o ponto do
-# vendedor foi remedido pelo usuário junto com as coordenadas de tela do clique,
-# então lá a célula exata é conhecida. Aqui a constante diz (178,-518) e o
-# usuário falou em (178,-517) -- uma unidade de diferença que ninguém mediu de
-# novo. 1.5 aceita as duas células e as vizinhas imediatas; apertar antes de
-# remedir seria transformar um erro de uma unidade em run travada.
-#
-# COMO FECHAR ISSO: o `14-INSTRUMENTAR-CLIQUE` já tem o ponto "fay", que
-# fotografa em volta do clique com o personagem parado aqui. Com a amostra, esta
-# precisão desce para 0.7 e o ponto de tela deixa de ser o genérico.
-PRECISAO_NO_PONTO_DA_FAY = 1.5
-
-# Quantas tentativas de encostar no ponto da Fay antes de desistir.
-#
-# Mesmo desenho do vendedor e do patamar do Altar Stone: o passo real é de 1 a 2
-# unidades, então faltando 2 ou 3 unidades bastam duas ou três tentativas.
-TENTATIVAS_DE_ENCOSTAR_NA_FAY = 6
-SEGUNDOS_POR_TENTATIVA_NA_FAY = 1.8
 
 # Coordenada de onde o personagem PARA para falar com o NPC vendedor (Rich Man),
 # em Stone City. Não é onde o NPC está -- é de onde o clique nele acerta.
@@ -434,7 +414,6 @@ CAIXA_DA_CAVE = _caixa_dos_waypoints()   # ((x min, y min), (x max, y max))
 # da cave. O waypoint mais a leste é a chegada, em x=423, então a caixa calculada
 # já para bem antes disso -- esta verificação existe para o caso de alguém
 # adicionar um waypoint errado e esticar a caixa até onde ela não deveria chegar.
-X_MAXIMO_DENTRO_DA_CAVE = 500
 assert CAIXA_DA_CAVE[1][0] <= X_MAXIMO_DENTRO_DA_CAVE, (
     f"a caixa da cave chegou a x={CAIXA_DA_CAVE[1][0]}, além do limite de "
     f"{X_MAXIMO_DENTRO_DA_CAVE}. Algum waypoint está com a coordenada errada."
@@ -475,76 +454,9 @@ def x_contradiz_a_cave(pos: tuple[int, int] | None) -> bool:
 
 # Y a partir do qual se está em Stone City. O número não é escolhido aqui: é o
 # que este arquivo já afirmava na caixa da cave ("Stone City (y <= -490)").
-Y_DE_STONE_CITY = -490
-
-
-NOME_DE_STONE_CITY = "Stone City"
-
-
-def nome_e_stone_city(local: str | None) -> bool:
-    """O jogo está DIZENDO que o personagem está em Stone City?
-
-    Sinal COMPLEMENTAR ao da coordenada, e não substituto -- ver
-    `esta_em_stone_city`.
-    """
-    return bool(local) and NOME_DE_STONE_CITY.lower() in str(local).lower()
-
-
-def esta_em_stone_city(pos: tuple[int, int] | None,
-                       local: str | None = None) -> bool:
-    """Está em Stone City? Vale a COORDENADA **ou** o NOME.
-
-    =======================================================================
-    POR QUE OS DOIS, quando o resto do projeto usa só a coordenada
-    =======================================================================
-
-    A caixa de coordenada é, por construção, um LIMITE INFERIOR: ela foi
-    derivada de dois pontos medidos (o vendedor e a Fay), e Stone City é uma
-    CIDADE -- tem muito mais chão que isso. Medido no log de 14/08/2026, duas
-    partidas com 19 segundos de diferença:
-
-        (205,-498) -> reconhecida, vendeu antes de sair
-        (237,-484) -> NÃO reconhecida, foi direto para a Fay com a bolsa cheia
-
-    As duas são Stone City; o jogo dizia isso nas duas. A segunda ficava 6
-    unidades acima do corte de `y <= -490`.
-
-    O NOME cobre o resto da cidade. A falha conhecida dele é FICAR PRESO num
-    nome antigo -- e o caso medido é ficar preso numa área da CAVE estando fora
-    dela, não o contrário. Um "Stone City" lido é sinal positivo confiável.
-
-    E o custo de errar é assimétrico, o que autoriza ser permissivo aqui:
-
-      * deixar de reconhecer  -> sai para a cave com a bolsa cheia, que é o que
-                                 trava o bot (o defeito medido acima);
-      * reconhecer por engano -> `travel_to_vendor` procura o Rich Man pelo
-                                 painel de arredores, não acha, devolve False,
-                                 e a rotina segue para o farm com um aviso.
-    """
-    return posicao_esta_em_stone_city(pos) or nome_e_stone_city(local)
-
-
-def posicao_esta_em_stone_city(pos: tuple[int, int] | None) -> bool:
-    """A coordenada AFIRMA que o personagem está em Stone City?
-
-    DOIS limites, e o segundo não é redundante: Ghost Din Woods fica em
-    (1395,-635), e o Y dele também passa por `Y_DE_STONE_CITY`. Quem separa os
-    dois é o X -- é a mesma regra de `x_contradiz_a_cave`, e por isso lê a
-    mesma constante em vez de repetir o 500.
-
-    Confere contra os pontos medidos:
-
-        vendedor  (158,-494)  -> True
-        Fay       (178,-518)  -> True
-        boss      ( 80,-406)  -> False   (y acima do corte)
-        saída     ( 81,-398)  -> False
-        Ghost Din (1395,-635) -> False   (x além do limite)
-
-    Nunca responde True sem posição: "não sei" não é "está".
-    """
-    if pos is None:
-        return False
-    return pos[1] <= Y_DE_STONE_CITY and pos[0] <= X_MAXIMO_DENTRO_DA_CAVE
+# `Y_DE_STONE_CITY`, `NOME_DE_STONE_CITY`, `nome_e_stone_city`,
+# `esta_em_stone_city` e `posicao_esta_em_stone_city` vêm de
+# `core/stone_city.py` (importados no topo): a cidade é das duas caves.
 
 
 def posicao_esta_fora_da_cave(pos: tuple[int, int] | None) -> bool:

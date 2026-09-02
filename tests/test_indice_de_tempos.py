@@ -67,13 +67,13 @@ def test_a_natureza_separa_TETO_de_espera_CEGA():
     das conversões que já foram feitas.
     """
     por_chave = {t.chave: t for t in extrair()}
-    teleporte = por_chave["blazesbot/bot/bc/vendor.py::ESPERA_DO_TELEPORTE"]
+    teleporte = por_chave["blazesbot/bot/vendedor.py::ESPERA_DO_TELEPORTE"]
     assert teleporte.natureza == "TETO"
 
-    passo = por_chave["blazesbot/bot/bc/vendor.py::PASSO_DA_ESPERA_DO_TELEPORTE"]
+    passo = por_chave["blazesbot/bot/vendedor.py::PASSO_DA_ESPERA_DO_TELEPORTE"]
     assert passo.natureza == "PASSO"
 
-    sell = por_chave["blazesbot/bot/bc/vendor.py::ESPERA_ANTES_DO_SELL"]
+    sell = por_chave["blazesbot/bot/vendedor.py::ESPERA_ANTES_DO_SELL"]
     assert sell.natureza == "FIXO"
 
 

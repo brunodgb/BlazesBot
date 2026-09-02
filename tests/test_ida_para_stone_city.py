@@ -24,6 +24,7 @@ import inspect
 
 import pytest
 
+from blazesbot.bot import vendedor as janela_de_venda
 from blazesbot.bot.bc import routine as mod_routine
 from blazesbot.bot.bc import vendor as v
 
@@ -71,7 +72,7 @@ def _servico(monkeypatch, roteiro, token="F1", pedra="F2"):
     servico.ctx = Ctx()
     servico.nav = type("N", (), {
         "ensure_dismounted": staticmethod(lambda **k: True)})()
-    monkeypatch.setattr(v.diario, "registrar_evento",
+    monkeypatch.setattr(janela_de_venda.diario, "registrar_evento",
                         lambda *a, **k: None, raising=False)
     return servico, apertadas
 
@@ -106,20 +107,20 @@ def test_o_token_e_tentado_10x_antes_da_pedra(monkeypatch):
     """
     servico, apertadas = _servico(monkeypatch, lambda n: NA_CAVE)
     assert servico.voltar_para_a_cidade() is False
-    assert apertadas.count("F1") == v.TENTATIVAS_DO_TOKEN
-    assert apertadas.count("F2") == v.TENTATIVAS_DA_PEDRA
-    assert apertadas[:v.TENTATIVAS_DO_TOKEN] == ["F1"] * v.TENTATIVAS_DO_TOKEN
+    assert apertadas.count("F1") == janela_de_venda.TENTATIVAS_DO_TOKEN
+    assert apertadas.count("F2") == janela_de_venda.TENTATIVAS_DA_PEDRA
+    assert apertadas[:janela_de_venda.TENTATIVAS_DO_TOKEN] == ["F1"] * janela_de_venda.TENTATIVAS_DO_TOKEN
 
 
 def test_tecla_nao_configurada_e_PULADA(monkeypatch):
     """Pedido explícito: sem a tecla, o bloco dela é ignorado inteiro."""
     servico, apertadas = _servico(monkeypatch, lambda n: NA_CAVE, token="")
     servico.voltar_para_a_cidade()
-    assert apertadas == ["F2"] * v.TENTATIVAS_DA_PEDRA
+    assert apertadas == ["F2"] * janela_de_venda.TENTATIVAS_DA_PEDRA
 
     servico, apertadas = _servico(monkeypatch, lambda n: NA_CAVE, pedra="")
     servico.voltar_para_a_cidade()
-    assert apertadas == ["F1"] * v.TENTATIVAS_DO_TOKEN
+    assert apertadas == ["F1"] * janela_de_venda.TENTATIVAS_DO_TOKEN
 
 
 def test_sem_nenhuma_tecla_recusa_sem_apertar(monkeypatch):

@@ -52,7 +52,7 @@ def test_o_Sell_tem_respiro_ANTES_e_DEPOIS():
 def test_o_respiro_do_Sell_e_maior_que_a_cadencia_da_rajada():
     """Se o respiro fosse da ordem do intervalo entre os cliques dos slots, ele
     não seria respiro nenhum -- seria mais um clique da rajada."""
-    from blazesbot.bot.bc import vendor
+    from blazesbot.bot import vendedor as janela_de_venda
 
-    assert vendor.ESPERA_ANTES_DO_SELL > vendor.ESPERA_ENTRE_CLIQUES_DA_VENDA * 3
-    assert vendor.ESPERA_DEPOIS_DO_SELL >= vendor.ESPERA_ANTES_DO_SELL
+    assert janela_de_venda.ESPERA_ANTES_DO_SELL > janela_de_venda.ESPERA_ENTRE_CLIQUES_DA_VENDA * 3
+    assert janela_de_venda.ESPERA_DEPOIS_DO_SELL >= janela_de_venda.ESPERA_ANTES_DO_SELL

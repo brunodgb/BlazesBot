@@ -14,6 +14,7 @@ import inspect
 
 import pytest
 
+from blazesbot.bot import vendedor as janela_de_venda
 from blazesbot.bot.bc import vendor as v
 
 # Onde está a grade da janela de venda na foto de referência: slot1 em
@@ -29,7 +30,7 @@ LISTA_DE_VENDA_Y = 505
 def _contraste(img, x, y):
     """O mesmo recorte que o `_nota_do_slot_vazio` faz."""
     import numpy as np
-    meio = v.LADO_DO_MIOLO_DA_CELULA // 2
+    meio = janela_de_venda.LADO_DO_MIOLO_DA_CELULA // 2
     return float(img[y - meio:y + meio, x - meio:x + meio]
                  .astype(np.float32).std())
 
@@ -57,10 +58,10 @@ def test_o_corte_separa_cheio_de_vazio_na_grade_REAL():
     cheios = _celulas(img, SLOT1[1])
     vazios = _celulas(img, LISTA_DE_VENDA_Y)
 
-    assert min(cheios) > v.CONTRASTE_QUE_E_SLOT_VAZIO, (
+    assert min(cheios) > janela_de_venda.CONTRASTE_QUE_E_SLOT_VAZIO, (
         f"uma célula COM item mediu {min(cheios):.1f}, abaixo do corte "
-        f"{v.CONTRASTE_QUE_E_SLOT_VAZIO} — a venda pararia cedo")
-    assert max(vazios) < v.CONTRASTE_QUE_E_SLOT_VAZIO, (
+        f"{janela_de_venda.CONTRASTE_QUE_E_SLOT_VAZIO} — a venda pararia cedo")
+    assert max(vazios) < janela_de_venda.CONTRASTE_QUE_E_SLOT_VAZIO, (
         f"uma célula VAZIA mediu {max(vazios):.1f}, acima do corte — a venda "
         f"nunca pararia sozinha")
     assert min(cheios) - max(vazios) > 25, (
@@ -87,10 +88,10 @@ def test_a_BORDA_DE_HOVER_nao_entra_no_miolo():
         pytest.skip("modelo de referência não está no repo")
     t = cv2.imread(str(arq), cv2.IMREAD_GRAYSCALE)
     cy, cx = t.shape[0] // 2, t.shape[1] // 2
-    meio = v.LADO_DO_MIOLO_DA_CELULA // 2
+    meio = janela_de_venda.LADO_DO_MIOLO_DA_CELULA // 2
     com_hover = float(t[cy - meio:cy + meio, cx - meio:cx + meio]
                       .astype(np.float32).std())
-    assert com_hover < v.CONTRASTE_QUE_E_SLOT_VAZIO, (
+    assert com_hover < janela_de_venda.CONTRASTE_QUE_E_SLOT_VAZIO, (
         f"o slot vazio COM hover mediu {com_hover:.1f} e passaria por cheio — "
         f"a borda voltou a entrar no recorte")
 
@@ -112,7 +113,7 @@ def test_tres_leituras_e_nao_uma_nem_duas():
     O que separa uma coisa da outra é o ESPAÇAMENTO entre elas, provado em
     `test_venda_rearranjo.py`. Valor alterado para 6 em 21/08/2026.
     """
-    assert v.LEITURAS_VAZIAS_PARA_PARAR == 6
+    assert janela_de_venda.LEITURAS_VAZIAS_PARA_PARAR == 6
 
 
 def test_a_conferencia_e_no_slot_CLICADO_e_nao_na_tela_toda():
@@ -137,7 +138,7 @@ def test_a_conferencia_e_no_slot_CLICADO_e_nao_na_tela_toda():
 
 def test_a_espera_entre_cliques_encolheu_mas_nao_zerou():
     """Zero arriscaria clicar durante o rearranjo; 200 ms era o gargalo."""
-    assert 0 < v.ESPERA_ENTRE_CLIQUES_DA_VENDA <= 0.1
+    assert 0 < janela_de_venda.ESPERA_ENTRE_CLIQUES_DA_VENDA <= 0.1
 
 
 def test_os_modelos_de_slot_vazio_sairam_da_DECISAO():

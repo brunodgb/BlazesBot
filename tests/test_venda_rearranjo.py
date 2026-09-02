@@ -22,12 +22,13 @@ do bot, e um relógio em zero torna "ainda não aconteceu" indistinguível de
 """
 import pytest
 
+from blazesbot.bot import vendedor as janela_de_venda
 from blazesbot.bot.bc import vendor as v
 
 # LIDO NO IMPORT, antes da fixture que força o interruptor ligado. Perguntar a
 # `v` depois da fixture provaria a fixture, não o código -- mesma lição do
 # `FONTE_PADRAO_NO_CODIGO` em `test_combat_vigia_do_alvo.py`.
-INTERRUPTOR_NO_CODIGO = v.CONFERIR_SLOT_VAZIO
+INTERRUPTOR_NO_CODIGO = janela_de_venda.CONFERIR_SLOT_VAZIO
 
 # Quanto tempo a grade leva para trazer o item de baixo. Maior que a espera
 # entre cliques (0,1 s) -- é essa desigualdade que cria o defeito.
@@ -51,7 +52,7 @@ def _com_a_conferencia_ligada(monkeypatch):
     estado real do interruptor é conferido por
     `test_o_interruptor_esta_desligado`, que lê o valor do MÓDULO.
     """
-    monkeypatch.setattr(v, "CONFERIR_SLOT_VAZIO", True)
+    monkeypatch.setattr(janela_de_venda, "CONFERIR_SLOT_VAZIO", True)
 
 
 class Relogio:
@@ -106,7 +107,7 @@ def _servico(monkeypatch, itens: int, cliques: int):
     class Vendor:
         sell_clicks = cliques
         sell_start_slot = 4
-        passadas_necessarias = max(1, -(-cliques // v.CLIQUES_POR_PASSADA))
+        passadas_necessarias = max(1, -(-cliques // janela_de_venda.CLIQUES_POR_PASSADA))
 
     class Memoria:
         # A bolsa encolhe junto com a grade: é o que o serviço loga no fim, e
@@ -182,8 +183,8 @@ def test_a_confirmacao_e_espacada_e_nao_colada():
     leituras voltam a caber no mesmo vão de rearranjo e o defeito de produção
     volta -- sem nada no log parecendo diferente.
     """
-    assert v.ESPERA_PARA_CONFIRMAR_VAZIO > v.ESPERA_ENTRE_CLIQUES_DA_VENDA * 4
-    assert v.ESPERA_PARA_CONFIRMAR_VAZIO >= VAO_DE_REARRANJO
+    assert janela_de_venda.ESPERA_PARA_CONFIRMAR_VAZIO > janela_de_venda.ESPERA_ENTRE_CLIQUES_DA_VENDA * 4
+    assert janela_de_venda.ESPERA_PARA_CONFIRMAR_VAZIO >= VAO_DE_REARRANJO
 
 
 def test_confirmar_nao_clica(monkeypatch):
@@ -230,7 +231,7 @@ def test_DESLIGADA_clica_o_total_configurado(monkeypatch):
     Nem a grade vazia encerra: os 66 cliques configurados saem, em passadas de
     24, com o Sell de cada passada. É o comportamento antigo, inteiro.
     """
-    monkeypatch.setattr(v, "CONFERIR_SLOT_VAZIO", False)
+    monkeypatch.setattr(janela_de_venda, "CONFERIR_SLOT_VAZIO", False)
     servico, grade = _servico(monkeypatch, itens=2, cliques=66)
     servico.sell_from_slot()
     assert grade.cliques == 66, (
@@ -244,7 +245,7 @@ def test_DESLIGADA_nao_paga_a_captura(monkeypatch):
     conferência. A caixa "It's precious item" continua conferida a cada clique
     — ela tem captura própria, e sem ela a passada inteira vende zero.
     """
-    monkeypatch.setattr(v, "CONFERIR_SLOT_VAZIO", False)
+    monkeypatch.setattr(janela_de_venda, "CONFERIR_SLOT_VAZIO", False)
     servico, _grade = _servico(monkeypatch, itens=9, cliques=66)
     olhadas = []
     monkeypatch.setattr(
@@ -279,7 +280,7 @@ def test_DENTE_contagem_colada_para_a_venda_cedo(monkeypatch):
     def contando_colado(alvo):
         leitura = None
         for _ in range(DEFEITO_ORIGINAL_LEITURAS - 1):
-            servico.ctx.tick(v.ESPERA_ENTRE_CLIQUES_DA_VENDA)
+            servico.ctx.tick(janela_de_venda.ESPERA_ENTRE_CLIQUES_DA_VENDA)
             leitura = servico._nota_do_slot_vazio(servico._quadro(), alvo)
             if not servico._esta_vazio(leitura):
                 return None
