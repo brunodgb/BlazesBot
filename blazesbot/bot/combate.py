@@ -57,7 +57,7 @@ from __future__ import annotations
 import time
 from dataclasses import dataclass
 
-from ..core import diario, vision
+from ..core import calibracao, diario, vision
 from ..core.pet import SEGUNDOS_PARA_A_COMIDA_SER_USADA, PetFeeder
 from ..core.target_hybrid import MorteDoAlvo, TargetHybrid
 from . import hotbar
@@ -2813,6 +2813,133 @@ class CombatEngine:
             )
         return True
 
+    def lutar_contra_um_boss(
+        self,
+        o_que: str,
+        *,
+        usar_aoe: bool = True,
+        tabs_ao_morrer: int = 0,
+        registrar_troca_de_fase: str | None = None,
+    ) -> FimDeCombate:
+        """UMA luta de boss, com tudo que o BC aprendeu a fazer nela.
+
+        =================================================================
+        POR QUE ISTO SUBIU PARA O MOTOR
+        =================================================================
+
+        Era `bc/combat.fase_do_boss_por_combate`, e todo o conhecimento abaixo
+        foi medido lá. Subiu em 03/09/2026 porque a HH tem QUATRO bosses e
+        estava lutando com uma versão empobrecida: sem desmontar, sem checar
+        morte, sem TAB de aquisição, sem golpe durante a confirmação.
+
+        O que fica em cada cave é o ROTEIRO -- quantos bosses, em que ordem,
+        com que nome. O COMO lutar é do jogo, e é isto.
+
+        =================================================================
+        SAIR DE COMBATE VALE COMO VITÓRIA
+        =================================================================
+
+        As duas formas de errar isso estão fechadas: morte do personagem é
+        conferida pelo HP próprio e devolve derrota, e prazo estourado ou flag
+        ilegível também devolvem derrota. O que sobra -- flag baixando com o
+        boss vivo e o personagem vivo, sem nada mais no covil -- não foi
+        observado e não tem como ser distinguido sem voltar aos ponteiros de
+        alvo.
+
+        =================================================================
+        A ESPERA PELO ENGAJAMENTO NÃO DESISTE -- MAS NÃO É PASSIVA
+        =================================================================
+
+        O boss pode estar afastado do waypoint, e antes o bot ficava parado sem
+        prazo esperando ele encostar (ver `SEM_PRAZO`, que continua valendo como
+        princípio: não se abandona uma instância já gasta por tempo).
+
+        Passados `SEGUNDOS_ANTES_DO_TAB_NO_BOSS`, o bot APERTA TAB e começa a
+        rotação normal, porque atacar é o que puxa o boss quando ele não vem
+        sozinho. Não é desistir: é trocar espera por ação. O que protege a run
+        desse novo risco é `LIMITE_PARA_A_LUTA_COMECAR` -- se o TAB não pegou o
+        alvo certo, o bot devolve o controle em 15 s em vez de girar a rotação
+        contra o nada até o prazo da luta.
+
+        =================================================================
+        SEM PORTÃO DE NOME, DE PROPÓSITO
+        =================================================================
+
+        **Não existe `alvo_esperado` aqui, e a ausência é a decisão.** O portão
+        de nome devolve `acabaram` para qualquer nome diferente do esperado, o
+        que é o desfecho CERTO numa fase de vários mobs (os guardas) e errado
+        num boss único: entrou em combate, ataca.
+
+        A HH tentou usar o portão com os rótulos de comentário do bot em Lua
+        ("Fa-Yuan", "Dupla") -- nomes que nunca foram medidos. Resultado: a luta
+        terminava na primeira leitura de nome, sem um golpe, e reportava
+        VITÓRIA. Medido em 03/09/2026.
+
+        `tabs_ao_morrer` existe para o caso de DOIS bosses no mesmo ponto (a
+        "Dupla" da HH): sem ele o segundo nunca é adquirido.
+        """
+        ctx = self.ctx
+        limite = float(ctx.cave.max_fight_seconds)
+        ctx.log.info(
+            "Luta do %s: aguardando a flag de combate ligar. Se não ligar em "
+            "%.0fs, aperto TAB e começo a rotação. Prazo da LUTA, depois que ela "
+            "começar: %.0fs", o_que, SEGUNDOS_ANTES_DO_TAB_NO_BOSS, limite,
+        )
+
+        self._descer_para_lutar(o_que)
+
+        # `pocao_na_espera=False`: na frente do boss não se bebe poção -- o boss
+        # encosta e o efeito para na hora. Quem garantiu a vida foi o top-up
+        # ANTES de encostar; aqui é espera seca, sentando para regenerar se
+        # ainda faltar.
+        #
+        # O PRAZO CURTO AQUI NÃO É DESISTÊNCIA. Estourá-lo não encerra nada:
+        # dispara o TAB e o início da rotação -- atacar é o que puxa o boss para
+        # a luta quando ele não vem sozinho.
+        forcado = False
+        if not self.esperar_entrar_em_combate(
+                o_que, limite=SEGUNDOS_ANTES_DO_TAB_NO_BOSS,
+                pocao_na_espera=False):
+            if ctx.snapshot().dead:
+                return FimDeCombate(False, f"morri antes de o {o_que} engajar",
+                                    0.0, 0)
+            # ESTE TAB NÃO É POR MORTE, e é o único do bot que não é.
+            # Quem olha o log precisa conseguir separar os dois: um TAB aqui com
+            # o mob vivo é o esperado -- é o bot indo BUSCAR o boss que não veio.
+            ctx.log.info(
+                "O %s não engajou em %.0fs: TAB para ADQUIRIR o alvo (não é "
+                "morte de ninguém) e começando a rotação normal.",
+                o_que, SEGUNDOS_ANTES_DO_TAB_NO_BOSS)
+            ctx.press(ctx.settings.keys.next_target)
+            ctx.tick(ESPERA_DEPOIS_DO_TAB)
+            forcado = True
+
+        # `exige_ter_entrado=forcado`: com a luta forçada a flag ainda está
+        # baixa quando a rotação começa, e sem este portão a confirmação de
+        # saída declararia vitória em 1,5 s sem luta nenhuma.
+        fim = self.atacar_ate_sair_de_combate(
+            o_que, usar_aoe=usar_aoe, limite=limite,
+            exige_ter_entrado=forcado,
+            tabs_ao_morrer=tabs_ao_morrer,
+            registrar_troca_de_fase=registrar_troca_de_fase,
+            # E O GOLPE NÃO PARA ENQUANTO A SAÍDA É CONFIRMADA. A virada de fase
+            # derruba a flag por um instante, e quem reengaja a fase seguinte é
+            # o golpe -- parado, o bot confirmava "vitória" com o boss de pé.
+            # Medido no log de 19/08/2026; ver a constante para o trecho inteiro.
+            atacar_na_confirmacao=True)
+
+        if fim.saiu_de_combate:
+            ctx.log.info(
+                "Saí de combate no %s depois de %.0fs e %s golpes -- "
+                "considerando derrotado", o_que, fim.segundos, fim.golpes)
+        # O PLACAR VAI PARA O DISCO NO FIM DA LUTA, e não só a cada
+        # `AMOSTRAS_ENTRE_GRAVACOES`. Foi o que perdeu a primeira run de teste
+        # inteira: ela ficou abaixo do gatilho de 40 e nada foi gravado.
+        # Uma escrita por luta é barata e transforma "perdi a sessão" em "perdi
+        # no máximo a luta em andamento".
+        calibracao.salvar()
+        return fim
+
     def sentar_para_recuperar(
         self,
         segundos: float = SEGUNDOS_SENTADO_APOS_GUARDAS,
@@ -3010,6 +3137,102 @@ class CombatEngine:
                 depois.position, depois.location,
             )
         return True
+
+    def curar_antes_do_boss(self) -> None:
+        """Top-up FORA de combate, ANTES de encostar num boss.
+
+        SUBIU DE `bc/combat.py` EM 03/09/2026, e é "quando e como se curar" --
+        conhecimento do jogo, não da cave. A HH tem quatro bosses e estava
+        entrando em todos com a vida da luta anterior.
+
+        O MOMENTO É O PONTO, e quem escolhe é a rotina de cada cave. No BC é
+        depois de matar os quatro Gun Witch e sair de batalha; na HH é antes de
+        cada um dos quatro bosses. O que as duas têm em comum: é o último lugar
+        seguro para ficar parado 15 s -- na frente do boss o personagem precisa
+        responder ao engajamento na hora, e beber lá seria gastar a poção com o
+        boss encostando (que cancela o efeito).
+
+        GATE 40%: se a vida estiver em ou acima de `LIMINAR_TOPUP_ANTES_DO_BOSS`,
+        não faz nada -- a sustentação em combate (`maintain` com `battle_hp_pct`)
+        cuida da fase que vem. Abaixo disso, a sequência é:
+
+            1. Super Skill (ou skill de cura) UMA vez, conferindo o efeito:
+               lê a vida antes, aperta a skill, espera o respiro de 1 s e relê.
+               Se a vida SUBIU, a skill estava fora de recarga e curou -- acabou.
+            2. Se a skill não subiu a vida (estava em recarga), UMA poção de HP
+               e fica parado pelos 15 s da duração -- andar cancela o efeito.
+
+        A conferência da skill importa: ela tem recarga longa, e apertá-la com o
+        bot achando que curou deixaria o personagem seguindo com a vida baixa.
+
+        Não senta aqui: os mobs do trajeto podem vir, e sentar é mais lento que
+        a rajada acima. `heal_to_full` cobre a recuperação longa FORA da cave.
+        """
+        ctx = self.ctx
+        k = ctx.settings.keys
+
+        estado = ctx.snapshot()
+        if not estado.max_hp:
+            return
+        if estado.hp_pct >= LIMINAR_TOPUP_ANTES_DO_BOSS:
+            return
+
+        # Só depois do portão dos 40%: sem cura para fazer, não há tecla para
+        # proteger, e clicar aqui seria custo por nada em toda run saudável.
+        hotbar.garantir_pagina_1(ctx, "curar antes do boss")
+
+        ctx.log.info(
+            "Vida %.0f%% (mínimo %s%%) -- top-up antes de encostar no boss",
+            estado.hp_pct, LIMINAR_TOPUP_ANTES_DO_BOSS,
+        )
+        if not self._preparar_para_agir("top-up antes do boss"):
+            return
+
+        # A skill de cura precisa de alvo, e o alvo é o próprio personagem.
+        self.auto_selecionar()
+
+        antes = estado.hp_pct
+
+        # SEGUNDO PONTO DE CURA DA RUN, e o usuário o descreveu assim: no
+        # waypoint dos 4 Gun Witch, DEPOIS de matá-los, e só se precisar. Os
+        # guardas já morreram, então não há luta -- o F1 do laço é seguro aqui.
+        if MODO_DE_CURA == "skill_em_laco" and k.heal_skill:
+            if self.curar_com_skill(ctx.settings.potions.hp_pct):
+                return
+            ctx.log.info("A cura por skill não bastou; indo à poção.")
+        else:
+            # Sem tecla de cura (o caso do Wizard) quem cura é a Super Skill,
+            # uma vez, exatamente como antes.
+            skill = k.super_skill or k.heal_skill
+            if skill:
+                ctx.log.info("Tentando a skill de cura antes da poção")
+                ctx.press(skill)
+                ctx.tick(SEGUNDOS_DEPOIS_DA_SUPER_SKILL)
+                depois = ctx.snapshot().hp_pct
+                if depois and depois > antes:
+                    ctx.log.info(
+                        "A skill de cura subiu a vida de %.0f%% para %.0f%% -- "
+                        "sem gastar poção", antes, depois,
+                    )
+                    return
+                ctx.log.info(
+                    "A skill de cura não subiu a vida (%.0f%% -> %.0f%%) -- "
+                    "provavelmente em recarga. Indo à poção.",
+                    antes, depois or antes,
+                )
+
+        if not k.hp_potion:
+            ctx.log.warning(
+                "Vida %.0f%% abaixo do mínimo %s%% e sem tecla de poção de HP "
+                "configurada. Seguindo ao boss assim mesmo.",
+                antes, LIMINAR_TOPUP_ANTES_DO_BOSS,
+            )
+            return
+
+        # PRECISOU DE POÇÃO. A marca fica para a regra da morte -- ver
+        # `_precisou_de_pocao_antes_do_boss`.
+        self._precisou_de_pocao_antes_do_boss = True
+        self._beber_ate_encher(k.hp_potion, antes)
 
     def _beber_ate_encher(self, tecla_da_pocao: str, antes: float) -> None:
         """Poção por poção até `ALVO_DO_TOPUP_ANTES_DO_BOSS`, sentado.

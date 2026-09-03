@@ -93,6 +93,15 @@ PASSO_FORA_DA_CAVE = 0.4
 # Quantas voltas do laço sem sair do estado antes de desconfiar.
 VOLTAS_ANTES_DE_RECUPERAR = 3
 
+# Quanto o personagem pode estar longe do ponto do boss e ainda contar como
+# "no ponto".
+#
+# MESMO VALOR DO BC (`routine.TOLERANCIA_DO_PONTO_DO_BOSS`), e pelo mesmo
+# motivo: o pathfinding para onde para, e exigir a coordenada exata faria o bot
+# voltar a andar por uma unidade de arredondamento.
+TOLERANCIA_DO_PONTO = 15
+
+
 # O botão "Pick up all" da janela de loot, achado por template.
 #
 # É ELE, E SÓ ELE, que autoriza o clique esquerdo do catador: esquerdo na cena
@@ -139,6 +148,8 @@ class HHRoutine:
         self._voltas_no_estado = 0
         self._ultimo_estado: State | None = None
         self._runs_na_ultima_venda = 0
+        # Se a morte desta vez já foi contada no placar.
+        self._contou_a_morte = False
 
     # ==================================================================
     # O laço
@@ -548,24 +559,74 @@ class HHRoutine:
     # ==================================================================
 
     def _do_boss(self) -> None:
-        """Luta, cata o loot, e avança para o trecho seguinte."""
-        ctx = self.ctx
-        rotulo, _caminho, _ponto = mapa_hh.TRECHOS_DOS_BOSSES[self._trecho]
+        """Luta com o ritual do BC, cata o loot, e HONRA o desfecho.
 
-        # A ORDEM: esperar a flag LIGAR, depois bater até ela BAIXAR. Quem
-        # encerra a luta é a flag de combate, não um cronômetro -- `limite` é
-        # rede de segurança contra a flag presa em ligado.
-        self.combat.esperar_entrar_em_combate(rotulo)
-        fim = self.combat.atacar_ate_sair_de_combate(
-            rotulo,
-            usar_aoe=True,
-            limite=float(ctx.settings.hh.max_fight_seconds),
-            alvo_esperado=rotulo,
-        )
+        =================================================================
+        O RITUAL É O DO BC, E ISSO É O PONTO
+        =================================================================
+
+        `CombatEngine.lutar_contra_um_boss` traz tudo que a Bewitcher Cave
+        aprendeu numa luta de boss: desmontar antes (montado o jogo recusa as
+        skills), esperar a flag com prazo CURTO e sem beber poção na frente do
+        boss, conferir MORTE antes de bater, TAB de aquisição quando o boss não
+        vem sozinho, `exige_ter_entrado` para a confirmação não declarar vitória
+        em 1,5 s, golpe durante a confirmação de saída, e o placar no disco no
+        fim da luta.
+
+        A versão anterior desta função fazia uma fração disso -- e passava
+        `alvo_esperado` com os rótulos de comentário do bot em Lua, nomes que
+        nunca foram medidos. O portão de nome devolvia `acabaram` na primeira
+        leitura e a luta terminava SEM UM GOLPE, reportando vitória.
+
+        =================================================================
+        E O DESFECHO É HONRADO
+        =================================================================
+
+        A versão anterior descartava o `fim`: avançava o trecho sempre. Morrer
+        no boss 2 fazia o bot seguir para o boss 3 -- morto, sem vida, sem pet.
+        Agora derrota manda para RECUPERAR, que é quem sabe se o personagem
+        reviveu dentro ou fora da cave.
+        """
+        ctx = self.ctx
+        rotulo, _caminho, ponto = mapa_hh.TRECHOS_DOS_BOSSES[self._trecho]
+
+        # NÃO SE ESPERA COMBATE DE LONGE. Absorvido do `BossRushRoutine._do_boss`:
+        # se o personagem não está no ponto, ele volta a andar em vez de ficar
+        # parado esperando uma flag que não vai ligar.
+        #
+        # Sem leitura de posição segue: recusar aqui travaria a run, e quem
+        # decide então é a flag de combate ligar ou não.
+        pos = ctx.memory.position()
+        if pos is not None and mapa_hh.distancia(pos, ponto) > TOLERANCIA_DO_PONTO:
+            ctx.log.info(
+                "HH: não estou no ponto do %s (estou em %s, o ponto é %s). Volto "
+                "a andar antes de esperar o combate.", rotulo, pos, ponto)
+            self._ir_para(State.ATE_O_BOSS)
+            return
+
+        # A CURA VEM ANTES DE ENCOSTAR, e não depois da luta.
+        #
+        # Na frente do boss não se bebe poção -- ele encosta e o efeito para na
+        # hora. É o mesmo motivo de o BC curar no fim da fase dos guardas, antes
+        # de andar até o boss.
+        self.combat.curar_antes_do_boss()
+        if ctx.snapshot().dead:
+            self._falhar(f"morri antes de encostar no {rotulo}")
+            return
+
+        fim = self.combat.lutar_contra_um_boss(
+            rotulo, tabs_ao_morrer=mapa_hh.tabs_ao_morrer(rotulo))
         ctx.log.info("HH: %s -- %s", rotulo, fim.resumo())
 
+        # `saiu_de_combate` É A VITÓRIA, e é como a BC lê o mesmo objeto
+        # (`_do_boss`: `venceu = fim.saiu_de_combate`). Morte, prazo estourado e
+        # flag ilegível devolvem False.
+        if not fim.saiu_de_combate:
+            self._falhar(f"não venci o {rotulo}: {fim.motivo}")
+            return
+
         self._catar_o_loot()
-        self.combat.heal_to_full()
+        self._recuperar_entre_os_bosses(rotulo)
 
         self._trecho += 1
         if self._trecho >= len(mapa_hh.TRECHOS_DOS_BOSSES):
@@ -573,6 +634,25 @@ class HHRoutine:
         else:
             proximo = mapa_hh.TRECHOS_DOS_BOSSES[self._trecho][0]
             self._ir_para(State.ATE_O_BOSS, f"indo para o {proximo}")
+
+    def _recuperar_entre_os_bosses(self, rotulo: str) -> None:
+        """Senta para recuperar, se a vida pedir. Absorvido do BC.
+
+        O BC senta depois da fase dos guardas (`SEGUNDOS_SENTADO_APOS_GUARDAS`)
+        porque é o único lugar da run onde ficar parado é seguro. Na HH os
+        equivalentes são os intervalos entre os quatro bosses: o ponto está
+        limpo, e o trecho seguinte começa com um trajeto.
+
+        SÓ SE PRECISAR. `precisa_curar` é o portão -- sentar com a vida cheia
+        seria pagar segundos por nada em toda run saudável.
+        """
+        ctx = self.ctx
+        estado = ctx.snapshot()
+        if not self.combat.precisa_curar(estado.hp_pct):
+            return
+        ctx.log.info("HH: vida %.0f%% depois do %s -- sentando para recuperar",
+                     estado.hp_pct, rotulo)
+        self.combat.sentar_para_recuperar()
 
     def _catar_o_loot(self) -> None:
         """Recolhe o loot do chão, para quem não tem pet com auto-pick.
@@ -704,10 +784,19 @@ class HHRoutine:
         ctx = self.ctx
         estado = ctx.snapshot()
         if estado.dead:
-            ctx.log.warning("HH: personagem morto; aguardando o revive")
-            ctx.stats.end_run(ok=False)
+            # A RUN CONTA COMO PERDIDA UMA VEZ SÓ.
+            #
+            # `_do_recuperar` volta a cada 2 s enquanto o personagem está morto,
+            # e chamar `end_run` em todas inflava o contador de falhas -- uma
+            # morte apareceria como dezenas de runs perdidas no placar.
+            if not self._contou_a_morte:
+                self._contou_a_morte = True
+                ctx.log.warning("HH: personagem morto; aguardando o revive")
+                ctx.stats.end_run(ok=False)
             ctx.tick(2.0)
             return
+
+        self._contou_a_morte = False
 
         self._trecho = 0
         self._ir_para(State.SITUAR, "recuperando: vou me situar de novo")

@@ -123,7 +123,7 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 
 | tempo | atual | original | natureza | onde | função | para que serve |
 |---|---|---|---|---|---|---|
-| *literal em* `_curar_antes_da_segunda_fase` | 0.3 s | = | FIXO | [combat.py:467](blazesbot/bot/bc/combat.py#L467) | `_curar_antes_da_segunda_fase` | Cura antes de encostar na fase seguinte, se a conta pedir. |
+| *literal em* `_curar_antes_da_segunda_fase` | 0.3 s | = | FIXO | [combat.py:370](blazesbot/bot/bc/combat.py#L370) | `_curar_antes_da_segunda_fase` | Cura antes de encostar na fase seguinte, se a conta pedir. |
 
 
 ## DENTRO DA CAVE — outros
@@ -227,8 +227,8 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 |---|---|---|---|---|---|---|
 | `SEGUNDOS_SENTADO_APOS_GUARDAS` | 4 s | = | FIXO | [combate.py:74](blazesbot/bot/combate.py#L74) | `sentar_para_recuperar` | Quatro segundos sentado recuperam vida e mana de graça, e é o único momento da |
 | `SEGUNDOS_DA_POCAO_DE_VIDA` | 15 s | = | FIXO | [combate.py:90](blazesbot/bot/combate.py#L90) | `curar_ao_entrar, _beber_ate_encher (+1)` | A POÇÃO DE VIDA LEVA 15 SEGUNDOS, E ANDAR CANCELA |
-| `SEGUNDOS_DEPOIS_DA_SUPER_SKILL` | 12 s | = | FIXO | [combate.py:94](blazesbot/bot/combate.py#L94) | `curar_ao_entrar` | Respiro depois da Super Skill de cura. Ela é instantânea; isto é só o tempo de |
-| `ESPERA_DEPOIS_DO_TAB` | 0.6 s | = | FIXO | [combate.py:114](blazesbot/bot/combate.py#L114) | `_trocar_de_alvo` | Espera depois de UM TAB, para a seleção chegar da rede antes de conferir. |
+| `SEGUNDOS_DEPOIS_DA_SUPER_SKILL` | 12 s | = | FIXO | [combate.py:94](blazesbot/bot/combate.py#L94) | `curar_ao_entrar, curar_antes_do_boss` | Respiro depois da Super Skill de cura. Ela é instantânea; isto é só o tempo de |
+| `ESPERA_DEPOIS_DO_TAB` | 0.6 s | = | FIXO | [combate.py:114](blazesbot/bot/combate.py#L114) | `_trocar_de_alvo, lutar_contra_um_boss` | Espera depois de UM TAB, para a seleção chegar da rede antes de conferir. |
 | `FATIA_DA_ESPERA_DA_POCAO` | 0.5 s | = | PASSO | [combate.py:146](blazesbot/bot/combate.py#L146) | `_esperar_o_efeito_da_pocao` | Fatia da espera da poção. O TOTAL é medido por relógio (ver acima), então esta |
 | `SEGUNDOS_DE_CONJURACAO_DA_CURA` | 1.6 s | = | FIXO | [combate.py:236](blazesbot/bot/combate.py#L236) | `_a_cura_subiu` | Conjuração da skill de cura. Informado pelo usuário em 19/08/2026. |
 | `INTERVALO_DE_CONFERENCIA` | 0.1 s | = | FIXO | [combate.py:242](blazesbot/bot/combate.py#L242) | `_a_cura_subiu` | De quanto em quanto tempo perguntar se a vida subiu. É leitura de memória -- |
@@ -242,7 +242,7 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | `ESPERA_APOS_A_MORTE_ANTES_DO_TAB` | 3 s | *novo* | FIXO | [combate.py:745](blazesbot/bot/combate.py#L745) | `limpar_o_combate` | Quanto esperar PARADO, sem bater, depois de cada morte, antes de gastar o TAB |
 | `CADENCIA_DA_LEITURA_DO_ALVO` | 0.15 s | = | PASSO | [combate.py:875](blazesbot/bot/combate.py#L875) | `atacar_ate_sair_de_combate, _bater_ate_o_alvo_cair` | De quanto em quanto tempo olhar a barra do alvo durante a luta. |
 | `CARENCIA_APOS_O_TAB` | 2.4 s | = | FIXO | [combate.py:884](blazesbot/bot/combate.py#L884) | `atacar_ate_sair_de_combate, _bater_ate_o_alvo_cair` | Depois de apertar TAB, quanto tempo ignorar a leitura. |
-| `SEGUNDOS_ANTES_DO_TAB_NO_BOSS` | 4 s | = | FIXO | [combate.py:885](blazesbot/bot/combate.py#L885) |  |  |
+| `SEGUNDOS_ANTES_DO_TAB_NO_BOSS` | 4 s | = | FIXO | [combate.py:885](blazesbot/bot/combate.py#L885) | `lutar_contra_um_boss` |  |
 | *literal em* `auto_selecionar` | 0.125 s | = | FIXO | [combate.py:1131](blazesbot/bot/combate.py#L1131) | `auto_selecionar` | Seleciona o próprio personagem (F1), para skill em si mesmo. |
 | *literal em* `maintain` | 0.15 s | = | FIXO | [combate.py:1261](blazesbot/bot/combate.py#L1261) | `maintain` | Poções e cura, escolhendo o item certo para a situação. |
 | *literal em* `maintain` | 0.2 s | = | FIXO | [combate.py:1283](blazesbot/bot/combate.py#L1283) | `maintain` | Poções e cura, escolhendo o item certo para a situação. |
@@ -252,20 +252,20 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | *literal em* `_manter_vida_caminho_antigo` | 0.15 s | = | FIXO | [combate.py:1330](blazesbot/bot/combate.py#L1330) | `_manter_vida_caminho_antigo` | O comportamento anterior a 19/08/2026, inteiro. |
 | *literal em* `esperar_entrar_em_combate` | 0.2 s | = | FIXO | [combate.py:1713](blazesbot/bot/combate.py#L1713) | `esperar_entrar_em_combate` | Espera a flag de combate LIGAR. NÃO aperta TAB, não mira nada. |
 | *literal em* `_travar_no_alvo_proibido` | 0.28 s | *novo* | FIXO | [combate.py:1820](blazesbot/bot/combate.py#L1820) | `_travar_no_alvo_proibido` | A ÚNICA trava do waypoint dos guardas -- UMA porta, duas fontes. |
-| *literal em* `sentar_para_recuperar` | 0.25 s | = | FIXO | [combate.py:2865](blazesbot/bot/combate.py#L2865) | `sentar_para_recuperar` | Senta alguns segundos para recuperar vida e mana, e levanta. |
-| *literal em* `heal_to_full` | 0.125 s | = | FIXO | [combate.py:3122](blazesbot/bot/combate.py#L3122) | `heal_to_full` | Recuperação longa, com poção, Super Skill e sentar. |
-| *literal em* `heal_to_full` | 0.125 s | = | FIXO | [combate.py:3125](blazesbot/bot/combate.py#L3125) | `heal_to_full` | Recuperação longa, com poção, Super Skill e sentar. |
-| *literal em* `heal_to_full` | 0.125 s | = | FIXO | [combate.py:3128](blazesbot/bot/combate.py#L3128) | `heal_to_full` | Recuperação longa, com poção, Super Skill e sentar. |
-| *literal em* `heal_to_full` | 0.3 s | = | FIXO | [combate.py:3131](blazesbot/bot/combate.py#L3131) | `heal_to_full` | Recuperação longa, com poção, Super Skill e sentar. |
-| *literal em* `heal_to_full` | 0.25 s | = | FIXO | [combate.py:3160](blazesbot/bot/combate.py#L3160) | `heal_to_full` | Recuperação longa, com poção, Super Skill e sentar. |
-| *literal em* `heal_to_full` | 0.6 s | = | FIXO | [combate.py:3173](blazesbot/bot/combate.py#L3173) | `heal_to_full` | Recuperação longa, com poção, Super Skill e sentar. |
-| *literal em* `heal_to_full` | 0.15 s | = | FIXO | [combate.py:3182](blazesbot/bot/combate.py#L3182) | `heal_to_full` | Recuperação longa, com poção, Super Skill e sentar. |
-| *literal em* `heal_to_full` | 0.15 s | = | FIXO | [combate.py:3186](blazesbot/bot/combate.py#L3186) | `heal_to_full` | Recuperação longa, com poção, Super Skill e sentar. |
-| *literal em* `heal_to_full` | 0.4 s | = | FIXO | [combate.py:3190](blazesbot/bot/combate.py#L3190) | `heal_to_full` | Recuperação longa, com poção, Super Skill e sentar. |
-| *literal em* `heal_to_full` | 0.5 s | = | FIXO | [combate.py:3192](blazesbot/bot/combate.py#L3192) | `heal_to_full` | Recuperação longa, com poção, Super Skill e sentar. |
-| *literal em* `ensure_pet` | 1.5 s | = | FIXO | [combate.py:3220](blazesbot/bot/combate.py#L3220) | `ensure_pet` | Garante que o pet está invocado. |
-| *literal em* `ensure_pet` | 1.5 s | = | FIXO | [combate.py:3233](blazesbot/bot/combate.py#L3233) | `ensure_pet` | Garante que o pet está invocado. |
-| *literal em* `apply_buffs` | 0.6 s | = | FIXO | [combate.py:3260](blazesbot/bot/combate.py#L3260) | `apply_buffs` | Aplica os buffs configurados, em si mesmo. |
+| *literal em* `sentar_para_recuperar` | 0.25 s | = | FIXO | [combate.py:2992](blazesbot/bot/combate.py#L2992) | `sentar_para_recuperar` | Senta alguns segundos para recuperar vida e mana, e levanta. |
+| *literal em* `heal_to_full` | 0.125 s | = | FIXO | [combate.py:3345](blazesbot/bot/combate.py#L3345) | `heal_to_full` | Recuperação longa, com poção, Super Skill e sentar. |
+| *literal em* `heal_to_full` | 0.125 s | = | FIXO | [combate.py:3348](blazesbot/bot/combate.py#L3348) | `heal_to_full` | Recuperação longa, com poção, Super Skill e sentar. |
+| *literal em* `heal_to_full` | 0.125 s | = | FIXO | [combate.py:3351](blazesbot/bot/combate.py#L3351) | `heal_to_full` | Recuperação longa, com poção, Super Skill e sentar. |
+| *literal em* `heal_to_full` | 0.3 s | = | FIXO | [combate.py:3354](blazesbot/bot/combate.py#L3354) | `heal_to_full` | Recuperação longa, com poção, Super Skill e sentar. |
+| *literal em* `heal_to_full` | 0.25 s | = | FIXO | [combate.py:3383](blazesbot/bot/combate.py#L3383) | `heal_to_full` | Recuperação longa, com poção, Super Skill e sentar. |
+| *literal em* `heal_to_full` | 0.6 s | = | FIXO | [combate.py:3396](blazesbot/bot/combate.py#L3396) | `heal_to_full` | Recuperação longa, com poção, Super Skill e sentar. |
+| *literal em* `heal_to_full` | 0.15 s | = | FIXO | [combate.py:3405](blazesbot/bot/combate.py#L3405) | `heal_to_full` | Recuperação longa, com poção, Super Skill e sentar. |
+| *literal em* `heal_to_full` | 0.15 s | = | FIXO | [combate.py:3409](blazesbot/bot/combate.py#L3409) | `heal_to_full` | Recuperação longa, com poção, Super Skill e sentar. |
+| *literal em* `heal_to_full` | 0.4 s | = | FIXO | [combate.py:3413](blazesbot/bot/combate.py#L3413) | `heal_to_full` | Recuperação longa, com poção, Super Skill e sentar. |
+| *literal em* `heal_to_full` | 0.5 s | = | FIXO | [combate.py:3415](blazesbot/bot/combate.py#L3415) | `heal_to_full` | Recuperação longa, com poção, Super Skill e sentar. |
+| *literal em* `ensure_pet` | 1.5 s | = | FIXO | [combate.py:3443](blazesbot/bot/combate.py#L3443) | `ensure_pet` | Garante que o pet está invocado. |
+| *literal em* `ensure_pet` | 1.5 s | = | FIXO | [combate.py:3456](blazesbot/bot/combate.py#L3456) | `ensure_pet` | Garante que o pet está invocado. |
+| *literal em* `apply_buffs` | 0.6 s | = | FIXO | [combate.py:3483](blazesbot/bot/combate.py#L3483) | `apply_buffs` | Aplica os buffs configurados, em si mesmo. |
 | `FATIA_DA_ESPERA` | 0.25 s | = | PASSO | [context.py:211](blazesbot/bot/context.py#L211) | `tick` | Fatia máxima de sono dentro de um `tick`. |
 | *literal em* `wait_if_paused` | 0.075 s | = | FIXO | [context.py:512](blazesbot/bot/context.py#L512) | `wait_if_paused` | Bloqueia enquanto a pausa estiver ativa. |
 | `PASSO_DA_FADA` | 0.1 s | *novo* | PASSO | [fada.py:78](blazesbot/bot/fada.py#L78) | `rodar` | Cadência do laço da Fada quando não há nada a fazer. |
@@ -287,8 +287,8 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | *literal em* `entrar` | 0.25 s | *novo* | FIXO | [fada.py:250](blazesbot/bot/hh/fada.py#L250) | `entrar` | Entra na cave. Mesma porta, mesma máquina, mesmo NPC do líder. |
 | `PASSO_DENTRO_DA_CAVE` | 0.05 s | *novo* | PASSO | [routine.py:90](blazesbot/bot/hh/routine.py#L90) | `run` | Quanto esperar entre estados DENTRO da cave. |
 | `PASSO_FORA_DA_CAVE` | 0.4 s | *novo* | PASSO | [routine.py:91](blazesbot/bot/hh/routine.py#L91) | `run` |  |
-| *literal em* `_do_situar` | 1 s | *novo* | FIXO | [routine.py:260](blazesbot/bot/hh/routine.py#L260) | `_do_situar` | Descobre em que ponto do ciclo a conta está, e entra por ali. |
-| *literal em* `_do_recuperar` | 2 s | *novo* | FIXO | [routine.py:709](blazesbot/bot/hh/routine.py#L709) | `_do_recuperar` | Algo saiu do roteiro. Volta a se situar, sem inventar. |
+| *literal em* `_do_situar` | 1 s | *novo* | FIXO | [routine.py:271](blazesbot/bot/hh/routine.py#L271) | `_do_situar` | Descobre em que ponto do ciclo a conta está, e entra por ali. |
+| *literal em* `_do_recuperar` | 2 s | *novo* | FIXO | [routine.py:796](blazesbot/bot/hh/routine.py#L796) | `_do_recuperar` | Algo saiu do roteiro. Volta a se situar, sem inventar. |
 | `SEGUNDOS_POR_TENTATIVA` | 1.8 s | *novo* | FIXO | [vendedor.py:68](blazesbot/bot/hh/vendedor.py#L68) | `encostar_no_ponto_da_venda` |  |
 | `RECARGA` | 5 s | = | FIXO | [hotbar.py:63](blazesbot/bot/hotbar.py#L63) | `garantir_pagina_1` | Recarga do caminho com `ctx`. Os momentos-chave acontecem em rajada -- o portão |
 | `PASSO_DA_SONDA` | 0.012 s | = | PASSO | [instrumentar_clique.py:110](blazesbot/bot/instrumentar_clique.py#L110) | `_sondar_ate_mudar` | De quanto em quanto tempo a sonda fotografa o minimapa esperando o efeito. |

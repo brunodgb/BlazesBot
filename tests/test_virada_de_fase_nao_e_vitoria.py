@@ -52,7 +52,6 @@ from types import SimpleNamespace
 import pytest
 
 from blazesbot.bot import combate as motor_de_combate
-from blazesbot.bot.bc import combat
 from blazesbot.bot.bc.combat import CombatEngine
 
 
@@ -299,11 +298,20 @@ def test_nos_guardas_o_golpe_PARA_na_hora(monkeypatch):
 
 
 def test_so_o_BOSS_pede_para_insistir():
-    """Lido no AST: `atacar_na_confirmacao=True` sai de UM lugar só."""
+    """Lido no AST: `atacar_na_confirmacao=True` sai de UM lugar só.
+
+    NO MOTOR, e não no roteiro da BC: o ritual da luta de boss subiu para
+    `bot/combate.lutar_contra_um_boss` em 03/09/2026, e a partir dali este
+    invariante protege as DUAS caves de uma vez -- a HH lutava sem insistir no
+    golpe durante a confirmação, que é exatamente o defeito que este teste
+    existe para impedir.
+    """
     import ast
     import inspect
 
-    fonte = inspect.getsource(combat)
+    from blazesbot.bot import combate as motor
+
+    fonte = inspect.getsource(motor)
     arvore = ast.parse(fonte)
     pedidos = []
     for no in ast.walk(arvore):

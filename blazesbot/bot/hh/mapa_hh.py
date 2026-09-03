@@ -184,6 +184,39 @@ BOSS_2 = "Dupla"              # dois bosses juntos
 BOSS_3 = "Green Robmaster"
 BOSS_4 = "Purple"             # o último
 
+# QUANTOS ALVOS tem cada ponto de boss.
+#
+# O `hh.lua` chama o segundo de "Dupla" e o comentário diz "dupla de boss" --
+# são DOIS no mesmo ponto. Isso muda o combate: matar o primeiro não encerra a
+# luta, e sem um TAB depois da morte o segundo nunca é adquirido. É o mesmo
+# mecanismo que a fase dos guardas da Bewitcher Cave usa
+# (`combate.TABS_NOS_GUARDAS`).
+#
+# Um por ponto é o normal, e aí o TAB não sai -- trocar de alvo no meio da luta
+# de um boss único seria perder dano.
+ALVOS_POR_PONTO: dict[str, int] = {
+    BOSS_1: 1,
+    BOSS_2: 2,
+    BOSS_3: 1,
+    BOSS_4: 1,
+}
+
+# Quantos TABs dar depois de cada morte, num ponto com mais de um alvo.
+#
+# DOIS e não um: o primeiro pode pegar o cadáver que ainda está selecionado. É o
+# mesmo motivo de `TABS_NOS_GUARDAS` ser 3 para quatro Gun Witch.
+TABS_ENTRE_OS_ALVOS_DO_PONTO = 2
+
+
+def tabs_ao_morrer(rotulo: str) -> int:
+    """Quantos TABs dar depois de uma morte, neste ponto de boss.
+
+    `0` para ponto de um alvo só -- e o zero é decisão, não omissão: TAB no meio
+    da luta de um boss único troca o alvo e perde dano.
+    """
+    return (TABS_ENTRE_OS_ALVOS_DO_PONTO
+            if ALVOS_POR_PONTO.get(rotulo, 1) > 1 else 0)
+
 # ONDE O BOT PARA PARA LUTAR: o último waypoint do trecho correspondente.
 #
 # Não confundir com a coordenada do BOSS. Nos comentários do `hh.lua` o autor

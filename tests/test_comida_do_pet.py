@@ -44,7 +44,6 @@ import pytest
 from blazesbot.bot import combate as motor_de_combate
 from blazesbot.bot import hotbar
 from blazesbot.bot.app import executor as app_mod
-from blazesbot.bot.bc import combat as combat_mod
 from blazesbot.bot.bc.combat import CombatEngine
 from blazesbot.core.pet import SEGUNDOS_PARA_A_COMIDA_SER_USADA, PetFeeder
 
@@ -282,7 +281,7 @@ def _hotbar_falsa(monkeypatch):
     """A barra é conferida em outro teste; aqui ela só registra o motivo."""
     chamadas: list[str] = []
     monkeypatch.setattr(
-        combat_mod.hotbar, "garantir_pagina_1",
+        motor_de_combate.hotbar, "garantir_pagina_1",
         lambda _ctx, motivo="", forcar=False: chamadas.append(motivo))
     return chamadas
 
