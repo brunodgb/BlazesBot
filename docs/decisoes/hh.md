@@ -530,3 +530,79 @@ O ciclo de time continua sendo do LÍDER, e não dela. Duas contas decidindo
 desfazer o mesmo time é uma corrida cujo resultado é um time desfeito no meio da
 cave — testes proíbem a Fada de chamar `sair_do_time`, de percorrer waypoints e
 de lutar.
+
+---
+
+## 11. A REVISÃO DE 03/09/2026 — três defeitos de transição
+
+Auditoria pedida pelo usuário depois de rodar a HH. Os três sintomas tinham
+causas independentes, e cada um virou trava.
+
+### 11.1 Vazamento de estado: ligar a HH marcava a caixa do BC
+
+`Account.farms` significava "o BC está ligado" quando existia uma cave só; virou
+`bc_farm or hh_farm` **sem revisar quem lê**. Quatro leitores ficaram com o
+significado antigo:
+
+| leitor | efeito |
+|---|---|
+| `supervisor` (resumo) | publicava `farms` no campo `farm` → o espelho ao vivo **marcava a caixa do BC** |
+| `context.raise_if_stopped` | desmarcar o BC com a HH ligada **não cortava a fase no meio** |
+| dois status + o rótulo do editor | diziam "BC farm" para conta só de HH |
+
+O primeiro é o sintoma visível; **o segundo é o que ninguém teria visto.**
+
+`farms` fica com o significado honesto — ELEGIBILIDADE, "esta conta está ocupada
+farmando?" — e `Account.cave_ligada` responde QUAL, na ordem do despacho.
+`ctx.cave_em_farm` diz quem está no ar, e a parada confere o interruptor dela.
+
+### 11.2 Configuração gravada e ignorada
+
+As duas interfaces gravavam `settings.hh.*`; o bot lia `settings.bc.*`. O usuário
+pôs `attack_delay = 0,1 s` na HH e o bot atacava com os 0,5 s do BC.
+
+E o pior não era número: **`TeamService` lia `settings.bc.reset_nick`**. Com o
+`bc.reset_nick` vazio, `montar_time()` devolvia `False` na primeira linha → a
+rotina caía em RECUPERAR → laço, para sempre. **A HH nunca montava time, e sem
+time os bosses não renascem.**
+
+`AccountSettings.cave(nome)` + `ctx.cave` resolvem pela cave em execução. Os dois
+`Config` têm os MESMOS nomes para os quatro campos do motor, travado por teste —
+nome diferente obrigaria um `if` por cave dentro do motor.
+
+### 11.3 Combate empobrecido, e uma luta que se zerava
+
+A HH passava `alvo_esperado` com os rótulos de **comentário** do bot em Lua. O
+portão de nome devolve `acabaram` para nome diferente do esperado — certo numa
+fase multi-mob, errado num boss único. **A luta terminava na primeira leitura de
+nome, sem um golpe, reportando vitória.**
+
+O ritual do BC subiu para `CombatEngine.lutar_contra_um_boss` e serve as duas.
+`curar_antes_do_boss` também — e ela **não existia** no `self.combat` da HH:
+`AttributeError` no primeiro boss, com a suíte inteira verde.
+
+### 11.4 O padrão que apareceu quatro vezes
+
+`Api.alternar_hh` inexistente · a Fada montada e não ligada · `_open_npc`
+chamando método que ficou na BC · `curar_antes_do_boss` fora do motor.
+
+**Suíte verde não prova que as peças estão LIGADAS.** As quatro travas são
+estruturais, porque não há comportamento errado para observar — há uma ligação
+que não existe:
+
+| trava | o que cruza |
+|---|---|
+| `test_a_ponte_web_expoe_tudo.py` | todo `chamar("x")` do JS × os métodos da `Api` |
+| `test_as_interfaces_importam.py` | os módulos de interface importam, e há paridade entre as duas |
+| `test_config_da_cave_e_lida.py` | todo campo do `HHConfig` × um leitor no bot |
+| `test_hh_combate_nivelado.py` | todo `self.<colaborador>.<nome>` × a classe real |
+| `test_hh_nao_vaza_para_o_bc.py` | todo uso de `.farms`, pelo AST, com o motivo declarado |
+| `test_ecossistema_isolado.py` | estragar uma cave não muda a outra (runtime) |
+
+### 11.5 E uma lição sobre os próprios testes
+
+Comparar posição de TEXTO para verificar ordem de execução falhou **sete vezes**
+nesta revisão: a docstring do método cita os nomes justamente para explicar a
+ordem, e `str.index` encontra a explicação antes do código. Toda verificação de
+ordem passou a ser por AST (`_em_ordem`), e `ast.walk` **não** preserva ordem de
+código — precisa de `lineno`.
