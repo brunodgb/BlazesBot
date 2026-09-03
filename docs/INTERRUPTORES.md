@@ -62,7 +62,7 @@ ligar código não testado.
 | `MODO_DE_TECLA` | `'postmessage'` | [blazesbot/core/inputs.py:175](blazesbot/core/inputs.py#L175) | — | INTERRUPTOR DO TECLADO -- "sendmessage" \| "postmessage" |
 | `USAR_MOUSE_SHIELD` | `False` | [blazesbot/core/inputs.py:63](blazesbot/core/inputs.py#L63) | instrumentar_clique.py, teste_do_cursor.py | INTERRUPTOR DO MOUSE SHIELD |
 | `COMPRIMIR_ARQUIVO_MORTO` | `True` | [blazesbot/core/log_limitado.py:72](blazesbot/core/log_limitado.py#L72) | — | O arquivo morto de DIAS ANTERIORES é comprimido. Medido no arquivo da noite de |
-| `USAR_PAINEL_POR_MEMORIA` | `True` | [blazesbot/core/memory.py:561](blazesbot/core/memory.py#L561) | — | ESTADO DE PAINEL DE UI POR MEMÓRIA -- o que sobreviveu ao campo |
+| `USAR_PAINEL_POR_MEMORIA` | `True` | [blazesbot/core/memory.py:578](blazesbot/core/memory.py#L578) | — | ESTADO DE PAINEL DE UI POR MEMÓRIA -- o que sobreviveu ao campo |
 | `USAR_REGIOES_QUENTES` | `True` | [blazesbot/core/memory.py:433](blazesbot/core/memory.py#L433) | — | REGIÕES QUENTES -- a rota que fecha os 38% que o array de entidades perde |
 | `ATIVADO` | `True` | [blazesbot/core/petbug.py:104](blazesbot/core/petbug.py#L104) | deletador.py, diagnostico_do_link.py, supervisor.py, esconder_jogadores.py | INTERRUPTOR |
 | `USAR_OFFSET_FIXO_DA_BARRA` | `True` | [blazesbot/core/vision.py:1467](blazesbot/core/vision.py#L1467) | — | INTERRUPTOR: o offset fixo é a régua; a âncora azul é a reserva |
@@ -71,7 +71,7 @@ ligar código não testado.
 
 ## Números medidos -- tolerância, limiar, teto, cadência
 
-516 constantes, agrupadas por arquivo.
+517 constantes, agrupadas por arquivo.
 
 | constante | valor | onde | quem lê | porquê (resumo) |
 |---|---|---|---|---|
@@ -489,10 +489,11 @@ ligar código não testado.
 | `LUGAR_FORA_DA_CAVE` | `'Ghost Din Woods'` | [blazesbot/core/lugares.py:102](blazesbot/core/lugares.py#L102) | localizacao.py, routine.py | O lugar em que o personagem está quando NÃO está na cave e o X é grande. |
 | `MINIMO_CAUDA` | `5` | [blazesbot/core/lugares.py:126](blazesbot/core/lugares.py#L126) | — | Menor cauda que ainda identifica um lugar com segurança. Abaixo disso, |
 | `ANGULO_DA_CAMERA` | `956.720459` | [blazesbot/core/memory.py:312](blazesbot/core/memory.py#L312) | ler_camera.py | O ângulo em que os cliques na cena 3D foram medidos. |
-| `BAG_CLOSED_VALUE` | `902` | [blazesbot/core/memory.py:618](blazesbot/core/memory.py#L618) | — | Valor da bolsa FECHADA. Medido em 02/09/2026 alternando a tecla `I` e lido em |
-| `BAG_OPEN_VALUE` | `903` | [blazesbot/core/memory.py:614](blazesbot/core/memory.py#L614) | — | — |
-| `DIALOGO_ABERTO_VALOR` | `16775` | [blazesbot/core/memory.py:547](blazesbot/core/memory.py#L547) | — | — |
-| `ESCALA_DE_INIMIGO` | `100` | [blazesbot/core/memory.py:623](blazesbot/core/memory.py#L623) | afericao_do_aliado.py | HP máximo padrão de inimigos do covil (Gun Witch, Cemetery Guard, etc.) |
+| `BAG_CLOSED_VALUE` | `902` | [blazesbot/core/memory.py:635](blazesbot/core/memory.py#L635) | — | Valor da bolsa FECHADA. Medido em 02/09/2026 alternando a tecla `I` e lido em |
+| `BAG_OPEN_VALUE` | `903` | [blazesbot/core/memory.py:631](blazesbot/core/memory.py#L631) | — | — |
+| `DIALOGO_ABERTO_VALOR` | `16775` | [blazesbot/core/memory.py:563](blazesbot/core/memory.py#L563) | — | — |
+| `DIALOGO_FECHADO_VALOR` | `16774` | [blazesbot/core/memory.py:564](blazesbot/core/memory.py#L564) | — | — |
+| `ESCALA_DE_INIMIGO` | `100` | [blazesbot/core/memory.py:640](blazesbot/core/memory.py#L640) | afericao_do_aliado.py | HP máximo padrão de inimigos do covil (Gun Witch, Cemetery Guard, etc.) |
 | `ESPELHO_DELTA` | `928` | [blazesbot/core/memory.py:109](blazesbot/core/memory.py#L109) | — | O BLOCO ATRASADO EM +0x3A0 -- o passado do estado, nao uma segunda fonte |
 | `JANELA_DE_COMBATE` | `16` | [blazesbot/core/memory.py:70](blazesbot/core/memory.py#L70) | — | Quantos bytes ler de cada lado de `OFF_BATTLE` em `battle_window()`. Serve para |
 | `LIMITE_DE_ENTIDADES` | `512` | [blazesbot/core/memory.py:420](blazesbot/core/memory.py#L420) | target_hybrid.py | Quantos slots do array de entidades varrer. 512 cobre com folga o que o |
@@ -500,8 +501,8 @@ ligar código não testado.
 | `PASSO_DA_PROVA_DA_CAMERA` | `0.05` | [blazesbot/core/memory.py:337](blazesbot/core/memory.py#L337) | — | — |
 | `PASSO_ENTRE_MEMBROS` | `136` | [blazesbot/core/memory.py:367](blazesbot/core/memory.py#L367) | — | — |
 | `PROVA_DA_CAMERA` | `5.0` | [blazesbot/core/memory.py:324](blazesbot/core/memory.py#L324) | — | Quanto o diagnóstico soma ao ângulo para PROVAR que a escrita move a câmera. |
-| `SIT_VALUE` | `200` | [blazesbot/core/memory.py:613](blazesbot/core/memory.py#L613) | — | Valores sentinela observados no cliente |
-| `SYSTEM_MENU_VALUE` | `1610612736` | [blazesbot/core/memory.py:619](blazesbot/core/memory.py#L619) | — | — |
+| `SIT_VALUE` | `200` | [blazesbot/core/memory.py:630](blazesbot/core/memory.py#L630) | — | Valores sentinela observados no cliente |
+| `SYSTEM_MENU_VALUE` | `1610612736` | [blazesbot/core/memory.py:636](blazesbot/core/memory.py#L636) | — | — |
 | `TETO_DA_PROVA_DA_CAMERA` | `1.0` | [blazesbot/core/memory.py:336](blazesbot/core/memory.py#L336) | — | Teto da espera pelo termômetro depois de uma escrita na câmera. |
 | `TOLERANCIA_DA_POSE` | `0.001` | [blazesbot/core/memory.py:269](blazesbot/core/memory.py#L269) | — | Quanto cada campo da pose pode variar e ainda contar como certo. |
 | `TOLERANCIA_DO_ANGULO` | `0.001` | [blazesbot/core/memory.py:318](blazesbot/core/memory.py#L318) | — | Quanto o ângulo pode variar e ainda contar como certo. |

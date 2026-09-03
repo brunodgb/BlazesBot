@@ -191,3 +191,52 @@ def test_o_probe_expoe_os_campos_e_os_valores_crus():
     for chave in ("quest aberto", "dialogo de UI a frente", "bandeira (cru)",
                   "2a fenda (cru)", "bolsa (cru: 902 fechada, 903 aberta)"):
         assert chave in fonte, "o probe deixou de expor %r" % chave
+
+
+# ===========================================================================
+# O DIALOGO DE NPC -- ressuscitado pelo rebase +0x60 (02/09/2026)
+# ===========================================================================
+#
+# `dialog_open()` devolvia "nao sei" em 600 de 600 leituras. A conclusao facil
+# era que a cadeia herdada de sete niveis tinha morrido na virada 6139 -> 6400.
+# Estava tudo certo MENOS o primeiro DWORD.
+
+def _memoria_dialogo(valor):
+    """Duble que resolve a cadeia e entrega `valor` na folha."""
+    m = mem.Memory.__new__(mem.Memory)
+    m.resolve = lambda raiz, cadeia: 0x40000000
+    m.read_int = lambda _e: valor
+    return m
+
+
+def test_a_raiz_do_dialogo_e_a_REBASEADA():
+    """A herdada le ZERO nos seis clientes; a herdada + 0x60 resolve a cadeia
+    inteira nos seis. E o caso didatico da regra do +0x60."""
+    assert mem.ADDR_DIALOG_ROOT == 0x0117B2DC
+    assert mem.ADDR_DIALOG_ROOT - 0x60 == 0x0117B27C
+
+
+def test_a_cadeia_herdada_do_dialogo_NAO_mudou():
+    """So a raiz estava errada -- se alguem mexer nos offsets, perde a cadeia
+    que resolve em 6 de 6."""
+    assert mem.CHAIN_DIALOG == [0x70, 0x56C, 0xC, 0x4, 0x42C, 0x1F8, 0x240]
+
+
+def test_os_dois_valores_medidos():
+    """Mesmo padrao N/N+1 da bolsa (902/903)."""
+    assert mem.DIALOGO_FECHADO_VALOR == 16774
+    assert mem.DIALOGO_ABERTO_VALOR == 16775
+    assert mem.DIALOGO_ABERTO_VALOR == mem.DIALOGO_FECHADO_VALOR + 1
+
+
+def test_dialogo_aberto_e_fechado():
+    assert _memoria_dialogo(16775).dialog_open() is True
+    assert _memoria_dialogo(16774).dialog_open() is False
+
+
+def test_valor_NUNCA_VISTO_devolve_None_e_nao_False():
+    """Um valor fora dos dois medidos nao vira `False` calado -- essa e a
+    diferenca entre "esta fechado" e "eu nao sei o que e isso"."""
+    for nunca_visto in (0, 1, 16773, 16776, 0xDEADBEEF, None):
+        assert _memoria_dialogo(nunca_visto).dialog_open() is None, (
+            "%r virou um booleano" % (nunca_visto,))

@@ -542,9 +542,26 @@ OFF_SUR_TEXT = 0x64
 
 # CAIXA DE DIÁLOGO DE NPC ABERTA. É exatamente a pergunta que o bot faz antes de
 # clicar no link "Bewitcher Cave" -- hoje respondida por template.
-ADDR_DIALOG_ROOT = 0x0117B27C
+# A RAIZ ESTAVA MORTA SO POR CAUSA DO REBASE +0x60 (medido em 02/09/2026).
+#
+# `dialog_open()` devolvia "nao sei" em 600 de 600 leituras, e a conclusao facil
+# era que a cadeia herdada de sete niveis tinha morrido na virada 6139 -> 6400.
+# Estava tudo certo MENOS o primeiro DWORD: a raiz herdada le ZERO nos seis
+# clientes, e a raiz + 0x60 resolve a cadeia INTEIRA nos seis.
+#
+# E a cadeia herdada e boa: os enderecos do meio DIFEREM entre processos (passam
+# o teste de natureza) e o nivel `+0x1F8` volta para o mesmo no do `+0x4`, que e
+# o vaivem tipico de pai/filho de no de UI.
+#
+# O VALOR: 16774 fechado, 16775 aberto -- o mesmo padrao N/N+1 da bolsa
+# (902/903), e o 16775 e exatamente a constante herdada. Confirmado com o BC
+# rodando: a conta em farm leu 16775 no instante em que a bandeira independente
+# de painel tambem acusou dialogo. Qualquer OUTRO valor devolve `None`, porque
+# nunca foi visto.
+ADDR_DIALOG_ROOT = 0x0117B2DC
 CHAIN_DIALOG = [0x70, 0x56C, 0xC, 0x4, 0x42C, 0x1F8, 0x240]
 DIALOGO_ABERTO_VALOR = 16775
+DIALOGO_FECHADO_VALOR = 16774
 
 # NENHUM DOS DOIS FOI VERIFICADO NESTE CLIENTE. Vieram do GhostBot, que roda no
 # mesmo jogo mas cujos ponteiros de alvo NÃO funcionaram aqui -- prova de que
@@ -1716,16 +1733,29 @@ class Memory:
         template -- e por memória ela não depende de captura de tela, então
         responde também com o cliente minimizado.
 
-        NÃO VERIFICADO NESTE CLIENTE. Enquanto não for, quem decide continua sendo
-        o template; este valor só aparece no diagnóstico, para comparação.
+        VIVO desde 02/09/2026, e o que faltava era o rebase `+0x60` da raiz --
+        ver o comentário de `ADDR_DIALOG_ROOT`. A cadeia resolve nos seis
+        clientes, e os dois únicos valores vistos são 16774 (fechado) e 16775
+        (aberto), o mesmo padrão N/N+1 da bolsa.
+
+        QUEM DECIDE AINDA É O TEMPLATE. Foi observado UM evento de abertura
+        (numa conta em farm, concordando com a bandeira independente no mesmo
+        instante) -- o suficiente para o leitor deixar de mentir "não sei", não o
+        suficiente para o bot passar a decidir por ele. Enquanto o contador de
+        eventos não crescer, este valor entra no diagnóstico ao lado do template.
+
+        Qualquer valor fora de {16774, 16775} devolve `None`: um valor nunca
+        visto não vira `False` calado.
         """
         addr = self.resolve(ADDR_DIALOG_ROOT, CHAIN_DIALOG)
         if addr is None:
             return None
         valor = self.read_int(addr)
-        if valor is None:
-            return None
-        return valor == DIALOGO_ABERTO_VALOR
+        if valor == DIALOGO_ABERTO_VALOR:
+            return True
+        if valor == DIALOGO_FECHADO_VALOR:
+            return False
+        return None
 
     def bag_open(self) -> bool:
         addr = self.resolve(ADDR_UI_ROOT, CHAIN_BAG_OPEN)
