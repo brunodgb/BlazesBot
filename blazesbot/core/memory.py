@@ -1757,6 +1757,49 @@ class Memory:
             return False
         return None
 
+    def algum_painel_aberto(self) -> bool:
+        """Tem alguma janela do jogo aberta por cima? SINAL DE UMA VIA.
+
+        `True` = tem, com certeza. `False` = nenhum dos sinais acusou, o que NÃO
+        prova tela limpa.
+
+        POR QUE O BC PRECISA: com uma janela aberta dentro do jogo, o clique vai
+        para ela em vez de ir para o mundo, e isso chega a impedir o diálogo de
+        NPC de abrir. Hoje o bot não olha, e a varredura de 02/09/2026 pegou
+        contas FARMANDO com bolsa e quest log abertos.
+
+        A união é de sinais POSITIVOS medidos, cada um validado à parte:
+
+          * a bandeira de painel -- sobe para 8 teclas de painel diferentes
+            (C, T, M, I, K, L, G, F) e para o menu do ESC;
+          * o discriminador do quest log;
+          * a cadeia da bolsa (902 fechada / 903 aberta);
+          * a cadeia do diálogo de NPC (16774 / 16775).
+
+        Cada um sozinho já foi visto perder um caso, e é por isso que isto é uma
+        UNIÃO e não um leitor só: o zero da bandeira foi refutado em campo (bolsa
+        aberta com a bandeira em zero, 7 vezes), então quem cobre esse caso é a
+        cadeia da bolsa.
+
+        ================== A ARMADILHA DO ESC, MEDIDA ==================
+
+        O ESC ALTERNA. Com painel aberto ele fecha; com a tela LIMPA ele ABRE o
+        menu do sistema -- medido seis vezes seguidas, sempre o mesmo nó
+        (`0` <-> `0x15142AB0`), e o `system_menu_open()` NÃO vê esse menu (diz
+        `False` nas duas metades).
+
+        Então quem for fechar painel PERGUNTA depois de cada tecla e para no
+        instante em que este método devolver `False`. Uma quantidade fixa de ESC
+        deixa o jogo pior do que achou.
+        """
+        if self.dialogo_de_ui_a_frente():
+            return True
+        if self.quest_aberto():
+            return True
+        if self.bag_open():
+            return True
+        return self.dialog_open() is True
+
     def bag_open(self) -> bool:
         addr = self.resolve(ADDR_UI_ROOT, CHAIN_BAG_OPEN)
         return self.read_int(addr) == BAG_OPEN_VALUE if addr else False
@@ -2430,6 +2473,9 @@ class Memory:
                                        xp1 is not None and xp2 is not None)
         relogio = self.relogio_ms()
         campos["relogio ms (0x85C)"] = (relogio, relogio is not None)
+
+        campos["algum painel aberto (uma via)"] = (
+            self.algum_painel_aberto(), True)
 
         endereco_bolsa = self.resolve(ADDR_UI_ROOT, CHAIN_BAG_OPEN)
         valor_bolsa = (self.read_int(endereco_bolsa)

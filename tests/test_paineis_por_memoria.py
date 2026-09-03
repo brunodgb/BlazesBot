@@ -240,3 +240,63 @@ def test_valor_NUNCA_VISTO_devolve_None_e_nao_False():
     for nunca_visto in (0, 1, 16773, 16776, 0xDEADBEEF, None):
         assert _memoria_dialogo(nunca_visto).dialog_open() is None, (
             "%r virou um booleano" % (nunca_visto,))
+
+
+# ===========================================================================
+# "TEM PAINEL ABERTO?" -- a uniao de sinais positivos, e a armadilha do ESC
+# ===========================================================================
+
+def _uniao(bandeira=0, segunda=0, quest=0, dialogo=16774, bolsa=None):
+    m = mem.Memory.__new__(mem.Memory)
+    valores = {
+        mem.ADDR_PAINEL_ABERTO: bandeira,
+        mem.ADDR_PAINEL_SEGUNDA_FENDA: segunda,
+        mem.ADDR_QUEST_ABERTO: quest,
+        0x40000000: dialogo,
+    }
+    m.read_uint = lambda e: valores.get(e, 0)
+    m.read_int = lambda e: valores.get(e, 0)
+    m.resolve = lambda raiz, cadeia: 0x40000000
+    m.bag_open = lambda: bool(bolsa)
+    return m
+
+
+def test_cada_sinal_sozinho_ja_acusa():
+    """Uniao: qualquer um dos quatro basta. Nenhum deles cobre todos os casos --
+    o zero da bandeira foi refutado em campo com a bolsa aberta."""
+    assert _uniao(bandeira=0x0EC47DC0).algum_painel_aberto() is True
+    assert _uniao(quest=1).algum_painel_aberto() is True
+    assert _uniao(bolsa=True).algum_painel_aberto() is True
+    assert _uniao(dialogo=16775).algum_painel_aberto() is True
+
+
+def test_o_caso_REFUTADO_e_coberto_pela_bolsa():
+    """Medido 7 vezes: bolsa ABERTA com a bandeira em ZERO. Um leitor so teria
+    dito "limpo" com confianca."""
+    m = _uniao(bandeira=0, bolsa=True)
+    assert m.dialogo_de_ui_a_frente() is False
+    assert m.algum_painel_aberto() is True
+
+
+def test_nenhum_sinal_NAO_prova_tela_limpa():
+    """O `False` e de UMA VIA, e o docstring tem de dizer isso -- senao alguem
+    conclui "limpo" e aperta ESC, que com a tela limpa ABRE o menu."""
+    assert _uniao().algum_painel_aberto() is False
+    fonte = inspect.getsource(mem.Memory.algum_painel_aberto)
+    assert "UMA VIA" in fonte
+    assert "NÃO\n        prova tela limpa" in fonte or "NÃO prova" in fonte
+
+
+def test_a_armadilha_do_ESC_fica_escrita_no_leitor():
+    """O ESC ALTERNA: com painel aberto fecha, com a tela limpa ABRE o menu do
+    sistema -- e o `system_menu_open()` nao ve esse menu. Uma quantidade fixa de
+    ESC deixa o jogo pior do que achou."""
+    fonte = inspect.getsource(mem.Memory.algum_painel_aberto)
+    assert "ARMADILHA DO ESC" in fonte
+    assert "0x15142AB0" in fonte
+    assert "PERGUNTA depois de cada tecla" in fonte
+
+
+def test_o_probe_expoe_a_uniao():
+    fonte = inspect.getsource(mem.Memory.probe)
+    assert "algum painel aberto (uma via)" in fonte
