@@ -322,3 +322,84 @@ endereços andou:
 E a receita para reconstruir a ferramenta, se um dia for preciso, está em "O
 método que funcionou" acima — junto com o algoritmo do `search_id()` inteiro,
 que é o que a ferramenta fazia.
+
+---
+
+## O bloco de `+0x3A0`: como uma hipótese boa ficou de pé por três medições erradas (02/09/2026)
+
+Este caso entra aqui, e não no índice de ponteiros, porque o defeito não foi de
+endereço — foi de **método**. O endereço estava certo desde o começo.
+
+### O que foi achado
+
+A varredura diferencial mostrou que o objeto do personagem guarda uma **segunda
+cópia** do bloco de estado, deslocada `0x3A0`:
+
+| grandeza | original | cópia |
+|---|---|---|
+| hp | `0x3B8` | `0x758` |
+| mp | `0x3BC` | `0x75C` |
+| xp | `0x3C8` | `0x768` |
+| ouro | `0x410` | `0x7B0` |
+
+### A hipótese, que era boa
+
+Na primeira leitura as quatro grandezas batiam em **6 de 6 clientes**. Daí a
+conclusão: é uma **segunda fonte independente do mesmo instante**. Isso fecharia
+de graça a exigência que este projeto cobra de toda leitura nova — "duas fontes
+no mesmo instante" — e dentro de **uma leitura só**. Divergir significaria "a
+leitura está errada AGORA", e o modo de falha que mais dói (errar calado)
+deixaria de existir para as quatro grandezas.
+
+Era bom demais, e era falso.
+
+### Como caiu — e as três medições que a sustentaram por engano
+
+1. **Campo, primeira rodada:** 2 divergências em 480 comparações, as duas no
+   `hp`, as duas em contas **farmando**. Eu li isso como defeito da minha
+   ferramenta: as duas leituras eram chamadas separadas, então o HP podia ter
+   mudado no meio. Explicação plausível — e errada.
+2. **Leitura atômica:** passei a ler o par num bloco único, o que de fato elimina
+   a janela entre as leituras. As divergências **aumentaram** para 19 em 720. Se
+   a causa fosse a minha janela, tinham de ir a zero. Foi aqui que a hipótese
+   deveria ter caído, e o sinal estava explícito: em **19 de 19** a cópia era
+   MAIOR, nunca menor. Uma discordância de leitura não tem direção preferida.
+3. **Amostragem de 20 ms:** 2945 amostras em três contas, 10 divergentes — e as
+   10 eram **um evento só**, que se resolveu em **204 ms**.
+
+### O que ele é
+
+Uma **cópia atrasada ~200 ms**. Divergir quer dizer "este valor MUDOU nos
+últimos 200 ms", não "a leitura errou. Como validador ele acusaria justamente
+durante o combate — que é quando o bot mais precisa confiar no que lê.
+
+### A lição de método, que é o motivo deste texto existir
+
+**Concordância em massa não prova fonte independente; prova apenas que as duas
+estavam paradas.** As 6 de 6 contas concordando eram 6 contas com o estado
+assentado. O teste que faltou não é mais amostra: é **provocar a mudança** e
+olhar o que a segunda cópia faz. Vale para qualquer par de endereços que
+"sempre bate".
+
+E o corolário desagradável: **eu culpei minha ferramenta com uma explicação
+plausível, e a explicação plausível protegeu a hipótese errada por uma rodada
+inteira.** O critério que deveria ter valido: quando o conserto da ferramenta
+piora o resultado, o errado é a hipótese, não a ferramenta.
+
+### O atraso virou capacidade
+
+Comparar as duas cópias diz **"o HP caiu"** sem guardar estado entre ticks, sem
+depender de quando foi o tick anterior, e medindo a janela do **jogo** (sempre os
+mesmos ~200 ms) e não a do bot — numa leitura só, com a janela em segundo plano.
+É o `Memory.hp_caiu_agora()`.
+
+**O que falta medir antes de alguém decidir por ele:**
+
+- **a direção de subida** — não foi observada, e não por falta de tentativa: nas
+  contas livres o HP e o MP estavam cheios (regeneração não mexe em nada) e
+  nenhuma das nove teclas da barra gastou mana fora de batalha. O `max(0, ...)`
+  do leitor é a única coisa honesta a fazer com um caso que ninguém viu;
+- **dois golpes dentro dos mesmos 200 ms** contam como um.
+
+Travado por `tests/test_mapa_medido.py`, que reprova o retorno de
+`espelho_confere` — o nome do leitor que tratava o atraso como erro de leitura.

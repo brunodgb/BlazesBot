@@ -72,6 +72,93 @@ OFF_SIT = 0x290
 OFF_MOUNT = 0x8B0
 OFF_PET_ACTIVE = 0x10A8
 
+# ===========================================================================
+# O BLOCO ATRASADO EM +0x3A0 -- o passado do estado, nao uma segunda fonte
+# ===========================================================================
+#
+# O objeto do personagem guarda uma SEGUNDA COPIA do bloco de estado, deslocada
+# 0x3A0 (achada pela varredura diferencial em 01/09/2026):
+#
+#     hp    0x3B8  <->  0x758        xp    0x3C8  <->  0x768
+#     mp    0x3BC  <->  0x75C        ouro  0x410  <->  0x7B0
+#
+# HIPOTESE REFUTADA -- e vale ficar escrito, porque ela era boa e era falsa.
+# A primeira leitura mostrou as quatro grandezas iguais em 6 de 6 clientes, e eu
+# conclui que era uma SEGUNDA FONTE do mesmo instante: a exigencia deste projeto
+# de "duas fontes no mesmo instante" satisfeita de graca, dentro de uma leitura
+# so, com divergencia significando "a leitura esta errada AGORA".
+#
+# ERRADO. A validacao em campo deu 19 divergencias em 720 comparacoes, todas no
+# `hp`, todas nas contas em COMBATE. Eu culpei a minha propria janela de leitura
+# e passei a ler o par num bloco unico -- e as divergencias AUMENTARAM. Foi a
+# amostragem de 20 ms que fechou a questao:
+#
+#   * 2945 amostras em tres contas, 10 divergentes;
+#   * em 19 de 19 divergencias o espelho era MAIOR, nunca menor;
+#   * as 10 amostras divergentes eram UM evento so, e o espelho alcancou o
+#     original em 204 ms.
+#
+# ENTAO O QUE ELE E: uma copia ATRASADA cerca de 200 ms. Divergencia nao quer
+# dizer "a leitura esta errada" -- quer dizer "este valor MUDOU nos ultimos
+# ~200 ms". Como validador de leitura ele acusaria justamente durante o combate,
+# que e quando o bot mais precisa confiar no que le.
+#
+# E ISSO NAO E CONSOLO: o atraso vira uma capacidade que o bot nao tinha. Comparar
+# as duas copias diz "o HP caiu" SEM guardar estado entre ticks e SEM depender de
+# quando foi o tick anterior -- numa leitura so. Ver `hp_caiu_agora`.
+ESPELHO_DELTA = 0x3A0           # atraso medido: ~204 ms
+OFF_HP_ESPELHO = 0x758          # = OFF_HP        + 0x3A0
+OFF_MP_ESPELHO = 0x75C          # = OFF_MP        + 0x3A0
+OFF_XP_ESPELHO = 0x768          # = OFF_XP        + 0x3A0
+OFF_GOLD_ESPELHO = 0x7B0        # = OFF_GOLD      + 0x3A0
+
+# ===========================================================================
+# EXPERIENCIA -- dois acumuladores, e o significado NAO fechou
+# ===========================================================================
+#
+# Os dois sobem JUNTOS a cada morte de alvo e nunca descem. Passos medidos em
+# tres contas: +126/+22, +86/+13, +137/+22.
+#
+# QUAL DELES E A EXPERIENCIA DO PERSONAGEM: NAO SE SABE. A barra do jogo mostra
+# o percentual em texto (4.5291% na conta medida), o que e gabarito perfeito --
+# e NENHUM par de DWORD do objeto (varredura de 0x0 a 0x1200) da esse numero.
+# Nenhum float do objeto vale 4.5291 nem 0.045291. E o total que a hipotese
+# exigiria (~1.966.483) nao existe em lugar crivel da memoria.
+#
+# Entao os dois entram como OBSERVACAO, nao como "a XP". Quem usar precisa saber
+# que o significado exato esta em aberto. Detalhe em
+# `Teste-Ponteiros/PONTEIROS.md`, secao 1.5.
+OFF_XP = 0x3C8
+OFF_XP_SECUNDARIA = 0x3CC
+
+# ===========================================================================
+# RELOGIO EM MILISSEGUNDOS -- candidato a detector de cliente congelado
+# ===========================================================================
+#
+# Sobe ~1000 por segundo, medido nos SEIS clientes sem excecao: passos de 3989 a
+# 4104 em intervalos de 4 s, e passo medio de 1000 a 1005 ms/s numa segunda
+# corrida com intervalo de 1 s.
+#
+# NAO E uptime do sistema (237 h no teste) nem do processo.
+#
+# HIPOTESE REFUTADA: numa primeira medicao os seis clientes leram
+# aproximadamente 25.484.500 concordando dentro de 250 ms, e eu conclui que era
+# uma "base de tempo comum as contas". ERRADO -- as seis tinham reiniciado
+# juntas, e a concordancia era disso. Medindo de novo no dia seguinte, com as
+# contas em idades diferentes, os valores foram 33,8M / 33,8M / 64,0M / 59,4M /
+# 33,8M / 8,7M: tempos de vida DIFERENTES.
+#
+# Entao ele e POR PROCESSO, e o epoch segue desconhecido -- nao casa com uptime
+# do sistema nem com o tempo desde o login. O que esta medido e so a TAXA.
+#
+# ATENCAO: no objeto de uma ENTIDADE o mesmo offset le valores pequenos, entao o
+# epoch difere. O que esta medido vale para o objeto do PERSONAGEM.
+#
+# PARA QUE SERVIRIA: se este numero para de andar, o laco do jogo travou -- e
+# isso se descobre sem captura de tela, com a janela em segundo plano. NUNCA
+# TESTADO com um cliente de fato travado, entao nenhuma decisao depende disto.
+OFF_RELOGIO_MS = 0x85C
+
 # Endereços estáticos
 ADDR_MODAL = 0x012CE35C  # DC / erro de login / caixa de confirmação (contextual)
 ADDR_QUEUE = 0x011BDF1C  # string da fila de login
@@ -309,6 +396,14 @@ MAXIMO_DE_MEMBROS_LIDOS = 4
 # aliado FERIDO, que é a condição que separa os dois campos.
 OFF_MEMBRO_HP = 0x34
 OFF_MEMBRO_MANA_MAXIMA = 0x3C
+# NIVEL do companheiro, dentro do bloco dele. Achado por busca EXAUSTIVA nos
+# 0x88 bytes -- todo offset, inclusive DESALINHADO, em int32/uint32/int16/
+# uint16/byte/float, mais as formas derivadas da grandeza. Ele esta num offset
+# desalinhado, e por isso uma busca por int32 alinhado nunca o acharia.
+#
+# CONFIRMADO em 4 membros distintos, 16 casamentos, contra o nivel que cada
+# conta le do proprio objeto no mesmo instante.
+OFF_MEMBRO_NIVEL = 0x42
 OFF_TEAM_SIZE = 0x3D8
 # Primeiro resultado do painel "Surroundings". A string tem o formato
 #   ... text="Nome [x,y]" ...
@@ -726,6 +821,93 @@ class Memory:
         if plus == 1:
             return base
         return math.floor(((total * plus) / 100) + total)
+
+    def bloco_atrasado(self) -> dict[str, tuple[int, int]] | None:
+        """Cada grandeza como `(agora, ha ~200 ms)`. `None` = nao deu para ler.
+
+        Le o original e a copia de `+0x3A0` num BLOCO UNICO -- isso e requisito,
+        nao economia: em duas chamadas separadas o proprio intervalo entre elas
+        entra na diferenca, e a diferenca e justamente o que se quer medir.
+
+        NAO E VALIDADOR DE LEITURA. Ver o comentario de `ESPELHO_DELTA`: a copia
+        esta atrasada ~204 ms, entao divergir significa "mudou agora", nao
+        "errou". Medido em 2945 amostras de 20 ms em tres contas.
+        """
+        base = self.read_uint(PLAYER_BASE)
+        if not base:
+            return None
+        fim = max(OFF_HP_ESPELHO, OFF_MP_ESPELHO,
+                  OFF_XP_ESPELHO, OFF_GOLD_ESPELHO) + 4
+        inicio = min(OFF_HP, OFF_MP, OFF_XP, OFF_GOLD)
+        try:
+            cru = self.pm.read_bytes(base + inicio, fim - inicio)
+        except Exception:
+            return None
+        if cru is None or len(cru) < fim - inicio:
+            return None
+
+        def ler(off: int) -> int:
+            return struct.unpack_from("<i", cru, off - inicio)[0]
+
+        return {
+            nome: (ler(off), ler(off_atrasado))
+            for nome, off, off_atrasado in (
+                ("hp", OFF_HP, OFF_HP_ESPELHO),
+                ("mp", OFF_MP, OFF_MP_ESPELHO),
+                ("xp", OFF_XP, OFF_XP_ESPELHO),
+                ("ouro", OFF_GOLD, OFF_GOLD_ESPELHO))
+        }
+
+    def hp_caiu_agora(self) -> int | None:
+        """Quanto o HP caiu nos ultimos ~200 ms. `0` = nao caiu. `None` = ilegivel.
+
+        O valor e `atrasado - agora` quando positivo. Em 19 de 19 divergencias
+        medidas o atrasado era MAIOR, nunca menor -- ou seja, o que aparece aqui
+        e queda.
+
+        A DIRECAO DE SUBIDA NAO FOI MEDIDA, e nao por falta de tentativa: nas
+        contas livres o HP e o MP estavam CHEIOS (regeneracao nao mexe em nada) e
+        nenhuma das nove teclas da barra gastou mana fora de batalha. Entao o
+        `max(0, ...)` aqui nao e detalhe de implementacao -- e a unica coisa
+        honesta a fazer com um caso que ninguem observou.
+
+        POR QUE ISSO E DIFERENTE DE COMPARAR COM O TICK ANTERIOR: nao guarda
+        estado, nao depende de quando foi o tick anterior, e nao mede o intervalo
+        do bot -- mede o intervalo do JOGO, sempre o mesmo ~200 ms, numa leitura
+        so. E responde com a janela em segundo plano.
+
+        Nada no bot decide por isto ainda: e capacidade e diagnostico. Antes de
+        alguem depender dela falta medir o caso da CURA e o do dano maior que a
+        janela (dois golpes dentro dos mesmos 200 ms contam como um).
+        """
+        bloco = self.bloco_atrasado()
+        if bloco is None:
+            return None
+        agora, atrasado = bloco["hp"]
+        return max(0, atrasado - agora)
+
+    def experiencia(self) -> tuple[int | None, int | None]:
+        """Os dois acumuladores de progresso. `(0x3C8, 0x3CC)`.
+
+        Sobem juntos a cada morte e nunca descem. QUAL DELES e a experiencia do
+        personagem NAO ESTA DETERMINADO -- a barra do jogo mostra o percentual em
+        texto e nenhum par de DWORD do objeto reproduz esse numero. Ver
+        `OFF_XP` para a medicao completa.
+        """
+        a = self._player_field(OFF_XP)
+        b = self._player_field(OFF_XP_SECUNDARIA)
+        return (self.read_int(a) if a else None,
+                self.read_int(b) if b else None)
+
+    def relogio_ms(self) -> int | None:
+        """Contador em milissegundos do objeto do personagem.
+
+        Sobe ~1000/s nos seis clientes medidos. Origem do epoch NAO confirmada.
+        Candidato a detector de cliente congelado -- nunca testado com um
+        cliente de fato travado, entao nada decide por ele.
+        """
+        addr = self._player_field(OFF_RELOGIO_MS)
+        return self.read_int(addr) if addr else None
 
     def mp(self) -> int | None:
         addr = self._player_field(OFF_MP)
@@ -2202,6 +2384,23 @@ class Memory:
         campos["bandeira (cru)"] = (bandeira, bandeira is not None)
         segunda = self.read_uint(ADDR_PAINEL_SEGUNDA_FENDA)
         campos["2a fenda (cru)"] = (segunda, segunda is not None)
+        # Capacidades medidas que ainda nao decidem nada -- entram no
+        # diagnostico para poderem ser conferidas em campo antes de decidir.
+        atrasado = self.bloco_atrasado()
+        if atrasado is not None:
+            mudando = [k for k, (a, b) in atrasado.items() if a != b]
+            campos["bloco +0x3A0 (atraso ~200 ms)"] = (
+                ("assentado" if not mudando
+                 else "mudando: %s" % ",".join(mudando)),
+                True,          # mudar e normal, nao e defeito
+            )
+            campos["hp caiu nos ultimos ~200 ms"] = (self.hp_caiu_agora(), True)
+        xp1, xp2 = self.experiencia()
+        campos["xp (0x3C8, 0x3CC)"] = ((xp1, xp2),
+                                       xp1 is not None and xp2 is not None)
+        relogio = self.relogio_ms()
+        campos["relogio ms (0x85C)"] = (relogio, relogio is not None)
+
         endereco_bolsa = self.resolve(ADDR_UI_ROOT, CHAIN_BAG_OPEN)
         valor_bolsa = (self.read_int(endereco_bolsa)
                        if endereco_bolsa is not None else None)

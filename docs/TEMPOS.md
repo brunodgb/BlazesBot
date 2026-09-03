@@ -391,9 +391,9 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | *literal em* `_click_sendmessage_rapido` | 0.002 s | = | FIXO | [inputs.py:856](blazesbot/core/inputs.py#L856) | `_click_sendmessage_rapido` | TESTE 2 (2026-08-14): SendMessage com sleep reduzido de 15ms → 1ms. |
 | *literal em* `_click_rapido_reafirmado` | 0.002 s | = | FIXO | [inputs.py:912](blazesbot/core/inputs.py#L912) | `_click_rapido_reafirmado` | O rápido, mais a coordenada REAFIRMADA entre o down e o up. |
 | *literal em* `_click_postmessage_puro` | 0.002 s | = | FIXO | [inputs.py:1021](blazesbot/core/inputs.py#L1021) | `_click_postmessage_puro` | AS QUATRO mensagens por `PostMessageW`. Nenhuma síncrona. |
-| `TETO_DA_PROVA_DA_CAMERA` | 1 s | = | TETO | [memory.py:249](blazesbot/core/memory.py#L249) | `_esperar_o_termometro` | Teto da espera pelo termômetro depois de uma escrita na câmera. |
-| `PASSO_DA_PROVA_DA_CAMERA` | 0.05 s | = | PASSO | [memory.py:250](blazesbot/core/memory.py#L250) | `_esperar_o_termometro` |  |
-| `PASSO_ENTRE_MEMBROS` | 136 s (2 min) | *novo* | PASSO | [memory.py:280](blazesbot/core/memory.py#L280) | `time_do_jogo, vida_do_time` |  |
+| `TETO_DA_PROVA_DA_CAMERA` | 1 s | = | TETO | [memory.py:336](blazesbot/core/memory.py#L336) | `_esperar_o_termometro` | Teto da espera pelo termômetro depois de uma escrita na câmera. |
+| `PASSO_DA_PROVA_DA_CAMERA` | 0.05 s | = | PASSO | [memory.py:337](blazesbot/core/memory.py#L337) | `_esperar_o_termometro` |  |
+| `PASSO_ENTRE_MEMBROS` | 136 s (2 min) | *novo* | PASSO | [memory.py:367](blazesbot/core/memory.py#L367) | `time_do_jogo, vida_do_time` |  |
 | *literal em* `_ensure_hook_installed` | 0.05 s | = | FIXO | [mouse_shield.py:223](blazesbot/core/mouse_shield.py#L223) | `_ensure_hook_installed` | Sobe o hook uma vez. NADA aqui bloqueia o callback. |
 | `SEGUNDOS_PARA_A_COMIDA_SER_USADA` | 1.5 s | *novo* | FIXO | [pet.py:131](blazesbot/core/pet.py#L131) |  | QUANTO TEMPO A COMIDA PRECISA ANTES DA PRÓXIMA AÇÃO |
 | `INTERVALO_MINIMO` | 30 s | = | FIXO | [petbug.py:172](blazesbot/core/petbug.py#L172) | `aplicar_patch` | Tempos |
