@@ -422,6 +422,22 @@ A BC passa `AREAS_APERTADAS`; a HH **não passa**, porque a área dela é marcad
 e mandar o bot voltar ao início da área sobre um marcador o devolveria ao
 waypoint 1 da cave a cada escorregão.
 
+## Fechar painel dentro do jogo — `docs/decisoes/memoria-primeiro.md`
+
+Vale para qualquer ecossistema que decida limpar a tela do jogo.
+
+1. **NUNCA aperte ESC uma quantidade fixa de vezes.** O ESC **alterna**: com
+   painel aberto ele fecha, com a tela **limpa** ele **ABRE o menu do sistema**
+   — medido seis vezes seguidas, sempre o mesmo nó (`0` ↔ `0x15142AB0`). Um
+   "aperta 3× para garantir" deixa o jogo pior do que achou.
+2. **PERGUNTE depois de cada tecla** — `Memory.algum_painel_aberto()` — e pare
+   no instante em que ela devolver `False`.
+3. **`False` NÃO prova tela limpa.** É sinal de **uma via**: `True` é certeza,
+   `False` é "nenhum dos quatro sinais acusou". Quem tratar esse `False` como
+   prova volta a errar calado, que é o defeito que a memória vem eliminar.
+4. **`system_menu_open()` NÃO vê o menu do ESC** — diz `False` com ele aberto.
+   Não use esse leitor para concluir nada sobre o menu do sistema.
+
 ## Estado atual relevante — as REGRAS
 
 Cada item é o que **não pode ser violado**. O detalhe de cada área mora em

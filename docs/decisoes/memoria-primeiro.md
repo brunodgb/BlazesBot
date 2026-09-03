@@ -403,3 +403,77 @@ mesmos ~200 ms) e não a do bot — numa leitura só, com a janela em segundo pl
 
 Travado por `tests/test_mapa_medido.py`, que reprova o retorno de
 `espelho_confere` — o nome do leitor que tratava o atraso como erro de leitura.
+
+---
+
+## Painel aberto por memória, e o `dialog_open` que nunca estava morto (02/09/2026)
+
+Pedido do usuário: *"é bom identificar se tem alguma aba aberta principalmente se
+for por memória, para poder fechar, no bot BC é importante que nenhuma janela
+esteja aberta dentro do jogo, para não atrapalhar os cliques, pois pode acabar
+impedindo de abrir os diálogos."*
+
+### O problema não era hipotético
+
+Varredura das seis contas: **cinco estavam farmando com painel aberto** — bolsa
+no `BlazesAPP1` e no `WizzOfBlazes5`, quest log no `WizzOfBlazes`. A única limpa
+foi a que foi limpa na mão. O bot não olhava.
+
+Vale registrar a coincidência: no mesmo dia o usuário consertou *"o diálogo do
+Altar Stone não abria"* (`ef16a46`, import quebrado no refactor). O sintoma tem
+**duas causas independentes**, e esta é a segunda.
+
+### `dialog_open()` — a lição do `+0x60`, outra vez
+
+Ele devolvia `None` em **600 de 600** leituras, e a leitura natural era que a
+cadeia herdada de **sete níveis** tinha morrido na virada 6139 → 6400. Estava
+tudo certo **menos o primeiro DWORD**: raiz herdada `0x0117B27C` lê **zero** nos
+seis clientes; **`0x0117B2DC`** resolve a **cadeia inteira** nos seis.
+
+Depois: 360 leituras, **zero "não sei"**, 3 aberturas reais concordando com a
+bandeira independente no mesmo instante, e **especificidade confirmada** — diz
+`False` com menu do ESC, bolsa e quest log abertos.
+
+**A regra do `+0x60` não é sobre um endereço; é sobre o banco inteiro.** Uma
+cadeia de sete níveis parecia morta por causa do primeiro deles. Antes de
+declarar cadeia herdada morta, teste a raiz `+0x60`.
+
+### Por que a resposta é uma UNIÃO, e não um leitor
+
+`Memory.algum_painel_aberto()` junta quatro sinais **positivos**, cada um
+validado à parte, porque **cada um já perdeu um caso**:
+
+| sinal | cobre | perde |
+|---|---|---|
+| bandeira `0x012CE3D8` ≠ 0 | 8 teclas de painel + menu do ESC | **zero com a bolsa aberta — 7 vezes** |
+| discriminador do quest log | quest log | o resto |
+| cadeia da bolsa (902/903) | **o caso que a bandeira perde** | o resto |
+| cadeia do diálogo (16774/16775) | diálogo de NPC | painel comum (de propósito) |
+
+Validado contra verdade construída: três painéis abertos por tecla, acusados
+**3 de 3**; quatro estados limpos, `False` **4 de 4**.
+
+### A armadilha do ESC — o motivo do invariante
+
+O ESC **alterna**: `0` → `0x15142AB0` → `0` → `0x15142AB0`, seis vezes, sempre o
+mesmo nó. Com a tela limpa ele **abre** o menu do sistema. E o
+`system_menu_open()` **não vê** esse menu.
+
+Então "aperta ESC 3× para garantir" **abre** painel em vez de fechar. É o caso
+mais limpo da regra *"onde havia espera cega, agora se PERGUNTA"*: a única forma
+correta é perguntar depois de cada tecla e parar quando a união disser `False`.
+
+O menu do ESC **não tem estático próprio** entre os 36 DWORDs que alternam com
+ele — o único sinal é a bandeira genérica.
+
+### Nota de método: quase acusei a ferramenta de ponto cego
+
+O achador de estático devolveu *"0 candidatos"* para o ESC, e eu estava a um
+passo de registrar que a ferramenta tinha ponto cego — o que invalidaria todos
+os "não achei" que ela já produziu. O endereço estava **dentro** da foto
+(conferido), e o erro era meu: eu lia a chave errada do dicionário de retorno.
+Com a chave certa, **36 candidatos**, e a bandeira conhecida entre eles.
+
+**Antes de acusar a ferramenta, confira o que você fez com a resposta dela.** É o
+mesmo erro do bloco de `+0x3A0`, onde eu culpei minha janela de leitura para
+salvar uma hipótese errada.
