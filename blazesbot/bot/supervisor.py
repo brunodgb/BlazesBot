@@ -27,7 +27,7 @@ import psutil
 import win32gui
 import win32process
 
-from ..config import MODO_FADA_DA_HH, Account, BotConfig
+from ..config import CAVE_BC, CAVE_HH, MODO_FADA_DA_HH, Account, BotConfig
 from ..core import logmodo, quedas
 from ..core.coords import coords_for_window
 from ..core.memory import Memory
@@ -874,7 +874,10 @@ class AccountSupervisor(threading.Thread):
         # volta a zero. Ver `self.tentativas_de_login` no `__init__`.
         self.tentativas_de_login = 0
 
-        farm = "com BC farm" if self.account.farms else "só online"
+        farm = {
+            CAVE_HH: "com a HH ligada",
+            CAVE_BC: "com BC farm",
+        }.get(self.account.cave_ligada, "só online")
         self._status(f"Logado como '{char_name}' ({farm})")
 
         # PETBUG: esconder jogadores + pet bug, num programa de terceiro.
@@ -885,9 +888,14 @@ class AccountSupervisor(threading.Thread):
         # caiu volta exatamente por aqui, num cliente NOVO que o patcher anterior
         # não alcançou.
         #
-        # SÓ CONTAS DE BC, também decisão dele. E um clique cobre TODOS os
-        # clientes abertos, então `petbug` tem intervalo próprio: cinco contas
-        # caindo juntas produzem UMA aplicação, não cinco.
+        # SÓ CONTAS DE FARM DE CAVE, também decisão dele -- e vale para as
+        # DUAS: a HH esconde jogadores e sofre o bug do pet pelo mesmo motivo
+        # que o BC. `farms` aqui é a pergunta certa ("está ocupada farmando?"),
+        # e não um resquício de quando existia uma cave só.
+        #
+        # E um clique cobre TODOS os clientes abertos, então `petbug` tem
+        # intervalo próprio: cinco contas caindo juntas produzem UMA aplicação,
+        # não cinco.
         if self.account.farms:
             self._aplicar_petbug()
 
@@ -2053,11 +2061,12 @@ class AccountSupervisor(threading.Thread):
             )
 
         self._status("Modo APP LIGADO (macro de teclado)")
-        if self.account.farms:
+        cave = self.account.cave_ligada
+        if cave:
             self._status(
-                "O BC farm também está ligado nesta conta. Os dois disputariam o "
-                "teclado, então o modo APP tem preferência e o farm fica parado "
-                "enquanto ele estiver ligado."
+                f"O farm da {cave.upper()} também está ligado nesta conta. Os "
+                "dois disputariam o teclado, então o modo APP tem preferência e "
+                "o farm fica parado enquanto ele estiver ligado."
             )
 
         # ================================================================
@@ -2713,7 +2722,13 @@ class BotManager:
                 "success": 0,
                 "fail": 0,
                 "relogins": sup.relogin_count,
-                "farm": sup.account.farms,
+                # UMA CHAVE POR CAVE, e não `account.farms` nas duas.
+                #
+                # `farms` é "farma alguma cave": publicá-la como `farm` fazia o
+                # espelho ao vivo da interface MARCAR a caixa do BC quando o
+                # usuário ligava a HH. Ver `Account.farms`.
+                "farm": sup.account.bc_farm,
+                "farm_hh": sup.account.hh_farm,
                 "last_run": 0.0,
                 "total_run": 0.0,
                 "uptime": 0.0,

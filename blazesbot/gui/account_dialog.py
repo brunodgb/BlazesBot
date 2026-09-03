@@ -1009,7 +1009,8 @@ class AccountDialog(QDialog):
     def _atualizar_rotulos(self, *_args) -> None:
         nick = self.in_nick.text().strip()
         self.selo.setText(
-            ("BC Farm ligado" if self.conta.farms else "só login")
+            (f"Farm da {self.conta.cave_ligada.upper()} ligado"
+             if self.conta.cave_ligada else "só login")
             + (f"  ·  {nick}" if nick else "")
         )
 

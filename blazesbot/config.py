@@ -883,6 +883,14 @@ class BCConfig:
 
 
 
+# COMO CADA CAVE SE CHAMA no código. Existe para "qual cave está rodando" ser
+# um valor comparável em vez de uma string solta em cada arquivo -- e é isso que
+# permite `ctx.raise_if_stopped` conferir o interruptor CERTO.
+CAVE_BC = "bc"
+CAVE_HH = "hh"
+CAVES = (CAVE_HH, CAVE_BC)      # na ordem do despacho: a HH tem precedência
+
+
 # Os dois modos de reset da HH. A cave não renasce sozinha -- regra do jogo.
 MODO_SOLO_DA_HH = "solo"
 MODO_FADA_DA_HH = "fada"
@@ -1178,13 +1186,42 @@ class Account:
 
     @property
     def farms(self) -> bool:
-        """Esta conta farma alguma cave?
+        """Esta conta farma ALGUMA cave? Vale para as duas.
 
-        Vale para as DUAS. Quem decide QUAL roda é o supervisor -- ver
-        `AccountSupervisor._operate`. Aqui a pergunta é só "tem farm ligado",
-        que é o que o painel e o laço de status precisam saber.
+        =================================================================
+        NÃO USE ISTO PARA DIZER "O BC ESTÁ LIGADO"
+        =================================================================
+
+        Era o que ela significava quando existia uma cave só, e alargar o
+        significado sem revisar quem lê vazou estado da HH para o BC em
+        02/09/2026: o resumo do supervisor publicava `farms` no campo `farm`, a
+        ponte web repassava, e o espelho ao vivo MARCAVA a caixa do BC quando o
+        usuário ligava a HH.
+
+        A pergunta certa aqui é a de ELEGIBILIDADE -- "esta conta está ocupada
+        farmando?" --, e é para isso que ela serve: validar a conta de reset,
+        recusar uma conta de farm como seguidora do time do APP, cobrar a
+        configuração de quem vai farmar.
+
+        Quem quer saber de UMA cave lê `bc_farm` ou `hh_farm` direto. Travado
+        por `tests/test_hh_nao_vaza_para_o_bc.py`.
         """
         return bool(self.bc_farm or self.hh_farm)
+
+    @property
+    def cave_ligada(self) -> str:
+        """QUAL cave está ligada: `"hh"`, `"bc"` ou `""`.
+
+        A ORDEM É A DO DESPACHO (`AccountSupervisor._operate`): marcar as duas
+        roda a HH. Ter a mesma precedência escrita em dois lugares seria ter
+        duas respostas possíveis para "o que vai rodar" -- então quem responde é
+        esta propriedade, e o supervisor a usa.
+        """
+        if self.hh_farm:
+            return CAVE_HH
+        if self.bc_farm:
+            return CAVE_BC
+        return ""
 
     def remember_char_name(self, nome: str) -> bool:
         """Guarda o nick visto nesta conta. Devolve True se o valor MUDOU.

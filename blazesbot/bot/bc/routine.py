@@ -68,6 +68,7 @@ import uuid
 from collections.abc import Callable
 from enum import Enum, auto
 
+from ...config import CAVE_BC
 from ...core import (
     calibracao,
     catador,
@@ -2494,6 +2495,9 @@ class BossRushRoutine:
         # ou `return` -- senão o laço "online" seguinte (fora do farming)
         # re-detonaria a parada e derrubaria a sessão, o oposto do desejado.
         ctx.farming = True
+        # QUEM está no ar. É o que faz a parada conferir o
+        # interruptor desta cave, e não `account.farms`.
+        ctx.cave_em_farm = CAVE_BC
         try:
             self._vender_ao_iniciar_se_estiver_na_cidade()
 
@@ -2585,4 +2589,5 @@ class BossRushRoutine:
             return
         finally:
             ctx.farming = False
+            ctx.cave_em_farm = ""
             logmodo.limpar()

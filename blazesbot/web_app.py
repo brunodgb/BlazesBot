@@ -818,10 +818,12 @@ class _App:
                 "uid": conta.garantir_uid() if conta else "",
                 "nick": _nick(conta) if conta else login,
                 "farm": bool(d.get("farm")),
-                # Sem isto o espelho ao vivo lia `undefined`, e
-                # `!!undefined` é False -- a cada volta do polling ele
-                # DESMARCARIA a caixa da HH.
-                "farm_hh": bool(conta.hh_farm) if conta else False,
+                # DO RESUMO, e não da configuração em disco: é o mesmo lugar
+                # de onde `farm` vem, então as duas caixas contam a mesma
+                # história. Sem esta chave o espelho lia `undefined`, e
+                # `!!undefined` é False -- ele DESMARCARIA a caixa da HH a cada
+                # volta do polling.
+                "farm_hh": bool(d.get("farm_hh")),
                 "runs": d.get("runs", 0),
                 "success": d.get("success", 0),
                 "fail": d.get("fail", 0),

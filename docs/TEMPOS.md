@@ -106,17 +106,17 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 
 | tempo | atual | original | natureza | onde | função | para que serve |
 |---|---|---|---|---|---|---|
-| `PASSO_DO_RECONHECIMENTO` | 0.04 s | = | PASSO | [routine.py:120](blazesbot/bot/bc/routine.py#L120) | `_reconhecer_entrada` | PASSO: de quanto em quanto tempo perguntar, dentro da janela. A pergunta é uma |
-| `ESPERA_ENTRE_TENTATIVAS` | 0.025 s | = | FIXO | [routine.py:130](blazesbot/bot/bc/routine.py#L130) | `_do_entrar` | E O INTERVALO ENTRE TENTATIVAS quase desaparece: a janela de reconhecimento já |
-| `PASSO_DA_ESPERA_DO_RESETER` | 1 s | *novo* | PASSO | [routine.py:144](blazesbot/bot/bc/routine.py#L144) | `_esperar_o_reseter` | Cadência da espera pela conta de reset (ver `_esperar_o_reseter`). |
-| `INTERVALO_DO_AVISO_DO_RESETER` | 300 s (5 min) | *novo* | FIXO | [routine.py:151](blazesbot/bot/bc/routine.py#L151) | `_esperar_o_reseter` | De quanto em quanto tempo repetir o aviso enquanto a trava dura. |
-| `SEGUNDOS_POR_TENTATIVA_NO_ALTAR` | 1.5 s | = | FIXO | [routine.py:181](blazesbot/bot/bc/routine.py#L181) | `_encostar_exato_no_patamar` |  |
-| `SEGUNDOS_ESPERANDO_A_BOLSA` | 0.2 s | = | FIXO | [routine.py:300](blazesbot/bot/bc/routine.py#L300) | `_usar_package_courage` | Quanto esperar a bolsa CONFIRMAR que abriu, lendo a memória. |
-| `PASSO_DA_ESPERA_DA_BOLSA` | 0.05 s | = | PASSO | [routine.py:325](blazesbot/bot/bc/routine.py#L325) | `_usar_package_courage` | De quanto em quanto tempo perguntar se a bolsa já abriu. Era 0,15 s, o que |
-| `ASSENTAMENTO_DA_BOLSA` | 0.14 s | = | FIXO | [routine.py:331](blazesbot/bot/bc/routine.py#L331) | `_usar_package_courage` | Depois que a MEMÓRIA confirma a bolsa aberta, o quanto esperar o DESENHO dela. |
-| *literal em* `_do_situar` | 1 s | = | FIXO | [routine.py:534](blazesbot/bot/bc/routine.py#L534) | `_do_situar` | Olha onde o personagem está e entra no estado que faz sentido. |
-| *literal em* `_do_preparar` | 0.2 s | = | FIXO | [routine.py:627](blazesbot/bot/bc/routine.py#L627) | `_do_preparar` |  |
-| *literal em* `_do_recuperar` | 3 s | = | FIXO | [routine.py:2349](blazesbot/bot/bc/routine.py#L2349) | `_do_recuperar` | Recuperação após morte ou falhas em sequência. |
+| `PASSO_DO_RECONHECIMENTO` | 0.04 s | = | PASSO | [routine.py:121](blazesbot/bot/bc/routine.py#L121) | `_reconhecer_entrada` | PASSO: de quanto em quanto tempo perguntar, dentro da janela. A pergunta é uma |
+| `ESPERA_ENTRE_TENTATIVAS` | 0.025 s | = | FIXO | [routine.py:131](blazesbot/bot/bc/routine.py#L131) | `_do_entrar` | E O INTERVALO ENTRE TENTATIVAS quase desaparece: a janela de reconhecimento já |
+| `PASSO_DA_ESPERA_DO_RESETER` | 1 s | *novo* | PASSO | [routine.py:145](blazesbot/bot/bc/routine.py#L145) | `_esperar_o_reseter` | Cadência da espera pela conta de reset (ver `_esperar_o_reseter`). |
+| `INTERVALO_DO_AVISO_DO_RESETER` | 300 s (5 min) | *novo* | FIXO | [routine.py:152](blazesbot/bot/bc/routine.py#L152) | `_esperar_o_reseter` | De quanto em quanto tempo repetir o aviso enquanto a trava dura. |
+| `SEGUNDOS_POR_TENTATIVA_NO_ALTAR` | 1.5 s | = | FIXO | [routine.py:182](blazesbot/bot/bc/routine.py#L182) | `_encostar_exato_no_patamar` |  |
+| `SEGUNDOS_ESPERANDO_A_BOLSA` | 0.2 s | = | FIXO | [routine.py:301](blazesbot/bot/bc/routine.py#L301) | `_usar_package_courage` | Quanto esperar a bolsa CONFIRMAR que abriu, lendo a memória. |
+| `PASSO_DA_ESPERA_DA_BOLSA` | 0.05 s | = | PASSO | [routine.py:326](blazesbot/bot/bc/routine.py#L326) | `_usar_package_courage` | De quanto em quanto tempo perguntar se a bolsa já abriu. Era 0,15 s, o que |
+| `ASSENTAMENTO_DA_BOLSA` | 0.14 s | = | FIXO | [routine.py:332](blazesbot/bot/bc/routine.py#L332) | `_usar_package_courage` | Depois que a MEMÓRIA confirma a bolsa aberta, o quanto esperar o DESENHO dela. |
+| *literal em* `_do_situar` | 1 s | = | FIXO | [routine.py:535](blazesbot/bot/bc/routine.py#L535) | `_do_situar` | Olha onde o personagem está e entra no estado que faz sentido. |
+| *literal em* `_do_preparar` | 0.2 s | = | FIXO | [routine.py:628](blazesbot/bot/bc/routine.py#L628) | `_do_preparar` |  |
+| *literal em* `_do_recuperar` | 3 s | = | FIXO | [routine.py:2350](blazesbot/bot/bc/routine.py#L2350) | `_do_recuperar` | Recuperação após morte ou falhas em sequência. |
 
 
 ## DENTRO DA CAVE — combate
@@ -267,7 +267,7 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | *literal em* `ensure_pet` | 1.5 s | = | FIXO | [combate.py:3233](blazesbot/bot/combate.py#L3233) | `ensure_pet` | Garante que o pet está invocado. |
 | *literal em* `apply_buffs` | 0.6 s | = | FIXO | [combate.py:3260](blazesbot/bot/combate.py#L3260) | `apply_buffs` | Aplica os buffs configurados, em si mesmo. |
 | `FATIA_DA_ESPERA` | 0.25 s | = | PASSO | [context.py:211](blazesbot/bot/context.py#L211) | `tick` | Fatia máxima de sono dentro de um `tick`. |
-| *literal em* `wait_if_paused` | 0.075 s | = | FIXO | [context.py:471](blazesbot/bot/context.py#L471) | `wait_if_paused` | Bloqueia enquanto a pausa estiver ativa. |
+| *literal em* `wait_if_paused` | 0.075 s | = | FIXO | [context.py:498](blazesbot/bot/context.py#L498) | `wait_if_paused` | Bloqueia enquanto a pausa estiver ativa. |
 | `PASSO_DA_FADA` | 0.1 s | *novo* | PASSO | [fada.py:78](blazesbot/bot/fada.py#L78) | `rodar` | Cadência do laço da Fada quando não há nada a fazer. |
 | `TETO_PARA_O_ALVO_VIRAR` | 0.4 s | *novo* | TETO | [fada.py:85](blazesbot/bot/fada.py#L85) | `_clique_saiu_errado` | Depois do clique no retrato, quanto esperar a memória mostrar o alvo novo. |
 | `PASSO_DA_CONFERENCIA_DO_ALVO` | 0.02 s | *novo* | PASSO | [fada.py:86](blazesbot/bot/fada.py#L86) | `_clique_saiu_errado` |  |
@@ -287,8 +287,8 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | *literal em* `entrar` | 0.25 s | *novo* | FIXO | [fada.py:250](blazesbot/bot/hh/fada.py#L250) | `entrar` | Entra na cave. Mesma porta, mesma máquina, mesmo NPC do líder. |
 | `PASSO_DENTRO_DA_CAVE` | 0.05 s | *novo* | PASSO | [routine.py:90](blazesbot/bot/hh/routine.py#L90) | `run` | Quanto esperar entre estados DENTRO da cave. |
 | `PASSO_FORA_DA_CAVE` | 0.4 s | *novo* | PASSO | [routine.py:91](blazesbot/bot/hh/routine.py#L91) | `run` |  |
-| *literal em* `_do_situar` | 1 s | *novo* | FIXO | [routine.py:255](blazesbot/bot/hh/routine.py#L255) | `_do_situar` | Descobre em que ponto do ciclo a conta está, e entra por ali. |
-| *literal em* `_do_recuperar` | 2 s | *novo* | FIXO | [routine.py:663](blazesbot/bot/hh/routine.py#L663) | `_do_recuperar` | Algo saiu do roteiro. Volta a se situar, sem inventar. |
+| *literal em* `_do_situar` | 1 s | *novo* | FIXO | [routine.py:259](blazesbot/bot/hh/routine.py#L259) | `_do_situar` | Descobre em que ponto do ciclo a conta está, e entra por ali. |
+| *literal em* `_do_recuperar` | 2 s | *novo* | FIXO | [routine.py:667](blazesbot/bot/hh/routine.py#L667) | `_do_recuperar` | Algo saiu do roteiro. Volta a se situar, sem inventar. |
 | `SEGUNDOS_POR_TENTATIVA` | 1.8 s | *novo* | FIXO | [vendedor.py:68](blazesbot/bot/hh/vendedor.py#L68) | `encostar_no_ponto_da_venda` |  |
 | `RECARGA` | 5 s | = | FIXO | [hotbar.py:63](blazesbot/bot/hotbar.py#L63) | `garantir_pagina_1` | Recarga do caminho com `ctx`. Os momentos-chave acontecem em rajada -- o portão |
 | `PASSO_DA_SONDA` | 0.012 s | = | PASSO | [instrumentar_clique.py:110](blazesbot/bot/instrumentar_clique.py#L110) | `_sondar_ate_mudar` | De quanto em quanto tempo a sonda fotografa o minimapa esperando o efeito. |
@@ -304,12 +304,12 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | *literal em* `_sleep_interruptible` | 0.125 s | = | FIXO | [supervisor.py:248](blazesbot/bot/supervisor.py#L248) | `_sleep_interruptible` |  |
 | *literal em* `_launch_client` | 1 s | = | FIXO | [supervisor.py:336](blazesbot/bot/supervisor.py#L336) | `_launch_client` | Lança o Client.bat e devolve o PID da nova instância. |
 | *literal em* `_find_window` | 1 s | = | FIXO | [supervisor.py:353](blazesbot/bot/supervisor.py#L353) | `_find_window` | Localiza a janela de nível superior pertencente ao PID. |
-| *literal em* `_run_session` | 1.5 s | = | FIXO | [supervisor.py:920](blazesbot/bot/supervisor.py#L920) | `_run_session` | Uma sessão: obter uma janela, logar se preciso, e operar. |
-| *literal em* `_operate` | 2.5 s | *novo* | FIXO | [supervisor.py:1195](blazesbot/bot/supervisor.py#L1195) | `_operate` | Opera a conta logada, respeitando o farm ligado/desligado ao vivo. |
-| *literal em* `_operate` | 2.5 s | *novo* | FIXO | [supervisor.py:1216](blazesbot/bot/supervisor.py#L1216) | `_operate` | Opera a conta logada, respeitando o farm ligado/desligado ao vivo. |
-| *literal em* `_operate` | 0.5 s | = | FIXO | [supervisor.py:1315](blazesbot/bot/supervisor.py#L1315) | `_operate` | Opera a conta logada, respeitando o farm ligado/desligado ao vivo. |
-| *literal em* `_publicar_o_proprio_id` | 0.3 s | *novo* | FIXO | [supervisor.py:1616](blazesbot/bot/supervisor.py#L1616) | `_publicar_o_proprio_id` | o alvo leva ~0,1 s para virar |
-| *literal em* `chamar_a_fada` | 0.2 s | *novo* | FIXO | [supervisor.py:2007](blazesbot/bot/supervisor.py#L2007) | `chamar_a_fada` | Pede cura à Fada do time e espera. `False` = não há Fada, beba poção. |
+| *literal em* `_run_session` | 1.5 s | = | FIXO | [supervisor.py:928](blazesbot/bot/supervisor.py#L928) | `_run_session` | Uma sessão: obter uma janela, logar se preciso, e operar. |
+| *literal em* `_operate` | 2.5 s | *novo* | FIXO | [supervisor.py:1203](blazesbot/bot/supervisor.py#L1203) | `_operate` | Opera a conta logada, respeitando o farm ligado/desligado ao vivo. |
+| *literal em* `_operate` | 2.5 s | *novo* | FIXO | [supervisor.py:1224](blazesbot/bot/supervisor.py#L1224) | `_operate` | Opera a conta logada, respeitando o farm ligado/desligado ao vivo. |
+| *literal em* `_operate` | 0.5 s | = | FIXO | [supervisor.py:1323](blazesbot/bot/supervisor.py#L1323) | `_operate` | Opera a conta logada, respeitando o farm ligado/desligado ao vivo. |
+| *literal em* `_publicar_o_proprio_id` | 0.3 s | *novo* | FIXO | [supervisor.py:1624](blazesbot/bot/supervisor.py#L1624) | `_publicar_o_proprio_id` | o alvo leva ~0,1 s para virar |
+| *literal em* `chamar_a_fada` | 0.2 s | *novo* | FIXO | [supervisor.py:2015](blazesbot/bot/supervisor.py#L2015) | `chamar_a_fada` | Pede cura à Fada do time e espera. `False` = não há Fada, beba poção. |
 | `ESPERA_DO_MENU` | 0.35 s | = | FIXO | [team.py:134](blazesbot/bot/team.py#L134) | `_enviar_convite` | Tempo para o menu de contexto aparecer depois do clique direito. |
 | `ESPERA_PELA_RESPOSTA` | 4 s | = | FIXO | [team.py:139](blazesbot/bot/team.py#L139) | `montar_time` | Quanto esperar a outra conta aceitar. Ela recebe o anúncio interno e clica no |
 | `PASSO_DA_ESPERA_DO_TIME` | 0.1 s | = | PASSO | [team.py:147](blazesbot/bot/team.py#L147) | `montar_time` | De quanto em quanto tempo conferir se o time já formou. |

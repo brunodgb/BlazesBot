@@ -51,7 +51,7 @@ import time
 from collections.abc import Callable
 from enum import Enum, auto
 
-from ...config import MODO_FADA_DA_HH
+from ...config import CAVE_HH, MODO_FADA_DA_HH
 from ...core import catador, esconder_jogadores, logmodo
 from ...core.vision import capture_window, find_template
 from .. import mural
@@ -177,6 +177,9 @@ class HHRoutine:
         # senão o laço "online" seguinte re-detonaria a parada e derrubaria a
         # sessão, o oposto do desejado.
         ctx.farming = True
+        # QUEM está no ar. É o que faz a parada conferir o
+        # interruptor desta cave, e não `account.farms`.
+        ctx.cave_em_farm = CAVE_HH
         try:
             while True:
                 if should_continue is not None and not should_continue():
@@ -198,6 +201,7 @@ class HHRoutine:
                          else PASSO_FORA_DA_CAVE)
         finally:
             ctx.farming = False
+            ctx.cave_em_farm = ""
 
     def _guard(self) -> None:
         """A parada e a queda respondem ENTRE estados, sempre."""

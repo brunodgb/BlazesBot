@@ -15,7 +15,7 @@ from pathlib import Path
 from time import monotonic
 from typing import TYPE_CHECKING
 
-from ..config import Account, AccountSettings, BotConfig
+from ..config import CAVE_BC, CAVE_HH, Account, AccountSettings, BotConfig
 from ..core.coords import Coords, coords_for_size
 from ..core.inputs import Input, jitter
 from ..core.memory import POSE_DA_CAMERA, Memory
@@ -266,11 +266,20 @@ class BotContext:
         self.account_login = account.login
         self.stop_event = stop_event
         self.pause_event = pause_event or threading.Event()
-        # True APENAS durante o `BossRushRoutine.run`: é o sinal que faz
-        # `raise_if_stopped` detonar `FarmDesligado` quando `bc_farm` apagar no
-        # meio de uma fase. Fora do farming a flag fica False, então a checagem
-        # nunca alcança movimento/login/conta de reset que não é BC.
+        # True APENAS durante o `run()` de uma rotina de cave: é o sinal que faz
+        # `raise_if_stopped` detonar `FarmDesligado` quando o interruptor da cave
+        # apagar no meio de uma fase. Fora do farming a flag fica False, então a
+        # checagem nunca alcança movimento/login/conta de reset.
         self.farming = False
+        # QUAL cave está no ar (`"bc"`, `"hh"` ou `""`). Quem liga o `farming`
+        # diz também quem é.
+        #
+        # SEM ISTO A PARADA ERRAVA O ALVO. A checagem antiga era
+        # `not self.account.farms`, e `farms` é "farma alguma cave" -- então,
+        # com a HH ligada, desmarcar o BC no meio de uma fase NÃO cortava a fase:
+        # `farms` continuava True. A parada só acontecia na fronteira do estado
+        # seguinte. Medido em 02/09/2026, junto com o vazamento visual.
+        self.cave_em_farm = ""
 
         self.log = logging.getLogger(f"blazes.{account.login}")
 
@@ -450,10 +459,28 @@ class BotContext:
         # a conta volta a "online" (parada, logada, com relogin) em vez de parar
         # o bot inteiro. A flag `farming` só é True durante o `routine.run`, então
         # este braço nunca dispara em movimento não-BC, login ou conta de reset.
-        if self.farming and not self.account.farms:
+        if self.farming and not self._a_cave_continua_ligada():
             raise FarmDesligado()
         if self.stop_event.is_set():
             raise StopRequested()
+
+    def _a_cave_continua_ligada(self) -> bool:
+        """O interruptor da cave que está rodando continua marcado?
+
+        Confere O INTERRUPTOR DELA, e não `account.farms` -- ver `cave_em_farm`.
+
+        Sem saber qual cave é (ninguém disse), cai em `farms`: é o
+        comportamento antigo, e é a direção segura. Errar para "continua
+        ligado" faz a fase terminar sozinha um instante depois, no
+        `should_continue` da rotina; errar para "desligou" abortaria uma fase
+        que ninguém pediu para abortar.
+        """
+        cave = self.cave_em_farm
+        if cave == CAVE_HH:
+            return bool(self.account.hh_farm)
+        if cave == CAVE_BC:
+            return bool(self.account.bc_farm)
+        return bool(self.account.farms)
 
     def wait_if_paused(self) -> None:
         """Bloqueia enquanto a pausa estiver ativa.
