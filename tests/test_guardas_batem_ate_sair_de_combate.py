@@ -37,6 +37,12 @@ class _FakeCtx:
             "bc": type("B", (), {"attack_delay": 0.5})(),
             "keys": type("K", (), {"next_target": "tab"})(),
         })()
+        # A CAVE QUE ESTÁ RODANDO. Os motores compartilhados leem número
+        # de cave por aqui desde 03/09/2026 (`ctx.cave`), em vez de
+        # `settings.bc` direto -- era o que fazia a HH rodar com os
+        # números do BC. Aqui aponta para o `bc` deste dublê, que é a
+        # cave que estes testes exercitam.
+        self.cave = self.settings.bc
 
     # -- contexto --------------------------------------------------------
     def tick(self, seconds):

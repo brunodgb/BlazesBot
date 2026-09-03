@@ -423,7 +423,10 @@ class BossRushRoutine:
         # `combat` ja importa `navigation`, e o contrario faria ciclo.
         self.nav.destravar_o_combate = self.combat.limpar_o_combate
         self.vendor = VendorService(ctx, self.nav)
-        self.team = TeamService(ctx)
+        # O nick do BC é o padrão do `TeamService`; passar explícito
+        # deixa as duas caves simétricas e o leitor sem dúvida.
+        self.team = TeamService(
+            ctx, nick_do_reset=lambda: ctx.settings.bc.reset_nick)
         # Um navegador só por conta, compartilhado. Ele guarda o cronômetro da
         # tecla da montaria e a recarga da skill de velocidade; duplicá-lo faria
         # dois donos do mesmo interruptor.

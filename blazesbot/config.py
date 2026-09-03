@@ -1036,6 +1036,32 @@ class AccountSettings:
         return self.keys.has_aoe
 
     # Atalhos para o código do bot não precisar navegar a árvore inteira.
+    def cave(self, nome: str) -> BCConfig | HHConfig:
+        """A configuração da cave que está rodando.
+
+        =================================================================
+        POR QUE ISTO EXISTE
+        =================================================================
+
+        Os motores compartilhados (`bot/combate.py`, `bot/velocidade.py`) leem
+        números que são DA CAVE: intervalo entre skills, limite de mana para o
+        AoE, prazo da luta, skill de velocidade. Eles nasceram no BC e liam
+        `settings.bc` direto.
+
+        Com a HH, isso virou defeito silencioso: as duas interfaces GRAVAVAM
+        `settings.hh.attack_delay` e o bot lia `settings.bc.attack_delay`. Medido
+        em 03/09/2026 na conta do usuário -- ele pôs 0,1 s na HH e o bot atacava
+        com os 0,5 s do BC. O campo existia, a tela mostrava, o disco guardava, e
+        ninguém lia.
+
+        `BCConfig` e `HHConfig` têm os MESMOS nomes para esses quatro campos, de
+        propósito: assim quem lê pergunta pela cave e não precisa saber qual é.
+
+        Nome desconhecido devolve a do BC -- é o comportamento de antes, e é a
+        direção segura: a alternativa seria o motor rodar sem número nenhum.
+        """
+        return self.hh if nome == CAVE_HH else self.bc
+
     @property
     def route(self) -> BCRoute:
         return self.bc.route

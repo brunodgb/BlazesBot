@@ -129,7 +129,8 @@ class HHRoutine:
         self.combat = CombatEngine(ctx, self.nav)
         self.ui = EntradaDaHH(ctx, self.nav)
         self.vendedor = VendedorDaHH(ctx, self.nav)
-        self.team = TeamService(ctx)
+        self.team = TeamService(
+            ctx, nick_do_reset=lambda: ctx.settings.hh.reset_nick)
         self.state = State.SITUAR
         # Em qual dos quatro trechos a run está. É o índice em
         # `mapa_hh.TRECHOS_DOS_BOSSES`, e é o que faz os quatro bosses serem um
@@ -446,7 +447,7 @@ class HHRoutine:
         provavelmente não sabe que os bosses não renascem.
         """
         ctx = self.ctx
-        nick = ctx.settings.hh.reset_nick.strip()
+        nick = self.team.nick_do_reset()
         if not nick:
             if self._voltas_no_estado == 0:
                 ctx.log.warning(
@@ -496,10 +497,51 @@ class HHRoutine:
             self._falhar(f"não cheguei no {rotulo}", State.RECUPERAR)
             return
 
+        self._limpar_os_mobs_do_caminho(rotulo)
+
         # DESMONTA ANTES DE LUTAR: montado o jogo recusa as skills.
         self.nav.ensure_dismounted()
         ctx.log.info("HH: no ponto do %s (%s)", rotulo, ponto)
         self._ir_para(State.BOSS)
+
+    def _limpar_os_mobs_do_caminho(self, rotulo: str) -> None:
+        """A PÉ, limpa os mobs que vieram atrás. Montado, não faz nada.
+
+        =================================================================
+        VEM DO BOT EM LUA, E A RAZÃO É DELE
+        =================================================================
+
+        `travelPath` limpa a cada 3 passos quando `MOUNT ~= "ON"` e não limpa
+        nada montado -- *"com montaria ON o char nao para: so mata nos bosses"*.
+        A decisão está certa: montado o personagem atravessa, e atravessar é o
+        que torna a run curta.
+
+        A PÉ é outra história: sem montaria o trem de mobs alcança, e chegar no
+        boss com quatro mobs somando dano por trás é o que perde a run.
+
+        `limpar_mobs_a_cada = 0` desliga -- é o modo "confio na montaria".
+
+        NUNCA DERRUBA A RUN. Limpar é prevenção; levantar aqui custaria a
+        instância já gasta.
+        """
+        ctx = self.ctx
+        a_cada = ctx.settings.hh.limpar_mobs_a_cada
+        if a_cada <= 0:
+            return
+        if ctx.memory.is_mounted():
+            # Montado o personagem não para -- e parar aqui seria desfazer
+            # justamente o que a montaria compra.
+            return
+
+        try:
+            ctx.log.info("HH: a pé no trecho do %s; limpando os mobs do caminho",
+                         rotulo)
+            self.combat.limpar_o_combate(f"caminho do {rotulo}")
+        except StopRequested:
+            raise
+        except Exception as exc:
+            ctx.log.warning("HH: limpeza do caminho falhou (segue a run): %s",
+                            exc)
 
     # ==================================================================
     # BOSS

@@ -41,12 +41,12 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 
 | tempo | atual | original | natureza | onde | função | para que serve |
 |---|---|---|---|---|---|---|
-| *literal em* `buy_supplies` | 0.4 s | = | FIXO | [vendor.py:344](blazesbot/bot/bc/vendor.py#L344) | `buy_supplies` | Compra a Pedra de Retorno gasta, no mesmo NPC da venda. |
-| *literal em* `buy_supplies` | 0.25 s | = | FIXO | [vendor.py:346](blazesbot/bot/bc/vendor.py#L346) | `buy_supplies` | Compra a Pedra de Retorno gasta, no mesmo NPC da venda. |
-| *literal em* `buy_supplies` | 0.3 s | = | FIXO | [vendor.py:350](blazesbot/bot/bc/vendor.py#L350) | `buy_supplies` | Compra a Pedra de Retorno gasta, no mesmo NPC da venda. |
-| *literal em* `buy_supplies` | 0.35 s | = | FIXO | [vendor.py:355](blazesbot/bot/bc/vendor.py#L355) | `buy_supplies` | Compra a Pedra de Retorno gasta, no mesmo NPC da venda. |
-| *literal em* `run_maintenance` | 0.2 s | = | FIXO | [vendor.py:443](blazesbot/bot/bc/vendor.py#L443) | `run_maintenance` | Ida completa à cidade: teleportar, viajar, vender, comprar. |
-| *literal em* `run_maintenance` | 0.5 s | = | FIXO | [vendor.py:456](blazesbot/bot/bc/vendor.py#L456) | `run_maintenance` | Ida completa à cidade: teleportar, viajar, vender, comprar. |
+| *literal em* `buy_supplies` | 0.4 s | = | FIXO | [vendor.py:359](blazesbot/bot/bc/vendor.py#L359) | `buy_supplies` | Compra a Pedra de Retorno gasta, no mesmo NPC da venda. |
+| *literal em* `buy_supplies` | 0.25 s | = | FIXO | [vendor.py:361](blazesbot/bot/bc/vendor.py#L361) | `buy_supplies` | Compra a Pedra de Retorno gasta, no mesmo NPC da venda. |
+| *literal em* `buy_supplies` | 0.3 s | = | FIXO | [vendor.py:365](blazesbot/bot/bc/vendor.py#L365) | `buy_supplies` | Compra a Pedra de Retorno gasta, no mesmo NPC da venda. |
+| *literal em* `buy_supplies` | 0.35 s | = | FIXO | [vendor.py:370](blazesbot/bot/bc/vendor.py#L370) | `buy_supplies` | Compra a Pedra de Retorno gasta, no mesmo NPC da venda. |
+| *literal em* `run_maintenance` | 0.2 s | = | FIXO | [vendor.py:458](blazesbot/bot/bc/vendor.py#L458) | `run_maintenance` | Ida completa à cidade: teleportar, viajar, vender, comprar. |
+| *literal em* `run_maintenance` | 0.5 s | = | FIXO | [vendor.py:471](blazesbot/bot/bc/vendor.py#L471) | `run_maintenance` | Ida completa à cidade: teleportar, viajar, vender, comprar. |
 
 
 ## FORA DA CAVE — painel, diálogos, Fay
@@ -55,8 +55,8 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 |---|---|---|---|---|---|---|
 | `TETO_DO_TELEPORTE_DA_FAY` | 2 s | = | TETO | [ui_service.py:52](blazesbot/bot/bc/ui_service.py#L52) | `viajar_para_ghost_din_woods, _esperar_o_teleporte` | TELEPORTE DA FAY (Stone City -> Ghost Din Woods) |
 | `PASSO_DA_ESPERA_DO_TELEPORTE` | 0.08 s | = | PASSO | [ui_service.py:53](blazesbot/bot/bc/ui_service.py#L53) | `viajar_para_ghost_din_woods, _esperar_o_teleporte` |  |
-| *literal em* `entrar_no_covil_do_boss` | 1.5 s | = | FIXO | [ui_service.py:482](blazesbot/bot/bc/ui_service.py#L482) | `entrar_no_covil_do_boss` | Altar Stone -> "Secret Cemetery", que é a sala do boss. |
-| *literal em* `sair_da_cave` | 1.5 s | = | FIXO | [ui_service.py:519](blazesbot/bot/bc/ui_service.py#L519) | `sair_da_cave` | Skull Herald do covil -> "Leave Bewitcher Cave". |
+| *literal em* `entrar_no_covil_do_boss` | 1.5 s | = | FIXO | [ui_service.py:497](blazesbot/bot/bc/ui_service.py#L497) | `entrar_no_covil_do_boss` | Altar Stone -> "Secret Cemetery", que é a sala do boss. |
+| *literal em* `sair_da_cave` | 1.5 s | = | FIXO | [ui_service.py:534](blazesbot/bot/bc/ui_service.py#L534) | `sair_da_cave` | Skull Herald do covil -> "Leave Bewitcher Cave". |
 
 
 ## FORA DA CAVE — montaria e trajeto
@@ -73,25 +73,25 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | `INTERVALO_REMONTAR` | 3 s | = | FIXO | [navegacao.py:290](blazesbot/bot/navegacao.py#L290) | `_pode_tocar_na_montaria, _manter_montaria` | A MONTARIA É PRÉ-REQUISITO DE ANDAR, NÃO UMA OTIMIZAÇÃO |
 | `TETO_DO_PORTAO` | 6 s | = | TETO | [navegacao.py:317](blazesbot/bot/navegacao.py#L317) | `garantir_montaria_para_andar` | A ORDEM DO PORTÃO: CONFERIR -> ATIVAR -> CONFIRMAR -> ANDAR |
 | `INTERVALO_PARADA_POCAO` | 10 s | = | FIXO | [navegacao.py:389](blazesbot/bot/navegacao.py#L389) | `_manutencao_em_movimento` | Recarga da PARADA para tomar poção durante o trajeto. |
-| *literal em* `wait_until_still` | 0.25 s | = | FIXO | [navegacao.py:497](blazesbot/bot/navegacao.py#L497) | `wait_until_still` | Espera o personagem parar de andar. |
-| *literal em* `_abrir_mapa` | 0.5 s | = | FIXO | [navegacao.py:521](blazesbot/bot/navegacao.py#L521) | `_abrir_mapa` |  |
-| *literal em* `_fechar_mapa` | 0.3 s | = | FIXO | [navegacao.py:527](blazesbot/bot/navegacao.py#L527) | `_fechar_mapa` |  |
-| *literal em* `_mover_pelo_mapa` | 0.2 s | = | FIXO | [navegacao.py:565](blazesbot/bot/navegacao.py#L565) | `_mover_pelo_mapa` | Anda até `alvo` usando o mapa-múndi. |
-| *literal em* `_mover_pelo_mapa` | 1 s | = | FIXO | [navegacao.py:571](blazesbot/bot/navegacao.py#L571) | `_mover_pelo_mapa` | Anda até `alvo` usando o mapa-múndi. |
-| *literal em* `_clicar_offset_e_verificar` | 0.1 s | = | FIXO | [navegacao.py:871](blazesbot/bot/navegacao.py#L871) | `_clicar_offset_e_verificar` | Clique curto num offset e medição: o personagem andou? |
-| *literal em* `_parada_para_pocao` | 0.25 s | = | FIXO | [navegacao.py:969](blazesbot/bot/navegacao.py#L969) | `_parada_para_pocao` | Desmonta, toma poção e remonta. É a ÚNICA forma que funciona. |
-| *literal em* `_parada_para_pocao` | 0.2 s | = | FIXO | [navegacao.py:980](blazesbot/bot/navegacao.py#L980) | `_parada_para_pocao` | Desmonta, toma poção e remonta. É a ÚNICA forma que funciona. |
-| *literal em* `follow_path` | 0.25 s | = | FIXO | [navegacao.py:1238](blazesbot/bot/navegacao.py#L1238) | `follow_path` | Percorre waypoints em ordem, SEM parar entre eles. |
-| *literal em* `travel_via_surroundings` | 0.5 s | = | FIXO | [navegacao.py:1536](blazesbot/bot/navegacao.py#L1536) | `travel_via_surroundings` | Usa o painel Surroundings como teleporte por nome. |
-| *literal em* `travel_via_surroundings` | 0.2 s | = | FIXO | [navegacao.py:1538](blazesbot/bot/navegacao.py#L1538) | `travel_via_surroundings` | Usa o painel Surroundings como teleporte por nome. |
-| *literal em* `travel_via_surroundings` | 0.15 s | = | FIXO | [navegacao.py:1540](blazesbot/bot/navegacao.py#L1540) | `travel_via_surroundings` | Usa o painel Surroundings como teleporte por nome. |
-| *literal em* `travel_via_surroundings` | 0.4 s | = | FIXO | [navegacao.py:1542](blazesbot/bot/navegacao.py#L1542) | `travel_via_surroundings` | Usa o painel Surroundings como teleporte por nome. |
-| *literal em* `travel_via_surroundings` | 0.25 s | = | FIXO | [navegacao.py:1555](blazesbot/bot/navegacao.py#L1555) | `travel_via_surroundings` | Usa o painel Surroundings como teleporte por nome. |
-| *literal em* `travel_via_surroundings` | 0.5 s | = | FIXO | [navegacao.py:1561](blazesbot/bot/navegacao.py#L1561) | `travel_via_surroundings` | Usa o painel Surroundings como teleporte por nome. |
-| *literal em* `travel_via_surroundings` | 0.25 s | = | FIXO | [navegacao.py:1563](blazesbot/bot/navegacao.py#L1563) | `travel_via_surroundings` | Usa o painel Surroundings como teleporte por nome. |
-| *literal em* `ensure_mounted` | 1 s | = | FIXO | [navegacao.py:1928](blazesbot/bot/navegacao.py#L1928) | `ensure_mounted` |  |
-| *literal em* `ensure_mounted` | 1 s | = | FIXO | [navegacao.py:1939](blazesbot/bot/navegacao.py#L1939) | `ensure_mounted` |  |
-| *literal em* `ensure_dismounted` | 0.75 s | = | FIXO | [navegacao.py:1987](blazesbot/bot/navegacao.py#L1987) | `ensure_dismounted` |  |
+| *literal em* `wait_until_still` | 0.25 s | = | FIXO | [navegacao.py:502](blazesbot/bot/navegacao.py#L502) | `wait_until_still` | Espera o personagem parar de andar. |
+| *literal em* `_abrir_mapa` | 0.5 s | = | FIXO | [navegacao.py:526](blazesbot/bot/navegacao.py#L526) | `_abrir_mapa` |  |
+| *literal em* `_fechar_mapa` | 0.3 s | = | FIXO | [navegacao.py:532](blazesbot/bot/navegacao.py#L532) | `_fechar_mapa` |  |
+| *literal em* `_mover_pelo_mapa` | 0.2 s | = | FIXO | [navegacao.py:570](blazesbot/bot/navegacao.py#L570) | `_mover_pelo_mapa` | Anda até `alvo` usando o mapa-múndi. |
+| *literal em* `_mover_pelo_mapa` | 1 s | = | FIXO | [navegacao.py:576](blazesbot/bot/navegacao.py#L576) | `_mover_pelo_mapa` | Anda até `alvo` usando o mapa-múndi. |
+| *literal em* `_clicar_offset_e_verificar` | 0.1 s | = | FIXO | [navegacao.py:876](blazesbot/bot/navegacao.py#L876) | `_clicar_offset_e_verificar` | Clique curto num offset e medição: o personagem andou? |
+| *literal em* `_parada_para_pocao` | 0.25 s | = | FIXO | [navegacao.py:974](blazesbot/bot/navegacao.py#L974) | `_parada_para_pocao` | Desmonta, toma poção e remonta. É a ÚNICA forma que funciona. |
+| *literal em* `_parada_para_pocao` | 0.2 s | = | FIXO | [navegacao.py:985](blazesbot/bot/navegacao.py#L985) | `_parada_para_pocao` | Desmonta, toma poção e remonta. É a ÚNICA forma que funciona. |
+| *literal em* `follow_path` | 0.25 s | = | FIXO | [navegacao.py:1250](blazesbot/bot/navegacao.py#L1250) | `follow_path` | Percorre waypoints em ordem, SEM parar entre eles. |
+| *literal em* `travel_via_surroundings` | 0.5 s | = | FIXO | [navegacao.py:1548](blazesbot/bot/navegacao.py#L1548) | `travel_via_surroundings` | Usa o painel Surroundings como teleporte por nome. |
+| *literal em* `travel_via_surroundings` | 0.2 s | = | FIXO | [navegacao.py:1550](blazesbot/bot/navegacao.py#L1550) | `travel_via_surroundings` | Usa o painel Surroundings como teleporte por nome. |
+| *literal em* `travel_via_surroundings` | 0.15 s | = | FIXO | [navegacao.py:1552](blazesbot/bot/navegacao.py#L1552) | `travel_via_surroundings` | Usa o painel Surroundings como teleporte por nome. |
+| *literal em* `travel_via_surroundings` | 0.4 s | = | FIXO | [navegacao.py:1554](blazesbot/bot/navegacao.py#L1554) | `travel_via_surroundings` | Usa o painel Surroundings como teleporte por nome. |
+| *literal em* `travel_via_surroundings` | 0.25 s | = | FIXO | [navegacao.py:1567](blazesbot/bot/navegacao.py#L1567) | `travel_via_surroundings` | Usa o painel Surroundings como teleporte por nome. |
+| *literal em* `travel_via_surroundings` | 0.5 s | = | FIXO | [navegacao.py:1573](blazesbot/bot/navegacao.py#L1573) | `travel_via_surroundings` | Usa o painel Surroundings como teleporte por nome. |
+| *literal em* `travel_via_surroundings` | 0.25 s | = | FIXO | [navegacao.py:1575](blazesbot/bot/navegacao.py#L1575) | `travel_via_surroundings` | Usa o painel Surroundings como teleporte por nome. |
+| *literal em* `ensure_mounted` | 1 s | = | FIXO | [navegacao.py:1940](blazesbot/bot/navegacao.py#L1940) | `ensure_mounted` |  |
+| *literal em* `ensure_mounted` | 1 s | = | FIXO | [navegacao.py:1951](blazesbot/bot/navegacao.py#L1951) | `ensure_mounted` |  |
+| *literal em* `ensure_dismounted` | 0.75 s | = | FIXO | [navegacao.py:1999](blazesbot/bot/navegacao.py#L1999) | `ensure_dismounted` |  |
 
 
 ## FORA DA CAVE — pontos exatos
@@ -114,9 +114,9 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | `SEGUNDOS_ESPERANDO_A_BOLSA` | 0.2 s | = | FIXO | [routine.py:301](blazesbot/bot/bc/routine.py#L301) | `_usar_package_courage` | Quanto esperar a bolsa CONFIRMAR que abriu, lendo a memória. |
 | `PASSO_DA_ESPERA_DA_BOLSA` | 0.05 s | = | PASSO | [routine.py:326](blazesbot/bot/bc/routine.py#L326) | `_usar_package_courage` | De quanto em quanto tempo perguntar se a bolsa já abriu. Era 0,15 s, o que |
 | `ASSENTAMENTO_DA_BOLSA` | 0.14 s | = | FIXO | [routine.py:332](blazesbot/bot/bc/routine.py#L332) | `_usar_package_courage` | Depois que a MEMÓRIA confirma a bolsa aberta, o quanto esperar o DESENHO dela. |
-| *literal em* `_do_situar` | 1 s | = | FIXO | [routine.py:535](blazesbot/bot/bc/routine.py#L535) | `_do_situar` | Olha onde o personagem está e entra no estado que faz sentido. |
-| *literal em* `_do_preparar` | 0.2 s | = | FIXO | [routine.py:628](blazesbot/bot/bc/routine.py#L628) | `_do_preparar` |  |
-| *literal em* `_do_recuperar` | 3 s | = | FIXO | [routine.py:2350](blazesbot/bot/bc/routine.py#L2350) | `_do_recuperar` | Recuperação após morte ou falhas em sequência. |
+| *literal em* `_do_situar` | 1 s | = | FIXO | [routine.py:538](blazesbot/bot/bc/routine.py#L538) | `_do_situar` | Olha onde o personagem está e entra no estado que faz sentido. |
+| *literal em* `_do_preparar` | 0.2 s | = | FIXO | [routine.py:631](blazesbot/bot/bc/routine.py#L631) | `_do_preparar` |  |
+| *literal em* `_do_recuperar` | 3 s | = | FIXO | [routine.py:2353](blazesbot/bot/bc/routine.py#L2353) | `_do_recuperar` | Recuperação após morte ou falhas em sequência. |
 
 
 ## DENTRO DA CAVE — combate
@@ -267,7 +267,7 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | *literal em* `ensure_pet` | 1.5 s | = | FIXO | [combate.py:3233](blazesbot/bot/combate.py#L3233) | `ensure_pet` | Garante que o pet está invocado. |
 | *literal em* `apply_buffs` | 0.6 s | = | FIXO | [combate.py:3260](blazesbot/bot/combate.py#L3260) | `apply_buffs` | Aplica os buffs configurados, em si mesmo. |
 | `FATIA_DA_ESPERA` | 0.25 s | = | PASSO | [context.py:211](blazesbot/bot/context.py#L211) | `tick` | Fatia máxima de sono dentro de um `tick`. |
-| *literal em* `wait_if_paused` | 0.075 s | = | FIXO | [context.py:498](blazesbot/bot/context.py#L498) | `wait_if_paused` | Bloqueia enquanto a pausa estiver ativa. |
+| *literal em* `wait_if_paused` | 0.075 s | = | FIXO | [context.py:512](blazesbot/bot/context.py#L512) | `wait_if_paused` | Bloqueia enquanto a pausa estiver ativa. |
 | `PASSO_DA_FADA` | 0.1 s | *novo* | PASSO | [fada.py:78](blazesbot/bot/fada.py#L78) | `rodar` | Cadência do laço da Fada quando não há nada a fazer. |
 | `TETO_PARA_O_ALVO_VIRAR` | 0.4 s | *novo* | TETO | [fada.py:85](blazesbot/bot/fada.py#L85) | `_clique_saiu_errado` | Depois do clique no retrato, quanto esperar a memória mostrar o alvo novo. |
 | `PASSO_DA_CONFERENCIA_DO_ALVO` | 0.02 s | *novo* | PASSO | [fada.py:86](blazesbot/bot/fada.py#L86) | `_clique_saiu_errado` |  |
@@ -287,8 +287,8 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | *literal em* `entrar` | 0.25 s | *novo* | FIXO | [fada.py:250](blazesbot/bot/hh/fada.py#L250) | `entrar` | Entra na cave. Mesma porta, mesma máquina, mesmo NPC do líder. |
 | `PASSO_DENTRO_DA_CAVE` | 0.05 s | *novo* | PASSO | [routine.py:90](blazesbot/bot/hh/routine.py#L90) | `run` | Quanto esperar entre estados DENTRO da cave. |
 | `PASSO_FORA_DA_CAVE` | 0.4 s | *novo* | PASSO | [routine.py:91](blazesbot/bot/hh/routine.py#L91) | `run` |  |
-| *literal em* `_do_situar` | 1 s | *novo* | FIXO | [routine.py:259](blazesbot/bot/hh/routine.py#L259) | `_do_situar` | Descobre em que ponto do ciclo a conta está, e entra por ali. |
-| *literal em* `_do_recuperar` | 2 s | *novo* | FIXO | [routine.py:667](blazesbot/bot/hh/routine.py#L667) | `_do_recuperar` | Algo saiu do roteiro. Volta a se situar, sem inventar. |
+| *literal em* `_do_situar` | 1 s | *novo* | FIXO | [routine.py:260](blazesbot/bot/hh/routine.py#L260) | `_do_situar` | Descobre em que ponto do ciclo a conta está, e entra por ali. |
+| *literal em* `_do_recuperar` | 2 s | *novo* | FIXO | [routine.py:709](blazesbot/bot/hh/routine.py#L709) | `_do_recuperar` | Algo saiu do roteiro. Volta a se situar, sem inventar. |
 | `SEGUNDOS_POR_TENTATIVA` | 1.8 s | *novo* | FIXO | [vendedor.py:68](blazesbot/bot/hh/vendedor.py#L68) | `encostar_no_ponto_da_venda` |  |
 | `RECARGA` | 5 s | = | FIXO | [hotbar.py:63](blazesbot/bot/hotbar.py#L63) | `garantir_pagina_1` | Recarga do caminho com `ctx`. Os momentos-chave acontecem em rajada -- o portão |
 | `PASSO_DA_SONDA` | 0.012 s | = | PASSO | [instrumentar_clique.py:110](blazesbot/bot/instrumentar_clique.py#L110) | `_sondar_ate_mudar` | De quanto em quanto tempo a sonda fotografa o minimapa esperando o efeito. |
@@ -313,24 +313,24 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | `ESPERA_DO_MENU` | 0.35 s | = | FIXO | [team.py:134](blazesbot/bot/team.py#L134) | `_enviar_convite` | Tempo para o menu de contexto aparecer depois do clique direito. |
 | `ESPERA_PELA_RESPOSTA` | 4 s | = | FIXO | [team.py:139](blazesbot/bot/team.py#L139) | `montar_time` | Quanto esperar a outra conta aceitar. Ela recebe o anúncio interno e clica no |
 | `PASSO_DA_ESPERA_DO_TIME` | 0.1 s | = | PASSO | [team.py:147](blazesbot/bot/team.py#L147) | `montar_time` | De quanto em quanto tempo conferir se o time já formou. |
-| *literal em* `_abrir_lista` | 0.6 s | = | FIXO | [team.py:277](blazesbot/bot/team.py#L277) | `_abrir_lista` | Abre a lista de amigos e vai para a aba Block. |
-| *literal em* `_abrir_lista` | 0.45 s | = | FIXO | [team.py:282](blazesbot/bot/team.py#L282) | `_abrir_lista` | Abre a lista de amigos e vai para a aba Block. |
-| *literal em* `_fechar_janelas` | 0.35 s | = | FIXO | [team.py:310](blazesbot/bot/team.py#L310) | `_fechar_janelas` | Fecha a caixa de nick e a lista de amigos, CONFIRMANDO que fecharam. |
-| *literal em* `_fechar_janelas` | 0.4 s | = | FIXO | [team.py:318](blazesbot/bot/team.py#L318) | `_fechar_janelas` | Fecha a caixa de nick e a lista de amigos, CONFIRMANDO que fecharam. |
-| *literal em* `_fechar_janelas` | 0.3 s | = | FIXO | [team.py:326](blazesbot/bot/team.py#L326) | `_fechar_janelas` | Fecha a caixa de nick e a lista de amigos, CONFIRMANDO que fecharam. |
-| *literal em* `_limpar_lista` | 0.15 s | = | FIXO | [team.py:356](blazesbot/bot/team.py#L356) | `_limpar_lista` | Remove todas as entradas da Block list. |
-| *literal em* `_limpar_lista` | 0.25 s | = | FIXO | [team.py:358](blazesbot/bot/team.py#L358) | `_limpar_lista` | Remove todas as entradas da Block list. |
-| *literal em* `_limpar_lista` | 0.2 s | = | FIXO | [team.py:362](blazesbot/bot/team.py#L362) | `_limpar_lista` | Remove todas as entradas da Block list. |
-| *literal em* `_adicionar_nick` | 0.5 s | = | FIXO | [team.py:373](blazesbot/bot/team.py#L373) | `_adicionar_nick` | Adiciona um nick à Block list pelo botão Block. |
-| *literal em* `_adicionar_nick` | 0.2 s | = | FIXO | [team.py:381](blazesbot/bot/team.py#L381) | `_adicionar_nick` | Adiciona um nick à Block list pelo botão Block. |
-| *literal em* `_adicionar_nick` | 0.1 s | = | FIXO | [team.py:383](blazesbot/bot/team.py#L383) | `_adicionar_nick` | Adiciona um nick à Block list pelo botão Block. |
-| *literal em* `_adicionar_nick` | 0.2 s | = | FIXO | [team.py:385](blazesbot/bot/team.py#L385) | `_adicionar_nick` | Adiciona um nick à Block list pelo botão Block. |
-| *literal em* `_adicionar_nick` | 0.6 s | = | FIXO | [team.py:387](blazesbot/bot/team.py#L387) | `_adicionar_nick` | Adiciona um nick à Block list pelo botão Block. |
-| *literal em* `_enviar_convite` | 0.5 s | = | FIXO | [team.py:520](blazesbot/bot/team.py#L520) | `_enviar_convite` | Envia o convite pelo MENU DE CONTEXTO da entrada na Block list. |
-| *literal em* `sair_do_time` | 0.4 s | = | FIXO | [team.py:683](blazesbot/bot/team.py#L683) | `sair_do_time` | Sai do time por DOIS CLIQUES medidos no cliente. |
-| *literal em* `sair_do_time` | 0.5 s | = | FIXO | [team.py:698](blazesbot/bot/team.py#L698) | `sair_do_time` | Sai do time por DOIS CLIQUES medidos no cliente. |
-| *literal em* `_aceitar` | 0.5 s | = | FIXO | [team.py:936](blazesbot/bot/team.py#L936) | `_aceitar` |  |
-| *literal em* `_recusar` | 0.5 s | = | FIXO | [team.py:943](blazesbot/bot/team.py#L943) | `_recusar` |  |
+| *literal em* `_abrir_lista` | 0.6 s | = | FIXO | [team.py:293](blazesbot/bot/team.py#L293) | `_abrir_lista` | Abre a lista de amigos e vai para a aba Block. |
+| *literal em* `_abrir_lista` | 0.45 s | = | FIXO | [team.py:298](blazesbot/bot/team.py#L298) | `_abrir_lista` | Abre a lista de amigos e vai para a aba Block. |
+| *literal em* `_fechar_janelas` | 0.35 s | = | FIXO | [team.py:326](blazesbot/bot/team.py#L326) | `_fechar_janelas` | Fecha a caixa de nick e a lista de amigos, CONFIRMANDO que fecharam. |
+| *literal em* `_fechar_janelas` | 0.4 s | = | FIXO | [team.py:334](blazesbot/bot/team.py#L334) | `_fechar_janelas` | Fecha a caixa de nick e a lista de amigos, CONFIRMANDO que fecharam. |
+| *literal em* `_fechar_janelas` | 0.3 s | = | FIXO | [team.py:342](blazesbot/bot/team.py#L342) | `_fechar_janelas` | Fecha a caixa de nick e a lista de amigos, CONFIRMANDO que fecharam. |
+| *literal em* `_limpar_lista` | 0.15 s | = | FIXO | [team.py:372](blazesbot/bot/team.py#L372) | `_limpar_lista` | Remove todas as entradas da Block list. |
+| *literal em* `_limpar_lista` | 0.25 s | = | FIXO | [team.py:374](blazesbot/bot/team.py#L374) | `_limpar_lista` | Remove todas as entradas da Block list. |
+| *literal em* `_limpar_lista` | 0.2 s | = | FIXO | [team.py:378](blazesbot/bot/team.py#L378) | `_limpar_lista` | Remove todas as entradas da Block list. |
+| *literal em* `_adicionar_nick` | 0.5 s | = | FIXO | [team.py:389](blazesbot/bot/team.py#L389) | `_adicionar_nick` | Adiciona um nick à Block list pelo botão Block. |
+| *literal em* `_adicionar_nick` | 0.2 s | = | FIXO | [team.py:397](blazesbot/bot/team.py#L397) | `_adicionar_nick` | Adiciona um nick à Block list pelo botão Block. |
+| *literal em* `_adicionar_nick` | 0.1 s | = | FIXO | [team.py:399](blazesbot/bot/team.py#L399) | `_adicionar_nick` | Adiciona um nick à Block list pelo botão Block. |
+| *literal em* `_adicionar_nick` | 0.2 s | = | FIXO | [team.py:401](blazesbot/bot/team.py#L401) | `_adicionar_nick` | Adiciona um nick à Block list pelo botão Block. |
+| *literal em* `_adicionar_nick` | 0.6 s | = | FIXO | [team.py:403](blazesbot/bot/team.py#L403) | `_adicionar_nick` | Adiciona um nick à Block list pelo botão Block. |
+| *literal em* `_enviar_convite` | 0.5 s | = | FIXO | [team.py:536](blazesbot/bot/team.py#L536) | `_enviar_convite` | Envia o convite pelo MENU DE CONTEXTO da entrada na Block list. |
+| *literal em* `sair_do_time` | 0.4 s | = | FIXO | [team.py:699](blazesbot/bot/team.py#L699) | `sair_do_time` | Sai do time por DOIS CLIQUES medidos no cliente. |
+| *literal em* `sair_do_time` | 0.5 s | = | FIXO | [team.py:714](blazesbot/bot/team.py#L714) | `sair_do_time` | Sai do time por DOIS CLIQUES medidos no cliente. |
+| *literal em* `_aceitar` | 0.5 s | = | FIXO | [team.py:957](blazesbot/bot/team.py#L957) | `_aceitar` |  |
+| *literal em* `_recusar` | 0.5 s | = | FIXO | [team.py:964](blazesbot/bot/team.py#L964) | `_recusar` |  |
 | `ESPERA_DEPOIS_DO_CLIQUE` | 0.35 s | = | FIXO | [teste_do_cursor.py:100](blazesbot/bot/teste_do_cursor.py#L100) | `_uma_fase` |  |
 | *literal em* `main` | 8 s | = | FIXO | [teste_do_cursor.py:476](blazesbot/bot/teste_do_cursor.py#L476) | `main` |  |
 | `PASSO_DA_ESPERA_DO_DIALOGO` | 0.08 s | = | PASSO | [ui_do_jogo.py:141](blazesbot/bot/ui_do_jogo.py#L141) | `_esperar_o_dialogo` | Diálogo do NPC aparecer. Era 0,30 s fixos, gastos inteiros mesmo quando o |

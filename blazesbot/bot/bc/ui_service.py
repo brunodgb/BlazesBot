@@ -83,6 +83,21 @@ TENTATIVAS_DE_POSICIONAR_NA_ENTRADA = 3
 class UIService(UIDoJogo):
     """As portas da Bewitcher Cave. A máquina de janela vem de `UIDoJogo`."""
 
+    def __init__(self, ctx, navigator=None) -> None:
+        """O navegador nasce com o MAPA DA BEWITCHER CAVE quando não vem pronto.
+
+        Sem isto, quem constrói sem passar o navegador (a ferramenta "Testar
+        Venda", por exemplo) recebia um navegador SEM MAPA -- e a tolerância dos
+        waypoints problemáticos da cave sumia em silêncio.
+
+        Não é o chamador que tem de lembrar: é o ecossistema que sabe o mapa
+        dele. Mesmo princípio de um ecossistema funcionar sozinho.
+        """
+        from ..navegacao import Navigator
+        from . import mapa_bc
+
+        super().__init__(ctx, navigator or Navigator(ctx, mapa_bc))
+
     def viajar_para_ghost_din_woods(self) -> bool:
         """Stone City -> Ghost Din Woods, pelo NPC Transport Fay.
 

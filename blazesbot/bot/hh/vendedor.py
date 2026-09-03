@@ -75,7 +75,9 @@ class VendedorDaHH(JanelaDeVenda):
 
     def __init__(self, ctx: BotContext,
                  navigator: Navigator | None = None) -> None:
-        super().__init__(ctx, navigator)
+        # O navegador nasce com o MAPA DA HH quando não vem pronto -- ver o
+        # construtor equivalente de `bc/vendor.py`.
+        super().__init__(ctx, navigator or Navigator(ctx, mapa_hh))
         self._avisou_sem_template = False
 
     # ==================================================================

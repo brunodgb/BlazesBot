@@ -162,9 +162,25 @@ MAX_CLIQUES_DE_ACEITE = 5
 class TeamService:
     """Monta e desfaz time para forçar o reset da cave."""
 
-    def __init__(self, ctx: BotContext) -> None:
+    def __init__(self, ctx: BotContext, nick_do_reset=None) -> None:
         self.ctx = ctx
+        # QUEM CONVIDAR, injetado por quem construiu.
+        #
+        # ERA `ctx.settings.bc.reset_nick` LIDO AQUI DENTRO, e isso deixou a HH
+        # sem time: o usuário configurou `hh.reset_nick` e o `bc.reset_nick`
+        # estava vazio, então `montar_time` devolvia False na primeira linha e a
+        # rotina caía em RECUPERAR -- em laço, para sempre. Medido em
+        # 03/09/2026.
+        #
+        # `None` = a do BC, que é o comportamento de sempre.
+        self._nick_do_reset = nick_do_reset
         self.aprendidos = LearnedCrops(ctx.templates.folder / "aprendidos")
+
+    def nick_do_reset(self) -> str:
+        """O nick da conta que reseta a cave que está rodando."""
+        if self._nick_do_reset is not None:
+            return str(self._nick_do_reset() or "").strip()
+        return self.ctx.settings.bc.reset_nick.strip()
 
     # -- utilidades --------------------------------------------------------
 
@@ -547,7 +563,7 @@ class TeamService:
         recebe o aviso e clica no Ok.
         """
         ctx = self.ctx
-        nick = ctx.settings.bc.reset_nick.strip()
+        nick = self.nick_do_reset()
         if not nick:
             return False
 
@@ -779,9 +795,14 @@ class InviteAcceptor:
         meu = self._meu_nick.lower()
         if not meu:
             return False
+        # AS DUAS CAVES. Olhar só `bc.reset_nick` deixava o reseter da HH
+        # invisível: o modo estrito não ligava por causa dele, e um convite da
+        # HH chegava sem ninguém reconhecer quem convidou.
         return any(
-            conta.settings.bc.reset_nick.strip().lower() == meu
+            nick.strip().lower() == meu
             for conta in self.ctx.config.farming_accounts()
+            for nick in (conta.settings.bc.reset_nick,
+                         conta.settings.hh.reset_nick)
         )
 
     def _achar_caixa(self, quadro) -> tuple[int, int] | None:

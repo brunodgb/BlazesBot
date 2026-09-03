@@ -42,6 +42,21 @@ class VendorBC(JanelaDeVenda):
 
     NOME_DO_VENDEDOR = "Rich Man"
 
+    def __init__(self, ctx, navigator=None) -> None:
+        """O navegador nasce com o MAPA DA BEWITCHER CAVE quando não vem pronto.
+
+        Sem isto, quem constrói sem passar o navegador (a ferramenta "Testar
+        Venda", por exemplo) recebia um navegador SEM MAPA -- e a tolerância dos
+        waypoints problemáticos da cave sumia em silêncio.
+
+        Não é o chamador que tem de lembrar: é o ecossistema que sabe o mapa
+        dele. Mesmo princípio de um ecossistema funcionar sozinho.
+        """
+        from ..navegacao import Navigator
+        from . import mapa_bc
+
+        super().__init__(ctx, navigator or Navigator(ctx, mapa_bc))
+
     def _ui_do_jogo(self):
         """A UI da BC, e não a genérica: a venda inicial acontece em Stone City,
         de onde a rotina também pode precisar viajar para a cave."""

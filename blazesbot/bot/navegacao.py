@@ -396,6 +396,11 @@ class _SemMapa:
     e para deixar explícito que "sem mapa" é uma resposta, não um erro.
     """
 
+    # Nenhum waypoint problemático conhecido. EXPLÍCITO em vez de deixar o
+    # `getattr` do chamador decidir: assim o contrato do mapa aparece aqui, e
+    # não espalhado em cada leitor.
+    WAYPOINTS_PROBLEMATICOS: tuple = ()
+
     @staticmethod
     def tolerancia_do_waypoint(wp, base: int, apertada: int) -> int:
         return base
@@ -1139,7 +1144,14 @@ class Navigator:
                 for wp in rota
             ]
         else:
-            problematicos = {tuple(p) for p in ctx.settings.route.tricky_waypoints}
+            # DO MAPA INJETADO, e não de `settings.route` -- que é um atalho
+            # para `bc.route` e traria os waypoints problemáticos da Bewitcher
+            # Cave para dentro da navegação da HH. Os dois mapas expõem o mesmo
+            # nome, e `getattr` cobre o mapa ausente (`_SemMapa`).
+            problematicos = {
+                tuple(p)
+                for p in getattr(self.mapa, "WAYPOINTS_PROBLEMATICOS", ())
+            }
             tolerancias = [
                 max(tolerance, TRICKY_TOLERANCE) if w in problematicos else tolerance
                 for w in caminho

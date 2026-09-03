@@ -61,7 +61,7 @@ class SkillDeVelocidade:
 
     @property
     def habilitada(self) -> bool:
-        return bool(self.tecla and self.ctx.settings.bc.usar_skill_de_velocidade)
+        return bool(self.tecla and self.ctx.cave.usar_skill_de_velocidade)
 
     @property
     def segundos_de_recarga(self) -> float:

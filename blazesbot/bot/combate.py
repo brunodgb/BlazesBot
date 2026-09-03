@@ -1507,7 +1507,7 @@ class CombatEngine:
             self.ctx.press(key)
         # Espera o intervalo mesmo sem rotação: sem isso o laço da luta giraria
         # sem pausa nenhuma, queimando CPU de todas as contas ao mesmo tempo.
-        self.ctx.tick(self.ctx.settings.bc.attack_delay)
+        self.ctx.tick(self.ctx.cave.attack_delay)
 
     def _proxima_skill(self, state, usar_aoe: bool) -> str | None:
         """A próxima tecla da rotação, já avançando o índice. `None` se não há.
@@ -2181,7 +2181,7 @@ class CombatEngine:
                         if key is not None:
                             ctx.press(key)
                             golpes += 1
-                            proximo_ataque = agora + ctx.settings.bc.attack_delay
+                            proximo_ataque = agora + ctx.cave.attack_delay
                 else:
                     ja_entrou = True
 
@@ -2406,7 +2406,7 @@ class CombatEngine:
                     and agora >= proximo_ataque):
                 if state is None:
                     state = ctx.snapshot()
-                proximo_ataque = agora + ctx.settings.bc.attack_delay
+                proximo_ataque = agora + ctx.cave.attack_delay
 
                 # PORTÃO DO ALVO. Só os guardas o usam. No BOSS ele NÃO existe:
                 # entrou em combate, ataca -- lá o TAB no meio da luta trocava o
@@ -2764,7 +2764,7 @@ class CombatEngine:
                     return True, golpes
 
             if agora >= proximo_ataque:
-                proximo_ataque = agora + ctx.settings.bc.attack_delay
+                proximo_ataque = agora + ctx.cave.attack_delay
                 if self._pode_bater_no_destravamento():
                     if state is None:
                         state = ctx.snapshot()

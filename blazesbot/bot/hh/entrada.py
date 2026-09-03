@@ -94,7 +94,9 @@ class EntradaDaHH(UIDoJogo):
 
     def __init__(self, ctx: BotContext,
                  navigator: Navigator | None = None) -> None:
-        super().__init__(ctx, navigator)
+        # O navegador nasce com o MAPA DA HH quando não vem pronto -- ver o
+        # construtor equivalente de `bc/ui_service.py`.
+        super().__init__(ctx, navigator or Navigator(ctx, mapa_hh))
         # Coordenadas aprendidas na primeira tentativa de entrada, para as
         # seguintes custarem dois cliques em vez de duas buscas por imagem. Ver
         # `UIDoJogo.preparar_entrada` para o porquê de serem esquecidas.

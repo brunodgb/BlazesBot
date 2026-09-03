@@ -464,6 +464,20 @@ class BotContext:
         if self.stop_event.is_set():
             raise StopRequested()
 
+    @property
+    def cave(self):
+        """A configuração da cave que está rodando (`settings.bc` ou `.hh`).
+
+        É POR AQUI que os motores compartilhados leem número de cave, em vez de
+        `settings.bc` direto -- ver `AccountSettings.cave` para o defeito que
+        isso conserta.
+
+        Fora do farm responde a do BC, que é o comportamento de sempre: quem lê
+        um número de cave sem estar numa cave está numa ferramenta ou num teste,
+        e ali o BC é o padrão histórico.
+        """
+        return self.settings.cave(self.cave_em_farm)
+
     def _a_cave_continua_ligada(self) -> bool:
         """O interruptor da cave que está rodando continua marcado?
 
