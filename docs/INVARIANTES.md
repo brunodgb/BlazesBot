@@ -279,6 +279,26 @@ time a flag não faz nada.
 - **`hh/` NUNCA importa de `bc/` nem de `app/`**, e o contrário também não.
   Travado por `tests/test_ecossistemas.py`, que agora cruza TODOS os pares de
   ecossistema — pasta nova ganha as verificações de graça.
+- **TODO IMPORT RELATIVO TEM QUE APONTAR PARA ALGO QUE EXISTE** (02/09/2026,
+  `test_todo_import_relativo_aponta_para_algo_que_existe`). É a trava que faltava
+  para o refactor de pastas: o teste acima só pergunta *"importa de outro
+  ecossistema?"*, e um import que aponta para o VAZIO não cita ecossistema
+  nenhum. **Medido:** o `cd2ef2b` subiu `bc/ui_service.py` para
+  `bot/ui_do_jogo.py` levando junto um `from . import mapa_bc` escrito dentro de
+  uma função — na casa nova o `.` virou `bot/`, onde `mapa_bc` não existe. Como
+  o import era LOCAL, o módulo carregava, o bot arrancava e a suíte passava; o
+  erro só nascia quando o personagem chegava no ponto e ia clicar num NPC.
+  Resultado no log de 02/09: **42 `cannot import name 'mapa_bc'` seguidos** em
+  `ENTRAR_NO_COVIL` — o bot dizia "Usando o Altar Stone para entrar no covil" e
+  estourava 1 ms depois, sem soltar o clique direito. `sair_da_cave` e a entrada
+  da HH usam a mesma função e estavam quebradas do mesmo jeito, ainda sem
+  ninguém ter visto. O mesmo teste achou um segundo caso na mesma hora:
+  `vendedor.py` com `from ...core.vision` (um nível a mais, sobra da subida de
+  `bc/vendor.py`).
+- **QUEM SOBE PARA `bot/` PERDE O DIREITO A `mapa_bc`.** `bot/` serve todos os
+  ecossistemas: reapontar aquele import para `bc/mapa_bc` teria consertado o
+  sintoma e criado a dependência que a pasta existe para proibir. O certo era o
+  `core` — `mapa_bc.distancia` já era só um reexport de `core.rota.distancia`.
 - **NADA é recriado.** Diretiva do usuário (01/09/2026): *"tudo que já existir no
   nosso BlazesBot você não precisa recriar, apenas utilizar onde necessário."*
   Combate, navegação, painel de arredores, venda, catador, deletador, pet,

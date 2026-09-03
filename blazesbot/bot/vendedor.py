@@ -628,7 +628,13 @@ class JanelaDeVenda:
         """
         import cv2
 
-        from ...core.vision import crop
+        # `..` e nao `...`: este arquivo mora em `bot/`, nao mais em `bot/bc/`.
+        # O nivel a mais sobreviveu a subida de `bc/vendor.py` para
+        # `bot/vendedor.py` e apontava para fora do pacote. Import local,
+        # entao so estouraria na primeira celula lida da bolsa. Mesmo defeito
+        # de `ui_do_jogo.na_posicao_de_clicar`, travado por
+        # `tests/test_ecossistemas.test_todo_import_relativo_aponta_para_algo_que_existe`.
+        from ..core.vision import crop
 
         if quadro is None:
             return None

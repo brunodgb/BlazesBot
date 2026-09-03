@@ -1591,15 +1591,31 @@ class UIDoJogo:
         if atual is None:
             return True
 
-        from . import mapa_bc
-
-        distancia = mapa_bc.distancia(atual, esperada)
-        if distancia <= tolerancia:
+        # `distancia` VEM DO CORE (`core.rota`, importada no topo deste arquivo).
+        #
+        # Aqui havia `from . import mapa_bc` -- um import que sobreviveu a mudanca
+        # de `bc/ui_service.py` para `bot/ui_do_jogo.py` (cd2ef2b) e passou a
+        # apontar para `blazesbot/bot/mapa_bc`, que nao existe. Como o import era
+        # LOCAL, nada quebrou no arranque: ele so estourava quando alguem chegava
+        # no ponto e ia clicar num NPC.
+        #
+        # MEDIDO em 02/09/2026: 42 `cannot import name 'mapa_bc'` seguidos na fase
+        # ENTRAR_NO_COVIL. O log dizia "Usando o Altar Stone para entrar no covil"
+        # e um MILISSEGUNDO depois estourava -- o clique direito nunca saia. De
+        # fora era "o dialogo do Altar Stone nao abre mais e o bot fica em loop".
+        # `sair_da_cave` e a entrada da HH chamam esta mesma funcao e estavam com
+        # o mesmo defeito, ainda nao observado.
+        #
+        # E o conserto NAO e reapontar para `bc/mapa_bc`: este arquivo serve TODOS
+        # os ecossistemas, e `mapa_bc.distancia` ja era so um reexport de
+        # `core.rota.distancia` (ver `mapa_bc.py`, "distancia vem de core/rota.py").
+        quanto = distancia(atual, esperada)
+        if quanto <= tolerancia:
             return True
         ctx.log.warning(
             "Estou em %s, a %.0f unidades de %s — longe demais para %s. As "
             "coordenadas de clique valem só a partir dali.",
-            atual, distancia, esperada, o_que,
+            atual, quanto, esperada, o_que,
         )
         return False
 

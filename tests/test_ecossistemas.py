@@ -133,6 +133,87 @@ def test_o_supervisor_e_a_unica_excecao():
         f"quem conhece ecossistema em bot/: {conhecem}")
 
 
+# ===========================================================================
+# TODO IMPORT RELATIVO TEM QUE APONTAR PARA ALGO QUE EXISTE
+# ===========================================================================
+#
+# O DEFEITO QUE ESTE TESTE TRAVA, medido em 02/09/2026: o refactor `cd2ef2b`
+# moveu `bc/ui_service.py` para `bot/ui_do_jogo.py` e levou junto um
+# `from . import mapa_bc` escrito DENTRO de uma funcao. Na casa nova o `.` passou
+# a ser `blazesbot/bot/`, onde `mapa_bc` nao existe.
+#
+# POR QUE NINGUEM VIU: o import era LOCAL. O modulo carrega, o bot arranca, os
+# testes passam -- e o erro so nasce quando alguem chega no ponto e vai clicar
+# num NPC. No log daquele dia foram 42 `cannot import name 'mapa_bc'` seguidos na
+# fase ENTRAR_NO_COVIL: o bot dizia "Usando o Altar Stone para entrar no covil" e
+# estourava um milissegundo depois, sem nunca soltar o clique direito. De fora
+# parecia "o dialogo do Altar Stone parou de abrir".
+#
+# `test_o_sistema_nao_depende_de_ecossistema_nenhum`, logo acima, NAO pega este
+# caso: um `from . import X` nao cita ecossistema nenhum -- ele so aponta para o
+# vazio. Sao perguntas diferentes, e esta e a que sobrevive a um refactor de
+# pastas.
+
+
+def _relativos_que_nao_resolvem(arquivo: pathlib.Path) -> list[str]:
+    """Imports relativos deste arquivo que apontam para nada."""
+    arvore = ast.parse(arquivo.read_text(encoding="utf-8"))
+    quebrados: list[str] = []
+    for no in ast.walk(arvore):
+        if not isinstance(no, ast.ImportFrom) or not no.level:
+            continue
+        # `.` = a pasta do arquivo; `..` = a de cima, e assim por diante.
+        base = arquivo.parent
+        for _ in range(no.level - 1):
+            base = base.parent
+
+        if no.module:
+            alvo = base.joinpath(*no.module.split("."))
+            if not (alvo.with_suffix(".py").exists() or alvo.is_dir()):
+                quebrados.append(f"L{no.lineno}: from {'.' * no.level}{no.module}")
+            continue
+
+        # `from . import nome`: o nome precisa ser um MODULO da pasta -- ou algo
+        # que o `__init__.py` dela publique.
+        publicados = set()
+        init = base / "__init__.py"
+        if init.exists():
+            publicados = {
+                alvo.id
+                for filho in ast.walk(ast.parse(init.read_text(encoding="utf-8")))
+                if isinstance(filho, (ast.Assign, ast.ImportFrom, ast.Import))
+                for alvo in _nomes_publicados(filho)
+            }
+        for a in no.names:
+            existe = ((base / a.name).with_suffix(".py").exists()
+                      or (base / a.name).is_dir()
+                      or a.name in publicados)
+            if not existe:
+                quebrados.append(f"L{no.lineno}: from {'.' * no.level} import {a.name}")
+    return quebrados
+
+
+def _nomes_publicados(no):
+    """Os nomes que um no de `__init__.py` deixa disponiveis para `from . import`."""
+    if isinstance(no, ast.Assign):
+        return [a for a in no.targets if isinstance(a, ast.Name)]
+    if isinstance(no, (ast.ImportFrom, ast.Import)):
+        return [ast.Name(id=(a.asname or a.name.split(".")[0])) for a in no.names]
+    return []
+
+
+@pytest.mark.parametrize("arquivo", sorted(RAIZ.rglob("*.py")),
+                         ids=lambda p: str(p.relative_to(RAIZ)))
+def test_todo_import_relativo_aponta_para_algo_que_existe(arquivo):
+    quebrados = _relativos_que_nao_resolvem(arquivo)
+    assert not quebrados, (
+        f"{arquivo.relative_to(RAIZ)} tem import relativo apontando para o vazio: "
+        + "; ".join(quebrados)
+        + ". Import dentro de funcao nao quebra o arranque -- ele espera o bot "
+          "chegar naquela linha, em producao."
+    )
+
+
 @pytest.mark.parametrize("arquivo", _arquivos(CORE), ids=lambda p: p.name)
 def test_o_core_nao_conhece_ecossistema_nenhum(arquivo):
     """`core/` é a camada de baixo: se ela importar de `bot/`, a dependência
