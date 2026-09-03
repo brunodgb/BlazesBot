@@ -72,6 +72,17 @@ LUGAR_FORA_DA_HH = "Black Wind Camp Dungeon"
 # abriu no lugar certo antes de confiar no resultado da busca.
 GRUPO_DOS_ARREDORES = "Outside Black Wind Camp"
 
+# O QUE "HH" SIGNIFICA: **Happiness Hall**.
+#
+# Lido no link do diálogo do NPC da entrada em 03/09/2026 -- "Enter Happiness
+# Hall". A sigla é do usuário e do bot em Lua; o jogo escreve o nome inteiro
+# nesse link, e em nenhum outro lugar.
+#
+# NÃO É O NOME DO LUGAR. A ZONA se chama `Black Wind Camp Dungeon` (é o que a
+# memória devolve, e o que entra em `core/lugares.py`); `Happiness Hall` é o
+# nome da INSTÂNCIA, que só aparece no link de entrar.
+NOME_DA_INSTANCIA = "Happiness Hall"
+
 # Marcador para a área que ainda não foi medida. Ver o cabeçalho do módulo: é
 # proposital que isto seja feio e visível.
 AREA_INTERNA_NAO_MEDIDA = "HH (área não medida)"
@@ -116,10 +127,25 @@ POSICAO_DA_MUTUAL = (-358, -288)
 # clique do NPC caiu no White Eagle que estava no caminho, o diálogo não abriu, e
 # a rotina concluiu a coisa errada. Então: **não se clica de fora do ponto.**
 #
-# CONFIRMAÇÃO CRUZADA: o bot Lua usa `entrance = {-342, -286}` como o ponto de
-# onde tenta entrar, a menos de 4 unidades daqui. A coordenada do usuário e a do
-# bot que roda hoje concordam.
-PONTO_DA_ENTRADA = (-343, -289)
+# MEDIDA NA TELA em 03/09/2026, e não mais ditada de memória: o rótulo do canto
+# superior direito do print da entrada (`data/templates/entrada/completa2.png`,
+# com o diálogo do Elite Axe Monk Soldier aberto) diz
+# `Black Wind Camp Dungeon [-342,-288]`.
+#
+# CONFIRMAÇÃO CRUZADA: o bot Lua usa `entrance = {-342, -286}`, a 2 unidades
+# daqui. A medição da tela e o bot que roda hoje concordam.
+PONTO_DA_ENTRADA = (-342, -288)
+
+# O ponto de onde se vende, no `Roaming Apothecary`.
+#
+# É O MESMO DA ENTRADA, e isso não é preguiça: o print do usuário mostra o
+# personagem parado ali com o vendedor logo abaixo dele e o NPC da cave acima,
+# na escada. Um waypoint serve para as duas coisas.
+#
+# SEPARADO NUM NOME PRÓPRIO de propósito. Se o clique no vendedor começar a cair
+# no chão, é ESTE número que se remede -- e mexer nele não pode mexer na
+# entrada, que já está confirmada por duas fontes.
+PONTO_DA_VENDA = PONTO_DA_ENTRADA
 
 # Folga aceita para considerar que já se está no ponto de conversa.
 PRECISAO_NO_PONTO_DA_ENTRADA = 1.5
@@ -377,7 +403,7 @@ def esta_dentro_da_hh(pos: tuple[int, int] | None) -> bool:
     """Dentro da cave, pelo SINAL DA COORDENADA.
 
     É a mesma regra que o bot Lua usa, e ela é forte aqui: fora da cave o X e o Y
-    são NEGATIVOS (a entrada é (-343, -289), o vendedor fica por ali); dentro,
+    são NEGATIVOS (a entrada é (-342, -288), o vendedor fica por ali); dentro,
     ambos são positivos. `if ptr.getX() > 0 and ptr.getY() > 0` aparece em três
     lugares do `farmer.lua` e é como ele reconhece que reviveu dentro da cave e
     não deve tentar entrar de novo.

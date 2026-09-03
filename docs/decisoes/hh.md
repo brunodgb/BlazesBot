@@ -50,7 +50,7 @@ Stone City
                  └─ TP
                       └─ painel de Arredores, aba NPC, busca "Mutual"
                            └─ "Mutual Quest Woman [-358, -288]"
-                                └─ andar até (-343, -289)
+                                └─ andar até (-342, -288)
                                      └─ NPC "Elite Axe Monk Soldier"
                                           └─ entra na cave
 ```
@@ -79,19 +79,19 @@ geometria que um clique de minimapa não atravessa. Medir 30 waypoints novos do
 TP até a entrada seria refazer à mão o que o jogo já faz de graça.
 
 `Mutual Quest Woman` está em `(-358, -288)`; a coordenada de conversa é
-`(-343, -289)`. **A distância entre as duas é o ponto todo:** o painel caminha
+`(-342, -288)`. **A distância entre as duas é o ponto todo:** o painel caminha
 até PERTO (aceita folga por construção), e clicar de onde ele largar é o defeito
 já medido na BC em 25/08/2026 — a 2 passos o clique caiu no White Eagle que
-estava no caminho. Por isso `(-343, -289)` é encostado com o mesmo mecanismo do
+estava no caminho. Por isso `(-342, -288)` é encostado com o mesmo mecanismo do
 `_encostar_na_fay` / `_no_ponto_do_vendedor`, e **não se clica de fora do ponto**.
 
 ### 2.3 A âncora do Lua confirma a coordenada
 
 `hh.lua` usa `entrance = {-342, -286}` como o ponto de onde tenta entrar, e
 `farmer.lua` usa `sellPos = {-344, -297}` para o vendedor. As duas ficam a menos
-de 4 unidades de `(-343, -289)`. Ou seja: **a coordenada do usuário e a do bot
+de 4 unidades de `(-342, -288)`. Ou seja: **a coordenada do usuário e a do bot
 que roda hoje concordam**, o que é a confirmação mais forte disponível sem
-medir de novo. O valor que entra no código é o do usuário, `(-343, -289)`, porque
+medir de novo. O valor que entra no código é o do usuário, `(-342, -288)`, porque
 é o que põe o personagem *de frente* para o Elite Axe Monk Soldier.
 
 ---
@@ -325,6 +325,93 @@ faz?*
 
 ---
 
+## 8.1 O QUE FOI MEDIDO NA TELA EM 03/09/2026
+
+Prints guardados em `data/templates/entrada/` como evidência de onde cada número
+saiu — sem eles, refazer um template daqui a seis meses é procurar a tela de
+novo no jogo.
+
+| o que | valor | de onde |
+|---|---|---|
+| **HH = `Happiness Hall`** | — | o link do diálogo diz *"Enter Happiness Hall"* |
+| waypoint da porta | **(-342, -288)** | rótulo de `completa2.png`: `Black Wind Camp Dungeon [-342,-288]` |
+| posição do Transport Fay | (178, -515) | rótulo de `completa1.png` — confirma `stone_city.POSICAO_DA_FAY` |
+| primeiro link do diálogo | cliente (302, 361) | derivado do recorte de `completa2.png` |
+| ponto do `Roaming Apothecary` | (475, 450) | medido pelo usuário, com o personagem no waypoint |
+| ponto de venda | **o MESMO da porta** | o print mostra o vendedor abaixo do personagem e o NPC da cave acima, na escada |
+
+### `Happiness Hall` NÃO é o nome do lugar
+
+A **zona** se chama `Black Wind Camp Dungeon` — é o que a memória devolve, e o
+que entra em `core/lugares.py`. `Happiness Hall` é o nome da **instância**, e ele
+aparece em um lugar só: o link de entrar. Confundir os dois faria a validação de
+lugar rejeitar a leitura da memória.
+
+### Os três templates, e o que o primeiro ensinou
+
+| arquivo | tamanho | de onde |
+|---|---|---|
+| `link_west_suburb.png` | 151×18 | `completa1.png` |
+| `link_enter_hh.png` | 126×20 | `completa2.png` |
+| `dialogo_seta_baixo.png` | 15×19 | a seta ▼ do diálogo do Fay |
+
+Duas correções foram necessárias, e as duas viraram teste:
+
+1. **O primeiro `link_enter_hh.png` era a TELA INTEIRA** (1029×804). Um template
+   do tamanho da tela casa com escore alto em qualquer lugar e não localiza
+   nada — `find_template` devolveria sempre o mesmo ponto. `test_o_template_e_um_RECORTE_e_nao_uma_tela`
+   não sabe se um recorte está certo, mas sabe que uma tela está errada.
+2. **O `link_west_suburb.png` veio com 5 linhas da linha DE CIMA.** O que está
+   acima do link na lista do Fay MUDA conforme a rolagem, e conteúdo variável
+   dentro do template baixa o escore justamente na hora de casar. Cortadas.
+
+E os três ficam em **`data/templates/`**, não em `entrada/` — o `TemplateLibrary`
+aponta para a raiz, e `entrada/` é a pasta de evidência. Template deixado só lá é
+template que o bot não encontra, e a falha aparece como "a HH não entra".
+
+### A CÂMERA vai para a pose padrão antes de todo clique posicional
+
+Mesma exigência da BC, e o bot em Lua também sabia: ele chamava
+`setCamera(380, 0, 40)` no começo de cada run. Todo clique de NPC e de minimapa
+deste ecossistema é posicional na cena 3D — com a câmera fora do padrão, a
+coordenada certa aponta para o lugar errado.
+
+**A diferença contra o Lua é COMO.** Aqui a pose é lida da memória e conferida
+(`Memory.camera_na_pose_certa`), em vez de escrita às cegas sobre um ponteiro
+resolvido no início do script — que é o vício condenado no item N da seção 6.
+
+Quatro lugares, travados por teste: o preparo da run, **cada trecho de
+waypoints** (o `via` calibrado de cada waypoint foi medido nessa pose, e é
+justamente nas curvas onde o cálculo falha que ele entra), a ida da Fada até a
+porta, e a ida ao vendedor.
+
+### A VENDA: o clique da BC não transfere, e isso foi medido
+
+    primeiro link do diálogo, no NPC da HH ....... cliente (302, 361)
+    `vendor_purchase_tab` da BC .................. cliente (282, 395)
+    `vendor_sell_tab` da BC ..................... cliente (266, 430)
+
+Os links do diálogo ficam a ~34 px um do outro, e a posição do **primeiro**
+depende de quantas linhas de texto o NPC escreve antes deles. O
+`Roaming Apothecary` escreve duas linhas e tem dois links, então o "Sell Item"
+dele cai por volta de (302, 395) — 35 px acima e 36 px à esquerda de onde a BC
+clica.
+
+É exatamente o que `clicar_link` já documentava: *"os links do diálogo mudam de
+posição conforme o texto do NPC, por isso são localizados por imagem e não por
+deslocamento fixo"*. **Este caso é a prova.**
+
+Então `_onde_clicar_no_link_de_vender` virou GANCHO: a BC devolve a coordenada
+dela (comportamento intacto), a HH acha o link por imagem. Falta recortar
+`link_sell_item.png`; sem ele a venda RECUSA e diz no log o que fazer. Um erro
+aqui não faz o personagem andar — o ponto errado cai dentro da janela do
+diálogo, não na cena —, mas a venda não abre e a bolsa continua cheia.
+
+E a venda da HH **não gasta item de retorno e não abre o painel de arredores**:
+o vendedor está no waypoint da porta. Os dois estão travados por teste.
+
+---
+
 ## 9. O QUE AINDA NÃO ESTÁ MEDIDO
 
 Registrado aqui para não virar palpite depois:
@@ -336,8 +423,8 @@ Registrado aqui para não virar palpite depois:
 2. **Os nomes exatos dos 4 bosses**, para a trava por identidade. Os rótulos do
    Lua entram como esperado e a leitura confirma.
 3. **A coordenada do `Roaming Apothecary`** e o ponto de encostar nele.
-4. **O template do link `West Suburb of Stone City`** e a coordenada da seta de
-   rolagem do diálogo.
+4. ~~O template do link `West Suburb of Stone City` e a seta de rolagem.~~
+   **FEITO** em 03/09/2026 — ver seção 8.1. Falta só `link_sell_item.png`.
 5. **O ponto de spawn interno.** O Lua usa `insidexY = {55, 33}`; não foi
    conferido na tela.
 
@@ -405,9 +492,10 @@ Travado por teste — nenhum nome de estado termina em dígito.
 
 Em ordem de bloqueio:
 
-1. **Os três templates** (seção 9, item 4). Sem eles a entrada recusa. Recortar
-   de um print do jogo em 1024×768: a seta de rolagem para baixo do diálogo, o
-   link `West Suburb of Stone City` e o link de entrar da HH.
+1. ~~Os três templates da entrada.~~ **FEITO** em 03/09/2026 (seção 8.1).
+   Falta **um**: `link_sell_item.png`, o texto "Sell Item" do diálogo do
+   `Roaming Apothecary`. Sem ele a entrada e o farm funcionam; só a venda
+   recusa, e o log diz o que falta.
 2. **A TECLA DE SEGUIR**, para o modo HH+Fada. `KeyBinds.follow` nasce VAZIA
    porque o cliente não tem atalho padrão para o follow: configure no jogo e
    repita em *Editar conta > Teclas > Seguir*. Sem ela a Fada avisa uma vez e

@@ -189,6 +189,10 @@ class FadaDaHH:
     def ir_para_a_porta(self) -> bool:
         """Viaja até a porta da HH. A MESMA rota do líder, o mesmo código."""
         ctx = self.ctx
+        # A CÂMERA NA POSE PADRÃO, pelo mesmo motivo do líder: ela vai clicar no
+        # mesmo NPC, na mesma coordenada posicional.
+        ctx.apply_camera()
+
         pos = ctx.memory.position()
         if pos is not None and mapa_hh.distancia(
                 pos, mapa_hh.PONTO_DA_ENTRADA) <= 30:

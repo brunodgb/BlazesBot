@@ -31,7 +31,7 @@ desta lista é ou uma exceção justificada, ou dívida que ninguém converteu a
 mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 
 
-**312 tempos catalogados** — 227 FIXOS (espera cega), 85 entre TETO e PASSO.
+**312 tempos catalogados** — 228 FIXOS (espera cega), 84 entre TETO e PASSO.
 
 
 **6 estão diferentes do original:** `TETO_DA_CAIXA`, `PASSO_DA_ESPERA`, `ESPERA_DA_BOLSA_ABRIR`, `FATIA_DE_ESPERA`, `INTERVALO_ENTRE_INVOCACOES`, `PASSOS_DO_APP`
@@ -275,21 +275,21 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | `ESPERA_ENTRE_CURAS` | 0.34 s | *novo* | FIXO | [fada.py:100](blazesbot/bot/fada.py#L100) | `_me_defender, _curar (+1)` | Entre uma tecla de cura e a seguinte. |
 | `ESPERA_DEPOIS_DE_ERRAR` | 0.333 s | *novo* | FIXO | [fada.py:118](blazesbot/bot/fada.py#L118) | `_atender` | Depois de uma tentativa que não pegou, espera antes da seguinte. |
 | `SEGUNDOS_ENTRE_CUIDADOS` | 30 s | *novo* | FIXO | [fada.py:128](blazesbot/bot/fada.py#L128) | `_cuidados_de_ociosa` | De quanto em quanto tempo a Fada cuida do pet e da bolsa, ESTANDO OCIOSA. |
-| `SEGUNDOS_POR_TENTATIVA_DE_ENCOSTAR` | 1.8 s | *novo* | FIXO | [entrada.py:65](blazesbot/bot/hh/entrada.py#L65) | `garantir_coordenada_da_entrada` | Quanto tempo dar a cada tentativa de encostar no ponto exato. |
-| `TETO_DA_ENTRADA` | 2 s | *novo* | TETO | [entrada.py:72](blazesbot/bot/hh/entrada.py#L72) | `esperar_entrar` | Teto da espera pela troca de mapa depois de clicar no link de entrar. |
-| `PASSO_DA_ESPERA_DA_ENTRADA` | 0.08 s | *novo* | PASSO | [entrada.py:73](blazesbot/bot/hh/entrada.py#L73) | `esperar_entrar` |  |
-| `TETO_DO_TELEPORTE` | 2 s | *novo* | TETO | [entrada.py:76](blazesbot/bot/hh/entrada.py#L76) | `viajar_para_a_hh` | Teto da espera pelo teleporte do Fay. |
-| `PASSO_DA_ESPERA_DO_TELEPORTE` | 0.08 s | *novo* | PASSO | [entrada.py:77](blazesbot/bot/hh/entrada.py#L77) | `viajar_para_a_hh` |  |
+| `SEGUNDOS_POR_TENTATIVA_DE_ENCOSTAR` | 1.8 s | *novo* | FIXO | [entrada.py:73](blazesbot/bot/hh/entrada.py#L73) | `garantir_coordenada_da_entrada` | Quanto tempo dar a cada tentativa de encostar no ponto exato. |
+| `TETO_DA_ENTRADA` | 2 s | *novo* | TETO | [entrada.py:80](blazesbot/bot/hh/entrada.py#L80) | `esperar_entrar` | Teto da espera pela troca de mapa depois de clicar no link de entrar. |
+| `PASSO_DA_ESPERA_DA_ENTRADA` | 0.08 s | *novo* | PASSO | [entrada.py:81](blazesbot/bot/hh/entrada.py#L81) | `esperar_entrar` |  |
+| `TETO_DO_TELEPORTE` | 2 s | *novo* | TETO | [entrada.py:84](blazesbot/bot/hh/entrada.py#L84) | `viajar_para_a_hh` | Teto da espera pelo teleporte do Fay. |
+| `PASSO_DA_ESPERA_DO_TELEPORTE` | 0.08 s | *novo* | PASSO | [entrada.py:85](blazesbot/bot/hh/entrada.py#L85) | `viajar_para_a_hh` |  |
 | `PASSO_DO_ACOMPANHAMENTO` | 0.3 s | *novo* | PASSO | [fada.py:73](blazesbot/bot/hh/fada.py#L73) | `acompanhar` | Quanto esperar entre duas leituras enquanto acompanha o líder. |
 | `INTERVALO_DE_REAFIRMAR_O_FOLLOW` | 4 s | *novo* | FIXO | [fada.py:80](blazesbot/bot/hh/fada.py#L80) | `acompanhar` | De quanto em quanto tempo reafirmar a tecla de seguir. |
 | `PASSO_ESPERANDO_O_LIDER` | 0.5 s | *novo* | PASSO | [fada.py:87](blazesbot/bot/hh/fada.py#L87) | `esperar_o_lider_entrar` |  |
 | *literal em* `seguir_o_lider` | 0.15 s | *novo* | FIXO | [fada.py:160](blazesbot/bot/hh/fada.py#L160) | `seguir_o_lider` | Clica no retrato do líder e aperta a tecla de seguir. |
-| *literal em* `entrar` | 0.25 s | *novo* | FIXO | [fada.py:246](blazesbot/bot/hh/fada.py#L246) | `entrar` | Entra na cave. Mesma porta, mesma máquina, mesmo NPC do líder. |
+| *literal em* `entrar` | 0.25 s | *novo* | FIXO | [fada.py:250](blazesbot/bot/hh/fada.py#L250) | `entrar` | Entra na cave. Mesma porta, mesma máquina, mesmo NPC do líder. |
 | `PASSO_DENTRO_DA_CAVE` | 0.05 s | *novo* | PASSO | [routine.py:90](blazesbot/bot/hh/routine.py#L90) | `run` | Quanto esperar entre estados DENTRO da cave. |
 | `PASSO_FORA_DA_CAVE` | 0.4 s | *novo* | PASSO | [routine.py:91](blazesbot/bot/hh/routine.py#L91) | `run` |  |
 | *literal em* `_do_situar` | 1 s | *novo* | FIXO | [routine.py:255](blazesbot/bot/hh/routine.py#L255) | `_do_situar` | Descobre em que ponto do ciclo a conta está, e entra por ali. |
-| *literal em* `_do_recuperar` | 2 s | *novo* | FIXO | [routine.py:645](blazesbot/bot/hh/routine.py#L645) | `_do_recuperar` | Algo saiu do roteiro. Volta a se situar, sem inventar. |
-| `MAX_SEGUNDOS_ATE_O_VENDEDOR` | 90 s (2 min) | *novo* | TETO | [vendedor.py:26](blazesbot/bot/hh/vendedor.py#L26) | `ir_ate_o_vendedor` | Teto da caminhada até o vendedor. Ele fica ao lado da porta; acima disto o |
+| *literal em* `_do_recuperar` | 2 s | *novo* | FIXO | [routine.py:663](blazesbot/bot/hh/routine.py#L663) | `_do_recuperar` | Algo saiu do roteiro. Volta a se situar, sem inventar. |
+| `SEGUNDOS_POR_TENTATIVA` | 1.8 s | *novo* | FIXO | [vendedor.py:68](blazesbot/bot/hh/vendedor.py#L68) | `encostar_no_ponto_da_venda` |  |
 | `RECARGA` | 5 s | = | FIXO | [hotbar.py:63](blazesbot/bot/hotbar.py#L63) | `garantir_pagina_1` | Recarga do caminho com `ctx`. Os momentos-chave acontecem em rajada -- o portão |
 | `PASSO_DA_SONDA` | 0.012 s | = | PASSO | [instrumentar_clique.py:110](blazesbot/bot/instrumentar_clique.py#L110) | `_sondar_ate_mudar` | De quanto em quanto tempo a sonda fotografa o minimapa esperando o efeito. |
 | `TETO_DA_SONDA` | 1.2 s | = | TETO | [instrumentar_clique.py:113](blazesbot/bot/instrumentar_clique.py#L113) | `_sondar_ate_mudar, _um_modo` | Teto da espera pelo efeito. Passou disso, o clique é dado como PERDIDO. |
@@ -370,8 +370,8 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | `ESPERA_PARA_CONFIRMAR_VAZIO` | 0.5 s | = | FIXO | [vendedor.py:284](blazesbot/bot/vendedor.py#L284) | `_confirmar_slot_vazio, sell_from_slot` | As leituras de confirmação são ESPAÇADAS, não coladas: veja |
 | `ESPERA_ANTES_DO_SELL` | 0.4 s | = | FIXO | [vendedor.py:316](blazesbot/bot/vendedor.py#L316) | `sell_from_slot` | O RESPIRO EM VOLTA DO BOTÃO "SELL" |
 | `ESPERA_DEPOIS_DO_SELL` | 0.6 s | = | FIXO | [vendedor.py:317](blazesbot/bot/vendedor.py#L317) | `sell_from_slot` |  |
-| *literal em* `_tentar_abrir_a_venda` | 0.3 s | = | FIXO | [vendedor.py:437](blazesbot/bot/vendedor.py#L437) | `_tentar_abrir_a_venda` |  |
-| *literal em* `_dismiss_confirm` | 0.125 s | = | FIXO | [vendedor.py:491](blazesbot/bot/vendedor.py#L491) | `_dismiss_confirm` | Fecha a caixa "It's precious item, please confirm!", se aberta. |
+| *literal em* `_tentar_abrir_a_venda` | 0.3 s | = | FIXO | [vendedor.py:475](blazesbot/bot/vendedor.py#L475) | `_tentar_abrir_a_venda` |  |
+| *literal em* `_dismiss_confirm` | 0.125 s | = | FIXO | [vendedor.py:529](blazesbot/bot/vendedor.py#L529) | `_dismiss_confirm` | Fecha a caixa "It's precious item, please confirm!", se aberta. |
 
 
 ## CORE — capacidades compartilhadas

@@ -6,7 +6,7 @@ O CICLO
 
     SITUAR ........ onde estou? Dentro da cave, na porta, ou em Stone City?
     PREPARAR ...... pet, buffs, poção, CAP, montaria -- nesta ordem
-    ATE_A_PORTA ... Fay -> West Suburb -> Mutual -> (-343,-289)
+    ATE_A_PORTA ... Fay -> West Suburb -> Mutual -> (-342,-288)
     ENTRAR ........ o time é montado AQUI, e a porta é disputada
     ATE_O_BOSS .... um trecho de waypoints; repete para os 4 bosses
     BOSS .......... luta, loot
@@ -302,6 +302,17 @@ class HHRoutine:
         """
         ctx = self.ctx
 
+        # A CÂMERA NA POSE PADRÃO, e é a primeira coisa do preparo.
+        #
+        # Mesma exigência da BC (`BossRushRoutine._do_preparar`): todo clique de
+        # NPC e todo clique de minimapa deste ecossistema é POSICIONAL na cena
+        # 3D. Com a câmera fora do padrão, a coordenada certa aponta para o lugar
+        # errado -- e o bot em Lua sabia disso, chamava `setCamera(380, 0, 40)`
+        # no começo de cada run. A diferença é que aqui a pose é lida da memória
+        # e conferida (`Memory.camera_na_pose_certa`), em vez de escrita às
+        # cegas sobre um ponteiro resolvido no início do script.
+        ctx.apply_camera()
+
         if ctx.settings.pet.summon_on_login:
             self.combat.ensure_pet()
         self.combat.apply_buffs()
@@ -466,6 +477,13 @@ class HHRoutine:
         ctx.log.info("HH: indo para o %s (trecho %s/%s, %s waypoints)",
                      rotulo, self._trecho + 1,
                      len(mapa_hh.TRECHOS_DOS_BOSSES), len(caminho))
+
+        # A CÂMERA ANTES DE CADA TRECHO. O clique de minimapa é calculado a
+        # partir do centro dele, mas o `via` calibrado de cada waypoint foi
+        # medido com a câmera na pose padrão -- e é justamente nas curvas onde o
+        # cálculo falha que o `via` entra. Câmera fora do padrão faz a reserva
+        # apontar para o lugar errado exatamente quando ela é necessária.
+        ctx.apply_camera()
 
         self.nav.garantir_montaria_para_andar(f"trecho do {rotulo}")
 

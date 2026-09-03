@@ -318,10 +318,24 @@ time a flag não faz nada.
   a retomada de rota da HH volta ao waypoint mais próximo e **não** recua para o
   início da área — recuar sobre um marcador devolveria o personagem ao waypoint
   1 da cave a cada escorregão.
-- **FALTAM TRÊS TEMPLATES**, e sem eles a HH não entra. O bot RECUSA e diz no
-  log qual arquivo falta, em vez de clicar num pixel adivinhado:
-  `data/templates/dialogo_seta_baixo.png` (a seta de rolagem do diálogo),
-  `link_west_suburb.png` e `link_enter_hh.png`.
+- **OS TEMPLATES DA ENTRADA ESTÃO PRONTOS** (03/09/2026) e moram em
+  `data/templates/` — não em `entrada/`, que é a pasta de EVIDÊNCIA. Falta um
+  só: `link_sell_item.png`, e sem ele apenas a VENDA recusa.
+- **Template tem que ser RECORTE, não tela.** O primeiro `link_enter_hh.png`
+  entregue tinha 1029×804: um template do tamanho da tela casa em qualquer lugar
+  e não localiza nada. Travado por
+  `test_o_template_e_um_RECORTE_e_nao_uma_tela`.
+- **A CÂMERA vai para a pose padrão antes de todo clique posicional** — preparo
+  da run, cada trecho de waypoints, a ida da Fada à porta e a ida ao vendedor.
+  Os `via` calibrados de cada waypoint foram medidos nessa pose, e é nas curvas
+  onde o cálculo falha que eles entram.
+- **A coordenada de link de diálogo NÃO transfere entre NPCs.** Medido:
+  o `vendor_sell_tab` da BC cai 35 px abaixo do "Sell Item" do vendedor da HH,
+  porque a posição dos links depende de quantas linhas o NPC escreve antes deles.
+  Link de diálogo se acha por IMAGEM — `_onde_clicar_no_link_de_vender` é gancho.
+- **`Happiness Hall` é o nome da INSTÂNCIA, não do lugar.** A zona é
+  `Black Wind Camp Dungeon`, que é o que a memória devolve. Confundir os dois
+  faria a validação de lugar rejeitar a leitura.
 - **A HH e a BC nunca rodam juntas.** O despacho é `APP → HH → BC`, com ordem
   fixa: marcar as duas roda a HH, e o log diz isso. Ligar a HH com o BC rodando
   devolve o controle no próximo ponto seguro.
@@ -329,7 +343,7 @@ time a flag não faz nada.
   lista.** A rolagem é um PASSO conferido pelo aparecimento do link — nunca um
   número fixo de cliques na seta. Clique cego na seta é o vício do bot Lua.
 - **Não se clica de fora do ponto de conversa.** O painel de arredores caminha
-  até PERTO da `Mutual Quest Woman` (-358,-289); a conversa é em (-343,-289). É o
+  até PERTO da `Mutual Quest Woman` (-358,-289); a conversa é em (-342,-288). É o
   mesmo defeito já medido na BC em 25/08/2026, quando o clique a 2 passos pegou o
   White Eagle.
 - **A cave PRECISA de reset** (regra do jogo): sem desfazer e refazer o time os

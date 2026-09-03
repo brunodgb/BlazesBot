@@ -11,7 +11,7 @@ O CAMINHO, MEDIDO NA TELA EM 01/09/2026
                      └─ TP
                           └─ Arredores, aba NPC, busca "Mutual"
                                └─ "Mutual Quest Woman [-358,-288]"
-                                    └─ andar até (-343,-289)
+                                    └─ andar até (-342,-288)
                                          └─ "Elite Axe Monk Soldier"
                                               └─ dentro da cave
 
@@ -29,7 +29,7 @@ faz o mesmo três vezes por run. Este módulo só diz QUAIS nomes:
     viajar_pelo_transporte   o Fay, o link, o ponto, como saber que chegou
     buscar_npc               "Mutual"
     ir_para_resultado         o pathfinding do jogo caminha
-    encostar_no_ponto        (-343,-289), sem clicar de fora dele
+    encostar_no_ponto        (-342,-288), sem clicar de fora dele
     falar_com_npc            o Elite Axe Monk Soldier
     clicar_link              o link de entrar
 
@@ -50,9 +50,17 @@ from . import mapa_hh
 
 # Links dentro dos diálogos, localizados por imagem.
 #
-# Ambos ainda precisam ser recortados de `data/templates/`. Enquanto não
-# existirem, `clicar_link` devolve None e a entrada falha com o nome do arquivo
-# no log -- que é o comportamento certo: não se adivinha onde clicar.
+# RECORTADOS PELO USUÁRIO em 03/09/2026, dos prints que ficaram em
+# `data/templates/entrada/` como evidência de onde cada um saiu:
+#
+#   link_west_suburb.png   151x18, de `completa1.png` (diálogo do Fay em Stone
+#                          City, com a lista de destinos ainda sem rolar)
+#   link_enter_hh.png      126x20, de `completa2.png` (diálogo do Elite Axe
+#                          Monk Soldier) -- o texto é "Enter Happiness Hall"
+#
+# O `link_west_suburb` veio com uma faixa da linha DE CIMA, e ela foi cortada: o
+# que está acima do link na lista do Fay muda conforme a rolagem, e conteúdo
+# variável dentro do template baixa o escore justamente na hora de casar.
 LINK_WEST_SUBURB = "link_west_suburb.png"
 LINK_ENTRAR_HH = "link_enter_hh.png"
 
@@ -147,7 +155,7 @@ class EntradaDaHH(UIDoJogo):
     # ==================================================================
 
     def ir_ate_o_npc_da_hh(self) -> bool:
-        """Caminha até (-343,-289), de frente para o Elite Axe Monk Soldier.
+        """Caminha até (-342,-288), de frente para o Elite Axe Monk Soldier.
 
         DOIS PASSOS, e a ordem importa. Primeiro o painel de arredores leva até
         PERTO da `Mutual Quest Woman` -- é o pathfinding do próprio jogo, que
@@ -183,7 +191,7 @@ class EntradaDaHH(UIDoJogo):
         return True
 
     def garantir_coordenada_da_entrada(self) -> bool:
-        """Põe o personagem em (-343,-289) ANTES de qualquer clique no NPC.
+        """Põe o personagem em (-342,-288) ANTES de qualquer clique no NPC.
 
         Conferido SEMPRE, e não só quando algo deu errado: SAIR da cave devolve o
         personagem perto da porta, mas não na coordenada exata, então "quase lá"

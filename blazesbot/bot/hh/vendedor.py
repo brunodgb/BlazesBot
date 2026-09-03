@@ -1,29 +1,71 @@
 """O vendedor da HH: o `Roaming Apothecary`, do lado de fora da cave.
 
-A JANELA DE VENDA mora em `bot/vendedor.py` e é a mesma do jogo inteiro --
-confirmado nas capturas de 01/09/2026: mesma moldura, mesma grade, mesma
-paginação 1/3, mesmo par Sell/Cancel do Rich Man de Stone City.
+=========================================================================
+A JANELA DE VENDA É A MESMA DO JOGO INTEIRO
+=========================================================================
 
-O QUE A HH NÃO PRECISA, e a BC precisa: viagem. O Rich Man fica em Stone City, e
-a rotina da BC gasta uma pedra de retorno ou a recarga do token de guilda para
-chegar nele. O `Roaming Apothecary` fica a poucos passos da porta da HH -- o
-painel de arredores encontra e o pathfinding do jogo caminha.
+`bot/vendedor.py` opera a janela; confirmado nas capturas de 01 a 03/09/2026:
+mesma moldura, mesma grade, mesma paginação 1/3, mesmo par Sell/Cancel do Rich
+Man de Stone City. Então aqui só ficam os NOMES e o CAMINHO.
 
-Diferença contra o bot em Lua, que também vende aqui: `farmer.sellItems()` dá
-**30 cliques fixos** num slot literal (448,327), 100 ms entre eles, sem saber se
-vendeu alguma coisa -- e antes disso navega por 5 cliques cegos de diálogo. Aqui
-cada clique é seguido de uma leitura do slot. Ver `bot/vendedor.py`.
+=========================================================================
+E O CAMINHO É MAIS CURTO QUE O DA BC -- NÃO TEM CAMINHO
+=========================================================================
+
+O Rich Man fica em Stone City, e a rotina da BC gasta uma pedra de retorno ou a
+recarga do token de guilda para chegar nele. O `Roaming Apothecary` fica NO
+MESMO PONTO da porta da HH: parado em `mapa_hh.PONTO_DA_VENDA` (-342,-288), o
+vendedor está logo abaixo do personagem e o NPC da cave logo acima, na escada.
+
+Então **não há painel de arredores, não há busca e não há viagem**: um clique
+direito na coordenada medida abre o diálogo. Foi o usuário que mediu, em
+03/09/2026, e é o `coords.hh_vendor_npc`.
+
+O PREÇO DISSO é que o clique é POSICIONAL na cena 3D: ele só vale a partir
+daquela coordenada. Por isso `_no_ponto_do_vendedor` confere a posição ANTES --
+de fora do ponto o clique cai no chão, e clique no chão faz o personagem ANDAR,
+tirando-o justamente do lugar de onde os cliques funcionam.
+
+=========================================================================
+CONTRA O BOT EM LUA
+=========================================================================
+
+`farmer.sellItems()` anda até o vendedor por um clique de minimapa, espera a
+posição num laço de 1 s, e então dá **30 cliques fixos** num slot literal
+(448,327) com 100 ms entre eles -- sem saber se vendeu alguma coisa, e sem saber
+se a janela abriu. Aqui cada clique de slot é seguido de uma leitura, e a
+abertura da janela é confirmada pela âncora. Ver `bot/vendedor.py`.
 """
 from __future__ import annotations
 
+from ...core.vision import capture_window, find_template
 from ..context import BotContext
 from ..navegacao import Navigator
+from ..ui_do_jogo import ANCHOR_THRESHOLD
 from ..vendedor import JanelaDeVenda
 from . import mapa_hh
 
-# Teto da caminhada até o vendedor. Ele fica ao lado da porta; acima disto o
-# painel de arredores levou o personagem para o lugar errado.
-MAX_SEGUNDOS_ATE_O_VENDEDOR = 90.0
+# O link "Sell Item" dentro do diálogo do vendedor, achado por IMAGEM.
+#
+# NÃO POR COORDENADA, e o motivo está medido em
+# `JanelaDeVenda._onde_clicar_no_link_de_vender`: o ponto da Bewitcher Cave cai
+# 35 px abaixo do link deste NPC, porque a posição dos links depende de quantas
+# linhas de texto o NPC escreve antes deles.
+#
+# Enquanto o arquivo não existir, a venda RECUSA e diz no log o que recortar.
+TEMPLATE_DO_LINK_DE_VENDER = "link_sell_item.png"
+
+
+# Folga aceita para considerar que se está no ponto de clicar no vendedor.
+#
+# APERTADA, e pelo mesmo motivo de todo clique posicional deste projeto: alguns
+# passos de distância giram o NPC na tela, o clique cai no chão e o personagem
+# anda -- piorando a tentativa seguinte.
+PRECISAO_NO_PONTO_DA_VENDA = 1.5
+
+# Quantas vezes tentar encostar no ponto antes de desistir da venda.
+TENTATIVAS_DE_ENCOSTAR = 4
+SEGUNDOS_POR_TENTATIVA = 1.8
 
 
 class VendedorDaHH(JanelaDeVenda):
@@ -34,39 +76,104 @@ class VendedorDaHH(JanelaDeVenda):
     def __init__(self, ctx: BotContext,
                  navigator: Navigator | None = None) -> None:
         super().__init__(ctx, navigator)
+        self._avisou_sem_template = False
 
-    def ir_ate_o_vendedor(self) -> bool:
-        """Acha o vendedor pelo painel de arredores e caminha até ele.
+    # ==================================================================
+    # Os três ganchos que a janela de venda pergunta
+    # ==================================================================
 
-        SEM VIAGEM E SEM ITEM DE RETORNO: ele está no mesmo lugar que a porta da
-        cave. O painel resolve, e o pathfinding do jogo atravessa a geometria que
-        um clique de minimapa não atravessa.
+    def _no_ponto_do_vendedor(self) -> bool:
+        """Estou de onde o clique no vendedor funciona?
+
+        SEM LEITURA DE POSIÇÃO DEVOLVE True: não há como conferir, e recusar
+        aqui travaria a venda num laço sem saída. Quem decide então é o diálogo
+        abrir ou não -- e `_tentar_abrir_a_venda` já confere isso pela âncora da
+        janela.
+        """
+        atual = self.ctx.memory.position()
+        if atual is None:
+            return True
+        return (mapa_hh.distancia(atual, mapa_hh.PONTO_DA_VENDA)
+                <= PRECISAO_NO_PONTO_DA_VENDA)
+
+    def _onde_clicar_no_vendedor(self) -> tuple[int, int]:
+        """A coordenada MEDIDA do Roaming Apothecary.
+
+        Não é o ponto genérico de NPC da cena: ele fica ABAIXO do personagem, e
+        o genérico aponta para a frente. Ver `coords.hh_vendor_npc`.
+        """
+        return self.ctx.coords.hh_vendor_npc
+
+    def _onde_clicar_no_link_de_vender(self) -> tuple[int, int] | None:
+        """Acha o "Sell Item" por imagem. Ver o gancho na classe base.
+
+        Devolve `None` quando o template não existe -- e aí a venda não
+        acontece, o que é melhor que clicar num ponto que não é o link: a bolsa
+        continua cheia e o log diz exatamente o que falta, em vez de a venda
+        "não funcionar" sem motivo aparente.
         """
         ctx = self.ctx
-        ui = self._ui_do_jogo()
-        busca, confirma = mapa_hh.NPC_VENDEDOR
-        busca = ctx.settings.hh.route.vendor_search_text or busca
+        tpl = ctx.templates.load(TEMPLATE_DO_LINK_DE_VENDER)
+        if tpl is None:
+            if not self._avisou_sem_template:
+                self._avisou_sem_template = True
+                ctx.log.warning(
+                    "HH: não tenho o template do link de vender (%s). Recorte o "
+                    "texto \"Sell Item\" do diálogo do %s e salve em "
+                    "data/templates/ com esse nome. NÃO vou clicar na "
+                    "coordenada da Bewitcher Cave: ela cai 35 px abaixo deste "
+                    "link, porque a posição depende do texto do NPC.",
+                    TEMPLATE_DO_LINK_DE_VENDER, self.NOME_DO_VENDEDOR)
+            return None
 
-        ctx.log.info("HH: procurando o %s", confirma)
-        with ui.trajeto_pelo_painel("vendedor da HH"):
-            info = ui.buscar_npc(busca, confirmar=confirma)
-            if info is None:
-                return False
-            return ui.ir_para_resultado(
-                confirma, coords=info.get("coords"),
-                max_seconds=MAX_SEGUNDOS_ATE_O_VENDEDOR
-                * ctx.settings.time_factor)
+        quadro = capture_window(ctx.hwnd)
+        if quadro is None:
+            ctx.log.debug("HH: sem imagem para achar o link de vender")
+            return None
+        return find_template(quadro, tpl, threshold=ANCHOR_THRESHOLD)
+
+    def ir_ate_o_vendedor(self) -> bool:
+        """Encosta no ponto de venda. Sem viagem: ele fica na porta da cave.
+
+        A CÂMERA VAI NA POSE PADRÃO ANTES, e é a mesma exigência da BC: o clique
+        é posicional na cena 3D, e com a câmera fora do padrão ele cai no chão
+        por mais que a coordenada esteja certa.
+        """
+        ctx = self.ctx
+        ctx.apply_camera()
+        return self.encostar_no_ponto_da_venda()
+
+    def encostar_no_ponto_da_venda(self) -> bool:
+        """Anda os últimos passos até `PONTO_DA_VENDA`.
+
+        Reusa `UIDoJogo.encostar_no_ponto` -- a regra de não clicar de fora do
+        ponto é a mesma do Fay, do Skull Herald e do Rich Man.
+        """
+        return self._ui_do_jogo().encostar_no_ponto(
+            alvo=mapa_hh.PONTO_DA_VENDA,
+            precisao=PRECISAO_NO_PONTO_DA_VENDA,
+            tentativas=TENTATIVAS_DE_ENCOSTAR,
+            segundos_por_tentativa=SEGUNDOS_POR_TENTATIVA,
+            o_que=f"vender no {self.NOME_DO_VENDEDOR}",
+        )
+
+    # ==================================================================
+    # A venda
+    # ==================================================================
 
     def vender(self) -> int:
-        """Vai até o vendedor, abre a janela e vende. Devolve quantos slots foram.
+        """Encosta no ponto, abre a janela e vende. Devolve quantos slots foram.
 
         Devolve 0 quando não conseguiu chegar ou abrir -- e isso NÃO é exceção:
-        a run seguinte tenta de novo, e a bolsa continua sendo o gatilho.
+        a bolsa continua sendo o gatilho, e a run seguinte tenta de novo.
         """
+        ctx = self.ctx
         if not self.ir_ate_o_vendedor():
-            self.ctx.log.warning("HH: não cheguei no %s", self.NOME_DO_VENDEDOR)
+            ctx.log.warning("HH: não encostei no ponto de venda %s (estou em %s)",
+                            mapa_hh.PONTO_DA_VENDA, ctx.memory.position())
             return 0
         if not self._open_npc():
-            self.ctx.log.warning("HH: não abri a janela de venda")
+            ctx.log.warning("HH: não abri a janela de venda do %s",
+                            self.NOME_DO_VENDEDOR)
             return 0
         return self.sell_from_slot()

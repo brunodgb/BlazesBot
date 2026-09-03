@@ -392,10 +392,16 @@ def test_a_tecla_nasce_VAZIA():
 
 
 def test_o_ponto_de_entrada_da_fada_e_o_MESMO_do_lider():
-    """Uma coordenada de porta por conta seria duas portas."""
+    """Uma coordenada de porta por conta seria duas portas.
+
+    O número está escrito à mão de propósito: ele foi MEDIDO na tela em
+    03/09/2026 -- o rótulo de `data/templates/entrada/completa2.png` diz
+    `Black Wind Camp Dungeon [-342,-288]` --, e mudar a constante sem remedir
+    tem que reprovar aqui.
+    """
     fonte = _fonte(FadaDaHH.ir_para_a_porta)
     assert "PONTO_DA_ENTRADA" in fonte
-    assert mapa_hh.PONTO_DA_ENTRADA == (-343, -289)
+    assert mapa_hh.PONTO_DA_ENTRADA == (-342, -288)
 
 
 # ===========================================================================

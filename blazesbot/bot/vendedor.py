@@ -371,6 +371,39 @@ class JanelaDeVenda:
         """
         return self._ui_do_jogo()._ponto_padrao_do_npc()
 
+    def _onde_clicar_no_link_de_vender(self) -> tuple[int, int] | None:
+        """Onde está o link "Sell Item" DENTRO do diálogo já aberto.
+
+        =================================================================
+        POR QUE ISTO É GANCHO E NÃO UMA CONSTANTE
+        =================================================================
+
+        A coordenada da Bewitcher Cave NÃO TRANSFERE para outro NPC, e isso foi
+        medido em 03/09/2026, não suposto:
+
+            primeiro link do diálogo, no NPC da HH ....... cliente (302, 361)
+            `vendor_purchase_tab` da BC .................. cliente (282, 395)
+            `vendor_sell_tab` da BC ..................... cliente (266, 430)
+
+        Os links do diálogo ficam a ~34 px um do outro, e a posição do PRIMEIRO
+        depende de quantas linhas de texto o NPC escreve antes deles. O
+        `Roaming Apothecary` da HH escreve duas linhas e tem dois links, então o
+        "Sell Item" dele cai por volta de (302, 395) -- 35 px acima e 36 px à
+        esquerda de onde a BC clica.
+
+        É exatamente o que `clicar_link` já documenta: *"os links do diálogo
+        mudam de posição conforme o texto do NPC, por isso são localizados por
+        imagem e não por deslocamento fixo"*. Este caso é a prova disso.
+
+        UM ERRO AQUI NÃO FAZ O PERSONAGEM ANDAR -- o ponto errado cai DENTRO da
+        janela do diálogo, não na cena 3D. Mas a venda não abre, e a bolsa
+        continua cheia; `_tentar_abrir_a_venda` confere a abertura pela âncora e
+        tenta de novo.
+
+        `None` = não sei onde é. Quem chama NÃO clica.
+        """
+        return self.ctx.coords.vendor_sell_tab
+
     def _open_npc(self, attempts: int = 4) -> bool:
         """Abre a janela de venda do NPC: clique direito, depois o link.
 
@@ -431,8 +464,13 @@ class JanelaDeVenda:
                     "Saí do ponto do vendedor (estou em %s); não clico daqui",
                     ctx.memory.position())
                 return False
+            ponto_do_link = self._onde_clicar_no_link_de_vender()
+            if ponto_do_link is None:
+                # Sem saber onde é o link, NÃO se clica. Ver o gancho para o
+                # porquê -- e quem devolve None já disse no log o que falta.
+                return False
             if ui._abrir_dialogo_e_clicar(
-                    self._onde_clicar_no_vendedor(), ctx.coords.vendor_sell_tab,
+                    self._onde_clicar_no_vendedor(), ponto_do_link,
                     f"abrir a venda do {self.NOME_DO_VENDEDOR}"):
                 ctx.tick(0.3)
                 if self._sell_anchor() is not None:
