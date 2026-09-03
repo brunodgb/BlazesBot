@@ -2070,7 +2070,7 @@ function atualizarEstado(est) {
     if (!tr) return;
     const chkBC = tr.querySelector('input[data-acao="bc"]');
     if (chkBC && chkBC.checked !== !!c.farm) chkBC.checked = !!c.farm;
-    const chkHH = linha.querySelector('input[data-acao="hh"]');
+    const chkHH = tr.querySelector('input[data-acao="hh"]');
     if (chkHH && chkHH.checked !== !!c.farm_hh) chkHH.checked = !!c.farm_hh;
   });
 

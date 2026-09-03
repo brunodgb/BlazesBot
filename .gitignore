@@ -29,3 +29,7 @@ __pycache__/
 # --- cópias e restos -------------------------------------------------------
 backup-web-*/
 nul
+
+# Experimentos de multi-agente do usuário. Não é do bot, e o `.env` daqui
+# guarda credencial -- já foi varrido para um commit uma vez (03/09/2026).
+multi-agentes/
