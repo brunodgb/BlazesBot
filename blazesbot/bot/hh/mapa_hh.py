@@ -184,6 +184,41 @@ BOSS_2 = "Dupla"              # dois bosses juntos
 BOSS_3 = "Green Robmaster"
 BOSS_4 = "Purple"             # o último
 
+# "Vários", quando o ponto não tem um número fixo de alvos.
+#
+# É o caso dos pontos de MOB RANGED: o que espera lá é um punhado deles, e a
+# luta acaba quando a flag de combate baixa, não quando um alvo conhecido morre.
+VARIOS = -1
+
+# ONDE A AoE NÃO FUNCIONA, e por quê.
+#
+# Regra do usuário, 03/09/2026: *"no primeiro boss e no 3 (Green Robmaster) tem
+# mobs ranged, então o AOE não irá funcionar, de resto pode usar o AOE sem
+# problemas"*. A skill de área do bot é de curta distância; mob ranged fica
+# parado longe atirando, e a área passa embaixo dele sem tocar em nada.
+#
+# Não é economia de tecla: girar AoE contra quem está fora do alcance é gastar
+# o tempo da rotação sem dano nenhum, e a luta se arrasta até o teto.
+PONTOS_SEM_AOE: frozenset[str] = frozenset({BOSS_1, BOSS_3})
+
+
+def usa_aoe(rotulo: str) -> bool:
+    """A skill de área serve neste ponto?"""
+    return rotulo not in PONTOS_SEM_AOE
+
+
+def e_pacote_de_mobs(rotulo: str) -> bool:
+    """O ponto é um PACOTE de mobs, e não um boss (ou dois) conhecido?
+
+    Muda o RITUAL da luta inteiro. Num boss vale `lutar_contra_um_boss`: espera
+    o engajamento, bate, e sair de combate é a vitória. Num pacote vale
+    `limpar_o_combate`: mata um, PARA e olha a flag, e só então TAB para o
+    próximo -- porque o que encerra é a lista acabar, e cada morte pode ou não
+    ser a última.
+    """
+    return ALVOS_POR_PONTO.get(rotulo, 1) == VARIOS
+
+
 # QUANTOS ALVOS tem cada ponto de boss.
 #
 # O `hh.lua` chama o segundo de "Dupla" e o comentário diz "dupla de boss" --
@@ -195,9 +230,13 @@ BOSS_4 = "Purple"             # o último
 # Um por ponto é o normal, e aí o TAB não sai -- trocar de alvo no meio da luta
 # de um boss único seria perder dano.
 ALVOS_POR_PONTO: dict[str, int] = {
-    BOSS_1: 1,
+    # MOBS RANGED, em número indeterminado -- medido pelo usuário no jogo em
+    # 03/09/2026. O rótulo "Fa-Yuan" veio do comentário do bot em Lua e ficou
+    # como NOME DO PONTO; o que espera lá não é um boss único.
+    BOSS_1: VARIOS,
     BOSS_2: 2,
-    BOSS_3: 1,
+    # Idem: o "Green Robmaster" do Lua é um ponto de mobs ranged.
+    BOSS_3: VARIOS,
     BOSS_4: 1,
 }
 
@@ -213,6 +252,11 @@ def tabs_ao_morrer(rotulo: str) -> int:
 
     `0` para ponto de um alvo só -- e o zero é decisão, não omissão: TAB no meio
     da luta de um boss único troca o alvo e perde dano.
+
+    `0` TAMBÉM para ponto de PACOTE, e por motivo oposto: lá quem dá o TAB é
+    `limpar_o_combate`, depois de parar e conferir a flag. Dois donos do mesmo
+    TAB gastariam dois por morte, e o segundo miraria quem está FORA do
+    combate -- que é como se puxa mob novo.
     """
     return (TABS_ENTRE_OS_ALVOS_DO_PONTO
             if ALVOS_POR_PONTO.get(rotulo, 1) > 1 else 0)

@@ -256,19 +256,25 @@ def test_o_BC_tambem_delega_o_ritual():
 
 def test_derrota_no_boss_manda_RECUPERAR_e_NAO_avanca_o_trecho():
     """Morrer no boss 2 fazia o bot seguir para o boss 3 -- morto."""
-    # O ALVO É O INCREMENTO, e não qualquer menção a `_trecho`: ele é lido no
-    # topo da função para escolher qual boss é o desta vez.
-    arvore = ast.parse(_fonte(HHRoutine._do_boss))
-    incrementos = [no.lineno for no in ast.walk(arvore)
-                   if isinstance(no, ast.AugAssign)
-                   and getattr(no.target, "attr", "") == "_trecho"]
-    assert incrementos, "a função deixou de avançar o trecho"
+    # A LUTA E O AVANÇO SÃO FUNÇÕES SEPARADAS desde 03/09/2026, e o portão
+    # entre elas é o `if not self._lutar_no_ponto(...)`: derrota devolve False
+    # e a função sai ANTES de qualquer avanço.
+    # HÁ DOIS AVANÇOS na função, e é de propósito: um quando o ponto não
+    # engaja em 5 s (nada a lutar) e outro depois da luta vencida. O que não
+    # pode existir é um avanço que ignore uma DERROTA -- por isso a comparação
+    # é com o ÚLTIMO, o que fecha o caminho da luta.
+    import ast as _ast
+    arvore = _ast.parse(_fonte(HHRoutine._do_boss))
+    avancos = [n.lineno for n in _ast.walk(arvore)
+               if isinstance(n, _ast.Call)
+               and getattr(n.func, "attr", "") == "_avancar_o_trecho"]
+    assert avancos, "a função deixou de avançar o trecho"
+    assert max(avancos) > _linha_de(HHRoutine._do_boss, "_lutar_no_ponto")
 
-    confere = _linha_de(HHRoutine._do_boss, "saiu_de_combate")
-    assert confere < min(incrementos), (
-        f"avança o trecho (linha {min(incrementos)}) antes de conferir o "
-        f"desfecho (linha {confere})")
-    assert "_falhar" in _fonte(HHRoutine._do_boss)
+    fonte = _fonte(HHRoutine._do_boss)
+    assert "if not self._lutar_no_ponto" in fonte, (
+        "o avanço deixou de depender do desfecho da luta")
+    assert "_falhar" in _fonte(HHRoutine._lutar_no_ponto)
 
 
 def test_a_vitoria_e_lida_do_MESMO_campo_que_o_BC_le():
@@ -277,14 +283,14 @@ def test_a_vitoria_e_lida_do_MESMO_campo_que_o_BC_le():
     from blazesbot.bot.bc.routine import BossRushRoutine
 
     assert "fim.saiu_de_combate" in _fonte(BossRushRoutine._do_boss)
-    assert "fim.saiu_de_combate" in _fonte(HHRoutine._do_boss)
+    assert "fim.saiu_de_combate" in _fonte(HHRoutine._lutar_no_ponto)
 
 
 def test_morrer_ANTES_de_encostar_tambem_para():
     """`curar_antes_do_boss` fica 15 s parado; um mob do trajeto pode matar
     ali."""
     _em_ordem(HHRoutine._do_boss,
-              "curar_antes_do_boss", "dead", "lutar_contra_um_boss")
+              "curar_antes_do_boss", "dead", "_lutar_no_ponto")
 
 
 def test_a_morte_conta_UMA_run_perdida():
@@ -305,7 +311,7 @@ def test_curar_antes_do_boss_mora_no_MOTOR():
 
 def test_a_cura_vem_ANTES_de_encostar_e_nao_depois_da_luta():
     """Na frente do boss a poção não vale: ele encosta e o efeito para."""
-    _em_ordem(HHRoutine._do_boss, "curar_antes_do_boss", "lutar_contra_um_boss")
+    _em_ordem(HHRoutine._do_boss, "curar_antes_do_boss", "_lutar_no_ponto")
 
 
 def test_a_HH_senta_entre_os_bosses_SE_precisar():
@@ -322,9 +328,52 @@ def test_a_HH_senta_entre_os_bosses_SE_precisar():
 
 
 def test_o_mapa_diz_quantos_alvos_tem_cada_ponto():
+    """Três naturezas, e o mapa é quem declara qual é qual.
+
+    Medido pelo usuário no jogo em 03/09/2026: os pontos 1 e 3 são PACOTES de
+    mobs ranged (número indeterminado), o 2 é a dupla de bosses, e o 4 é um
+    boss só.
+    """
     assert mapa_hh.ALVOS_POR_PONTO[mapa_hh.BOSS_2] == 2
-    for rotulo in (mapa_hh.BOSS_1, mapa_hh.BOSS_3, mapa_hh.BOSS_4):
-        assert mapa_hh.ALVOS_POR_PONTO[rotulo] == 1
+    assert mapa_hh.ALVOS_POR_PONTO[mapa_hh.BOSS_4] == 1
+    for rotulo in (mapa_hh.BOSS_1, mapa_hh.BOSS_3):
+        assert mapa_hh.ALVOS_POR_PONTO[rotulo] == mapa_hh.VARIOS
+        assert mapa_hh.e_pacote_de_mobs(rotulo)
+    for rotulo in (mapa_hh.BOSS_2, mapa_hh.BOSS_4):
+        assert not mapa_hh.e_pacote_de_mobs(rotulo)
+
+
+def test_a_AoE_e_desligada_onde_os_mobs_sao_RANGED():
+    """A skill de área é de curta distância.
+
+    Mob ranged fica parado longe atirando, e a área passa embaixo dele sem
+    tocar em nada -- girar AoE ali é gastar o tempo da rotação sem dano, e a
+    luta se arrasta até o teto. Regra do usuário, 03/09/2026.
+    """
+    assert not mapa_hh.usa_aoe(mapa_hh.BOSS_1)
+    assert not mapa_hh.usa_aoe(mapa_hh.BOSS_3)
+    assert mapa_hh.usa_aoe(mapa_hh.BOSS_2)
+    assert mapa_hh.usa_aoe(mapa_hh.BOSS_4)
+
+
+def test_a_luta_pergunta_ao_MAPA_se_usa_AoE():
+    """O dado mora no mapa, e a rotina obedece -- não há `if rotulo ==` solto."""
+    fonte = _fonte(HHRoutine._lutar_no_ponto)
+    assert "mapa_hh.usa_aoe(rotulo)" in fonte
+    assert "mapa_hh.e_pacote_de_mobs(rotulo)" in fonte
+
+
+def test_o_PACOTE_usa_o_ritual_de_matar_ate_sair_de_batalha():
+    """Mata um, PARA e olha a flag, e só então TAB para o próximo.
+
+    É a coreografia de `limpar_o_combate`, que é a mesma do bot em Lua neste
+    ponto (`hh.killAtPosition`). Existe porque o que encerra a luta é a lista
+    acabar: cada morte pode ou não ser a última, e a pausa é como se descobre
+    sem puxar mob novo.
+    """
+    fonte = _fonte(HHRoutine._lutar_no_ponto)
+    assert "limpar_o_combate" in fonte
+    assert hasattr(motor.CombatEngine, "limpar_o_combate")
 
 
 def test_o_ponto_de_DOIS_alvos_pede_TAB_e_o_de_um_nao():
@@ -334,6 +383,10 @@ def test_o_ponto_de_DOIS_alvos_pede_TAB_e_o_de_um_nao():
     do boss -- perdendo dano.
     """
     assert mapa_hh.tabs_ao_morrer(mapa_hh.BOSS_2) > 0
+    # E ZERO NOS PACOTES por motivo OPOSTO: lá quem dá o TAB é
+    # `limpar_o_combate`, depois de parar e conferir a flag. Dois donos do mesmo
+    # TAB gastariam dois por morte, e o segundo miraria quem está FORA do
+    # combate -- que é como se puxa mob novo.
     for rotulo in (mapa_hh.BOSS_1, mapa_hh.BOSS_3, mapa_hh.BOSS_4):
         assert mapa_hh.tabs_ao_morrer(rotulo) == 0
 
@@ -344,8 +397,7 @@ def test_rotulo_desconhecido_NAO_gasta_TAB():
 
 
 def test_a_luta_recebe_o_numero_de_TABS_do_mapa():
-    fonte = _fonte(HHRoutine._do_boss)
-    assert "tabs_ao_morrer" in fonte
+    assert "tabs_ao_morrer" in _fonte(HHRoutine._lutar_no_ponto)
 
 
 def test_todo_ponto_de_boss_esta_declarado():
@@ -362,7 +414,7 @@ def test_todo_ponto_de_boss_esta_declarado():
 def test_a_HH_confere_a_POSICAO_antes_de_esperar_o_combate():
     """Absorvido do `BossRushRoutine._do_boss`: fora do ponto, o bot volta a
     andar em vez de ficar parado esperando uma flag que não vai ligar."""
-    _em_ordem(HHRoutine._do_boss, "position", "lutar_contra_um_boss")
+    _em_ordem(HHRoutine._do_boss, "position", "_lutar_no_ponto")
     assert "State.ATE_O_BOSS" in _fonte(HHRoutine._do_boss)
 
 

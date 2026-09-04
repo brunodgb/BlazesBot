@@ -71,7 +71,7 @@ ligar código não testado.
 
 ## Números medidos -- tolerância, limiar, teto, cadência
 
-526 constantes, agrupadas por arquivo.
+528 constantes, agrupadas por arquivo.
 
 | constante | valor | onde | quem lê | porquê (resumo) |
 |---|---|---|---|---|
@@ -245,7 +245,7 @@ ligar código não testado.
 | `LINK_WEST_SUBURB` | `'link_west_suburb.png'` | [blazesbot/bot/hh/entrada.py:64](blazesbot/bot/hh/entrada.py#L64) | — | Links dentro dos diálogos, localizados por imagem. |
 | `PASSO_DA_ESPERA_DA_ENTRADA` | `0.04` | [blazesbot/bot/hh/entrada.py:94](blazesbot/bot/hh/entrada.py#L94) | — | — |
 | `PASSO_DA_ESPERA_DO_TELEPORTE` | `0.08` | [blazesbot/bot/hh/entrada.py:98](blazesbot/bot/hh/entrada.py#L98) | ui_service.py, vendedor.py | — |
-| `SEGUNDOS_POR_TENTATIVA_DE_ENCOSTAR` | `1.8` | [blazesbot/bot/hh/entrada.py:73](blazesbot/bot/hh/entrada.py#L73) | — | Quanto tempo dar a cada tentativa de encostar no ponto exato. |
+| `SEGUNDOS_POR_TENTATIVA_DE_ENCOSTAR` | `1.8` | [blazesbot/bot/hh/entrada.py:73](blazesbot/bot/hh/entrada.py#L73) | routine.py | Quanto tempo dar a cada tentativa de encostar no ponto exato. |
 | `TENTATIVAS_DE_POSICIONAR` | `3` | [blazesbot/bot/hh/entrada.py:70](blazesbot/bot/hh/entrada.py#L70) | — | Quantas vezes refazer a caminhada pelo painel de arredores antes de desistir |
 | `TETO_DA_ENTRADA` | `0.25` | [blazesbot/bot/hh/entrada.py:93](blazesbot/bot/hh/entrada.py#L93) | routine.py | Teto da espera pela troca de mapa depois de clicar no link de entrar. |
 | `TETO_DO_TELEPORTE` | `2.0` | [blazesbot/bot/hh/entrada.py:97](blazesbot/bot/hh/entrada.py#L97) | — | Teto da espera pelo teleporte do Fay. |
@@ -258,20 +258,22 @@ ligar código não testado.
 | `BOSS_3` | `'Green Robmaster'` | [blazesbot/bot/hh/mapa_hh.py:184](blazesbot/bot/hh/mapa_hh.py#L184) | — | — |
 | `BOSS_4` | `'Purple'` | [blazesbot/bot/hh/mapa_hh.py:185](blazesbot/bot/hh/mapa_hh.py#L185) | — | — |
 | `DESTINO_DO_TRANSPORTE` | `'West Suburb of Stone City'` | [blazesbot/bot/hh/mapa_hh.py:114](blazesbot/bot/hh/mapa_hh.py#L114) | — | O destino no diálogo do Fay. **SÓ APARECE ROLANDO A LISTA ATÉ O FIM.** |
-| `FOLGA_DA_CAIXA` | `25` | [blazesbot/bot/hh/mapa_hh.py:414](blazesbot/bot/hh/mapa_hh.py#L414) | mapa_bc.py | A caixa que envolve o interior da cave |
+| `FOLGA_DA_CAIXA` | `25` | [blazesbot/bot/hh/mapa_hh.py:458](blazesbot/bot/hh/mapa_hh.py#L458) | mapa_bc.py | A caixa que envolve o interior da cave |
 | `GRUPO_DOS_ARREDORES` | `'Outside Black Wind Camp'` | [blazesbot/bot/hh/mapa_hh.py:73](blazesbot/bot/hh/mapa_hh.py#L73) | — | O grupo do painel de arredores naquele lugar. Serve para conferir que o painel |
 | `LUGAR_FORA_DA_HH` | `'Black Wind Camp Dungeon'` | [blazesbot/bot/hh/mapa_hh.py:69](blazesbot/bot/hh/mapa_hh.py#L69) | — | A zona de FORA da cave, lida da tela em 01/09/2026 (o rótulo do canto superior |
 | `NOME_DA_INSTANCIA` | `'Happiness Hall'` | [blazesbot/bot/hh/mapa_hh.py:84](blazesbot/bot/hh/mapa_hh.py#L84) | — | O QUE "HH" SIGNIFICA: **Happiness Hall**. |
 | `NPC_DA_ENTRADA` | `'Elite Axe Monk Soldier'` | [blazesbot/bot/hh/mapa_hh.py:154](blazesbot/bot/hh/mapa_hh.py#L154) | entrada.py | O NPC com quem se fala para entrar na cave. |
 | `PRECISAO_NO_PONTO_DA_ENTRADA` | `1.5` | [blazesbot/bot/hh/mapa_hh.py:151](blazesbot/bot/hh/mapa_hh.py#L151) | entrada.py, routine.py | Folga aceita para considerar que já se está no ponto de conversa. |
-| `TABS_ENTRE_OS_ALVOS_DO_PONTO` | `2` | [blazesbot/bot/hh/mapa_hh.py:208](blazesbot/bot/hh/mapa_hh.py#L208) | — | Quantos TABs dar depois de cada morte, num ponto com mais de um alvo. |
+| `TABS_ENTRE_OS_ALVOS_DO_PONTO` | `2` | [blazesbot/bot/hh/mapa_hh.py:247](blazesbot/bot/hh/mapa_hh.py#L247) | — | Quantos TABs dar depois de cada morte, num ponto com mais de um alvo. |
 | `ENTRE_TENTATIVAS_DE_ENTRAR` | `0.025` | [blazesbot/bot/hh/routine.py:94](blazesbot/bot/hh/routine.py#L94) | — | Entre uma tentativa de entrada e a seguinte. É o RESTO do orçamento da |
-| `LIMIAR_DO_PICK_UP_ALL` | `0.85` | [blazesbot/bot/hh/routine.py:132](blazesbot/bot/hh/routine.py#L132) | routine.py | — |
+| `LIMIAR_DO_PICK_UP_ALL` | `0.85` | [blazesbot/bot/hh/routine.py:155](blazesbot/bot/hh/routine.py#L155) | routine.py | — |
 | `PASSO_DENTRO_DA_CAVE` | `0.05` | [blazesbot/bot/hh/routine.py:111](blazesbot/bot/hh/routine.py#L111) | — | Quanto esperar entre estados DENTRO da cave. |
 | `PASSO_FORA_DA_CAVE` | `0.4` | [blazesbot/bot/hh/routine.py:112](blazesbot/bot/hh/routine.py#L112) | — | — |
-| `TEMPLATE_PICK_UP_ALL` | `'btn_pick_up_all.png'` | [blazesbot/bot/hh/routine.py:131](blazesbot/bot/hh/routine.py#L131) | routine.py | O botão "Pick up all" da janela de loot, achado por template. |
+| `SEGUNDOS_PARA_ENGAJAR` | `5.0` | [blazesbot/bot/hh/routine.py:131](blazesbot/bot/hh/routine.py#L131) | — | Quanto esperar, num ponto de batalha, para a flag de combate LIGAR. |
+| `SEGUNDOS_POR_TENTATIVA_DE_VOLTAR` | `1.8` | [blazesbot/bot/hh/routine.py:138](blazesbot/bot/hh/routine.py#L138) | — | Quanto esperar, por tentativa, a volta ao ponto depois da luta. |
+| `TEMPLATE_PICK_UP_ALL` | `'btn_pick_up_all.png'` | [blazesbot/bot/hh/routine.py:154](blazesbot/bot/hh/routine.py#L154) | routine.py | O botão "Pick up all" da janela de loot, achado por template. |
 | `TENTATIVAS_POR_LINHA_DE_LOG` | `15` | [blazesbot/bot/hh/routine.py:101](blazesbot/bot/hh/routine.py#L101) | routine.py, indice_de_tempos.py | De quantas em quantas tentativas escrever uma linha no log. |
-| `TOLERANCIA_DO_PONTO` | `15` | [blazesbot/bot/hh/routine.py:123](blazesbot/bot/hh/routine.py#L123) | — | Quanto o personagem pode estar longe do ponto do boss e ainda contar como |
+| `TOLERANCIA_DO_PONTO` | `15` | [blazesbot/bot/hh/routine.py:146](blazesbot/bot/hh/routine.py#L146) | — | Quanto o personagem pode estar longe do ponto do boss e ainda contar como |
 | `VOLTAS_ANTES_DE_RECUPERAR` | `3` | [blazesbot/bot/hh/routine.py:115](blazesbot/bot/hh/routine.py#L115) | — | Quantas voltas do laço sem sair do estado antes de desconfiar. |
 | `PRECISAO_NO_PONTO_DA_VENDA` | `1.5` | [blazesbot/bot/hh/vendedor.py:64](blazesbot/bot/hh/vendedor.py#L64) | — | Folga aceita para considerar que se está no ponto de clicar no vendedor. |
 | `SEGUNDOS_POR_TENTATIVA` | `1.8` | [blazesbot/bot/hh/vendedor.py:68](blazesbot/bot/hh/vendedor.py#L68) | — | — |

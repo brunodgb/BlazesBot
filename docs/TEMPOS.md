@@ -31,7 +31,7 @@ desta lista é ou uma exceção justificada, ou dívida que ninguém converteu a
 mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 
 
-**312 tempos catalogados** — 228 FIXOS (espera cega), 84 entre TETO e PASSO.
+**314 tempos catalogados** — 230 FIXOS (espera cega), 84 entre TETO e PASSO.
 
 
 **6 estão diferentes do original:** `TETO_DA_CAIXA`, `PASSO_DA_ESPERA`, `ESPERA_DA_BOLSA_ABRIR`, `FATIA_DE_ESPERA`, `INTERVALO_ENTRE_INVOCACOES`, `PASSOS_DO_APP`
@@ -287,8 +287,10 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | *literal em* `entrar` | 0.25 s | *novo* | FIXO | [fada.py:250](blazesbot/bot/hh/fada.py#L250) | `entrar` | Entra na cave. Mesma porta, mesma máquina, mesmo NPC do líder. |
 | `PASSO_DENTRO_DA_CAVE` | 0.05 s | *novo* | PASSO | [routine.py:111](blazesbot/bot/hh/routine.py#L111) | `run` | Quanto esperar entre estados DENTRO da cave. |
 | `PASSO_FORA_DA_CAVE` | 0.4 s | *novo* | PASSO | [routine.py:112](blazesbot/bot/hh/routine.py#L112) | `run` |  |
-| *literal em* `_do_situar` | 1 s | *novo* | FIXO | [routine.py:293](blazesbot/bot/hh/routine.py#L293) | `_do_situar` | Descobre em que ponto do ciclo a conta está, e entra por ali. |
-| *literal em* `_do_recuperar` | 2 s | *novo* | FIXO | [routine.py:1005](blazesbot/bot/hh/routine.py#L1005) | `_do_recuperar` | Algo saiu do roteiro. Volta a se situar, sem inventar. |
+| `SEGUNDOS_PARA_ENGAJAR` | 5 s | *novo* | FIXO | [routine.py:131](blazesbot/bot/hh/routine.py#L131) | `_do_boss` | Quanto esperar, num ponto de batalha, para a flag de combate LIGAR. |
+| `SEGUNDOS_POR_TENTATIVA_DE_VOLTAR` | 1.8 s | *novo* | FIXO | [routine.py:138](blazesbot/bot/hh/routine.py#L138) | `_voltar_ao_ponto` | Quanto esperar, por tentativa, a volta ao ponto depois da luta. |
+| *literal em* `_do_situar` | 1 s | *novo* | FIXO | [routine.py:330](blazesbot/bot/hh/routine.py#L330) | `_do_situar` | Descobre em que ponto do ciclo a conta está, e entra por ali. |
+| *literal em* `_do_recuperar` | 2 s | *novo* | FIXO | [routine.py:1175](blazesbot/bot/hh/routine.py#L1175) | `_do_recuperar` | Algo saiu do roteiro. Volta a se situar, sem inventar. |
 | `SEGUNDOS_POR_TENTATIVA` | 1.8 s | *novo* | FIXO | [vendedor.py:68](blazesbot/bot/hh/vendedor.py#L68) | `encostar_no_ponto_da_venda` |  |
 | `RECARGA` | 5 s | = | FIXO | [hotbar.py:63](blazesbot/bot/hotbar.py#L63) | `garantir_pagina_1` | Recarga do caminho com `ctx`. Os momentos-chave acontecem em rajada -- o portão |
 | `PASSO_DA_SONDA` | 0.012 s | = | PASSO | [instrumentar_clique.py:110](blazesbot/bot/instrumentar_clique.py#L110) | `_sondar_ate_mudar` | De quanto em quanto tempo a sonda fotografa o minimapa esperando o efeito. |

@@ -215,8 +215,14 @@ def test_os_bosses_sao_dados_e_nao_estados():
 
 
 def test_o_trecho_avanca_e_o_ultimo_leva_para_a_SAIDA():
-    fonte = _fonte(HHRoutine._do_boss)
-    assert "_trecho += 1" in fonte
+    """O avanço mora em `_avancar_o_trecho` desde 03/09/2026.
+
+    Saiu de `_do_boss` porque passou a ter duas entradas -- o ponto que não
+    engajou em 5 s e a luta vencida -- e a regra de pular os já feitos vale
+    para as duas.
+    """
+    fonte = _fonte(HHRoutine._avancar_o_trecho)
+    assert "self._trecho = proximo" in fonte
     assert "State.SAIR" in fonte
     assert "State.ATE_O_BOSS" in fonte
 
@@ -514,3 +520,102 @@ def test_estourar_o_teto_volta_para_a_PORTA_e_nao_para_RECUPERAR():
     fonte = _fonte(HHRoutine._do_entrar)
     assert "State.ATE_A_PORTA" in fonte
     assert "State.RECUPERAR" not in fonte
+
+# ===========================================================================
+# CINCO SEGUNDOS PARA ENGAJAR, E DEPOIS SEGUE
+# ===========================================================================
+#
+# Regra do usuário, 03/09/2026: *"sempre que tiver em um waypoint de ataque
+# deve esperar no máximo 5 segundos para entrar em batalha, caso não entre em
+# batalha pode continuar para os próximos waypoints"* -- e ele confirmou que
+# vale no ponto do BOSS também.
+#
+# É o que torna barato refazer um trecho já limpo depois de uma morte.
+
+
+def test_o_ponto_espera_5s_pela_flag_e_nao_mais():
+    from blazesbot.bot.hh import routine as hh
+
+    assert hh.SEGUNDOS_PARA_ENGAJAR == 5.0
+    fonte = _fonte(HHRoutine._do_boss)
+    assert "esperar_entrar_em_combate" in fonte
+    assert "SEGUNDOS_PARA_ENGAJAR" in fonte
+
+
+def test_nao_engajou_em_5s_AVANCA_o_trecho_sem_lutar():
+    """O ponto está limpo; insistir seria pagar o teto da luta contra o nada."""
+    chamadas = _chamadas(HHRoutine._do_boss)
+    assert (chamadas.index("esperar_entrar_em_combate")
+            < chamadas.index("_avancar_o_trecho"))
+
+
+def test_morrer_esperando_o_engajamento_NAO_vira_ponto_limpo():
+    """Silêncio porque morri é diferente de silêncio porque não tem ninguém.
+
+    Sem esta conferência, morrer na espera faria o bot marcar o trecho como
+    feito e seguir para o próximo boss -- morto.
+    """
+    fonte = _fonte(HHRoutine._do_boss)
+    depois_da_espera = fonte[fonte.index("SEGUNDOS_PARA_ENGAJAR"):]
+    assert depois_da_espera.index("dead") < depois_da_espera.index(
+        "_avancar_o_trecho")
+
+
+# ===========================================================================
+# VOLTAR AO PONTO DEPOIS DE MATAR
+# ===========================================================================
+
+
+def test_volta_ao_ponto_depois_da_luta():
+    """Mob ranged não vem até o personagem -- é o personagem que anda até ele.
+
+    Sair do ponto desalinha o trecho seguinte, e foi assim que o rollback falso
+    apareceu: começar o caminho fora do waypoint faz a retomada escolher índice
+    errado. O bot em Lua faz o mesmo (`hh.killAtPosition`).
+    """
+    chamadas = _chamadas(HHRoutine._do_boss)
+    assert chamadas.index("_lutar_no_ponto") < chamadas.index("_voltar_ao_ponto")
+    assert chamadas.index("_voltar_ao_ponto") < chamadas.index("_catar_o_loot")
+    assert "encostar_no_ponto" in _chamadas(HHRoutine._voltar_ao_ponto)
+
+
+def test_nao_volta_se_nao_saiu_do_lugar():
+    """Um clique de minimapa é barato, mas não é de graça em toda run."""
+    fonte = _fonte(HHRoutine._voltar_ao_ponto)
+    assert "onde_eu_estava is None" in fonte
+    assert "<= 3" in fonte
+
+
+# ===========================================================================
+# O QUE JÁ FOI FEITO NESTA IDA À CAVE
+# ===========================================================================
+#
+# Regra do usuário, 03/09/2026: *"não precisa ser persistente, só verificar
+# enquanto está com o bot aberto... e a cada vez que saiu da cave, tem que
+# resetar, pois ao reentrar todos os bosses vão estar vivos novamente"*.
+
+
+def test_o_progresso_e_ZERADO_ao_entrar_na_cave():
+    """Instância nova, quatro bosses vivos de novo."""
+    assert "_trechos_feitos.clear()" in _fonte(HHRoutine._entrou)
+
+
+def test_o_trecho_feito_e_PULADO_na_volta():
+    """Depois de uma morte o bot refaz a perna; o que já limpou, ele pula."""
+    fonte = _fonte(HHRoutine._avancar_o_trecho)
+    assert "_trechos_feitos.add" in fonte
+    assert "in self._trechos_feitos" in fonte
+
+
+def test_a_retomada_respeita_o_trecho_em_ANDAMENTO():
+    """Os quatro trechos se cruzam no mapa.
+
+    Quem morre no trecho 3 revive no começo da cave, e dali um waypoint do
+    trecho 1 fica mais perto que qualquer coisa do 3. Escolher pela distância
+    refaria os bosses já mortos -- e encontraria as salas vazias, porque o reset
+    só acontece na saída.
+    """
+    fonte = _fonte(HHRoutine._retomar_dentro_da_cave)
+    assert "_run_em_andamento" in fonte
+    # a distância só decide DEPOIS, quando não há run em andamento
+    assert fonte.index("_run_em_andamento") < fonte.index("mais_proximos")

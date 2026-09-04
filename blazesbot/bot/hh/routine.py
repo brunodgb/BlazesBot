@@ -114,6 +114,29 @@ PASSO_FORA_DA_CAVE = 0.4
 # Quantas voltas do laço sem sair do estado antes de desconfiar.
 VOLTAS_ANTES_DE_RECUPERAR = 3
 
+# Quanto esperar, num ponto de batalha, para a flag de combate LIGAR.
+#
+# Número do usuário, 03/09/2026: *"sempre que tiver em um waypoint de ataque
+# deve esperar no máximo 5 segundos para entrar em batalha, caso não entre em
+# batalha pode continuar para os próximos waypoints"*. E ele confirmou que vale
+# no ponto do BOSS também.
+#
+# É O QUE TORNA BARATO REFAZER UM TRECHO JÁ LIMPO -- e é por isso que existe.
+# Depois de uma morte o bot volta pelo começo da perna; num ponto onde não
+# sobrou nada, cinco segundos de silêncio dizem "aqui já foi" e ele segue.
+#
+# O QUE ISSO CUSTA, e está escrito para aparecer no log quando acontecer: um
+# boss VIVO que demore mais de 5 s para agredir é pulado, e a run perde esse
+# boss. O usuário foi avisado e escolheu assim -- ver `docs/decisoes/hh.md`.
+SEGUNDOS_PARA_ENGAJAR = 5.0
+
+# Quanto esperar, por tentativa, a volta ao ponto depois da luta.
+#
+# Mesmo valor que `entrada.SEGUNDOS_POR_TENTATIVA_DE_ENCOSTAR` usa para encostar
+# no NPC: é a mesma ação (um clique de minimapa e a caminhada até lá), e o
+# trajeto aqui é ainda mais curto.
+SEGUNDOS_POR_TENTATIVA_DE_VOLTAR = 1.8
+
 # Quanto o personagem pode estar longe do ponto do boss e ainda contar como
 # "no ponto".
 #
@@ -172,6 +195,20 @@ class HHRoutine:
         self._runs_na_ultima_venda = 0
         # Se a morte desta vez já foi contada no placar.
         self._contou_a_morte = False
+        # QUAIS TRECHOS JÁ NÃO TÊM MAIS NADA nesta ida à cave.
+        #
+        # Volátil de propósito (regra do usuário, 03/09/2026: *"não precisa ser
+        # persistente, só verificar enquanto está com o bot aberto"*): serve
+        # para a MORTE, que devolve o personagem ao começo da cave com a run
+        # ainda em andamento. Sem isto ele refaria os bosses já mortos.
+        #
+        # ZERADO AO SAIR DA CAVE, e é obrigatório: o desfaz-refaz do time
+        # ressuscita todos os quatro, então na volta seguinte nenhum está feito.
+        self._trechos_feitos: set[int] = set()
+        # Se há uma run em andamento DENTRO da cave. É o que faz a retomada
+        # respeitar o trecho em que ela parou em vez de escolher pelo waypoint
+        # mais próximo -- os quatro trechos se cruzam no mapa.
+        self._run_em_andamento = False
 
     # ==================================================================
     # O laço
@@ -307,10 +344,30 @@ class HHRoutine:
     def _retomar_dentro_da_cave(self, pos: tuple[int, int]) -> None:
         """Já estou dentro: descobre por qual trecho continuar.
 
-        Escolhe o trecho cujo waypoint mais próximo está mais perto. Não é
-        adivinhação: os quatro trechos ocupam regiões distintas da cave, e a
-        distância separa bem.
+        =================================================================
+        O TRECHO EM ANDAMENTO GANHA DA DISTÂNCIA
+        =================================================================
+
+        Quem morre no trecho 3 revive no começo da cave, e dali um waypoint do
+        trecho 1 fica mais perto que qualquer coisa do 3 -- os quatro trechos se
+        cruzam no mapa. Escolher pela distância refaria os bosses já mortos, e
+        encontraria as salas vazias: o reset só acontece na SAÍDA.
+
+        Então a distância só decide quando NÃO HÁ run em andamento, que é o caso
+        de abrir o bot com o personagem já dentro da cave. Nesse caso ele não
+        tem como saber o que já foi feito, e os 5 s de espera em cada ponto de
+        batalha (`SEGUNDOS_PARA_ENGAJAR`) é que resolvem: ponto limpo não
+        engaja, e o bot segue.
         """
+        if self._run_em_andamento:
+            rotulo = mapa_hh.TRECHOS_DOS_BOSSES[self._trecho][0]
+            self._ir_para(
+                State.PREPARAR_DENTRO,
+                f"de volta DENTRO da cave em {pos}; a run continua no trecho do "
+                f"{rotulo} ({len(self._trechos_feitos)} de "
+                f"{len(mapa_hh.TRECHOS_DOS_BOSSES)} já feitos)")
+            return
+
         melhor, menor = 0, float("inf")
         for i, (_rotulo, caminho, _ponto) in enumerate(mapa_hh.TRECHOS_DOS_BOSSES):
             _indice, dist = mapa_hh.mais_proximos(pos, caminho)[0]
@@ -565,6 +622,8 @@ class HHRoutine:
         """
         ctx = self.ctx
         self._trecho = 0
+        # ENTRADA NOVA, INSTÂNCIA NOVA: os quatro bosses estão vivos de novo.
+        self._trechos_feitos.clear()
 
         if ctx.settings.hh.modo_do_reset != MODO_FADA_DA_HH:
             # SOLO: a conta de reset já cumpriu o papel dela. Desfazer agora é o
@@ -640,6 +699,7 @@ class HHRoutine:
         # falhado: amarrar a contagem ao sucesso do preparo faria a run com
         # problema sumir das estatísticas, e é justamente ela que interessa.
         ctx.stats.begin_run()
+        self._run_em_andamento = True
 
         rotulo = mapa_hh.TRECHOS_DOS_BOSSES[self._trecho][0]
         self._ir_para(State.ATE_O_BOSS,
@@ -823,26 +883,136 @@ class HHRoutine:
             self._falhar(f"morri antes de encostar no {rotulo}")
             return
 
+        # ONDE EU ESTAVA. Mob ranged não vem até o personagem -- é o personagem
+        # que anda até ele quando a rotação mira longe. Guardar aqui é o que
+        # permite voltar depois, ver `_voltar_ao_ponto`.
+        onde_eu_estava = ctx.memory.position()
+
+        # CINCO SEGUNDOS PARA A FLAG LIGAR, e é isto que torna barato refazer um
+        # trecho já limpo depois de uma morte: ponto vazio não engaja.
+        if not self.combat.esperar_entrar_em_combate(
+                rotulo, limite=SEGUNDOS_PARA_ENGAJAR, pocao_na_espera=False):
+            if ctx.snapshot().dead:
+                self._falhar(f"morri esperando o {rotulo} engajar")
+                return
+            ctx.log.info(
+                "HH: o %s não engajou em %.0fs -- o ponto está limpo, sigo para "
+                "o trecho seguinte. (Se ele estava VIVO e só demorou, esta run "
+                "perde este boss; é a regra escolhida.)",
+                rotulo, SEGUNDOS_PARA_ENGAJAR)
+            self._avancar_o_trecho(rotulo)
+            return
+
+        if not self._lutar_no_ponto(rotulo):
+            return
+
+        # VOLTA PARA O PONTO antes de qualquer outra coisa: o loot e o trecho
+        # seguinte contam com o personagem onde a rota o deixou.
+        self._voltar_ao_ponto(rotulo, onde_eu_estava)
+        self._catar_o_loot()
+        self._recuperar_entre_os_bosses(rotulo)
+        self._avancar_o_trecho(rotulo)
+
+    def _lutar_no_ponto(self, rotulo: str) -> bool:
+        """A luta deste ponto, com o ritual que a NATUREZA dele pede.
+
+        =================================================================
+        DOIS RITUAIS, E O MAPA É QUEM ESCOLHE
+        =================================================================
+
+        BOSS (um ou dois): `lutar_contra_um_boss` -- o ritual inteiro do BC,
+        com AoE, TAB de aquisição se ele não vem, e golpe durante a confirmação
+        de saída.
+
+        PACOTE DE MOBS RANGED: `limpar_o_combate` -- mata UM, PARA e olha a flag
+        por três segundos, e só então TAB para o próximo. É a coreografia que o
+        bot em Lua usa neste mesmo ponto (`hh.killAtPosition`), e ela existe
+        porque o que encerra a luta é a lista acabar: cada morte pode ou não ser
+        a última, e a pausa é como se descobre sem puxar mob novo.
+
+        E SEM AoE nos pontos ranged (`mapa_hh.PONTOS_SEM_AOE`): a skill de área
+        é de curta distância, o mob ranged fica parado longe atirando, e a área
+        passa embaixo dele. Girar AoE ali é gastar o tempo da rotação sem dano.
+        """
+        ctx = self.ctx
+
+        if mapa_hh.e_pacote_de_mobs(rotulo):
+            if self.combat.limpar_o_combate(f"o pacote do {rotulo}"):
+                return True
+            self._falhar(f"não saí de batalha no pacote do {rotulo}")
+            return False
+
         fim = self.combat.lutar_contra_um_boss(
-            rotulo, tabs_ao_morrer=mapa_hh.tabs_ao_morrer(rotulo))
+            rotulo,
+            usar_aoe=mapa_hh.usa_aoe(rotulo),
+            tabs_ao_morrer=mapa_hh.tabs_ao_morrer(rotulo))
         ctx.log.info("HH: %s -- %s", rotulo, fim.resumo())
 
         # `saiu_de_combate` É A VITÓRIA, e é como a BC lê o mesmo objeto
         # (`_do_boss`: `venceu = fim.saiu_de_combate`). Morte, prazo estourado e
         # flag ilegível devolvem False.
-        if not fim.saiu_de_combate:
-            self._falhar(f"não venci o {rotulo}: {fim.motivo}")
+        if fim.saiu_de_combate:
+            return True
+        self._falhar(f"não venci o {rotulo}: {fim.motivo}")
+        return False
+
+    def _voltar_ao_ponto(self, rotulo: str,
+                         onde_eu_estava: tuple[int, int] | None) -> None:
+        """Se o personagem andou atrás de um mob, volta para onde estava.
+
+        O bot em Lua faz isto no mesmo lugar (`hh.killAtPosition`, o trecho
+        *"Char andou pra atacar o mob, voltando pra ..."*), e o motivo aparece
+        justamente nos pontos ranged: o mob fica parado longe, a rotação mira
+        nele, e o personagem caminha até o alcance.
+
+        SAIR DO PONTO DESALINHA O QUE VEM DEPOIS -- foi assim que o rollback
+        falso apareceu no trecho 1. Começar o caminho seguinte fora do waypoint
+        faz a retomada escolher índice errado.
+
+        Um clique de minimapa é barato; a alternativa é o trecho inteiro torto.
+        """
+        ctx = self.ctx
+        if onde_eu_estava is None:
+            return
+        agora = ctx.memory.position()
+        if agora is None or mapa_hh.distancia(agora, onde_eu_estava) <= 3:
             return
 
-        self._catar_o_loot()
-        self._recuperar_entre_os_bosses(rotulo)
+        ctx.log.info(
+            "HH: andei atrás dos mobs do %s (de %s para %s); voltando ao ponto",
+            rotulo, onde_eu_estava, agora)
+        self.ui.encostar_no_ponto(
+            alvo=onde_eu_estava,
+            precisao=TOLERANCIA_DO_PONTO,
+            tentativas=2,
+            segundos_por_tentativa=SEGUNDOS_POR_TENTATIVA_DE_VOLTAR,
+            o_que=f"voltar ao ponto do {rotulo}",
+        )
 
-        self._trecho += 1
+    def _avancar_o_trecho(self, rotulo: str) -> None:
+        """Marca este trecho como feito e escolhe o próximo PENDENTE.
+
+        Pular os já feitos é o que faz a morte custar apenas o caminho de volta:
+        o personagem revive no começo da cave, refaz a perna e, chegando num
+        ponto que ele já limpou, não perde nem os 5 s de espera.
+        """
+        self._trechos_feitos.add(self._trecho)
+
+        proximo = self._trecho + 1
+        while (proximo < len(mapa_hh.TRECHOS_DOS_BOSSES)
+               and proximo in self._trechos_feitos):
+            self.ctx.log.info(
+                "HH: o %s já foi feito nesta ida à cave; pulando",
+                mapa_hh.TRECHOS_DOS_BOSSES[proximo][0])
+            proximo += 1
+
+        self._trecho = proximo
         if self._trecho >= len(mapa_hh.TRECHOS_DOS_BOSSES):
-            self._ir_para(State.SAIR, "quatro bosses feitos; saindo")
+            self._ir_para(State.SAIR,
+                          f"{rotulo} foi o último; os quatro feitos, saindo")
         else:
-            proximo = mapa_hh.TRECHOS_DOS_BOSSES[self._trecho][0]
-            self._ir_para(State.ATE_O_BOSS, f"indo para o {proximo}")
+            seguinte = mapa_hh.TRECHOS_DOS_BOSSES[self._trecho][0]
+            self._ir_para(State.ATE_O_BOSS, f"indo para o {seguinte}")
 
     def _recuperar_entre_os_bosses(self, rotulo: str) -> None:
         """Senta para recuperar, se a vida pedir. Absorvido do BC.
