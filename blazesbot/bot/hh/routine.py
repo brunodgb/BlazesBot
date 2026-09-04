@@ -59,12 +59,17 @@ from collections.abc import Callable
 from enum import Enum, auto
 
 from ...config import CAVE_HH, MODO_FADA_DA_HH
-from ...core import catador, esconder_jogadores, logmodo
+from ...core import catador, diario, esconder_jogadores, logmodo
 from ...core.vision import capture_window, find_template
 from .. import mural
 from ..combate import CombatEngine
-from ..context import BotContext, StopRequested
-from ..navegacao import Navigator
+from ..context import (
+    BotContext,
+    Disconnected,
+    FarmDesligado,
+    StopRequested,
+)
+from ..navegacao import Navigator, PersonagemMortoNoPortao
 from ..team import TeamService
 from . import mapa_hh
 from .entrada import EntradaDaHH
@@ -277,12 +282,57 @@ class HHRoutine:
                 self._contar_a_volta()
                 logmodo.fase(self.state.name.lower())
 
+                anterior = self.state
                 handler = getattr(self, f"_do_{self.state.name.lower()}")
-                handler()
+                try:
+                    handler()
+                except (StopRequested, Disconnected):
+                    # Parar a conta e cair são do supervisor, não daqui.
+                    raise
+                except FarmDesligado:
+                    # DESLIGAR A HH NÃO É DEFEITO.
+                    #
+                    # `ctx.tick` chama `raise_if_stopped`, que detona
+                    # `FarmDesligado` assim que o interruptor da cave cai -- e
+                    # `tick` é chamado de dentro da navegação, do combate e da
+                    # venda. Sem este ramo a exceção subia até o supervisor,
+                    # que a registrava como "Erro inesperado na sessão" COM
+                    # TRACEBACK e derrubava a sessão inteira: a conta soltava o
+                    # controle e refazia login, janela e contexto.
+                    #
+                    # Medido no log de 03/09/2026: **15 vezes em 33 minutos**,
+                    # cada uma reconstruindo a sessão. É o mesmo desenho que a
+                    # BC já tinha em `bc/routine.py`.
+                    ctx.log.info(
+                        "HH desligada no meio de %s; devolvendo o controle "
+                        "(a conta fica online, parada)", anterior.name)
+                    return
+                except PersonagemMortoNoPortao as exc:
+                    # O portão da montaria avisando que não há o que insistir:
+                    # cadáver não monta. Não é exceção inesperada, e o desfecho
+                    # é o mesmo do `_guard()` ao ver o personagem morto.
+                    ctx.log.warning("%s. Indo para RECUPERAR.", exc)
+                    self.state = State.RECUPERAR
+                except Exception as exc:
+                    ctx.log.exception("HH: erro no estado %s: %s",
+                                      anterior.name, exc)
+                    diario.registrar_evento(
+                        ctx.account_login, "excecao",
+                        f"HH {anterior.name}: {type(exc).__name__}: {exc}",
+                        ctx.memory.position(), ctx.memory.location(),
+                    )
+                    self._falhar(f"exceção em {anterior.name}")
 
                 ctx.tick(PASSO_DENTRO_DA_CAVE
                          if self.state in ESTADOS_DENTRO_DA_CAVE
                          else PASSO_FORA_DA_CAVE)
+        except FarmDesligado:
+            # REDE DE SEGURANÇA: o `ctx.tick` do fim do laço e o `_guard()` do
+            # começo ficam FORA do `try` do handler. A HH pode apagar ali
+            # também, e o desfecho tem de ser o mesmo -- controle devolvido
+            # limpo, sem derrubar a sessão.
+            ctx.log.info("HH desligada; devolvendo o controle")
+            return
         finally:
             ctx.farming = False
             ctx.cave_em_farm = ""

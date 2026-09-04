@@ -161,26 +161,73 @@ def test_a_HH_confere_a_saude_ENTRE_estados():
     assert "_guard()" in laco, "o `_guard` não é chamado no laço"
 
 
-def test_a_HH_NAO_trata_Disconnected():
+def test_a_HH_NAO_ENGOLE_Disconnected():
     """Quem sabe matar o cliente, relançar e relogar é o supervisor.
 
     Uma rotina que engolisse `Disconnected` deixaria a conta presa numa janela
     morta -- e o relogin, que é a fundação de todo ecossistema, nunca
     aconteceria.
+
+    =================================================================
+    O TESTE PEDIA A COISA ERRADA, E ISSO IMPORTA
+    =================================================================
+
+    Ele exigia que `Disconnected` **não aparecesse** em nenhum `except` da HH.
+    Parecia a mesma coisa e não é: quando a HH ganhou um `except Exception`
+    para não derrubar a sessão por defeito de um estado, esse `except Exception`
+    passou a engolir `Disconnected` junto -- e a forma de impedir isso é
+    justamente CAPTURÁ-LO antes e relançar, que era o que o teste proibia.
+
+    Então o que se trava aqui é o comportamento: capturar pode; **engolir, não**.
+    Todo `except` que nomeia `Disconnected` tem de ser um `raise` puro. É o
+    mesmo desenho da BC (`bc/routine.py`).
     """
     from blazesbot.bot.hh import routine as mod_hh
 
     fonte = inspect.getsource(mod_hh)
     arvore = ast.parse(fonte)
-    capturas = []
+    engolidos = []
     for no in ast.walk(arvore):
-        if isinstance(no, ast.ExceptHandler) and no.type is not None:
-            nomes = ast.unparse(no.type)
-            if "Disconnected" in nomes:
-                capturas.append(no.lineno)
-    assert not capturas, (
-        f"a HH captura Disconnected nas linhas {capturas}; ela tem que subir "
-        f"para o supervisor")
+        if not isinstance(no, ast.ExceptHandler) or no.type is None:
+            continue
+        if "Disconnected" not in ast.unparse(no.type):
+            continue
+        # O corpo tem de ser um `raise` seco -- nada antes, nada depois.
+        corpo = [c for c in no.body if not (isinstance(c, ast.Expr)
+                                            and isinstance(c.value, ast.Constant))]
+        if not (len(corpo) == 1 and isinstance(corpo[0], ast.Raise)
+                and corpo[0].exc is None):
+            engolidos.append(no.lineno)
+    assert not engolidos, (
+        f"a HH captura Disconnected nas linhas {engolidos} sem relançar; ela "
+        f"tem que subir para o supervisor")
+
+
+def test_o_except_geral_da_HH_vem_DEPOIS_dos_especificos():
+    """Ordem de `except` é semântica, não estilo.
+
+    `except Exception` primeiro engoliria `Disconnected`, `StopRequested` e
+    `FarmDesligado` -- os três sinais que NÃO são defeito e que precisam chegar
+    a quem sabe tratá-los.
+    """
+    import textwrap
+
+    from blazesbot.bot.hh import routine as mod_hh
+
+    arvore = ast.parse(
+        textwrap.dedent(inspect.getsource(mod_hh.HHRoutine.run)))
+    for no in ast.walk(arvore):
+        if not isinstance(no, ast.Try):
+            continue
+        nomes = [ast.unparse(h.type) if h.type else "BARE" for h in no.handlers]
+        if "Exception" not in nomes:
+            continue
+        geral = nomes.index("Exception")
+        for sinal in ("Disconnected", "StopRequested", "FarmDesligado"):
+            posicoes = [i for i, n in enumerate(nomes) if sinal in n]
+            assert posicoes and min(posicoes) < geral, (
+                f"{sinal} tem que ser tratado ANTES do `except Exception` "
+                f"(handlers: {nomes})")
 
 
 def test_a_queda_na_HH_entra_no_historico_pelo_MESMO_caminho():
