@@ -77,8 +77,21 @@ SEGUNDOS_POR_TENTATIVA_DE_ENCOSTAR = 1.8
 # Mesmo valor do teleporte da Fay na BC, e pelo mesmo motivo: estourar o teto
 # vira AVISO e a rotina segue -- quem descobre que não entrou é a leitura de
 # posição do passo seguinte, que já existe e não custa nada.
-TETO_DA_ENTRADA = 2.0
-PASSO_DA_ESPERA_DA_ENTRADA = 0.08
+# A CONFIRMAÇÃO DE UMA TENTATIVA DE ENTRADA -- os dois números são do BC.
+#
+# Eram 2,0 s de teto com passo de 0,08 s, e isso custava a disputa: enquanto o
+# bot esperava dois segundos para descobrir que a instância estava cheia,
+# ninguém estava tentando de novo. A vaga é disputada com outros jogadores.
+#
+# Os valores abaixo vêm da aritmética medida da BC (`bc/routine.py`, o bloco do
+# orçamento da disputa): um quarto de segundo cobre a ida e volta do servidor
+# com folga, e perguntar é uma leitura de MEMÓRIA -- posição --, que custa
+# microssegundos. Por isso dá para perguntar seis vezes por janela em vez de
+# esperar cego.
+#
+# Entrou, sai na hora. Não entrou, a janela fecha e a tentativa seguinte começa.
+TETO_DA_ENTRADA = 0.25
+PASSO_DA_ESPERA_DA_ENTRADA = 0.04
 
 # Teto da espera pelo teleporte do Fay.
 TETO_DO_TELEPORTE = 2.0

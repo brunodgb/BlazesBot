@@ -78,13 +78,27 @@ from .vendedor import VendedorDaHH
 # de arredores e um teleporte; acima disto algo está errado de verdade.
 MAX_SEGUNDOS_ATE_A_PORTA = 10 * 60.0
 
-# Teto da rajada de tentativas de entrar. A vaga é disputada e cada tentativa
-# custa cerca de 1 segundo -- ver `bot/ui_do_jogo.py`.
-MAX_SEGUNDOS_NA_PORTA = 5 * 60.0
+# Teto da rajada de tentativas de entrar. UMA HORA, e é o número do BC.
+#
+# Não é generosidade: a instância pode estar cheia, e desistir devolve o
+# personagem para o começo do ciclo sem ter feito nada. Uma hora de tentativa
+# custa quase zero (a tentativa é clique e leitura de memória) e ainda entra;
+# desistir em 5 minutos custa a run inteira. Regra do usuário, 03/09/2026:
+# *"tem que ficar fazendo as tentativas para entrar, como é feito em BC, pois
+# são várias e várias tentativas até conseguir entrar"*.
+MAX_SEGUNDOS_NA_PORTA = 1 * 60 * 60.0
 
-# Entre uma tentativa de entrada e a seguinte. É o RESTO do orçamento, não um
-# gasto: a tentativa em si já leva ~1 s.
-ENTRE_TENTATIVAS_DE_ENTRAR = 0.25
+# Entre uma tentativa de entrada e a seguinte. É o RESTO do orçamento da
+# disputa, não um gasto: a tentativa em si (dois cliques mais a confirmação
+# curta) é que leva o tempo. Mesmo valor do BC.
+ENTRE_TENTATIVAS_DE_ENTRAR = 0.025
+
+# De quantas em quantas tentativas escrever uma linha no log.
+#
+# Sem isto a disputa enche o log com uma linha por tentativa -- são milhares por
+# hora. Com isto o log continua dizendo "estou tentando", que é a informação que
+# interessa, sem afogar todo o resto.
+TENTATIVAS_POR_LINHA_DE_LOG = 15
 
 # Teto de um trecho de waypoints até um boss. O trecho mais longo tem 22
 # waypoints; com montaria isso é bem menos de um minuto.
@@ -445,37 +459,101 @@ class HHRoutine:
         O TIME É MONTADO AQUI, não antes: mexer na lista no meio do caminho não
         adianta e o convite podia expirar durante o teleporte.
 
-        F12 PRESO DURANTE A RAJADA. Daqui saem dois cliques por segundo na cena
-        3D disputando a vaga, e um jogador parado na frente do NPC engole todos
-        eles.
+        F12 PRESO DURANTE A RAJADA. Daqui saem cliques na cena 3D disputando a
+        vaga, e um jogador parado na frente do NPC engole todos eles.
+
+        =================================================================
+        A RAJADA É A DO BC, E A FORMA DELA É O PONTO
+        =================================================================
+
+        Regra do usuário, 03/09/2026: *"tem que ficar fazendo as tentativas para
+        entrar, como é feito em BC, pois são várias e várias tentativas até
+        conseguir entrar, pois pode estar cheio a cave"*.
+
+        Quatro coisas vieram de lá, e cada uma resolve um jeito de a disputa
+        fracassar:
+
+          * TETO DE UMA HORA em vez de cinco minutos. Desistir devolve o
+            personagem ao começo do ciclo sem ter feito nada.
+          * CONFIRMAÇÃO CURTA (0,25 s, ver `entrada.TETO_DA_ENTRADA`) em vez de
+            dois segundos. Enquanto o bot esperava, ninguém estava tentando.
+          * VOLTAR À COORDENADA quando o personagem deriva. Fora do ponto de
+            conversa todo clique erra o NPC, e cada erro empurra mais.
+          * REDESCOBRIR SÓ NA FALHA MECÂNICA. Instância cheia é a razão normal
+            de não entrar; redescobrir por causa dela custaria segundos por
+            tentativa.
+
+        E o fracasso do teto volta para `ATE_A_PORTA`, não para `RECUPERAR`:
+        uma hora na porta sem entrar não é queda nem morte -- é a cave cheia, e
+        a resposta certa é refazer o caminho e tentar de novo.
         """
         ctx = self.ctx
         if not self._garantir_o_time():
             return
 
         self.ui.preparar_entrada()
-        limite = time.time() + MAX_SEGUNDOS_NA_PORTA
+        comeco = time.time()
+        limite = comeco + MAX_SEGUNDOS_NA_PORTA
+        tentativa = 0
 
         with esconder_jogadores.segurado(
                 tecla=ctx.settings.keys.hide_players,
                 segurar=ctx.key_down, soltar=ctx.key_up, log=ctx.log):
             while time.time() < limite:
                 self._guard()
+                tentativa += 1
 
-                if not self.ui.tentar_entrar_na_hh():
-                    self.ui.registrar_falha_de_entrada()
-                    ctx.tick(ENTRE_TENTATIVAS_DE_ENTRAR)
-                    continue
+                # ANTES DE CLICAR: ainda estou onde a cave pode ser aberta?
+                pos = ctx.memory.position()
 
-                if self.ui.esperar_entrar():
+                # Entrei numa tentativa anterior e só descobri agora. Acontece
+                # quando o servidor demora mais que a janela de confirmação.
+                if mapa_hh.esta_dentro_da_hh(pos):
+                    ctx.log.info(
+                        "Já estou dentro da HH em %s (tentativa %s, %.0fs de "
+                        "disputa)", pos, tentativa, time.time() - comeco)
                     self._entrou()
                     return
 
-                self.ui.registrar_falha_de_entrada()
+                # DERIVA. Um mob que empurra, um clique que escorregou, e o
+                # personagem sai da coordenada de conversa -- daí em diante todo
+                # clique erra o NPC, e cada erro faz o personagem andar mais.
+                # Voltar é mais barato que insistir de longe. Igual ao BC.
+                if pos is not None and mapa_hh.distancia(
+                        pos, mapa_hh.PONTO_DA_ENTRADA
+                ) > mapa_hh.PRECISAO_NO_PONTO_DA_ENTRADA:
+                    self.ui.garantir_coordenada_da_entrada()
+                    continue
+
+                # `False` = a MECÂNICA falhou (o diálogo não abriu, o clique não
+                # pegou). `True` = os dois cliques saíram e o pedido foi feito.
+                cliques_sairam = self.ui.tentar_entrar_na_hh()
+
+                if self.ui.esperar_entrar():
+                    ctx.log.info(
+                        "DENTRO da HH na tentativa %s (%.0fs de disputa)",
+                        tentativa, time.time() - comeco)
+                    self._entrou()
+                    return
+
+                # SÓ A FALHA MECÂNICA CONTA para a redescoberta do NPC e do
+                # link. Instância cheia é a razão NORMAL de não entrar, e
+                # redescobrir por causa dela custaria segundos por tentativa no
+                # meio da disputa.
+                if not cliques_sairam:
+                    self.ui.registrar_falha_de_entrada()
+
+                if tentativa % TENTATIVAS_POR_LINHA_DE_LOG == 0:
+                    ctx.log.info(
+                        "Ainda do lado de fora da HH depois de %s tentativas "
+                        "(%.0fs). A instância deve estar cheia; continuo.",
+                        tentativa, time.time() - comeco)
+
                 ctx.tick(ENTRE_TENTATIVAS_DE_ENTRAR)
 
-        self._falhar(f"não consegui entrar em {MAX_SEGUNDOS_NA_PORTA:.0f}s",
-                     State.RECUPERAR)
+        self._falhar(
+            f"não entrei na HH em {MAX_SEGUNDOS_NA_PORTA / 60:.0f} min "
+            f"({tentativa} tentativas)", State.ATE_A_PORTA)
 
     def _entrou(self) -> None:
         """Dentro. No modo solo, o time é desfeito AQUI.

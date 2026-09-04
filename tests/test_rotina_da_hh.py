@@ -445,3 +445,72 @@ def test_a_HH_nao_tem_alvo_proibido_e_isso_e_RESPOSTA():
     from blazesbot.bot.combate import CombatEngine
 
     assert CombatEngine.NOME_DO_ALVO_PROIBIDO is None
+
+
+# ===========================================================================
+# A RAJADA DE ENTRADA É A DO BC
+# ===========================================================================
+#
+# Regra do usuário, 03/09/2026: *"tem que ficar fazendo as tentativas para
+# entrar, como é feito em BC, pois são várias e várias tentativas até conseguir
+# entrar, pois pode estar cheio a cave"*.
+#
+# Os números não são copiados na unha: o teste compara com os do BC, e é isso
+# que impede os dois de divergirem em silêncio quando alguém ajustar um lado.
+
+
+def test_o_teto_da_porta_e_o_mesmo_do_BC():
+    """Uma hora, e não cinco minutos.
+
+    Desistir devolve o personagem ao começo do ciclo sem ter feito nada -- e a
+    tentativa em si custa quase zero (clique e leitura de memória).
+    """
+    from blazesbot.bot.bc import routine as bc
+    from blazesbot.bot.hh import routine as hh
+
+    assert hh.MAX_SEGUNDOS_NA_PORTA == bc.MAX_SEGUNDOS_ENTRADA == 3600.0
+
+
+def test_o_intervalo_entre_tentativas_e_o_mesmo_do_BC():
+    from blazesbot.bot.bc import routine as bc
+    from blazesbot.bot.hh import routine as hh
+
+    assert hh.ENTRE_TENTATIVAS_DE_ENTRAR == bc.ESPERA_ENTRE_TENTATIVAS
+
+
+def test_a_confirmacao_de_uma_tentativa_e_CURTA():
+    """Eram 2,0 s, e enquanto o bot esperava ninguém estava tentando de novo.
+
+    A janela do BC é 0,25 s porque perguntar é uma leitura de memória: dá para
+    perguntar várias vezes dentro dela em vez de esperar cego.
+    """
+    from blazesbot.bot.bc import routine as bc
+    from blazesbot.bot.hh import entrada
+
+    assert entrada.TETO_DA_ENTRADA == bc.JANELA_DE_RECONHECIMENTO
+    assert entrada.PASSO_DA_ESPERA_DA_ENTRADA == bc.PASSO_DO_RECONHECIMENTO
+
+
+def test_a_rajada_confere_a_POSICAO_antes_de_clicar():
+    """Duas coisas, e as duas na mesma leitura.
+
+    Já estar dentro (o servidor demorou mais que a janela) e ter DERIVADO para
+    fora do ponto de conversa -- fora dele todo clique erra o NPC, e cada erro
+    empurra o personagem mais para longe.
+    """
+    chamadas = _chamadas(HHRoutine._do_entrar)
+    assert "position" in chamadas
+    assert "esta_dentro_da_hh" in chamadas
+    assert "garantir_coordenada_da_entrada" in chamadas
+    assert chamadas.index("position") < chamadas.index("tentar_entrar_na_hh")
+
+
+def test_estourar_o_teto_volta_para_a_PORTA_e_nao_para_RECUPERAR():
+    """Uma hora sem entrar não é queda nem morte -- é a cave cheia.
+
+    `RECUPERAR` é para quando algo saiu do roteiro; a resposta certa aqui é
+    refazer o caminho e tentar de novo.
+    """
+    fonte = _fonte(HHRoutine._do_entrar)
+    assert "State.ATE_A_PORTA" in fonte
+    assert "State.RECUPERAR" not in fonte
