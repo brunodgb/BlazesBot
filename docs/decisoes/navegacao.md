@@ -954,3 +954,87 @@ Três decisões dentro dele:
    `marco`, `ultimo_progresso`, `parado_desde` e `ultima_posicao` são
    reiniciados.
 
+---
+
+## O DESTRAVAMENTO QUE ANDAVA ZERO — 4 MIN 10 S NUM PONTO SÓ (04/09/2026)
+
+O usuário mandou o print do jogo com o chat repetindo
+
+    Failed to auto-path [Happiness Hall Visitor Room(282,139)->...(282,139)]
+
+e o personagem cercado de *Elite Blackshirt Bandit*. O log deu o resto: **~180
+voltas em 4 minutos e 10 segundos**, sempre o mesmo ciclo:
+
+    sem progresso indo para (271,137) (waypoint 22/22, distância 11)
+    Navegação travada em (282,139). Vizinhos: 21 em (282,139) a 0 -> 22 a 11
+    Destravando pelo waypoint 21/22 em (282,139) (tolerância 2)
+    waypoint 1/1 alcançado em 0.0s | posição (282,139)      <- andou ZERO
+    Cheguei no waypoint 21; a rota continua do 22
+    sem progresso indo para (271,137) ...                    <- e recomeça
+
+### Por que o laço nunca fechava
+
+`follow_path` de um ponto **já alcançado** devolve `True` sempre, em zero
+segundo, com qualquer tolerância. A manobra declarava sucesso, o chamador zerava
+o contador de travas, e a situação voltava idêntica.
+
+Três proteções existiam e **nenhuma** cobria este caso:
+
+| proteção | por que não pegou |
+|---|---|
+| tolerância apertada no mais próximo (`TOLERANCIA_DE_VOLTA_AO_CAMINHO`) | resolve "quase lá"; distância **zero** passa em qualquer tolerância |
+| memória de candidatos que falharam | guarda quem **falhou**, e este tem sucesso |
+| contador de travas com teto | é zerado pelo sucesso falso, então nunca cresce |
+
+A terceira é especialmente instrutiva: o módulo **já tinha** um comentário
+avisando que zerar `melhor_distancia` fazia "o contador de travas NUNCA crescer,
+e com isso o teto nunca disparava". O mesmo formato, num campo diferente.
+
+### O conserto
+
+**Candidato dentro da tolerância de chegada é descartado**, e se sobrarem zero a
+manobra devolve `None` em vez de fingir. A régua do filtro é a **mesma** da
+tentativa (`_tolerancia_do_candidato`, extraída para função): duas cópias dessa
+conta divergiriam em silêncio, e o sintoma seria um candidato descartado com uma
+régua e tentado com outra.
+
+---
+
+## A NAVEGAÇÃO PASSA A SABER DE COMBATE, E A FICAR PRESA TEM PRAZO (04/09/2026)
+
+Duas faltas no mesmo ponto do laço, e a causa de fundo do episódio acima.
+
+### O jogo prende o personagem em combate
+
+Insistir no clique de minimapa contra um combate não anda um passo — é o
+`Failed to auto-path` do chat. O remédio **já existia**: `destravar_o_combate`,
+o gancho que mata mob a mob até a flag baixar.
+
+Mas só o **portão da montaria** o chamava. E o portão só entra quando se vai
+montar; ali o personagem já estava montado e andando, então ele nunca era
+consultado. É o mesmo gancho, no lugar que faltava.
+
+Regra do usuário: *"é importante não deixar ficar sem progresso, arranjar uma
+forma de continuar a cave, mas sem pular a morte dos boss, pois aqui em HH,
+junto com os boss, tem vários mobs que precisam ser mortos"*. **Matar é
+continuar** — e por isso matar vem ANTES do teto e ANTES da manobra de vizinhos.
+
+`in_battle() is True`, e não `not ...`: leitura ilegível não autoriza sair
+batendo, que seria puxar mob por causa de uma leitura que falhou.
+
+### Ficar preso tem prazo — `TETO_PRESO_NO_MESMO_PONTO = 30 s`
+
+Número do usuário: *"o ideal é não ficar muito tempo parado, 30 segundos sem
+fazer nada já é bastante tempo parado"*.
+
+Ele conta só o tempo **inútil**: matar mob zera o relógio, porque matar é
+progresso mesmo com o personagem parado no lugar; e o avanço da rota zera
+também, para o teto valer **por ponto** e não pelo trajeto inteiro.
+
+**O que o prazo compra não é só tempo.** Enquanto a navegação insistia,
+`_do_ate_o_boss` não devolvia o controle — e sem isso o `_guard()` da rotina não
+roda, então o Parar e o watchdog ficam sem resposta. Os 4 min 10 s do episódio
+só terminaram porque o usuário desligou a HH na mão. Estourado o teto,
+`follow_path` devolve `False` e **quem decide é a rotina**, que sabe refazer o
+trecho, matar ou falhar — e que respira.
+

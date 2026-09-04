@@ -385,6 +385,27 @@ time a flag não faz nada.
 - **O vendedor é o `Roaming Apothecary`, fora da cave** — a venda da BC com outro
   NPC. Isso é dado de rota, não módulo de venda novo.
 
+#### Navegação presa — vale para as DUAS caves (`navegacao.md`, 04/09/2026)
+
+- **MANOBRA QUE ANDA ZERO UNIDADE NÃO É MANOBRA.** O destravamento descarta o
+  candidato que já está dentro da tolerância de chegada, e devolve `None`
+  quando não sobra nenhum. Fingir sucesso ali zerava o contador de travas do
+  chamador e produziu **4 min 10 s** num ponto só. A régua do filtro é a mesma
+  da tentativa (`_tolerancia_do_candidato`) — nunca duas cópias.
+- **SEM PROGRESSO E EM BATALHA: MATA.** O jogo prende o personagem em combate e
+  nenhum clique de minimapa resolve. `destravar_o_combate` deixou de ser só do
+  portão da montaria. Matar vem **antes** do teto e da manobra: matar é
+  continuar, e a HH tem mobs a matar junto com os bosses.
+- **FICAR PRESO TEM PRAZO: 30 s** (`TETO_PRESO_NO_MESMO_PONTO`). Conta só tempo
+  inútil — matar e avançar zeram o relógio. Estourado, o controle volta para a
+  rotina: enquanto a navegação insiste, o `_guard()` não roda, e Parar e
+  watchdog ficam sem resposta.
+- **O PONTO DO BOSS É O FIM DO CAMINHO DE CADA TRECHO.** Os dois são declarados
+  separados e já divergiram (04/09: um waypoint comentado, o ponto apontando
+  para ele). A diferença coube na tolerância e o defeito não apareceu como
+  erro — apareceu como o bot insistindo num waypoint que não existia mais.
+  Travado por `test_o_ponto_do_boss_e_o_FIM_do_caminho_de_cada_trecho`.
+
 #### O que a sessão de 04/09/2026 fixou — o porquê medido em `hh.md` §13
 
 - **`FarmDesligado`, `StopRequested` e `Disconnected` são tratados ANTES do
