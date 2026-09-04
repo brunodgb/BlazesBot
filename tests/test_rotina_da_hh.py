@@ -101,20 +101,72 @@ def test_dentro_da_cave_a_cadencia_e_mais_curta():
     from blazesbot.bot.hh import routine
 
     assert routine.PASSO_DENTRO_DA_CAVE < routine.PASSO_FORA_DA_CAVE
-    assert ESTADOS_DENTRO_DA_CAVE == {State.ATE_O_BOSS, State.BOSS, State.SAIR}
+    assert ESTADOS_DENTRO_DA_CAVE == {
+        State.PREPARAR_DENTRO, State.ATE_O_BOSS, State.BOSS, State.SAIR}
 
 
 # ===========================================================================
-# A ORDEM DE OURO: preparação, depois alvo
+# FORA DA CAVE NÃO SE PREPARA NADA QUE EXIJA ESTAR A PÉ
 # ===========================================================================
+#
+# Regra do usuário, 03/09/2026: *"o uso de SS, o uso de buff, o uso de poção de
+# cura, qualquer coisa que precisar é só depois que entrar na cave e não fora,
+# como é feito no bot BC"*. É a mesma regra que a BC segue desde 25/08/2026.
+#
+# Os dois motivos são medidos: montado o jogo IGNORA a tecla sem devolver erro,
+# e entrar na cave é disputado -- durante a espera o personagem regenera de
+# graça, então curar antes é gastar poção que a espera ia devolver.
 
 
-def test_o_preparo_vem_ANTES_de_qualquer_deslocamento():
-    """Pet, buffs e vida antes de andar. O bot em Lua invertia: montava, andava,
-    e só então curava."""
-    chamadas = _chamadas(HHRoutine._do_preparar)
-    assert chamadas.index("ensure_pet") < chamadas.index("apply_buffs")
-    assert "heal_to_full" in chamadas
+@pytest.mark.parametrize("proibida,por_que", [
+    ("apply_buffs", "buff fora da cave expira na fila da porta"),
+    ("curar_ao_entrar", "a espera da porta devolve a vida de graça"),
+    ("heal_to_full", "a espera da porta devolve a vida de graça"),
+    ("feed_pet", "alimentar exige estar a pé, e a pé fora da cave é proibido"),
+])
+def test_o_preparo_de_FORA_nao_faz_o_que_e_de_dentro(proibida, por_que):
+    assert proibida not in _chamadas(HHRoutine._do_preparar), por_que
+
+
+def test_o_preparo_de_DENTRO_segue_a_ordem_do_BC():
+    """A ordem não é preferência: cada passo depende do que o anterior deixa.
+
+    Curar antes de buffar (buff em quem vai morrer é buff perdido), pet antes da
+    comida, e montar por último -- senão os passos seguintes desfazem a montaria.
+    """
+    chamadas = _chamadas(HHRoutine._do_preparar_dentro)
+    for antes, depois in [("curar_ao_entrar", "apply_buffs"),
+                          ("apply_buffs", "ensure_pet"),
+                          ("ensure_pet", "feed_pet"),
+                          ("feed_pet", "garantir_montaria_para_andar")]:
+        assert chamadas.index(antes) < chamadas.index(depois), (
+            f"{antes} tem que vir antes de {depois}")
+
+
+def test_o_PET_e_conferido_na_PORTA_e_so_uma_vez():
+    """A única verificação que acontece fora da cave.
+
+    Regra do usuário: *"o pet também pode verificar fora da cave, mas só ao
+    chegar na frente da cave, antes não precisa"*. E FORA do laço de tentativas:
+    a rajada pode durar uma hora com uma tentativa a cada 25 ms.
+    """
+    assert "ensure_pet" in _chamadas(HHRoutine._conferir_o_pet_na_porta)
+    assert "ensure_pet" not in _chamadas(HHRoutine._do_entrar)
+    # e o estado que chega na porta chama o conferidor nos DOIS caminhos
+    # (já estava na porta, e viajou até ela)
+    assert _chamadas(HHRoutine._do_ate_a_porta).count(
+        "_conferir_o_pet_na_porta") == 2
+
+
+def test_a_contagem_da_run_comeca_no_preparo_de_DENTRO():
+    """Não na entrada: a disputa da porta pode ter levado uma hora.
+
+    Contar a run a partir do preparo é o que torna o tempo por run comparável
+    entre uma volta e outra. Mesmo desenho da BC.
+    """
+    assert "begin_run" in _chamadas(HHRoutine._do_preparar_dentro)
+    assert "begin_run" not in _chamadas(HHRoutine._entrou)
+    assert "begin_run" not in _chamadas(HHRoutine._retomar_dentro_da_cave)
 
 
 def test_o_CAP_e_conferido_ANTES_de_entrar():

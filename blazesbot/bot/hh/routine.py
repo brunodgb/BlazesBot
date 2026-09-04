@@ -4,15 +4,22 @@
 O CICLO
 =========================================================================
 
-    SITUAR ........ onde estou? Dentro da cave, na porta, ou em Stone City?
-    PREPARAR ...... pet, buffs, poção, CAP, montaria -- nesta ordem
-    ATE_A_PORTA ... Fay -> West Suburb -> Mutual -> (-342,-288)
-    ENTRAR ........ o time é montado AQUI, e a porta é disputada
-    ATE_O_BOSS .... um trecho de waypoints; repete para os 4 bosses
+    SITUAR ............ onde estou? Dentro da cave, na porta, ou em Stone City?
+    PREPARAR .......... câmera, CAP e montaria. NADA que exija estar a pé
+    ATE_A_PORTA ....... Fay -> West Suburb -> Mutual -> (-342,-288), e o PET
+    ENTRAR ............ o time é montado AQUI, e a porta é disputada
+    PREPARAR_DENTRO ... poção, buffs, pet, comida, montaria -- nesta ordem
+    ATE_O_BOSS ........ um trecho de waypoints; repete para os 4 bosses
     BOSS .......... luta, loot
     SAIR .......... pelo NPC, de volta para fora
     MANUTENCAO .... vender, deletar, desfazer e refazer o time
     RECUPERAR ..... morreu ou algo saiu do roteiro
+
+FORA DA CAVE NÃO SE PREPARA NADA que dependa de estar a pé. É regra do
+usuário (03/09/2026) e é o que a BC já faz: buff, poção e comida de pet moram no
+`PREPARAR_DENTRO`, depois que a instância abriu. A única exceção é o PET, que é
+conferido uma vez ao CHEGAR na porta -- e conferido de novo lá dentro, porque a
+tela de carregamento é justamente onde ele some.
 
 A DIFERENÇA DE FORMA CONTRA A BC é que os quatro bosses são um LAÇO sobre
 `mapa_hh.TRECHOS_DOS_BOSSES`, e não quatro pares de estados. Acrescentar um
@@ -116,6 +123,7 @@ class State(Enum):
     PREPARAR = auto()
     ATE_A_PORTA = auto()
     ENTRAR = auto()
+    PREPARAR_DENTRO = auto()
     ATE_O_BOSS = auto()
     BOSS = auto()
     SAIR = auto()
@@ -125,7 +133,7 @@ class State(Enum):
 
 # Estados que acontecem DENTRO da instância, com os mobs vindo atrás.
 ESTADOS_DENTRO_DA_CAVE = frozenset({
-    State.ATE_O_BOSS, State.BOSS, State.SAIR,
+    State.PREPARAR_DENTRO, State.ATE_O_BOSS, State.BOSS, State.SAIR,
 })
 
 
@@ -289,7 +297,6 @@ class HHRoutine:
         adivinhação: os quatro trechos ocupam regiões distintas da cave, e a
         distância separa bem.
         """
-        ctx = self.ctx
         melhor, menor = 0, float("inf")
         for i, (_rotulo, caminho, _ponto) in enumerate(mapa_hh.TRECHOS_DOS_BOSSES):
             _indice, dist = mapa_hh.mais_proximos(pos, caminho)[0]
@@ -298,23 +305,44 @@ class HHRoutine:
 
         self._trecho = melhor
         rotulo = mapa_hh.TRECHOS_DOS_BOSSES[melhor][0]
+        # PASSA PELO PREPARO, e não direto para o trecho. Quem chega aqui ou
+        # morreu e reviveu dentro, ou abriu o bot com a run em andamento -- nos
+        # dois casos a vida, os buffs e o pet estão em estado desconhecido, que é
+        # exatamente o que o preparo resolve. E ele começa curando.
         self._ir_para(
-            State.ATE_O_BOSS,
+            State.PREPARAR_DENTRO,
             f"já estou DENTRO da cave em {pos}; retomando no trecho do "
             f"{rotulo} (waypoint a {menor:.0f} unidades)")
-        ctx.stats.begin_run()
 
     # ==================================================================
     # PREPARAR -- pet, buffs, poção, cap, montaria
     # ==================================================================
 
     def _do_preparar(self) -> None:
-        """A ORDEM DE OURO: preparação primeiro, alvo depois.
+        """FORA DA CAVE SÓ ACONTECE O QUE NÃO DÁ PARA FAZER DENTRO.
 
-        E ela inclui o CAP, que é a capacidade que o bot em Lua não tem: ele
-        vende toda run com 30 cliques cegos e transborda sem avisar. Aqui a
-        bolsa decide se vale ir vender ANTES de entrar -- entrar com a bolsa
-        cheia é fazer a run inteira e deixar o loot no chão.
+        =================================================================
+        O QUE SAIU DAQUI, E POR QUÊ
+        =================================================================
+
+        Regra do usuário, 03/09/2026: *"o uso de SS, o uso de buff, o uso de
+        poção de cura, qualquer coisa que precisar é só depois que entrar na
+        cave e não fora, como é feito no bot BC"*. É a mesma regra que a
+        Bewitcher Cave já seguia desde 25/08/2026 -- ver `bc.routine._do_curar`.
+
+        Buff, poção e comida de pet foram para `_do_preparar_dentro`. Os dois
+        motivos são medidos e valem igual aqui:
+
+          * TUDO ISSO EXIGE ESTAR A PÉ, e montado o jogo IGNORA a tecla sem
+            devolver erro -- o bot "aperta e nada acontece". Desmontar no meio
+            do trajeto custa a descida, a ação e a remontagem.
+          * ENTRAR É DISPUTADO e pode levar até uma hora de tentativa. Nesse
+            intervalo o personagem regenera de graça: curar antes é gastar
+            poção que a espera ia devolver.
+
+        FICA AQUI: a câmera, a montaria para viajar, e a decisão de vender.
+        O PET fica em `_do_ate_a_porta` -- é a única verificação que acontece
+        fora, e só ao CHEGAR na porta (regra do usuário na mesma data).
         """
         ctx = self.ctx
 
@@ -329,17 +357,17 @@ class HHRoutine:
         # cegas sobre um ponteiro resolvido no início do script.
         ctx.apply_camera()
 
-        if ctx.settings.pet.summon_on_login:
-            self.combat.ensure_pet()
-        self.combat.apply_buffs()
-        self.combat.heal_to_full()
-
         # A bolsa manda ir vender ANTES de entrar, não depois de encher.
         if self._precisa_vender():
             self._ir_para(State.MANUTENCAO, "a bolsa pede venda antes de entrar")
             return
 
-        self._ir_para(State.ATE_A_PORTA, "preparado; indo para a porta da cave")
+        # MONTARIA PARA VIAJAR. A regra do usuário é curta: *"a montaria você
+        # irá sempre que precisar, dentro e fora da cave"* -- e só desce para
+        # atacar. Aqui é o começo de um trajeto, então sobe.
+        self.nav.garantir_montaria_para_andar("ir até a porta da HH")
+
+        self._ir_para(State.ATE_A_PORTA, "indo para a porta da cave")
 
     def _precisa_vender(self) -> bool:
         """A bolsa está cheia, ou já passaram runs demais desde a última venda?
@@ -374,6 +402,7 @@ class HHRoutine:
         if pos is not None and mapa_hh.distancia(
                 pos, mapa_hh.PONTO_DA_ENTRADA) <= 30:
             if self.ui.garantir_coordenada_da_entrada():
+                self._conferir_o_pet_na_porta()
                 self._ir_para(State.ENTRAR, "já estou na porta")
                 return
 
@@ -385,7 +414,26 @@ class HHRoutine:
             self._falhar("não cheguei na porta da cave", State.RECUPERAR)
             return
 
+        self._conferir_o_pet_na_porta()
         self._ir_para(State.ENTRAR, "na porta da cave")
+
+    def _conferir_o_pet_na_porta(self) -> None:
+        """A ÚNICA verificação que acontece fora da cave, e é aqui.
+
+        Regra do usuário, 03/09/2026: *"o pet também pode verificar fora da
+        cave, mas só ao chegar na frente da cave, antes não precisa"*.
+
+        O LUGAR É ESTE, e não dentro do laço de tentativas: a rajada de entrada
+        pode durar uma hora com uma tentativa a cada 25 ms, e reler o pet ali
+        seriam centenas de leituras por minuto de uma coisa que não muda com o
+        personagem parado na porta. Aqui roda uma vez, ao chegar.
+
+        Dentro da cave o pet é conferido DE NOVO (`_do_preparar_dentro`), e a
+        repetição é de propósito: a tela de carregamento da instância é
+        justamente onde ele some.
+        """
+        if self.ctx.settings.pet.summon_on_login:
+            self.combat.ensure_pet()
 
     # ==================================================================
     # ENTRAR -- a vaga é disputada
@@ -430,9 +478,14 @@ class HHRoutine:
                      State.RECUPERAR)
 
     def _entrou(self) -> None:
-        """Dentro. No modo solo, o time é desfeito AQUI."""
+        """Dentro. No modo solo, o time é desfeito AQUI.
+
+        A CONTAGEM DA RUN NÃO COMEÇA AQUI, e sim no `_do_preparar_dentro` --
+        mesmo desenho da BC. A disputa da porta pode ter levado uma hora e o
+        preparo leva mais alguns segundos; contar a run a partir daí é o que
+        torna o tempo por run comparável entre uma volta e outra.
+        """
         ctx = self.ctx
-        ctx.stats.begin_run()
         self._trecho = 0
 
         if ctx.settings.hh.modo_do_reset != MODO_FADA_DA_HH:
@@ -448,7 +501,71 @@ class HHRoutine:
         # abre uma cópia da instância, e entrar antes do líder gastaria a dela
         # numa cópia onde ele não está. Ver `bot/hh/fada.py`.
         self._publicar_onde_estou(dentro=True)
-        self._ir_para(State.ATE_O_BOSS, "dentro da cave")
+        self._ir_para(State.PREPARAR_DENTRO, "dentro da cave; preparando")
+
+    # ==================================================================
+    # PREPARAR_DENTRO -- tudo que exige estar a pé, num lugar só
+    # ==================================================================
+
+    def _do_preparar_dentro(self) -> None:
+        """O PREPARO DE ENTRADA. É o `_do_curar` da BC, com os mesmos motivos.
+
+        =================================================================
+        A ORDEM, E POR QUE ELA É ESTA
+        =================================================================
+
+            1. CURAR    -- primeiro, porque buff em personagem que vai morrer é
+                           buff desperdiçado
+            2. BUFFS    -- com a vida já cheia
+            3. PET      -- de novo: a tela de carregamento da instância é onde
+                           ele some, e a checagem da porta ficou do outro lado
+                           dela
+            4. COMIDA   -- por último, porque o cronômetro dela começa a valer
+                           daqui (ver `PetFeeder`)
+            5. MONTAR   -- e é AQUI que os cronômetros da run começam
+
+        É a ordem da BC, ponto por ponto. O usuário pediu a checagem de pet em
+        primeiro lugar; ela acontece antes, na PORTA (`_conferir_o_pet_na_porta`),
+        e por isso a sequência aqui dentro pode manter a da BC -- que existe
+        porque cada passo depende do estado que o anterior deixa.
+
+        =================================================================
+        DEPOIS DAQUI SÓ SE CURA EM EMERGÊNCIA
+        =================================================================
+
+        Regra do usuário, 03/09/2026: *"curas em outros momentos só se for
+        realmente necessário, pois a cave de HH é bem mais fraca que a cave de
+        BC"*. O que sobra no meio da run é o portão de emergência que a
+        navegação já aplica em qualquer trajeto (`potions.emergency_pct`), e
+        nada mais.
+        """
+        ctx = self.ctx
+
+        # 1 e 2. VIDA E BUFFS.
+        self.combat.curar_ao_entrar()
+        self.combat.apply_buffs()
+
+        # 3. PET.
+        if ctx.settings.pet.summon_on_login:
+            self.combat.ensure_pet()
+
+        # 4. COMIDA DO PET. Exige estar a pé, e a pé fora da cave é o que a
+        #    regra proíbe. Se a hora passou lá fora, ela é dada agora -- a
+        #    cadência não escorrega porque o `PetFeeder` ancora no vencimento.
+        self.combat.feed_pet()
+
+        # 5. MONTARIA. O portão INSISTE até confirmar: dentro da cave não se
+        #    anda a pé, porque a pé não se chega no boss.
+        self.nav.garantir_montaria_para_andar("atravessar a cave")
+
+        # A RUN PASSA A CONTAR AQUI, e começa mesmo que algo acima tenha
+        # falhado: amarrar a contagem ao sucesso do preparo faria a run com
+        # problema sumir das estatísticas, e é justamente ela que interessa.
+        ctx.stats.begin_run()
+
+        rotulo = mapa_hh.TRECHOS_DOS_BOSSES[self._trecho][0]
+        self._ir_para(State.ATE_O_BOSS,
+                      f"preparo feito; indo para o {rotulo}")
 
     def _garantir_o_time(self) -> bool:
         """Monta o time de reset, se houver conta configurada.
