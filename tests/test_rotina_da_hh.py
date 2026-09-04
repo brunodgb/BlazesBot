@@ -762,3 +762,69 @@ def test_o_teto_para_sair_e_MENOR_que_o_de_entrar():
     from blazesbot.bot.hh import routine as hh
 
     assert hh.MAX_SEGUNDOS_PARA_SAIR < hh.MAX_SEGUNDOS_NA_PORTA
+
+
+# ===========================================================================
+# ENTRAR E SAIR NA MESMA VOLTA
+# ===========================================================================
+#
+# Regra do usuário, 03/09/2026: *"se for Black Wind Camp Dungeon e X acima de 0
+# entrou na cave e precisa parar as tentativas na hora, pois no mesmo ângulo que
+# entra, ele sai"*.
+#
+# O par de cliques não é atômico: entre o direito e o do link há a espera do
+# diálogo. Quando uma tentativa acertava, o personagem entrava, e a tentativa
+# seguinte clicava com direito no mesmo ângulo -- que dentro da cave é o NPC de
+# SAÍDA. O diálogo abria (a conferência dizia "pode clicar") e o clique caía em
+# "Leave Happiness Hall".
+
+
+def test_o_par_de_cliques_confere_o_mundo_no_MEIO():
+    """A conferência é ENTRE os dois cliques, não só antes do par."""
+    import inspect
+
+    from blazesbot.bot.hh.entrada import EntradaDaHH
+
+    for metodo in (EntradaDaHH._entrar_rapido, EntradaDaHH._entrar_descobrindo):
+        fonte = inspect.getsource(metodo)
+        assert "_ainda_estou_fora" in fonte, (
+            f"{metodo.__name__} pode clicar no link já estando dentro")
+
+
+def test_estar_dentro_ABORTA_o_clique_no_link():
+    import inspect
+
+    from blazesbot.bot.hh.entrada import EntradaDaHH
+
+    fonte = inspect.getsource(EntradaDaHH._ainda_estou_fora)
+    assert "esta_dentro_da_hh" in fonte
+    assert "return False" in fonte
+
+
+def test_sem_leitura_de_posicao_a_entrada_SEGUE():
+    """"Não sei" não pode bloquear a entrada -- bot mudo na porta é pior."""
+    from blazesbot.bot.hh import mapa_hh
+
+    assert mapa_hh.esta_dentro_da_hh(None) is False
+
+
+def test_o_gancho_do_par_de_cliques_e_OPCIONAL():
+    """Sem gancho o comportamento é o de antes -- é o que protege a BC."""
+    import inspect
+
+    from blazesbot.bot.ui_do_jogo import UIDoJogo
+
+    for metodo in (UIDoJogo._abrir_dialogo_e_clicar,
+                   UIDoJogo._clicar_no_npc_e_no_link):
+        assert inspect.signature(metodo).parameters["ainda_vale"].default is None
+
+
+def test_abortar_no_meio_FECHA_o_dialogo():
+    """Diálogo aberto por cima da cena engole o clique da tentativa seguinte."""
+    import inspect
+
+    from blazesbot.bot.ui_do_jogo import UIDoJogo
+
+    fonte = inspect.getsource(UIDoJogo._clicar_no_npc_e_no_link)
+    trecho = fonte[fonte.index("ainda_vale is not None"):]
+    assert "fechar_dialogo" in trecho.split("ctx.click")[0]

@@ -263,6 +263,10 @@ class EntradaDaHH(UIDoJogo):
             ctx.log.warning("Não abri o diálogo do %s", mapa_hh.NPC_DA_ENTRADA)
             return False
 
+        if not self._ainda_estou_fora():
+            self.fechar_dialogo()
+            return False
+
         ponto_link = self.clicar_link(LINK_ENTRAR_HH)
         if ponto_link is None:
             self.fechar_dialogo()
@@ -281,7 +285,38 @@ class EntradaDaHH(UIDoJogo):
         """
         return self._abrir_dialogo_e_clicar(
             self._ponto_npc_entrada, self._ponto_link_entrada,
-            "entrar na HH", esperar_depois=0.0)
+            "entrar na HH", esperar_depois=0.0,
+            ainda_vale=self._ainda_estou_fora)
+
+    def _ainda_estou_fora(self) -> bool:
+        """Continuo do lado de fora da cave? Chamado ENTRE os dois cliques.
+
+        =================================================================
+        O BOT ENTRAVA E SAÍA NA MESMA VOLTA
+        =================================================================
+
+        Regra do usuário, 03/09/2026: *"se for Black Wind Camp Dungeon e X acima
+        de 0 entrou na cave e precisa parar as tentativas na hora, pois no mesmo
+        ângulo que entra, ele sai"*.
+
+        O par de cliques não é atômico -- entre o direito e o do link há a
+        espera do diálogo. Quando uma tentativa acertava, o personagem entrava,
+        e a tentativa seguinte clicava com direito no mesmo ângulo: dentro da
+        cave aquele ângulo é o NPC de SAÍDA. O diálogo abria (a conferência
+        dizia "pode clicar") e o clique no link caía em "Leave Happiness Hall".
+
+        A leitura é de MEMÓRIA -- uma coordenada -- e custa microssegundos. É o
+        que torna barato perguntar entre dois cliques.
+
+        SEM LEITURA, SEGUE. `esta_dentro_da_hh(None)` é False, e "não sei" não
+        pode bloquear a entrada: bot mudo na porta é pior que o defeito.
+        """
+        if mapa_hh.esta_dentro_da_hh(self.ctx.memory.position()):
+            self.ctx.log.info(
+                "Entrei na cave entre os dois cliques -- PARO a tentativa aqui. "
+                "Clicar no link agora seria clicar em sair.")
+            return False
+        return True
 
     def registrar_falha_de_entrada(self) -> None:
         """Uma tentativa rápida não entrou. Cinco seguidas mandam redescobrir."""

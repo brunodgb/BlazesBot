@@ -86,6 +86,7 @@ from __future__ import annotations
 
 import time
 from collections import deque
+from collections.abc import Callable
 from contextlib import contextmanager
 
 from ..core import esconder_jogadores, janelas_abertas
@@ -1449,6 +1450,7 @@ class UIDoJogo:
         ponto_link: tuple[int, int],
         o_que: str,
         esperar_depois: float = ESPERA_DEPOIS_DO_LINK,
+        ainda_vale: Callable[[], bool] | None = None,
     ) -> bool:
         """O par de cliques de NPC, com o diálogo CONFERIDO no meio.
 
@@ -1460,6 +1462,25 @@ class UIDoJogo:
         `esperar_depois=0` para quem observa o resultado por conta própria: na
         disputa pela cave é o laço da rotina que fica lendo a posição em fatias
         curtas, e dormir aqui só atrasaria a leitura dele.
+
+        =================================================================
+        `ainda_vale` -- O MUNDO PODE TER MUDADO ENTRE OS DOIS CLIQUES
+        =================================================================
+
+        O par não é atômico: entre o clique direito e o clique no link há a
+        espera do diálogo (centenas de milissegundos). Se o mundo mudou nesse
+        vão, o segundo clique vai para um diálogo que não é o que se pediu.
+
+        Medido na HH em 03/09/2026, e o desfecho era o pior possível: uma
+        tentativa de entrada acertava, o personagem entrava na cave, e a
+        tentativa SEGUINTE clicava com direito no mesmo ângulo -- que dentro da
+        cave abre o diálogo do NPC de SAÍDA. O diálogo abria (então a
+        conferência dizia "pode clicar"), e o clique no link caía em "Leave
+        Happiness Hall". O bot entrava e saía na mesma volta.
+
+        `ainda_vale` é chamado DEPOIS de o diálogo abrir e ANTES do clique no
+        link. Devolvendo False, o diálogo é fechado e nada mais é clicado.
+        Sem o gancho o comportamento é o de antes -- por isso a BC não muda.
 
         Devolve se o clique no link saiu.
         """
@@ -1481,7 +1502,7 @@ class UIDoJogo:
                 tecla=ctx.settings.keys.hide_players,
                 segurar=ctx.key_down, soltar=ctx.key_up, log=ctx.log):
             return self._clicar_no_npc_e_no_link(
-                ponto_npc, ponto_link, o_que, esperar_depois)
+                ponto_npc, ponto_link, o_que, esperar_depois, ainda_vale)
 
     def _clicar_no_npc_e_no_link(
         self,
@@ -1489,6 +1510,7 @@ class UIDoJogo:
         ponto_link: tuple[int, int],
         o_que: str,
         esperar_depois: float,
+        ainda_vale: Callable[[], bool] | None = None,
     ) -> bool:
         """O par de cliques em si. Separado só para o `with` acima ficar legível."""
         ctx = self.ctx
@@ -1509,6 +1531,16 @@ class UIDoJogo:
             # por POSIÇÃO, feita por quem chama, ainda pega o clique perdido.
             ctx.log.debug("Sem imagem para conferir o diálogo de %s; seguindo",
                           o_que)
+
+        # O MUNDO AINDA É O MESMO? Última conferência antes do clique no link.
+        # Ver o bloco `ainda_vale` na docstring de `_abrir_dialogo_e_clicar`.
+        if ainda_vale is not None and not ainda_vale():
+            ctx.log.info(
+                "O diálogo abriu, mas o estado mudou entre os dois cliques "
+                "(%s). NÃO vou clicar no link -- ele agora pertence a outra "
+                "conversa.", o_que)
+            self.fechar_dialogo()
+            return False
 
         #ctx.log.info("Clique ESQUERDO no link %s (%s)", ponto_link, o_que)
         ctx.click(ponto_link)

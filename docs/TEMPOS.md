@@ -336,34 +336,34 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | *literal em* `_recusar` | 0.5 s | = | FIXO | [team.py:964](blazesbot/bot/team.py#L964) | `_recusar` |  |
 | `ESPERA_DEPOIS_DO_CLIQUE` | 0.35 s | = | FIXO | [teste_do_cursor.py:100](blazesbot/bot/teste_do_cursor.py#L100) | `_uma_fase` |  |
 | *literal em* `main` | 8 s | = | FIXO | [teste_do_cursor.py:476](blazesbot/bot/teste_do_cursor.py#L476) | `main` |  |
-| `PASSO_DA_ESPERA_DO_DIALOGO` | 0.08 s | = | PASSO | [ui_do_jogo.py:141](blazesbot/bot/ui_do_jogo.py#L141) | `_esperar_o_dialogo` | Diálogo do NPC aparecer. Era 0,30 s fixos, gastos inteiros mesmo quando o |
-| `LIMITE_INICIAL_DA_ESPERA_DO_DIALOGO` | 0.65 s | = | TETO | [ui_do_jogo.py:180](blazesbot/bot/ui_do_jogo.py#L180) | `limite_da_espera_do_dialogo` | TETO DA ESPERA DO DIÁLOGO -- ajustado pelo que foi MEDIDO, não chutado |
-| `LIMITE_MINIMO_DA_ESPERA_DO_DIALOGO` | 0.18 s | = | TETO | [ui_do_jogo.py:184](blazesbot/bot/ui_do_jogo.py#L184) | `limite_da_espera_do_dialogo` | Piso: o valor que valia antes. Abaixo disto não se aperta nem com evidência -- |
-| `LIMITE_MAXIMO_DA_ESPERA_DO_DIALOGO` | 0.6 s | = | TETO | [ui_do_jogo.py:188](blazesbot/bot/ui_do_jogo.py#L188) | `limite_da_espera_do_dialogo` | Teto do teto. Passado disto, o diálogo não vai abrir mesmo, e insistir só |
-| `LIMITE_DA_ESPERA_DO_DIALOGO_LENTA` | 0.65 s | = | TETO | [ui_do_jogo.py:214](blazesbot/bot/ui_do_jogo.py#L214) | `limite_da_espera_do_dialogo_lenta` | Diálogo aparecer na REDESCOBERTA, depois de cada clique direito. Era `tick(1.3)` |
-| `ESPERA_DEPOIS_DO_LINK` | 0.2 s | = | FIXO | [ui_do_jogo.py:236](blazesbot/bot/ui_do_jogo.py#L236) | `_abrir_dialogo_e_clicar` | Servidor processar o pedido de entrada. Zero na disputa: quem confirma a entrada |
-| `PASSO_DA_ESPERA_DO_PAINEL` | 0.08 s | = | PASSO | [ui_do_jogo.py:274](blazesbot/bot/ui_do_jogo.py#L274) | `_esperar_o_painel` | Passo e teto da espera pelo painel aparecer. Cada volta custa uma captura de |
-| `LIMITE_DA_ESPERA_DO_PAINEL` | 0.8 s | = | TETO | [ui_do_jogo.py:280](blazesbot/bot/ui_do_jogo.py#L280) | `abrir_surroundings, _esperar_o_painel` | O teto é EXATAMENTE a espera fixa que havia antes (1,2 s), e isso é de propósito: |
-| `ESPERA_DA_TROCA_DE_ABA` | 0.05 s | = | FIXO | [ui_do_jogo.py:284](blazesbot/bot/ui_do_jogo.py#L284) | `abrir_surroundings` | Assentar depois de clicar na aba NPC. Não é "esperar a aba renderizar": é só dar |
-| `PASSO_DA_ESPERA_DO_RESULTADO` | 0.08 s | = | PASSO | [ui_do_jogo.py:302](blazesbot/bot/ui_do_jogo.py#L302) | `_esperar_resultado_da_busca` | De quanto em quanto tempo perguntar à memória se o resultado apareceu, e por |
-| `LIMITE_DA_ESPERA_DO_RESULTADO` | 0.8 s | = | TETO | [ui_do_jogo.py:303](blazesbot/bot/ui_do_jogo.py#L303) | `_esperar_resultado_da_busca` |  |
-| `ESPERA_CEGA_DO_RESULTADO` | 0.3 s | = | FIXO | [ui_do_jogo.py:329](blazesbot/bot/ui_do_jogo.py#L329) | `_esperar_resultado_da_busca` | Quando a leitura de arredores por memória não funciona neste cliente, a lista |
-| `PASSO_DA_ESPERA_DO_ANDAR` | 0.04 s | = | PASSO | [ui_do_jogo.py:372](blazesbot/bot/ui_do_jogo.py#L372) | `_saiu_do_lugar` | Depois de clicar no resultado o personagem já saiu andando -- o pathfinding do |
-| `LIMITE_DA_ESPERA_DO_ANDAR` | 0.4 s | = | TETO | [ui_do_jogo.py:373](blazesbot/bot/ui_do_jogo.py#L373) | `ir_para_resultado, _saiu_do_lugar` |  |
-| `ESPERA_DEPOIS_DE_CLICAR_NO_RESULTADO` | 0.15 s | = | FIXO | [ui_do_jogo.py:374](blazesbot/bot/ui_do_jogo.py#L374) | `_saiu_do_lugar` |  |
-| `INTERVALO_ENTRE_USOS_DO_PAINEL` | 2 s | = | FIXO | [ui_do_jogo.py:456](blazesbot/bot/ui_do_jogo.py#L456) | `_respeitar_a_cadencia_do_painel` | CADÊNCIA MÍNIMA ENTRE UM USO DO PAINEL DE ARREDORES E O SEGUINTE |
-| `PASSO_DA_ESPERA_DA_CHEGADA` | 0.25 s | = | PASSO | [ui_do_jogo.py:480](blazesbot/bot/ui_do_jogo.py#L480) | `_esperar_chegar` | Passo da leitura de posição enquanto se espera a chegada. Ler memória custa |
-| `PASSO_DA_ESPERA_DO_FECHAMENTO` | 0.04 s | = | PASSO | [ui_do_jogo.py:498](blazesbot/bot/ui_do_jogo.py#L498) | `fechar_surroundings` |  |
-| `LIMITE_DA_ESPERA_DO_FECHAMENTO` | 0.4 s | = | TETO | [ui_do_jogo.py:499](blazesbot/bot/ui_do_jogo.py#L499) | `fechar_surroundings` |  |
-| `ESPERA_DEPOIS_DE_FECHAR` | 0.2 s | = | FIXO | [ui_do_jogo.py:500](blazesbot/bot/ui_do_jogo.py#L500) |  |  |
-| `ESPERA_ANTES_DE_CONFERIR` | 0.15 s | = | FIXO | [ui_do_jogo.py:502](blazesbot/bot/ui_do_jogo.py#L502) |  |  |
-| `PASSOS_DE_ROLAGEM` | 12 s | *novo* | PASSO | [ui_do_jogo.py:528](blazesbot/bot/ui_do_jogo.py#L528) | `rolar_o_dialogo` | Quantas rolagens no máximo antes de aceitar que o link não está na lista. |
-| `ESPERA_DA_ROLAGEM` | 0.08 s | *novo* | FIXO | [ui_do_jogo.py:533](blazesbot/bot/ui_do_jogo.py#L533) | `rolar_o_dialogo` | A lista redesenhar depois do clique na seta. Uma volta de laço do cliente, não |
-| *literal em* `resetar_visao` | 0.175 s | = | FIXO | [ui_do_jogo.py:652](blazesbot/bot/ui_do_jogo.py#L652) | `resetar_visao` | Aperta o View Reset para recentrar a câmera. |
-| *literal em* `buscar_npc` | 0.5 s | = | FIXO | [ui_do_jogo.py:1098](blazesbot/bot/ui_do_jogo.py#L1098) | `buscar_npc` | Busca um NPC e devolve o primeiro resultado, conferido. |
-| *literal em* `fechar_dialogo` | 0.3 s | = | FIXO | [ui_do_jogo.py:1523](blazesbot/bot/ui_do_jogo.py#L1523) | `fechar_dialogo` |  |
-| *literal em* `clicar_link` | 0.75 s | = | FIXO | [ui_do_jogo.py:1542](blazesbot/bot/ui_do_jogo.py#L1542) | `clicar_link` | Clica num link do diálogo, localizado pelo texto. Devolve o ponto. |
-| *literal em* `clicar_link` | 0.4 s | = | FIXO | [ui_do_jogo.py:1544](blazesbot/bot/ui_do_jogo.py#L1544) | `clicar_link` | Clica num link do diálogo, localizado pelo texto. Devolve o ponto. |
+| `PASSO_DA_ESPERA_DO_DIALOGO` | 0.08 s | = | PASSO | [ui_do_jogo.py:142](blazesbot/bot/ui_do_jogo.py#L142) | `_esperar_o_dialogo` | Diálogo do NPC aparecer. Era 0,30 s fixos, gastos inteiros mesmo quando o |
+| `LIMITE_INICIAL_DA_ESPERA_DO_DIALOGO` | 0.65 s | = | TETO | [ui_do_jogo.py:181](blazesbot/bot/ui_do_jogo.py#L181) | `limite_da_espera_do_dialogo` | TETO DA ESPERA DO DIÁLOGO -- ajustado pelo que foi MEDIDO, não chutado |
+| `LIMITE_MINIMO_DA_ESPERA_DO_DIALOGO` | 0.18 s | = | TETO | [ui_do_jogo.py:185](blazesbot/bot/ui_do_jogo.py#L185) | `limite_da_espera_do_dialogo` | Piso: o valor que valia antes. Abaixo disto não se aperta nem com evidência -- |
+| `LIMITE_MAXIMO_DA_ESPERA_DO_DIALOGO` | 0.6 s | = | TETO | [ui_do_jogo.py:189](blazesbot/bot/ui_do_jogo.py#L189) | `limite_da_espera_do_dialogo` | Teto do teto. Passado disto, o diálogo não vai abrir mesmo, e insistir só |
+| `LIMITE_DA_ESPERA_DO_DIALOGO_LENTA` | 0.65 s | = | TETO | [ui_do_jogo.py:215](blazesbot/bot/ui_do_jogo.py#L215) | `limite_da_espera_do_dialogo_lenta` | Diálogo aparecer na REDESCOBERTA, depois de cada clique direito. Era `tick(1.3)` |
+| `ESPERA_DEPOIS_DO_LINK` | 0.2 s | = | FIXO | [ui_do_jogo.py:237](blazesbot/bot/ui_do_jogo.py#L237) | `_abrir_dialogo_e_clicar` | Servidor processar o pedido de entrada. Zero na disputa: quem confirma a entrada |
+| `PASSO_DA_ESPERA_DO_PAINEL` | 0.08 s | = | PASSO | [ui_do_jogo.py:275](blazesbot/bot/ui_do_jogo.py#L275) | `_esperar_o_painel` | Passo e teto da espera pelo painel aparecer. Cada volta custa uma captura de |
+| `LIMITE_DA_ESPERA_DO_PAINEL` | 0.8 s | = | TETO | [ui_do_jogo.py:281](blazesbot/bot/ui_do_jogo.py#L281) | `abrir_surroundings, _esperar_o_painel` | O teto é EXATAMENTE a espera fixa que havia antes (1,2 s), e isso é de propósito: |
+| `ESPERA_DA_TROCA_DE_ABA` | 0.05 s | = | FIXO | [ui_do_jogo.py:285](blazesbot/bot/ui_do_jogo.py#L285) | `abrir_surroundings` | Assentar depois de clicar na aba NPC. Não é "esperar a aba renderizar": é só dar |
+| `PASSO_DA_ESPERA_DO_RESULTADO` | 0.08 s | = | PASSO | [ui_do_jogo.py:303](blazesbot/bot/ui_do_jogo.py#L303) | `_esperar_resultado_da_busca` | De quanto em quanto tempo perguntar à memória se o resultado apareceu, e por |
+| `LIMITE_DA_ESPERA_DO_RESULTADO` | 0.8 s | = | TETO | [ui_do_jogo.py:304](blazesbot/bot/ui_do_jogo.py#L304) | `_esperar_resultado_da_busca` |  |
+| `ESPERA_CEGA_DO_RESULTADO` | 0.3 s | = | FIXO | [ui_do_jogo.py:330](blazesbot/bot/ui_do_jogo.py#L330) | `_esperar_resultado_da_busca` | Quando a leitura de arredores por memória não funciona neste cliente, a lista |
+| `PASSO_DA_ESPERA_DO_ANDAR` | 0.04 s | = | PASSO | [ui_do_jogo.py:373](blazesbot/bot/ui_do_jogo.py#L373) | `_saiu_do_lugar` | Depois de clicar no resultado o personagem já saiu andando -- o pathfinding do |
+| `LIMITE_DA_ESPERA_DO_ANDAR` | 0.4 s | = | TETO | [ui_do_jogo.py:374](blazesbot/bot/ui_do_jogo.py#L374) | `ir_para_resultado, _saiu_do_lugar` |  |
+| `ESPERA_DEPOIS_DE_CLICAR_NO_RESULTADO` | 0.15 s | = | FIXO | [ui_do_jogo.py:375](blazesbot/bot/ui_do_jogo.py#L375) | `_saiu_do_lugar` |  |
+| `INTERVALO_ENTRE_USOS_DO_PAINEL` | 2 s | = | FIXO | [ui_do_jogo.py:457](blazesbot/bot/ui_do_jogo.py#L457) | `_respeitar_a_cadencia_do_painel` | CADÊNCIA MÍNIMA ENTRE UM USO DO PAINEL DE ARREDORES E O SEGUINTE |
+| `PASSO_DA_ESPERA_DA_CHEGADA` | 0.25 s | = | PASSO | [ui_do_jogo.py:481](blazesbot/bot/ui_do_jogo.py#L481) | `_esperar_chegar` | Passo da leitura de posição enquanto se espera a chegada. Ler memória custa |
+| `PASSO_DA_ESPERA_DO_FECHAMENTO` | 0.04 s | = | PASSO | [ui_do_jogo.py:499](blazesbot/bot/ui_do_jogo.py#L499) | `fechar_surroundings` |  |
+| `LIMITE_DA_ESPERA_DO_FECHAMENTO` | 0.4 s | = | TETO | [ui_do_jogo.py:500](blazesbot/bot/ui_do_jogo.py#L500) | `fechar_surroundings` |  |
+| `ESPERA_DEPOIS_DE_FECHAR` | 0.2 s | = | FIXO | [ui_do_jogo.py:501](blazesbot/bot/ui_do_jogo.py#L501) |  |  |
+| `ESPERA_ANTES_DE_CONFERIR` | 0.15 s | = | FIXO | [ui_do_jogo.py:503](blazesbot/bot/ui_do_jogo.py#L503) |  |  |
+| `PASSOS_DE_ROLAGEM` | 12 s | *novo* | PASSO | [ui_do_jogo.py:529](blazesbot/bot/ui_do_jogo.py#L529) | `rolar_o_dialogo` | Quantas rolagens no máximo antes de aceitar que o link não está na lista. |
+| `ESPERA_DA_ROLAGEM` | 0.08 s | *novo* | FIXO | [ui_do_jogo.py:534](blazesbot/bot/ui_do_jogo.py#L534) | `rolar_o_dialogo` | A lista redesenhar depois do clique na seta. Uma volta de laço do cliente, não |
+| *literal em* `resetar_visao` | 0.175 s | = | FIXO | [ui_do_jogo.py:653](blazesbot/bot/ui_do_jogo.py#L653) | `resetar_visao` | Aperta o View Reset para recentrar a câmera. |
+| *literal em* `buscar_npc` | 0.5 s | = | FIXO | [ui_do_jogo.py:1099](blazesbot/bot/ui_do_jogo.py#L1099) | `buscar_npc` | Busca um NPC e devolve o primeiro resultado, conferido. |
+| *literal em* `fechar_dialogo` | 0.3 s | = | FIXO | [ui_do_jogo.py:1555](blazesbot/bot/ui_do_jogo.py#L1555) | `fechar_dialogo` |  |
+| *literal em* `clicar_link` | 0.75 s | = | FIXO | [ui_do_jogo.py:1574](blazesbot/bot/ui_do_jogo.py#L1574) | `clicar_link` | Clica num link do diálogo, localizado pelo texto. Devolve o ponto. |
+| *literal em* `clicar_link` | 0.4 s | = | FIXO | [ui_do_jogo.py:1576](blazesbot/bot/ui_do_jogo.py#L1576) | `clicar_link` | Clica num link do diálogo, localizado pelo texto. Devolve o ponto. |
 | `SEGUNDOS_ANDANDO_ANTES` | 0.5 s | = | FIXO | [velocidade.py:45](blazesbot/bot/velocidade.py#L45) | `usar_se_puder` | Quanto o personagem precisa ter andado antes de valer a pena acionar. |
 | `ESPERA_DO_TELEPORTE` | 5 s | = | TETO | [vendedor.py:99](blazesbot/bot/vendedor.py#L99) |  | TETO da espera do teleporte -- não é mais o tempo gasto, é o limite. |
 | `PASSO_DA_ESPERA_DO_TELEPORTE` | 0.12 s | *novo* | PASSO | [vendedor.py:103](blazesbot/bot/vendedor.py#L103) |  | Entre leituras. A posição vem da memória e custa microssegundos; o passo é |
