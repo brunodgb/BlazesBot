@@ -828,3 +828,30 @@ def test_abortar_no_meio_FECHA_o_dialogo():
     fonte = inspect.getsource(UIDoJogo._clicar_no_npc_e_no_link)
     trecho = fonte[fonte.index("ainda_vale is not None"):]
     assert "fechar_dialogo" in trecho.split("ctx.click")[0]
+
+
+# ===========================================================================
+# FORA DO PONTO E EM BATALHA -- O BECO SEM SAÍDA
+# ===========================================================================
+
+
+def test_fora_do_ponto_e_em_batalha_MATA_em_vez_de_andar():
+    """Medido pelo usuário em 04/09/2026, e era travamento eterno.
+
+    Chegou no ponto, o bot desmontou para lutar, o servidor lagou e devolveu o
+    personagem para outro X/Y. A rotina concluía "não estou no ponto" e voltava
+    para `ATE_O_BOSS`, que começa exigindo montaria -- e em batalha o jogo
+    RECUSA montar. O bot apertava a tecla contra uma recusa, para sempre.
+    """
+    fonte = _fonte(HHRoutine._do_boss)
+    trecho = fonte[fonte.index("TOLERANCIA_DO_PONTO"):]
+    corte = trecho.index("State.ATE_O_BOSS")
+    antes_de_voltar_a_andar = trecho[:corte]
+    assert "in_battle" in antes_de_voltar_a_andar
+    assert "limpar_o_combate" in antes_de_voltar_a_andar
+
+
+def test_flag_ilegivel_NAO_autoriza_sair_batendo():
+    """"Não sei" não pode virar "estou em combate" -- puxaria mob por nada."""
+    fonte = _fonte(HHRoutine._do_boss)
+    assert "in_battle() is True" in fonte

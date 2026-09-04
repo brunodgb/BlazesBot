@@ -989,6 +989,35 @@ class HHRoutine:
         # decide então é a flag de combate ligar ou não.
         pos = ctx.memory.position()
         if pos is not None and mapa_hh.distancia(pos, ponto) > TOLERANCIA_DO_PONTO:
+            # ===========================================================
+            # EM BATALHA NÃO SE ANDA -- MATA-SE
+            # ===========================================================
+            #
+            # Este ramo era um beco sem saída, e o usuário mediu no jogo em
+            # 04/09/2026: chegou no ponto, o bot desmontou para lutar, o
+            # servidor lagou e devolveu o personagem para outro X/Y. A rotina
+            # concluía "não estou no ponto" e voltava para `ATE_O_BOSS`, que
+            # começa exigindo montaria -- e **em batalha o jogo recusa montar**.
+            # O bot ficava apertando a tecla contra uma recusa, para sempre.
+            #
+            # A resposta do usuário: *"é importante identificar se está em
+            # batalha e sair matando os mobs até sair de batalha, então vai
+            # matando 1 por 1, até a flag de batalha ficar false"*. É
+            # exatamente `limpar_o_combate`.
+            #
+            # E não muda de estado: a volta seguinte relê a posição e decide de
+            # novo -- pode ser que matar já tenha bastado, porque o personagem
+            # persegue o mob e às vezes volta para dentro da tolerância.
+            #
+            # `is True` e não `not ...`: ilegível NÃO autoriza sair batendo.
+            if ctx.memory.in_battle() is True:
+                ctx.log.info(
+                    "HH: fora do ponto do %s (%s, o ponto é %s) e EM BATALHA. "
+                    "Não dá para andar nem montar assim -- matando até sair de "
+                    "combate.", rotulo, pos, ponto)
+                self.combat.limpar_o_combate(f"voltar ao ponto do {rotulo}")
+                return
+
             ctx.log.info(
                 "HH: não estou no ponto do %s (estou em %s, o ponto é %s). Volto "
                 "a andar antes de esperar o combate.", rotulo, pos, ponto)
