@@ -109,6 +109,21 @@ TOLERANCIA_ROTA = 7
 # Sem aproximar-se do alvo por este tempo, considera travado.
 SEM_PROGRESSO_SEGUNDOS = 1.2
 
+# TETO PARA FICAR PRESO NO MESMO WAYPOINT, sem conseguir manobra nenhuma.
+#
+# Número do usuário, 04/09/2026: *"o ideal é não ficar muito tempo parado, 30
+# segundos sem fazer nada já é bastante tempo parado"*.
+#
+# Ele conta só o tempo INÚTIL: matar mob zera o relógio, porque matar é
+# progresso mesmo que o personagem não saia do lugar. O que este teto corta é o
+# bot insistindo numa manobra que não muda nada -- o laço de 4 min 10 s medido
+# no log de 04/09, em que o destravamento "chegava" num waypoint onde o
+# personagem já estava, ~180 vezes seguidas.
+#
+# Estourado, `follow_path` devolve False e QUEM DECIDE É A ROTINA: ela sabe
+# refazer o trecho, matar, ou falhar a run -- e, ao contrário deste laço, ela
+# passa pelo `_guard()`, que responde ao Parar e ao watchdog.
+TETO_PRESO_NO_MESMO_PONTO = 30.0
 
 # Folga do detector de rollback: voltar ATÉ 1 índice é ruído normal de leitura;
 # voltar 2+ índices é lag/rollback e relança a navegação. (Pedido do usuário: o
@@ -1270,6 +1285,9 @@ class Navigator:
         ultima_posicao: tuple[int, int] | None = None
         parado_desde = 0.0
         manobras_de_parado = 0
+        # Desde quando estou preso no MESMO waypoint sem manobra que resolva.
+        # Zerado por avanço de índice e por qualquer trabalho útil (matar mob).
+        preso_desde = 0.0
 
         ctx.log.info("Percorrendo %s waypoints (tolerância %s, teto %.0fs)%s%s",
                      total, tolerance, max_seconds,
@@ -1408,6 +1426,9 @@ class Navigator:
                     f" (+{novo - indice - 1} atravessado(s))" if novo - indice > 1 else "",
                     atual,
                 )
+                # A ROTA ANDOU: o relógio de "preso" recomeça do zero.
+                preso_desde = 0.0
+
                 if ao_chegar is not None:
                     for alcancado in caminho[indice:novo]:
                         ao_chegar(alcancado)
@@ -1487,6 +1508,67 @@ class Navigator:
                 travas = 0
             elif agora - ultimo_progresso > SEM_PROGRESSO_SEGUNDOS:
                 travas += 1
+                if not preso_desde:
+                    preso_desde = agora
+                ctx.log.debug(
+                    "sem progresso indo para %s (waypoint %s/%s, distância "
+                    "%.0f) — relançando (%s)", alvo, indice + 1, total,
+                    distancia, travas,
+                )
+
+                # =======================================================
+                # EM BATALHA NÃO SE ANDA -- E A NAVEGAÇÃO PASSA A SABER
+                # =======================================================
+                #
+                # O jogo prende o personagem em combate, e insistir no clique de
+                # minimapa contra isso é o que o log de 04/09 mostra: `Failed to
+                # auto-path` repetido enquanto os mobs batiam.
+                #
+                # Este remédio já existia -- `destravar_o_combate`, o mesmo
+                # gancho que o portão da montaria usa --, mas só o PORTÃO sabia
+                # dele. E o portão só é chamado quando se vai montar; aqui o
+                # personagem já está montado e andando, então ele nunca entrava.
+                #
+                # Regra do usuário, 04/09/2026: *"é importante não deixar ficar
+                # sem progresso, arranjar uma forma de continuar a cave, mas sem
+                # pular a morte dos boss, pois aqui em HH, junto com os boss, tem
+                # vários mobs que precisam ser mortos"*. Matar é continuar.
+                #
+                # MATAR ZERA O RELÓGIO DE "PRESO": é trabalho útil, mesmo que o
+                # personagem não saia do lugar. O teto existe para insistência
+                # inútil, não para luta.
+                #
+                # `is True` e não `not ...`: leitura ilegível não autoriza sair
+                # batendo -- puxaria mob por causa de uma leitura que falhou.
+                if (self.destravar_o_combate is not None
+                        and ctx.memory.in_battle() is True):
+                    ctx.log.info(
+                        "Sem progresso indo para %s e EM BATALHA: o jogo prende "
+                        "o personagem em combate. Matando até sair, antes de "
+                        "tentar andar de novo.", alvo)
+                    self.destravar_o_combate(f"andar até {alvo}")
+                    preso_desde = 0.0
+                    ultimo_progresso = time.time()
+                    travas = 0
+                    continue
+
+                # TETO DA INSISTÊNCIA INÚTIL. Ver `TETO_PRESO_NO_MESMO_PONTO`.
+                if agora - preso_desde > TETO_PRESO_NO_MESMO_PONTO:
+                    ctx.log.warning(
+                        "Preso no waypoint %s/%s (%s) há %.0fs sem manobra que "
+                        "resolva, a %.0f unidades. Devolvendo o controle para a "
+                        "rotina decidir.", indice + 1, total, alvo,
+                        agora - preso_desde, distancia,
+                    )
+                    diario.registrar_evento(
+                        ctx.account_login, "preso",
+                        f"waypoint {indice + 1}/{total} alvo {alvo} "
+                        f"a {distancia:.0f} unidades por "
+                        f"{agora - preso_desde:.0f}s",
+                        atual, ctx.memory.location(),
+                    )
+                    return False
+
                 if rota is not None:
                     # IR DIRETO para o relançar, SEM passo lateral (pedido do
                     # usuário): o destravar antigo mexia o personagem 1-2u no

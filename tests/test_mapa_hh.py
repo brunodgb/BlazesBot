@@ -478,3 +478,20 @@ def test_nenhum_par_da_rota_e_uma_ESPORA_sem_aviso():
     ]
     assert apertados == [("Fa-Yuan", (209, 182), (207, 186))], (
         f"o inventário de pares apertados mudou: {apertados}")
+
+
+def test_o_ponto_do_boss_e_o_FIM_do_caminho_de_cada_trecho():
+    """Os dois são declarados separados, e em 04/09/2026 divergiram.
+
+    O usuário comentou o último waypoint do trecho 1 e `POSICAO_DO_BOSS_1`
+    ficou apontando para o ponto removido. A diferença de 11 unidades coube na
+    tolerância de 15 e o defeito não apareceu como erro -- apareceu como o bot
+    insistindo num waypoint que não existia mais.
+
+    O waypoint voltou, então hoje os quatro coincidem. Este teste é para a
+    próxima edição: mexer num sem mexer no outro reprova aqui.
+    """
+    for rotulo, caminho, ponto in m.TRECHOS_DOS_BOSSES:
+        assert caminho[-1].pos == ponto, (
+            f"o trecho do {rotulo} termina em {caminho[-1].pos} mas o ponto do "
+            f"boss é {ponto} -- alguém editou um sem editar o outro")

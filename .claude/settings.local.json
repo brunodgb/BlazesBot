@@ -163,7 +163,8 @@
       "Skill(update-config)",
       "Bash(./.venv/Scripts/python.exe -m ruff check blazesbot/config.py blazesbot/bot/supervisor.py)",
       "Bash(./.venv/Scripts/python.exe -m py_compile blazesbot/config.py blazesbot/bot/supervisor.py)",
-      "Bash(./.venv/Scripts/python.exe -m pytest -q)"
+      "Bash(./.venv/Scripts/python.exe -m pytest -q)",
+      "WebFetch(domain:raw.githubusercontent.com)"
     ]
   },
   "enabledPlugins": {
