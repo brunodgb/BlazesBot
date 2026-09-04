@@ -314,12 +314,68 @@ def test_a_cura_vem_ANTES_de_encostar_e_nao_depois_da_luta():
     _em_ordem(HHRoutine._do_boss, "curar_antes_do_boss", "_lutar_no_ponto")
 
 
-def test_a_HH_senta_entre_os_bosses_SE_precisar():
-    """O BC senta depois dos guardas; na HH o equivalente é o intervalo entre
-    os quatro bosses. `precisa_curar` é o portão -- sentar com a vida cheia
-    seria pagar segundos por nada em toda run saudável."""
-    _em_ordem(HHRoutine._recuperar_entre_os_bosses,
-              "precisa_curar", "sentar_para_recuperar")
+def test_a_HH_NAO_senta_entre_os_bosses():
+    """A ausência é a decisão, e ela tem duas medições atrás.
+
+    Sentar entre os bosses era o TERCEIRO momento de cura no mesmo ponto --
+    `curar_antes_do_boss` já faz o top-up no começo do trecho seguinte, e o
+    intervalo entre os dois é só o tempo de andar. E sentar foi medido e
+    reprovado na BC: quatro segundos parado não mudavam a luta.
+
+    Sobrou o que a regra do usuário pede (03/09/2026): *"curas em outros
+    momentos só se for realmente necessário"* -- a entrada, o top-up antes de
+    cada boss, e a emergência.
+    """
+    assert not hasattr(HHRoutine, "_recuperar_entre_os_bosses")
+    assert "sentar_para_recuperar" not in _fonte(HHRoutine._do_boss)
+
+
+def test_a_emergencia_MATA_para_poder_curar():
+    """*"para se curar tem que estar fora de batalha"*, e a saída é matando.
+
+    Quando perguntado o que fazer estando em batalha com a vida baixa, o
+    usuário escolheu matar: *"você deve matar os mobs até sair de batalha"*.
+    """
+    _em_ordem(HHRoutine._curar_em_emergencia,
+              "in_battle", "limpar_o_combate", "curar_ao_entrar")
+
+
+def test_a_emergencia_usa_o_limiar_de_EMERGENCIA_e_nao_o_normal():
+    """O limiar normal faria a run passar o tempo bebendo.
+
+    Os mobs da HH são fracos; quem manda aqui é `emergency_pct`, o mesmo número
+    que faz a navegação abortar o trajeto -- e por isso o mesmo que trouxe o bot
+    até este estado.
+    """
+    # PELO AST, e não pelo texto: a docstring desta função EXPLICA por que
+    # `precisa_curar` não serve aqui, e uma busca no texto acharia a explicação.
+    # É o mesmo tropeço que já custou sete testes errados neste arquivo.
+    arvore = ast.parse(_fonte(HHRoutine._curar_em_emergencia))
+    lidos = {no.attr for no in ast.walk(arvore) if isinstance(no, ast.Attribute)}
+    chamados = {getattr(no.func, "attr", "") for no in ast.walk(arvore)
+                if isinstance(no, ast.Call)}
+    assert "emergency_pct" in lidos
+    assert "precisa_curar" not in chamados
+
+
+def test_nao_sair_de_batalha_NAO_trava_a_recuperacao():
+    """"Não consegui" devolve o controle; travar aqui pararia a conta."""
+    fonte = _fonte(HHRoutine._curar_em_emergencia)
+    assert "if not self.combat.limpar_o_combate" in fonte
+    assert "return" in fonte.split("limpar_o_combate")[-1]
+
+
+def test_cair_NAO_joga_fora_o_trecho_em_andamento():
+    """Aqui havia `self._trecho = 0`, e ele desfazia o progresso da run.
+
+    Quem caísse no trecho 3 voltava a fazer o 1 -- e encontrava a sala vazia,
+    porque os bosses só renascem no reset, que acontece na SAÍDA.
+    """
+    # PELO AST: o comentário que explica a remoção cita `self._trecho = 0`.
+    arvore = ast.parse(_fonte(HHRoutine._do_recuperar))
+    zeragens = [no for no in ast.walk(arvore) if isinstance(no, ast.Assign)
+                and any(getattr(a, "attr", "") == "_trecho" for a in no.targets)]
+    assert not zeragens, "o progresso da run voltou a ser jogado fora na queda"
 
 
 # ===========================================================================

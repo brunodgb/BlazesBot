@@ -953,7 +953,6 @@ class HHRoutine:
         # seguinte contam com o personagem onde a rota o deixou.
         self._voltar_ao_ponto(rotulo, onde_eu_estava)
         self._catar_o_loot()
-        self._recuperar_entre_os_bosses(rotulo)
         self._avancar_o_trecho(rotulo)
 
     def _lutar_no_ponto(self, rotulo: str) -> bool:
@@ -1057,24 +1056,21 @@ class HHRoutine:
             seguinte = mapa_hh.TRECHOS_DOS_BOSSES[self._trecho][0]
             self._ir_para(State.ATE_O_BOSS, f"indo para o {seguinte}")
 
-    def _recuperar_entre_os_bosses(self, rotulo: str) -> None:
-        """Senta para recuperar, se a vida pedir. Absorvido do BC.
-
-        O BC senta depois da fase dos guardas (`SEGUNDOS_SENTADO_APOS_GUARDAS`)
-        porque é o único lugar da run onde ficar parado é seguro. Na HH os
-        equivalentes são os intervalos entre os quatro bosses: o ponto está
-        limpo, e o trecho seguinte começa com um trajeto.
-
-        SÓ SE PRECISAR. `precisa_curar` é o portão -- sentar com a vida cheia
-        seria pagar segundos por nada em toda run saudável.
-        """
-        ctx = self.ctx
-        estado = ctx.snapshot()
-        if not self.combat.precisa_curar(estado.hp_pct):
-            return
-        ctx.log.info("HH: vida %.0f%% depois do %s -- sentando para recuperar",
-                     estado.hp_pct, rotulo)
-        self.combat.sentar_para_recuperar()
+    # A CURA ENTRE OS BOSSES SAIU, e a ausência é a decisão.
+    #
+    # Ela sentava alguns segundos quando `precisa_curar` dizia que sim, no
+    # intervalo entre um trecho e o seguinte. Dois motivos para tirar:
+    #
+    #   * ERA O TERCEIRO MOMENTO DE CURA NO MESMO PONTO. `curar_antes_do_boss`
+    #     já faz o top-up no começo do trecho seguinte, e o intervalo entre os
+    #     dois é o tempo de andar -- curar duas vezes ali é pagar duas.
+    #   * SENTAR FOI MEDIDO E REPROVADO NA BC (ver `sentar_para_recuperar`):
+    #     quatro segundos parado não recuperavam o suficiente para mudar a luta.
+    #
+    # E a regra do usuário (03/09/2026) é justamente essa: *"curas em outros
+    # momentos só se for realmente necessário, pois a cave de HH é bem mais
+    # fraca que a cave de BC"*. O que sobrou são dois momentos: a entrada, e o
+    # top-up antes de encostar em cada boss.
 
     def _catar_o_loot(self) -> None:
         """Recolhe o loot do chão, para quem não tem pet com auto-pick.
@@ -1220,8 +1216,68 @@ class HHRoutine:
 
         self._contou_a_morte = False
 
-        self._trecho = 0
+        # VIVO, MAS ALGO SAIU DO ROTEIRO. O caso mais comum aqui é o trajeto ter
+        # sido abortado por HP crítico (`Navigator._manutencao_em_movimento`
+        # devolve um motivo quando a vida cai abaixo de `emergency_pct`).
+        self._curar_em_emergencia()
+
+        # O TRECHO EM ANDAMENTO NÃO É JOGADO FORA.
+        #
+        # Aqui havia `self._trecho = 0`, e ele desfazia o progresso da run: quem
+        # caísse no trecho 3 voltava a fazer o 1, encontrando a sala vazia --
+        # os bosses só renascem no reset, que acontece na SAÍDA.
+        #
+        # Quem decide por onde continuar é `_retomar_dentro_da_cave`, que sabe
+        # distinguir "a run continua" de "abri o bot com o personagem dentro".
         self._ir_para(State.SITUAR, "recuperando: vou me situar de novo")
+
+    def _curar_em_emergencia(self) -> None:
+        """Cura fora da rotina, e só quando a vida realmente pede.
+
+        =================================================================
+        PARA CURAR TEM QUE ESTAR FORA DE BATALHA -- E A SAÍDA É MATANDO
+        =================================================================
+
+        Regra do usuário, 03/09/2026: *"para se curar tem que estar fora de
+        batalha"*, e quando perguntado o que fazer estando em batalha com a vida
+        baixa ele escolheu MATAR: *"você deve matar os mobs até sair de
+        batalha"*.
+
+        `limpar_o_combate` é exatamente isso, e já existia no motor: mata um,
+        para e olha a flag, e só então TAB para o próximo. Se o teto dela
+        estourar sem sair de batalha, **não trava**: a cura é pulada, o bot
+        volta a se situar, e na volta seguinte tenta de novo.
+
+        =================================================================
+        E SÓ ABAIXO DA EMERGÊNCIA
+        =================================================================
+
+        `precisa_curar` (o limiar normal, `potions.hp_pct`) seria demais aqui:
+        os mobs da HH são fracos e a run passaria o tempo bebendo. Quem manda é
+        `potions.emergency_pct` -- o mesmo número que faz a navegação abortar o
+        trajeto, e por isso o mesmo que trouxe o bot até este estado.
+
+        DENTRO DA CAVE QUEM CURA É `curar_ao_entrar`: rajada curta, sem sentar.
+        `heal_to_full` senta e é para fora da instância.
+        """
+        ctx = self.ctx
+        pct = ctx.memory.vida_pct()
+        if pct is None or pct > ctx.settings.potions.emergency_pct:
+            return
+
+        if ctx.memory.in_battle() is True:
+            ctx.log.warning(
+                "HH: vida em %.0f%% e ainda EM BATALHA. Não dá para curar assim "
+                "-- matando até sair de combate.", pct)
+            if not self.combat.limpar_o_combate("curar em emergência"):
+                ctx.log.warning(
+                    "HH: não saí de batalha no teto; deixo a cura para a volta "
+                    "seguinte em vez de travar aqui.")
+                return
+
+        ctx.log.info("HH: vida em %.0f%% (emergência é %s%%); curando",
+                     pct, ctx.settings.potions.emergency_pct)
+        self.combat.curar_ao_entrar()
 
 
 __all__ = ["ESTADOS_DENTRO_DA_CAVE", "HHRoutine", "State"]

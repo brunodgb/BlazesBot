@@ -222,7 +222,7 @@ ligar código não testado.
 | `SEGUNDOS_DEPOIS_DA_SUPER_SKILL` | `12.0` | [blazesbot/bot/combate.py:94](blazesbot/bot/combate.py#L94) | — | Respiro depois da Super Skill de cura. Ela é instantânea; isto é só o tempo de |
 | `SEGUNDOS_DE_CONJURACAO_DA_CURA` | `1.6` | [blazesbot/bot/combate.py:236](blazesbot/bot/combate.py#L236) | — | Conjuração da skill de cura. Informado pelo usuário em 19/08/2026. |
 | `SEGUNDOS_SEM_ALVO_PARA_MORTE` | `3.0` | [blazesbot/bot/combate.py:294](blazesbot/bot/combate.py#L294) | — | 2. TEMPO -- segundos contínuos sem nada vivo selecionado. Dá lastro à contagem: |
-| `SEGUNDOS_SENTADO_APOS_GUARDAS` | `4.0` | [blazesbot/bot/combate.py:74](blazesbot/bot/combate.py#L74) | routine.py | Quatro segundos sentado recuperam vida e mana de graça, e é o único momento da |
+| `SEGUNDOS_SENTADO_APOS_GUARDAS` | `4.0` | [blazesbot/bot/combate.py:74](blazesbot/bot/combate.py#L74) | — | Quatro segundos sentado recuperam vida e mana de graça, e é o único momento da |
 | `SUBIDA_MINIMA_PARA_CONTAR` | `1.0` | [blazesbot/bot/combate.py:248](blazesbot/bot/combate.py#L248) | — | Quanto a vida precisa subir para a conjuração contar como bem-sucedida. Um |
 | `TABS_NOS_GUARDAS` | `3` | [blazesbot/bot/combate.py:678](blazesbot/bot/combate.py#L678) | combat.py, mapa_hh.py | Quantos TAB no máximo. São 4 mobs e o primeiro vira alvo sozinho quando ataca, |
 | `TABS_PARA_REFUTAR_A_MORTE` | `4` | [blazesbot/bot/combate.py:303](blazesbot/bot/combate.py#L303) | — | 3. REFUTAÇÃO ATIVA -- antes de declarar vitória, o bot TENTA achar algo vivo. |
