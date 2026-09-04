@@ -109,6 +109,7 @@ TOLERANCIA_ROTA = 7
 # Sem aproximar-se do alvo por este tempo, considera travado.
 SEM_PROGRESSO_SEGUNDOS = 1.2
 
+
 # Folga do detector de rollback: voltar ATÉ 1 índice é ruído normal de leitura;
 # voltar 2+ índices é lag/rollback e relança a navegação. (Pedido do usuário: o
 # lag costuma devolver 2-3 waypoints, nunca mais de 5 -- e a folga=1 pega todos.)
@@ -632,6 +633,25 @@ class Navigator:
         self._retrocesso_bloqueado = False
         self._indice_do_retrocesso = -1
 
+    def _tolerancia_do_candidato(self, rota: tuple, i: int,
+                                 base: int | None) -> int:
+        """Com que precisão é preciso chegar neste candidato do destravamento.
+
+        O mais próximo (`base`) é o "voltar para o caminho": ali chegar de
+        verdade é o ponto, e a régua é apertada. Os outros usam a tolerância da
+        área, que é a mesma da rota.
+
+        VIROU FUNÇÃO em 04/09/2026 porque agora há DOIS lugares que precisam da
+        mesma resposta: o laço que tenta e o filtro que descarta o candidato
+        onde o personagem já está. Duas cópias dessa conta divergiriam em
+        silêncio, e o sintoma seria um candidato descartado com uma régua e
+        tentado com outra.
+        """
+        if i == base:
+            return TOLERANCIA_DE_VOLTA_AO_CAMINHO
+        return self.mapa.tolerancia_do_waypoint(
+            rota[i], TOLERANCIA_ROTA, TRICKY_TOLERANCE)
+
     def destravar_pelos_vizinhos(
         self,
         rota: tuple,
@@ -739,6 +759,51 @@ class Navigator:
             restantes = candidatos
         candidatos = restantes
 
+        # ===============================================================
+        # CANDIDATO ONDE O PERSONAGEM JÁ ESTÁ NÃO É CANDIDATO
+        # ===============================================================
+        #
+        # Andar até um ponto que já foi alcançado dá certo SEMPRE -- em zero
+        # segundo, com qualquer tolerância -- e não muda nada. Pior: a manobra
+        # declara sucesso, quem chamou zera o contador de travas, e a situação
+        # volta idêntica. É um laço que nunca fecha.
+        #
+        # Medido no log de 04/09/2026: parado em (282,139), com o waypoint 21
+        # exatamente em (282,139), o bot deu **~180 voltas em 4 minutos e 10
+        # segundos** -- "Destravando pelo waypoint 21 (tolerância 2)",
+        # "alcançado em 0.0s", "a rota continua do 22", e de novo. Só parou
+        # porque o usuário desligou a HH.
+        #
+        # A docstring acima já previa metade disso ("o mais próximo exige chegar
+        # DE VERDADE"), e a tolerância apertada resolve o "quase lá". O que ela
+        # não cobria era o "já estou lá": distância ZERO passa em qualquer
+        # tolerância.
+        #
+        # A MESMA RÉGUA DA TENTATIVA decide o filtro (`_tolerancia_do_candidato`)
+        # -- é o que garante que "seria alcançado na hora" e "é descartado"
+        # sejam exatamente o mesmo conjunto.
+        ja_alcancados = [
+            i for i in candidatos
+            if distancia(atual, rota[i].pos)
+            <= self._tolerancia_do_candidato(rota, i, base)
+        ]
+        if ja_alcancados:
+            ctx.log.info(
+                "Destravamento: descartando o(s) waypoint(s) %s -- o personagem "
+                "já está neles, e andar zero unidade não destrava nada.",
+                [i + 1 for i in ja_alcancados])
+            candidatos = [i for i in candidatos if i not in ja_alcancados]
+
+        if not candidatos:
+            # NÃO HÁ O QUE OFERECER, e dizer isso é o ganho: quem chamou devolve
+            # o controle para a rotina, que sabe matar, refazer o trecho ou
+            # falhar. Fingir sucesso aqui era o laço de 4 minutos.
+            ctx.log.warning(
+                "Destravamento em %s: todos os vizinhos são pontos em que o "
+                "personagem JÁ está. Não tenho manobra -- devolvendo o controle.",
+                atual)
+            return None
+
         ctx.log.warning(
             "Navegação travada em %s. Vizinhos imediatos: %s%s",
             atual,
@@ -758,12 +823,7 @@ class Navigator:
             for i in candidatos:
                 ctx.raise_if_stopped()
                 alvo = rota[i].pos
-                # O mais próximo é o "voltar para o caminho": ali chegar de
-                # verdade é o ponto. Os outros dois usam a tolerância da área.
-                tolerancia = (
-                    TOLERANCIA_DE_VOLTA_AO_CAMINHO if i == base
-                    else self.mapa.tolerancia_do_waypoint(
-                        rota[i], TOLERANCIA_ROTA, TRICKY_TOLERANCE))
+                tolerancia = self._tolerancia_do_candidato(rota, i, base)
                 ctx.log.info(
                     "Destravando pelo waypoint %s/%s em %s (tolerância %s, "
                     "passada %s de %s)",
@@ -1427,12 +1487,6 @@ class Navigator:
                 travas = 0
             elif agora - ultimo_progresso > SEM_PROGRESSO_SEGUNDOS:
                 travas += 1
-                ctx.log.debug(
-                    "sem progresso indo para %s (waypoint %s/%s, distância "
-                    "%.0f) — relançando (%s)", alvo, indice + 1, total,
-                    distancia, travas,
-                )
-
                 if rota is not None:
                     # IR DIRETO para o relançar, SEM passo lateral (pedido do
                     # usuário): o destravar antigo mexia o personagem 1-2u no

@@ -261,3 +261,68 @@ def test_DENTE_sem_a_memoria_a_manobra_repete_o_mesmo_candidato(monkeypatch):
 
 if __name__ == "__main__":
     pytest.main([__file__, "-q"])
+
+
+# =====================================================================
+# ANDAR ZERO UNIDADE NÃO DESTRAVA NADA -- 04/09/2026
+# =====================================================================
+#
+# Medido no log: parado em (282,139), com o waypoint 21 exatamente em
+# (282,139), o bot deu ~180 voltas em 4 min 10 s -- "Destravando pelo waypoint
+# 21 (tolerância 2)", "alcançado em 0.0s", "a rota continua do 22", e de novo.
+#
+# O `follow_path` de um ponto que já foi alcançado devolve True SEMPRE, em zero
+# segundo, com qualquer tolerância. A manobra declarava sucesso, quem chamou
+# zerava o contador de travas, e a situação voltava idêntica.
+#
+# A memória de falhas (`_candidatos_que_falharam`) não pegava: ela guarda quem
+# FALHOU, e este candidato tem sucesso -- um sucesso que não serve para nada.
+
+
+def test_o_candidato_onde_o_personagem_JA_esta_NAO_e_tentado(monkeypatch):
+    """Parado EM CIMA do waypoint 1: a manobra tem de oferecer outro ponto."""
+    rota = _rota()
+    servico, tentativas = _navegador(
+        monkeypatch, rota, intransitaveis=set(), posicao=(200, 30))
+
+    servico.destravar_pelos_vizinhos(rota)
+
+    assert (200, 30) not in tentativas, (
+        "tentou andar até onde o personagem já estava -- é o laço de 4 minutos")
+    assert tentativas, "não ofereceu manobra nenhuma tendo vizinhos válidos"
+
+
+def test_todos_os_vizinhos_no_MESMO_ponto_devolve_None(monkeypatch):
+    """Sem manobra a oferecer, o certo é DIZER isso.
+
+    Fingir sucesso é o que fazia `follow_path` zerar as travas e reinsistir para
+    sempre. Devolvendo `None`, quem chamou devolve o controle para a rotina --
+    que sabe matar, refazer o trecho ou falhar, e que passa pelo `_guard()`.
+    """
+    rota = RotaFalsa(Waypoint((200, 30)) for _ in range(3))
+    servico, tentativas = _navegador(
+        monkeypatch, rota, intransitaveis=set(), posicao=(200, 30))
+
+    assert servico.destravar_pelos_vizinhos(rota) is None
+    assert not tentativas, "não deveria ter tentado andar para lugar nenhum"
+
+
+def test_a_regua_do_filtro_e_a_MESMA_da_tentativa(monkeypatch):
+    """Duas cópias dessa conta divergiriam em silêncio.
+
+    O sintoma seria um candidato descartado com uma régua e tentado com outra --
+    ou o contrário, que traz o laço de volta.
+    """
+    # PELO AST: o comentário que explica o filtro cita a função pelo nome, e
+    # `str.count` no texto contava a explicação junto com as chamadas.
+    import ast
+    import inspect
+    import textwrap
+
+    arvore = ast.parse(textwrap.dedent(
+        inspect.getsource(nav.Navigator.destravar_pelos_vizinhos)))
+    chamadas = [n for n in ast.walk(arvore) if isinstance(n, ast.Call)
+                and getattr(n.func, "attr", "") == "_tolerancia_do_candidato"]
+    assert len(chamadas) == 2, (
+        "o filtro e a tentativa têm que usar a mesma função de tolerância, e "
+        f"cada um chamá-la uma vez -- achei {len(chamadas)} chamada(s)")
