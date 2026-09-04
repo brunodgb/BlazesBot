@@ -34,11 +34,19 @@ configurado.
 O QUE AINDA NÃO ESTÁ MEDIDO -- LEIA ANTES DE CONFIAR NA ÁREA
 =========================================================================
 
-Os nomes de ÁREA de dentro desta cave são DESCONHECIDOS. O bot Lua nunca lê o
-nome do lugar: ele decide tudo por coordenada. Das capturas só se tirou o nome de
-FORA (`Black Wind Camp Dungeon`).
+Os nomes de ÁREA de dentro desta cave são quase todos DESCONHECIDOS. O bot Lua
+nunca lê o nome do lugar: ele decide tudo por coordenada.
 
-Por isso todo waypoint interno nasce com `AREA_INTERNA_NAO_MEDIDA`. É um
+DOIS FORAM MEDIDOS, nos prints do usuário de 03/09/2026, e eles provam que o
+interior tem MAIS DE UMA área nomeada -- o que descarta a hipótese de tratar a
+cave inteira como um nome só:
+
+    (55, 33) .... "Happiness Hall Dungeon"      -- onde a entrada deposita
+    (529, 118) .. "Happiness Hall Main Hall"    -- o ponto de saída
+
+Fora da cave é `Black Wind Camp Dungeon`, que já estava medido.
+
+Os outros 64 waypoints continuam com `AREA_INTERNA_NAO_MEDIDA`. É um
 MARCADOR EXPLÍCITO, não uma adivinhação disfarçada de dado: enquanto ele estiver
 ali, a área não serve para conferir onde o bot está, e quem depender disso tem de
 tratar a ausência. Preencher exige rodar a ferramenta de medição pela rota e
@@ -86,6 +94,17 @@ NOME_DA_INSTANCIA = "Happiness Hall"
 # Marcador para a área que ainda não foi medida. Ver o cabeçalho do módulo: é
 # proposital que isto seja feio e visível.
 AREA_INTERNA_NAO_MEDIDA = "HH (área não medida)"
+
+# OS DOIS NOMES DE DENTRO QUE JÁ FORAM MEDIDOS.
+#
+# Vieram dos prints do usuário de 03/09/2026, do canto superior direito do
+# cliente, onde o jogo escreve `<lugar> [x, y]`.
+#
+# ELES PROVAM QUE O INTERIOR NÃO É UMA ÁREA SÓ, e é por isso que estão aqui em
+# vez de um `LUGAR_DENTRO_DA_HH` único: dois pontos da mesma instância devolvem
+# nomes diferentes. Quem for medir o resto vai achar mais.
+LUGAR_DA_CHEGADA = "Happiness Hall Dungeon"
+AREA_DA_SAIDA = "Happiness Hall Main Hall"
 
 
 # ---------------------------------------------------------------------------
@@ -430,7 +449,9 @@ PONTO_FORA_DA_HH = PONTO_DA_ENTRADA
 
 
 CAMINHO_ATE_A_SAIDA: tuple[Waypoint, ...] = _wp([
-    (529, 119, _A, (921, 104)),
+    # ÚNICO WAYPOINT COM ÁREA MEDIDA: o print do usuário mostra
+    # `Happiness Hall Main Hall [529, 118]` com o personagem exatamente aqui.
+    (529, 119, AREA_DA_SAIDA, (921, 104)),
 ])
 
 # Os quatro trechos na ordem em que são percorridos, com o rótulo do boss que
@@ -586,16 +607,31 @@ def como_lista(caminho: tuple[Waypoint, ...]) -> list[tuple[int, int]]:
 
 
 def area_medida() -> bool:
-    """As áreas internas já foram medidas?
+    """TODAS as áreas internas já foram medidas?
 
     Existe para que quem depende da área PERGUNTE em vez de descobrir na hora
-    errada. Enquanto isto devolver False, `Waypoint.area` da HH é um marcador --
-    ver o cabeçalho do módulo.
+    errada. Enquanto isto devolver False, a `Waypoint.area` da HH é um marcador
+    na maioria dos pontos -- ver o cabeçalho do módulo.
+
+    RESPONDE PELO CONJUNTO, e não ponto a ponto, porque é assim que ela é usada:
+    o recuo "volte ao começo da área" só faz sentido quando se sabe onde CADA
+    área começa. Um nome medido no meio de 64 marcadores não muda isso.
     """
     return all(wp.area != AREA_INTERNA_NAO_MEDIDA for wp in TODOS_OS_WAYPOINTS)
 
 
+def areas_medidas() -> dict[tuple[int, int], str]:
+    """Os waypoints cuja área foi MEDIDA, e o nome de cada um.
+
+    É o inventário do que já se sabe, para o teste travar e para quem for medir
+    o resto saber por onde continuar.
+    """
+    return {wp.pos: wp.area for wp in TODOS_OS_WAYPOINTS
+            if wp.area != AREA_INTERNA_NAO_MEDIDA}
+
+
 __all__ = [
+    "AREA_DA_SAIDA",
     "AREA_INTERNA_NAO_MEDIDA",
     "BOSS_1",
     "BOSS_2",
@@ -613,6 +649,7 @@ __all__ = [
     "FOLGA_DA_CAIXA",
     "GRUPO_DOS_ARREDORES",
     "LIMITES_DO_MINIMAPA",
+    "LUGAR_DA_CHEGADA",
     "LUGAR_FORA_DA_HH",
     "NPC_DA_ENTRADA",
     "NPC_DA_SAIDA",
@@ -635,6 +672,7 @@ __all__ = [
     "WAYPOINTS_PROBLEMATICOS",
     "Waypoint",
     "area_medida",
+    "areas_medidas",
     "como_lista",
     "distancia",
     "esta_dentro_da_hh",

@@ -151,10 +151,31 @@ def test_a_area_interna_continua_marcada_como_nao_medida():
     teste incomodar.
     """
     assert not m.area_medida(), (
-        "as áreas internas da HH aparecem como medidas. Se foram medidas de "
-        "verdade, apague este teste e atualize docs/decisoes/hh.md seção 9.")
+        "TODAS as áreas internas da HH aparecem como medidas. Se foram medidas "
+        "de verdade, apague este teste e atualize docs/decisoes/hh.md seção 9.")
+
+    # O INVENTÁRIO DO QUE JÁ FOI MEDIDO É EXPLÍCITO, e é ele que impede o
+    # afrouxamento: um nome novo aqui só entra junto com a linha que diz de que
+    # print ele saiu. Medidos em 03/09/2026, nos prints do usuário.
+    assert m.areas_medidas() == {(529, 119): "Happiness Hall Main Hall"}, (
+        "alguém nomeou uma área da HH sem registrar a medição -- ver o "
+        "cabeçalho de mapa_hh.py e docs/decisoes/hh.md seção 9")
     assert all(wp.area == m.AREA_INTERNA_NAO_MEDIDA
-               for wp in m.TODOS_OS_WAYPOINTS)
+               for wp in m.TODOS_OS_WAYPOINTS
+               if wp.pos not in m.areas_medidas())
+
+
+def test_o_interior_da_HH_tem_MAIS_DE_UMA_area():
+    """Os dois nomes medidos são diferentes, e isso descarta uma hipótese.
+
+    Se a instância inteira tivesse um nome só, dava para confirmar "estou
+    dentro" pelo nome. Ela não tem: a chegada é `Happiness Hall Dungeon` e a
+    saída é `Happiness Hall Main Hall`. Por isso quem responde "estou dentro" é
+    a COORDENADA (`esta_dentro_da_hh`), como o bot em Lua já fazia.
+    """
+    assert m.LUGAR_DA_CHEGADA != m.AREA_DA_SAIDA
+    assert m.LUGAR_DA_CHEGADA != m.LUGAR_FORA_DA_HH
+    assert m.AREA_DA_SAIDA != m.LUGAR_FORA_DA_HH
 
 
 def test_o_marcador_e_visivel():

@@ -71,7 +71,7 @@ ligar código não testado.
 
 ## Números medidos -- tolerância, limiar, teto, cadência
 
-532 constantes, agrupadas por arquivo.
+534 constantes, agrupadas por arquivo.
 
 | constante | valor | onde | quem lê | porquê (resumo) |
 |---|---|---|---|---|
@@ -254,20 +254,22 @@ ligar código não testado.
 | `INTERVALO_DE_REAFIRMAR_O_FOLLOW` | `4.0` | [blazesbot/bot/hh/fada.py:80](blazesbot/bot/hh/fada.py#L80) | — | De quanto em quanto tempo reafirmar a tecla de seguir. |
 | `PASSO_DO_ACOMPANHAMENTO` | `0.3` | [blazesbot/bot/hh/fada.py:73](blazesbot/bot/hh/fada.py#L73) | — | Quanto esperar entre duas leituras enquanto acompanha o líder. |
 | `PASSO_ESPERANDO_O_LIDER` | `0.5` | [blazesbot/bot/hh/fada.py:87](blazesbot/bot/hh/fada.py#L87) | — | — |
-| `AREA_INTERNA_NAO_MEDIDA` | `'HH (área não medida)'` | [blazesbot/bot/hh/mapa_hh.py:88](blazesbot/bot/hh/mapa_hh.py#L88) | — | Marcador para a área que ainda não foi medida. Ver o cabeçalho do módulo: é |
-| `BOSS_1` | `'Fa-Yuan'` | [blazesbot/bot/hh/mapa_hh.py:182](blazesbot/bot/hh/mapa_hh.py#L182) | — | Os quatro bosses |
-| `BOSS_2` | `'Dupla'` | [blazesbot/bot/hh/mapa_hh.py:183](blazesbot/bot/hh/mapa_hh.py#L183) | — | — |
-| `BOSS_3` | `'Green Robmaster'` | [blazesbot/bot/hh/mapa_hh.py:184](blazesbot/bot/hh/mapa_hh.py#L184) | — | — |
-| `BOSS_4` | `'Purple'` | [blazesbot/bot/hh/mapa_hh.py:185](blazesbot/bot/hh/mapa_hh.py#L185) | — | — |
-| `DESTINO_DO_TRANSPORTE` | `'West Suburb of Stone City'` | [blazesbot/bot/hh/mapa_hh.py:114](blazesbot/bot/hh/mapa_hh.py#L114) | — | O destino no diálogo do Fay. **SÓ APARECE ROLANDO A LISTA ATÉ O FIM.** |
-| `FOLGA_DA_CAIXA` | `25` | [blazesbot/bot/hh/mapa_hh.py:498](blazesbot/bot/hh/mapa_hh.py#L498) | mapa_bc.py | A caixa que envolve o interior da cave |
-| `GRUPO_DOS_ARREDORES` | `'Outside Black Wind Camp'` | [blazesbot/bot/hh/mapa_hh.py:73](blazesbot/bot/hh/mapa_hh.py#L73) | — | O grupo do painel de arredores naquele lugar. Serve para conferir que o painel |
-| `LUGAR_FORA_DA_HH` | `'Black Wind Camp Dungeon'` | [blazesbot/bot/hh/mapa_hh.py:69](blazesbot/bot/hh/mapa_hh.py#L69) | — | A zona de FORA da cave, lida da tela em 01/09/2026 (o rótulo do canto superior |
-| `NOME_DA_INSTANCIA` | `'Happiness Hall'` | [blazesbot/bot/hh/mapa_hh.py:84](blazesbot/bot/hh/mapa_hh.py#L84) | — | O QUE "HH" SIGNIFICA: **Happiness Hall**. |
-| `NPC_DA_ENTRADA` | `'Elite Axe Monk Soldier'` | [blazesbot/bot/hh/mapa_hh.py:154](blazesbot/bot/hh/mapa_hh.py#L154) | entrada.py | O NPC com quem se fala para entrar na cave. |
-| `NPC_DA_SAIDA` | `'Servant Child'` | [blazesbot/bot/hh/mapa_hh.py:422](blazesbot/bot/hh/mapa_hh.py#L422) | entrada.py, routine.py | Do boss 4 até o ponto de onde se sai da cave pelo NPC. |
-| `PRECISAO_NO_PONTO_DA_ENTRADA` | `1.5` | [blazesbot/bot/hh/mapa_hh.py:151](blazesbot/bot/hh/mapa_hh.py#L151) | entrada.py, routine.py | Folga aceita para considerar que já se está no ponto de conversa. |
-| `TABS_ENTRE_OS_ALVOS_DO_PONTO` | `2` | [blazesbot/bot/hh/mapa_hh.py:268](blazesbot/bot/hh/mapa_hh.py#L268) | — | Quantos TABs dar depois de cada morte, num ponto com mais de um alvo. |
+| `AREA_DA_SAIDA` | `'Happiness Hall Main Hall'` | [blazesbot/bot/hh/mapa_hh.py:107](blazesbot/bot/hh/mapa_hh.py#L107) | — | — |
+| `AREA_INTERNA_NAO_MEDIDA` | `'HH (área não medida)'` | [blazesbot/bot/hh/mapa_hh.py:96](blazesbot/bot/hh/mapa_hh.py#L96) | — | Marcador para a área que ainda não foi medida. Ver o cabeçalho do módulo: é |
+| `BOSS_1` | `'Fa-Yuan'` | [blazesbot/bot/hh/mapa_hh.py:201](blazesbot/bot/hh/mapa_hh.py#L201) | — | Os quatro bosses |
+| `BOSS_2` | `'Dupla'` | [blazesbot/bot/hh/mapa_hh.py:202](blazesbot/bot/hh/mapa_hh.py#L202) | — | — |
+| `BOSS_3` | `'Green Robmaster'` | [blazesbot/bot/hh/mapa_hh.py:203](blazesbot/bot/hh/mapa_hh.py#L203) | — | — |
+| `BOSS_4` | `'Purple'` | [blazesbot/bot/hh/mapa_hh.py:204](blazesbot/bot/hh/mapa_hh.py#L204) | — | — |
+| `DESTINO_DO_TRANSPORTE` | `'West Suburb of Stone City'` | [blazesbot/bot/hh/mapa_hh.py:133](blazesbot/bot/hh/mapa_hh.py#L133) | — | O destino no diálogo do Fay. **SÓ APARECE ROLANDO A LISTA ATÉ O FIM.** |
+| `FOLGA_DA_CAIXA` | `25` | [blazesbot/bot/hh/mapa_hh.py:519](blazesbot/bot/hh/mapa_hh.py#L519) | mapa_bc.py | A caixa que envolve o interior da cave |
+| `GRUPO_DOS_ARREDORES` | `'Outside Black Wind Camp'` | [blazesbot/bot/hh/mapa_hh.py:81](blazesbot/bot/hh/mapa_hh.py#L81) | — | O grupo do painel de arredores naquele lugar. Serve para conferir que o painel |
+| `LUGAR_DA_CHEGADA` | `'Happiness Hall Dungeon'` | [blazesbot/bot/hh/mapa_hh.py:106](blazesbot/bot/hh/mapa_hh.py#L106) | — | OS DOIS NOMES DE DENTRO QUE JÁ FORAM MEDIDOS. |
+| `LUGAR_FORA_DA_HH` | `'Black Wind Camp Dungeon'` | [blazesbot/bot/hh/mapa_hh.py:77](blazesbot/bot/hh/mapa_hh.py#L77) | — | A zona de FORA da cave, lida da tela em 01/09/2026 (o rótulo do canto superior |
+| `NOME_DA_INSTANCIA` | `'Happiness Hall'` | [blazesbot/bot/hh/mapa_hh.py:92](blazesbot/bot/hh/mapa_hh.py#L92) | — | O QUE "HH" SIGNIFICA: **Happiness Hall**. |
+| `NPC_DA_ENTRADA` | `'Elite Axe Monk Soldier'` | [blazesbot/bot/hh/mapa_hh.py:173](blazesbot/bot/hh/mapa_hh.py#L173) | entrada.py | O NPC com quem se fala para entrar na cave. |
+| `NPC_DA_SAIDA` | `'Servant Child'` | [blazesbot/bot/hh/mapa_hh.py:441](blazesbot/bot/hh/mapa_hh.py#L441) | entrada.py, routine.py | Do boss 4 até o ponto de onde se sai da cave pelo NPC. |
+| `PRECISAO_NO_PONTO_DA_ENTRADA` | `1.5` | [blazesbot/bot/hh/mapa_hh.py:170](blazesbot/bot/hh/mapa_hh.py#L170) | entrada.py, routine.py | Folga aceita para considerar que já se está no ponto de conversa. |
+| `TABS_ENTRE_OS_ALVOS_DO_PONTO` | `2` | [blazesbot/bot/hh/mapa_hh.py:287](blazesbot/bot/hh/mapa_hh.py#L287) | — | Quantos TABs dar depois de cada morte, num ponto com mais de um alvo. |
 | `ENTRE_TENTATIVAS_DE_ENTRAR` | `0.025` | [blazesbot/bot/hh/routine.py:94](blazesbot/bot/hh/routine.py#L94) | — | Entre uma tentativa de entrada e a seguinte. É o RESTO do orçamento da |
 | `ENTRE_TENTATIVAS_DE_SAIR` | `1.0` | [blazesbot/bot/hh/routine.py:151](blazesbot/bot/hh/routine.py#L151) | — | Entre uma tentativa de sair e a seguinte. Maior que o da entrada porque cada |
 | `LIMIAR_DO_PICK_UP_ALL` | `0.85` | [blazesbot/bot/hh/routine.py:168](blazesbot/bot/hh/routine.py#L168) | routine.py | — |
