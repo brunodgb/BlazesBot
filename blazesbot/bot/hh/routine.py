@@ -199,6 +199,22 @@ class HHRoutine:
         self.ctx = ctx
         self.nav = Navigator(ctx, mapa_hh)
         self.combat = CombatEngine(ctx, self.nav)
+        # LIGA O PORTÃO DA MONTARIA NO COMBATE, e esta linha faltava.
+        #
+        # Em batalha o jogo RECUSA montar, e o portão insiste sem teto. Sem esta
+        # ligação `_diagnosticar_o_portao` lia a flag, concluía "estou em
+        # batalha" e só sabia dizer *"não tenho destravamento ligado; sigo
+        # insistindo"* -- o bot ficava apertando a tecla da montaria contra uma
+        # recusa do jogo até os mobs morrerem por conta própria.
+        #
+        # Medido no log de 03/09/2026, 23:44: **41 segundos** parado no meio da
+        # cave, com o trem de mobs em cima. É o mesmo defeito que custou 24
+        # minutos à BC em 31/08 e que a linha gêmea (`bc/routine.py`) conserta
+        # lá desde então.
+        #
+        # A ROTINA É QUEM PODE FAZER A LIGAÇÃO: `combate` já importa
+        # `navegacao`, e o contrário faria ciclo.
+        self.nav.destravar_o_combate = self.combat.limpar_o_combate
         self.ui = EntradaDaHH(ctx, self.nav)
         self.vendedor = VendedorDaHH(ctx, self.nav)
         self.team = TeamService(
