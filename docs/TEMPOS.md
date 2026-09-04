@@ -405,7 +405,7 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | `SEGUNDOS_PARA_O_LOG_CONFIRMAR` | 5 s | = | FIXO | [petbug.py:177](blazesbot/core/petbug.py#L177) | `aplicar_patch, _esperar_a_confirmacao` | Espera pela confirmação no log depois do clique. |
 | `FATIA_DA_ESPERA` | 0.25 s | = | PASSO | [petbug.py:178](blazesbot/core/petbug.py#L178) | `_abrir_o_programa, _esperar_a_confirmacao` |  |
 | `SEGUNDOS_POR_TENTATIVA_NA_FAY` | 1.8 s | = | FIXO | [stone_city.py:55](blazesbot/core/stone_city.py#L55) |  |  |
-| `PASSO_DA_AMOSTRAGEM_DO_QUADRO` | 8 s | = | PASSO | [vision.py:33](blazesbot/core/vision.py#L33) | `frame_is_blank` | De quantos em quantos pixels o `frame_is_blank` amostra o quadro. |
+| `PASSO_DA_AMOSTRAGEM_DO_QUADRO` | 8 s | *novo* | PASSO | [captura.py:27](blazesbot/core/vision/captura.py#L27) | `frame_is_blank` | De quantos em quantos pixels o `frame_is_blank` amostra o quadro. |
 
 
 ## OUTROS

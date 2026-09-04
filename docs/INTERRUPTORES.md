@@ -65,7 +65,7 @@ ligar código não testado.
 | `USAR_PAINEL_POR_MEMORIA` | `True` | [blazesbot/core/memory.py:578](blazesbot/core/memory.py#L578) | — | ESTADO DE PAINEL DE UI POR MEMÓRIA -- o que sobreviveu ao campo |
 | `USAR_REGIOES_QUENTES` | `True` | [blazesbot/core/memory.py:433](blazesbot/core/memory.py#L433) | — | REGIÕES QUENTES -- a rota que fecha os 38% que o array de entidades perde |
 | `ATIVADO` | `True` | [blazesbot/core/petbug.py:104](blazesbot/core/petbug.py#L104) | deletador.py, diagnostico_do_link.py, supervisor.py, esconder_jogadores.py | INTERRUPTOR |
-| `USAR_OFFSET_FIXO_DA_BARRA` | `True` | [blazesbot/core/vision.py:1467](blazesbot/core/vision.py#L1467) | — | INTERRUPTOR: o offset fixo é a régua; a âncora azul é a reserva |
+| `USAR_OFFSET_FIXO_DA_BARRA` | `True` | [blazesbot/core/vision/barra.py:259](blazesbot/core/vision/barra.py#L259) | __init__.py | INTERRUPTOR: o offset fixo é a régua; a âncora azul é a reserva |
 
 ---
 
@@ -563,18 +563,18 @@ ligar código não testado.
 | `FAIXA_PARA_OLHAR_O_MARCADOR` | `0.1` | [blazesbot/core/target_hybrid.py:104](blazesbot/core/target_hybrid.py#L104) | — | Abaixo desta fração de vida vale a pena procurar o `EnemyDead.png`. |
 | `LIMIAR_VIDA_TELA` | `0.02` | [blazesbot/core/target_hybrid.py:93](blazesbot/core/target_hybrid.py#L93) | executor.py | Abaixo desta fração a barra conta como VAZIA. |
 | `MAXIMO_DE_ACHADOS` | `12` | [blazesbot/core/target_hybrid.py:567](blazesbot/core/target_hybrid.py#L567) | — | Quantos endereços mostrar por id. Mais que isto vira parede de texto. |
-| `ALTURA_DA_BARRA` | `8` | [blazesbot/core/vision.py:907](blazesbot/core/vision.py#L907) | — | — |
-| `BARRA_DO_ALVO_X0` | `466` | [blazesbot/core/vision.py:1260](blazesbot/core/vision.py#L1260) | — | A BARRA NÃO ESCALA COM A RESOLUÇÃO, E ISSO FOI CONFIRMADO EM DUAS |
-| `BARRA_DO_ALVO_X1` | `600` | [blazesbot/core/vision.py:1261](blazesbot/core/vision.py#L1261) | — | — |
-| `BARRA_DO_ALVO_Y0` | `46` | [blazesbot/core/vision.py:1262](blazesbot/core/vision.py#L1262) | — | — |
-| `BARRA_DO_ALVO_Y1` | `49` | [blazesbot/core/vision.py:1263](blazesbot/core/vision.py#L1263) | — | — |
-| `DEFAULT_THRESHOLD` | `0.87` | [blazesbot/core/vision.py:25](blazesbot/core/vision.py#L25) | — | — |
-| `LARGURA_MINIMA_DA_BARRA` | `100` | [blazesbot/core/vision.py:903](blazesbot/core/vision.py#L903) | — | Largura mínima da corrida azul para ela ser a barra de mana do alvo. Não é a |
-| `LIMIAR_DA_FASE_2_DO_BOSS` | `0.92` | [blazesbot/core/vision.py:1119](blazesbot/core/vision.py#L1119) | combate.py | A SEGUNDA FASE DO BOSS, LIDA NA TELA |
-| `LIMIAR_DO_MARCADOR_DE_MORTE` | `0.85` | [blazesbot/core/vision.py:948](blazesbot/core/vision.py#L948) | — | Limiar do marcador de inimigo morto. Sprite pequeno (26x22) num quadro de UI, |
-| `LINHAS_ENTRE_HP_E_MP` | `7` | [blazesbot/core/vision.py:906](blazesbot/core/vision.py#L906) | — | Distância da barra vermelha para a azul, em linhas, e altura da faixa. |
-| `MINIMO_RECONHECIDO_NA_FAIXA` | `0.7` | [blazesbot/core/vision.py:1273](blazesbot/core/vision.py#L1273) | — | A fração da faixa que precisa ser reconhecida (vida ou vazio) para a leitura |
-| `PASSO_DA_AMOSTRAGEM_DO_QUADRO` | `8` | [blazesbot/core/vision.py:33](blazesbot/core/vision.py#L33) | — | De quantos em quantos pixels o `frame_is_blank` amostra o quadro. |
+| `BARRA_DO_ALVO_X0` | `466` | [blazesbot/core/vision/barra.py:52](blazesbot/core/vision/barra.py#L52) | __init__.py | A BARRA DO ALVO POR OFFSET FIXO -- medida pelo usuário em 25/08/2026 |
+| `BARRA_DO_ALVO_X1` | `600` | [blazesbot/core/vision/barra.py:53](blazesbot/core/vision/barra.py#L53) | __init__.py | — |
+| `BARRA_DO_ALVO_Y0` | `46` | [blazesbot/core/vision/barra.py:54](blazesbot/core/vision/barra.py#L54) | __init__.py | — |
+| `BARRA_DO_ALVO_Y1` | `49` | [blazesbot/core/vision/barra.py:55](blazesbot/core/vision/barra.py#L55) | __init__.py | — |
+| `MINIMO_RECONHECIDO_NA_FAIXA` | `0.7` | [blazesbot/core/vision/barra.py:65](blazesbot/core/vision/barra.py#L65) | __init__.py | A fração da faixa que precisa ser reconhecida (vida ou vazio) para a leitura |
+| `PASSO_DA_AMOSTRAGEM_DO_QUADRO` | `8` | [blazesbot/core/vision/captura.py:27](blazesbot/core/vision/captura.py#L27) | __init__.py | De quantos em quantos pixels o `frame_is_blank` amostra o quadro. |
+| `ALTURA_DA_BARRA` | `8` | [blazesbot/core/vision/marcadores.py:41](blazesbot/core/vision/marcadores.py#L41) | __init__.py, barra.py | — |
+| `LARGURA_MINIMA_DA_BARRA` | `100` | [blazesbot/core/vision/marcadores.py:37](blazesbot/core/vision/marcadores.py#L37) | __init__.py, barra.py | Largura mínima da corrida azul para ela ser a barra de mana do alvo. Não é a |
+| `LIMIAR_DA_FASE_2_DO_BOSS` | `0.92` | [blazesbot/core/vision/marcadores.py:233](blazesbot/core/vision/marcadores.py#L233) | combate.py, __init__.py | A SEGUNDA FASE DO BOSS, LIDA NA TELA. |
+| `LIMIAR_DO_MARCADOR_DE_MORTE` | `0.85` | [blazesbot/core/vision/marcadores.py:78](blazesbot/core/vision/marcadores.py#L78) | __init__.py | Limiar do marcador de inimigo morto. Sprite pequeno (26x22) num quadro de UI, |
+| `LINHAS_ENTRE_HP_E_MP` | `7` | [blazesbot/core/vision/marcadores.py:40](blazesbot/core/vision/marcadores.py#L40) | __init__.py, barra.py | Distância da barra vermelha para a azul, em linhas, e altura da faixa. |
+| `DEFAULT_THRESHOLD` | `0.87` | [blazesbot/core/vision/templates.py:21](blazesbot/core/vision/templates.py#L21) | __init__.py | — |
 | `MAP_DISTANCE_THRESHOLD` | `50` | [blazesbot/core/zones.py:222](blazesbot/core/zones.py#L222) | navegacao.py | Distância em unidades de coordenada a partir da qual vale usar o mapa-múndi |
 | `MINIMAP_MAX_PIXELS` | `30` | [blazesbot/core/zones.py:218](blazesbot/core/zones.py#L218) | — | Deslocamento máximo, em pixels, a partir do centro do minimapa. Clique além |
 | `MINIMAP_SCALE` | `1.7` | [blazesbot/core/zones.py:214](blazesbot/core/zones.py#L214) | ui_do_jogo.py, coords.py | Escala do minimapa: pixels por unidade de coordenada. |
