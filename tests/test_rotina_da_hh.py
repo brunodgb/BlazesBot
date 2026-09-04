@@ -619,3 +619,88 @@ def test_a_retomada_respeita_o_trecho_em_ANDAMENTO():
     assert "_run_em_andamento" in fonte
     # a distância só decide DEPOIS, quando não há run em andamento
     assert fonte.index("_run_em_andamento") < fonte.index("mais_proximos")
+
+
+# ===========================================================================
+# O PONTO ONDE OS MOBS BLOQUEIAM A PASSAGEM
+# ===========================================================================
+#
+# O (232,188) aparece em dois arquivos do bot em Lua com a mesma instrução:
+# matar os mobs que bloqueiam antes de continuar (`travel.lua`, `hh.lua`). É uma
+# passagem estreita, e um mob parado nela faz a navegação bater na geometria e
+# chamar o destravamento em círculo.
+
+
+def test_o_mapa_declara_onde_a_passagem_e_bloqueada():
+    from blazesbot.bot.hh import mapa_hh
+
+    assert mapa_hh.WAYPOINTS_QUE_BLOQUEIAM == ((232, 188),)
+    assert mapa_hh.bloqueia_a_passagem((232, 188))
+    assert not mapa_hh.bloqueia_a_passagem((209, 182))
+
+
+def test_e_um_conceito_DIFERENTE_de_waypoint_problematico():
+    """Um é sobre GEOMETRIA (tolerância maior), o outro é sobre MOBS.
+
+    Os dois calham de ser o mesmo ponto hoje, e é justamente por isso que
+    misturá-los seria fácil e errado: o dia em que um mob bloquear um ponto de
+    geometria fácil, a lista certa cresce sozinha.
+    """
+    import inspect
+
+    from blazesbot.bot.hh import mapa_hh
+
+    # Os dois calham de valer para o mesmo ponto hoje -- e o interpretador
+    # chega a compartilhar a tupla, porque o conteúdo é idêntico. O que o teste
+    # trava não é a identidade do objeto, e sim que as duas PERGUNTAS são
+    # respondidas por listas separadas.
+    assert mapa_hh.WAYPOINTS_QUE_BLOQUEIAM == ((232, 188),)
+    assert mapa_hh.WAYPOINTS_PROBLEMATICOS == ((232, 188),)
+    corpo = inspect.getsource(mapa_hh.bloqueia_a_passagem)
+    assert "WAYPOINTS_PROBLEMATICOS" not in corpo, (
+        "quem responde 'tem mob barrando?' não pode consultar a lista de "
+        "geometria difícil -- são perguntas diferentes")
+
+
+def test_a_rota_da_HH_leva_o_gancho():
+    fonte = _fonte(HHRoutine._do_ate_o_boss)
+    assert "ao_chegar=self._ao_chegar_no_waypoint" in fonte
+
+
+def test_so_limpa_se_JA_estiver_em_combate_e_a_pe():
+    """Numa volta em que o ponto está limpo isto não custa clique nenhum.
+
+    A diferença contra o Lua: ele mata ali sempre que está a pé, porque não lê
+    a flag de combate. Nós lemos.
+    """
+    chamadas = _chamadas(HHRoutine._ao_chegar_no_waypoint)
+    assert "bloqueia_a_passagem" in chamadas
+    assert "is_mounted" in chamadas
+    assert "in_battle" in chamadas
+    assert "limpar_o_combate" in chamadas
+    fonte = _fonte(HHRoutine._ao_chegar_no_waypoint)
+    assert "in_battle() is not True" in fonte, (
+        "ilegível não pode virar 'estou em combate' -- pararia por nada")
+
+
+def test_o_gancho_e_OPCIONAL_no_navegador():
+    """Sem gancho o comportamento é o de antes -- é o que protege a BC."""
+    import inspect
+
+    from blazesbot.bot.navegacao import Navigator
+
+    for metodo in (Navigator.seguir_rota, Navigator.follow_path):
+        assert inspect.signature(metodo).parameters["ao_chegar"].default is None
+
+
+def test_o_gancho_vale_para_os_waypoints_ATRAVESSADOS():
+    """A montaria cruza dois ou três waypoints numa leitura só.
+
+    Um ponto que exige parada não pode ser pulado por causa da velocidade.
+    """
+    import inspect
+
+    from blazesbot.bot.navegacao import Navigator
+
+    fonte = inspect.getsource(Navigator.follow_path)
+    assert "for alcancado in caminho[indice:novo]" in fonte

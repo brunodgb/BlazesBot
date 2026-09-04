@@ -773,7 +773,8 @@ class HHRoutine:
         self.nav.garantir_montaria_para_andar(f"trecho do {rotulo}")
 
         if not self.nav.seguir_rota(caminho,
-                                    max_seconds=MAX_SEGUNDOS_POR_TRECHO):
+                                    max_seconds=MAX_SEGUNDOS_POR_TRECHO,
+                                    ao_chegar=self._ao_chegar_no_waypoint):
             self._falhar(f"não cheguei no {rotulo}", State.RECUPERAR)
             return
 
@@ -783,6 +784,48 @@ class HHRoutine:
         self.nav.ensure_dismounted()
         ctx.log.info("HH: no ponto do %s (%s)", rotulo, ponto)
         self._ir_para(State.BOSS)
+
+    def _ao_chegar_no_waypoint(self, waypoint: tuple[int, int]) -> None:
+        """Nos pontos que costumam ter mob barrando, limpa ANTES de seguir.
+
+        =================================================================
+        O PONTO É UM SÓ, E ELE VEM DO BOT EM LUA
+        =================================================================
+
+        O (232,188) aparece em dois arquivos do bot original com a mesma
+        instrução: matar os mobs que bloqueiam antes de continuar. É uma
+        passagem estreita, e um mob parado nela faz a navegação bater na
+        geometria e chamar o destravamento em círculo.
+
+        SÓ SE O COMBATE JÁ COMEÇOU, e essa é a diferença contra o Lua. Ele mata
+        ali sempre que está a pé, porque não lê a flag; nós lemos. Numa volta em
+        que o ponto está limpo isto não custa uma leitura de tela nem um clique
+        -- só a pergunta à memória, que é o que a regra "memória primeiro" torna
+        barata.
+
+        MONTADO NÃO PARA. Em batalha não se monta, então chegar aqui montado já
+        significa que não há combate -- mas a conferência fica explícita porque
+        montado o jogo IGNORA a tecla de skill sem devolver erro, e girar a
+        rotação sem dano é a armadilha silenciosa de sempre.
+        """
+        ctx = self.ctx
+        if not mapa_hh.bloqueia_a_passagem(waypoint):
+            return
+        if ctx.memory.is_mounted():
+            return
+        if ctx.memory.in_battle() is not True:
+            return
+
+        ctx.log.info(
+            "HH: cheguei no %s em combate -- é o ponto onde os mobs bloqueiam a "
+            "passagem. Limpando antes de seguir.", waypoint)
+        try:
+            self.combat.limpar_o_combate(f"passagem em {waypoint}")
+        except StopRequested:
+            raise
+        except Exception as exc:
+            ctx.log.warning(
+                "HH: limpeza da passagem falhou (segue a run): %s", exc)
 
     def _limpar_os_mobs_do_caminho(self, rotulo: str) -> None:
         """A PÉ, limpa os mobs que vieram atrás. Montado, não faz nada.

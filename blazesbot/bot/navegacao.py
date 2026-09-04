@@ -1063,6 +1063,7 @@ class Navigator:
         rota: tuple,
         max_seconds: float | None = None,
         comecar_em: int = 0,
+        ao_chegar: Callable[[tuple[int, int]], None] | None = None,
     ) -> bool:
         """Percorre uma rota de um mapa de cave, com tudo que ela sabe.
 
@@ -1093,6 +1094,7 @@ class Navigator:
             rota=rota,
             dentro_da_cave=True,
             comecar_em=comecar_em,
+            ao_chegar=ao_chegar,
         )
 
     def follow_path(
@@ -1103,8 +1105,21 @@ class Navigator:
         rota: tuple | None = None,
         dentro_da_cave: bool = False,
         comecar_em: int = 0,
+        ao_chegar: Callable[[tuple[int, int]], None] | None = None,
     ) -> bool:
         """Percorre waypoints em ordem, SEM parar entre eles.
+
+        `ao_chegar` é chamado uma vez por waypoint ALCANÇADO, com a coordenada
+        dele, e existe para o punhado de pontos onde a rota precisa PARAR e
+        fazer algo -- na HH, o (232,188), onde os mobs bloqueiam a passagem
+        (`travel.lua`: *"em 232,188 matando os mobs que bloqueiam"*).
+
+        Sem gancho o comportamento é exatamente o de antes, e é por isso que a
+        BC não muda: o parâmetro é opcional e o padrão é `None`.
+
+        É CHAMADO PARA TODOS OS ATRAVESSADOS, e não só para o último: o laço
+        pode cruzar dois ou três waypoints numa leitura, e um ponto que exige
+        parada não pode ser pulado por causa da velocidade da montaria.
 
         O laço é único para o caminho inteiro, em vez de um `goto` por waypoint.
         É essa diferença que dá fluidez: quando o personagem alcança um ponto, o
@@ -1333,10 +1348,21 @@ class Navigator:
                     f" (+{novo - indice - 1} atravessado(s))" if novo - indice > 1 else "",
                     atual,
                 )
+                if ao_chegar is not None:
+                    for alcancado in caminho[indice:novo]:
+                        ao_chegar(alcancado)
+                    # OS CRONÔMETROS RECOMEÇAM DEPOIS DO GANCHO. Ele pode ter
+                    # ficado um minuto matando mob, e sem isto esse minuto
+                    # contaria como "parado sem progresso" -- o laço concluiria
+                    # que o personagem travou e dispararia o destravamento.
+                    agora = time.time()
+
                 marco = agora
                 indice = novo
                 melhor_distancia = float("inf")
                 ultimo_progresso = agora
+                parado_desde = 0.0
+                ultima_posicao = None
                 # A rota AVANÇOU de verdade: o retrocesso volta a ser permitido.
                 # Sem esta liberação a trava valeria para o trajeto inteiro, e um
                 # retrocesso legítimo mais adiante (outro ponto, outro problema)

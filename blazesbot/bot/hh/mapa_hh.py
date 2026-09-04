@@ -202,6 +202,27 @@ VARIOS = -1
 PONTOS_SEM_AOE: frozenset[str] = frozenset({BOSS_1, BOSS_3})
 
 
+# ONDE OS MOBS BLOQUEIAM A PASSAGEM.
+#
+# Vem do bot em Lua, e ele para nesse ponto em dois lugares diferentes:
+# `travel.lua` (*"em 232,188 matando os mobs que bloqueiam"*) e `hh.lua`
+# (*"ataca mobs em 232,188 até não ter alvo, depois senta"*).
+#
+# NÃO É O MESMO QUE `WAYPOINTS_PROBLEMATICOS`: aquele alarga a tolerância de
+# chegada de pontos onde a geometria não deixa encostar. Este é sobre MOBS.
+#
+# A DIFERENÇA CONTRA O LUA, e ela é medida: ele mata ali sempre que está a pé,
+# porque não lê a flag de combate. Nós lemos -- então só paramos se o combate
+# JÁ começou, e o ponto não custa nada na volta em que está limpo, que é a
+# maioria delas.
+WAYPOINTS_QUE_BLOQUEIAM: tuple[tuple[int, int], ...] = ((232, 188),)
+
+
+def bloqueia_a_passagem(pos: tuple[int, int]) -> bool:
+    """Este waypoint é um dos que costumam ter mob barrando o caminho?"""
+    return tuple(pos) in WAYPOINTS_QUE_BLOQUEIAM
+
+
 def usa_aoe(rotulo: str) -> bool:
     """A skill de área serve neste ponto?"""
     return rotulo not in PONTOS_SEM_AOE
