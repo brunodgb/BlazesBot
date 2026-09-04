@@ -311,13 +311,21 @@ time a flag não faz nada.
   motor de navegação, que calcula a partir da posição ATUAL e sabe destravar. Um
   clique fixo foi calibrado numa posição e, usado de outra, aponta para o lugar
   errado. Ver `core/rota.py`.
-- **A área interna da HH NÃO está medida** e vale o marcador
-  `AREA_INTERNA_NAO_MEDIDA`. Quem depender de área tem de tratar a ausência;
-  preencher com palpite reprova em
-  `test_a_area_interna_continua_marcada_como_nao_medida`. Consequência prática:
-  a retomada de rota da HH volta ao waypoint mais próximo e **não** recua para o
-  início da área — recuar sobre um marcador devolveria o personagem ao waypoint
-  1 da cave a cada escorregão.
+- **A área interna da HH está medida em 2 dos 66 waypoints**; o resto vale o
+  marcador `AREA_INTERNA_NAO_MEDIDA`. Medidos em 03/09/2026, nos prints do
+  usuário: `Happiness Hall Dungeon` em (55,33) e `Happiness Hall Main Hall` em
+  (529,118) — e eles provam que **o interior NÃO é uma área só**. Quem depender
+  de área tem de tratar a ausência; nome novo só entra junto com a linha que diz
+  de que print ele saiu, e o inventário (`mapa_hh.areas_medidas()`) é travado
+  por `test_a_area_interna_continua_marcada_como_nao_medida`. Consequência
+  prática, inalterada: a retomada de rota da HH volta ao waypoint mais próximo e
+  **não** recua para o início da área — recuar sobre um marcador devolveria o
+  personagem ao waypoint 1 da cave a cada escorregão.
+- **"Estou dentro" é respondido pela COORDENADA, não pelo nome do lugar**
+  (`mapa_hh.esta_dentro_da_hh`: X e Y positivos). É o que o bot em Lua já fazia
+  e o que o usuário confirmou em 03/09/2026 — e é obrigatório, porque o interior
+  tem mais de um nome de área. O par de chegada é sempre **(55,33)**, padrão do
+  jogo.
 - **OS TEMPLATES DA ENTRADA ESTÃO PRONTOS** (03/09/2026) e moram em
   `data/templates/` — não em `entrada/`, que é a pasta de EVIDÊNCIA. Falta um
   só: `link_sell_item.png`, e sem ele apenas a VENDA recusa.
@@ -363,6 +371,62 @@ time a flag não faz nada.
   onde está. Chutar um padrão faria ela apertar algo que faz outra coisa.
 - **O vendedor é o `Roaming Apothecary`, fora da cave** — a venda da BC com outro
   NPC. Isso é dado de rota, não módulo de venda novo.
+
+#### O que a sessão de 03/09/2026 fixou — o porquê medido em `hh.md` §12
+
+- **FORA DA CAVE NÃO SE PREPARA NADA QUE EXIJA ESTAR A PÉ.** Buff, poção e
+  comida de pet moram em `PREPARAR_DENTRO`. Regra do usuário, e é a mesma que a
+  BC segue desde 25/08/2026: montado o jogo IGNORA a tecla sem devolver erro, e
+  entrar é disputado — durante a espera o personagem regenera de graça. **A
+  única exceção é o PET**, conferido uma vez ao CHEGAR na porta, e **fora** do
+  laço de tentativas (a rajada pode dar centenas de leituras por minuto).
+- **O PET é conferido nos DOIS lados da tela de carregamento** — na porta e no
+  preparo de dentro. A repetição é de propósito: é ali que ele some.
+- **A CURA TEM TRÊS MOMENTOS, e só três:** a entrada (`curar_ao_entrar`), o
+  top-up antes de encostar em cada boss (`curar_antes_do_boss`), e a
+  emergência. Sentar entre os bosses foi REMOVIDO — era o terceiro no mesmo
+  ponto, e sentar já tinha sido medido e reprovado na BC.
+- **PARA CURAR TEM QUE ESTAR FORA DE BATALHA, e a saída é MATANDO**
+  (`limpar_o_combate`). Escolha do usuário entre pular, esperar e matar. A
+  emergência usa `potions.emergency_pct`, **não** o limiar normal: os mobs da HH
+  são fracos e o normal faria a run passar o tempo bebendo. Não sair de batalha
+  no teto **não trava** — a cura fica para a volta seguinte.
+- **A NATUREZA DE CADA PONTO MORA NO MAPA, e a rotina obedece.** Não pode haver
+  `if rotulo == "..."` na rotina. Pontos 1 e 3 são pacotes de mobs **ranged**:
+  sem AoE (a skill de área é de curta distância e passa embaixo deles) e com o
+  ritual `limpar_o_combate`. Pontos 2 e 4 são boss, com AoE e
+  `lutar_contra_um_boss`.
+- **O TAB de um ponto tem UM dono.** Zero no pacote porque quem o dá é o próprio
+  `limpar_o_combate`; zero no boss único porque trocar de alvo perde dano; dois
+  na Dupla porque sem ele o segundo boss nunca é adquirido.
+- **CINCO SEGUNDOS PARA ENGAJAR, em qualquer ponto de batalha — inclusive o do
+  boss.** Não engajou, o bot segue. É o que torna barato refazer um trecho
+  depois de uma morte. **Custo aceito pelo usuário e registrado:** um boss vivo
+  que demore mais de 5 s é pulado, e o log diz isso em voz alta.
+- **VOLTA-SE AO PONTO depois de matar.** Mob ranged não vem até o personagem, e
+  começar o trecho seguinte fora do waypoint faz a retomada escolher índice
+  errado.
+- **O PROGRESSO DOS BOSSES É VOLÁTIL E ZERADO AO SAIR DA CAVE.** O desfaz-refaz
+  do time ressuscita os quatro; lembrar entre entradas faria o bot pular sala
+  cheia. Dentro da mesma ida, a retomada respeita o **trecho em andamento** — os
+  quatro trechos se cruzam no mapa, e escolher pela distância refaria bosses já
+  mortos.
+- **CAIR NÃO PODE JOGAR FORA O PROGRESSO DA RUN.** `RECUPERAR` não zera o
+  trecho; quem decide por onde continuar é `_retomar_dentro_da_cave`.
+- **A RAJADA DE ENTRADA É A DO BC**: uma hora de teto, 25 ms entre tentativas,
+  confirmação de 0,25 s, volta à coordenada ao derivar, e redescoberta do NPC
+  **só** na falha mecânica (instância cheia é a razão normal de não entrar).
+  Estourar o teto volta para `ATE_A_PORTA`, não para `RECUPERAR`.
+- **SAIR DA CAVE É FALAR COM O `Servant Child`**, achando "Leave Happiness Hall"
+  por template e confirmando pela POSIÇÃO (-342,-288). Andar até (529,119) e
+  declarar a run concluída deixava o personagem dentro. Os três cliques cegos do
+  Lua estão REPROVADOS: clique que erra o NPC cai no chão, e clique no chão faz
+  o personagem andar para fora do ponto de onde o NPC é alcançável.
+- **`WAYPOINTS_QUE_BLOQUEIAM` ≠ `WAYPOINTS_PROBLEMATICOS`.** O primeiro é sobre
+  MOBS que barram a passagem (só (232,188) hoje, e só se limpa **se o combate já
+  começou**); o segundo alarga a tolerância onde a geometria não deixa encostar.
+  Valem para o mesmo ponto hoje, e é por isso que misturá-los seria fácil e
+  errado.
 
 ### Promoções que a HH forçou — dependência cruzada
 

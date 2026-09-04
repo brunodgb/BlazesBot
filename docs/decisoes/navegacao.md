@@ -884,3 +884,73 @@ o diagnóstico em **~13 s** contra os 1465 s do log.
 Medido na simulação (`tests/test_destravamento_do_combate.py`, relógio falso):
 1 mob ⇒ 5,6 s e **zero TAB**; 2 mobs ⇒ 11,5 s e **1 TAB**; ninguém cai ⇒ 63,1 s
 e `False`, com o portão voltando a insistir.
+
+---
+
+## O ROLLBACK PASSA A SER MEDIDO PELO TRECHO, E NÃO PELO PONTO (03/09/2026)
+
+**Vale para as duas caves — o conserto é em `core/rota.py`.**
+
+`houve_rollback` perguntava *"qual waypoint está mais perto do personagem"*
+quando a pergunta é *"ele foi jogado para trás"*. Numa rota que só avança as
+duas coisas coincidem. Numa rota que **volta pelo mesmo corredor**, não: o mais
+próximo pode ser um índice bem anterior enquanto o personagem anda, certinho, no
+rumo do próximo.
+
+O sintoma é um **loop infinito**: "voltei" → relança a navegação → o
+destravamento escolhe o vizinho de trás → recruza → "voltei". A HH bateu nele
+duas vezes no mesmo dia, em geometrias diferentes:
+
+| trecho | geometria | por que o mais próximo mentia |
+|---|---|---|
+| 1 | (209,182) e (207,186) a **4,5** unidades — menos que a tolerância de chegada (7) | o bot cruza os dois de uma vez, o índice vai para 12, e o mais próximo continua sendo o 10 |
+| 4 | (510,126) é uma **espora**: desce 19 para depois subir 33 até (509,93) | andando de 13 para 14 o personagem passa de novo pela altura do (507,107) |
+
+Os dois pontos são **legítimos** — o bot em Lua usa os mesmos, e o `via` de cada
+um é diferente: o ponto existe para virar a direção do clique no minimapa, não
+para andar 4 unidades. O errado era a régua.
+
+**A correção:** quem decide é o **trecho atual** (`distancia_ao_trecho`, do
+waypoint anterior ao alvo). Estar em cima dessa reta é a definição de "estou
+indo para onde mandaram", por mais perto que passe um waypoint antigo. Nos dois
+casos medidos a distância ao trecho era **2,3** e **0,7** unidade, contra as 12
+de `NA_ROTA` — a mesma régua que o resto do módulo já usa para separar
+"escorreguei" de "saí da rota". **Número novo, nenhum.**
+
+O rollback de verdade continua sendo pego, e o teste prova: teleporte para trás
+fica **longe do trecho atual E perto de um índice bem anterior**. Precisa das
+duas coisas, e o andar normal só tem a segunda.
+
+**Uma alternativa foi proposta e REPROVADA no caminho:** "olhar o waypoint mais
+avançado dentro da tolerância". Ela conserta o trecho 1 e **não** conserta o
+trecho 4 — em (509,115) nenhum waypoint está dentro da tolerância 7 (o 12 a 8,2;
+o 13 a 11,0; o 14 a 22). Só o segundo log mostrou isso. **Subir a folga de 1
+para 2** também consertaria os dois, e foi reprovada por outro motivo: pararia
+de detectar o lag de 2 waypoints, que o próprio comentário da função registra
+como acontecendo.
+
+Detalhe medido, com os trechos do log: `docs/decisoes/hh.md` §12.2.
+
+---
+
+## UM GANCHO POR WAYPOINT ALCANÇADO — `ao_chegar` (03/09/2026)
+
+`seguir_rota` e `follow_path` aceitam `ao_chegar`, chamado uma vez por waypoint
+alcançado, com a coordenada dele. Existe para o punhado de pontos onde a rota
+precisa **parar e fazer algo** — na HH, o (232,188), onde os mobs bloqueiam a
+passagem.
+
+Três decisões dentro dele:
+
+1. **É OPCIONAL, e o padrão é `None`.** Sem gancho o comportamento é exatamente
+   o de antes — é assim que a BC não muda.
+2. **VALE PARA OS ATRAVESSADOS.** O laço pode cruzar dois ou três waypoints numa
+   leitura só (a montaria é rápida), e um ponto que exige parada não pode ser
+   pulado por causa da velocidade. Por isso o gancho roda para
+   `caminho[indice:novo]`, e não só para o último.
+3. **OS CRONÔMETROS RECOMEÇAM DEPOIS DELE.** O gancho pode ficar um minuto
+   matando mob, e sem isso esse minuto contaria como "parado sem progresso" — o
+   próprio laço concluiria que o personagem travou e dispararia o destravamento.
+   `marco`, `ultimo_progresso`, `parado_desde` e `ultima_posicao` são
+   reiniciados.
+

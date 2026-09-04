@@ -416,17 +416,24 @@ o vendedor está no waypoint da porta. Os dois estão travados por teste.
 
 Registrado aqui para não virar palpite depois:
 
-1. **Nomes de área DENTRO da cave.** Só se sabe o de fora
-   (`Black Wind Camp Dungeon` / `Outside Black Wind Camp`). Sem isso,
-   `Waypoint.area` da HH é um marcador e não um dado, e
-   `lugares.e_dentro_da_cave` não sabe responder pela HH.
-2. **Os nomes exatos dos 4 bosses**, para a trava por identidade. Os rótulos do
-   Lua entram como esperado e a leitura confirma.
-3. **A coordenada do `Roaming Apothecary`** e o ponto de encostar nele.
+1. **Nomes de área DENTRO da cave — 2 de 66 medidos.** Os prints de 03/09/2026
+   deram `Happiness Hall Dungeon` em (55,33) e `Happiness Hall Main Hall` em
+   (529,118). Os outros 64 waypoints continuam com `AREA_INTERNA_NAO_MEDIDA`, e
+   `mapa_hh.area_medida()` continua `False` — ela responde pelo CONJUNTO,
+   porque o recuo "volte ao começo da área" só serve quando se sabe onde cada
+   área começa. O inventário do que já se sabe é `mapa_hh.areas_medidas()`, e o
+   teste trava esse dicionário: nome novo só entra com a linha que diz de que
+   print ele saiu.
+2. **Os nomes exatos dos 4 bosses**, para a trava por identidade. Continuam sem
+   medição — e é por isso que `lutar_contra_um_boss` **não tem** portão de
+   nome (ver seção 11).
+3. ~~A coordenada do `Roaming Apothecary`~~ **FEITO** — (475,450), seção 8.1.
 4. ~~O template do link `West Suburb of Stone City` e a seta de rolagem.~~
    **FEITO** em 03/09/2026 — ver seção 8.1. Falta só `link_sell_item.png`.
-5. **O ponto de spawn interno.** O Lua usa `insidexY = {55, 33}`; não foi
-   conferido na tela.
+5. ~~O ponto de spawn interno.~~ **CONFIRMADO NA TELA** em 03/09/2026: o print
+   mostra `Happiness Hall Dungeon [55, 33]`, exatamente o `insidexY` do Lua. E
+   o usuário confirmou que é sempre esse par — *"o X e Y é igual e sempre vai
+   entrar nesse X e Y pois é o padrão do jogo"*.
 
 ---
 
@@ -606,3 +613,246 @@ nesta revisão: a docstring do método cita os nomes justamente para explicar a
 ordem, e `str.index` encontra a explicação antes do código. Toda verificação de
 ordem passou a ser por AST (`_em_ordem`), e `ast.walk` **não** preserva ordem de
 código — precisa de `lineno`.
+
+---
+
+## 12. A SESSÃO DE 03/09/2026 — DOIS LOOPS INFINITOS, UM CRASH, E O DESENHO
+##     DA PREPARAÇÃO
+
+Esta seção é o resultado de uma sessão de `/grilling` com o usuário (cinco
+rodadas) mais a leitura do log de produção de 03/09. Tudo aqui foi **medido** —
+no log, no print do jogo, ou no código do bot em Lua.
+
+### 12.1 O crash que reiniciava o bot na porta a cada 5 s
+
+`hh/routine._garantir_o_time` fazia `self.team.in_team()`. **`in_team` é
+`@property`**, e com o jogo aberto isso é
+`TypeError: 'bool' object is not callable`. A exceção subia até o supervisor,
+que soltava o controle e recomeçava a sessão.
+
+O log de 19:02 mostra o ciclo inteiro seis vezes em 21 segundos: *"Logado
+como..."* → *"Iniciando HH"* → `situar` → `preparar` → *"já estou na porta"* →
+`entrar` → crash → *"Soltando o controle"*.
+
+**A suíte inteira passava.** O teste irmão
+(`test_toda_chamada_em_colaborador_da_HH_existe`) só conferia se o NOME existe
+na classe — e existe. O que não existe é o direito de chamá-lo. O teste novo
+(`test_a_HH_nao_CHAMA_propriedade_de_colaborador`) lê o AST, junta só os
+`self.<colaborador>.<nome>(...)` **com parênteses**, e reprova os que são
+`@property` na classe real.
+
+Passou a usar `estado_do_time`, que devolve `None` quando a leitura falha em vez
+de achatar "não estou" e "não consegui ler" no mesmo `False` — o próprio
+`bot/team.py` documenta que esse achatamento já custou caro uma vez.
+
+### 12.2 Os dois loops infinitos — o mesmo defeito, duas geometrias
+
+O usuário relatou o bot "indo e voltando várias vezes" em (227,186) e depois em
+(507,107). São o **mesmo defeito**: `core/rota.houve_rollback` perguntava *"qual
+waypoint está mais perto do personagem"* quando a pergunta é *"ele foi jogado
+para trás"*. Numa rota que só avança as duas coisas coincidem; numa rota que
+volta pelo mesmo corredor, não.
+
+| trecho | geometria | por que o mais próximo mentia |
+|---|---|---|
+| 1 | wp10 (209,182) e wp11 (207,186) a **4,5** unidades — menos que a tolerância de chegada (7) | o bot cruza os dois de uma vez, o índice vai para 12, e o mais próximo continua sendo o 10 |
+| 4 | wp13 (510,126) é uma **espora**: desce 19 para depois subir 33 até o wp14 (509,93) | andando de 13 para 14 o personagem passa de novo pela altura do wp12 (507,107) |
+
+Em ambos: "voltei" → relança a navegação → o destravamento escolhe o vizinho de
+trás → recruza → "voltei". Para sempre. O log de 19:39 tem 40 voltas em 15 s.
+
+**Os dois pontos são legítimos** — o bot em Lua usa os mesmos, e o `via` de cada
+um é diferente (o ponto existe para virar a direção do clique no minimapa, não
+para andar 4 unidades). O errado era a régua.
+
+**A correção:** quem decide é o **trecho atual**. Estar em cima da reta que liga
+o waypoint anterior ao alvo é a definição de "estou indo para onde mandaram".
+Distância ao trecho nos dois casos medidos: **2,3** e **0,7** unidades, contra
+as 12 de `NA_ROTA` — a mesma régua que o resto do módulo já usa. Número novo,
+nenhum.
+
+O rollback de verdade continua sendo pego: teleporte para trás fica **longe do
+trecho atual E perto de um índice bem anterior**. Precisa das duas coisas.
+
+**Uma recomendação minha foi reprovada no caminho.** Na rodada 3 eu propus
+"olhar o waypoint mais avançado dentro da tolerância". Ela conserta o trecho 1 e
+**não conserta o trecho 4**: em (509,115) nenhum waypoint está dentro da
+tolerância 7 (wp12 a 8,2; wp13 a 11,0; wp14 a 22). Só o segundo log mostrou
+isso.
+
+### 12.3 A preparação sai de fora e vai para dentro
+
+Regra do usuário: *"o uso de SS, o uso de buff, o uso de poção de cura,
+qualquer coisa que precisar é só depois que entrar na cave e não fora, como é
+feito no bot BC"*. É a **mesma regra** que a Bewitcher Cave segue desde
+25/08/2026, e os dois motivos valem igual:
+
+- **tudo isso exige estar a pé**, e montado o jogo IGNORA a tecla sem devolver
+  erro — o bot "aperta e nada acontece";
+- **entrar é disputado** e pode levar uma hora; nesse intervalo o personagem
+  regenera de graça, então curar antes é gastar poção que a espera ia devolver.
+
+| onde | o que acontece |
+|---|---|
+| `PREPARAR` (fora) | câmera, decisão de venda, montaria para viajar |
+| fim de `ATE_A_PORTA` | **o PET** — a única verificação de fora, e só ao CHEGAR |
+| `PREPARAR_DENTRO` | curar → buffs → pet → comida → montar (a ordem do BC) |
+
+O pet é conferido **nos dois lugares de propósito**: a tela de carregamento da
+instância fica entre eles, e é justamente onde ele some. E a checagem da porta
+fica **fora** do laço de tentativas — a rajada pode durar uma hora com uma
+tentativa a cada 25 ms.
+
+A contagem da run passa a começar no preparo de dentro: a disputa da porta pode
+ter levado uma hora, e contar dali torna o tempo por run comparável.
+
+### 12.4 A rajada de entrada é a do BC
+
+Regra do usuário: *"tem que ficar fazendo as tentativas para entrar, como é
+feito em BC, pois são várias e várias tentativas até conseguir entrar, pois pode
+estar cheio a cave"*. Quatro coisas vieram de lá:
+
+| antes (HH) | agora (= BC) | o que resolve |
+|---|---|---|
+| teto de 5 min | **1 hora** | desistir devolve o personagem ao começo do ciclo sem ter feito nada |
+| confirmação de 2,0 s | **0,25 s**, passo 0,04 s | enquanto o bot esperava, ninguém estava tentando |
+| — | **voltar à coordenada** ao derivar | fora do ponto todo clique erra o NPC, e cada erro empurra mais |
+| redescobria sempre | **só na falha mecânica** | instância cheia é a razão NORMAL de não entrar |
+
+Mais duas: percebe que já entrou numa tentativa anterior (o servidor pode
+demorar mais que a janela), e escreve uma linha de log a cada 15 tentativas em
+vez de uma por tentativa — são milhares por hora.
+
+Estourar o teto volta para `ATE_A_PORTA`, e não para `RECUPERAR`: uma hora sem
+entrar não é queda nem morte.
+
+### 12.5 Cada ponto luta do jeito que a natureza dele pede
+
+Medido pelo usuário no jogo: *"no primeiro boss e no 3 (Green Robmaster) tem
+mobs ranged, então o AOE não irá funcionar, de resto pode usar o AOE sem
+problemas"*.
+
+| ponto | natureza | ritual | AoE | TAB |
+|---|---|---|---|---|
+| 1 Fa-Yuan | pacote ranged | `limpar_o_combate` | não | do próprio ritual |
+| 2 Dupla | dois bosses | `lutar_contra_um_boss` | sim | 2 por morte |
+| 3 Green Robmaster | pacote ranged | `limpar_o_combate` | não | do próprio ritual |
+| 4 Purple | boss único | `lutar_contra_um_boss` | sim | 0 |
+
+**Por que a AoE não serve:** a skill de área é de curta distância; o mob ranged
+fica parado longe atirando e a área passa embaixo dele. Girar AoE ali é gastar o
+tempo da rotação sem dano, e a luta se arrasta até o teto.
+
+**Por que o pacote usa outro ritual:** o que encerra a luta é a lista acabar, e
+cada morte pode ou não ser a última. `limpar_o_combate` mata UM, **para e olha a
+flag por três segundos**, e só então TAB para o próximo — que é exatamente a
+coreografia do `hh.killAtPosition` do Lua, com as três skills normais
+(probe/burning/bash) e nenhuma de área. A pausa é como se descobre o fim sem
+puxar mob novo.
+
+O TAB do mapa é **0** nos pacotes por motivo OPOSTO ao do boss único: lá quem dá
+o TAB é o próprio `limpar_o_combate`. Dois donos do mesmo TAB gastariam dois por
+morte, e o segundo miraria quem está FORA do combate.
+
+### 12.6 Cinco segundos para engajar — e o que isso custa
+
+Regra do usuário: *"sempre que tiver em um waypoint de ataque deve esperar no
+máximo 5 segundos para entrar em batalha, caso não entre em batalha pode
+continuar para os próximos waypoints"*, e ele confirmou que **vale no ponto do
+boss também**.
+
+É o que torna barato refazer um trecho depois de uma morte: ponto vazio não
+engaja, e o bot passa reto em 5 s.
+
+**O custo está registrado porque eu levantei e o usuário reafirmou:** um boss
+VIVO que demore mais de 5 s para agredir é pulado, e a run perde esse boss. Eu
+tinha recomendado apertar TAB depois dos 5 s (o que o BC faz) para distinguir
+"ponto limpo" de "boss lento"; o usuário escolheu seguir direto. O log diz em
+voz alta quando acontece, para dar para conferir no jogo se acontece de verdade.
+
+### 12.7 Voltar ao ponto, e o que já foi feito
+
+**Voltar ao ponto depois de matar** (o Lua faz o mesmo em `hh.killAtPosition`):
+mob ranged não vem até o personagem — é o personagem que anda até ele. Sair do
+ponto desalinha o trecho seguinte, e foi assim que o rollback falso apareceu no
+trecho 1.
+
+**O progresso dos bosses** é lembrado em memória, volátil (regra do usuário:
+*"não precisa ser persistente, só verificar enquanto está com o bot aberto"*), e
+**zerado ao sair da cave** — o desfaz-refaz do time ressuscita os quatro.
+
+E a retomada respeita o **trecho em andamento** em vez de escolher pelo waypoint
+mais próximo: os quatro trechos se cruzam no mapa, e quem morre no trecho 3
+revive perto do trecho 1. Escolher pela distância refaria bosses já mortos e
+encontraria as salas vazias.
+
+Junto veio o conserto de `RECUPERAR`, que fazia `self._trecho = 0` — jogando
+fora o progresso da run em toda queda.
+
+### 12.8 Curar exige estar fora de batalha, e a saída é matando
+
+Regra do usuário: *"para se curar tem que estar fora de batalha"*. Perguntado o
+que fazer estando em batalha com a vida baixa, ele escolheu **matar**: *"você
+deve matar os mobs até sair de batalha"*.
+
+O trajeto já abortava sozinho abaixo de `emergency_pct` — é
+`Navigator._manutencao_em_movimento`, código compartilhado que a HH já herdava.
+O que faltava era o **depois**: `RECUPERAR` agora mata até sair de combate e só
+então bebe. Não saiu no teto? A cura fica para a volta seguinte — "não consegui"
+devolve o controle em vez de travar a conta.
+
+**Usa o limiar de EMERGÊNCIA, não o normal.** Os mobs da HH são fracos (é a
+razão que o usuário deu para curar menos) e com o limiar normal a run passaria o
+tempo bebendo.
+
+**A cura entre os bosses saiu.** Era o terceiro momento de cura no mesmo ponto —
+`curar_antes_do_boss` já faz o top-up no começo do trecho seguinte, e entre os
+dois só há o tempo de andar — e sentar já tinha sido medido e reprovado na BC.
+Sobraram três momentos: a entrada, o top-up antes de cada boss, e a emergência.
+
+### 12.9 A saída — o estado que não saía
+
+`_do_sair` andava até (529,119) e declarava a run concluída, **sem falar com NPC
+nenhum**. O personagem ficava dentro, e a "run seguinte" começava a tentar
+entrar numa cave em que já estava.
+
+Medido no print: o diálogo se chama **`Servant Child`**, o texto é *"Don't beat
+me. I'm just a servant of here, if you want to leave here, I can help you..."* e
+o link verde é **"Leave Happiness Hall"** (`link_leave_hh.png`). O clique
+direito é (708,300) na base 1024×768.
+
+**O padrão é o da entrada, e não o do Lua.** Ele dá TRÊS cliques direitos às
+cegas em alturas diferentes (526,298 / 524,325 / 529,361) e depois clica num
+ponto fixo do diálogo, porque não sabe ler a tela. Um clique que erra o NPC cai
+no chão — e clique no chão faz o personagem ANDAR, saindo do ponto de onde o NPC
+é alcançável.
+
+Insiste até a POSIÇÃO confirmar (-342,-288), como o Lua também faz. Teto de 5
+minutos e não de uma hora: entrar disputa vaga com outros jogadores e depende de
+eles saírem; sair não depende de ninguém.
+
+A confirmação da saída espera **3 s**, contra 0,25 s da entrada, e a diferença é
+de propósito: a entrada é disputada e esperar ali é tempo em que ninguém está
+tentando; a saída paga a troca de mapa inteira uma vez por run.
+
+### 12.10 O ponto onde os mobs bloqueiam
+
+O (232,188) aparece em dois arquivos do Lua com a mesma instrução —
+`travel.lua` (*"em 232,188 matando os mobs que bloqueiam"*) e `hh.lua` (*"ataca
+mobs em 232,188 até não ter alvo"*). É uma passagem estreita, e um mob parado
+nela faz a navegação bater na geometria.
+
+**A diferença contra o Lua é medida:** ele mata ali sempre que está a pé, porque
+não lê a flag de combate. Nós lemos — então só paramos se o combate JÁ começou.
+Numa volta em que o ponto está limpo isso não custa clique nem captura de tela.
+
+Para isso o navegador ganhou um gancho opcional `ao_chegar`. **Sem gancho o
+comportamento é exatamente o de antes**, e é assim que o BC não muda. O gancho
+vale para os waypoints ATRAVESSADOS também: a montaria cruza dois ou três numa
+leitura só.
+
+`WAYPOINTS_QUE_BLOQUEIAM` é um conceito **diferente** de
+`WAYPOINTS_PROBLEMATICOS`: aquele alarga a tolerância de chegada onde a
+geometria não deixa encostar, este é sobre MOBS. Os dois calham de valer para o
+mesmo ponto hoje, e é por isso que misturá-los seria fácil e errado.
+
