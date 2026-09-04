@@ -757,6 +757,33 @@ class HHRoutine:
         """
         ctx = self.ctx
 
+        # ===============================================================
+        # NO MEIO DA CAVE NÃO SE VERIFICA NADA
+        # ===============================================================
+        #
+        # Regra do usuário, 04/09/2026: *"as verificações são somente na entrada
+        # da cave, se tiver no meio da cave não deve ser verificado nada, então
+        # só naquele waypoint inicial você faz as verificações e usa os buffs"*.
+        #
+        # O motivo é o mesmo que tirou o preparo de FORA da cave, um degrau
+        # adiante: tudo isto exige estar A PÉ, e a pé no meio da cave é o trem
+        # de mobs encostando. Quem chega aqui sem ser pela porta é quem morreu e
+        # reviveu dentro, ou quem abriu o bot com a run em andamento -- e nos
+        # dois casos o que urge é voltar a andar, não beber poção parado.
+        #
+        # A MONTARIA NÃO É "VERIFICAÇÃO", e por isso continua: é a condição para
+        # andar, e a pé o personagem não chega no boss. Regra medida.
+        if not mapa_hh.acabei_de_entrar(ctx.memory.position()):
+            ctx.log.info(
+                "HH: retomando no meio da cave -- só garanto a montaria. Buff, "
+                "poção e comida ficam para a próxima entrada.")
+            self.nav.garantir_montaria_para_andar("atravessar a cave")
+            ctx.stats.begin_run()
+            self._run_em_andamento = True
+            rotulo = mapa_hh.TRECHOS_DOS_BOSSES[self._trecho][0]
+            self._ir_para(State.ATE_O_BOSS, f"seguindo para o {rotulo}")
+            return
+
         # 1 e 2. VIDA E BUFFS.
         self.combat.curar_ao_entrar()
         self.combat.apply_buffs()

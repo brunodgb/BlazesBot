@@ -134,7 +134,23 @@ def test_o_preparo_de_DENTRO_segue_a_ordem_do_BC():
     Curar antes de buffar (buff em quem vai morrer é buff perdido), pet antes da
     comida, e montar por último -- senão os passos seguintes desfazem a montaria.
     """
-    chamadas = _chamadas(HHRoutine._do_preparar_dentro)
+    # SÓ O RAMO DO PREPARO COMPLETO. O ramo do meio da cave garante a montaria
+    # e sai, então uma busca no método inteiro acharia essa montaria primeiro e
+    # concluiria que a ordem quebrou. O corte é pelo AST, e não por fatia de
+    # texto: fatiar a fonte no meio de um bloco indentado não volta a ser
+    # Python válido.
+    import ast as _ast
+
+    arvore = _ast.parse(_fonte(HHRoutine._do_preparar_dentro))
+    porta = next(n for n in _ast.walk(arvore)
+                 if isinstance(n, _ast.If)
+                 and "acabei_de_entrar" in _ast.unparse(n.test))
+    dentro_do_desvio = {id(n) for n in _ast.walk(porta)}
+    nos = [(n.lineno, n.col_offset,
+            getattr(n.func, "attr", getattr(n.func, "id", "")))
+           for n in _ast.walk(arvore)
+           if isinstance(n, _ast.Call) and id(n) not in dentro_do_desvio]
+    chamadas = [nome for _l, _c, nome in sorted(nos)]
     for antes, depois in [("curar_ao_entrar", "apply_buffs"),
                           ("apply_buffs", "ensure_pet"),
                           ("ensure_pet", "feed_pet"),
@@ -855,3 +871,52 @@ def test_flag_ilegivel_NAO_autoriza_sair_batendo():
     """"Não sei" não pode virar "estou em combate" -- puxaria mob por nada."""
     fonte = _fonte(HHRoutine._do_boss)
     assert "in_battle() is True" in fonte
+
+
+# ===========================================================================
+# NO MEIO DA CAVE NÃO SE VERIFICA NADA
+# ===========================================================================
+#
+# Regra do usuário, 04/09/2026: *"as verificações são somente na entrada da
+# cave, se tiver no meio da cave não deve ser verificado nada, então só naquele
+# waypoint inicial você faz as verificações e usa os buffs"*.
+
+
+def test_o_preparo_completo_so_roda_no_waypoint_de_ENTRADA():
+    """A pé no meio da cave é o trem de mobs encostando.
+
+    Quem chega ao preparo sem ser pela porta é quem morreu e reviveu dentro, ou
+    quem abriu o bot com a run em andamento -- e nos dois casos o que urge é
+    voltar a andar, não beber poção parado.
+    """
+    fonte = _fonte(HHRoutine._do_preparar_dentro)
+    portao = fonte.index("acabei_de_entrar")
+    for depois in ("curar_ao_entrar", "apply_buffs", "ensure_pet", "feed_pet"):
+        assert fonte.index(depois) > portao, (
+            f"{depois} roda antes do portão de 'acabei de entrar'")
+
+
+def test_a_MONTARIA_nao_e_verificacao_e_continua_no_meio_da_cave():
+    """É a condição para andar: a pé o personagem não chega no boss."""
+    fonte = _fonte(HHRoutine._do_preparar_dentro)
+    ramo_do_meio = fonte[fonte.index("acabei_de_entrar"):fonte.index("# 1 e 2.")]
+    assert "garantir_montaria_para_andar" in ramo_do_meio
+    assert "begin_run" in ramo_do_meio, "a run precisa contar dos dois lados"
+    assert "State.ATE_O_BOSS" in ramo_do_meio
+
+
+def test_a_regua_da_chegada_e_a_do_core_e_nao_um_numero_novo():
+    """(55,33) é padrão do jogo; o log leu (55,34) um segundo depois.
+
+    O primeiro waypoint fica a 26 unidades, então qualquer régua abaixo disso
+    separa "acabei de entrar" de "já estou andando" -- e `NA_ROTA` é a que o
+    `core/rota.py` já usa para a mesma pergunta.
+    """
+    from blazesbot.bot.hh import mapa_hh
+    from blazesbot.core import rota
+
+    assert mapa_hh.TOLERANCIA_DA_CHEGADA == rota.NA_ROTA
+    assert mapa_hh.acabei_de_entrar((55, 34))
+    assert mapa_hh.acabei_de_entrar(mapa_hh.CHEGADA_NA_HH)
+    assert not mapa_hh.acabei_de_entrar((80, 42))
+    assert not mapa_hh.acabei_de_entrar(None)

@@ -553,6 +553,32 @@ def posicao_esta_na_caixa_da_hh(pos: tuple[int, int] | None) -> bool:
     return xmin <= pos[0] <= xmax and ymin <= pos[1] <= ymax
 
 
+# QUÃO PERTO DE (55,33) AINDA CONTA COMO "ACABEI DE ENTRAR".
+#
+# A entrada sempre deposita no mesmo par -- é padrão do jogo, confirmado pelo
+# usuário em 03/09/2026 -- e o log leu (55,34) um segundo depois. O primeiro
+# waypoint da rota fica a 26 unidades (80,42), então qualquer régua abaixo disso
+# separa "acabei de entrar" de "já estou andando pela cave".
+#
+# `rota.NA_ROTA` é a régua que o `core/rota.py` já usa para separar "escorreguei
+# um pouco" de "saí da rota". É a mesma pergunta, e uma régua só evita
+# divergência muda. Número novo, nenhum.
+TOLERANCIA_DA_CHEGADA = rota.NA_ROTA
+
+
+def acabei_de_entrar(pos: tuple[int, int] | None) -> bool:
+    """O personagem está no ponto onde a entrada deposita?
+
+    É o portão do PREPARO COMPLETO. Regra do usuário, 04/09/2026: *"as
+    verificações são somente na entrada da cave, se tiver no meio da cave não
+    deve ser verificado nada, então só naquele waypoint inicial você faz as
+    verificações e usa os buffs"*.
+    """
+    if pos is None:
+        return False
+    return distancia(pos, CHEGADA_NA_HH) <= TOLERANCIA_DA_CHEGADA
+
+
 def esta_dentro_da_hh(pos: tuple[int, int] | None) -> bool:
     """Dentro da cave, pelo SINAL DA COORDENADA.
 
@@ -687,6 +713,7 @@ __all__ = [
     "VIA_FORA_DOS_LIMITES",
     "WAYPOINTS_PROBLEMATICOS",
     "Waypoint",
+    "acabei_de_entrar",
     "area_medida",
     "areas_medidas",
     "como_lista",
