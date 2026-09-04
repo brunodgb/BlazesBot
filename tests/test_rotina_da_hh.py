@@ -704,3 +704,61 @@ def test_o_gancho_vale_para_os_waypoints_ATRAVESSADOS():
 
     fonte = inspect.getsource(Navigator.follow_path)
     assert "for alcancado in caminho[indice:novo]" in fonte
+
+
+# ===========================================================================
+# SAIR DA CAVE -- o estado que NÃO SAÍA
+# ===========================================================================
+#
+# `_do_sair` andava até (529,119) e declarava a run concluída, sem falar com
+# NPC nenhum. O personagem ficava dentro, e a "run seguinte" começava a tentar
+# entrar numa cave em que já estava.
+
+
+def test_sair_FALA_com_o_NPC_e_nao_so_anda_ate_o_ponto():
+    chamadas = _chamadas(HHRoutine._do_sair)
+    assert "seguir_rota" in chamadas
+    assert "_falar_com_o_npc_da_saida" in chamadas
+    assert (chamadas.index("seguir_rota")
+            < chamadas.index("_falar_com_o_npc_da_saida"))
+
+
+def test_a_run_so_e_dada_por_concluida_DEPOIS_de_sair():
+    """`end_run(ok=True)` com o personagem ainda dentro seria placar mentindo."""
+    fonte = _fonte(HHRoutine._do_sair)
+    assert "end_run" not in fonte, (
+        "o fecho da run mora em `_saiu`, que só roda depois da confirmação")
+    assert "end_run" in _fonte(HHRoutine._saiu)
+
+
+def test_a_saida_insiste_ate_a_POSICAO_confirmar():
+    """Quem diz que saiu é a coordenada, não o clique ter saído.
+
+    O Lua confere do mesmo jeito e refaz o diálogo quando a espera passa.
+    """
+    chamadas = _chamadas(HHRoutine._falar_com_o_npc_da_saida)
+    assert "esta_dentro_da_hh" in chamadas
+    assert "tentar_sair_da_hh" in chamadas
+    assert "esperar_sair" in chamadas
+
+
+def test_sair_ZERA_o_progresso_dos_bosses():
+    """O desfaz-refaz do time ressuscita os quatro.
+
+    Regra do usuário, 03/09/2026: *"a cada vez que saiu da cave, tem que
+    resetar, pois ao reentrar todos os bosses vão estar vivos novamente"*.
+    """
+    fonte = _fonte(HHRoutine._saiu)
+    assert "_trechos_feitos.clear()" in fonte
+    assert "_run_em_andamento = False" in fonte
+
+
+def test_o_teto_para_sair_e_MENOR_que_o_de_entrar():
+    """As naturezas são opostas.
+
+    Entrar disputa vaga com outros jogadores e depende de eles saírem; sair não
+    depende de ninguém -- se não sai, é o clique que está errando o NPC.
+    """
+    from blazesbot.bot.hh import routine as hh
+
+    assert hh.MAX_SEGUNDOS_PARA_SAIR < hh.MAX_SEGUNDOS_NA_PORTA

@@ -63,6 +63,8 @@ from . import mapa_hh
 # variável dentro do template baixa o escore justamente na hora de casar.
 LINK_WEST_SUBURB = "link_west_suburb.png"
 LINK_ENTRAR_HH = "link_enter_hh.png"
+# O link do diálogo do `Servant Child`, DENTRO da cave.
+LINK_SAIR_HH = "link_leave_hh.png"
 
 # Quantas vezes refazer a caminhada pelo painel de arredores antes de desistir
 # de acertar a coordenada de conversa. Três: a primeira resolve no caso normal,
@@ -92,6 +94,15 @@ SEGUNDOS_POR_TENTATIVA_DE_ENCOSTAR = 1.8
 # Entrou, sai na hora. Não entrou, a janela fecha e a tentativa seguinte começa.
 TETO_DA_ENTRADA = 0.25
 PASSO_DA_ESPERA_DA_ENTRADA = 0.04
+
+# A CONFIRMAÇÃO DA SAÍDA é mais generosa que a da entrada, e de propósito.
+#
+# A entrada é DISPUTADA: esperar ali é tempo em que ninguém está tentando de
+# novo, e por isso a janela é de 0,25 s. A saída não disputa nada -- acontece
+# uma vez por run, com a cave vazia --, e o que ela paga é a troca de mapa
+# inteira. Repetir o diálogo antes de o servidor responder gastaria dois
+# cliques na cena 3D com a tela ainda carregando.
+TETO_DA_SAIDA = 3.0
 
 # Teto da espera pelo teleporte do Fay.
 TETO_DO_TELEPORTE = 2.0
@@ -286,6 +297,60 @@ class EntradaDaHH(UIDoJogo):
         self._ponto_npc_entrada = None
         self._ponto_link_entrada = None
         self._falhas_rapidas = 0
+
+    # ==================================================================
+    # A saída
+    # ==================================================================
+
+    def tentar_sair_da_hh(self) -> bool:
+        """Uma tentativa de sair pelo NPC. Devolve se o clique no link saiu.
+
+        =================================================================
+        É O MESMO PADRÃO DA ENTRADA, E ISSO É O PONTO
+        =================================================================
+
+        Clique direito no NPC, diálogo conferido por imagem, link achado por
+        TEMPLATE e clicado. Quem confirma a saída é o laço da rotina, lendo a
+        posição -- igual à entrada.
+
+        O bot em Lua faz diferente porque não sabe ler a tela: `farmer.exitCave`
+        dá TRÊS cliques direitos às cegas em alturas diferentes (526,298 /
+        524,325 / 529,361) e depois clica num ponto fixo do diálogo. Um clique
+        que erra o NPC cai no chão -- e clique no chão faz o personagem ANDAR,
+        saindo do ponto de onde o NPC é alcançável.
+
+        NÃO GUARDA OS PONTOS entre tentativas, diferente da entrada. Lá a rajada
+        é disputada e vale 1 s contra 10; aqui a saída acontece uma vez por run,
+        com a cave vazia, e a economia não pagaria o risco de repetir um ponto
+        que ficou velho.
+        """
+        ctx = self.ctx
+        if self.falar_com_npc(ctx.coords.hh_exit_npc) is None:
+            ctx.log.warning("Não abri o diálogo do %s", mapa_hh.NPC_DA_SAIDA)
+            return False
+
+        if self.clicar_link(LINK_SAIR_HH) is None:
+            ctx.log.warning(
+                "O diálogo do %s abriu mas não achei o link %r",
+                mapa_hh.NPC_DA_SAIDA, LINK_SAIR_HH)
+            self.fechar_dialogo()
+            return False
+        return True
+
+    def esperar_sair(self) -> bool:
+        """Espera a troca de mapa depois do clique no link.
+
+        A régua é a POSIÇÃO virar a de fora da cave, e não o nome do lugar: o
+        Lua usa o mesmo par (`farmer.exitCave`), e a coordenada é a leitura que
+        nunca falhou nos logs.
+        """
+        return self.esperar_a_chegada(
+            chegou=lambda: not mapa_hh.esta_dentro_da_hh(
+                self.ctx.memory.position()),
+            teto=TETO_DA_SAIDA,
+            passo=PASSO_DA_ESPERA_DA_ENTRADA,
+            o_que="Saída da HH",
+        )
 
     def esperar_entrar(self) -> bool:
         """Espera a troca de mapa depois do clique. Sai no instante em que entra."""

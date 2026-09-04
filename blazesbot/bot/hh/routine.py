@@ -137,6 +137,19 @@ SEGUNDOS_PARA_ENGAJAR = 5.0
 # trajeto aqui é ainda mais curto.
 SEGUNDOS_POR_TENTATIVA_DE_VOLTAR = 1.8
 
+# Teto para conseguir sair da cave pelo NPC.
+#
+# Bem menor que o da ENTRADA (uma hora) porque a natureza é outra: entrar
+# disputa vaga com outros jogadores e depende deles saírem; sair não depende de
+# ninguém -- se não sai, é o clique que está errando o NPC, e insistir cinco
+# minutos já dá dezenas de tentativas. Passou disso, RECUPERAR se situa de novo.
+MAX_SEGUNDOS_PARA_SAIR = 5 * 60.0
+
+# Entre uma tentativa de sair e a seguinte. Maior que o da entrada porque cada
+# tentativa aqui inclui um diálogo inteiro (abrir, achar o link, clicar), e não
+# dois cliques guardados.
+ENTRE_TENTATIVAS_DE_SAIR = 1.0
+
 # Quanto o personagem pode estar longe do ponto do boss e ainda contar como
 # "no ponto".
 #
@@ -1120,15 +1133,87 @@ class HHRoutine:
     # ==================================================================
 
     def _do_sair(self) -> None:
-        """Volta ao ponto de saída e sai pelo NPC."""
-        ctx = self.ctx
+        """Vai até o ponto de saída e SAI de verdade, pelo `Servant Child`.
+
+        =================================================================
+        ANTES ESTE ESTADO NÃO SAÍA DA CAVE
+        =================================================================
+
+        Ele andava até (529,119) e declarava a run concluída -- sem falar com
+        NPC nenhum. O personagem ficava dentro, e a "run seguinte" começava a
+        tentar entrar numa cave em que já estava.
+
+        =================================================================
+        O PADRÃO É O DA ENTRADA, E NÃO O DO LUA
+        =================================================================
+
+        Um clique direito no NPC (`coords.hh_exit_npc`), o diálogo conferido, e
+        o link "Leave Happiness Hall" achado por TEMPLATE. O bot em Lua dá três
+        cliques direitos às cegas em alturas diferentes porque não sabe ler a
+        tela; um clique que erra o NPC cai no chão, e clique no chão faz o
+        personagem ANDAR -- saindo do ponto de onde o NPC é alcançável.
+
+        INSISTE ATÉ A POSIÇÃO CONFIRMAR, e é a mesma forma da entrada: quem diz
+        que saiu é a coordenada, não o clique ter saído. O Lua também confere
+        assim (`farmer.exitCave`), e refaz o diálogo quando a espera passa.
+
+        A PÉ PARA FALAR: `falar_com_npc` já garante isso, e é o mesmo motivo de
+        sempre -- montado o jogo ignora a interação sem devolver erro.
+        """
         self.nav.garantir_montaria_para_andar("saída da cave")
         if not self.nav.seguir_rota(mapa_hh.CAMINHO_ATE_A_SAIDA,
                                     max_seconds=MAX_SEGUNDOS_POR_TRECHO):
             self._falhar("não cheguei no ponto de saída", State.RECUPERAR)
             return
 
+        if not self._falar_com_o_npc_da_saida():
+            return
+
+        self._saiu()
+
+    def _falar_com_o_npc_da_saida(self) -> bool:
+        """Insiste no diálogo de saída até a POSIÇÃO dizer que saiu."""
+        ctx = self.ctx
+        limite = time.time() + MAX_SEGUNDOS_PARA_SAIR
+        tentativa = 0
+
+        while time.time() < limite:
+            self._guard()
+            tentativa += 1
+
+            # JÁ SAÍ? Pode ter saído na tentativa anterior e a confirmação ter
+            # fechado antes da resposta do servidor.
+            if not mapa_hh.esta_dentro_da_hh(ctx.memory.position()):
+                return True
+
+            if self.ui.tentar_sair_da_hh() and self.ui.esperar_sair():
+                ctx.log.info("HH: fora da cave na tentativa %s", tentativa)
+                return True
+
+            ctx.log.info(
+                "HH: tentativa %s de sair não confirmou; refazendo o diálogo "
+                "do %s", tentativa, mapa_hh.NPC_DA_SAIDA)
+            ctx.tick(ENTRE_TENTATIVAS_DE_SAIR)
+
+        self._falhar(
+            f"não saí da cave em {MAX_SEGUNDOS_PARA_SAIR / 60:.0f} min "
+            f"({tentativa} tentativas)", State.RECUPERAR)
+        return False
+
+    def _saiu(self) -> None:
+        """Fora. A run fecha aqui, e o progresso da cave é esquecido.
+
+        ZERAR `_trechos_feitos` É OBRIGATÓRIO: o desfaz-refaz do time
+        (`MANUTENCAO`) ressuscita os quatro bosses, então na entrada seguinte
+        nenhum trecho está feito. Regra do usuário, 03/09/2026: *"a cada vez que
+        saiu da cave, tem que resetar, pois ao reentrar todos os bosses vão
+        estar vivos novamente"*.
+        """
+        ctx = self.ctx
         ctx.stats.end_run(ok=True)
+        self._trechos_feitos.clear()
+        self._run_em_andamento = False
+        self._trecho = 0
         self._publicar_onde_estou(dentro=False)
         self._ir_para(State.MANUTENCAO, "run concluída")
 

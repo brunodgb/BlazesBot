@@ -410,6 +410,25 @@ CAMINHO_ATE_O_BOSS_4: tuple[Waypoint, ...] = _wp([
 ])
 
 # Do boss 4 até o ponto de onde se sai da cave pelo NPC.
+# O NPC QUE TIRA DA CAVE, e o que ele responde.
+#
+# MEDIDO pelo usuário em 03/09/2026, no print do ponto de saída: o diálogo se
+# chama "Servant Child" e o texto é *"Don't beat me. I'm just a servant of here,
+# if you want to leave here, I can help you..."*, com o link verde
+# "Leave Happiness Hall".
+#
+# O bot em Lua não tem o nome: ele dá TRÊS cliques direitos às cegas em alturas
+# diferentes (`farmer.exitCave`) porque não sabe ler a tela. Nós lemos.
+NPC_DA_SAIDA = "Servant Child"
+
+# ONDE O PERSONAGEM APARECE DEPOIS DE SAIR.
+#
+# É o mesmo ponto da porta -- sair devolve o personagem para a frente da cave,
+# que é o que faz a run seguinte começar sem viagem. O Lua confirma pelo mesmo
+# par (`farmer.exitCave`: `local outside = {-342, -288}`).
+PONTO_FORA_DA_HH = PONTO_DA_ENTRADA
+
+
 CAMINHO_ATE_A_SAIDA: tuple[Waypoint, ...] = _wp([
     (529, 119, _A, (921, 104)),
 ])
@@ -596,11 +615,13 @@ __all__ = [
     "LIMITES_DO_MINIMAPA",
     "LUGAR_FORA_DA_HH",
     "NPC_DA_ENTRADA",
+    "NPC_DA_SAIDA",
     "NPC_DE_TRANSPORTE",
     "NPC_PARA_BUSCAR",
     "NPC_VENDEDOR",
     "PONTO_DA_ENTRADA",
     "PONTO_DEPOIS_DO_BOSS_1",
+    "PONTO_FORA_DA_HH",
     "POSICAO_DA_FADA_NO_BOSS",
     "POSICAO_DA_MUTUAL",
     "POSICAO_DO_BOSS_1",

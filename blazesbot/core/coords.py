@@ -233,6 +233,16 @@ _SPOTS: dict[str, Spot] = {
     # 3D, então ele só vale a partir daquela coordenada. Mudar uma sem remedir a
     # outra faz o clique cair no chão -- e clique no chão faz o personagem ANDAR.
     "hh_vendor_npc": _from_base(475, 450, C),
+    # O `Servant Child` da HH, DENTRO da cave, no ponto de saída (529,119).
+    #
+    # MEDIDO pelo usuário em 03/09/2026: clique DIREITO aqui abre o diálogo,
+    # que traz o link "Leave Happiness Hall".
+    #
+    # ANDA JUNTO COM `mapa_hh.CAMINHO_ATE_A_SAIDA`: é um clique na cena 3D, e
+    # só vale a partir daquela coordenada. Mudar uma sem remedir a outra faz o
+    # clique cair no chão -- e clique no chão faz o personagem ANDAR, saindo
+    # justamente do ponto de onde o NPC é alcançável.
+    "hh_exit_npc": _from_base(708, 300, C),
     "vendor_sell_button": _from_base(472, 717, BC),
     "vendor_purchase_tab": _from_base(282, 395, C),
     "vendor_buy_slot": _from_base(194, 327, C),

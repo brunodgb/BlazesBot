@@ -37,6 +37,7 @@ EVIDENCIA = TEMPLATES / "entrada"
 RECORTES = [
     (entrada.LINK_WEST_SUBURB, "o link West Suburb of Stone City", 300, 40),
     (entrada.LINK_ENTRAR_HH, "o link Enter Happiness Hall", 300, 40),
+    (entrada.LINK_SAIR_HH, "o link Leave Happiness Hall", 300, 40),
     ("dialogo_seta_baixo.png", "a seta de rolagem do diálogo", 40, 40),
 ]
 
@@ -349,3 +350,58 @@ def test_a_venda_da_HH_nao_abre_o_painel_de_arredores():
     fonte = inspect.getsource(vendedor)
     assert "buscar_npc" not in fonte
     assert "trajeto_pelo_painel" not in fonte
+
+
+# ===========================================================================
+# A SAÍDA -- medida no print de 03/09/2026
+# ===========================================================================
+
+
+def test_o_NPC_da_saida_e_o_do_print():
+    """O diálogo do ponto de saída se chama `Servant Child`.
+
+    O texto é *"Don't beat me. I'm just a servant of here, if you want to leave
+    here, I can help you..."*, e o link verde é "Leave Happiness Hall".
+    """
+    assert mapa_hh.NPC_DA_SAIDA == "Servant Child"
+
+
+def test_o_ponto_de_saida_e_o_do_bot_em_lua():
+    """`position_exit = {xY = {529, 119}}`, e o print confirma [529, 118]."""
+    assert [(w.x, w.y) for w in mapa_hh.CAMINHO_ATE_A_SAIDA] == [(529, 119)]
+
+
+def test_sair_devolve_o_personagem_para_a_PORTA():
+    """É o que faz a run seguinte começar sem viagem.
+
+    O Lua confere pelo mesmo par (`farmer.exitCave`: `outside = {-342, -288}`).
+    """
+    assert mapa_hh.PONTO_FORA_DA_HH == mapa_hh.PONTO_DA_ENTRADA == (-342, -288)
+
+
+def test_o_clique_no_NPC_da_saida_e_o_medido():
+    """(708,300) na base 1024x768, medido pelo usuário em 03/09/2026."""
+    assert coords_for_size(1024, 768).hh_exit_npc == (708, 300)
+
+
+def test_o_NPC_da_saida_nao_e_o_da_entrada_nem_o_do_vendedor():
+    """Três NPCs, três pontos: um dentro da cave e dois do lado de fora."""
+    c = coords_for_size(1024, 768)
+    assert len({c.hh_exit_npc, c.hh_vendor_npc, c.npc_padrao}) == 3
+
+
+def test_a_saida_usa_o_PADRAO_do_projeto_e_nao_os_tres_cliques_cegos():
+    """O Lua dá três cliques direitos às cegas em alturas diferentes.
+
+    Ele faz assim porque não sabe ler a tela (`farmer.exitCave`: 526,298 /
+    524,325 / 529,361, depois um clique fixo em 301,382). Nós achamos o link
+    por template -- e um clique que erra o NPC cai no chão, o que faz o
+    personagem ANDAR para fora do ponto onde o NPC é alcançável.
+    """
+    import inspect
+
+    fonte = inspect.getsource(entrada.EntradaDaHH.tentar_sair_da_hh)
+    assert "clicar_link(LINK_SAIR_HH)" in fonte
+    assert "hh_exit_npc" in fonte
+    for cego in ("526, 298", "524, 325", "529, 361", "301, 382"):
+        assert cego not in fonte
