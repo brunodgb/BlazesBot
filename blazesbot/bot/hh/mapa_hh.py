@@ -95,15 +95,29 @@ NOME_DA_INSTANCIA = "Happiness Hall"
 # proposital que isto seja feio e visível.
 AREA_INTERNA_NAO_MEDIDA = "HH (área não medida)"
 
-# OS DOIS NOMES DE DENTRO QUE JÁ FORAM MEDIDOS.
+# OS DOIS NOMES DE DENTRO QUE JÁ FORAM MEDIDOS -- E ELES SÃO DA **TELA**.
+#
+# =========================================================================
+# NÃO COMPARE ESTES NOMES COM `Memory.location()`
+# =========================================================================
 #
 # Vieram dos prints do usuário de 03/09/2026, do canto superior direito do
-# cliente, onde o jogo escreve `<lugar> [x, y]`.
+# cliente, onde o jogo escreve `<lugar> [x, y]`. Isso é o rótulo da ÁREA, e
+# **não é o que o ponteiro devolve**.
 #
-# ELES PROVAM QUE O INTERIOR NÃO É UMA ÁREA SÓ, e é por isso que estão aqui em
-# vez de um `LUGAR_DENTRO_DA_HH` único: dois pontos da mesma instância devolvem
-# nomes diferentes. Quem for medir o resto vai achar mais.
-LUGAR_DA_CHEGADA = "Happiness Hall Dungeon"
+# O ponteiro devolve `Black Wind Camp Dungeon` -- dentro E fora da cave. Medido
+# no log de 03/09/2026: a linha que confirma a entrada diz
+# *"Entrada na HH confirmado em 0 ms: (55, 33) | local Black Wind Camp
+# Dungeon"*, e em 673 menções do log essa é a ÚNICA string de lugar.
+#
+# Quando estes dois nomes entraram aqui, em 03/09, eles foram tratados como se
+# fossem leitura de ponteiro. Não são, e a diferença importa: é por isso que
+# `etapa_pelo_lugar` decide "dentro ou fora" pela COORDENADA e nunca pelo nome.
+#
+# Para que servem, então: são o rótulo humano da área numa `Waypoint.area` --
+# melhor no log que o marcador `HH (área não medida)` -- e são a prova de que o
+# interior tem MAIS DE UMA área nomeada.
+ROTULO_DE_TELA_DA_CHEGADA = "Happiness Hall Dungeon"
 AREA_DA_SAIDA = "Happiness Hall Main Hall"
 
 
@@ -786,7 +800,6 @@ __all__ = [
     "GRUPO_DOS_ARREDORES",
     "LIMITES_DO_MINIMAPA",
     "LUGARES_DEPOIS_DO_TELEPORTE",
-    "LUGAR_DA_CHEGADA",
     "LUGAR_FORA_DA_HH",
     "NPC_DA_ENTRADA",
     "NPC_DA_SAIDA",
@@ -804,6 +817,7 @@ __all__ = [
     "POSICAO_DO_BOSS_4",
     "PRECISAO_NO_PONTO_DA_ENTRADA",
     "RAIO_DA_PORTA",
+    "ROTULO_DE_TELA_DA_CHEGADA",
     "TODOS_OS_WAYPOINTS",
     "TRECHOS_DOS_BOSSES",
     "VIA_FORA_DOS_LIMITES",

@@ -173,9 +173,31 @@ def test_o_interior_da_HH_tem_MAIS_DE_UMA_area():
     saída é `Happiness Hall Main Hall`. Por isso quem responde "estou dentro" é
     a COORDENADA (`esta_dentro_da_hh`), como o bot em Lua já fazia.
     """
-    assert m.LUGAR_DA_CHEGADA != m.AREA_DA_SAIDA
-    assert m.LUGAR_DA_CHEGADA != m.LUGAR_FORA_DA_HH
+    assert m.ROTULO_DE_TELA_DA_CHEGADA != m.AREA_DA_SAIDA
+    assert m.ROTULO_DE_TELA_DA_CHEGADA != m.LUGAR_FORA_DA_HH
     assert m.AREA_DA_SAIDA != m.LUGAR_FORA_DA_HH
+
+
+def test_os_nomes_de_Happiness_Hall_sao_da_TELA_e_nao_do_PONTEIRO():
+    """Registrado porque foi tratado errado uma vez, em 03/09/2026.
+
+    O ponteiro devolve `Black Wind Camp Dungeon` DENTRO e FORA da cave -- a
+    linha do log que confirma a entrada diz *"(55, 33) | local Black Wind Camp
+    Dungeon"*. Os nomes `Happiness Hall *` são o rótulo do canto da TELA.
+
+    A consequência é a regra: quem responde "dentro ou fora" é a COORDENADA.
+    """
+    assert m.LUGAR_FORA_DA_HH == "Black Wind Camp Dungeon"
+    # o nome NÃO decide -- o mesmo nome com coordenadas opostas dá etapas
+    # opostas
+    assert m.etapa_pelo_lugar(m.LUGAR_FORA_DA_HH, (55, 33)) == m.ETAPA_DENTRO
+    assert (m.etapa_pelo_lugar(m.LUGAR_FORA_DA_HH, (-343, -288))
+            == m.ETAPA_NA_PORTA)
+    # e nenhum `Happiness Hall *` participa da decisão
+    import inspect
+
+    corpo = inspect.getsource(m.etapa_pelo_lugar)
+    assert "Happiness" not in corpo
 
 
 def test_o_marcador_e_visivel():
