@@ -856,3 +856,152 @@ leitura só.
 geometria não deixa encostar, este é sobre MOBS. Os dois calham de valer para o
 mesmo ponto hoje, e é por isso que misturá-los seria fácil e errado.
 
+---
+
+## 13. A SESSÃO DE 04/09/2026 — QUATRO DEFEITOS NO LOG, E A VERIFICAÇÃO DUPLA
+
+Tudo aqui saiu do log de produção de 03/09 (23:22 → 00:06) ou de medição do
+usuário no jogo.
+
+### 13.1 A correção que abre a seção: o nome do lugar é o mesmo dentro e fora
+
+**`Memory.location()` devolve `Black Wind Camp Dungeon` DENTRO e FORA da cave.**
+A linha que confirma a entrada diz, literalmente:
+
+    Entrada na HH confirmado em 0 ms: (55, 33) | local Black Wind Camp Dungeon
+
+Em 673 menções do log é a **única** string de lugar. Os nomes
+`Happiness Hall Dungeon` e `Happiness Hall Main Hall` da seção 12 são o rótulo
+do canto da **TELA**, e foram registrados ali como se fossem leitura de
+ponteiro. Não são.
+
+A consequência é a regra: **quem responde "dentro ou fora" é a COORDENADA**, e o
+símbolo passou a se chamar `ROTULO_DE_TELA_DA_CHEGADA` para não sugerir o
+contrário.
+
+### 13.2 Os quatro defeitos
+
+| # | o que era | evidência |
+|---|---|---|
+| 1 | **`FarmDesligado` escapava.** A HH não capturava em lugar nenhum; a exceção subia ao supervisor como "Erro inesperado na sessão" e derrubava tudo | **15 vezes em 33 min**, cada uma refazendo login, janela e contexto |
+| 2 | **`NOME_DO_ALVO_PROIBIDO` é `None` no motor** e três pontos chamavam `.lower()` nele | 3 sessões derrubadas, todas em `limpar_o_combate` — **regressão da véspera**, quando a HH passou a usá-lo |
+| 3 | **`nav.destravar_o_combate` nunca foi ligado na HH** (só `bc/routine.py:424` liga) | 23:44: *"estou EM BATALHA… não tenho destravamento ligado; sigo insistindo"* — **41 s** parado |
+| 4 | **O reinício perdia o trecho em andamento** | 23:40:14 pulou do Fa-Yuan direto para o Dupla |
+
+O #4 é consequência dos #1 e #2: sem os crashes, a sessão não se reconstrói. O
+usuário já tinha decidido (03/09) que o progresso **não** é persistente, e os
+5 s de espera em cada ponto de batalha cobrem o resto.
+
+O #3 é o **quarto** caso desta integração de peça construída e nunca ligada. Os
+outros três: a Fada que não curava, o `Api.alternar_hh` ausente, e o
+`curar_antes_do_boss` que não existia no motor.
+
+**O teste que guardava o #1 pedia a coisa errada.** Ele exigia que
+`Disconnected` **não aparecesse** em nenhum `except` da HH. Quando o laço ganhou
+um `except Exception` (para não morrer por defeito de um estado), esse
+`except Exception` passou a engolir `Disconnected` — e a forma de impedir isso é
+justamente capturá-lo antes e relançar, que era o que o teste proibia. Agora ele
+trava o comportamento (**capturar pode; engolir, não**) e tem um irmão que
+confere a ORDEM dos handlers.
+
+### 13.3 O bot entrava na cave e saía na mesma volta
+
+Regra do usuário: *"se for Black Wind Camp Dungeon e X acima de 0 entrou na cave
+e precisa parar as tentativas na hora, pois no mesmo ângulo que entra, ele sai"*.
+
+**Não era lentidão de detecção** — o log mostra a entrada aparecendo na memória
+em **0 ms**, com as duas tentativas anteriores dizendo "ainda em (-343,-288)".
+
+Era o **par de cliques não ser atômico**: entre o clique direito e o clique no
+link há a espera do diálogo, que o log mede em 180–420 ms. Quando uma tentativa
+acertava, o personagem entrava — e a tentativa seguinte clicava com direito no
+mesmo ângulo, que **dentro** da cave é o NPC de saída. O diálogo abria (então a
+conferência dizia "pode clicar") e o clique caía em "Leave Happiness Hall".
+
+`_abrir_dialogo_e_clicar` ganhou `ainda_vale`, chamado depois de o diálogo abrir
+e antes do clique no link. A HH passa `_ainda_estou_fora`, que lê a POSIÇÃO —
+microssegundos, que é o que torna barato perguntar entre dois cliques. Sem
+leitura, **segue**: bot mudo na porta é pior que o defeito.
+
+### 13.4 A verificação dupla — nome E coordenada
+
+Regra do usuário: *"é importante verificar a localização por ponteiro e a
+coordenada por ponteiro, fazer a verificação dupla"*. Nenhum dos dois basta:
+
+- **o nome não separa dentro de fora** (§13.1);
+- **a coordenada não separa as etapas de fora**, porque o teleporte da Fay
+  espalha o ponto de chegada — e o usuário foi explícito: estando em
+  `West Suburb of Stone City` deve-se seguir dali *"mesmo que o X e Y não esteja
+  certo"*.
+
+A divisão de trabalho em `mapa_hh.etapa_pelo_lugar`: a **coordenada** responde
+"dentro ou fora" (é a leitura que nunca falhou em nenhum log, inclusive nos
+episódios de nome preso); o **nome** responde "quão longe da cave estou, do lado
+de fora".
+
+| etapa | como se chega nela |
+|---|---|
+| `ETAPA_DENTRO` | posição na caixa `((55,17),(585,246))` |
+| `ETAPA_NA_PORTA` | a até 30 unidades de (-342,-288) |
+| `ETAPA_NA_VIZINHANCA` | nome em `West Suburb of Stone City` ou `Outside Black Wind Camp` |
+| `ETAPA_LONGE` | o padrão — qualquer outra coisa |
+
+O ganho: estando depois do teleporte, o bot **pula a Fay** e vai direto pelos
+arredores. Não é só economia de dois painéis — refazer o teleporte estando do
+outro lado dele levaria o personagem de volta para Stone City, **andando para
+longe da cave**.
+
+`ETAPA_LONGE` como padrão é o desfecho seguro: nome desconhecido (`Wei's
+Village`, `Bothy`, um mapa novo) manda fazer a viagem inteira, que funciona de
+qualquer lugar. **"Não sei" custa uma viagem, nunca um clique no lugar errado.**
+
+### 13.5 O beco sem saída do ponto do boss
+
+Medido pelo usuário: chegou no X/Y do boss, o bot desmontou para lutar, o
+servidor lagou e devolveu o personagem para outro X/Y. A rotina concluía "não
+estou no ponto" e voltava para `ATE_O_BOSS` — que começa exigindo montaria. E
+**em batalha o jogo recusa montar**. O bot apertava a tecla contra uma recusa,
+sem saída.
+
+Resposta do usuário: *"é importante identificar se está em batalha e sair
+matando os mobs até sair de batalha, então vai matando 1 por 1, até a flag de
+batalha ficar false"*. É `limpar_o_combate`.
+
+E **não muda de estado**: a volta seguinte relê a posição e decide de novo —
+matar pode ter bastado sozinho, porque o personagem persegue o mob e às vezes
+volta para dentro da tolerância.
+
+### 13.6 No meio da cave não se verifica nada
+
+Regra do usuário: *"as verificações são somente na entrada da cave… só naquele
+waypoint inicial você faz as verificações e usa os buffs"*.
+
+É o mesmo motivo que tirou o preparo de FORA da cave, um degrau adiante: tudo
+isso exige estar **a pé**, e a pé no meio da cave é o trem de mobs encostando.
+Quem chega ao preparo sem ser pela porta morreu e reviveu dentro, ou abriu o bot
+com a run em andamento — e nos dois casos o que urge é voltar a andar.
+
+**A montaria não é "verificação"** e continua nos dois ramos: é a condição para
+andar, e a pé o personagem não chega no boss.
+
+O portão é `acabei_de_entrar`, e a régua não é número novo: a entrada sempre
+deposita em (55,33), o log leu (55,34) um segundo depois, e o primeiro waypoint
+fica a 26 unidades. `rota.NA_ROTA` (12) é a régua que o core já usa para a mesma
+pergunta.
+
+### 13.7 A saída remedida
+
+    ponto  (529, 119) -> (527, 124)
+    clique (708, 300) -> (626, 526)
+
+Do ângulo antigo a **montaria** do personagem ficava na frente do NPC e comia o
+clique. Os dois números andam juntos porque o clique é posicional na cena 3D.
+
+E veio a regra que faltava: a navegação declarava o trecho concluído dentro da
+tolerância de **rota** (7 unidades), e o bot clicava dali. Sete unidades bastam
+para o clique pegar **outro NPC** que fica por perto — e aí o personagem caminha
+até ele, saindo do único ponto de onde o `Servant Child` é alcançável.
+
+Agora vale a mesma régua da porta da cave: chega no ponto primeiro, e
+`tentar_sair_da_hh` recusa clicar de fora dele.
+

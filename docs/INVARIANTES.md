@@ -321,6 +321,19 @@ time a flag não faz nada.
   prática, inalterada: a retomada de rota da HH volta ao waypoint mais próximo e
   **não** recua para o início da área — recuar sobre um marcador devolveria o
   personagem ao waypoint 1 da cave a cada escorregão.
+- **`Memory.location()` NÃO distingue dentro de fora da HH.** Ele devolve
+  `Black Wind Camp Dungeon` nos dois lados — medido no log de 03/09/2026, 673
+  menções e uma única string. Os nomes `Happiness Hall *` são rótulo da **TELA**
+  (`ROTULO_DE_TELA_DA_CHEGADA`, `AREA_DA_SAIDA`) e **não podem ser comparados**
+  com o que o ponteiro devolve. Travado por
+  `test_os_nomes_de_Happiness_Hall_sao_da_TELA_e_nao_do_PONTEIRO`.
+- **A ETAPA DA VIAGEM SAI DE NOME + COORDENADA** (`mapa_hh.etapa_pelo_lugar`),
+  e a divisão é fixa: a **coordenada** responde "dentro ou fora", o **nome**
+  responde "quão longe da cave, do lado de fora". Nenhum dos dois sozinho — o
+  nome não separa dentro de fora, e a coordenada não separa as etapas de fora
+  porque o teleporte da Fay espalha o ponto de chegada. Lugar desconhecido cai
+  em `ETAPA_LONGE` (viagem completa): "não sei" custa uma viagem, nunca um
+  clique no lugar errado.
 - **"Estou dentro" é respondido pela COORDENADA, não pelo nome do lugar**
   (`mapa_hh.esta_dentro_da_hh`: X e Y positivos). É o que o bot em Lua já fazia
   e o que o usuário confirmou em 03/09/2026 — e é obrigatório, porque o interior
@@ -371,6 +384,33 @@ time a flag não faz nada.
   onde está. Chutar um padrão faria ela apertar algo que faz outra coisa.
 - **O vendedor é o `Roaming Apothecary`, fora da cave** — a venda da BC com outro
   NPC. Isso é dado de rota, não módulo de venda novo.
+
+#### O que a sessão de 04/09/2026 fixou — o porquê medido em `hh.md` §13
+
+- **`FarmDesligado`, `StopRequested` e `Disconnected` são tratados ANTES do
+  `except Exception`** no laço da HH. Ordem de `except` aqui é semântica: o
+  geral na frente engoliria os três sinais que não são defeito. `Disconnected`
+  pode ser capturado, mas só para `raise` seco.
+- **Nenhum clique de entrada sai depois de o personagem já ter entrado.** O par
+  de cliques não é atômico (180–420 ms de espera do diálogo no meio), e dentro
+  da cave o mesmo ângulo é o NPC de SAÍDA — o bot entrava e saía na mesma volta.
+  A conferência é ENTRE os dois cliques (`ainda_vale`), não só antes do par.
+- **Cave sem alvo proibido é caso legítimo.** `NOME_DO_ALVO_PROIBIDO` nasce
+  `None` e só a BC o preenche; sem nome, o veredito é `bate` e **não**
+  `acabaram` — `acabaram` encerraria a luta na primeira leitura, sem um golpe.
+- **Toda rotina com `Navigator` + `CombatEngine` LIGA `destravar_o_combate`.**
+  Sem isso o portão da montaria detecta a batalha e só sabe insistir na tecla
+  contra uma recusa do jogo. Custou 41 s à HH e 24 min à BC, em datas
+  diferentes, pelo mesmo motivo.
+- **Fora do ponto do boss e EM BATALHA: mata, não anda.** Voltar para
+  `ATE_O_BOSS` exige montaria, e em batalha o jogo recusa montar — é beco sem
+  saída. `in_battle() is True`: ilegível não autoriza sair batendo.
+- **No meio da cave só a MONTARIA é garantida.** Buff, poção e comida exigem
+  estar a pé, e a pé no meio da cave é o trem de mobs encostando. O portão é
+  `acabei_de_entrar` (55,33 ± `rota.NA_ROTA`).
+- **A saída não clica de fora do ponto.** (527,124) e clique (626,526),
+  remedidos em 04/09 porque a montaria entrava na frente do NPC. Sete unidades
+  de folga bastam para o clique pegar OUTRO NPC que fica por perto.
 
 #### O que a sessão de 03/09/2026 fixou — o porquê medido em `hh.md` §12
 
