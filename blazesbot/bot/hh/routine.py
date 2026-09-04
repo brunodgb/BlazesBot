@@ -467,7 +467,21 @@ class HHRoutine:
                     "diante a cave vem vazia.")
             return True
 
-        if self.team.in_team():
+        # `estado_do_time` E NÃO `in_team`, e a diferença é o `None`.
+        #
+        # `in_team` achata "não estou em time" e "não consegui ler o time" no
+        # mesmo `False` -- o próprio `bot/team.py` documenta que essa confusão já
+        # custou caro uma vez, quando `sair_do_time` saía sem clicar porque a
+        # leitura tinha falhado. Aqui o desfecho de "não sei" é o mesmo de "não
+        # estou": tentar montar. Montar estando em time é barato; entrar sem
+        # reset é achar a cave vazia da segunda run em diante.
+        #
+        # E ESTA LINHA JÁ DERRUBOU O BOT: era `self.team.in_team()`, com
+        # parênteses, e `in_team` é `@property`. `TypeError: 'bool' object is
+        # not callable` estourava a sessão inteira, o supervisor soltava o
+        # controle e recomeçava -- o bot ficava reiniciando na porta da cave a
+        # cada 5 s, para sempre. Medido no log de 03/09/2026, 19:02.
+        if self.team.estado_do_time is True:
             return True
 
         if self.team.montar_time():

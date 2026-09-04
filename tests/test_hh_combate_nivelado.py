@@ -370,3 +370,59 @@ def test_sem_leitura_de_posicao_a_luta_SEGUE():
     """Recusar aqui travaria a run; quem decide então é a flag ligar ou não."""
     fonte = _fonte(HHRoutine._do_boss)
     assert "pos is not None" in fonte
+
+
+# ===========================================================================
+# Chamar uma PROPRIEDADE é TypeError, e o nome existe
+# ===========================================================================
+
+
+def _chamadas_de_verdade_em(rotina, colaborador: str) -> set[str]:
+    """Os nomes usados como `self.<colaborador>.<nome>(...)` -- COM parênteses.
+
+    Diferente de `_chamadas_em`, que pega qualquer acesso: aqui só entra o que
+    o código de fato CHAMA, porque é só isso que quebra quando o nome é uma
+    propriedade.
+    """
+    achados: set[str] = set()
+    for metodo in vars(rotina).values():
+        if not callable(metodo) or not hasattr(metodo, "__code__"):
+            continue
+        try:
+            arvore = ast.parse(_fonte(metodo))
+        except (OSError, SyntaxError):  # pragma: no cover
+            continue
+        for no in ast.walk(arvore):
+            if not isinstance(no, ast.Call):
+                continue
+            alvo = no.func
+            if not isinstance(alvo, ast.Attribute):
+                continue
+            dono = alvo.value
+            if (isinstance(dono, ast.Attribute) and dono.attr == colaborador
+                    and isinstance(dono.value, ast.Name)
+                    and dono.value.id == "self"):
+                achados.add(alvo.attr)
+    return achados
+
+
+@pytest.mark.parametrize("atributo,caminho", sorted(COLABORADORES.items()))
+def test_a_HH_nao_CHAMA_propriedade_de_colaborador(atributo: str, caminho: str):
+    """`self.team.in_team()` derrubou o bot inteiro, e a suíte não viu.
+
+    `in_team` é `@property` em `bot/team.py`. Com parênteses vira
+    `TypeError: 'bool' object is not callable`, que estoura a sessão -- o
+    supervisor solta o controle e recomeça, e o bot fica reiniciando na porta da
+    cave a cada 5 s. Medido no log de 03/09/2026, 19:02.
+
+    O teste irmão (`test_toda_chamada_em_colaborador_da_HH_existe`) não pegava:
+    o nome EXISTE na classe. O que não existe é o direito de chamá-lo.
+    """
+    classe = _classe(caminho)
+    propriedades = sorted(
+        n for n in _chamadas_de_verdade_em(HHRoutine, atributo)
+        if isinstance(getattr(classe, n, None), property))
+    assert not propriedades, (
+        f"a rotina da HH chama `self.{atributo}.{{{', '.join(propriedades)}}}()` "
+        f"com parênteses, e em {classe.__name__} isso é `@property`. "
+        f"Com o jogo aberto vira TypeError e a sessão inteira cai.")

@@ -288,7 +288,7 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | `PASSO_DENTRO_DA_CAVE` | 0.05 s | *novo* | PASSO | [routine.py:90](blazesbot/bot/hh/routine.py#L90) | `run` | Quanto esperar entre estados DENTRO da cave. |
 | `PASSO_FORA_DA_CAVE` | 0.4 s | *novo* | PASSO | [routine.py:91](blazesbot/bot/hh/routine.py#L91) | `run` |  |
 | *literal em* `_do_situar` | 1 s | *novo* | FIXO | [routine.py:271](blazesbot/bot/hh/routine.py#L271) | `_do_situar` | Descobre em que ponto do ciclo a conta está, e entra por ali. |
-| *literal em* `_do_recuperar` | 2 s | *novo* | FIXO | [routine.py:796](blazesbot/bot/hh/routine.py#L796) | `_do_recuperar` | Algo saiu do roteiro. Volta a se situar, sem inventar. |
+| *literal em* `_do_recuperar` | 2 s | *novo* | FIXO | [routine.py:810](blazesbot/bot/hh/routine.py#L810) | `_do_recuperar` | Algo saiu do roteiro. Volta a se situar, sem inventar. |
 | `SEGUNDOS_POR_TENTATIVA` | 1.8 s | *novo* | FIXO | [vendedor.py:68](blazesbot/bot/hh/vendedor.py#L68) | `encostar_no_ponto_da_venda` |  |
 | `RECARGA` | 5 s | = | FIXO | [hotbar.py:63](blazesbot/bot/hotbar.py#L63) | `garantir_pagina_1` | Recarga do caminho com `ctx`. Os momentos-chave acontecem em rajada -- o portão |
 | `PASSO_DA_SONDA` | 0.012 s | = | PASSO | [instrumentar_clique.py:110](blazesbot/bot/instrumentar_clique.py#L110) | `_sondar_ate_mudar` | De quanto em quanto tempo a sonda fotografa o minimapa esperando o efeito. |
