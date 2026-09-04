@@ -156,6 +156,23 @@ ESPERA_DEPOIS_DE_INVOCAR = 1
 # O executor NÃO usa mais estas constantes para movimento (ecossistema cego).
 TOLERANCIA_POSICAO = 1
 
+# Quanto o personagem pode se AFASTAR do ponto inicial durante a macro.
+#
+# Decisão do usuário em 04/09/2026: *"tem vezes que o jogo dá bug e dá target
+# em um mob bem longe, só que com isso acaba chamando outros mobs e
+# provavelmente vai morrer no caminho (...) essa limitação é muito importante
+# para não acabar puxando vários mobs ao mesmo tempo por andar para muito
+# longe."*
+#
+# NÃO É A MESMA COISA QUE `TOLERANCIA_POSICAO`. Aquela é a folga do "já voltei"
+# -- de quanto o personagem pode estar fora do ponto para a trava considerar
+# que chegou. Esta é o TETO do quanto ele pode se afastar ANDANDO, e é maior
+# de propósito: um passo lateral do jogo não pode interromper a volta.
+#
+# Conferido a cada linha, junto com o alvo zerado, e pelo mesmo motivo: é
+# leitura de memória, não de tela.
+MAXIMO_DE_PIXELS_DO_PONTO = 12
+
 # Teto da espera da TRAVA DE POSIÇÃO pela chegada à base.
 #
 # 2,0 porque era exatamente esse o `time.sleep` cego que existia aqui -- o teto
@@ -2616,6 +2633,30 @@ class ExecutorDeMacro:
             if self._ler_id_do_alvo() == 0:
                 self.log.info("APP: fiquei sem alvo na linha %d — corto a volta "
                               "e pego outro.", i + 1)
+                return self._abortar_a_volta()
+
+            # ANDOU DEMAIS -- a trava do ponto inicial, DURANTE a macro.
+            #
+            # A trava de posição já existia, mas só rodava no prelúdio da volta:
+            # o personagem podia sair andando na linha 2 e só ser trazido de
+            # volta no fim da macro. Nesse caminho ele passa por mobs que não
+            # eram dele e chega no destino com uma fila atrás -- que é
+            # exatamente o que o usuário descreveu.
+            #
+            # CORTAR A VOLTA JÁ RESOLVE: o prelúdio da volta seguinte é quem
+            # anda de volta (`_travar_posicao_se_preciso`), e ele é o único
+            # lugar que sabe fazer isso. Duplicar a caminhada aqui seria duas
+            # coisas mandando no mesmo personagem.
+            #
+            # `None` NÃO CORTA: sem leitura de posição (ou com a trava
+            # desligada) não há ponto inicial, e sem ponto não há do que se
+            # afastar.
+            longe = self.distancia_da_base()
+            if longe is not None and longe > MAXIMO_DE_PIXELS_DO_PONTO:
+                self.log.info(
+                    "APP: andei %.0f do ponto inicial (teto %d) na linha %d — "
+                    "corto a volta e volto antes de puxar mais mob.",
+                    longe, MAXIMO_DE_PIXELS_DO_PONTO, i + 1)
                 return self._abortar_a_volta()
 
             self.input.key(passo.key)
