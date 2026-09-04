@@ -14,7 +14,12 @@ import itertools
 import pytest
 
 from blazesbot.bot.hh import mapa_hh as m
-from blazesbot.core.rota import Waypoint, montar
+from blazesbot.core.rota import (
+    Waypoint,
+    distancia_ao_trecho,
+    houve_rollback,
+    montar,
+)
 
 # ===========================================================================
 # Os waypoints vindos do Lua
@@ -352,3 +357,81 @@ def test_o_rollback_vale_igual_nas_duas():
     assert m.houve_rollback(10, caminho[10].pos, caminho) is None
     assert m.houve_rollback(10, caminho[9].pos, caminho) is None   # folga
     assert m.houve_rollback(10, None, caminho) is None
+
+
+# ===========================================================================
+# Os dois LOOPS INFINITOS de 03/09/2026
+# ===========================================================================
+#
+# Os dois foram o MESMO defeito, em duas geometrias diferentes: `houve_rollback`
+# perguntava "qual waypoint está mais perto" quando a pergunta é "o personagem
+# foi jogado para trás". Ver a explicação inteira em `core/rota.houve_rollback`.
+#
+# O teste usa a rota REAL da HH de propósito: o defeito era do encontro entre a
+# régua e ESTES pontos, e um caminho sintético não guardaria isso.
+
+def _indice_do(caminho, ponto):
+    for i, w in enumerate(caminho):
+        if w.pos == ponto:
+            return i
+    raise AssertionError(f"{ponto} não está mais na rota; o teste ficou velho")
+
+
+@pytest.mark.parametrize("trecho,anterior,alvo,posicao,por_que", [
+    # Trecho 1: wp10 e wp11 estão a 4,5 unidades -- menos que a tolerância de
+    # chegada (7). O bot cruza os dois de uma vez e o mais próximo continua
+    # sendo o 10, com o índice já no 12.
+    (0, (207, 186), (232, 188), (211, 184),
+     "wp10 e wp11 cabem no mesmo raio de tolerância"),
+    # Trecho 4: wp13 é uma ESPORA -- desce 19 para subir 33. Voltando por cima
+    # do corredor, o wp12 vira o mais próximo.
+    (3, (510, 126), (509, 93), (509, 115),
+     "a rota volta pelo mesmo corredor da espora do wp13"),
+])
+def test_andar_no_rumo_certo_NAO_e_rollback(trecho, anterior, alvo, posicao,
+                                            por_que):
+    """O bot ia e voltava para sempre nestes dois pontos. Medido no log.
+
+    Em ambos o personagem estava indo para onde mandaram -- em cima da reta que
+    liga o waypoint anterior ao alvo. O que estava errado era a régua.
+    """
+    caminho = m.TRECHOS_DOS_BOSSES[trecho][1]
+    i_alvo = _indice_do(caminho, alvo)
+    assert caminho[i_alvo - 1].pos == anterior, (
+        "a ordem da rota mudou; conferir se o loop volta com ela")
+
+    assert distancia_ao_trecho(posicao, anterior, alvo) <= 12.0, (
+        f"{posicao} deveria estar EM CIMA do trecho {anterior}->{alvo}")
+    assert houve_rollback(i_alvo, posicao, caminho) is None, (
+        f"loop infinito de volta: {por_que}")
+
+
+def test_rollback_DE_VERDADE_continua_sendo_pego():
+    """O conserto não pode ter desligado a detecção.
+
+    Personagem no meio do trecho 1 e jogado de volta para um waypoint bem
+    anterior: longe do trecho atual E perto de um índice de trás. As duas
+    coisas, que é o que o teleporte tem e o andar normal não.
+    """
+    caminho = m.TRECHOS_DOS_BOSSES[0][1]
+    i_alvo = _indice_do(caminho, (232, 188))
+    atras = caminho[i_alvo - 4].pos
+    assert houve_rollback(i_alvo, atras, caminho) == i_alvo - 4
+
+
+def test_nenhum_par_da_rota_e_uma_ESPORA_sem_aviso():
+    """Inventário dos pontos que a régua nova protege.
+
+    Não reprova a espora -- ela é legítima, o bot em Lua usa os mesmos pontos e
+    o `via` de cada um é diferente (o ponto existe para virar a direção do
+    clique, não para andar). O que o teste faz é manter o inventário à vista:
+    se um trecho novo trouxer outro, o número aqui muda e quem mexeu vê por quê.
+    """
+    apertados = [
+        (rotulo, c[i - 1].pos, c[i].pos)
+        for rotulo, c, _p in m.TRECHOS_DOS_BOSSES
+        for i in range(1, len(c))
+        if m.distancia(c[i - 1].pos, c[i].pos) < 7
+    ]
+    assert apertados == [("Fa-Yuan", (209, 182), (207, 186))], (
+        f"o inventário de pares apertados mudou: {apertados}")

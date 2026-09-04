@@ -285,6 +285,23 @@ def onde_retomar(
     return Retomada(escolhido, dist, motivo, agora or area)
 
 
+def distancia_ao_trecho(pos: Ponto, a: Ponto, b: Ponto) -> float:
+    """Distância de um ponto ao SEGMENTO a-b (não à reta infinita).
+
+    Fora das pontas a resposta é a distância até a ponta mais próxima, que é o
+    que se quer: quem está 30 unidades além do fim do segmento não está "em
+    cima dele" só porque a reta continuaria ali.
+    """
+    dx, dy = b[0] - a[0], b[1] - a[1]
+    if dx == 0 and dy == 0:
+        return distancia(pos, a)
+    # `t` é onde a projeção do ponto cai ao longo do segmento, de 0 (em `a`) a
+    # 1 (em `b`). Preso nesse intervalo para não sair das pontas.
+    t = ((pos[0] - a[0]) * dx + (pos[1] - a[1]) * dy) / (dx * dx + dy * dy)
+    t = max(0.0, min(1.0, t))
+    return distancia(pos, (a[0] + t * dx, a[1] + t * dy))
+
+
 def houve_rollback(
     indice_atual: int,
     pos: Ponto | None,
@@ -298,15 +315,56 @@ def houve_rollback(
     depois dá uma diferença pequena e normal -- só um salto de 2+ índices para
     trás é rollback. (O usuário confirmou: o lag costuma devolver 2-3 waypoints,
     nunca mais de 5; folga=1 pega todos.)
+
+    =====================================================================
+    O WAYPOINT MAIS PRÓXIMO NÃO BASTA -- E ISSO TRAVOU A HH DUAS VEZES
+    =====================================================================
+
+    A pergunta que este teste faz é "o personagem foi jogado para trás?", e por
+    anos ela foi respondida por "qual waypoint está mais perto dele". Numa rota
+    que só avança as duas coisas coincidem. Numa rota que VOLTA PELO MESMO
+    CORREDOR, não: o mais próximo pode ser um índice bem anterior enquanto o
+    personagem anda, certinho, no rumo do próximo.
+
+    Os dois casos medidos na HH em 03/09/2026, ambos com loop infinito:
+
+      * trecho 1, wp10 (209,182) e wp11 (207,186) a 4,5 unidades um do outro --
+        menos que a tolerância de chegada. O bot cruza os dois de uma vez, o
+        índice vai para 12, e o mais próximo continua sendo o 10.
+      * trecho 4, wp13 (510,126) é uma ESPORA: desce 19 unidades para depois
+        subir 33 até o wp14 (509,93). Andando de 13 para 14 o personagem passa
+        de novo pela altura do wp12 (507,107), que vira o mais próximo.
+
+    Em ambos o bot concluía "voltei", relançava a navegação, o destravamento
+    escolhia o vizinho de trás, e recomeçava. Para sempre.
+
+    A CORREÇÃO: quem decide é o TRECHO ATUAL, não o ponto mais próximo. Estar em
+    cima da reta que liga o waypoint anterior ao waypoint alvo é a definição de
+    "estou indo para onde mandaram" -- e aí não houve rollback, por mais perto
+    que passe um waypoint antigo. Nos dois casos medidos a distância ao trecho
+    era 2,3 e 1,0 unidade.
+
+    O rollback DE VERDADE continua sendo pego: um personagem jogado para trás
+    fica longe do trecho atual **e** perto de um índice bem anterior. Precisa
+    das duas coisas, e o teleporte tem as duas.
     """
-    if pos is None or not caminho:
+    if pos is None or not caminho or indice_atual <= 0:
         return None
     (i, d) = mais_proximos(pos, caminho)[0]
     if d > RAIO_DA_AREA:
         return None
-    if i < indice_atual - folga:
-        return i
-    return None
+    if i >= indice_atual - folga:
+        return None
+
+    # EM CIMA DO TRECHO ATUAL NÃO É ROLLBACK. `NA_ROTA` é a mesma régua que
+    # separa "escorreguei um pouco" de "saí da rota" no resto do módulo -- não
+    # há número novo aqui.
+    alvo = min(indice_atual, len(caminho) - 1)
+    if alvo >= 1 and distancia_ao_trecho(
+            pos, caminho[alvo - 1].pos, caminho[alvo].pos) <= NA_ROTA:
+        return None
+
+    return i
 
 
 def tolerancia_do_waypoint(
