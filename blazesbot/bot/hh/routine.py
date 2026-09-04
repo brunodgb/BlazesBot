@@ -390,17 +390,19 @@ class HHRoutine:
     def _do_situar(self) -> None:
         """Descobre em que ponto do ciclo a conta está, e entra por ali.
 
-        TRÊS RESPOSTAS POSSÍVEIS, e a ordem de checagem importa:
-
-          1. DENTRO da cave -- o personagem morreu e reviveu lá, ou o bot foi
-             ligado com a run em andamento. Retoma pelo trecho mais próximo, sem
-             tentar entrar de novo.
-          2. Na PORTA -- saiu da cave e a run seguinte pode começar da entrada.
-          3. Em qualquer outro lugar -- vai preparar e depois viajar.
+        QUEM RESPONDE É `mapa_hh.etapa_pelo_lugar`, lendo NOME e COORDENADA
+        juntos -- a regra da verificação dupla que o usuário pediu em
+        04/09/2026. As quatro etapas e o porquê de cada régua estão lá; aqui só
+        se obedece.
 
         SEM LEITURA DE POSIÇÃO NÃO SE DECIDE NADA: sem saber onde está, qualquer
         escolha é chute, e chute aqui significa clicar no NPC errado ou andar
         para o lado oposto. Espera a leitura voltar.
+
+        O NOME, ESSE, PODE FALTAR. Ele só refina o lado de FORA (já passei do
+        teleporte?), e o desfecho de não saber é a viagem completa -- que
+        funciona de qualquer lugar. Bloquear por falta de nome seria trocar uma
+        viagem a mais por uma conta parada.
         """
         ctx = self.ctx
         pos = ctx.memory.position()
@@ -409,16 +411,13 @@ class HHRoutine:
             ctx.tick(1.0)
             return
 
-        if mapa_hh.esta_dentro_da_hh(pos):
+        etapa = mapa_hh.etapa_pelo_lugar(ctx.memory.location(), pos)
+
+        if etapa == mapa_hh.ETAPA_DENTRO:
             self._retomar_dentro_da_cave(pos)
             return
 
-        if mapa_hh.distancia(pos, mapa_hh.PONTO_DA_ENTRADA) <= 30:
-            self._ir_para(State.PREPARAR,
-                          f"estou na porta da cave ({pos}); preparando")
-            return
-
-        self._ir_para(State.PREPARAR, f"estou em {pos}; preparando para viajar")
+        self._ir_para(State.PREPARAR, f"{etapa} ({pos}); preparando")
 
     def _retomar_dentro_da_cave(self, pos: tuple[int, int]) -> None:
         """Já estou dentro: descobre por qual trecho continuar.
@@ -547,18 +546,34 @@ class HHRoutine:
         (dois painéis e um teleporte) para chegar onde já se está.
         """
         ctx = self.ctx
-        pos = ctx.memory.position()
+        etapa = mapa_hh.etapa_pelo_lugar(
+            ctx.memory.location(), ctx.memory.position())
 
-        if pos is not None and mapa_hh.distancia(
-                pos, mapa_hh.PONTO_DA_ENTRADA) <= 30:
+        if etapa == mapa_hh.ETAPA_NA_PORTA:
             if self.ui.garantir_coordenada_da_entrada():
                 self._conferir_o_pet_na_porta()
                 self._ir_para(State.ENTRAR, "já estou na porta")
                 return
 
-        if not self.ui.viajar_para_a_hh():
-            self._falhar("não consegui viajar para a HH", State.RECUPERAR)
-            return
+        # O TELEPORTE DA FAY SÓ SE EU AINDA NÃO PASSEI POR ELE.
+        #
+        # Regra do usuário, 04/09/2026: estando em `West Suburb of Stone City`
+        # (onde a Fay deposita) ou em `Outside Black Wind Camp` (mais perto
+        # ainda), *"você vai usar o surroundings"* e seguir dali -- **mesmo que
+        # o X e Y não estejam certos**, porque o teleporte espalha o ponto de
+        # chegada e quem responde ali é o NOME do lugar.
+        #
+        # Pular a Fay economiza dois painéis e um teleporte. E, mais que o
+        # tempo: refazer o teleporte estando do outro lado dele levaria o
+        # personagem de volta para Stone City, andando para longe da cave.
+        if etapa not in (mapa_hh.ETAPA_NA_VIZINHANCA, mapa_hh.ETAPA_NA_PORTA):
+            if not self.ui.viajar_para_a_hh():
+                self._falhar("não consegui viajar para a HH", State.RECUPERAR)
+                return
+        else:
+            ctx.log.info(
+                "HH: %s -- pulo o teleporte da Fay e vou direto pelos "
+                "arredores", etapa)
 
         if not self.ui.ir_ate_o_npc_da_hh():
             self._falhar("não cheguei na porta da cave", State.RECUPERAR)

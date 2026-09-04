@@ -71,7 +71,7 @@ ligar código não testado.
 
 ## Números medidos -- tolerância, limiar, teto, cadência
 
-535 constantes, agrupadas por arquivo.
+540 constantes, agrupadas por arquivo.
 
 | constante | valor | onde | quem lê | porquê (resumo) |
 |---|---|---|---|---|
@@ -262,6 +262,10 @@ ligar código não testado.
 | `BOSS_3` | `'Green Robmaster'` | [blazesbot/bot/hh/mapa_hh.py:203](blazesbot/bot/hh/mapa_hh.py#L203) | — | — |
 | `BOSS_4` | `'Purple'` | [blazesbot/bot/hh/mapa_hh.py:204](blazesbot/bot/hh/mapa_hh.py#L204) | — | — |
 | `DESTINO_DO_TRANSPORTE` | `'West Suburb of Stone City'` | [blazesbot/bot/hh/mapa_hh.py:133](blazesbot/bot/hh/mapa_hh.py#L133) | — | O destino no diálogo do Fay. **SÓ APARECE ROLANDO A LISTA ATÉ O FIM.** |
+| `ETAPA_DENTRO` | `'dentro da cave'` | [blazesbot/bot/hh/mapa_hh.py:603](blazesbot/bot/hh/mapa_hh.py#L603) | routine.py | EM QUE ETAPA DA VIAGEM O PERSONAGEM ESTÁ |
+| `ETAPA_LONGE` | `'longe, viagem completa'` | [blazesbot/bot/hh/mapa_hh.py:606](blazesbot/bot/hh/mapa_hh.py#L606) | — | — |
+| `ETAPA_NA_PORTA` | `'na porta da cave'` | [blazesbot/bot/hh/mapa_hh.py:604](blazesbot/bot/hh/mapa_hh.py#L604) | routine.py | — |
+| `ETAPA_NA_VIZINHANCA` | `'já passei do teleporte'` | [blazesbot/bot/hh/mapa_hh.py:605](blazesbot/bot/hh/mapa_hh.py#L605) | routine.py | — |
 | `FOLGA_DA_CAIXA` | `25` | [blazesbot/bot/hh/mapa_hh.py:535](blazesbot/bot/hh/mapa_hh.py#L535) | mapa_bc.py | A caixa que envolve o interior da cave |
 | `GRUPO_DOS_ARREDORES` | `'Outside Black Wind Camp'` | [blazesbot/bot/hh/mapa_hh.py:81](blazesbot/bot/hh/mapa_hh.py#L81) | — | O grupo do painel de arredores naquele lugar. Serve para conferir que o painel |
 | `LUGAR_DA_CHEGADA` | `'Happiness Hall Dungeon'` | [blazesbot/bot/hh/mapa_hh.py:106](blazesbot/bot/hh/mapa_hh.py#L106) | — | OS DOIS NOMES DE DENTRO QUE JÁ FORAM MEDIDOS. |
@@ -270,6 +274,7 @@ ligar código não testado.
 | `NPC_DA_ENTRADA` | `'Elite Axe Monk Soldier'` | [blazesbot/bot/hh/mapa_hh.py:173](blazesbot/bot/hh/mapa_hh.py#L173) | entrada.py | O NPC com quem se fala para entrar na cave. |
 | `NPC_DA_SAIDA` | `'Servant Child'` | [blazesbot/bot/hh/mapa_hh.py:441](blazesbot/bot/hh/mapa_hh.py#L441) | entrada.py, routine.py | Do boss 4 até o ponto de onde se sai da cave pelo NPC. |
 | `PRECISAO_NO_PONTO_DA_ENTRADA` | `1.5` | [blazesbot/bot/hh/mapa_hh.py:170](blazesbot/bot/hh/mapa_hh.py#L170) | entrada.py, routine.py | Folga aceita para considerar que já se está no ponto de conversa. |
+| `RAIO_DA_PORTA` | `30` | [blazesbot/bot/hh/mapa_hh.py:626](blazesbot/bot/hh/mapa_hh.py#L626) | — | Quão perto da porta ainda conta como "estou nela". |
 | `TABS_ENTRE_OS_ALVOS_DO_PONTO` | `2` | [blazesbot/bot/hh/mapa_hh.py:287](blazesbot/bot/hh/mapa_hh.py#L287) | — | Quantos TABs dar depois de cada morte, num ponto com mais de um alvo. |
 | `ENTRE_TENTATIVAS_DE_ENTRAR` | `0.025` | [blazesbot/bot/hh/routine.py:99](blazesbot/bot/hh/routine.py#L99) | — | Entre uma tentativa de entrada e a seguinte. É o RESTO do orçamento da |
 | `ENTRE_TENTATIVAS_DE_SAIR` | `1.0` | [blazesbot/bot/hh/routine.py:156](blazesbot/bot/hh/routine.py#L156) | — | Entre uma tentativa de sair e a seguinte. Maior que o da entrada porque cada |

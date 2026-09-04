@@ -255,10 +255,66 @@ def test_situar_DENTRO_da_cave_retoma_pelo_trecho_mais_proximo():
 def test_sem_leitura_de_posicao_NAO_se_decide_nada():
     """Sem saber onde está, qualquer escolha é chute -- e chute aqui significa
     clicar no NPC errado ou andar para o lado oposto."""
-    fonte = _fonte(HHRoutine._do_situar)
-    i_none = fonte.index("if pos is None")
-    i_dentro = fonte.index("esta_dentro_da_hh")
-    assert i_none < i_dentro
+    # PELO AST: a docstring desta função CITA `etapa_pelo_lugar` ao explicar
+    # quem responde, e uma busca no texto acharia a explicação antes do código.
+    import ast as _ast
+
+    arvore = _ast.parse(_fonte(HHRoutine._do_situar))
+    guarda = min(n.lineno for n in _ast.walk(arvore)
+                 if isinstance(n, _ast.Compare)
+                 and "pos is None" in _ast.unparse(n))
+    consulta = min(n.lineno for n in _ast.walk(arvore)
+                   if isinstance(n, _ast.Call)
+                   and getattr(n.func, "attr", "") == "etapa_pelo_lugar")
+    assert guarda < consulta
+
+
+def test_a_etapa_sai_de_NOME_e_COORDENADA_juntos():
+    """Verificação dupla, regra do usuário de 04/09/2026.
+
+    Nenhum dos dois basta: `Memory.location()` devolve `Black Wind Camp
+    Dungeon` tanto em (-343,-288) quanto em (55,33) -- medido no log de 03/09,
+    673 menções e uma única string --, e a coordenada não separa as etapas de
+    FORA porque o teleporte da Fay espalha o ponto de chegada.
+    """
+    chamadas = _chamadas(HHRoutine._do_situar)
+    assert "etapa_pelo_lugar" in chamadas
+    assert "location" in chamadas
+    assert "position" in chamadas
+
+
+def test_ja_estando_depois_do_teleporte_a_Fay_e_PULADA():
+    """Refazer o teleporte do outro lado dele levaria o personagem de volta
+    para Stone City, andando para LONGE da cave."""
+    fonte = _fonte(HHRoutine._do_ate_a_porta)
+    assert "ETAPA_NA_VIZINHANCA" in fonte
+    guarda = fonte.index("ETAPA_NA_VIZINHANCA")
+    assert guarda < fonte.index("viajar_para_a_hh")
+
+
+def test_lugar_desconhecido_faz_a_VIAGEM_COMPLETA():
+    """"Não sei" custa uma viagem, nunca um clique no lugar errado."""
+    from blazesbot.bot.hh import mapa_hh
+
+    for nome in (None, "Wei's Village", "Bothy", "Stone City"):
+        assert mapa_hh.etapa_pelo_lugar(nome, (-500, -500)) == mapa_hh.ETAPA_LONGE
+
+
+def test_a_COORDENADA_e_o_veto_de_dentro_e_fora():
+    """Estar na caixa da instância PROVA que está dentro, e nenhum nome desmente.
+
+    É o mesmo desenho medido da BC (`bc/localizacao._decidir_se_esta_na_cave`).
+    """
+    from blazesbot.bot.hh import mapa_hh
+
+    # o nome é o mesmo dentro e fora -- só a coordenada separa
+    assert mapa_hh.etapa_pelo_lugar(
+        "Black Wind Camp Dungeon", (55, 33)) == mapa_hh.ETAPA_DENTRO
+    assert mapa_hh.etapa_pelo_lugar(
+        "Black Wind Camp Dungeon", (-343, -288)) == mapa_hh.ETAPA_NA_PORTA
+    # e sem nome nenhum a coordenada ainda decide
+    assert mapa_hh.etapa_pelo_lugar(None, (552, 188)) == mapa_hh.ETAPA_DENTRO
+    assert mapa_hh.etapa_pelo_lugar(None, (-342, -288)) == mapa_hh.ETAPA_NA_PORTA
 
 
 # ===========================================================================

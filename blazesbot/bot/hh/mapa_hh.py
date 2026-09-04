@@ -566,6 +566,95 @@ def posicao_esta_na_caixa_da_hh(pos: tuple[int, int] | None) -> bool:
 TOLERANCIA_DA_CHEGADA = rota.NA_ROTA
 
 
+# ONDE A FAY DEPOSITA. Medido pelo usuário em 04/09/2026.
+#
+# NÃO É PORTÃO DE DECISÃO, e é por isso que fica só documentado: o usuário foi
+# explícito -- *"é importante que se eu já tiver nessa localização você faça o
+# dali pra frente, MESMO QUE O X E Y NÃO ESTEJA CERTO"*. Quem decide a etapa
+# ali é o NOME do lugar; a coordenada varia porque o teleporte espalha.
+CHEGADA_DA_FAY = (-255, -484)
+
+
+# ===========================================================================
+# EM QUE ETAPA DA VIAGEM O PERSONAGEM ESTÁ
+# ===========================================================================
+#
+# A pergunta é "de onde eu continuo", e ela tem de ser respondida por NOME E
+# COORDENADA juntos -- regra do usuário, 04/09/2026: *"é importante verificar a
+# localização por ponteiro e a coordenada por ponteiro, fazer a verificação
+# dupla para saber onde está e de onde deve começar o bot, pois tem coisas que
+# não fazem sentido dependendo da localização"*.
+#
+# POR QUE NENHUM DOS DOIS BASTA SOZINHO:
+#
+#   * O NOME NÃO SEPARA DENTRO DE FORA. Medido no log de 03/09/2026:
+#     `Memory.location()` devolve `Black Wind Camp Dungeon` tanto em (-343,-288)
+#     quanto em (55,33). Em 673 menções do log é a única string. Os nomes
+#     `Happiness Hall Dungeon` e `Happiness Hall Main Hall` que aparecem no
+#     canto da TELA não são o que o ponteiro devolve.
+#   * A COORDENADA NÃO SEPARA AS ETAPAS DE FORA. West Suburb e a vizinhança da
+#     cave são regiões distintas do mundo, e o teleporte da Fay espalha o ponto
+#     de chegada -- por isso o usuário mandou decidir por nome ali.
+#
+# A DIVISÃO DE TRABALHO, então: a COORDENADA responde "dentro ou fora" (é a
+# leitura que nunca falhou em nenhum log, inclusive nos episódios de nome
+# preso), e o NOME responde "quão longe da cave eu estou, do lado de fora".
+
+ETAPA_DENTRO = "dentro da cave"
+ETAPA_NA_PORTA = "na porta da cave"
+ETAPA_NA_VIZINHANCA = "já passei do teleporte"
+ETAPA_LONGE = "longe, viagem completa"
+
+# Os lugares de onde NÃO é preciso usar a Fay -- o personagem já está do outro
+# lado do teleporte e o painel de arredores alcança a cave.
+#
+# `West Suburb of Stone City` é onde a Fay deposita; `Outside Black Wind Camp`
+# fica mais perto ainda. Os dois levam à MESMA ação (arredores → NPC da porta),
+# e é por isso que são uma lista e não dois ramos.
+LUGARES_DEPOIS_DO_TELEPORTE: frozenset[str] = frozenset({
+    DESTINO_DO_TRANSPORTE,   # "West Suburb of Stone City"
+    GRUPO_DOS_ARREDORES,     # "Outside Black Wind Camp"
+})
+
+# Quão perto da porta ainda conta como "estou nela".
+#
+# Generoso de propósito, e diferente de `PRECISAO_NO_PONTO_DA_ENTRADA` (1,5):
+# esta régua responde *"preciso viajar?"* e aquela responde *"posso clicar?"*.
+# Sair da cave devolve o personagem PERTO da porta, não nela -- então 30
+# unidades evitam uma viagem inteira, e o ajuste fino de coordenada fica com
+# `garantir_coordenada_da_entrada`, que é quem clica.
+RAIO_DA_PORTA = 30
+
+
+def etapa_pelo_lugar(nome: str | None,
+                     pos: tuple[int, int] | None) -> str:
+    """De onde o bot continua, lendo NOME e COORDENADA juntos.
+
+    A ORDEM DAS PERGUNTAS É A DECISÃO. A coordenada vem primeiro porque a
+    implicação é lógica, não estatística: estar na caixa da instância PROVA que
+    o personagem está dentro, e nenhum nome desmente isso.
+
+    `ETAPA_LONGE` é o padrão, e é o desfecho seguro: manda fazer a viagem
+    inteira, que funciona de qualquer lugar. Um nome desconhecido (`Wei's
+    Village`, `Bothy`, um mapa novo) cai aqui, e "não sei" custa uma viagem --
+    nunca um clique no lugar errado.
+    """
+    if posicao_esta_na_caixa_da_hh(pos):
+        return ETAPA_DENTRO
+
+    if pos is not None and distancia(pos, PONTO_DA_ENTRADA) <= RAIO_DA_PORTA:
+        return ETAPA_NA_PORTA
+
+    # DAQUI PARA BAIXO QUEM DECIDE É O NOME. A coordenada já provou que o
+    # personagem não está dentro nem na porta; o que falta é saber se ele já
+    # passou do teleporte -- e isso a coordenada não diz, porque a Fay espalha
+    # o ponto de chegada.
+    if nome in LUGARES_DEPOIS_DO_TELEPORTE:
+        return ETAPA_NA_VIZINHANCA
+
+    return ETAPA_LONGE
+
+
 def acabei_de_entrar(pos: tuple[int, int] | None) -> bool:
     """O personagem está no ponto onde a entrada deposita?
 
@@ -685,12 +774,18 @@ __all__ = [
     "CAMINHO_ATE_O_BOSS_2",
     "CAMINHO_ATE_O_BOSS_3",
     "CAMINHO_ATE_O_BOSS_4",
+    "CHEGADA_DA_FAY",
     "CHEGADA_NA_HH",
     "COORDENADA_ANOTADA_NO_LUA",
     "DESTINO_DO_TRANSPORTE",
+    "ETAPA_DENTRO",
+    "ETAPA_LONGE",
+    "ETAPA_NA_PORTA",
+    "ETAPA_NA_VIZINHANCA",
     "FOLGA_DA_CAIXA",
     "GRUPO_DOS_ARREDORES",
     "LIMITES_DO_MINIMAPA",
+    "LUGARES_DEPOIS_DO_TELEPORTE",
     "LUGAR_DA_CHEGADA",
     "LUGAR_FORA_DA_HH",
     "NPC_DA_ENTRADA",
@@ -708,6 +803,7 @@ __all__ = [
     "POSICAO_DO_BOSS_3",
     "POSICAO_DO_BOSS_4",
     "PRECISAO_NO_PONTO_DA_ENTRADA",
+    "RAIO_DA_PORTA",
     "TODOS_OS_WAYPOINTS",
     "TRECHOS_DOS_BOSSES",
     "VIA_FORA_DOS_LIMITES",
@@ -719,5 +815,6 @@ __all__ = [
     "como_lista",
     "distancia",
     "esta_dentro_da_hh",
+    "etapa_pelo_lugar",
     "posicao_esta_na_caixa_da_hh",
 ]
