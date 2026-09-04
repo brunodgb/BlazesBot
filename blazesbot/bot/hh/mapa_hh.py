@@ -440,6 +440,21 @@ CAMINHO_ATE_O_BOSS_4: tuple[Waypoint, ...] = _wp([
 # diferentes (`farmer.exitCave`) porque não sabe ler a tela. Nós lemos.
 NPC_DA_SAIDA = "Servant Child"
 
+# DE ONDE SE FALA COM ELE. Remedido pelo usuário em 04/09/2026: era (529,119),
+# passou a (527,124) porque dali a MONTARIA do personagem não fica na frente do
+# NPC. O clique é posicional na cena 3D, então mover o ponto move o clique --
+# os dois foram remedidos juntos (ver `coords.hh_exit_npc`).
+PONTO_DA_SAIDA = (527, 124)
+
+# COM QUE PRECISÃO É PRECISO ESTAR NELE ANTES DE CLICAR.
+#
+# A MESMA da porta da cave, e pelo mesmo motivo medido: clique posicional só
+# vale a partir da coordenada. Aqui a consequência é pior que errar o clique --
+# o usuário mediu em 04/09/2026 que **existe OUTRO NPC por perto**, e clicar de
+# longe abre o diálogo dele; o personagem então caminha até esse outro NPC,
+# saindo do ponto de onde o `Servant Child` é alcançável.
+PRECISAO_NO_PONTO_DA_SAIDA = PRECISAO_NO_PONTO_DA_ENTRADA
+
 # ONDE O PERSONAGEM APARECE DEPOIS DE SAIR.
 #
 # É o mesmo ponto da porta -- sair devolve o personagem para a frente da cave,
@@ -450,8 +465,9 @@ PONTO_FORA_DA_HH = PONTO_DA_ENTRADA
 
 CAMINHO_ATE_A_SAIDA: tuple[Waypoint, ...] = _wp([
     # ÚNICO WAYPOINT COM ÁREA MEDIDA: o print do usuário mostra
-    # `Happiness Hall Main Hall [529, 118]` com o personagem exatamente aqui.
-    (529, 119, AREA_DA_SAIDA, (921, 104)),
+    # `Happiness Hall Main Hall` com o personagem aqui. O par exato mudou de
+    # (529,119) para (527,124) em 04/09/2026 -- ver `PONTO_DA_SAIDA`.
+    (*PONTO_DA_SAIDA, AREA_DA_SAIDA, (921, 104)),
 ])
 
 # Os quatro trechos na ordem em que são percorridos, com o rótulo do boss que

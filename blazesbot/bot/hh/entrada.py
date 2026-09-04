@@ -302,6 +302,23 @@ class EntradaDaHH(UIDoJogo):
     # A saída
     # ==================================================================
 
+    def garantir_coordenada_da_saida(self) -> bool:
+        """Põe o personagem em (527,124) ANTES de qualquer clique no NPC.
+
+        Espelho de `garantir_coordenada_da_entrada`, e existe pelo mesmo motivo
+        -- com uma consequência pior. Medido pelo usuário em 04/09/2026: há
+        **outro NPC por perto**, e o clique de longe abre o diálogo DELE. O
+        personagem então caminha até esse outro NPC, saindo do único ponto de
+        onde o `Servant Child` é alcançável, e a saída deixa de acontecer.
+        """
+        return self.encostar_no_ponto(
+            alvo=mapa_hh.PONTO_DA_SAIDA,
+            precisao=mapa_hh.PRECISAO_NO_PONTO_DA_SAIDA,
+            tentativas=TENTATIVAS_DE_POSICIONAR,
+            segundos_por_tentativa=SEGUNDOS_POR_TENTATIVA_DE_ENCOSTAR,
+            o_que=f"falar com o {mapa_hh.NPC_DA_SAIDA}",
+        )
+
     def tentar_sair_da_hh(self) -> bool:
         """Uma tentativa de sair pelo NPC. Devolve se o clique no link saiu.
 
@@ -325,6 +342,14 @@ class EntradaDaHH(UIDoJogo):
         que ficou velho.
         """
         ctx = self.ctx
+        # NÃO SE CLICA DE FORA DO PONTO. É a mesma regra da entrada, e aqui ela
+        # protege de um erro pior: o clique de longe pega OUTRO NPC.
+        if not self.na_posicao_de_clicar(
+                mapa_hh.PONTO_DA_SAIDA,
+                tolerancia=mapa_hh.PRECISAO_NO_PONTO_DA_SAIDA,
+                o_que="sair da HH"):
+            return False
+
         if self.falar_com_npc(ctx.coords.hh_exit_npc) is None:
             ctx.log.warning("Não abri o diálogo do %s", mapa_hh.NPC_DA_SAIDA)
             return False

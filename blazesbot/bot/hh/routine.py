@@ -1252,6 +1252,12 @@ class HHRoutine:
             if not mapa_hh.esta_dentro_da_hh(ctx.memory.position()):
                 return True
 
+            # CHEGA PRIMEIRO, DEPOIS CLICA. A navegação declara o trecho
+            # concluído dentro da tolerância de rota (7), e sete unidades já
+            # bastam para o clique pegar o NPC errado -- ver
+            # `garantir_coordenada_da_saida`.
+            self.ui.garantir_coordenada_da_saida()
+
             if self.ui.tentar_sair_da_hh() and self.ui.esperar_sair():
                 ctx.log.info("HH: fora da cave na tentativa %s", tentativa)
                 return True

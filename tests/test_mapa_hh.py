@@ -157,7 +157,7 @@ def test_a_area_interna_continua_marcada_como_nao_medida():
     # O INVENTÁRIO DO QUE JÁ FOI MEDIDO É EXPLÍCITO, e é ele que impede o
     # afrouxamento: um nome novo aqui só entra junto com a linha que diz de que
     # print ele saiu. Medidos em 03/09/2026, nos prints do usuário.
-    assert m.areas_medidas() == {(529, 119): "Happiness Hall Main Hall"}, (
+    assert m.areas_medidas() == {(527, 124): "Happiness Hall Main Hall"}, (
         "alguém nomeou uma área da HH sem registrar a medição -- ver o "
         "cabeçalho de mapa_hh.py e docs/decisoes/hh.md seção 9")
     assert all(wp.area == m.AREA_INTERNA_NAO_MEDIDA

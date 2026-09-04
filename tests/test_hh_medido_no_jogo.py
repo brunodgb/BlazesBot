@@ -366,9 +366,15 @@ def test_o_NPC_da_saida_e_o_do_print():
     assert mapa_hh.NPC_DA_SAIDA == "Servant Child"
 
 
-def test_o_ponto_de_saida_e_o_do_bot_em_lua():
-    """`position_exit = {xY = {529, 119}}`, e o print confirma [529, 118]."""
-    assert [(w.x, w.y) for w in mapa_hh.CAMINHO_ATE_A_SAIDA] == [(529, 119)]
+def test_o_ponto_de_saida_foi_REMEDIDO_para_a_montaria_nao_atrapalhar():
+    """Era (529,119), o do bot em Lua. Passou a (527,124) em 04/09/2026.
+
+    Motivo do usuário: dali a MONTARIA do personagem não fica na frente do NPC.
+    O clique é posicional na cena 3D, então o ponto e o clique andam juntos --
+    os dois foram remedidos no mesmo dia (ver `coords.hh_exit_npc`).
+    """
+    assert mapa_hh.PONTO_DA_SAIDA == (527, 124)
+    assert [(w.x, w.y) for w in mapa_hh.CAMINHO_ATE_A_SAIDA] == [(527, 124)]
 
 
 def test_sair_devolve_o_personagem_para_a_PORTA():
@@ -380,8 +386,31 @@ def test_sair_devolve_o_personagem_para_a_PORTA():
 
 
 def test_o_clique_no_NPC_da_saida_e_o_medido():
-    """(708,300) na base 1024x768, medido pelo usuário em 03/09/2026."""
-    assert coords_for_size(1024, 768).hh_exit_npc == (708, 300)
+    """(626,526) na base 1024x768, remedido pelo usuário em 04/09/2026.
+
+    Era (708,300), do ponto (529,119). Mudou junto com o ponto: com a montaria
+    ativa o corpo dela entrava na frente do NPC naquele ângulo.
+    """
+    assert coords_for_size(1024, 768).hh_exit_npc == (626, 526)
+
+
+def test_a_saida_NAO_clica_de_fora_do_ponto():
+    """Clicar de longe abre o diálogo de OUTRO NPC que fica por perto.
+
+    O personagem então caminha até ele, saindo do único ponto de onde o
+    `Servant Child` é alcançável. Medido pelo usuário em 04/09/2026.
+    """
+    import inspect
+
+    fonte = inspect.getsource(entrada.EntradaDaHH.tentar_sair_da_hh)
+    assert "na_posicao_de_clicar" in fonte
+    assert fonte.index("na_posicao_de_clicar") < fonte.index("falar_com_npc")
+
+
+def test_a_precisao_da_saida_e_a_MESMA_da_porta():
+    """Mesma pergunta, mesma régua -- e uma régua só evita divergência muda."""
+    assert (mapa_hh.PRECISAO_NO_PONTO_DA_SAIDA
+            == mapa_hh.PRECISAO_NO_PONTO_DA_ENTRADA)
 
 
 def test_o_NPC_da_saida_nao_e_o_da_entrada_nem_o_do_vendedor():

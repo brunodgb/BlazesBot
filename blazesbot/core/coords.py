@@ -242,7 +242,7 @@ _SPOTS: dict[str, Spot] = {
     # só vale a partir daquela coordenada. Mudar uma sem remedir a outra faz o
     # clique cair no chão -- e clique no chão faz o personagem ANDAR, saindo
     # justamente do ponto de onde o NPC é alcançável.
-    "hh_exit_npc": _from_base(708, 300, C),
+    "hh_exit_npc": _from_base(626, 526, C),
     "vendor_sell_button": _from_base(472, 717, BC),
     "vendor_purchase_tab": _from_base(282, 395, C),
     "vendor_buy_slot": _from_base(194, 327, C),
