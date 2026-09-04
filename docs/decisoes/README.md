@@ -32,3 +32,4 @@ medição. Regra sem porquê apodrece; porquê aqui dentro faz o arquivo voltar 
 | `docs/decisoes/transplante-ghostbot.md` | o que veio do GhostBot, rebase +0x60 |
 | `docs/decisoes/stuttering-mouse.md` | corrida do mouse shield / stuttering |
 | **`docs/TEMPOS.md`** *(gerado)* | **toda espera do bot: atual × original, natureza, arquivo, linha, função** |
+| **`docs/decisoes/eslint-portado-para-python.md`** | **os três quality gates do toolkit ESLint, portados em Python: teto de 350 linhas, `print()` só em diagnóstico, fronteira de ecossistemas (esta última já em `test_ecossistemas.py`)** |
