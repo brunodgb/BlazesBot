@@ -96,6 +96,32 @@ def _classe(caminho: str):
     return getattr(importlib.import_module(modulo), nome)
 
 
+def _atributos_do_init(classe) -> set[str]:
+    """Os `self.<nome> = ...` do `__init__` da classe.
+
+    Existem colaboradores cujo nome só nasce em tempo de instância -- o
+    `destravar_o_combate` do `Navigator` é o gancho que cada rotina liga no seu
+    próprio motor de combate. Conferir só o corpo da classe daria "não existe"
+    para um atributo que existe em toda instância.
+    """
+    try:
+        arvore = ast.parse(_fonte(classe.__init__))
+    except (OSError, SyntaxError, TypeError):  # pragma: no cover
+        return set()
+    achados: set[str] = set()
+    for no in ast.walk(arvore):
+        # `self.x = ...` e `self.x: T = ...` -- a segunda forma é `AnnAssign`, e
+        # é justamente a que `destravar_o_combate` usa.
+        alvos = (no.targets if isinstance(no, ast.Assign)
+                 else [no.target] if isinstance(no, ast.AnnAssign) else [])
+        for alvo in alvos:
+            if (isinstance(alvo, ast.Attribute)
+                    and isinstance(alvo.value, ast.Name)
+                    and alvo.value.id == "self"):
+                achados.add(alvo.attr)
+    return achados
+
+
 def _chamadas_em(rotina, colaborador: str) -> set[str]:
     """Os nomes chamados como `self.<colaborador>.<nome>(...)`."""
     achados: set[str] = set()
@@ -126,8 +152,12 @@ def test_toda_chamada_em_colaborador_da_HH_existe(atributo: str, caminho: str):
     real do colaborador.
     """
     classe = _classe(caminho)
+    # ATRIBUTO DE INSTÂNCIA TAMBÉM CONTA. `Navigator.destravar_o_combate` nasce
+    # no `__init__` (é o gancho que a rotina liga no combate), então
+    # `hasattr(Navigator, ...)` é False e o nome existe mesmo assim.
     faltando = sorted(n for n in _chamadas_em(HHRoutine, atributo)
-                      if not hasattr(classe, n))
+                      if not hasattr(classe, n)
+                      and n not in _atributos_do_init(classe))
     assert not faltando, (
         f"a rotina da HH chama `self.{atributo}.{{{', '.join(faltando)}}}` e "
         f"{classe.__name__} não tem. Isso é AttributeError com o jogo aberto.")
@@ -534,3 +564,50 @@ def test_a_HH_nao_CHAMA_propriedade_de_colaborador(atributo: str, caminho: str):
         f"a rotina da HH chama `self.{atributo}.{{{', '.join(propriedades)}}}()` "
         f"com parênteses, e em {classe.__name__} isso é `@property`. "
         f"Com o jogo aberto vira TypeError e a sessão inteira cai.")
+
+
+# ===========================================================================
+# CAVE SEM ALVO PROIBIDO
+# ===========================================================================
+#
+# `NOME_DO_ALVO_PROIBIDO` nasce `None` no motor e só a Bewitcher Cave o
+# preenche (o Cemetery Guard). A HH não tem alvo proibido -- e o motor assumia
+# que sempre havia um.
+
+
+def test_o_motor_nasce_SEM_alvo_proibido_e_a_BC_e_quem_poe():
+    from blazesbot.bot.bc.combat import CombateBC
+
+    assert motor.CombatEngine.NOME_DO_ALVO_PROIBIDO is None
+    assert CombateBC.NOME_DO_ALVO_PROIBIDO
+
+
+def test_sem_alvo_proibido_nada_e_proibido():
+    """Era `AttributeError: 'NoneType' object has no attribute 'lower'`.
+
+    Estourava dentro de `limpar_o_combate`, que a HH passou a usar nos pontos
+    de mob ranged -- e derrubava a SESSÃO inteira, não só a luta. Três vezes no
+    log de 03/09/2026.
+    """
+    class Sem(motor.CombatEngine):
+        def __init__(self):  # sem BotContext: só o veredito interessa
+            self._ultimos_nomes_do_alvo = ["Qualquer Mob"]
+
+    assert Sem()._e_o_alvo_proibido() is False
+
+
+def test_sem_nome_esperado_o_veredito_e_BATE_e_nao_acabaram():
+    """`acabaram` encerraria a luta na primeira leitura, sem um golpe.
+
+    É o mesmo desfecho errado que o `alvo_esperado` com rótulos não medidos
+    produziu na HH em 03/09 -- por isso a ausência de nome tem de significar
+    "não há quem barrar", e não "não há mais ninguém".
+    """
+    class Sem(motor.CombatEngine):
+        def __init__(self):
+            self._ultimos_nomes_do_alvo = []
+
+        def _nomes_do_alvo(self):
+            return ["Mob Vivo"]
+
+    assert Sem()._veredito_do_alvo(None) == "bate"

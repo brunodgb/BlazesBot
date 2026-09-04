@@ -1769,6 +1769,15 @@ class CombatEngine:
         # existindo e continua significando a mesma coisa: NÃO SEI. Quem
         # consome não pode tratar "não sei" como "alvo errado" -- parar de
         # bater por causa de uma leitura que falhou custa a luta inteira.
+        # SEM NOME ESPERADO NÃO HÁ PORTÃO. A cave que não tem alvo proibido
+        # (a HH) chega aqui com `esperado=None` vindo do destravamento, e o
+        # `.lower()` lá embaixo estourava. "Não há quem barrar" é `bate`, e não
+        # `acabaram`: `acabaram` encerraria a luta na primeira leitura.
+        if not esperado:
+            self._ultimos_nomes_do_alvo = [
+                n for n in self._nomes_do_alvo() if n]
+            return "bate"
+
         legiveis = [n for n in self._nomes_do_alvo() if n]
         # Guarda o que ESTE veredito viu, para o log poder mostrar a mesma
         # fonte que decidiu. Imprimir `target_name()` ao lado do veredito era
@@ -1789,6 +1798,16 @@ class CombatEngine:
         leituras no mesmo instante já produziram o log enganoso
         "veredito=ilegivel lido='Gun Witch'" na mesma linha.
         """
+        # SEM NOME PROIBIDO, NADA É PROIBIDO.
+        #
+        # `NOME_DO_ALVO_PROIBIDO` nasce `None` no motor e só a Bewitcher Cave o
+        # preenche (o Cemetery Guard). A HH não tem alvo proibido -- e sem esta
+        # linha o `.lower()` abaixo estourava `AttributeError` no meio da luta.
+        # Medido no log de 03/09/2026: três sessões derrubadas, todas dentro de
+        # `limpar_o_combate`, que a HH passou a usar nos pontos de mob ranged.
+        if not self.NOME_DO_ALVO_PROIBIDO:
+            return False
+
         nomes = self._ultimos_nomes_do_alvo if nomes is None else nomes
         procurado = self.NOME_DO_ALVO_PROIBIDO.lower()
         return any(procurado in (n or "").lower() for n in (nomes or ()))
@@ -2785,6 +2804,10 @@ class CombatEngine:
         """
         ctx = self.ctx
         if not USAR_PORTAO_DE_NOME:
+            return True
+        # SEM ALVO PROIBIDO NESTA CAVE, a pergunta nao existe -- e nao ha
+        # leitura a pagar. A HH cai aqui em todo golpe do destravamento.
+        if not self.NOME_DO_ALVO_PROIBIDO:
             return True
         # Popula `_ultimos_nomes_do_alvo` -- a MESMA leitura que
         # `_e_o_alvo_proibido` consulta logo abaixo, e nao uma segunda.
