@@ -32,18 +32,45 @@ usa `find_template` provavelmente também usa `capture_window`, e separá-los
 em submódulos só para ficarem "isolados" seria separar por cerimônia, não
 por uso.
 """
+from blazesbot.core.vision.barra import (
+    BARRA_DO_ALVO_X0,
+    BARRA_DO_ALVO_X1,
+    BARRA_DO_ALVO_Y0,
+    BARRA_DO_ALVO_Y1,
+    MINIMO_RECONHECIDO_NA_FAIXA,
+    USAR_OFFSET_FIXO_DA_BARRA,
+    LeituraDaBarra,
+    _barra_vermelha_e_hp_valida,  # noqa: F401  re-export: tests/test_marcador_de_morte
+    _classificar_colunas,  # noqa: F401  re-export: tests/test_fase_2_pela_tela
+    _vida_por_ancora_azul,  # noqa: F401  re-export: reserva do vida_do_alvo
+    ler_barra_do_alvo,
+    vida_do_alvo,
+)
 from blazesbot.core.vision.captura import (
     PASSO_DA_AMOSTRAGEM_DO_QUADRO,
     PW_RENDERFULLCONTENT,
     GdiPool,
-    _capture_with_pool,
-    _raw_capture,
+    _capture_with_pool,  # noqa: F401  re-export: tests testam o pool
+    _raw_capture,  # noqa: F401  re-export: tests testam o fallback
     capture_available,
     capture_window,
     client_offset,
     frame_is_blank,
     get_pool,
     release_pool,
+)
+from blazesbot.core.vision.marcadores import (
+    ALTURA_DA_BARRA,
+    LARGURA_MINIMA_DA_BARRA,
+    LIMIAR_DA_FASE_2_DO_BOSS,
+    LIMIAR_DO_MARCADOR_DE_MORTE,
+    LINHAS_ENTRE_HP_E_MP,
+    _corrida_mais_longa,  # noqa: F401  re-export: tests/test_fase_2_pela_tela
+    _regiao_quadro_alvo,  # noqa: F401  re-export: tests/test_marcador_de_morte
+    alvo_morto_na_tela,
+    boss_na_segunda_fase,
+    marcador_de_morte,
+    marcador_de_morte_em_cor,
 )
 from blazesbot.core.vision.templates import (
     DEFAULT_THRESHOLD,
@@ -58,75 +85,48 @@ from blazesbot.core.vision.templates import (
     region_is_uniform,
     template_present,
 )
-from blazesbot.core.vision.marcadores import (
-    ALTURA_DA_BARRA,
-    LARGURA_MINIMA_DA_BARRA,
-    LIMIAR_DA_FASE_2_DO_BOSS,
-    LIMIAR_DO_MARCADOR_DE_MORTE,
-    LINHAS_ENTRE_HP_E_MP,
-    _corrida_mais_longa,
-    _regiao_quadro_alvo,
-    alvo_morto_na_tela,
-    boss_na_segunda_fase,
-    marcador_de_morte,
-    marcador_de_morte_em_cor,
-)
-from blazesbot.core.vision.barra import (
-    BARRA_DO_ALVO_X0,
-    BARRA_DO_ALVO_X1,
-    BARRA_DO_ALVO_Y0,
-    BARRA_DO_ALVO_Y1,
-    LeituraDaBarra,
-    MINIMO_RECONHECIDO_NA_FAIXA,
-    USAR_OFFSET_FIXO_DA_BARRA,
-    _barra_vermelha_e_hp_valida,
-    _classificar_colunas,
-    _vida_por_ancora_azul,
-    ler_barra_do_alvo,
-    vida_do_alvo,
-)
 
 __all__ = [
-    # captura
-    "PASSO_DA_AMOSTRAGEM_DO_QUADRO",
-    "PW_RENDERFULLCONTENT",
-    "GdiPool",
-    "capture_window",
-    "capture_available",
-    "frame_is_blank",
-    "client_offset",
-    "get_pool",
-    "release_pool",
-    # templates
-    "DEFAULT_THRESHOLD",
-    "HIGHLIGHT_BGR",
-    "TemplateLibrary",
-    "LearnedCrops",
-    "crop",
-    "region_is_uniform",
-    "find_template",
-    "find_all_templates",
-    "highlight_ratio",
-    "find_highlighted_row",
-    "template_present",
-    # marcadores
-    "LARGURA_MINIMA_DA_BARRA",
-    "LINHAS_ENTRE_HP_E_MP",
     "ALTURA_DA_BARRA",
-    "LIMIAR_DO_MARCADOR_DE_MORTE",
-    "LIMIAR_DA_FASE_2_DO_BOSS",
-    "alvo_morto_na_tela",
-    "marcador_de_morte",
-    "marcador_de_morte_em_cor",
-    "boss_na_segunda_fase",
     # barra
     "BARRA_DO_ALVO_X0",
     "BARRA_DO_ALVO_X1",
     "BARRA_DO_ALVO_Y0",
     "BARRA_DO_ALVO_Y1",
+    # templates
+    "DEFAULT_THRESHOLD",
+    "HIGHLIGHT_BGR",
+    # marcadores
+    "LARGURA_MINIMA_DA_BARRA",
+    "LIMIAR_DA_FASE_2_DO_BOSS",
+    "LIMIAR_DO_MARCADOR_DE_MORTE",
+    "LINHAS_ENTRE_HP_E_MP",
     "MINIMO_RECONHECIDO_NA_FAIXA",
+    # captura
+    "PASSO_DA_AMOSTRAGEM_DO_QUADRO",
+    "PW_RENDERFULLCONTENT",
     "USAR_OFFSET_FIXO_DA_BARRA",
+    "GdiPool",
+    "LearnedCrops",
     "LeituraDaBarra",
+    "TemplateLibrary",
+    "alvo_morto_na_tela",
+    "boss_na_segunda_fase",
+    "capture_available",
+    "capture_window",
+    "client_offset",
+    "crop",
+    "find_all_templates",
+    "find_highlighted_row",
+    "find_template",
+    "frame_is_blank",
+    "get_pool",
+    "highlight_ratio",
     "ler_barra_do_alvo",
+    "marcador_de_morte",
+    "marcador_de_morte_em_cor",
+    "region_is_uniform",
+    "release_pool",
+    "template_present",
     "vida_do_alvo",
 ]

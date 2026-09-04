@@ -31,7 +31,7 @@ def main() -> int:
     for label, module, package in CHECKS:
         try:
             importlib.import_module(module)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             print(f"  [FALHA] {label}")
             print(f"          {type(exc).__name__}: {exc}")
             missing.append(package)
@@ -50,7 +50,7 @@ def main() -> int:
     # Confere também que o próprio BlazesBot importa
     try:
         from blazesbot.config import BotConfig  # noqa: F401
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         print(f"  [FALHA] módulos do BlazesBot: {exc}")
         print()
         print("A pasta 'blazesbot' provavelmente não está do lado do main.py.")

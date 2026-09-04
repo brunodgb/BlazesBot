@@ -22,9 +22,9 @@ from dataclasses import dataclass
 import numpy as np
 
 from blazesbot.core.vision.marcadores import (
+    ALTURA_DA_BARRA,
     LARGURA_MINIMA_DA_BARRA,
     LINHAS_ENTRE_HP_E_MP,
-    ALTURA_DA_BARRA,
     _corrida_mais_longa,
     _regiao_quadro_alvo,
 )

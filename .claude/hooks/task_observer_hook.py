@@ -7,8 +7,8 @@ saía com código 1 no cmd. Sem aspas no comando, não há o que quebrar.
 
 O texto mora no .txt ao lado para poder ser editado sem mexer em código.
 """
-from pathlib import Path
 import sys
+from pathlib import Path
 
 sys.stdout.reconfigure(encoding="utf-8")
 print((Path(__file__).with_name("task-observer.txt")).read_text(encoding="utf-8"))
