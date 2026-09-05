@@ -14,9 +14,9 @@ O QUE ENTROU (e o que NÃO entrou)
 
 Os três gates portados vivem em `tests/test_quality_gates_python.py`:
 
-1. **Teto de 350 linhas por arquivo** (`test_max_linhas_por_arquivo`).
-   Mesmo número do toolkit; abaixo de ~200 vira briga constante em código
-   legítimo, acima de ~500 para de pressionar.
+1. **Teto de 800 linhas por arquivo** (`test_max_linhas_por_arquivo`).
+   **NÃO** é o 350 do toolkit — ver "POR QUE 800, E NÃO 350" abaixo, que é
+   a correção medida de 05/09/2026.
 
 2. **`print()` só em scripts de diagnóstico** (`test_print_so_em_scripts_de_diagnostico`).
    Lista de exceções documentada na docstring do teste: `tools/`, mais
@@ -45,10 +45,97 @@ do próximo prompt do toolkit (`09-file-size-refactor`) — a porta
 zerar, e o `print` idem.
 
 ================================================================
-MEDIÇÃO DE 04/09/2026 — LINHA DE BASE
+POR QUE 800, E NÃO 350 (correção medida — 05/09/2026)
+================================================================
+
+O 350 foi **importado** do toolkit sem ser medido nesta base, e reprovou
+45 dos 90 `.py`. O `CLAUDE.md` deste projeto manda o contrário: *"Número
+novo precisa de MEDIÇÃO"*. Medido, o 350 não serve — por duas razões
+independentes.
+
+**1. O teto ficava ABAIXO da mediana do projeto.**
+
+```
+mediana ... 410     teto  350 -> 45 arquivos (50%)
+p75 ....... 664     teto  500 -> 34 arquivos
+p90 ...... 1511     teto  800 -> 19 arquivos (21%)
+p95 ...... 2164     teto 1200 -> 12 arquivos
+```
+
+Um teto abaixo da mediana não sinaliza exceção: descreve o projeto
+inteiro. E fila de 45 itens parece infinita — foi exatamente isso que
+levou a sessão de 04-05/09 a partir `executor.py` e `combate.py` na
+marreta (ver "O QUE DEU ERRADO" abaixo). Gate só funciona com fila
+finita e visivelmente vencível.
+
+**2. Só 40% das linhas deste projeto são código executável.**
+
+```
+código executável ...... 22.475  (40%)
+docstring .............. 13.136  (23%)
+comentário ............. 11.907  (21%)
+em branco ...............  7.621  (13%)
+```
+
+O 350 do toolkit foi calibrado para TypeScript/JSX, onde a densidade de
+código é bem maior. Aqui:
+
+> **350 linhas cruas ~= 142 linhas de código real.**
+> **350 linhas de código real ~= 858 linhas cruas.**
+
+Aplicar 350 aqui é aplicar um teto **2,5x mais apertado** do que o
+toolkit pretendia. E 44% do arquivo é docstring e comentário — que é
+precisamente o que o `CLAUDE.md` **exige** ("porquê medido",
+"documentação de transição no mesmo passo"). Um teto de linhas cruas
+em 350 **pune a documentação que outra regra do projeto manda
+escrever**: dois gates brigando.
+
+**Por que 800 e não outro número:**
+
+- **~325 linhas de código real** — o ponto de pressão que o toolkit de
+  fato queria ("abaixo de ~200 vira briga, acima de ~500 para de
+  pressionar" — em linhas de CÓDIGO, não cruas).
+- **Acima do p75 (664)** — reprova o outlier, não a mediana.
+- **19 arquivos** em vez de 45: fila finita.
+- **Já era o padrão do usuário.** `~/.claude/rules/ecc/code-review.md`
+  diz *"Files are cohesive (<800 lines)"*. O 350 veio de fora e
+  atropelou calado uma régua que já existia.
+
+Se um dia o teto for apertado, aperte sobre **linhas de código**, não
+cruas — assim ele não pune docstring, que neste projeto é obrigatória.
+
+================================================================
+O QUE DEU ERRADO COM O 350 (04-05/09/2026)
+================================================================
+
+Com 45 offenders, a execução do prompt `09-file-size-refactor` violou o
+próprio prompt em quatro pontos, e o resultado foi descartado (tag
+`refatoracao-350-descartada`, 25 commits):
+
+- O prompt proíbe blob residual — *"a file holding whatever was left
+  over is **a failure, not a result**"*. Foram criados
+  `_modulo_legado.py` (1902L) e `_antigo.py` (906L).
+- O prompt manda cortar **por responsabilidade**; foi cortado por grupo
+  de métodos ("os 20 do alvo"), e `_alvo.py` saiu com 891L — acima até
+  do teto novo.
+- O prompt manda *"do not proceed with a failing check"*; a suíte
+  quebrou em `1851de6` (05/09 07:23) e **seguiram mais 8 commits** em
+  cima do vermelho.
+- A verificação final do prompt (quantos arquivos ainda acima do teto)
+  daria **44 -> 50**: o objetivo declarado andou para trás.
+
+O que ficou de bom e foi preservado: os dois gates, e o split de
+`core/vision.py` (`e96648e`) — cortado por domínio real
+(`captura`/`templates`/`barra`/`marcadores`), sem blob, sem injeção,
+suíte verde. **É o molde para os próximos.**
+
+================================================================
+MEDIÇÃO DE 04/09/2026 — LINHA DE BASE (com o teto antigo de 350)
 ================================================================
 
 TETO 350 — 44 offenders (do maior para o menor):
+*(fotografia histórica; o teto vigente é 800 — ver seção acima)*
+
 
 ```
    3735  blazesbot/bot/combate.py
@@ -158,6 +245,39 @@ python -m pytest tests/test_quality_gates_python.py -v
 Cada `::test_max_linhas_por_arquivo[<arquivo>]` que violar emite
 `UserWarning` listando o tamanho atual e o teto. O segundo gate emite
 uma `UserWarning` consolidadada com a lista de violações. **A suíte
-inteira passa** hoje (44 warns); o dia em que virar 0 warns é o dia em
-que a regra passa a reprovar de verdade — basta tirar o `with
-pytest.warns(...)` e usar `assert` direto.
+inteira passa** hoje (19 warns com o teto de 800); o dia em que virar 0
+warns é o dia em que a regra passa a reprovar de verdade — basta tirar o
+`with pytest.warns(...)` e usar `assert` direto.
+
+================================================================
+A FILA COM O TETO DE 800 (medida em 05/09/2026)
+================================================================
+
+```
+   3735  blazesbot/bot/combate.py
+   2939  blazesbot/bot/app/executor.py
+   2755  blazesbot/bot/supervisor.py
+   2596  blazesbot/bot/bc/routine.py
+   2498  blazesbot/core/memory.py
+   2164  blazesbot/bot/navegacao.py
+   1935  blazesbot/config.py
+   1929  blazesbot/bot/ui_do_jogo.py
+   1895  blazesbot/gui/main_window.py
+   1511  blazesbot/bot/hh/routine.py
+   1449  blazesbot/web_app.py
+   1415  blazesbot/gui/account_dialog.py
+   1134  blazesbot/bot/login.py
+   1111  blazesbot/core/inputs.py
+   1105  blazesbot/core/calibracao.py
+    972  blazesbot/bot/team.py
+    935  blazesbot/bot/vendedor.py
+    852  blazesbot/bot/bc/amostragem_de_cliques.py
+    834  blazesbot/bot/hh/mapa_hh.py
+```
+
+**Esta fila não é uma lista de tarefas com prazo.** É catraca: o valor
+do gate está em não deixar nascer o 20º. Arquivo grande e COESO é
+aceitável — se não há costura de responsabilidade, a resposta certa do
+prompt 09 é *"say so, leave it alone, and move to the next file"*.
+`core/memory.py` com 2498 linhas pode ser um mapa de offsets que é
+grande de verdade; dividi-lo piora.
