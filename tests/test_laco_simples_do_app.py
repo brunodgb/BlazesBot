@@ -60,6 +60,8 @@ def _executor(em_batalha=None, passos=3, tecla="TAB"):
     # SEM TIME: alvo aliado não existe fora de um, e a pergunta
     # nem chega a ser feita (`None` = não há como ser aliado).
     e._alvo_e_aliado = None
+    # SEM CICLO DA MORTE: o dublê não morre, e a pergunta nem é feita.
+    e.morte = None
     # SEM PONTO INICIAL: `distancia_da_base` devolve None e nada que dependa
     # de distância opina. A coleira dos 12 mora na AQUISIÇÃO -- ver
     # tests/test_coleira_do_ponto_no_app.py.

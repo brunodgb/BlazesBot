@@ -43,6 +43,22 @@ from __future__ import annotations
 import threading
 import time
 
+# O QUADRO DOS MORTOS mora ao lado (ver `mural_da_morte.py`): dicionários e
+# tranca próprios, e este arquivo já estava no teto de 800 linhas. Reexportado
+# aqui para quem lê o mural continuar dizendo `mural.morri(...)`.
+from .mural_da_morte import (  # noqa: F401
+    SEGUNDOS_DE_MORTO_PARA_FURAR_A_FILA,
+    VALIDADE_DO_FEITICO,
+    comecei_a_conjurar,
+    esquecer_morte,
+    esta_morto,
+    fada_conjurando_em,
+    fila_de_reviver,
+    morri,
+    morto_ha_muito_tempo,
+    nick_do_morto,
+)
+
 # ---------------------------------------------------------------------------
 # Registro de convites entre as contas desta execução
 # ---------------------------------------------------------------------------

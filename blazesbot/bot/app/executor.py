@@ -831,6 +831,8 @@ class ExecutorDeMacro:
         #
         # `None` = sem proteção de vida, e o APP roda exatamente como antes.
         cura: Callable[[object], object] | None = None,
+        # O CICLO DA MORTE (`bot/morte.py`), pela mesma fábrica da cura.
+        morte: Callable[[object], object] | None = None,
         sincronia: Callable[[object], object] | None = None,
         alvo_e_aliado: Callable[[], bool] | None = None,
         # A FADA: cura o time clicando nos retratos e confirmando pelo TARGET_ID.
@@ -1024,6 +1026,7 @@ class ExecutorDeMacro:
         self._tab_solicitado = False
         self._alvo_verificado: tuple[int, int] | None = None
         self.cura = cura(self) if cura is not None else None
+        self.morte = morte(self) if morte is not None else None
 
 
 
@@ -2642,6 +2645,14 @@ class ExecutorDeMacro:
             #
             # `None` NÃO INTERROMPE: sem leitura a resposta é "não sei", e o
             # modo cego roda a macro inteira como sempre fez.
+            # MORRI? Nada do que vem depois da linha importa -- e até
+            # 04/09/2026 o APP nem perguntava: a macro seguia apertando tecla
+            # contra um cadáver. O ciclo é de `bot/morte.py`; aqui só se pergunta.
+            if self.morte is not None and self.morte.estou_morto():
+                if not self.morte.resolver():
+                    return False
+                return self._abortar_a_volta()
+
             if self._ler_id_do_alvo() == 0:
                 self.log.info("APP: fiquei sem alvo na linha %d — corto a volta "
                               "e pego outro.", i + 1)

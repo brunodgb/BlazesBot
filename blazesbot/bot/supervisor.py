@@ -79,6 +79,19 @@ TETO_DA_FATIA_DE_ESPERA = 0.25
 # uma noite parado.
 TETO_DA_ESPERA_PELA_FADA = 60.0
 
+# Do CENTRO do template do convite até o "Ok" dele.
+#
+# `find_template` devolve o centro do casamento; o template é a fileira dos dois
+# botões (recortada de `data/templates/entrada/reviveu.png`), e o "Ok" fica à
+# esquerda do centro dela. Medido no recorte: template de 240x30, "Ok" centrado
+# em (50, 14) dentro dele, centro em (120, 15).
+DO_CENTRO_ATE_O_OK = (-70, -1)
+
+# Limiar do casamento do convite. Mais exigente que o limiar geral de telas
+# (0.85 é o do login) porque o custo do falso positivo aqui é um clique numa
+# janela que talvez seja a OUTRA -- e a outra tira o personagem do spot.
+LIMIAR_DO_CONVITE = 0.9
+
 
 class _AnyEvent:
     """Visão de "qualquer um destes eventos foi acionado".
@@ -186,6 +199,9 @@ class AccountSupervisor(threading.Thread):
         self.max_runs = max_runs
 
         self.log = logging.getLogger(f"blazes.{account.login}")
+        # Template do convite de reviver, carregado UMA vez (ver
+        # `achar_o_convite_de_reviver`).
+        self._tpl_convite = None
         self.pid: int | None = None
         self.hwnd: int | None = None
         self.relogin_count = 0
@@ -1443,6 +1459,38 @@ class AccountSupervisor(threading.Thread):
 
     # -- a Fada ------------------------------------------------------------
 
+    def achar_o_convite_de_reviver(self) -> tuple[int, int] | None:
+        """Onde clicar para ACEITAR o reviver da Fada, ou `None` se não há convite.
+
+        ESTA É A ÚNICA LEITURA DE TELA DO CICLO DA MORTE, e ela existe porque as
+        duas janelas ficam a 133 px uma da outra: a de trás ("revive at birth
+        place") tira o personagem do spot e cobra mais Exp. Clique cego ali é
+        caro demais; o template é o que separa uma da outra.
+
+        O ponto devolvido é o do "Ok" do convite, calculado a partir de ONDE o
+        template casou -- e não de uma coordenada fixa. Assim o clique acompanha
+        a janela em vez de depender da aritmética de quem recortou o print.
+        """
+        from ..core.vision import capture_window, find_template
+
+        if self._tpl_convite is None:
+            biblioteca = TemplateLibrary(Path("data") / "templates" / "entrada")
+            self._tpl_convite = biblioteca.load("convite_reviver.png")
+            if self._tpl_convite is None:
+                self.log.warning(
+                    "Sem o template do convite de reviver — não vou clicar às "
+                    "cegas numa tela com dois Ok.")
+                return None
+        quadro = capture_window(self.hwnd)
+        if quadro is None:
+            return None
+        centro = find_template(quadro, self._tpl_convite,
+                               threshold=LIMIAR_DO_CONVITE)
+        if centro is None:
+            return None
+        return (centro[0] + DO_CENTRO_ATE_O_OK[0],
+                centro[1] + DO_CENTRO_ATE_O_OK[1])
+
     def abrir_a_bolsa_e_apagar(self, tecla: str) -> None:
         """Abre a bolsa e apaga o lixo. UMA receita, dois chamadores.
 
@@ -2112,6 +2160,20 @@ class AccountSupervisor(threading.Thread):
                 log=log,
             )
 
+        def montar_o_ciclo_da_morte(executor_do_app):
+            """As peças do `CicloDaMorte`. Fábrica, como a cura e a Fada.
+
+            A MONTAGEM MORA EM `bot/morte.py`, ao lado do ciclo que ela serve --
+            este arquivo está no teto da catraca de tamanho, e a montagem não
+            precisa de nada que só o supervisor saiba além do próprio `self`.
+            """
+            from .morte import montar_para_o_app
+
+            return montar_para_o_app(
+                self, executor_do_app, entrada,
+                vida_pct=vida_pct, em_batalha=em_batalha,
+                esta_sentado=esta_sentado, tecla_de_sentar=teclas.sit)
+
         executor = ExecutorDeMacro(
             hwnd=self.hwnd,
             # A MACRO PODE SER EMPRESTADA. Num time, o seguidor roda as linhas
@@ -2171,6 +2233,10 @@ class AccountSupervisor(threading.Thread):
             # A CURA e o ALVO. Sem memória legível a cura fica inerte e o APP
             # roda exatamente como antes -- é o mesmo contrato do pet.
             cura=montar_cura if memoria_do_pet is not None else None,
+            # O CICLO DA MORTE. Sem memória não há como saber que morreu, e aí
+            # o APP roda cego como sempre rodou -- mesmo contrato da cura.
+            morte=(montar_o_ciclo_da_morte
+                   if memoria_do_pet is not None else None),
             alvo_atual=alvo_atual if memoria_do_pet is not None else None,
             # O TAB DEIXOU DE SER LINHA DA MACRO: o bot lê o id do alvo e só
             # aperta quando não há nenhum. Ver `_garantir_alvo` no executor.

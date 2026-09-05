@@ -616,6 +616,25 @@ Cada item é o que **não pode ser violado**. O detalhe de cada área mora em
   de Quedas, igual ao `_rodar_modo_app`. E `_montar_a_fada` **captura
   `Disconnected` e relança ANTES** do `except Exception` — engolir a queda ali
   deixava a Fada da HH acompanhando o líder com a janela fechada.
+- **O APP RECONHECE A PRÓPRIA MORTE** (04/09/2026, `bot/morte.py`). `hp == 0`
+  lido da memória, conferido **a cada linha** junto do alvo zerado — antes disso
+  a macro seguia apertando tecla contra um cadáver, e no log de 7 h de duas
+  contas de APP não havia UM evento de morte. Sem leitura, **não há morte**:
+  cego não declara morte, senão pararia a macro de uma conta viva.
+- **O CICLO DA MORTE TEM ORDEM FIXA:** avisa o time → espera a Fada no máximo
+  `PRAZO_PARA_A_FADA` (60 s) → clica o "Ok" do jogo → senta e regenera → volta ao
+  ponto pelo `Navigator`. **Sem Fada no time (ou sendo eu a Fada), revive na
+  hora** — não há por que esperar. **Feitiço em curso ESTICA o prazo** (a skill
+  tem 5 s de preparo; sem esticar, a vítima se auto-revive no meio dele e a
+  mana da Fada vai fora).
+- **OS DOIS "Ok" FICAM A 133 px UM DO OUTRO, E O ERRADO CUSTA O SPOT.** O do
+  convite da Fada teleporta para ela; o do jogo revive no lugar cobrando mais
+  Exp. Por isso o convite é o **único** ponto do ciclo decidido por IMAGEM
+  (`convite_reviver.png`, limiar 0.9) e o clique sai **onde o template casou**,
+  nunca numa coordenada fixa.
+- **TRÊS MORTES SEGUIDAS SEM VOLTAR AO PONTO PARAM A CONTA.** É "seguidas", não
+  "no total": voltar zera o contador. Sem ele, um spot que virou armadilha vira
+  um moedor de tentativas a noite toda.
 - **A COLEIRA DOS 12 — mob longe do ponto NÃO é alvo** (04/09/2026,
   `core/coleira_do_ponto.py`, `MAXIMO_DE_PIXELS_DO_PONTO = 12`). A distância
   medida é a do **MOB até a base**, e ela é conferida **na AQUISIÇÃO**, dentro de
