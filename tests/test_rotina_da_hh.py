@@ -238,7 +238,7 @@ def test_o_trecho_avanca_e_o_ultimo_leva_para_a_SAIDA():
     para as duas.
     """
     fonte = _fonte(HHRoutine._avancar_o_trecho)
-    assert "self._trecho = proximo" in fonte
+    assert "marcar_feito_e_avancar" in fonte
     assert "State.SAIR" in fonte
     assert "State.ATE_O_BOSS" in fonte
 
@@ -407,7 +407,12 @@ def test_a_morte_cai_no_RECUPERAR_e_volta_a_se_situar():
     fonte = _fonte(HHRoutine._do_recuperar)
     assert "dead" in fonte
     assert "State.SITUAR" in fonte
-    assert "_trecho = 0" in fonte
+    # AQUI HAVIA `assert "_trecho = 0" in fonte`, e ele estava ERRADO em dois
+    # sentidos: zerar o trecho na queda foi REMOVIDO em 03/09 (quem caísse no
+    # trecho 3 voltava a fazer o 1 e encontrava a sala vazia), e a asserção só
+    # continuava passando porque casava com o COMENTÁRIO que explicava a
+    # remoção. Quem guarda o comportamento certo é
+    # `test_cair_NAO_joga_fora_o_trecho_em_andamento`, pelo AST.
 
 
 # ===========================================================================
@@ -669,14 +674,17 @@ def test_nao_volta_se_nao_saiu_do_lugar():
 
 def test_o_progresso_e_ZERADO_ao_entrar_na_cave():
     """Instância nova, quatro bosses vivos de novo."""
-    assert "_trechos_feitos.clear()" in _fonte(HHRoutine._entrou)
+    assert "progresso.entrei_na_cave()" in _fonte(HHRoutine._entrou)
 
 
 def test_o_trecho_feito_e_PULADO_na_volta():
     """Depois de uma morte o bot refaz a perna; o que já limpou, ele pula."""
+    # A REGRA DE PULAR mora no `ProgressoDaCave` e é testada lá
+    # (`test_o_trecho_ja_feito_e_PULADO`). Aqui só se confere que a rotina
+    # delega em vez de reimplementar a contagem.
     fonte = _fonte(HHRoutine._avancar_o_trecho)
-    assert "_trechos_feitos.add" in fonte
-    assert "in self._trechos_feitos" in fonte
+    assert "marcar_feito_e_avancar" in fonte
+    assert "_trechos_feitos" not in fonte
 
 
 def test_a_retomada_respeita_o_trecho_em_ANDAMENTO():
@@ -688,9 +696,9 @@ def test_a_retomada_respeita_o_trecho_em_ANDAMENTO():
     só acontece na saída.
     """
     fonte = _fonte(HHRoutine._retomar_dentro_da_cave)
-    assert "_run_em_andamento" in fonte
+    assert "progresso.em_andamento" in fonte
     # a distância só decide DEPOIS, quando não há run em andamento
-    assert fonte.index("_run_em_andamento") < fonte.index("mais_proximos")
+    assert fonte.index("progresso.em_andamento") < fonte.index("mais_proximos")
 
 
 # ===========================================================================
@@ -820,9 +828,7 @@ def test_sair_ZERA_o_progresso_dos_bosses():
     Regra do usuário, 03/09/2026: *"a cada vez que saiu da cave, tem que
     resetar, pois ao reentrar todos os bosses vão estar vivos novamente"*.
     """
-    fonte = _fonte(HHRoutine._saiu)
-    assert "_trechos_feitos.clear()" in fonte
-    assert "_run_em_andamento = False" in fonte
+    assert "progresso.sai_da_cave()" in _fonte(HHRoutine._saiu)
 
 
 def test_o_teto_para_sair_e_MENOR_que_o_de_entrar():
@@ -976,3 +982,42 @@ def test_a_regua_da_chegada_e_a_do_core_e_nao_um_numero_novo():
     assert mapa_hh.acabei_de_entrar(mapa_hh.CHEGADA_NA_HH)
     assert not mapa_hh.acabei_de_entrar((80, 42))
     assert not mapa_hh.acabei_de_entrar(None)
+
+
+# ===========================================================================
+# "TODOS OS TRECHOS FEITOS" É UM ESTADO LEGÍTIMO -- 05/09/2026
+# ===========================================================================
+#
+# A CONTAGEM em si é testada em `tests/test_progresso_da_cave.py`. Aqui fica só
+# o que a ROTINA faz com a resposta dela.
+
+
+def test_com_tudo_feito_SITUAR_manda_SAIR_e_nao_estoura():
+    """Era `IndexError: tuple index out of range` em `_retomar_dentro_da_cave`.
+
+    Medido no log de 05/09/2026: o usuário desligou às 20:02:14 com "os quatro
+    feitos, saindo" e religou às 20:02:35 -- SITUAR estourou ONZE vezes em dez
+    segundos. O progresso atravessa o desliga/liga porque a rotina é guardada
+    no supervisor de propósito.
+    """
+    from blazesbot.bot.hh import mapa_hh
+    from blazesbot.bot.hh.progresso import ProgressoDaCave
+
+    r = HHRoutine.__new__(HHRoutine)
+    r.progresso = ProgressoDaCave(len(mapa_hh.TRECHOS_DOS_BOSSES))
+    r.progresso.a_run_comecou()
+    r.progresso.pular_para(len(mapa_hh.TRECHOS_DOS_BOSSES))
+
+    registrado = []
+    r._ir_para = lambda estado, motivo="": registrado.append(estado)
+    r._retomar_dentro_da_cave((55, 33))
+
+    assert registrado == [State.SAIR]
+
+
+def test_a_rotina_NAO_faz_a_conta_de_acabou_por_conta_propria():
+    """Duas contas dessas divergiriam: IndexError num ramo, trecho refeito no
+    outro."""
+    fonte = _fonte(HHRoutine._retomar_dentro_da_cave)
+    assert "self.progresso.acabou()" in fonte
+    assert "len(mapa_hh.TRECHOS_DOS_BOSSES)" not in fonte

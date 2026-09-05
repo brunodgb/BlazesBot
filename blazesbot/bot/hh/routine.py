@@ -73,6 +73,7 @@ from ..navegacao import Navigator, PersonagemMortoNoPortao
 from ..team import TeamService
 from . import mapa_hh
 from .entrada import EntradaDaHH
+from .progresso import ProgressoDaCave
 from .vendedor import VendedorDaHH
 
 # ---------------------------------------------------------------------------
@@ -220,29 +221,18 @@ class HHRoutine:
         self.team = TeamService(
             ctx, nick_do_reset=lambda: ctx.settings.hh.reset_nick)
         self.state = State.SITUAR
-        # Em qual dos quatro trechos a run está. É o índice em
-        # `mapa_hh.TRECHOS_DOS_BOSSES`, e é o que faz os quatro bosses serem um
-        # laço em vez de quatro pares de estados.
-        self._trecho = 0
+        # O PROGRESSO DOS TRECHOS TEM DONO, e é `hh/progresso.py`.
+        #
+        # Eram três campos soltos aqui (`_trecho`, `_trechos_feitos`,
+        # `_run_em_andamento`), lidos e escritos em seis lugares sem nenhum que
+        # declarasse "a run começou" ou "acabou" -- e foi dessa dispersão que
+        # nasceu o `IndexError` em SITUAR de 05/09/2026.
+        self.progresso = ProgressoDaCave(len(mapa_hh.TRECHOS_DOS_BOSSES))
         self._voltas_no_estado = 0
         self._ultimo_estado: State | None = None
         self._runs_na_ultima_venda = 0
         # Se a morte desta vez já foi contada no placar.
         self._contou_a_morte = False
-        # QUAIS TRECHOS JÁ NÃO TÊM MAIS NADA nesta ida à cave.
-        #
-        # Volátil de propósito (regra do usuário, 03/09/2026: *"não precisa ser
-        # persistente, só verificar enquanto está com o bot aberto"*): serve
-        # para a MORTE, que devolve o personagem ao começo da cave com a run
-        # ainda em andamento. Sem isto ele refaria os bosses já mortos.
-        #
-        # ZERADO AO SAIR DA CAVE, e é obrigatório: o desfaz-refaz do time
-        # ressuscita todos os quatro, então na volta seguinte nenhum está feito.
-        self._trechos_feitos: set[int] = set()
-        # Se há uma run em andamento DENTRO da cave. É o que faz a retomada
-        # respeitar o trecho em que ela parou em vez de escolher pelo waypoint
-        # mais próximo -- os quatro trechos se cruzam no mapa.
-        self._run_em_andamento = False
 
     # ==================================================================
     # O laço
@@ -437,13 +427,39 @@ class HHRoutine:
         batalha (`SEGUNDOS_PARA_ENGAJAR`) é que resolvem: ponto limpo não
         engaja, e o bot segue.
         """
-        if self._run_em_andamento:
-            rotulo = mapa_hh.TRECHOS_DOS_BOSSES[self._trecho][0]
+        if self.progresso.em_andamento:
+            # ===========================================================
+            # "TODOS OS TRECHOS FEITOS" É UM ESTADO LEGÍTIMO
+            # ===========================================================
+            #
+            # `_avancar_o_trecho` deixa `_trecho == len(TRECHOS)` no intervalo
+            # entre matar o último boss e sair da cave. Nesse intervalo não há
+            # trecho para retomar -- há uma SAÍDA pendente.
+            #
+            # Sem este ramo a linha de baixo indexava a tupla fora do fim e
+            # estourava `IndexError`. Medido no log de 05/09/2026: o usuário
+            # desligou a HH às 20:02:14 com "os quatro feitos, saindo" e religou
+            # às 20:02:35 -- SITUAR estourou ONZE vezes em dez segundos, cada
+            # uma virando `exceção em SITUAR` -> RECUPERAR -> SITUAR.
+            #
+            # POR QUE O ESTADO ATRAVESSA O DESLIGA/LIGA: a rotina é guardada em
+            # `supervisor._rotina_da_hh` de propósito -- recriá-la a cada volta
+            # do laço externo faria a run voltar ao primeiro boss. O preço é que
+            # `_trecho` sobrevive, e quem lê tem de estar preparado.
+            if self.progresso.acabou():
+                self._ir_para(
+                    State.SAIR,
+                    f"de volta DENTRO da cave em {pos}; os "
+                    f"{self.progresso.total} trechos já estão "
+                    f"feitos -- o que falta é sair")
+                return
+
+            rotulo = mapa_hh.TRECHOS_DOS_BOSSES[self.progresso.trecho][0]
             self._ir_para(
                 State.PREPARAR_DENTRO,
                 f"de volta DENTRO da cave em {pos}; a run continua no trecho do "
-                f"{rotulo} ({len(self._trechos_feitos)} de "
-                f"{len(mapa_hh.TRECHOS_DOS_BOSSES)} já feitos)")
+                f"{rotulo} ({self.progresso.feitos} de "
+                f"{self.progresso.total} já feitos)")
             return
 
         melhor, menor = 0, float("inf")
@@ -452,7 +468,7 @@ class HHRoutine:
             if dist < menor:
                 melhor, menor = i, dist
 
-        self._trecho = melhor
+        self.progresso.pular_para(melhor)
         rotulo = mapa_hh.TRECHOS_DOS_BOSSES[melhor][0]
         # PASSA PELO PREPARO, e não direto para o trecho. Quem chega aqui ou
         # morreu e reviveu dentro, ou abriu o bot com a run em andamento -- nos
@@ -715,9 +731,8 @@ class HHRoutine:
         torna o tempo por run comparável entre uma volta e outra.
         """
         ctx = self.ctx
-        self._trecho = 0
         # ENTRADA NOVA, INSTÂNCIA NOVA: os quatro bosses estão vivos de novo.
-        self._trechos_feitos.clear()
+        self.progresso.entrei_na_cave()
 
         if ctx.settings.hh.modo_do_reset != MODO_FADA_DA_HH:
             # SOLO: a conta de reset já cumpriu o papel dela. Desfazer agora é o
@@ -794,8 +809,8 @@ class HHRoutine:
                 "poção e comida ficam para a próxima entrada.")
             self.nav.garantir_montaria_para_andar("atravessar a cave")
             ctx.stats.begin_run()
-            self._run_em_andamento = True
-            rotulo = mapa_hh.TRECHOS_DOS_BOSSES[self._trecho][0]
+            self.progresso.a_run_comecou()
+            rotulo = mapa_hh.TRECHOS_DOS_BOSSES[self.progresso.trecho][0]
             self._ir_para(State.ATE_O_BOSS, f"seguindo para o {rotulo}")
             return
 
@@ -820,9 +835,9 @@ class HHRoutine:
         # falhado: amarrar a contagem ao sucesso do preparo faria a run com
         # problema sumir das estatísticas, e é justamente ela que interessa.
         ctx.stats.begin_run()
-        self._run_em_andamento = True
+        self.progresso.a_run_comecou()
 
-        rotulo = mapa_hh.TRECHOS_DOS_BOSSES[self._trecho][0]
+        rotulo = mapa_hh.TRECHOS_DOS_BOSSES[self.progresso.trecho][0]
         self._ir_para(State.ATE_O_BOSS,
                       f"preparo feito; indo para o {rotulo}")
 
@@ -878,10 +893,10 @@ class HHRoutine:
         desliga.
         """
         ctx = self.ctx
-        rotulo, caminho, ponto = mapa_hh.TRECHOS_DOS_BOSSES[self._trecho]
+        rotulo, caminho, ponto = mapa_hh.TRECHOS_DOS_BOSSES[self.progresso.trecho]
 
         ctx.log.info("HH: indo para o %s (trecho %s/%s, %s waypoints)",
-                     rotulo, self._trecho + 1,
+                     rotulo, self.progresso.trecho + 1,
                      len(mapa_hh.TRECHOS_DOS_BOSSES), len(caminho))
 
         # A CÂMERA ANTES DE CADA TRECHO. O clique de minimapa é calculado a
@@ -1021,7 +1036,7 @@ class HHRoutine:
         reviveu dentro ou fora da cave.
         """
         ctx = self.ctx
-        rotulo, _caminho, ponto = mapa_hh.TRECHOS_DOS_BOSSES[self._trecho]
+        rotulo, _caminho, ponto = mapa_hh.TRECHOS_DOS_BOSSES[self.progresso.trecho]
 
         # NÃO SE ESPERA COMBATE DE LONGE. Absorvido do `BossRushRoutine._do_boss`:
         # se o personagem não está no ponto, ele volta a andar em vez de ficar
@@ -1182,29 +1197,19 @@ class HHRoutine:
         )
 
     def _avancar_o_trecho(self, rotulo: str) -> None:
-        """Marca este trecho como feito e escolhe o próximo PENDENTE.
+        """Fecha este trecho e vai para o próximo pendente -- ou para a saída.
 
-        Pular os já feitos é o que faz a morte custar apenas o caminho de volta:
-        o personagem revive no começo da cave, refaz a perna e, chegando num
-        ponto que ele já limpou, não perde nem os 5 s de espera.
+        A CONTAGEM É DO `ProgressoDaCave`; aqui fica só o que a rotina faz com
+        a resposta dele.
         """
-        self._trechos_feitos.add(self._trecho)
-
-        proximo = self._trecho + 1
-        while (proximo < len(mapa_hh.TRECHOS_DOS_BOSSES)
-               and proximo in self._trechos_feitos):
-            self.ctx.log.info(
-                "HH: o %s já foi feito nesta ida à cave; pulando",
-                mapa_hh.TRECHOS_DOS_BOSSES[proximo][0])
-            proximo += 1
-
-        self._trecho = proximo
-        if self._trecho >= len(mapa_hh.TRECHOS_DOS_BOSSES):
+        seguinte = self.progresso.marcar_feito_e_avancar()
+        if seguinte is None:
             self._ir_para(State.SAIR,
                           f"{rotulo} foi o último; os quatro feitos, saindo")
-        else:
-            seguinte = mapa_hh.TRECHOS_DOS_BOSSES[self._trecho][0]
-            self._ir_para(State.ATE_O_BOSS, f"indo para o {seguinte}")
+            return
+        self._ir_para(
+            State.ATE_O_BOSS,
+            f"indo para o {mapa_hh.TRECHOS_DOS_BOSSES[seguinte][0]}")
 
     # A CURA ENTRE OS BOSSES SAIU, e a ausência é a decisão.
     #
@@ -1346,17 +1351,11 @@ class HHRoutine:
     def _saiu(self) -> None:
         """Fora. A run fecha aqui, e o progresso da cave é esquecido.
 
-        ZERAR `_trechos_feitos` É OBRIGATÓRIO: o desfaz-refaz do time
-        (`MANUTENCAO`) ressuscita os quatro bosses, então na entrada seguinte
-        nenhum trecho está feito. Regra do usuário, 03/09/2026: *"a cada vez que
-        saiu da cave, tem que resetar, pois ao reentrar todos os bosses vão
-        estar vivos novamente"*.
+        O PORQUÊ de esquecer está em `progresso.sai_da_cave`.
         """
         ctx = self.ctx
         ctx.stats.end_run(ok=True)
-        self._trechos_feitos.clear()
-        self._run_em_andamento = False
-        self._trecho = 0
+        self.progresso.sai_da_cave()
         self._publicar_onde_estou(dentro=False)
         self._ir_para(State.MANUTENCAO, "run concluída")
 
@@ -1449,14 +1448,10 @@ class HHRoutine:
         # devolve um motivo quando a vida cai abaixo de `emergency_pct`).
         self._curar_em_emergencia()
 
-        # O TRECHO EM ANDAMENTO NÃO É JOGADO FORA.
-        #
-        # Aqui havia `self._trecho = 0`, e ele desfazia o progresso da run: quem
-        # caísse no trecho 3 voltava a fazer o 1, encontrando a sala vazia --
-        # os bosses só renascem no reset, que acontece na SAÍDA.
-        #
-        # Quem decide por onde continuar é `_retomar_dentro_da_cave`, que sabe
-        # distinguir "a run continua" de "abri o bot com o personagem dentro".
+        # O TRECHO EM ANDAMENTO NÃO É JOGADO FORA: quem caísse no trecho 3
+        # voltaria a fazer o 1 e encontraria a sala vazia -- os bosses só
+        # renascem no reset, que acontece na SAÍDA. Quem decide por onde
+        # continuar é `_retomar_dentro_da_cave`.
         self._ir_para(State.SITUAR, "recuperando: vou me situar de novo")
 
     def _curar_em_emergencia(self) -> None:
