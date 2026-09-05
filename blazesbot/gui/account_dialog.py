@@ -535,6 +535,7 @@ class AccountDialog(QDialog):
             "Os buffs são aplicados depois de cada login."
         ), [
             ("Super Skill:", "k_super"), ("Skill de cura:", "k_heal"),
+            ("Reviver aliado:", "k_revive"),
             ("Buff 1:", "k_buff1"), ("Buff 2:", "k_buff2"),
             ("Buff 3:", "k_buff3"), ("Buff 4:", "k_buff4"),
         ]))
@@ -1251,6 +1252,7 @@ class AccountDialog(QDialog):
         self.k_break.set_key(k.break_soul)
         self.k_super.set_key(k.super_skill)
         self.k_heal.set_key(k.heal_skill)
+        self.k_revive.set_key(k.revive_skill)
         buffs = list(k.buffs) + [""] * 4
         for i, attr in enumerate(("k_buff1", "k_buff2", "k_buff3", "k_buff4")):
             getattr(self, attr).set_key(buffs[i])
@@ -1370,6 +1372,7 @@ class AccountDialog(QDialog):
         k.break_soul = self.k_break.key()
         k.super_skill = self.k_super.key()
         k.heal_skill = self.k_heal.key()
+        k.revive_skill = self.k_revive.key()
         k.buffs = [
             c.key() for c in (self.k_buff1, self.k_buff2, self.k_buff3, self.k_buff4)
             if c.key()

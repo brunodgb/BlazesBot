@@ -904,6 +904,7 @@ const CAMPO_TECLA = [
   ["ed-k-atk3", "attack_skills", 3],
   ["ed-k-aoe", "aoe_skill"], ["ed-k-break", "break_soul"],
   ["ed-k-super", "super_skill"], ["ed-k-heal", "heal_skill"],
+  ["ed-k-revive", "revive_skill"],
   ["ed-k-buff1", "buffs", 0], ["ed-k-buff2", "buffs", 1],
   ["ed-k-buff3", "buffs", 2], ["ed-k-buff4", "buffs", 3],
   ["ed-k-hp", "hp_potion"], ["ed-k-bhp", "battle_hp_potion"],
@@ -1233,7 +1234,8 @@ function preencherBC(bc) {
 function lerTeclas() {
   const out = {
     attack_skills: [], aoe_skill: "", break_soul: "", super_skill: "",
-    heal_skill: "", buffs: [], hp_potion: "", battle_hp_potion: "",
+    heal_skill: "", revive_skill: "", buffs: [], hp_potion: "",
+    battle_hp_potion: "",
     pet_food: "", stone_charm: "", mount: "", speed_skill: "",
     guild_token: "", pet_summon: "", next_target: "", sit: "",
     inventory: "", friend_list: "",

@@ -145,6 +145,21 @@ def _todos_os_python(raiz: Path) -> list[Path]:
 # 04-05/09 provou o custo de ignorar isso (ver `git show
 # refatoracao-350-descartada`). Ver a triagem completa em
 # `docs/decisoes/eslint-portado-para-python.md`.
+# QUANDO A LINHA DE BASE PODE SUBIR -- e é raro
+#
+# A catraca não tem escapatória de propósito: herdado encolhe ou fica. Só que
+# TRÊS destes arquivos são o ÚNICO lugar possível de uma classe inteira de
+# alteração -- um campo novo de configuração precisa de uma linha no dataclass
+# (`config.py`), uma no dicionário que a ponte manda para a tela e outra na que
+# ela lê de volta (`web_app.py`), e uma no par carregar/gravar da GUI
+# (`account_dialog.py`). Não existe "outro módulo" para uma linha dentro de um
+# literal, e quebrar `config.py` para acrescentar uma tecla seria pior desenho
+# do que a linha.
+#
+# Então a regra fica: subir a base é ATO DELIBERADO, no mesmo commit que a
+# provoca, com o motivo escrito ao lado do número. Subir por comodidade -- para
+# caber lógica nova, comentário longo, método novo -- não vale: aí o certo
+# continua sendo outro módulo. Toda subida aqui tem data e motivo.
 HERDADOS = {
     # COESO — uma classe gorda, sem costura de arquivo
     "blazesbot/bot/combate.py": 3735,                    # CombatEngine, 52 métodos (74%)
@@ -156,14 +171,17 @@ HERDADOS = {
     "blazesbot/bot/ui_do_jogo.py": 1929,                 # UIDoJogo, 34 métodos (70%)
     "blazesbot/gui/main_window.py": 1895,                # MainWindow, 59 métodos (92%)
     "blazesbot/bot/hh/routine.py": 1511,                 # HHRoutine, 34 métodos (86%)
-    "blazesbot/web_app.py": 1449,                        # _App, 45 métodos (63%)
-    "blazesbot/gui/account_dialog.py": 1415,             # AccountDialog, 20 métodos (92%)
+    "blazesbot/web_app.py": 1451,                        # _App, 45 métodos (63%)
+    #  +2 em 04/09: ida e volta da tecla `revive_skill` na ponte
+    "blazesbot/gui/account_dialog.py": 1418,             # AccountDialog, 20 métodos (92%)
+    #  +3 em 04/09: campo, carga e gravação da tecla `revive_skill`
     "blazesbot/bot/login.py": 1134,                      # LoginSequence, 26 métodos (84%)
     "blazesbot/core/inputs.py": 1111,                    # Input, 27 métodos (68%)
     "blazesbot/bot/team.py": 972,                        # TeamService, 18 métodos (59%)
     "blazesbot/bot/vendedor.py": 935,                    # JanelaDeVenda, 19 métodos (65%)
     # COM COSTURA — muitas funções top-level; dividir é possível quando valer
-    "blazesbot/config.py": 1935,                         # 15 classes + 10 funções top-level
+    "blazesbot/config.py": 1942,                         # 15 classes + 10 funções top-level
+    #  +7 em 04/09: campo `revive_skill` no `KeyBinds` e o resumo dele
     "blazesbot/core/calibracao.py": 1105,                # 24 funções top-level (diagnóstico)
     "blazesbot/bot/bc/amostragem_de_cliques.py": 852,    # 12 funções top-level (diagnóstico)
     "blazesbot/bot/hh/mapa_hh.py": 834,                  # 0 classes, 16 funções top-level

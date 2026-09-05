@@ -324,3 +324,21 @@ pedido, a republicação da vítima chega lá **indistinguível de um pedido nov
 e limpar ali reabriria exatamente o laço que a marca fecha. Quem limpa é a
 vítima, ao LER o recado, ou o relógio (`VALIDADE_DA_DESISTENCIA`, 20 s) — curto
 de propósito, porque a marca é recado, não banimento.
+
+
+## A tecla de reviver — o que foi medido (04/09/2026)
+
+O tooltip da skill no cliente (Wizard nível 70) responde sozinho quase todo o
+desenho do reviver:
+
+| campo | valor | o que decide |
+|---|---|---|
+| Mana | **1168** | a Fada confere a mana ANTES de tentar; sem ela, nem aperta |
+| Distance | **150** | ela **não precisa chegar perto do corpo** — nada de caminhar até o morto |
+| Preparing Time | **5 s** | do toque até a janela aparecer na tela da vítima passam ≥5 s; concluir "a tecla não saiu" antes disso é erro |
+| Cooling Time | 1,5 s | duas tentativas seguidas não colidem |
+| efeito | revive **e recupera 1168 de vida** | o revivido não levanta agonizando (o valor acompanha a força da Fada) |
+
+A tecla é `KeyBinds.revive_skill`, na aba **Teclas → Magias de Suporte**, nas
+duas interfaces. **Vazia por padrão**, como a `follow`: chutar tecla faria a
+Fada apertar outra coisa em cima de um morto.

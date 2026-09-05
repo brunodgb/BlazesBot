@@ -77,6 +77,11 @@ class KeyBinds:
     super_skill: str = ""
     break_soul: str = ""
     heal_skill: str = ""
+    # Ressuscitar um aliado caído ("Revive Spell"). VAZIA por padrão, como a
+    # `follow`: chutar tecla faria a Fada apertar outra coisa em cima de um
+    # morto. O que foi medido dela (alcance, preparo, mana) está em
+    # `docs/decisoes/fada.md`.
+    revive_skill: str = ""
     buffs: list[str] = field(default_factory=list)
     # Consumíveis
     hp_potion: str = "9"
@@ -173,6 +178,7 @@ class KeyBinds:
         opcionais = [
             ("AoE", self.aoe_skill), ("Super Skill", self.super_skill),
             ("Break Soul", self.break_soul), ("Cura", self.heal_skill),
+            ("Reviver", self.revive_skill),
             ("HP de batalha", self.battle_hp_potion),
             ("Comida de pet", self.pet_food),
             ("Pedra de retorno", self.stone_charm),
@@ -214,6 +220,7 @@ class KeyBinds:
         for rotulo, valor in (
             ("AoE", self.aoe_skill), ("Super Skill", self.super_skill),
             ("Break Soul", self.break_soul), ("Cura", self.heal_skill),
+            ("Reviver", self.revive_skill),
             ("Poção HP", self.hp_potion),
             ("Poção HP em batalha", self.battle_hp_potion),
             ("Comida Pet", self.pet_food), ("Retorno", self.stone_charm),

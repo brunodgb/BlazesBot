@@ -349,6 +349,7 @@ class _App:
                 "break_soul": k.break_soul,
                 "super_skill": k.super_skill,
                 "heal_skill": k.heal_skill,
+                "revive_skill": k.revive_skill,
                 "buffs": buffs[:4],
                 "hp_potion": k.hp_potion,
                 "battle_hp_potion": k.battle_hp_potion,
@@ -645,6 +646,7 @@ class _App:
         st.keys.break_soul = str(k.get("break_soul", "") or "").upper()
         st.keys.super_skill = str(k.get("super_skill", "") or "").upper()
         st.keys.heal_skill = str(k.get("heal_skill", "") or "").upper()
+        st.keys.revive_skill = str(k.get("revive_skill", "") or "").upper()
         st.keys.buffs = [
             str(x).upper() for x in (k.get("buffs") or []) if str(x).strip()
         ]
