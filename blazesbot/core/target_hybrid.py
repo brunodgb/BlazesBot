@@ -54,6 +54,7 @@ from .memory import (
     OFF_ENTITY_ID,
     Memory,
 )
+from .registro_de_mortes import RegistroDeMortes
 from .vision import LeituraDaBarra
 
 if TYPE_CHECKING:
@@ -150,6 +151,8 @@ class MorteDoAlvo:
         # de 7 a 13 s (medido em 20/08/2026). Uma trava de relogio curta demais
         # conta o mesmo obito duas vezes; longa demais engole o seguinte.
         self._ultimo_morto: int | None = None
+        # Quem caiu, por NOME. Ver `core/registro_de_mortes.py`.
+        self.mortos = RegistroDeMortes()
 
     @staticmethod
     def veredito(entidade: dict | None) -> bool | None:
@@ -175,22 +178,36 @@ class MorteDoAlvo:
         """Esta morte ja foi contada? Nao mexe em nada."""
         return bool(ident) and self._ultimo_morto == ident
 
-    def contar(self, ident: int | None) -> bool:
+    def contar(self, ident: int | None, nome: str | None = None) -> bool:
         """Marca a morte deste alvo. `True` = e a PRIMEIRA vez.
 
         Quem chama usa o `False` para calar o log e o contador -- nunca para
         mudar o VEREDITO. Travar o veredito junto faria o portao "alvo vivo,
         nao mexe" reler o cadaver ja contado como se fosse alvo, e bloquear o
         TAB nele.
+
+        `nome` alimenta o REGISTRO DE MORTES (`core/registro_de_mortes.py`) --
+        opcional, e a ausencia nao muda nada aqui.
         """
         if self.ja_contei(ident):
             return False
         self._ultimo_morto = ident
+        self.mortos.anotar((nome,))
         return True
 
+    def caiu(self, nome: str) -> bool:
+        """Vi este nome cair desde o ultimo `esquecer`?
+
+        EVIDENCIA POSITIVA, NUNCA PORTAO. O porque medido esta no modulo do
+        registro: o nome vem com lixo em alguns por cento das leituras, entao
+        ele serve para AFIRMAR e nunca para NEGAR.
+        """
+        return self.mortos.caiu(nome)
+
     def esquecer(self) -> None:
-        """Zera a trava. Usado quando o ecossistema recomeca do zero."""
+        """Zera a trava e o registro. Quando o ecossistema recomeca do zero."""
         self._ultimo_morto = None
+        self.mortos.esquecer()
 
 
 @dataclass(frozen=True)

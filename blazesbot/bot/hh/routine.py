@@ -71,7 +71,7 @@ from ..context import (
 )
 from ..navegacao import Navigator, PersonagemMortoNoPortao
 from ..team import TeamService
-from . import mapa_hh
+from . import bosses, mapa_hh
 from .entrada import EntradaDaHH
 from .ponto_do_boss import do_trecho
 from .progresso import ProgressoDaCave
@@ -1122,6 +1122,14 @@ class HHRoutine:
         if not self._lutar_no_ponto(rotulo):
             return
 
+        # VI O BOSS CAIR? Prova mais forte que a posição: responde "o boss
+        # morreu?" e não "estou no lugar certo?". SÓ AFIRMA -- não ter visto cai
+        # no contrato de posição, logo abaixo. Ver `hh/bosses.py`.
+        if self._vi_o_boss_cair(rotulo):
+            self._catar_o_loot()
+            self._avancar_o_trecho(rotulo)
+            return
+
         # VOLTA PARA O PONTO, E A FALHA IMPORTA.
         #
         # Sair de batalha responde "a flag baixou", nunca "o ponto está limpo".
@@ -1139,6 +1147,22 @@ class HHRoutine:
 
         self._catar_o_loot()
         self._avancar_o_trecho(rotulo)
+
+    def _vi_o_boss_cair(self, rotulo: str) -> bool:
+        """A memória confirmou a morte do boss DESTE ponto, pelo nome?
+
+        Ponto de dois bosses exige os DOIS. Ver `hh/bosses.py`.
+        """
+        # `_morte` é `core/target_hybrid.MorteDoAlvo`, que já decide a morte e
+        # agora lembra o NOME de quem caiu. Chega-se a ela pelo motor porque a
+        # catraca não deixa `combate.py` crescer nem uma linha.
+        nomes = bosses.nomes_do_boss(rotulo)
+        morte = self.combat._morte
+        if not nomes or not all(morte.caiu(n) for n in nomes):
+            return False
+        self.ctx.log.info("HH: a memória confirmou a morte de %s -- o %s está "
+                          "feito.", ", ".join(nomes), rotulo)
+        return True
 
     def _lutar_no_ponto(self, rotulo: str) -> bool:
         """A luta deste ponto, com o ritual que a NATUREZA dele pede.
@@ -1162,6 +1186,7 @@ class HHRoutine:
         passa embaixo dele. Girar AoE ali é gastar o tempo da rotação sem dano.
         """
         ctx = self.ctx
+        self.combat._morte.esquecer()   # por episódio; ver `hh/bosses.py`
 
         if mapa_hh.e_pacote_de_mobs(rotulo):
             if self.combat.limpar_o_combate(f"o pacote do {rotulo}"):

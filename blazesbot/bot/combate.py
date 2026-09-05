@@ -2049,7 +2049,7 @@ class CombatEngine:
                 morreu=False, fonte="memoria", motivo=detalhe)
             return False
 
-        if not self._morte.contar(info.target_id):
+        if not self._morte.contar(info.target_id, info.nome):
             # MORTE JÁ CONTADA para ESTE alvo. O cadáver fica selecionável por
             # segundos (medido: 7 a 13 s), e sem esta trava ele gastaria um TAB
             # por leitura enquanto estivesse ali. A trava é por IDENTIDADE, não

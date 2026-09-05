@@ -261,10 +261,10 @@ ligar código não testado.
 | `PASSO_ESPERANDO_O_LIDER` | `0.5` | [blazesbot/bot/hh/fada.py:87](blazesbot/bot/hh/fada.py#L87) | — | — |
 | `AREA_DA_SAIDA` | `'Happiness Hall Main Hall'` | [blazesbot/bot/hh/mapa_hh.py:121](blazesbot/bot/hh/mapa_hh.py#L121) | — | — |
 | `AREA_INTERNA_NAO_MEDIDA` | `'HH (área não medida)'` | [blazesbot/bot/hh/mapa_hh.py:96](blazesbot/bot/hh/mapa_hh.py#L96) | — | Marcador para a área que ainda não foi medida. Ver o cabeçalho do módulo: é |
-| `BOSS_1` | `'Fa-Yuan'` | [blazesbot/bot/hh/mapa_hh.py:215](blazesbot/bot/hh/mapa_hh.py#L215) | — | Os quatro bosses |
-| `BOSS_2` | `'Dupla'` | [blazesbot/bot/hh/mapa_hh.py:216](blazesbot/bot/hh/mapa_hh.py#L216) | — | — |
-| `BOSS_3` | `'Green Robmaster'` | [blazesbot/bot/hh/mapa_hh.py:217](blazesbot/bot/hh/mapa_hh.py#L217) | — | — |
-| `BOSS_4` | `'Purple'` | [blazesbot/bot/hh/mapa_hh.py:218](blazesbot/bot/hh/mapa_hh.py#L218) | — | — |
+| `BOSS_1` | `'Fa-Yuan'` | [blazesbot/bot/hh/mapa_hh.py:215](blazesbot/bot/hh/mapa_hh.py#L215) | bosses.py | Os quatro bosses |
+| `BOSS_2` | `'Dupla'` | [blazesbot/bot/hh/mapa_hh.py:216](blazesbot/bot/hh/mapa_hh.py#L216) | bosses.py | — |
+| `BOSS_3` | `'Green Robmaster'` | [blazesbot/bot/hh/mapa_hh.py:217](blazesbot/bot/hh/mapa_hh.py#L217) | bosses.py | — |
+| `BOSS_4` | `'Purple'` | [blazesbot/bot/hh/mapa_hh.py:218](blazesbot/bot/hh/mapa_hh.py#L218) | bosses.py | — |
 | `DESTINO_DO_TRANSPORTE` | `'West Suburb of Stone City'` | [blazesbot/bot/hh/mapa_hh.py:147](blazesbot/bot/hh/mapa_hh.py#L147) | — | O destino no diálogo do Fay. **SÓ APARECE ROLANDO A LISTA ATÉ O FIM.** |
 | `ETAPA_DENTRO` | `'dentro da cave'` | [blazesbot/bot/hh/mapa_hh.py:617](blazesbot/bot/hh/mapa_hh.py#L617) | routine.py | EM QUE ETAPA DA VIAGEM O PERSONAGEM ESTÁ |
 | `ETAPA_LONGE` | `'longe, viagem completa'` | [blazesbot/bot/hh/mapa_hh.py:620](blazesbot/bot/hh/mapa_hh.py#L620) | — | — |
@@ -578,10 +578,10 @@ ligar código não testado.
 | `SEGUNDOS_POR_TENTATIVA_NA_FAY` | `1.8` | [blazesbot/core/stone_city.py:55](blazesbot/core/stone_city.py#L55) | mapa_bc.py, ui_service.py, entrada.py | — |
 | `TENTATIVAS_DE_ENCOSTAR_NA_FAY` | `6` | [blazesbot/core/stone_city.py:54](blazesbot/core/stone_city.py#L54) | mapa_bc.py, ui_service.py, entrada.py | Quantas vezes tentar encostar no ponto exato antes de desistir da viagem. |
 | `X_MAXIMO_DENTRO_DA_CAVE` | `500` | [blazesbot/core/stone_city.py:72](blazesbot/core/stone_city.py#L72) | mapa_bc.py | O X MÁXIMO QUE PODE EXISTIR NUMA INSTÂNCIA. |
-| `CASAS_DO_DESENHO` | `10` | [blazesbot/core/target_hybrid.py:115](blazesbot/core/target_hybrid.py#L115) | — | Casas do desenho da barra no log. |
-| `FAIXA_PARA_OLHAR_O_MARCADOR` | `0.1` | [blazesbot/core/target_hybrid.py:104](blazesbot/core/target_hybrid.py#L104) | — | Abaixo desta fração de vida vale a pena procurar o `EnemyDead.png`. |
-| `LIMIAR_VIDA_TELA` | `0.02` | [blazesbot/core/target_hybrid.py:93](blazesbot/core/target_hybrid.py#L93) | executor.py | Abaixo desta fração a barra conta como VAZIA. |
-| `MAXIMO_DE_ACHADOS` | `12` | [blazesbot/core/target_hybrid.py:567](blazesbot/core/target_hybrid.py#L567) | — | Quantos endereços mostrar por id. Mais que isto vira parede de texto. |
+| `CASAS_DO_DESENHO` | `10` | [blazesbot/core/target_hybrid.py:116](blazesbot/core/target_hybrid.py#L116) | — | Casas do desenho da barra no log. |
+| `FAIXA_PARA_OLHAR_O_MARCADOR` | `0.1` | [blazesbot/core/target_hybrid.py:105](blazesbot/core/target_hybrid.py#L105) | — | Abaixo desta fração de vida vale a pena procurar o `EnemyDead.png`. |
+| `LIMIAR_VIDA_TELA` | `0.02` | [blazesbot/core/target_hybrid.py:94](blazesbot/core/target_hybrid.py#L94) | executor.py | Abaixo desta fração a barra conta como VAZIA. |
+| `MAXIMO_DE_ACHADOS` | `12` | [blazesbot/core/target_hybrid.py:584](blazesbot/core/target_hybrid.py#L584) | — | Quantos endereços mostrar por id. Mais que isto vira parede de texto. |
 | `BARRA_DO_ALVO_X0` | `466` | [blazesbot/core/vision/barra.py:52](blazesbot/core/vision/barra.py#L52) | __init__.py | A BARRA DO ALVO POR OFFSET FIXO -- medida pelo usuário em 25/08/2026 |
 | `BARRA_DO_ALVO_X1` | `600` | [blazesbot/core/vision/barra.py:53](blazesbot/core/vision/barra.py#L53) | __init__.py | — |
 | `BARRA_DO_ALVO_Y0` | `46` | [blazesbot/core/vision/barra.py:54](blazesbot/core/vision/barra.py#L54) | __init__.py | — |

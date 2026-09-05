@@ -651,7 +651,10 @@ def test_volta_ao_ponto_depois_da_luta():
     """
     chamadas = _chamadas(HHRoutine._do_boss)
     assert chamadas.index("_lutar_no_ponto") < chamadas.index("voltar_para_ele")
-    assert chamadas.index("voltar_para_ele") < chamadas.index("_catar_o_loot")
+    # o loot vem depois do retorno NO CAMINHO DA POSIÇÃO (o último `_catar_o_loot`
+    # da função); o primeiro é o atalho de quando a memória confirmou o nome.
+    assert chamadas.index("voltar_para_ele") < max(
+        i for i, c in enumerate(chamadas) if c == "_catar_o_loot")
 
 
 def test_nao_conseguir_voltar_ao_ponto_NAO_credita_o_boss():
