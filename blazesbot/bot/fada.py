@@ -127,6 +127,13 @@ ESPERA_DEPOIS_DE_ERRAR = 0.333
 # nisso -- ela existe para estar pronta quando alguém pedir cura.
 SEGUNDOS_ENTRE_CUIDADOS = 30.0
 
+# Por quanto tempo vale a batida dada ANTES de uma tarefa longa da ociosa.
+#
+# Medido pelo teto do próprio deletador: `TETO_DE_SEGUNDOS = 10.0` mais folga
+# para abrir e fechar a bolsa. Não é espera nova -- é a validade que a Fada
+# anuncia para o time enquanto está de cabeça na mochila.
+SEGUNDOS_DE_CUIDADO_LONGO = 12.0
+
 
 class FadaDoTime:
     """O laço da Fada. Não ataca, não roda macro: cura e senta.
@@ -262,6 +269,13 @@ class FadaDoTime:
 
     def _uma_volta(self) -> bool:
         """Um giro do laço. `False` = é para parar."""
+        # A BATIDA TAMBÉM SAI DAQUI, e não só do `rodar()`, porque este giro tem
+        # OUTRO chamador: a Fada da HH roda `_uma_volta` de dentro do laço de
+        # acompanhar o líder (`bot/hh/fada.py`), onde o `rodar()` nunca entra.
+        # Com a fila vazia o giro voltava sem passar por espera nenhuma -- ou
+        # seja, no modo HH a batida só saía por acaso, e o time concluía que a
+        # Fada tinha sumido enquanto ela seguia o líder ao lado dele.
+        self.mural.bater_fada(self.meu_login, em_batalha=self._em_briga)
         if self._em_batalha() is True:
             # EM BATALHA ELA CUIDA DE SI, e não da fila.
             #
@@ -417,9 +431,24 @@ class FadaDoTime:
             return
         self._proximo_cuidado = time.monotonic() + SEGUNDOS_ENTRE_CUIDADOS
         if self._cuidar_do_pet is not None:
+            self._bater_por(SEGUNDOS_DE_CUIDADO_LONGO)
             self._cuidar_do_pet()
         if self._limpar_a_bolsa is not None and self._posso_cuidar():
+            # A BOLSA É A TAREFA MAIS LONGA DA FADA -- teto de 10 s no
+            # deletador, o dobro do silêncio que a mata. Ela avisa ANTES por
+            # quanto tempo vai sumir, senão quem chegar na fila no meio da
+            # limpeza conclui que ela morreu e vai de poção.
+            self._bater_por(SEGUNDOS_DE_CUIDADO_LONGO)
             self._limpar_a_bolsa()
+            # E bate de novo ao voltar, para a validade longa não sobrar: a
+            # partir daqui ela está pronta, e uma morte agora tem de aparecer
+            # nos 5 s de sempre.
+            self.mural.bater_fada(self.meu_login, em_batalha=self._em_briga)
+
+    def _bater_por(self, segundos: float) -> None:
+        """"Vou sumir por até `segundos`, e estou viva." Ver `TETO_DA_BATIDA_LONGA`."""
+        self.mural.bater_fada(self.meu_login, em_batalha=self._em_briga,
+                              vale_por=segundos)
 
     def _posso_cuidar(self) -> bool:
         """Nada na fila e fora de batalha."""

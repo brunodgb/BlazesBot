@@ -71,7 +71,7 @@ ligar código não testado.
 
 ## Números medidos -- tolerância, limiar, teto, cadência
 
-543 constantes, agrupadas por arquivo.
+545 constantes, agrupadas por arquivo.
 
 | constante | valor | onde | quem lê | porquê (resumo) |
 |---|---|---|---|---|
@@ -99,7 +99,7 @@ ligar código não testado.
 | `TEMPLATE_DO_ICONE` | `'btn_delete_item.png'` | [blazesbot/bot/app/deletador.py:167](blazesbot/bot/app/deletador.py#L167) | — | — |
 | `TENTATIVAS_DE_FECHAR_A_BOLSA` | `2` | [blazesbot/bot/app/deletador.py:162](blazesbot/bot/app/deletador.py#L162) | — | Quantas vezes insistir para FECHAR a bolsa. Duas, porque a tecla é síncrona: |
 | `TETO_DA_CAIXA` | `1.2` | [blazesbot/bot/app/deletador.py:150](blazesbot/bot/app/deletador.py#L150) | — | Espera pela caixa de confirmação aparecer, depois do clique no ícone. |
-| `TETO_DE_SEGUNDOS` | `10.0` | [blazesbot/bot/app/deletador.py:147](blazesbot/bot/app/deletador.py#L147) | — | Teto do passo inteiro (verificar + apagar), pedido do usuário. |
+| `TETO_DE_SEGUNDOS` | `10.0` | [blazesbot/bot/app/deletador.py:147](blazesbot/bot/app/deletador.py#L147) | fada.py | Teto do passo inteiro (verificar + apagar), pedido do usuário. |
 | `ESPERA_ANTES_DO_TAB` | `0.4` | [blazesbot/bot/app/executor.py:494](blazesbot/bot/app/executor.py#L494) | — | PAGO UMA VEZ POR AQUISIÇÃO, NÃO UMA VEZ POR TECLA |
 | `ESPERA_DEPOIS_DE_INVOCAR` | `1` | [blazesbot/bot/app/executor.py:154](blazesbot/bot/app/executor.py#L154) | — | Espera depois de apertar a tecla do pet, antes de seguir para as teclas da |
 | `ESPERA_DEPOIS_DO_TAB` | `0.01` | [blazesbot/bot/app/executor.py:514](blazesbot/bot/app/executor.py#L514) | combate.py, config.py | Respiro entre o TAB e a PRIMEIRA linha da macro. |
@@ -238,6 +238,7 @@ ligar código não testado.
 | `MAXIMO_DE_TENTATIVAS_POR_VITIMA` | `3` | [blazesbot/bot/fada.py:110](blazesbot/bot/fada.py#L110) | — | Quantas vezes tentar selecionar a MESMA vítima antes de desistir dela. |
 | `PASSO_DA_CONFERENCIA_DO_ALVO` | `0.02` | [blazesbot/bot/fada.py:86](blazesbot/bot/fada.py#L86) | executor.py | — |
 | `PASSO_DA_FADA` | `0.1` | [blazesbot/bot/fada.py:78](blazesbot/bot/fada.py#L78) | — | Cadência do laço da Fada quando não há nada a fazer. |
+| `SEGUNDOS_DE_CUIDADO_LONGO` | `12.0` | [blazesbot/bot/fada.py:135](blazesbot/bot/fada.py#L135) | — | Por quanto tempo vale a batida dada ANTES de uma tarefa longa da ociosa. |
 | `SEGUNDOS_ENTRE_CUIDADOS` | `30.0` | [blazesbot/bot/fada.py:128](blazesbot/bot/fada.py#L128) | — | De quanto em quanto tempo a Fada cuida do pet e da bolsa, ESTANDO OCIOSA. |
 | `TETO_DA_CURA_SEGUNDOS` | `20.0` | [blazesbot/bot/fada.py:93](blazesbot/bot/fada.py#L93) | — | Quanto tempo insistir numa cura antes de desistir daquela vítima. |
 | `TETO_PARA_O_ALVO_VIRAR` | `0.4` | [blazesbot/bot/fada.py:85](blazesbot/bot/fada.py#L85) | — | Depois do clique no retrato, quanto esperar a memória mostrar o alvo novo. |
@@ -321,6 +322,7 @@ ligar código não testado.
 | `LARGADA_VALIDA_SEGUNDOS` | `5.0` | [blazesbot/bot/mural.py:269](blazesbot/bot/mural.py#L269) | sincronia.py | Quanto tempo uma largada anunciada continua valendo. |
 | `SILENCIO_DA_FADA` | `5.0` | [blazesbot/bot/mural.py:473](blazesbot/bot/mural.py#L473) | — | Quanto silêncio já é "a Fada não está lá". |
 | `SILENCIO_MAXIMO` | `5.0` | [blazesbot/bot/mural.py:129](blazesbot/bot/mural.py#L129) | — | Quanto silêncio já é "caiu". |
+| `TETO_DA_BATIDA_LONGA` | `15.0` | [blazesbot/bot/mural.py:487](blazesbot/bot/mural.py#L487) | fada.py | Quanto uma batida pode valer, no MÁXIMO, quando a Fada avisa que vai sumir. |
 | `ALCANCE_DA_EXPANSAO` | `4` | [blazesbot/bot/navegacao.py:216](blazesbot/bot/navegacao.py#L216) | — | ATÉ ONDE A MANOBRA SE AFASTA NA ROTA quando os vizinhos imediatos falham. |
 | `AVISAR_A_PE_NO_TRAJETO` | `4.0` | [blazesbot/bot/navegacao.py:314](blazesbot/bot/navegacao.py#L314) | — | Depois de quanto tempo a pé, no meio de um trajeto, o log passa a dizer isso em |
 | `CICLOS_ANTES_DE_DESTRAVAR` | `2` | [blazesbot/bot/navegacao.py:360](blazesbot/bot/navegacao.py#L360) | — | Depois de quantos ciclos sem montar o portao para de insistir MUDO e vai |

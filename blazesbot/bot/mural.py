@@ -460,8 +460,8 @@ def esquecer_passo(lider: str) -> None:
 # o pedido sairia da fila e a vítima continuaria ferida, sem erro na tela.
 _IDS: dict[str, int] = {}                     # login -> id da entidade
 _PEDIDOS: dict[str, tuple[float, float]] = {}  # login -> (vida_pct, quando)
-# login -> (última batida, em batalha)
-_FADAS: dict[str, tuple[float, bool]] = {}
+# login -> (última batida, em batalha, por quanto tempo ela vale)
+_FADAS: dict[str, tuple[float, bool, float]] = {}
 _LIMPEZAS: dict[str, float] = {}              # lider -> quando anunciou
 _LOCK_FADA = threading.Lock()
 
@@ -471,6 +471,20 @@ _LOCK_FADA = threading.Lock()
 # batida sai de dentro do laço que cura, que gira várias vezes por segundo, e 5
 # s são muitas voltas dela. É o que separa "esperar a Fada" de "beber poção".
 SILENCIO_DA_FADA = 5.0
+
+# Quanto uma batida pode valer, no MÁXIMO, quando a Fada avisa que vai sumir.
+#
+# Existe porque a Fada tem tarefas que passam dos 5 s sem chance de bater no
+# meio -- a limpeza da bolsa é a pior delas, com teto de 10 s no deletador, o
+# DOBRO do silêncio que a mata. Sem isto, toda vítima que chegasse durante uma
+# limpeza concluía "a Fada sumiu" e ia de poção, com a Fada viva e parada ao
+# lado.
+#
+# É um aviso, não um cheque em branco: quem bate diz por quanto vale, e o teto
+# aqui impede que uma Fada realmente morta demore uma eternidade para ser
+# notada. Morrer DURANTE a tarefa longa custa esta espera a mais -- é o preço,
+# e é menor que o de abandonar uma Fada viva.
+TETO_DA_BATIDA_LONGA = 15.0
 
 
 def publicar_id(login: str, ident: int | None) -> None:
@@ -545,7 +559,8 @@ def fila_de_cura(logins) -> list[str]:
     return [login for _, login in itens]
 
 
-def bater_fada(login: str, em_batalha: bool = False) -> None:
+def bater_fada(login: str, em_batalha: bool = False,
+               vale_por: float = SILENCIO_DA_FADA) -> None:
     """A Fada prova que está de pé. Chamada de DENTRO do laço que cura.
 
     De dentro, e não de fora: uma Fada logada mas presa numa janela aberta passa
@@ -555,7 +570,9 @@ def bater_fada(login: str, em_batalha: bool = False) -> None:
     if not login:
         return
     with _LOCK_FADA:
-        _FADAS[login.strip().lower()] = (time.monotonic(), bool(em_batalha))
+        _FADAS[login.strip().lower()] = (
+            time.monotonic(), bool(em_batalha),
+            min(max(float(vale_por), SILENCIO_DA_FADA), TETO_DA_BATIDA_LONGA))
 
 
 def fada_de_pe(login: str) -> bool:
@@ -566,7 +583,7 @@ def fada_de_pe(login: str) -> bool:
         dados = _FADAS.get(login.strip().lower())
     if dados is None:
         return False
-    return (time.monotonic() - dados[0]) <= SILENCIO_DA_FADA
+    return (time.monotonic() - dados[0]) <= dados[2]
 
 
 def fada_em_batalha(login: str) -> bool:
@@ -586,8 +603,8 @@ def fada_em_batalha(login: str) -> bool:
         dados = _FADAS.get(login.strip().lower())
     if dados is None:
         return False
-    quando, em_batalha = dados
-    if (time.monotonic() - quando) > SILENCIO_DA_FADA:
+    quando, em_batalha, vale_por = dados
+    if (time.monotonic() - quando) > vale_por:
         return False
     return em_batalha
 

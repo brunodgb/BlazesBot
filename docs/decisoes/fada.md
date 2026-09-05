@@ -253,3 +253,36 @@ a Fada da HH seguia acompanhando o líder com a janela fechada.
 Continuam abertos os buracos de **silêncio** do batimento (a Fada viva que passa
 mais de `SILENCIO_DA_FADA` sem bater, e o time conclui que ela sumiu) e a
 **espera sem teto** da vítima. São outro assunto, outro commit.
+
+
+## Os buracos de silêncio — a Fada viva dada por morta (04/09/2026)
+
+A queda que ninguém via tinha um irmão gêmeo do lado oposto: **a Fada viva que
+para de bater.** Como `fada_de_pe` é a ÚNICA coisa que faz a vítima desistir e
+beber poção, todo intervalo em que a Fada existe mas não bate é um intervalo em
+que o time a dá por morta.
+
+Dois buracos medidos:
+
+| buraco | tamanho | por quê |
+|---|---|---|
+| limpeza da bolsa da ociosa | até **10 s** (`deletador.TETO_DE_SEGUNDOS`) | `_cuidados_de_ociosa` chamava `_limpar_a_bolsa()` direto, sem passar por `_dormir` -- e é o `_dormir` que bate |
+| modo **HH+Fada** | o giro inteiro | a batida morava só no `rodar()`, e a HH chama `_uma_volta` de dentro do laço de acompanhar o líder; com a fila vazia o giro voltava sem espera nenhuma |
+
+### O remédio: a batida passa a ter VALIDADE
+
+`bater_fada(login, em_batalha, vale_por)`. Quem vai sumir por uma tarefa longa
+avisa antes por quanto tempo; `fada_de_pe` compara com a validade gravada, e não
+mais com a constante. Com dois limites:
+
+- **nunca encurta** o silêncio padrão de 5 s (pedir menos não adianta nada);
+- **nunca passa de `TETO_DA_BATIDA_LONGA` (15 s)** — morrer *durante* a tarefa
+  longa custa essa espera a mais, e é o preço aceito; sem teto, uma Fada morta
+  demoraria uma eternidade para ser notada.
+
+Ao terminar a limpeza ela **bate de novo com a validade normal**, para o aviso
+não sobrar: dali em diante ela está pronta, e uma morte tem de aparecer nos 5 s
+de sempre.
+
+O buraco da HH se resolve sem validade nenhuma: a batida passou a sair também do
+topo de `_uma_volta`, que é o único ponto por onde os dois chamadores passam.

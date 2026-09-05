@@ -592,6 +592,13 @@ Cada item é o que **não pode ser violado**. O detalhe de cada área mora em
 - **Trava de posição no APP** (`AppConfig.travar_posicao`, padrão True): salva a
   posição como base; andou > `TOLERANCIA_POSICAO` (1) ⇒ devolvido andando pelo
   minimapa. Só com memória respondendo.
+- **A BATIDA DA FADA TEM VALIDADE, E TAREFA LONGA AVISA ANTES** (04/09/2026).
+  `bater_fada(..., vale_por=)`; nunca encurta os 5 s padrão, nunca passa de
+  `TETO_DA_BATIDA_LONGA` (15 s), e ao terminar a tarefa ela bate de novo com a
+  validade normal para o aviso não sobrar. Sem isso, a limpeza de bolsa (teto de
+  10 s) fazia o time inteiro dar a Fada por morta e beber poção com ela viva ao
+  lado. **A batida sai também do topo de `_uma_volta`** — é o único ponto por
+  onde passam os dois chamadores (o `rodar()` do APP e o laço da HH).
 - **A FADA PERCEBE A PRÓPRIA QUEDA COMO QUALQUER OUTRO MODO** (04/09/2026).
   Janela morta no fim de `rodar_a_fada` ⇒ `Disconnected` ⇒ relogin e Histórico
   de Quedas, igual ao `_rodar_modo_app`. E `_montar_a_fada` **captura

@@ -874,3 +874,79 @@ def test_sem_leitura_usa_o_controle_interno():
     assert jogo.sentadas == 1
     f._uma_volta()
     assert jogo.sentadas == 1, "sentou duas vezes sem leitura"
+
+
+# ---------------------------------------------------------------------------
+# OS BURACOS DE SILÊNCIO -- a Fada VIVA que o time dava por morta (04/09/2026)
+# ---------------------------------------------------------------------------
+#
+# Relato do usuário: *"se a fada cai, muitas vezes o bot não reconhece"*. O
+# levantamento achou os dois lados da mesma moeda: a queda que ninguém via
+# (consertada em `fada_montagem`) e o INVERSO -- a Fada viva que passa mais de
+# `SILENCIO_DA_FADA` sem bater, e aí o time inteiro conclui que ela sumiu e vai
+# de poção com ela parada ao lado.
+
+
+def test_a_limpeza_da_bolsa_AVISA_que_vai_sumir():
+    """O deletador tem teto de 10 s, o DOBRO do silêncio que mata a batida.
+
+    Sem o aviso, quem entra na fila durante uma limpeza bebe poção -- e essa
+    era a janela mais larga de todas.
+    """
+    jogo = _Jogo()
+    validades = []
+
+    def limpar():
+        # No meio da limpeza, é isto que o time enxerga.
+        validades.append(mural._FADAS["fada"][2])
+
+    f = _fada(jogo, cuidar_do_pet=lambda: None, limpar_a_bolsa=limpar)
+    f._cuidados_de_ociosa()
+
+    assert validades, "a bolsa nem foi limpa"
+    assert validades[0] > mural.SILENCIO_DA_FADA, validades
+    assert validades[0] <= mural.TETO_DA_BATIDA_LONGA
+
+
+def test_a_validade_longa_NAO_SOBRA_depois_da_limpeza():
+    """Terminada a tarefa, uma morte tem de voltar a aparecer nos 5 s de
+    sempre -- senão o aviso vira desculpa permanente."""
+    jogo = _Jogo()
+    f = _fada(jogo, cuidar_do_pet=lambda: None, limpar_a_bolsa=lambda: None)
+    f._cuidados_de_ociosa()
+
+    assert mural._FADAS["fada"][2] == mural.SILENCIO_DA_FADA
+
+
+def test_o_aviso_tem_TETO():
+    """Uma Fada que morre DURANTE a tarefa longa custa a espera a mais -- por
+    isso o quanto ela pode pedir é limitado."""
+    mural.bater_fada("fada", vale_por=10_000)
+    assert mural._FADAS["fada"][2] == mural.TETO_DA_BATIDA_LONGA
+
+
+def test_o_aviso_nunca_ENCURTA_o_silencio_padrao():
+    mural.bater_fada("fada", vale_por=0.1)
+    assert mural._FADAS["fada"][2] == mural.SILENCIO_DA_FADA
+
+
+def test_a_batida_sai_de_UMA_VOLTA_e_nao_so_do_rodar():
+    """A Fada da HH chama `_uma_volta` de dentro do laço de acompanhar o líder
+    -- o `rodar()`, que era o único lugar que batia, nunca entra ali. Com a fila
+    vazia o giro voltava sem passar por espera nenhuma, e a batida só saía por
+    acaso."""
+    jogo = _Jogo()
+    f = _fada(jogo)
+    mural.esquecer_fada("fada")
+
+    f._uma_volta()
+
+    assert mural.fada_de_pe("fada") is True
+
+
+def test_em_batalha_a_batida_de_UMA_VOLTA_leva_o_estado_junto():
+    jogo = _Jogo()
+    jogo.batalha = True
+    f = _fada(jogo)
+    f._uma_volta()
+    assert mural.fada_em_batalha("fada") is True
