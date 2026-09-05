@@ -71,7 +71,7 @@ ligar código não testado.
 
 ## Números medidos -- tolerância, limiar, teto, cadência
 
-557 constantes, agrupadas por arquivo.
+560 constantes, agrupadas por arquivo.
 
 | constante | valor | onde | quem lê | porquê (resumo) |
 |---|---|---|---|---|
@@ -95,7 +95,7 @@ ligar código não testado.
 | `LIMIAR_DO_ICONE` | `0.8` | [blazesbot/bot/app/deletador.py:164](blazesbot/bot/app/deletador.py#L164) | — | — |
 | `LIMIAR_EM_COR` | `0.92` | [blazesbot/bot/app/deletador.py:121](blazesbot/bot/app/deletador.py#L121) | — | Limiar do casamento EM COR dos itens. Vem do `package_courage`, que mediu o |
 | `MAXIMO_DE_EXCLUSOES` | `20` | [blazesbot/bot/app/deletador.py:124](blazesbot/bot/app/deletador.py#L124) | — | Teto de exclusões por chamada. Um template ruim não pode esvaziar a bolsa. |
-| `PASSO_DA_ESPERA` | `0.08` | [blazesbot/bot/app/deletador.py:151](blazesbot/bot/app/deletador.py#L151) | morte.py | — |
+| `PASSO_DA_ESPERA` | `0.08` | [blazesbot/bot/app/deletador.py:151](blazesbot/bot/app/deletador.py#L151) | fada_reviver.py, morte.py | — |
 | `TEMPLATE_DO_ICONE` | `'btn_delete_item.png'` | [blazesbot/bot/app/deletador.py:167](blazesbot/bot/app/deletador.py#L167) | — | — |
 | `TENTATIVAS_DE_FECHAR_A_BOLSA` | `2` | [blazesbot/bot/app/deletador.py:162](blazesbot/bot/app/deletador.py#L162) | — | Quantas vezes insistir para FECHAR a bolsa. Duas, porque a tecla é síncrona: |
 | `TETO_DA_CAIXA` | `1.2` | [blazesbot/bot/app/deletador.py:150](blazesbot/bot/app/deletador.py#L150) | — | Espera pela caixa de confirmação aparecer, depois do clique no ícone. |
@@ -233,16 +233,19 @@ ligar código não testado.
 | `TETO_DO_DESTRAVAMENTO` | `60.0` | [blazesbot/bot/combate.py:731](blazesbot/bot/combate.py#L731) | — | Teto de UMA rodada de destravamento. Palavra do usuario: *"no maximo atrasar 1 |
 | `FATIA_DA_ESPERA` | `0.25` | [blazesbot/bot/context.py:211](blazesbot/bot/context.py#L211) | petbug.py | Fatia máxima de sono dentro de um `tick`. |
 | `TENTATIVAS_DE_AJUSTE_DA_CAMERA` | `3` | [blazesbot/bot/context.py:244](blazesbot/bot/context.py#L244) | — | Quantas vezes insistir para a câmera ficar no ângulo certo. |
-| `ESPERA_DEPOIS_DE_ERRAR` | `0.333` | [blazesbot/bot/fada.py:118](blazesbot/bot/fada.py#L118) | — | Depois de uma tentativa que não pegou, espera antes da seguinte. |
-| `ESPERA_ENTRE_CURAS` | `0.34` | [blazesbot/bot/fada.py:100](blazesbot/bot/fada.py#L100) | — | Entre uma tecla de cura e a seguinte. |
-| `MAXIMO_DE_TENTATIVAS_POR_VITIMA` | `3` | [blazesbot/bot/fada.py:110](blazesbot/bot/fada.py#L110) | — | Quantas vezes tentar selecionar a MESMA vítima antes de desistir dela. |
-| `PASSO_DA_CONFERENCIA_DO_ALVO` | `0.02` | [blazesbot/bot/fada.py:86](blazesbot/bot/fada.py#L86) | executor.py | — |
-| `PASSO_DA_FADA` | `0.1` | [blazesbot/bot/fada.py:78](blazesbot/bot/fada.py#L78) | — | Cadência do laço da Fada quando não há nada a fazer. |
-| `SEGUNDOS_DE_CUIDADO_LONGO` | `12.0` | [blazesbot/bot/fada.py:135](blazesbot/bot/fada.py#L135) | — | Por quanto tempo vale a batida dada ANTES de uma tarefa longa da ociosa. |
-| `SEGUNDOS_ENTRE_CUIDADOS` | `30.0` | [blazesbot/bot/fada.py:128](blazesbot/bot/fada.py#L128) | — | De quanto em quanto tempo a Fada cuida do pet e da bolsa, ESTANDO OCIOSA. |
-| `TETO_DA_CURA_SEGUNDOS` | `20.0` | [blazesbot/bot/fada.py:93](blazesbot/bot/fada.py#L93) | — | Quanto tempo insistir numa cura antes de desistir daquela vítima. |
-| `TETO_PARA_O_ALVO_VIRAR` | `0.4` | [blazesbot/bot/fada.py:85](blazesbot/bot/fada.py#L85) | — | Depois do clique no retrato, quanto esperar a memória mostrar o alvo novo. |
+| `ESPERA_DEPOIS_DE_ERRAR` | `0.333` | [blazesbot/bot/fada.py:120](blazesbot/bot/fada.py#L120) | — | Depois de uma tentativa que não pegou, espera antes da seguinte. |
+| `ESPERA_ENTRE_CURAS` | `0.34` | [blazesbot/bot/fada.py:102](blazesbot/bot/fada.py#L102) | — | Entre uma tecla de cura e a seguinte. |
+| `MAXIMO_DE_TENTATIVAS_POR_VITIMA` | `3` | [blazesbot/bot/fada.py:112](blazesbot/bot/fada.py#L112) | — | Quantas vezes tentar selecionar a MESMA vítima antes de desistir dela. |
+| `PASSO_DA_CONFERENCIA_DO_ALVO` | `0.02` | [blazesbot/bot/fada.py:88](blazesbot/bot/fada.py#L88) | executor.py | — |
+| `PASSO_DA_FADA` | `0.1` | [blazesbot/bot/fada.py:80](blazesbot/bot/fada.py#L80) | — | Cadência do laço da Fada quando não há nada a fazer. |
+| `SEGUNDOS_DE_CUIDADO_LONGO` | `12.0` | [blazesbot/bot/fada.py:137](blazesbot/bot/fada.py#L137) | — | Por quanto tempo vale a batida dada ANTES de uma tarefa longa da ociosa. |
+| `SEGUNDOS_ENTRE_CUIDADOS` | `30.0` | [blazesbot/bot/fada.py:130](blazesbot/bot/fada.py#L130) | — | De quanto em quanto tempo a Fada cuida do pet e da bolsa, ESTANDO OCIOSA. |
+| `TETO_DA_CURA_SEGUNDOS` | `20.0` | [blazesbot/bot/fada.py:95](blazesbot/bot/fada.py#L95) | — | Quanto tempo insistir numa cura antes de desistir daquela vítima. |
+| `TETO_PARA_O_ALVO_VIRAR` | `0.4` | [blazesbot/bot/fada.py:87](blazesbot/bot/fada.py#L87) | — | Depois do clique no retrato, quanto esperar a memória mostrar o alvo novo. |
 | `SEGUNDOS_ENTRE_TENTATIVAS` | `1.0` | [blazesbot/bot/fada_montagem.py:34](blazesbot/bot/fada_montagem.py#L34) | — | Respiro quando a Fada não consegue nem começar (memória fechada, por exemplo). |
+| `PASSO_DA_ESPERA` | `0.2` | [blazesbot/bot/fada_reviver.py:41](blazesbot/bot/fada_reviver.py#L41) | deletador.py, morte.py | Passo entre duas perguntas enquanto o feitiço prepara. |
+| `TENTATIVAS_POR_MORTO` | `3` | [blazesbot/bot/fada_reviver.py:48](blazesbot/bot/fada_reviver.py#L48) | — | Tentativas de reviver a MESMA vítima antes de deixá-la para o prazo dela. |
+| `TETO_DO_FEITICO` | `12.0` | [blazesbot/bot/fada_reviver.py:38](blazesbot/bot/fada_reviver.py#L38) | — | Quanto se espera o feitiço pegar depois de apertar a tecla. |
 | `LINK_ENTRAR_HH` | `'link_enter_hh.png'` | [blazesbot/bot/hh/entrada.py:65](blazesbot/bot/hh/entrada.py#L65) | — | — |
 | `LINK_SAIR_HH` | `'link_leave_hh.png'` | [blazesbot/bot/hh/entrada.py:67](blazesbot/bot/hh/entrada.py#L67) | — | O link do diálogo do `Servant Child`, DENTRO da cave. |
 | `LINK_WEST_SUBURB` | `'link_west_suburb.png'` | [blazesbot/bot/hh/entrada.py:64](blazesbot/bot/hh/entrada.py#L64) | — | Links dentro dos diálogos, localizados por imagem. |
@@ -319,19 +322,19 @@ ligar código não testado.
 | `CADENCIA_DO_CONVITE` | `0.5` | [blazesbot/bot/morte.py:70](blazesbot/bot/morte.py#L70) | — | Cadência da conferência do convite da Fada na TELA. |
 | `EXTENSAO_PELO_FEITICO` | `15.0` | [blazesbot/bot/morte.py:57](blazesbot/bot/morte.py#L57) | — | Quanto o prazo estica quando a Fada avisa que COMEÇOU a conjurar. |
 | `MORTES_SEGUIDAS_PARA_PARAR` | `3` | [blazesbot/bot/morte.py:83](blazesbot/bot/morte.py#L83) | — | Mortes seguidas SEM conseguir voltar ao ponto antes de parar a conta. |
-| `PASSO_DA_ESPERA` | `0.3` | [blazesbot/bot/morte.py:62](blazesbot/bot/morte.py#L62) | deletador.py | Passo entre duas perguntas durante a espera. Tudo o que ele pergunta é |
-| `PRAZO_PARA_A_FADA` | `60.0` | [blazesbot/bot/morte.py:52](blazesbot/bot/morte.py#L52) | mural_da_morte.py | Quanto o morto espera pela Fada antes de se reviver sozinho. |
+| `PASSO_DA_ESPERA` | `0.3` | [blazesbot/bot/morte.py:62](blazesbot/bot/morte.py#L62) | deletador.py, fada_reviver.py | Passo entre duas perguntas durante a espera. Tudo o que ele pergunta é |
+| `PRAZO_PARA_A_FADA` | `60.0` | [blazesbot/bot/morte.py:52](blazesbot/bot/morte.py#L52) | fada_reviver.py, mural_da_morte.py | Quanto o morto espera pela Fada antes de se reviver sozinho. |
 | `TETO_DA_REGENERACAO` | `60.0` | [blazesbot/bot/morte.py:80](blazesbot/bot/morte.py#L80) | — | Teto da regeneração sentada antes de andar de volta. |
 | `TETO_PARA_O_REVIVE_PEGAR` | `10.0` | [blazesbot/bot/morte.py:73](blazesbot/bot/morte.py#L73) | — | Quanto se espera o `hp` subir depois de um clique que deveria reviver. |
-| `ACEITE_VALIDO_SEGUNDOS` | `15.0` | [blazesbot/bot/mural.py:201](blazesbot/bot/mural.py#L201) | — | Validade do aceite. Curta de propósito: ele confirma UM convite recém-enviado, |
-| `CONVITE_VALIDO_SEGUNDOS` | `60.0` | [blazesbot/bot/mural.py:79](blazesbot/bot/mural.py#L79) | — | Validade do anúncio. Cobre a fila de resposta do outro cliente com folga; mais |
-| `ESTADO_VALIDO_SEGUNDOS` | `30.0` | [blazesbot/bot/mural.py:293](blazesbot/bot/mural.py#L293) | sincronia.py, supervisor.py | Quanto tempo o estado publicado por uma conta continua valendo. |
-| `LARGADA_VALIDA_SEGUNDOS` | `5.0` | [blazesbot/bot/mural.py:285](blazesbot/bot/mural.py#L285) | sincronia.py | Quanto tempo uma largada anunciada continua valendo. |
-| `SILENCIO_DA_FADA` | `5.0` | [blazesbot/bot/mural.py:500](blazesbot/bot/mural.py#L500) | — | Quanto silêncio já é "a Fada não está lá". |
-| `SILENCIO_MAXIMO` | `5.0` | [blazesbot/bot/mural.py:145](blazesbot/bot/mural.py#L145) | — | Quanto silêncio já é "caiu". |
-| `TETO_DA_BATIDA_LONGA` | `15.0` | [blazesbot/bot/mural.py:514](blazesbot/bot/mural.py#L514) | fada.py | Quanto uma batida pode valer, no MÁXIMO, quando a Fada avisa que vai sumir. |
-| `VALIDADE_DA_DESISTENCIA` | `20.0` | [blazesbot/bot/mural.py:589](blazesbot/bot/mural.py#L589) | — | Por quanto tempo a desistência da Fada continua valendo. |
-| `SEGUNDOS_DE_MORTO_PARA_FURAR_A_FILA` | `40.0` | [blazesbot/bot/mural_da_morte.py:42](blazesbot/bot/mural_da_morte.py#L42) | mural.py | A partir de quantos segundos de morto a vítima FURA a fila dos feridos. |
+| `ACEITE_VALIDO_SEGUNDOS` | `15.0` | [blazesbot/bot/mural.py:202](blazesbot/bot/mural.py#L202) | — | Validade do aceite. Curta de propósito: ele confirma UM convite recém-enviado, |
+| `CONVITE_VALIDO_SEGUNDOS` | `60.0` | [blazesbot/bot/mural.py:80](blazesbot/bot/mural.py#L80) | — | Validade do anúncio. Cobre a fila de resposta do outro cliente com folga; mais |
+| `ESTADO_VALIDO_SEGUNDOS` | `30.0` | [blazesbot/bot/mural.py:294](blazesbot/bot/mural.py#L294) | sincronia.py, supervisor.py | Quanto tempo o estado publicado por uma conta continua valendo. |
+| `LARGADA_VALIDA_SEGUNDOS` | `5.0` | [blazesbot/bot/mural.py:286](blazesbot/bot/mural.py#L286) | sincronia.py | Quanto tempo uma largada anunciada continua valendo. |
+| `SILENCIO_DA_FADA` | `5.0` | [blazesbot/bot/mural.py:501](blazesbot/bot/mural.py#L501) | — | Quanto silêncio já é "a Fada não está lá". |
+| `SILENCIO_MAXIMO` | `5.0` | [blazesbot/bot/mural.py:146](blazesbot/bot/mural.py#L146) | — | Quanto silêncio já é "caiu". |
+| `TETO_DA_BATIDA_LONGA` | `15.0` | [blazesbot/bot/mural.py:515](blazesbot/bot/mural.py#L515) | fada.py | Quanto uma batida pode valer, no MÁXIMO, quando a Fada avisa que vai sumir. |
+| `VALIDADE_DA_DESISTENCIA` | `20.0` | [blazesbot/bot/mural.py:590](blazesbot/bot/mural.py#L590) | — | Por quanto tempo a desistência da Fada continua valendo. |
+| `SEGUNDOS_DE_MORTO_PARA_FURAR_A_FILA` | `40.0` | [blazesbot/bot/mural_da_morte.py:42](blazesbot/bot/mural_da_morte.py#L42) | fada.py, fada_reviver.py, mural.py | A partir de quantos segundos de morto a vítima FURA a fila dos feridos. |
 | `VALIDADE_DO_FEITICO` | `8.0` | [blazesbot/bot/mural_da_morte.py:133](blazesbot/bot/mural_da_morte.py#L133) | mural.py | Por quanto tempo o aviso "estou conjurando" continua de pé. |
 | `ALCANCE_DA_EXPANSAO` | `4` | [blazesbot/bot/navegacao.py:216](blazesbot/bot/navegacao.py#L216) | — | ATÉ ONDE A MANOBRA SE AFASTA NA ROTA quando os vizinhos imediatos falham. |
 | `AVISAR_A_PE_NO_TRAJETO` | `4.0` | [blazesbot/bot/navegacao.py:314](blazesbot/bot/navegacao.py#L314) | — | Depois de quanto tempo a pé, no meio de um trajeto, o log passa a dizer isso em |

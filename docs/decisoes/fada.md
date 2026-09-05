@@ -342,3 +342,44 @@ desenho do reviver:
 A tecla é `KeyBinds.revive_skill`, na aba **Teclas → Magias de Suporte**, nas
 duas interfaces. **Vazia por padrão**, como a `follow`: chutar tecla faria a
 Fada apertar outra coisa em cima de um morto.
+
+
+## A Fada revivendo (04/09/2026)
+
+O segundo serviço dela, ao lado da cura — em `bot/fada_reviver.py`, fora de
+`fada.py` porque aquele arquivo estava a poucas linhas do teto de 800 e porque a
+costura é real: curar é apertar uma tecla até uma barra subir; reviver é apertar
+**uma vez** e esperar um feitiço de 5 s pegar. A seleção pelo retrato do painel
+é **chamada** de lá, não copiada.
+
+### A prioridade
+
+> *"O ideal é colocar o morto à frente só se estiver demorando muito (...)
+> tirando isso a cura vem primeiro."*
+
+Parece contraintuitivo e não é: um morto não apanha nem gasta poção, e tem prazo
+próprio de um minuto para se reviver sozinho. Um ferido a 30% sentado esperando,
+ao contrário, pode virar o próximo morto. Então a cura vem primeiro **até** o
+morto passar de **40 s** (`SEGUNDOS_DE_MORTO_PARA_FURAR_A_FILA`), e aí ele fura
+a fila.
+
+Os 40 não são arredondamento: o morto se auto-revive aos 60
+(`morte.PRAZO_PARA_A_FADA`) e a skill leva 5 s preparando. Com 40 a Fada tem
+folga para começar, terminar e ainda avisar que começou.
+
+### O contrato dos dois lados
+
+| quem | faz | por quê |
+|---|---|---|
+| Fada | `mural.comecei_a_conjurar(vítima)` **antes** de apertar | sem isso a vítima clica no "Ok" do jogo no meio dos 5 s: a mana vai fora e o convite aparece para quem já está vivo |
+| vítima | `mural.esquecer_morte` **no instante** em que fica de pé | é assim que a Fada sabe que o feitiço pegou; deixar para o fim do ciclo faria ela esperar a caminhada de volta inteira |
+
+### O que continua valendo da cura
+
+- **Id que não bate não revive.** O clique pode não pegar, e o feitiço iria para
+  o aliado ANTERIOR — a mana inteira gasta em quem está vivo.
+- **Freio de 3 tentativas** (o mesmo dos 357 cliques de 01/09/2026). Estourou,
+  ela larga o morto e o prazo dele resolve.
+- **Mana contada antes do toque.** O reviver custa muito mais que uma cura;
+  apertar sem ter só queima a recarga.
+- **Sem tecla configurada ela avisa UMA vez** e segue curando.

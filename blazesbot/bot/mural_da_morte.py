@@ -131,3 +131,10 @@ def fada_conjurando_em(login_vitima: str) -> bool:
 # volta a contar o prazo dele em vez de esperar para sempre por um feitiço que
 # não vem.
 VALIDADE_DO_FEITICO = 8.0
+
+
+def zerar_para_teste() -> None:
+    """Só para teste: esvazia o quadro. Ver `mural.zerar_o_time_para_teste`."""
+    with _LOCK_MORTE:
+        _MORTOS.clear()
+        _CONJURANDO.clear()

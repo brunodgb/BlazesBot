@@ -213,6 +213,7 @@ class CicloDaMorte:
             if self.estou_morto() is False:
                 # De pé sem eu ter clicado em nada: alguém reviveu por fora.
                 self.log.info("Voltei à vida sem clicar — a Fada resolveu.")
+                self._de_pe()
                 return True
 
             if agora >= proximo_olhar:
@@ -252,6 +253,16 @@ class CicloDaMorte:
         self._clicar_no_ok_da_morte()
         return self._esperar_ficar_de_pe("o Ok da morte")
 
+    def _de_pe(self) -> None:
+        """SAI DA FILA DOS MORTOS NA HORA em que fica de pé.
+
+        Na hora, e não no fim do ciclo: quem espera esta notícia é a FADA, que
+        usa a fila para saber se o feitiço dela pegou. Deixar para o `finally`
+        faria ela esperar a caminhada de volta inteira antes de atender o
+        próximo -- e o teto dela venceria antes.
+        """
+        self.mural.esquecer_morte(self.meu_login)
+
     def _esperar_ficar_de_pe(self, o_que: str) -> bool:
         """Confirma pela MEMÓRIA que o clique reviveu. `False` = não pegou.
 
@@ -262,6 +273,7 @@ class CicloDaMorte:
         while time.monotonic() < fim and self._continuar():
             if not self.estou_morto():
                 self.log.info("De pé.")
+                self._de_pe()
                 return True
             if not self._dormir(PASSO_DA_ESPERA):
                 return False

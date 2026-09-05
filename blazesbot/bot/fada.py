@@ -70,6 +70,8 @@ import time
 from collections.abc import Callable
 from typing import Any
 
+from . import fada_reviver
+
 # Cadência do laço da Fada quando não há nada a fazer.
 #
 # Ela não manda tecla nesse estado -- só olha o mural. Dez vezes por segundo é
@@ -161,6 +163,9 @@ class FadaDoTime:
         # -- ações
         clicar_no_retrato: Callable[[int], bool],
         apertar_cura: Callable[[], None],
+        # REVIVER UM ALIADO CAÍDO. `None` = a conta não tem a tecla configurada,
+        # e aí a Fada só cura -- os mortos se reviverm sozinhos no prazo deles.
+        apertar_reviver: Callable[[], None] | None = None,
         apertar_sentar: Callable[[], None],
         auto_selecionar: Callable[[], None],
         # -- o mural
@@ -190,6 +195,11 @@ class FadaDoTime:
         self._id_do_alvo = id_do_alvo
         self._clicar_no_retrato = clicar_no_retrato
         self._apertar_cura = apertar_cura
+        self._apertar_reviver = apertar_reviver
+        self._avisou_sem_tecla_de_reviver = False
+        self._tentativas_de_reviver: dict[str, int] = {}
+        self.revives = 0
+        self.revives_sem_efeito = 0
         self._apertar_sentar = apertar_sentar
         self._auto_selecionar = auto_selecionar
         self.mural = mural
@@ -234,6 +244,9 @@ class FadaDoTime:
         # dentro de QUALQUER espera, inclusive de dentro da auto-cura -- e lá
         # não há como perguntar de novo sem custar uma leitura por espera.
         self._em_briga = False
+
+    def tem_tecla_de_reviver(self) -> bool:
+        return self._apertar_reviver is not None
 
     def _dormir_batendo(self, segundos: float) -> bool:
         """Espera, batendo no mural antes. Ver o porquê no `__init__`.
@@ -303,7 +316,20 @@ class FadaDoTime:
         if minha_vida is not None and minha_vida <= self._pedir_pct():
             return self._curar_a_mim_mesma(minha_vida)
 
+        # OS MORTOS -- fila separada, e a ordem entre as duas é decisão do
+        # usuário: a cura vem primeiro, EXCETO para quem já está caído há mais
+        # de `SEGUNDOS_DE_MORTO_PARA_FURAR_A_FILA`. O porquê está no cabeçalho
+        # de `fada_reviver.py`.
+        mortos = [x for x in self.mural.fila_de_reviver(self._membros_do_time())
+                  if x != self.meu_login]
+        urgente = next((m for m in mortos
+                        if self.mural.morto_ha_muito_tempo(m)), None)
+        if urgente is not None:
+            return fada_reviver.reviver(self, urgente)
+
         if not fila:
+            if mortos:
+                return fada_reviver.reviver(self, mortos[0])
             self._cuidados_de_ociosa()
             return self._descansar()
 

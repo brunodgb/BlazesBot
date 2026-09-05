@@ -616,6 +616,14 @@ Cada item é o que **não pode ser violado**. O detalhe de cada área mora em
   de Quedas, igual ao `_rodar_modo_app`. E `_montar_a_fada` **captura
   `Disconnected` e relança ANTES** do `except Exception` — engolir a queda ali
   deixava a Fada da HH acompanhando o líder com a janela fechada.
+- **A FADA REVIVE, E A CURA VEM PRIMEIRO** (04/09/2026, `bot/fada_reviver.py`).
+  O morto só fura a fila dos feridos depois de `SEGUNDOS_DE_MORTO_PARA_FURAR_A_FILA`
+  (40 s) — antes disso a cura tem prioridade, porque morto não apanha e tem
+  prazo próprio. **Ela avisa no mural que começou a conjurar ANTES de apertar**,
+  e **a vítima sai da fila dos mortos no instante em que fica de pé** — os dois
+  lados desse contrato existem para o feitiço de 5 s não ser desperdiçado.
+  Valem as mesmas regras da cura: id que não bate não revive, freio de 3
+  tentativas, mana conferida antes do toque, sem tecla avisa uma vez e segue.
 - **O APP RECONHECE A PRÓPRIA MORTE** (04/09/2026, `bot/morte.py`). `hp == 0`
   lido da memória, conferido **a cada linha** junto do alvo zerado — antes disso
   a macro seguia apertando tecla contra um cadáver, e no log de 7 h de duas

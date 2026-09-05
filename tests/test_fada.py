@@ -57,6 +57,8 @@ class _Jogo:
         self.mana = mana
         self.batalha = batalha
         self.companheiros = list(companheiros)
+        self.revives = 0
+        self.ao_reviver = None
         self.vidas = vidas if vidas is not None else [
             {"nome": "Aliado", "hp": 300}, {"nome": "Outro", "hp": 1000}]
         self.alvo = alvo
@@ -83,6 +85,11 @@ class _Jogo:
             if novo is not None:
                 self.alvo = novo
         return True
+
+    def reviver(self) -> None:
+        self.revives += 1
+        if self.ao_reviver is not None:
+            self.ao_reviver()
 
     def curar(self) -> None:
         """Sobe a vida de QUEM ESTÁ SELECIONADO, não de um nome fixo.
@@ -122,7 +129,7 @@ class _Jogo:
 
 def _fada(jogo, *, membros=("lider", "aliado"), nicks=None, parar=90.0,
           pedir=30.0, continuar=None, cuidar_do_pet=None,
-          limpar_a_bolsa=None):
+          limpar_a_bolsa=None, tem_reviver=True):
     nicks = nicks or {"aliado": "Aliado", "outro": "Outro", "fada": "Fada"}
     return mod.FadaDoTime(
         log=logging.getLogger("teste.fada"),
@@ -137,6 +144,7 @@ def _fada(jogo, *, membros=("lider", "aliado"), nicks=None, parar=90.0,
         id_do_alvo=lambda: jogo.alvo,
         clicar_no_retrato=jogo.clicar,
         apertar_cura=jogo.curar,
+        apertar_reviver=(jogo.reviver if tem_reviver else None),
         apertar_sentar=jogo.sentar,
         auto_selecionar=jogo.auto_selecionar,
         mural=mural,
@@ -1080,3 +1088,155 @@ def test_toda_morte_de_janela_esquece_o_id():
     from blazesbot.bot import supervisor as mod_sup
 
     assert "esquecer_id" in inspect.getsource(mod_sup.AccountSupervisor._release)
+
+
+# ---------------------------------------------------------------------------
+# A FADA REVIVENDO -- 04/09/2026
+# ---------------------------------------------------------------------------
+#
+# *"Vamos fazer a fada reviver ele; vai ter que adicionar uma tecla para isso."*
+# A prioridade é do usuário: a cura vem primeiro, EXCETO para quem já está caído
+# há muito tempo -- um morto não apanha nem gasta poção, e tem prazo próprio
+# para se reviver sozinho; um ferido sentado esperando pode virar o próximo
+# morto.
+
+import blazesbot.bot.fada_reviver as mod_reviver
+from blazesbot.bot import mural_da_morte
+
+
+@pytest.fixture(autouse=True)
+def _feitico_rapido(monkeypatch):
+    """O teto real é de 12 s (os 5 s de preparo mais folga). Aqui interessa o
+    que ela FAZ, não o relógio."""
+    monkeypatch.setattr(mod_reviver, "TETO_DO_FEITICO", 0.05)
+    monkeypatch.setattr(mod_reviver, "PASSO_DA_ESPERA", 0.01)
+
+
+def _envelhecer_a_morte(login, segundos):
+    quando, nick = mural_da_morte._MORTOS[login]
+    mural_da_morte._MORTOS[login] = (quando - segundos, nick)
+
+
+def test_a_CURA_vem_antes_do_morto_recente():
+    jogo = _Jogo()
+    jogo.companheiros = ["Aliado", "Outro"]
+    f = _fada(jogo, membros=("aliado", "outro"),
+              nicks={"aliado": "Aliado", "outro": "Outro"})
+    mural.pedir_cura("aliado", 30.0)
+    mural.morri("outro", nick="Outro")      # morreu agora, não é urgente
+
+    f._uma_volta()
+
+    assert jogo.curas >= 1, "curou ninguém"
+    assert jogo.revives == 0, "reviveu na frente de um ferido"
+
+
+def test_o_morto_ANTIGO_fura_a_fila():
+    jogo = _Jogo()
+    jogo.companheiros = ["Aliado", "Outro"]
+    f = _fada(jogo, membros=("aliado", "outro"),
+              nicks={"aliado": "Aliado", "outro": "Outro"})
+    mural.pedir_cura("aliado", 30.0)
+    mural.morri("outro", nick="Outro")
+    _envelhecer_a_morte("outro",
+                        mural.SEGUNDOS_DE_MORTO_PARA_FURAR_A_FILA + 1)
+
+    f._uma_volta()
+
+    assert jogo.revives == 1, "o morto antigo continuou esperando"
+
+
+def test_com_a_fila_de_cura_VAZIA_o_morto_e_atendido_na_hora():
+    jogo = _Jogo()
+    jogo.companheiros = ["Aliado"]
+    f = _fada(jogo)
+    mural.morri("aliado", nick="Aliado")
+    # De pé, a VÍTIMA sai da fila -- é ela quem lê o próprio hp.
+    jogo.ao_reviver = lambda: mural.esquecer_morte("aliado")
+
+    f._uma_volta()
+
+    assert jogo.revives == 1
+
+
+def test_sem_tecla_configurada_ela_nao_tenta_e_avisa_UMA_vez(caplog):
+    jogo = _Jogo()
+    jogo.companheiros = ["Aliado"]
+    f = _fada(jogo, tem_reviver=False)
+    mural.morri("aliado", nick="Aliado")
+
+    with caplog.at_level("WARNING"):
+        f._uma_volta()
+        f._uma_volta()
+
+    assert jogo.revives == 0
+    avisos = [r for r in caplog.records if "tecla de reviver" in r.getMessage()]
+    assert len(avisos) == 1, "avisou mais de uma vez"
+
+
+def test_id_que_nao_bate_NAO_revive():
+    """A mesma regra da cura: o clique pode não ter pego, e o feitiço iria para
+    o aliado ANTERIOR -- gastando a mana inteira em quem está vivo."""
+    jogo = _Jogo(alvo=555)                  # o clique nunca seleciona
+    jogo.companheiros = ["Aliado"]
+    f = _fada(jogo)
+    mural.publicar_id("aliado", 4242)
+    mural.morri("aliado", nick="Aliado")
+
+    f._uma_volta()
+
+    assert jogo.revives == 0
+
+
+def test_desiste_do_morto_depois_de_N_tentativas():
+    jogo = _Jogo(alvo=555)
+    jogo.companheiros = ["Aliado"]
+    f = _fada(jogo)
+    mural.publicar_id("aliado", 4242)
+    mural.morri("aliado", nick="Aliado")
+
+    for _ in range(mod_reviver.TENTATIVAS_POR_MORTO):
+        f._uma_volta()
+
+    assert mural.esta_morto("aliado") is False, ("não largou o morto; a fila "
+                                                 "trava num caso perdido")
+
+
+def test_ela_AVISA_que_comecou_a_conjurar():
+    """Sem o aviso, a vítima clica no Ok do jogo no meio dos 5 s de preparo: a
+    mana da Fada vai fora e a janela de convite aparece para quem já está
+    vivo."""
+    jogo = _Jogo()
+    jogo.companheiros = ["Aliado"]
+    f = _fada(jogo)
+    mural.morri("aliado", nick="Aliado")
+    avisou = []
+    jogo.ao_reviver = lambda: avisou.append(mural.fada_conjurando_em("aliado"))
+
+    f._uma_volta()
+
+    assert avisou == [True], "apertou a tecla sem avisar o time"
+
+
+def test_sem_mana_ela_nem_aperta():
+    """O reviver custa muito mais que uma cura (1168 na medição) -- apertar sem
+    ter só queima a recarga."""
+    jogo = _Jogo()
+    jogo.companheiros = ["Aliado"]
+    jogo.mana = 1.0
+    f = _fada(jogo)
+    mural.morri("aliado", nick="Aliado")
+
+    f._uma_volta()
+
+    assert jogo.revives == 0
+
+
+def test_a_propria_Fada_nao_entra_na_fila_dos_mortos():
+    jogo = _Jogo()
+    f = _fada(jogo)
+    mural.morri("fada", nick="Fada")
+
+    f._uma_volta()
+
+    assert jogo.revives == 0

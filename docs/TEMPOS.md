@@ -31,7 +31,7 @@ desta lista é ou uma exceção justificada, ou dívida que ninguém converteu a
 mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 
 
-**326 tempos catalogados** — 233 FIXOS (espera cega), 93 entre TETO e PASSO.
+**328 tempos catalogados** — 233 FIXOS (espera cega), 95 entre TETO e PASSO.
 
 
 **6 estão diferentes do original:** `TETO_DA_CAIXA`, `PASSO_DA_ESPERA`, `ESPERA_DA_BOLSA_ABRIR`, `FATIA_DE_ESPERA`, `INTERVALO_ENTRE_INVOCACOES`, `PASSOS_DO_APP`
@@ -269,15 +269,17 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | *literal em* `apply_buffs` | 0.6 s | = | FIXO | [combate.py:3506](blazesbot/bot/combate.py#L3506) | `apply_buffs` | Aplica os buffs configurados, em si mesmo. |
 | `FATIA_DA_ESPERA` | 0.25 s | = | PASSO | [context.py:211](blazesbot/bot/context.py#L211) | `tick` | Fatia máxima de sono dentro de um `tick`. |
 | *literal em* `wait_if_paused` | 0.075 s | = | FIXO | [context.py:512](blazesbot/bot/context.py#L512) | `wait_if_paused` | Bloqueia enquanto a pausa estiver ativa. |
-| `PASSO_DA_FADA` | 0.1 s | *novo* | PASSO | [fada.py:78](blazesbot/bot/fada.py#L78) | `rodar` | Cadência do laço da Fada quando não há nada a fazer. |
-| `TETO_PARA_O_ALVO_VIRAR` | 0.4 s | *novo* | TETO | [fada.py:85](blazesbot/bot/fada.py#L85) | `_clique_saiu_errado` | Depois do clique no retrato, quanto esperar a memória mostrar o alvo novo. |
-| `PASSO_DA_CONFERENCIA_DO_ALVO` | 0.02 s | *novo* | PASSO | [fada.py:86](blazesbot/bot/fada.py#L86) | `_clique_saiu_errado` |  |
-| `TETO_DA_CURA_SEGUNDOS` | 20 s | *novo* | TETO | [fada.py:93](blazesbot/bot/fada.py#L93) | `_me_defender, _curar (+1)` | Quanto tempo insistir numa cura antes de desistir daquela vítima. |
-| `ESPERA_ENTRE_CURAS` | 0.34 s | *novo* | FIXO | [fada.py:100](blazesbot/bot/fada.py#L100) | `_me_defender, _curar (+1)` | Entre uma tecla de cura e a seguinte. |
-| `ESPERA_DEPOIS_DE_ERRAR` | 0.333 s | *novo* | FIXO | [fada.py:118](blazesbot/bot/fada.py#L118) | `_atender` | Depois de uma tentativa que não pegou, espera antes da seguinte. |
-| `SEGUNDOS_ENTRE_CUIDADOS` | 30 s | *novo* | FIXO | [fada.py:128](blazesbot/bot/fada.py#L128) | `_cuidados_de_ociosa` | De quanto em quanto tempo a Fada cuida do pet e da bolsa, ESTANDO OCIOSA. |
-| `SEGUNDOS_DE_CUIDADO_LONGO` | 12 s | *novo* | FIXO | [fada.py:135](blazesbot/bot/fada.py#L135) | `_cuidados_de_ociosa` | Por quanto tempo vale a batida dada ANTES de uma tarefa longa da ociosa. |
+| `PASSO_DA_FADA` | 0.1 s | *novo* | PASSO | [fada.py:80](blazesbot/bot/fada.py#L80) | `rodar` | Cadência do laço da Fada quando não há nada a fazer. |
+| `TETO_PARA_O_ALVO_VIRAR` | 0.4 s | *novo* | TETO | [fada.py:87](blazesbot/bot/fada.py#L87) | `_clique_saiu_errado` | Depois do clique no retrato, quanto esperar a memória mostrar o alvo novo. |
+| `PASSO_DA_CONFERENCIA_DO_ALVO` | 0.02 s | *novo* | PASSO | [fada.py:88](blazesbot/bot/fada.py#L88) | `_clique_saiu_errado` |  |
+| `TETO_DA_CURA_SEGUNDOS` | 20 s | *novo* | TETO | [fada.py:95](blazesbot/bot/fada.py#L95) | `_me_defender, _curar (+1)` | Quanto tempo insistir numa cura antes de desistir daquela vítima. |
+| `ESPERA_ENTRE_CURAS` | 0.34 s | *novo* | FIXO | [fada.py:102](blazesbot/bot/fada.py#L102) | `_me_defender, _curar (+1)` | Entre uma tecla de cura e a seguinte. |
+| `ESPERA_DEPOIS_DE_ERRAR` | 0.333 s | *novo* | FIXO | [fada.py:120](blazesbot/bot/fada.py#L120) | `_atender` | Depois de uma tentativa que não pegou, espera antes da seguinte. |
+| `SEGUNDOS_ENTRE_CUIDADOS` | 30 s | *novo* | FIXO | [fada.py:130](blazesbot/bot/fada.py#L130) | `_cuidados_de_ociosa` | De quanto em quanto tempo a Fada cuida do pet e da bolsa, ESTANDO OCIOSA. |
+| `SEGUNDOS_DE_CUIDADO_LONGO` | 12 s | *novo* | FIXO | [fada.py:137](blazesbot/bot/fada.py#L137) | `_cuidados_de_ociosa` | Por quanto tempo vale a batida dada ANTES de uma tarefa longa da ociosa. |
 | `SEGUNDOS_ENTRE_TENTATIVAS` | 1 s | *novo* | FIXO | [fada_montagem.py:34](blazesbot/bot/fada_montagem.py#L34) | `rodar_a_fada` | Respiro quando a Fada não consegue nem começar (memória fechada, por exemplo). |
+| `TETO_DO_FEITICO` | 12 s | *novo* | TETO | [fada_reviver.py:38](blazesbot/bot/fada_reviver.py#L38) | `reviver` | Quanto se espera o feitiço pegar depois de apertar a tecla. |
+| `PASSO_DA_ESPERA` | 0.2 s | *novo* | PASSO | [fada_reviver.py:41](blazesbot/bot/fada_reviver.py#L41) | `reviver` | Passo entre duas perguntas enquanto o feitiço prepara. |
 | `SEGUNDOS_POR_TENTATIVA_DE_ENCOSTAR` | 1.8 s | *novo* | FIXO | [entrada.py:75](blazesbot/bot/hh/entrada.py#L75) | `garantir_coordenada_da_entrada, garantir_coordenada_da_saida` | Quanto tempo dar a cada tentativa de encostar no ponto exato. |
 | `TETO_DA_ENTRADA` | 0.25 s | *novo* | TETO | [entrada.py:95](blazesbot/bot/hh/entrada.py#L95) | `esperar_entrar` | Teto da espera pela troca de mapa depois de clicar no link de entrar. |
 | `PASSO_DA_ESPERA_DA_ENTRADA` | 0.04 s | *novo* | PASSO | [entrada.py:96](blazesbot/bot/hh/entrada.py#L96) | `esperar_sair, esperar_entrar` |  |
@@ -306,11 +308,11 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | `CADENCIA_DO_CONVITE` | 0.5 s | *novo* | PASSO | [morte.py:70](blazesbot/bot/morte.py#L70) | `_esperar_a_fada` | Cadência da conferência do convite da Fada na TELA. |
 | `TETO_PARA_O_REVIVE_PEGAR` | 10 s | *novo* | TETO | [morte.py:73](blazesbot/bot/morte.py#L73) | `_esperar_ficar_de_pe` | Quanto se espera o `hp` subir depois de um clique que deveria reviver. |
 | `TETO_DA_REGENERACAO` | 60 s (1 min) | *novo* | TETO | [morte.py:80](blazesbot/bot/morte.py#L80) | `_regenerar_antes_de_andar` | Teto da regeneração sentada antes de andar de volta. |
-| `CONVITE_VALIDO_SEGUNDOS` | 60 s (1 min) | = | FIXO | [mural.py:79](blazesbot/bot/mural.py#L79) | `convite_pendente` | Validade do anúncio. Cobre a fila de resposta do outro cliente com folga; mais |
-| `ACEITE_VALIDO_SEGUNDOS` | 15 s | = | FIXO | [mural.py:201](blazesbot/bot/mural.py#L201) | `aceite_pendente` | Validade do aceite. Curta de propósito: ele confirma UM convite recém-enviado, |
-| `LARGADA_VALIDA_SEGUNDOS` | 5 s | *novo* | FIXO | [mural.py:285](blazesbot/bot/mural.py#L285) | `largada_pendente` | Quanto tempo uma largada anunciada continua valendo. |
-| `ESTADO_VALIDO_SEGUNDOS` | 30 s | *novo* | FIXO | [mural.py:293](blazesbot/bot/mural.py#L293) | `estado_da_conta` | Quanto tempo o estado publicado por uma conta continua valendo. |
-| `TETO_DA_BATIDA_LONGA` | 15 s | *novo* | TETO | [mural.py:514](blazesbot/bot/mural.py#L514) | `bater_fada` | Quanto uma batida pode valer, no MÁXIMO, quando a Fada avisa que vai sumir. |
+| `CONVITE_VALIDO_SEGUNDOS` | 60 s (1 min) | = | FIXO | [mural.py:80](blazesbot/bot/mural.py#L80) | `convite_pendente` | Validade do anúncio. Cobre a fila de resposta do outro cliente com folga; mais |
+| `ACEITE_VALIDO_SEGUNDOS` | 15 s | = | FIXO | [mural.py:202](blazesbot/bot/mural.py#L202) | `aceite_pendente` | Validade do aceite. Curta de propósito: ele confirma UM convite recém-enviado, |
+| `LARGADA_VALIDA_SEGUNDOS` | 5 s | *novo* | FIXO | [mural.py:286](blazesbot/bot/mural.py#L286) | `largada_pendente` | Quanto tempo uma largada anunciada continua valendo. |
+| `ESTADO_VALIDO_SEGUNDOS` | 30 s | *novo* | FIXO | [mural.py:294](blazesbot/bot/mural.py#L294) | `estado_da_conta` | Quanto tempo o estado publicado por uma conta continua valendo. |
+| `TETO_DA_BATIDA_LONGA` | 15 s | *novo* | TETO | [mural.py:515](blazesbot/bot/mural.py#L515) | `bater_fada` | Quanto uma batida pode valer, no MÁXIMO, quando a Fada avisa que vai sumir. |
 | `SEGUNDOS_DE_MORTO_PARA_FURAR_A_FILA` | 40 s | *novo* | FIXO | [mural_da_morte.py:42](blazesbot/bot/mural_da_morte.py#L42) | `morto_ha_muito_tempo` | A partir de quantos segundos de morto a vítima FURA a fila dos feridos. |
 | `PASSO_VERTICAL` | 4 s | = | PASSO | [recorte_do_time.py:90](blazesbot/bot/recorte_do_time.py#L90) | `_candidatos` |  |
 | `TETO_DA_FATIA_DE_ESPERA` | 0.25 s | = | TETO | [supervisor.py:71](blazesbot/bot/supervisor.py#L71) | `wait` | Teto de uma fatia dentro de `_AnyEvent.wait`. É REDE, não o caminho normal -- |
