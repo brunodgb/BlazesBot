@@ -291,12 +291,12 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | `PASSO_ESPERANDO_O_LIDER` | 0.5 s | *novo* | PASSO | [fada.py:87](blazesbot/bot/hh/fada.py#L87) | `esperar_o_lider_entrar` |  |
 | *literal em* `seguir_o_lider` | 0.15 s | *novo* | FIXO | [fada.py:160](blazesbot/bot/hh/fada.py#L160) | `seguir_o_lider` | Clica no retrato do líder e aperta a tecla de seguir. |
 | *literal em* `entrar` | 0.25 s | *novo* | FIXO | [fada.py:250](blazesbot/bot/hh/fada.py#L250) | `entrar` | Entra na cave. Mesma porta, mesma máquina, mesmo NPC do líder. |
-| `PASSO_DENTRO_DA_CAVE` | 0.05 s | *novo* | PASSO | [routine.py:117](blazesbot/bot/hh/routine.py#L117) | `run` | Quanto esperar entre estados DENTRO da cave. |
-| `PASSO_FORA_DA_CAVE` | 0.4 s | *novo* | PASSO | [routine.py:118](blazesbot/bot/hh/routine.py#L118) | `run` |  |
-| `SEGUNDOS_PARA_ENGAJAR` | 5 s | *novo* | FIXO | [routine.py:137](blazesbot/bot/hh/routine.py#L137) | `_do_boss` | Quanto esperar, num ponto de batalha, para a flag de combate LIGAR. |
-| `SEGUNDOS_POR_TENTATIVA_DE_VOLTAR` | 1.8 s | *novo* | FIXO | [routine.py:144](blazesbot/bot/hh/routine.py#L144) | `_voltar_ao_ponto` | Quanto esperar, por tentativa, a volta ao ponto depois da luta. |
-| *literal em* `_do_situar` | 1 s | *novo* | FIXO | [routine.py:401](blazesbot/bot/hh/routine.py#L401) | `_do_situar` | Descobre em que ponto do ciclo a conta está, e entra por ali. |
-| *literal em* `_do_recuperar` | 2 s | *novo* | FIXO | [routine.py:1441](blazesbot/bot/hh/routine.py#L1441) | `_do_recuperar` | Algo saiu do roteiro. Volta a se situar, sem inventar. |
+| `PASSO_DENTRO_DA_CAVE` | 0.05 s | *novo* | PASSO | [routine.py:118](blazesbot/bot/hh/routine.py#L118) | `run` | Quanto esperar entre estados DENTRO da cave. |
+| `PASSO_FORA_DA_CAVE` | 0.4 s | *novo* | PASSO | [routine.py:119](blazesbot/bot/hh/routine.py#L119) | `run` |  |
+| `SEGUNDOS_PARA_ENGAJAR` | 5 s | *novo* | FIXO | [routine.py:138](blazesbot/bot/hh/routine.py#L138) | `_do_boss` | Quanto esperar, num ponto de batalha, para a flag de combate LIGAR. |
+| `SEGUNDOS_POR_TENTATIVA_DE_VOLTAR` | 1.8 s | *novo* | FIXO | [routine.py:145](blazesbot/bot/hh/routine.py#L145) | `_do_boss` | Quanto esperar, por tentativa, a volta ao ponto depois da luta. |
+| *literal em* `_do_situar` | 1 s | *novo* | FIXO | [routine.py:402](blazesbot/bot/hh/routine.py#L402) | `_do_situar` | Descobre em que ponto do ciclo a conta está, e entra por ali. |
+| *literal em* `_do_recuperar` | 2 s | *novo* | FIXO | [routine.py:1428](blazesbot/bot/hh/routine.py#L1428) | `_do_recuperar` | Algo saiu do roteiro. Volta a se situar, sem inventar. |
 | `SEGUNDOS_POR_TENTATIVA` | 1.8 s | *novo* | FIXO | [vendedor.py:68](blazesbot/bot/hh/vendedor.py#L68) | `encostar_no_ponto_da_venda` |  |
 | `RECARGA` | 5 s | = | FIXO | [hotbar.py:63](blazesbot/bot/hotbar.py#L63) | `garantir_pagina_1` | Recarga do caminho com `ctx`. Os momentos-chave acontecem em rajada -- o portão |
 | `PASSO_DA_SONDA` | 0.012 s | = | PASSO | [instrumentar_clique.py:110](blazesbot/bot/instrumentar_clique.py#L110) | `_sondar_ate_mudar` | De quanto em quanto tempo a sonda fotografa o minimapa esperando o efeito. |

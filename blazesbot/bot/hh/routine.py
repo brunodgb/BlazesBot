@@ -73,6 +73,7 @@ from ..navegacao import Navigator, PersonagemMortoNoPortao
 from ..team import TeamService
 from . import mapa_hh
 from .entrada import EntradaDaHH
+from .ponto_do_boss import do_trecho
 from .progresso import ProgressoDaCave
 from .vendedor import VendedorDaHH
 
@@ -1036,7 +1037,8 @@ class HHRoutine:
         reviveu dentro ou fora da cave.
         """
         ctx = self.ctx
-        rotulo, _caminho, ponto = mapa_hh.TRECHOS_DOS_BOSSES[self.progresso.trecho]
+        alvo = do_trecho(self.progresso.trecho, TOLERANCIA_DO_PONTO)
+        rotulo, ponto = alvo.rotulo, alvo.ponto
 
         # NÃO SE ESPERA COMBATE DE LONGE. Absorvido do `BossRushRoutine._do_boss`:
         # se o personagem não está no ponto, ele volta a andar em vez de ficar
@@ -1091,11 +1093,6 @@ class HHRoutine:
             self._falhar(f"morri antes de encostar no {rotulo}")
             return
 
-        # ONDE EU ESTAVA. Mob ranged não vem até o personagem -- é o personagem
-        # que anda até ele quando a rotação mira longe. Guardar aqui é o que
-        # permite voltar depois, ver `_voltar_ao_ponto`.
-        onde_eu_estava = ctx.memory.position()
-
         # CINCO SEGUNDOS PARA A FLAG LIGAR, e é isto que torna barato refazer um
         # trecho já limpo depois de uma morte: ponto vazio não engaja.
         if not self.combat.esperar_entrar_em_combate(
@@ -1103,10 +1100,21 @@ class HHRoutine:
             if ctx.snapshot().dead:
                 self._falhar(f"morri esperando o {rotulo} engajar")
                 return
+            # SILÊNCIO SÓ VALE COMO "LIMPO" SE EU ESTIVER NO PONTO.
+            #
+            # Longe dele, não engajar não prova nada -- prova só que o
+            # personagem está longe. Creditar ali foi o defeito #2 da auditoria.
+            if not alvo.estou_nele(ctx.memory.position()):
+                self._falhar(
+                    f"o {rotulo} não engajou, mas eu estou a "
+                    f"{alvo.distancia_de(ctx.memory.position()) or -1:.0f} "
+                    f"unidades do ponto -- refazendo o trecho",
+                    State.ATE_O_BOSS)
+                return
             ctx.log.info(
-                "HH: o %s não engajou em %.0fs -- o ponto está limpo, sigo para "
-                "o trecho seguinte. (Se ele estava VIVO e só demorou, esta run "
-                "perde este boss; é a regra escolhida.)",
+                "HH: o %s não engajou em %.0fs, e eu ESTOU no ponto -- está "
+                "limpo, sigo para o trecho seguinte. (Se ele estava VIVO e só "
+                "demorou, esta run perde este boss; é a regra escolhida.)",
                 rotulo, SEGUNDOS_PARA_ENGAJAR)
             self._avancar_o_trecho(rotulo)
             return
@@ -1114,9 +1122,21 @@ class HHRoutine:
         if not self._lutar_no_ponto(rotulo):
             return
 
-        # VOLTA PARA O PONTO antes de qualquer outra coisa: o loot e o trecho
-        # seguinte contam com o personagem onde a rota o deixou.
-        self._voltar_ao_ponto(rotulo, onde_eu_estava)
+        # VOLTA PARA O PONTO, E A FALHA IMPORTA.
+        #
+        # Sair de batalha responde "a flag baixou", nunca "o ponto está limpo".
+        # No log de 05/09 o personagem limpou um pacote 46 unidades fora do
+        # ponto do Fa-Yuan, o retorno falhou, e a run creditou o boss assim
+        # mesmo. Não voltou ⇒ o boss continua lá ⇒ refaz o trecho.
+        if not alvo.voltar_para_ele(
+                ctx.memory.position(), self.ui.encostar_no_ponto, ctx.log,
+                SEGUNDOS_POR_TENTATIVA_DE_VOLTAR):
+            self._falhar(
+                f"saí de batalha no {rotulo} mas não consegui voltar ao ponto "
+                f"-- não dá para creditar o boss daqui",
+                State.ATE_O_BOSS)
+            return
+
         self._catar_o_loot()
         self._avancar_o_trecho(rotulo)
 
@@ -1162,39 +1182,6 @@ class HHRoutine:
             return True
         self._falhar(f"não venci o {rotulo}: {fim.motivo}")
         return False
-
-    def _voltar_ao_ponto(self, rotulo: str,
-                         onde_eu_estava: tuple[int, int] | None) -> None:
-        """Se o personagem andou atrás de um mob, volta para onde estava.
-
-        O bot em Lua faz isto no mesmo lugar (`hh.killAtPosition`, o trecho
-        *"Char andou pra atacar o mob, voltando pra ..."*), e o motivo aparece
-        justamente nos pontos ranged: o mob fica parado longe, a rotação mira
-        nele, e o personagem caminha até o alcance.
-
-        SAIR DO PONTO DESALINHA O QUE VEM DEPOIS -- foi assim que o rollback
-        falso apareceu no trecho 1. Começar o caminho seguinte fora do waypoint
-        faz a retomada escolher índice errado.
-
-        Um clique de minimapa é barato; a alternativa é o trecho inteiro torto.
-        """
-        ctx = self.ctx
-        if onde_eu_estava is None:
-            return
-        agora = ctx.memory.position()
-        if agora is None or mapa_hh.distancia(agora, onde_eu_estava) <= 3:
-            return
-
-        ctx.log.info(
-            "HH: andei atrás dos mobs do %s (de %s para %s); voltando ao ponto",
-            rotulo, onde_eu_estava, agora)
-        self.ui.encostar_no_ponto(
-            alvo=onde_eu_estava,
-            precisao=TOLERANCIA_DO_PONTO,
-            tentativas=2,
-            segundos_por_tentativa=SEGUNDOS_POR_TENTATIVA_DE_VOLTAR,
-            o_que=f"voltar ao ponto do {rotulo}",
-        )
 
     def _avancar_o_trecho(self, rotulo: str) -> None:
         """Fecha este trecho e vai para o próximo pendente -- ou para a saída.

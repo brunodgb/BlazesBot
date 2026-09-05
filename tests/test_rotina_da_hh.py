@@ -646,21 +646,37 @@ def test_morrer_esperando_o_engajamento_NAO_vira_ponto_limpo():
 def test_volta_ao_ponto_depois_da_luta():
     """Mob ranged não vem até o personagem -- é o personagem que anda até ele.
 
-    Sair do ponto desalinha o trecho seguinte, e foi assim que o rollback falso
-    apareceu: começar o caminho fora do waypoint faz a retomada escolher índice
-    errado. O bot em Lua faz o mesmo (`hh.killAtPosition`).
+    O CONTRATO mora em `hh/ponto_do_boss.py` desde 05/09/2026 e é testado lá.
+    Aqui só se confere a ORDEM: lutar, voltar, e só então catar e creditar.
     """
     chamadas = _chamadas(HHRoutine._do_boss)
-    assert chamadas.index("_lutar_no_ponto") < chamadas.index("_voltar_ao_ponto")
-    assert chamadas.index("_voltar_ao_ponto") < chamadas.index("_catar_o_loot")
-    assert "encostar_no_ponto" in _chamadas(HHRoutine._voltar_ao_ponto)
+    assert chamadas.index("_lutar_no_ponto") < chamadas.index("voltar_para_ele")
+    assert chamadas.index("voltar_para_ele") < chamadas.index("_catar_o_loot")
 
 
-def test_nao_volta_se_nao_saiu_do_lugar():
-    """Um clique de minimapa é barato, mas não é de graça em toda run."""
-    fonte = _fonte(HHRoutine._voltar_ao_ponto)
-    assert "onde_eu_estava is None" in fonte
-    assert "<= 3" in fonte
+def test_nao_conseguir_voltar_ao_ponto_NAO_credita_o_boss():
+    """Sair de batalha responde "a flag baixou", nunca "o ponto está limpo".
+
+    Medido em 05/09/2026: o personagem limpou um pacote 46 unidades fora do
+    ponto do Fa-Yuan, o retorno falhou, e a run creditou o boss assim mesmo --
+    "1 de 4 já feitos" com o boss vivo.
+    """
+    fonte = _fonte(HHRoutine._do_boss)
+    trecho = fonte[fonte.index("voltar_para_ele"):]
+    corte = trecho.index("_avancar_o_trecho")
+    assert "_falhar" in trecho[:corte], (
+        "a falha do retorno é descartada e o trecho avança assim mesmo")
+    assert "State.ATE_O_BOSS" in trecho[:corte]
+
+
+def test_a_ancora_do_retorno_e_o_WAYPOINT_e_nao_uma_leitura():
+    """Sob rollback, uma posição capturada guarda onde o rollback largou.
+
+    No log de 05/09 a âncora era (275,138) e o ponto do boss é (271,137).
+    """
+    fonte = _fonte(HHRoutine._do_boss)
+    assert "onde_eu_estava" not in fonte
+    assert "do_trecho(self.progresso.trecho" in fonte
 
 
 # ===========================================================================
