@@ -276,8 +276,75 @@ A FILA COM O TETO DE 800 (medida em 05/09/2026)
 ```
 
 **Esta fila não é uma lista de tarefas com prazo.** É catraca: o valor
-do gate está em não deixar nascer o 20º. Arquivo grande e COESO é
-aceitável — se não há costura de responsabilidade, a resposta certa do
-prompt 09 é *"say so, leave it alone, and move to the next file"*.
-`core/memory.py` com 2498 linhas pode ser um mapa de offsets que é
-grande de verdade; dividi-lo piora.
+do gate está em não deixar nascer o 20º.
+
+================================================================
+TRIAGEM DE COSTURA (05/09/2026) — 15 DOS 19 NÃO SE DIVIDEM
+================================================================
+
+Antes de cortar qualquer arquivo, foi medida a estrutura dos 19: quanto
+do arquivo é UMA classe, e quantas funções top-level existem. O
+resultado muda o tamanho do problema.
+
+| padrão | arquivos | o que significa |
+|---|---|---|
+| **Uma classe gorda** (59–92% do arquivo é UMA classe) | **15** | Sem costura em nível de ARQUIVO |
+| **Costura real** (muitas funções top-level) | **4** | Divisível quando valer a pena |
+
+Os 15 sem costura, com a classe que os domina:
+
+```
+combate.py .......... CombatEngine        52 métodos  (74% do arquivo)
+app/executor.py ..... ExecutorDeMacro     47 métodos  (74%)
+supervisor.py ....... AccountSupervisor   41 métodos  (85%)
+bc/routine.py ....... BossRushRoutine     37 métodos  (84%)
+core/memory.py ...... Memory              82 métodos  (74%)
+navegacao.py ........ Navigator           32 métodos  (80%)
+ui_do_jogo.py ....... UIDoJogo            34 métodos  (70%)
+gui/main_window.py .. MainWindow          59 métodos  (92%)
+hh/routine.py ....... HHRoutine           34 métodos  (86%)
+web_app.py .......... _App                45 métodos  (63%)
+account_dialog.py ... AccountDialog       20 métodos  (92%)
+login.py ............ LoginSequence       26 métodos  (84%)
+core/inputs.py ...... Input               27 métodos  (68%)
+team.py ............. TeamService         18 métodos  (59%)
+vendedor.py ......... JanelaDeVenda       19 métodos  (65%)
+```
+
+**Isto explica retroativamente o desastre de 04-05/09.** `executor`,
+`combate` e `supervisor` são exatamente este padrão. Não se move um
+método de uma classe para outro arquivo sem uma de três coisas:
+herança, mixin, ou injeção (`Classe.metodo = funcao`). A sessão
+anterior escolheu injeção — a pior das três — porque a costura que ela
+procurava **não existia**. Não foi descuido: era o arquivo errado.
+
+Pela regra do próprio prompt 09 (*"say so, leave it alone, and move to
+the next file"*), **os 15 saem da fila**. Quebrá-los não é refatoração,
+é **redesenho**: trocar a classe gorda por objetos colaboradores. É
+decisão grande, no motor de produção, e precisa de medição própria — não
+se faz sob pressão de um gate de lint.
+
+Os 4 com costura real (`config.py`, `core/calibracao.py`,
+`bc/amostragem_de_cliques.py`, `hh/mapa_hh.py`) podem ser divididos
+quando houver motivo — dois deles são ferramentas de diagnóstico que nem
+rodam dentro do bot, então o ganho é pequeno e não há pressa.
+
+================================================================
+COMO A CATRACA FUNCIONA (é o que o gate faz hoje)
+================================================================
+
+`tests/test_quality_gates_python.py` tem a lista `HERDADOS` com os 19
+arquivos e o tamanho que cada um tinha em 05/09/2026. O gate:
+
+| situação | resultado |
+|---|---|
+| arquivo dentro do teto, fora da lista | passa |
+| arquivo **NOVO** acima de 800 | **REPROVA** |
+| herdado que **CRESCEU** desde 05/09 | **REPROVA** |
+| herdado igual ou menor, ainda acima de 800 | avisa (`warn`) |
+| herdado que baixou **para dentro** do teto | **REPROVA** até a entrada sair de `HERDADOS` |
+
+Os três `REPROVA` foram verificados criando os casos de propósito, não
+por leitura do código — um gate que não falha é o problema que estamos
+consertando. A fila, portanto, **só pode encolher**: nada grande nasce,
+nada grande cresce, e quem sai da lista não volta.

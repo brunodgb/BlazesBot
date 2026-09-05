@@ -127,23 +127,72 @@ def _todos_os_python(raiz: Path) -> list[Path]:
 
 
 # ===========================================================================
-# GATE 1 — TETO DE 800 LINHAS POR ARQUIVO
+# GATE 1 — TETO DE 800 LINHAS POR ARQUIVO (CATRACA)
 # ===========================================================================
+
+# Os 19 arquivos que JÁ estavam acima do teto em 05/09/2026, com o tamanho
+# que tinham naquele dia. A catraca usa este número como limite individual:
+# o herdado pode ficar como está ou encolher, NUNCA crescer.
+#
+# Tirar um daqui é permanente: se o arquivo voltar a passar de 800 depois de
+# sair da lista, ele é tratado como arquivo novo e REPROVA.
+#
+# 15 destes 19 são "uma classe gorda" (59-92% do arquivo é UMA classe) e
+# estão marcados COESO: não têm costura de responsabilidade em nível de
+# arquivo, e a regra do prompt 09 do toolkit para esse caso é "say so, leave
+# it alone". Dividi-los não é refatoração, é redesenho da classe em objetos
+# colaboradores — decisão própria, com medição própria. A tentativa de
+# 04-05/09 provou o custo de ignorar isso (ver `git show
+# refatoracao-350-descartada`). Ver a triagem completa em
+# `docs/decisoes/eslint-portado-para-python.md`.
+HERDADOS = {
+    # COESO — uma classe gorda, sem costura de arquivo
+    "blazesbot/bot/combate.py": 3735,                    # CombatEngine, 52 métodos (74%)
+    "blazesbot/bot/app/executor.py": 2939,               # ExecutorDeMacro, 47 métodos (74%)
+    "blazesbot/bot/supervisor.py": 2755,                 # AccountSupervisor, 41 métodos (85%)
+    "blazesbot/bot/bc/routine.py": 2596,                 # BossRushRoutine, 37 métodos (84%)
+    "blazesbot/core/memory.py": 2498,                    # Memory, 82 métodos (74%)
+    "blazesbot/bot/navegacao.py": 2164,                  # Navigator, 32 métodos (80%)
+    "blazesbot/bot/ui_do_jogo.py": 1929,                 # UIDoJogo, 34 métodos (70%)
+    "blazesbot/gui/main_window.py": 1895,                # MainWindow, 59 métodos (92%)
+    "blazesbot/bot/hh/routine.py": 1511,                 # HHRoutine, 34 métodos (86%)
+    "blazesbot/web_app.py": 1449,                        # _App, 45 métodos (63%)
+    "blazesbot/gui/account_dialog.py": 1415,             # AccountDialog, 20 métodos (92%)
+    "blazesbot/bot/login.py": 1134,                      # LoginSequence, 26 métodos (84%)
+    "blazesbot/core/inputs.py": 1111,                    # Input, 27 métodos (68%)
+    "blazesbot/bot/team.py": 972,                        # TeamService, 18 métodos (59%)
+    "blazesbot/bot/vendedor.py": 935,                    # JanelaDeVenda, 19 métodos (65%)
+    # COM COSTURA — muitas funções top-level; dividir é possível quando valer
+    "blazesbot/config.py": 1935,                         # 15 classes + 10 funções top-level
+    "blazesbot/core/calibracao.py": 1105,                # 24 funções top-level (diagnóstico)
+    "blazesbot/bot/bc/amostragem_de_cliques.py": 852,    # 12 funções top-level (diagnóstico)
+    "blazesbot/bot/hh/mapa_hh.py": 834,                  # 0 classes, 16 funções top-level
+}
+
 
 @pytest.mark.parametrize("arquivo", _todos_os_python(RAIZ),
                          ids=lambda p: str(p.relative_to(RAIZ)))
 def test_max_linhas_por_arquivo(arquivo):
-    """Teto de 800 linhas por arquivo, medido para esta base.
+    """Teto de 800 linhas por arquivo — como CATRACA, não como lista de tarefas.
 
-    HOJE: gate em `warn` (não reprova). É o que o passo 6 do toolkit
-    manda: gate que nasce vermelho em cima de código que já existia
-    é ruído que alguém desliga. A lista atual de offenders está
-    ordenada em `docs/decisoes/eslint-portado-para-python.md`.
+    O gate NÃO existe para pagar a dívida dos 19 herdados. Existe para
+    impedir o 20º de nascer. Por isso ele tem três comportamentos:
 
-    AMANHÃ: quando a contagem baseline anotada na doc chegar a zero,
-    o `pytest.warns` aqui se transforma em `assert` e a regra passa
-    a reprovar de verdade. Novos arquivos grandes ficam visíveis na
-    hora — e o aviso some.
+      * arquivo dentro do teto ................... passa;
+      * arquivo NOVO acima do teto ............... REPROVA (assert);
+      * herdado, se CRESCEU desde 05/09/2026 ..... REPROVA (assert);
+      * herdado, mesmo tamanho ou menor .......... avisa (`warn`).
+
+    A diferença para o gate anterior é que agora ele tem dentes nos dois
+    lados que importam: nada grande NASCE, e nada grande CRESCE. A fila
+    só pode encolher. Um herdado que baixar de 800 deve ser removido do
+    `HERDADOS` no mesmo commit — o teste diz isso na mensagem.
+
+    Por que a dívida herdada não tem prazo: 15 dos 19 são "uma classe
+    gorda", e a regra do prompt 09 do toolkit para arquivo sem costura
+    de responsabilidade é "say so, leave it alone, and move to the next
+    file". Arquivo grande e COESO é aceitável; arquivo grande e
+    incoerente não é. Ver `docs/decisoes/eslint-portado-para-python.md`.
     """
     caminho = arquivo.relative_to(RAIZ.parent)
     # `__init__.py` puro-reexport tem zero linhas de lógica. Contar ele
@@ -151,15 +200,49 @@ def test_max_linhas_por_arquivo(arquivo):
     texto = arquivo.read_text(encoding="utf-8")
     if caminho.name == "__init__.py" and not texto.strip():
         return
+    chave = caminho.as_posix()
     n = len(texto.splitlines())
-    if n > TETO_DE_LINHAS:
-        with pytest.warns(UserWarning, match=re.escape(
-                f"{caminho}: {n} linhas (teto {TETO_DE_LINHAS})")):
-            warnings.warn(
-                f"{caminho}: {n} linhas (teto {TETO_DE_LINHAS}). "
-                f"Ver docs/decisoes/eslint-portado-para-python.md.",
-                stacklevel=1,
-            )
+    limite_herdado = HERDADOS.get(chave)
+
+    if n <= TETO_DE_LINHAS:
+        # Encolheu para dentro do teto: a entrada em `HERDADOS` tem que sair
+        # NESTE commit, senão o arquivo poderia voltar a crescer até o
+        # limite antigo sem a catraca reclamar.
+        assert limite_herdado is None, (
+            f"{chave} baixou para {n} linhas e está dentro do teto "
+            f"({TETO_DE_LINHAS}): REMOVA a entrada de `HERDADOS` neste "
+            f"mesmo commit. Sair da lista é permanente — se o arquivo "
+            f"voltar a passar do teto, ele reprova como arquivo novo."
+        )
+        return
+
+    assert limite_herdado is not None, (
+        f"{chave}: {n} linhas, acima do teto de {TETO_DE_LINHAS}. "
+        f"Este arquivo NÃO está em `HERDADOS` — ou é novo, ou saiu da "
+        f"lista e voltou a crescer. A catraca existe para impedir "
+        f"exatamente isso. "
+        f"Quebre-o por RESPONSABILIDADE (não por contagem de linhas) "
+        f"antes de commitar. Se não houver costura, o arquivo não devia "
+        f"ter chegado a este tamanho de uma vez: reveja o desenho. "
+        f"Ver docs/decisoes/eslint-portado-para-python.md."
+    )
+    assert n <= limite_herdado, (
+        f"{chave}: {n} linhas — CRESCEU (tinha {limite_herdado} em "
+        f"05/09/2026, +{n - limite_herdado}). "
+        f"Herdado pode ficar como está ou encolher, nunca crescer: é o "
+        f"que faz a fila ser catraca e não lista de desejos. Coloque o "
+        f"código novo em outro módulo, ou reduza o arquivo antes de "
+        f"crescê-lo."
+    )
+
+    with pytest.warns(UserWarning, match=re.escape(
+            f"{caminho}: {n} linhas (teto {TETO_DE_LINHAS})")):
+        warnings.warn(
+            f"{caminho}: {n} linhas (teto {TETO_DE_LINHAS}). "
+            f"Herdado de 05/09/2026, sem prazo. "
+            f"Ver docs/decisoes/eslint-portado-para-python.md.",
+            stacklevel=1,
+        )
 
 
 # ===========================================================================
