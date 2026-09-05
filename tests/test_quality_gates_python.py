@@ -95,6 +95,19 @@ RAIZ = Path(__file__).resolve().parent.parent / "blazesbot"
 # O porquê completo está na docstring do módulo, seção MEDIÇÃO (05/09/2026).
 TETO_DE_LINHAS = 800
 
+# Quanto um HERDADO pode crescer sobre o tamanho que tinha em 05/09/2026
+# antes de reprovar. Medido pelo efeito, nao escolhido no ar: a versao
+# anterior desta catraca proibia QUALQUER crescimento, e no primeiro dia
+# reprovou tres alteracoes de funcionalidade legitimas (combate.py +47L,
+# hh/mapa_hh.py +58L, hh/routine.py +37L). A saida que ela sugeria --
+# "coloque o codigo novo em outro modulo" -- e exatamente a fragmentacao
+# que o GATE 3 abaixo existe para impedir: dois gates brigando.
+#
+# 10% deixa passar a alteracao normal e pega o arquivo em FUGA. Em
+# combate.py (3735) a folga e de 373 linhas; um arquivo que consome isso
+# nao esta recebendo uma funcionalidade, esta virando outro problema.
+MARGEM_DO_HERDADO = 1.10
+
 # Onde `print()` É legítimo. São a porta de saída de scripts ad-hoc e de
 # diagnósticos que rodam UMA vez por invocação humana, não dentro do bot
 # rodando. Tudo o mais é aplicação e deveria ir para `logging`.
@@ -198,7 +211,7 @@ def test_max_linhas_por_arquivo(arquivo):
 
       * arquivo dentro do teto ................... passa;
       * arquivo NOVO acima do teto ............... REPROVA (assert);
-      * herdado, se CRESCEU desde 05/09/2026 ..... REPROVA (assert);
+      * herdado que passou a MARGEM de 10% ....... REPROVA (assert);
       * herdado, mesmo tamanho ou menor .......... avisa (`warn`).
 
     A diferença para o gate anterior é que agora ele tem dentes nos dois
@@ -244,20 +257,23 @@ def test_max_linhas_por_arquivo(arquivo):
         f"ter chegado a este tamanho de uma vez: reveja o desenho. "
         f"Ver docs/decisoes/eslint-portado-para-python.md."
     )
-    assert n <= limite_herdado, (
-        f"{chave}: {n} linhas — CRESCEU (tinha {limite_herdado} em "
-        f"05/09/2026, +{n - limite_herdado}). "
-        f"Herdado pode ficar como está ou encolher, nunca crescer: é o "
-        f"que faz a fila ser catraca e não lista de desejos. Coloque o "
-        f"código novo em outro módulo, ou reduza o arquivo antes de "
-        f"crescê-lo."
+    teto_individual = int(limite_herdado * MARGEM_DO_HERDADO)
+    assert n <= teto_individual, (
+        f"{chave}: {n} linhas — passou a margem. Tinha {limite_herdado} "
+        f"em 05/09/2026, e o limite com {int((MARGEM_DO_HERDADO - 1) * 100)}% "
+        f"de folga é {teto_individual} (+{n - teto_individual} além). "
+        f"Crescimento normal de funcionalidade cabe na margem; consumir "
+        f"ela inteira significa que este arquivo virou outro problema. "
+        f"Divida-o em pacote de contexto (ver GATE 3: de 2 a 7 módulos, "
+        f"120 a 800 linhas cada) antes de continuar crescendo."
     )
 
     with pytest.warns(UserWarning, match=re.escape(
             f"{caminho}: {n} linhas (teto {TETO_DE_LINHAS})")):
         warnings.warn(
             f"{caminho}: {n} linhas (teto {TETO_DE_LINHAS}). "
-            f"Herdado de 05/09/2026, sem prazo. "
+            f"Herdado de 05/09/2026, sem prazo (margem até "
+            f"{teto_individual}). "
             f"Ver docs/decisoes/eslint-portado-para-python.md.",
             stacklevel=1,
         )
@@ -304,5 +320,203 @@ def test_print_so_em_scripts_de_diagnostico():
                 f"{len(violacoes)} `print()` em local proibido. "
                 f"Adicione o caminho a `EXCECOES_DE_PRINT` (decisão "
                 f"documentada) ou troque por `logging`: \n  {lista}",
+                stacklevel=1,
+            )
+
+
+# ===========================================================================
+# GATE 3 — COESÃO DE CONTEXTO (o outro lado do teto de linhas)
+# ===========================================================================
+#
+# POR QUE ESTE GATE EXISTE
+# ------------------------
+# O teto de 800 linhas resolve METADE do problema: impede o arquivo
+# gigante. Sozinho, ele empurra para o defeito oposto — um contexto picado
+# em 20 pedaços, que custa MAIS para navegar do que o arquivo grande
+# custava. "Onde está a lógica da fada?" não pode ter como resposta "abre
+# esses seis arquivos".
+#
+# Diretriz do usuário (05/09/2026), palavra por palavra:
+#
+#   "quando é referente a combate é importante que esteja agrupado, ou se
+#    é referente a fada é bom que esteja em um lugar só, para eu como
+#    desenvolvedor não precisar caçar em 500 arquivos diferentes"
+#
+# A FAIXA SAUDÁVEL DE UM CONTEXTO
+# -------------------------------
+# Um contexto tem UMA PORTA: ou um arquivo `X.py`, ou um pacote `X/` com
+# fachada. E o pacote tem forma MEDIDA — a do `core/vision/`, que é o
+# único split deste projeto que deu certo:
+#
+#     core/vision/   5 módulos, 1647 linhas, de 132 a 448, mediana 340
+#
+# Daí a faixa: 2 a 7 módulos, cada um entre 120 e 800 linhas. Nem
+# monolito, nem picadinho. A faixa comporta a fila inteira: o maior
+# arquivo do projeto (combate.py, 3735L) cabe em 5-6 módulos de ~650L.
+#
+# POR QUE `error` E NÃO `warn`
+# ---------------------------
+# Medido em 05/09/2026: ZERO violações. A fragmentação ainda não
+# aconteceu, e essa é a única condição em que o passo 6 do toolkit permite
+# `error` de saída. Instalar agora é de graça; instalar depois de 20
+# fragmentos seria outra fila de dívida.
+
+# Pastas que agrupam contextos DIFERENTES (namespaces) e por isso não
+# respondem pela faixa: ninguém espera que `core/` seja um só assunto.
+# Todo pacote que NÃO estiver aqui é PACOTE DE CONTEXTO — nasceu de
+# dividir um assunto, e a faixa vale para ele.
+NAMESPACES = frozenset({
+    "blazesbot",
+    "blazesbot/bot",
+    "blazesbot/core",
+    "blazesbot/gui",
+    "blazesbot/tools",
+    "blazesbot/bot/bc",
+    "blazesbot/bot/app",
+    "blazesbot/bot/hh",
+})
+
+PISO_DE_MODULO = 120
+MIN_MODULOS_POR_CONTEXTO = 2
+MAX_MODULOS_POR_CONTEXTO = 7
+
+# Módulos que PODEM ser pequenos dentro de um pacote de contexto: são
+# declaração, não lógica. Um arquivo só de constantes com 40 linhas não é
+# fragmento — é o lugar certo das constantes.
+MODULO_PEQUENO_LEGITIMO = ("_constantes", "_protocolo", "_tipos", "_estado")
+
+# `X.py` com satélites `X_*.py` ao lado é um pacote fingindo não ser um
+# pacote: para responder sobre o assunto é preciso abrir todos, e nenhum
+# deles é a porta. Estes 5 são de antes da regra e avisam; grupo NOVO
+# reprova.
+PORTAS_DUPLAS_HERDADAS = frozenset({
+    "blazesbot/bot/fada",          # fada.py + fada_montagem.py + fada_reviver.py
+    "blazesbot/bot/login",         # login.py + login_states.py
+    "blazesbot/bot/mural",         # mural.py + mural_da_morte.py
+    "blazesbot/bot/app/afericao",  # afericao.py + afericao_do_aliado.py
+    "blazesbot/core/janelas",      # janelas.py + janelas_abertas.py
+})
+
+
+def _pacotes_de_contexto() -> list[Path]:
+    """Pastas que representam UM assunto — as que respondem pela faixa."""
+    return sorted(
+        d for d in RAIZ.rglob("*")
+        if d.is_dir() and "__pycache__" not in d.parts
+        and (d / "__init__.py").exists()
+        and d.relative_to(RAIZ.parent).as_posix() not in NAMESPACES
+    )
+
+
+def _modulos(pacote: Path) -> list[Path]:
+    return sorted(p for p in pacote.glob("*.py") if p.name != "__init__.py")
+
+
+def _ids_de_pacote(d):
+    return "-" if d is None else str(d.relative_to(RAIZ))
+
+
+@pytest.mark.parametrize("pacote", _pacotes_de_contexto() or [None],
+                         ids=_ids_de_pacote)
+def test_pacote_de_contexto_nao_e_picadinho(pacote):
+    """Pacote de contexto tem de 2 a 7 módulos — nem monolito, nem picadinho.
+
+    Um pacote com 1 módulo não era para ser pacote: o arquivo bastava, e o
+    pacote só acrescenta uma pasta para atravessar. Um pacote com mais de
+    7 deixou de ser navegável — a pergunta "onde está X?" voltou a custar
+    caro, que é exatamente o que o teto de linhas queria evitar.
+
+    ESCAPE: contexto que honestamente precisa de mais de 7 pedaços não
+    vira 12 irmãos — vira SUBPACOTES com nome de domínio
+    (`combate/alvo/`, `combate/rotacao/`). Aí cada nível continua
+    respondendo à pergunta num relance.
+    """
+    if pacote is None:
+        pytest.skip("nenhum pacote de contexto ainda")
+    mods = _modulos(pacote)
+    nome = pacote.relative_to(RAIZ.parent).as_posix()
+    assert len(mods) >= MIN_MODULOS_POR_CONTEXTO, (
+        f"{nome}/ tem {len(mods)} módulo(s), abaixo de "
+        f"{MIN_MODULOS_POR_CONTEXTO}. Pacote com um módulo só não se "
+        f"justifica: o arquivo único bastava."
+    )
+    assert len(mods) <= MAX_MODULOS_POR_CONTEXTO, (
+        f"{nome}/ tem {len(mods)} módulos, acima de "
+        f"{MAX_MODULOS_POR_CONTEXTO}. O contexto foi PICADO, não dividido "
+        f"— e a pergunta 'onde está X?' voltou a custar caro. Junte os "
+        f"que respondem à mesma pergunta, ou crie subpacotes com nome de "
+        f"domínio em vez de mais irmãos."
+    )
+
+
+@pytest.mark.parametrize("pacote", _pacotes_de_contexto() or [None],
+                         ids=_ids_de_pacote)
+def test_modulo_de_contexto_tem_massa(pacote):
+    """Módulo dentro de pacote de contexto tem pelo menos 120 linhas.
+
+    Abaixo disso quase nunca é uma responsabilidade: é pedaço de outra,
+    separado por contagem de linhas em vez de por assunto. O custo de
+    abrir um arquivo é FIXO e não depende do tamanho dele — dez arquivos
+    de 60 linhas cobram dez aberturas para entregar o que um de 600
+    entregaria em uma.
+
+    ISENTOS: `_constantes`, `_protocolo`, `_tipos`, `_estado` — são
+    declaração, não lógica, e o lugar certo delas é arquivo próprio por
+    menor que seja.
+    """
+    if pacote is None:
+        pytest.skip("nenhum pacote de contexto ainda")
+    for m in _modulos(pacote):
+        if any(k in m.name for k in MODULO_PEQUENO_LEGITIMO):
+            continue
+        n = len(m.read_text(encoding="utf-8").splitlines())
+        assert n >= PISO_DE_MODULO, (
+            f"{m.relative_to(RAIZ.parent).as_posix()}: {n} linhas, abaixo "
+            f"do piso de {PISO_DE_MODULO}. Módulo pequeno demais é "
+            f"fragmento, não responsabilidade. Funda com o irmão que "
+            f"responde à mesma pergunta — ou, se for mesmo só declaração, "
+            f"nomeie como tal ({', '.join(MODULO_PEQUENO_LEGITIMO)})."
+        )
+
+
+def test_um_contexto_uma_porta():
+    """`X.py` com satélites `X_*.py` ao lado deveria ser o pacote `X/`.
+
+    É o padrão que a diretriz de 05/09/2026 nomeia. Hoje, responder "onde
+    está a lógica da fada?" custa abrir `fada.py`, `fada_montagem.py` e
+    `fada_reviver.py` — três arquivos, nenhum deles a porta. Um pacote
+    `fada/` com fachada responde num lugar só, SEM juntar tudo num arquivo
+    gigante: é o meio-termo entre os dois defeitos.
+
+    Os 5 grupos de antes da regra avisam; grupo NOVO reprova.
+    """
+    from collections import defaultdict
+    achados = []
+    for d in sorted({p.parent for p in _todos_os_python(RAIZ)}):
+        por_prefixo = defaultdict(list)
+        for p in sorted(d.glob("*.py")):
+            if p.name == "__init__.py":
+                continue
+            por_prefixo[p.stem.split("_")[0]].append(p)
+        for pref, membros in sorted(por_prefixo.items()):
+            if (d / f"{pref}.py").exists() and len(membros) >= 2:
+                achados.append(((d / pref).relative_to(RAIZ.parent).as_posix(),
+                                [m.name for m in membros]))
+
+    novos = [(k, v) for k, v in achados if k not in PORTAS_DUPLAS_HERDADAS]
+    assert not novos, (
+        "Contexto novo espalhado em irmãos `X.py` + `X_*.py`: "
+        + "; ".join(f"{k} -> {v}" for k, v in novos)
+        + ". Faça um pacote com o nome do contexto e uma fachada no "
+        "`__init__.py`. Vale a faixa do GATE 3: de 2 a 7 módulos, cada um "
+        "com 120 a 800 linhas."
+    )
+
+    for k, v in achados:
+        with pytest.warns(UserWarning, match=re.escape(k)):
+            warnings.warn(
+                f"{k}: contexto espalhado em {len(v)} irmãos "
+                f"({', '.join(v)}). Herdado de 05/09/2026, sem prazo — "
+                f"vira pacote quando alguém mexer nele de qualquer forma.",
                 stacklevel=1,
             )

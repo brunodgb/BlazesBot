@@ -330,6 +330,80 @@ quando houver motivo — dois deles são ferramentas de diagnóstico que nem
 rodam dentro do bot, então o ganho é pequeno e não há pressa.
 
 ================================================================
+GATE 3 — COESÃO DE CONTEXTO: O OUTRO LADO DO TETO (05/09/2026)
+================================================================
+
+O teto de linhas resolve METADE do problema. Sozinho, ele empurra para o
+defeito oposto: um contexto picado em 20 pedaços, que custa MAIS para
+navegar do que o arquivo grande custava. Diretriz do usuário, palavra por
+palavra:
+
+> *"quando é referente a combate é importante que esteja agrupado, ou se é
+> referente a fada é bom que esteja em um lugar só, para eu como
+> desenvolvedor não precisar caçar em 500 arquivos diferentes"*
+
+**E o defeito já existe hoje**, na forma de irmãos com prefixo:
+
+```
+793  bot/fada.py        205  bot/fada_montagem.py     135  bot/fada_reviver.py
+```
+
+Três arquivos, nenhum deles a porta. É **um pacote fingindo não ser um
+pacote**. Mesmo padrão em `login.py`+`login_states.py`,
+`mural.py`+`mural_da_morte.py`, `afericao.py`+`afericao_do_aliado.py`,
+`janelas.py`+`janelas_abertas.py`.
+
+**A FAIXA SAUDÁVEL.** Um contexto tem UMA PORTA: um arquivo `X.py` ou um
+pacote `X/` com fachada. O pacote tem forma medida — a do `core/vision/`,
+único split do projeto que deu certo:
+
+```
+core/vision/   5 módulos, 1647 linhas, de 132 a 448, mediana 340
+```
+
+Daí a faixa: **2 a 7 módulos, cada um de 120 a 800 linhas**. Nem monolito,
+nem picadinho. Ela comporta a fila inteira — `combate.py` (3735L) cabe em
+5-6 módulos de ~650L. Contexto que precise de mais de 7 não vira 12 irmãos:
+vira **subpacotes com nome de domínio** (`combate/alvo/`).
+
+**As três regras, e por que nascem `error`:**
+
+| regra | violações em 05/09 | severidade |
+|---|---|---|
+| pacote de contexto: 2 a 7 módulos | **0** | `error` |
+| módulo de contexto ≥ 120 linhas | **0** | `error` |
+| `X.py` + `X_*.py` vira pacote `X/` | 5 | `warn` (herdados) |
+
+As duas primeiras nascem VERDES porque a fragmentação ainda não aconteceu
+— e essa é a única condição em que o passo 6 do toolkit permite `error` de
+saída. Instalar agora é de graça; instalar depois de 20 fragmentos seria
+outra fila de dívida. Os três `error` foram verificados criando os casos
+de propósito (`vision/` com 8 módulos, módulo de 60 linhas, um
+`navegacao_extra.py` ao lado de `navegacao.py`).
+
+================================================================
+A MARGEM DE 10% — POR QUE A CATRACA AFROUXOU NO MESMO DIA
+================================================================
+
+A primeira versão da catraca proibia QUALQUER crescimento de herdado. **No
+primeiro dia ela reprovou três alterações de funcionalidade legítimas**
+(`combate.py` +47L, `hh/mapa_hh.py` +58L, `hh/routine.py` +37L) — e a saída
+que ela sugeria, *"coloque o código novo em outro módulo"*, é exatamente a
+fragmentação que o GATE 3 acima existe para impedir. **Dois gates
+brigando.**
+
+Nos 19 herdados é onde a funcionalidade deste projeto acontece; cobrar
+pedágio em cada commit ali é o gate que alguém desliga na primeira
+sexta-feira. Por isso `MARGEM_DO_HERDADO = 1.10`: crescimento normal cabe,
+arquivo em FUGA reprova. Em `combate.py` a folga é de 373 linhas — quem
+consome isso não está recebendo uma funcionalidade, está virando outro
+problema, e aí a mensagem manda dividir em pacote de contexto dentro da
+faixa do GATE 3.
+
+Lição registrada: **um gate calibrado por princípio, e não por efeito
+medido, cobra o preço no primeiro dia.**
+
+================================================================
 COMO A CATRACA FUNCIONA (é o que o gate faz hoje)
 ================================================================
 
@@ -340,7 +414,7 @@ arquivos e o tamanho que cada um tinha em 05/09/2026. O gate:
 |---|---|
 | arquivo dentro do teto, fora da lista | passa |
 | arquivo **NOVO** acima de 800 | **REPROVA** |
-| herdado que **CRESCEU** desde 05/09 | **REPROVA** |
+| herdado que passou a **margem de 10%** | **REPROVA** |
 | herdado igual ou menor, ainda acima de 800 | avisa (`warn`) |
 | herdado que baixou **para dentro** do teto | **REPROVA** até a entrada sair de `HERDADOS` |
 
