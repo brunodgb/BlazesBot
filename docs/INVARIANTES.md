@@ -616,6 +616,14 @@ Cada item é o que **não pode ser violado**. O detalhe de cada área mora em
   de Quedas, igual ao `_rodar_modo_app`. E `_montar_a_fada` **captura
   `Disconnected` e relança ANTES** do `except Exception` — engolir a queda ali
   deixava a Fada da HH acompanhando o líder com a janela fechada.
+- **MEXEU NO `web/`, RODE `npm run build`** (04/09/2026). A janela do bot abre
+  **`dist/index.html`**, que é o Vite compilado — editar `web/index.html` sem
+  compilar não muda nada do que o usuário vê, e **nenhum teste reclamava**.
+  Medido no campo `revive_skill`: campo no HTML, mapeado no `main.js`,
+  transportado pela ponte nos dois sentidos, suíte inteira verde — e a aba
+  Teclas na tela continuava sem ele. Travado por
+  `test_o_dist_COMPILADO_tem_o_campo` (pula quando não há `dist/`, porque ele é
+  gerado e ignorado pelo git).
 - **A FADA REVIVE, E A CURA VEM PRIMEIRO** (04/09/2026, `bot/fada_reviver.py`).
   O morto só fura a fila dos feridos depois de `SEGUNDOS_DE_MORTO_PARA_FURAR_A_FILA`
   (40 s) — antes disso a cura tem prioridade, porque morto não apanha e tem

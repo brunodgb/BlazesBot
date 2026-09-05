@@ -784,3 +784,29 @@ CSP e ao `file://`, herda `currentColor`) e um `.ico` multi-resolução de verda
 para a janela, a GUI e a taskbar. FontAwesome e Material Icons foram recusados:
 webfont externa não carrega em `file://`, e via npm entra um pacote inteiro para
 um glifo.
+
+
+## O `dist/` é o que roda — e ele mentiu por uma sessão inteira (04/09/2026)
+
+A tecla nova de reviver foi acrescentada em `web/index.html`, mapeada em
+`web/main.js`, transportada pela ponte nos dois sentidos e carregada/gravada na
+GUI PyQt6. Os testes de paridade — que existem justamente para o campo não
+"aparecer e não gravar" — passaram todos.
+
+E a aba **Teclas na tela continuava sem o campo.**
+
+Motivo: `pywebview` abre **`dist/index.html`**, o bundle do Vite. `web/` é
+fonte; `dist/` é o que existe para o usuário. Sem `npm run build`, o HTML novo
+fica no disco sem nunca chegar à tela.
+
+### Por que nenhum teste pegou
+
+Os quatro testes de paridade leem `web/index.html`, `web/main.js`,
+`blazesbot/web_app.py` e `blazesbot/gui/account_dialog.py`. Nenhum lia o
+artefato. E `dist/` está no `.gitignore`, então a tentação é dizer que teste
+nenhum pode olhar para ele.
+
+Pode, com uma condição: **pular quando não existe.** Num clone novo ou na CI o
+teste é irrelevante; na máquina de quem desenvolve, ele é a única coisa que
+separa "mexi no HTML" de "o usuário viu". `test_o_dist_COMPILADO_tem_o_campo`
+não cobra que o build seja feito — cobra que o build **que existe** esteja em dia.

@@ -75,6 +75,37 @@ def test_gui_carrega_e_grava_a_tecla(tecla: str) -> None:
     )
 
 
+@pytest.mark.parametrize("tecla", TECLAS)
+def test_o_dist_COMPILADO_tem_o_campo(tecla: str) -> None:
+    """O que roda na tela é `dist/`, não `web/` -- 04/09/2026.
+
+    Esta é a irmã do defeito que este arquivo já pegava. Lá, o input aparecia e
+    o valor não saía; aqui, o input **nem aparece**: a janela do bot abre
+    `dist/index.html`, que é o Vite compilado, e mexer no `web/index.html` sem
+    rodar `npm run build` não muda nada do que o usuário vê.
+
+    Foi exatamente o que aconteceu com `revive_skill`: campo no HTML, mapeado
+    no main.js, transportado pela ponte nos dois sentidos, todos os testes
+    verdes -- e a aba Teclas na tela continuava sem ele.
+
+    `dist/` é gerado e está no .gitignore, então o teste PULA quando não existe
+    (clone novo, CI). Ele não cobra o build; cobra que o build feito esteja em
+    dia com o HTML.
+    """
+    dist = RAIZ / "dist" / "index.html"
+    if not dist.exists():
+        pytest.skip("dist/ não foi compilado nesta cópia")
+    campo = f'ed-k-{tecla.replace("_skill", "").replace("_", "-")}'
+    fonte = dist.read_text(encoding="utf-8")
+    origem = _ler("web/index.html")
+    if campo not in origem:
+        pytest.skip(f"{tecla} não usa o id {campo} no web/index.html")
+    assert campo in fonte, (
+        f"'{campo}' está no web/index.html e NÃO no dist/ compilado. "
+        f"Rode `npm run build` -- a tela do bot lê o dist, não o web."
+    )
+
+
 def test_a_tecla_da_hotbar_existe() -> None:
     """Âncora: se este campo sumir, os testes acima passariam vazios."""
     assert "hotbar_page_1" in TECLAS
