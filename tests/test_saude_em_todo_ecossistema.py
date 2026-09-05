@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import ast
 import inspect
+import textwrap
 from pathlib import Path
 
 from blazesbot.bot import supervisor as mod_supervisor
@@ -273,3 +274,85 @@ def test_a_parada_do_usuario_vale_na_HH_como_nas_outras():
                 if isinstance(n, ast.Try) and n.finalbody]
     corpo = " ".join(ast.unparse(x) for f in finallys for x in f.finalbody)
     assert "farming = False" in corpo
+
+# ===========================================================================
+# A FADA ERA A ÚNICA QUE NÃO VIA A PRÓPRIA QUEDA -- 04/09/2026
+# ===========================================================================
+#
+# Relato do usuário: *"se a fada cai, muitas vezes o bot não reconhece"*. E não
+# reconhecia mesmo: `rodar()` termina sozinho quando o `continuar` vê a janela
+# morta pelo `IsWindow`, e o `_operate` simplesmente chamava `_rodar_fada` de
+# novo -- sem matar o cliente, sem relogin, sem Histórico de Quedas. O modo APP
+# já tinha exatamente esta linha no fim de `_rodar_modo_app` desde 18/08/2026;
+# a Fada nasceu depois e não a herdou.
+
+
+def _fonte_da(nome):
+    """A montagem da Fada saiu do supervisor em 04/09/2026 -- ver
+    `bot/fada_montagem.py`. `_montar_a_fada` ficou no supervisor."""
+    from blazesbot.bot import fada_montagem as mod_fada
+
+    for dono in (mod_fada, mod_supervisor.AccountSupervisor):
+        alvo = getattr(dono, nome, None)
+        if alvo is not None:
+            return inspect.getsource(alvo)
+    raise AssertionError(nome)
+
+
+def test_a_FADA_percebe_a_propria_queda_como_o_modo_APP():
+    fonte = _fonte_da("rodar_a_fada")
+    arvore = ast.parse(textwrap.dedent(fonte))
+
+    levantam = [no for no in ast.walk(arvore)
+                if isinstance(no, ast.Raise)
+                and no.exc is not None
+                and "Disconnected" in ast.unparse(no.exc)]
+
+    assert levantam, ("`_rodar_fada` não levanta `Disconnected` em lugar nenhum "
+                      "-- a queda da Fada volta a passar despercebida.")
+    assert "IsWindow" in fonte, ("a queda tem de ser decidida pela MESMA "
+                                 "pergunta do modo APP: a janela ainda existe?")
+
+
+def test_a_queda_da_FADA_e_conferida_DEPOIS_do_laco_dela():
+    """O `continuar` da Fada só ENCERRA o laço quando a janela morre; quem
+    transforma isso em queda é a conferência no fim, no mesmo lugar em que
+    `_rodar_modo_app` faz a dele."""
+    fonte = _fonte_da("rodar_a_fada")
+    depois_do_laco = fonte.split("fada.rodar()")[-1]
+
+    assert "IsWindow" in depois_do_laco and "Disconnected" in depois_do_laco
+
+
+def test_montar_a_FADA_NAO_ENGOLE_a_queda():
+    """`_montar_a_fada` tem um `except Exception` para não derrubar a sessão
+    quando a montagem falha -- e ele engolia `Disconnected` junto, deixando a
+    Fada da HH acompanhando com a janela morta. Capturar pode; engolir, não."""
+    fonte = textwrap.dedent(_fonte_da("_montar_a_fada"))
+    arvore = ast.parse(fonte)
+
+    handlers = [no for no in ast.walk(arvore) if isinstance(no, ast.ExceptHandler)]
+    nomeiam = [h for h in handlers
+               if h.type is not None and "Disconnected" in ast.unparse(h.type)]
+
+    assert nomeiam, "`_montar_a_fada` não trata `Disconnected` -- ele é engolido."
+    for h in nomeiam:
+        assert all(isinstance(c, ast.Raise) and c.exc is None for c in h.body), (
+            "o `except Disconnected` tem de ser um `raise` seco")
+    # E ele precisa vir ANTES do `except Exception`, senão nunca é alcançado.
+    ordem = [ast.unparse(h.type) if h.type is not None else "*" for h in handlers]
+    assert ordem.index("Disconnected") < ordem.index("Exception"), ordem
+
+
+def test_a_FADA_sem_memoria_nao_gira_em_laco_quente():
+    """Memória que não abre devolvia na hora, e `_operate` chamava de novo na
+    hora: a conta girava sem dormir, sem curar e sem cair. O respiro é o que
+    impede isso -- e antes dele vem a pergunta se a janela morreu, porque
+    memória fechada quase sempre é janela morta."""
+    fonte = _fonte_da("rodar_a_fada")
+    trecho = fonte.split("não consegui abrir a memória")[0]
+
+    assert "IsWindow" in trecho, ("antes de desistir por falta de memória, "
+                                  "conferir se não é queda")
+    depois = fonte.split("não consegui abrir a memória")[1].split("return")[0]
+    assert "SEGUNDOS_ENTRE_TENTATIVAS" in depois

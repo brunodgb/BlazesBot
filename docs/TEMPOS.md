@@ -31,7 +31,7 @@ desta lista é ou uma exceção justificada, ou dívida que ninguém converteu a
 mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 
 
-**316 tempos catalogados** — 230 FIXOS (espera cega), 86 entre TETO e PASSO.
+**317 tempos catalogados** — 231 FIXOS (espera cega), 86 entre TETO e PASSO.
 
 
 **6 estão diferentes do original:** `TETO_DA_CAIXA`, `PASSO_DA_ESPERA`, `ESPERA_DA_BOLSA_ABRIR`, `FATIA_DE_ESPERA`, `INTERVALO_ENTRE_INVOCACOES`, `PASSOS_DO_APP`
@@ -276,6 +276,7 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | `ESPERA_ENTRE_CURAS` | 0.34 s | *novo* | FIXO | [fada.py:100](blazesbot/bot/fada.py#L100) | `_me_defender, _curar (+1)` | Entre uma tecla de cura e a seguinte. |
 | `ESPERA_DEPOIS_DE_ERRAR` | 0.333 s | *novo* | FIXO | [fada.py:118](blazesbot/bot/fada.py#L118) | `_atender` | Depois de uma tentativa que não pegou, espera antes da seguinte. |
 | `SEGUNDOS_ENTRE_CUIDADOS` | 30 s | *novo* | FIXO | [fada.py:128](blazesbot/bot/fada.py#L128) | `_cuidados_de_ociosa` | De quanto em quanto tempo a Fada cuida do pet e da bolsa, ESTANDO OCIOSA. |
+| `SEGUNDOS_ENTRE_TENTATIVAS` | 1 s | *novo* | FIXO | [fada_montagem.py:34](blazesbot/bot/fada_montagem.py#L34) | `rodar_a_fada` | Respiro quando a Fada não consegue nem começar (memória fechada, por exemplo). |
 | `SEGUNDOS_POR_TENTATIVA_DE_ENCOSTAR` | 1.8 s | *novo* | FIXO | [entrada.py:75](blazesbot/bot/hh/entrada.py#L75) | `garantir_coordenada_da_entrada, garantir_coordenada_da_saida` | Quanto tempo dar a cada tentativa de encostar no ponto exato. |
 | `TETO_DA_ENTRADA` | 0.25 s | *novo* | TETO | [entrada.py:95](blazesbot/bot/hh/entrada.py#L95) | `esperar_entrar` | Teto da espera pela troca de mapa depois de clicar no link de entrar. |
 | `PASSO_DA_ESPERA_DA_ENTRADA` | 0.04 s | *novo* | PASSO | [entrada.py:96](blazesbot/bot/hh/entrada.py#L96) | `esperar_sair, esperar_entrar` |  |
@@ -312,8 +313,8 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | *literal em* `_operate` | 2.5 s | *novo* | FIXO | [supervisor.py:1203](blazesbot/bot/supervisor.py#L1203) | `_operate` | Opera a conta logada, respeitando o farm ligado/desligado ao vivo. |
 | *literal em* `_operate` | 2.5 s | *novo* | FIXO | [supervisor.py:1224](blazesbot/bot/supervisor.py#L1224) | `_operate` | Opera a conta logada, respeitando o farm ligado/desligado ao vivo. |
 | *literal em* `_operate` | 0.5 s | = | FIXO | [supervisor.py:1323](blazesbot/bot/supervisor.py#L1323) | `_operate` | Opera a conta logada, respeitando o farm ligado/desligado ao vivo. |
-| *literal em* `_publicar_o_proprio_id` | 0.3 s | *novo* | FIXO | [supervisor.py:1503](blazesbot/bot/supervisor.py#L1503) | `_publicar_o_proprio_id` | o alvo leva ~0,1 s para virar |
-| *literal em* `chamar_a_fada` | 0.2 s | *novo* | FIXO | [supervisor.py:1883](blazesbot/bot/supervisor.py#L1883) | `chamar_a_fada` | Pede cura à Fada do time e espera. `False` = não há Fada, beba poção. |
+| *literal em* `_publicar_o_proprio_id` | 0.3 s | *novo* | FIXO | [supervisor.py:1508](blazesbot/bot/supervisor.py#L1508) | `_publicar_o_proprio_id` | o alvo leva ~0,1 s para virar |
+| *literal em* `chamar_a_fada` | 0.2 s | *novo* | FIXO | [supervisor.py:1888](blazesbot/bot/supervisor.py#L1888) | `chamar_a_fada` | Pede cura à Fada do time e espera. `False` = não há Fada, beba poção. |
 | `ESPERA_DO_MENU` | 0.35 s | = | FIXO | [team.py:134](blazesbot/bot/team.py#L134) | `_enviar_convite` | Tempo para o menu de contexto aparecer depois do clique direito. |
 | `ESPERA_PELA_RESPOSTA` | 4 s | = | FIXO | [team.py:139](blazesbot/bot/team.py#L139) | `montar_time` | Quanto esperar a outra conta aceitar. Ela recebe o anúncio interno e clica no |
 | `PASSO_DA_ESPERA_DO_TIME` | 0.1 s | = | PASSO | [team.py:147](blazesbot/bot/team.py#L147) | `montar_time` | De quanto em quanto tempo conferir se o time já formou. |

@@ -71,7 +71,7 @@ ligar código não testado.
 
 ## Números medidos -- tolerância, limiar, teto, cadência
 
-542 constantes, agrupadas por arquivo.
+543 constantes, agrupadas por arquivo.
 
 | constante | valor | onde | quem lê | porquê (resumo) |
 |---|---|---|---|---|
@@ -241,6 +241,7 @@ ligar código não testado.
 | `SEGUNDOS_ENTRE_CUIDADOS` | `30.0` | [blazesbot/bot/fada.py:128](blazesbot/bot/fada.py#L128) | — | De quanto em quanto tempo a Fada cuida do pet e da bolsa, ESTANDO OCIOSA. |
 | `TETO_DA_CURA_SEGUNDOS` | `20.0` | [blazesbot/bot/fada.py:93](blazesbot/bot/fada.py#L93) | — | Quanto tempo insistir numa cura antes de desistir daquela vítima. |
 | `TETO_PARA_O_ALVO_VIRAR` | `0.4` | [blazesbot/bot/fada.py:85](blazesbot/bot/fada.py#L85) | — | Depois do clique no retrato, quanto esperar a memória mostrar o alvo novo. |
+| `SEGUNDOS_ENTRE_TENTATIVAS` | `1.0` | [blazesbot/bot/fada_montagem.py:34](blazesbot/bot/fada_montagem.py#L34) | — | Respiro quando a Fada não consegue nem começar (memória fechada, por exemplo). |
 | `LINK_ENTRAR_HH` | `'link_enter_hh.png'` | [blazesbot/bot/hh/entrada.py:65](blazesbot/bot/hh/entrada.py#L65) | — | — |
 | `LINK_SAIR_HH` | `'link_leave_hh.png'` | [blazesbot/bot/hh/entrada.py:67](blazesbot/bot/hh/entrada.py#L67) | — | O link do diálogo do `Servant Child`, DENTRO da cave. |
 | `LINK_WEST_SUBURB` | `'link_west_suburb.png'` | [blazesbot/bot/hh/entrada.py:64](blazesbot/bot/hh/entrada.py#L64) | — | Links dentro dos diálogos, localizados por imagem. |

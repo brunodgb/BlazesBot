@@ -216,3 +216,40 @@ comportamento sem revive: morto para de rodar o APP e a Fada o ignora.
 
 **A leitura direta da vida do aliado.** Só se a aferição passar. Até lá, quem
 diz "estou cheio" é a vítima.
+
+
+## A queda da Fada — 04/09/2026
+
+> *"Por sinal, se a fada cai, muitas vezes o bot não reconhece; tem que analisar
+> isso, provavelmente é algo que não está sendo feito."* — usuário.
+
+Era isso mesmo: **a Fada era o único modo que não percebia a própria queda.**
+
+`FadaDoTime.rodar()` termina sozinho quando o `continuar` vê a janela morta
+(`IsWindow`). Só que ninguém traduzia isso em queda: `_operate` simplesmente
+chamava a montagem de novo na volta seguinte. Sem `Disconnected`, não há
+`_encerrar_caido`, não há relogin, não há print em `logs/quedas/` e não há linha
+no Histórico. A conta ficava girando contra uma janela morta.
+
+O modo APP tem exatamente esta conferência no fim de `_rodar_modo_app` desde
+18/08/2026, e a regra do `CLAUDE.md` é explícita: *todo ecossistema percebe a
+queda ENQUANTO roda, com a MESMA definição, e tem o MESMO desfecho*. A Fada
+nasceu depois e não herdou a linha.
+
+### O que mudou
+
+| onde | antes | agora |
+|---|---|---|
+| fim de `rodar_a_fada` | devolvia calado | `IsWindow` falso ⇒ `Disconnected` |
+| memória que não abre | `return` seco (e `_operate` chamando de novo na hora) | confere a janela primeiro; se está viva, avisa e **dorme** `SEGUNDOS_ENTRE_TENTATIVAS` |
+| `_montar_a_fada` (HH) | `except Exception` engolia a queda junto | `except Disconnected: raise` **antes** do geral |
+
+O terceiro é o mais traiçoeiro: o `except Exception` existe para a HH não
+derrubar a sessão quando a montagem falha, e ele engolia a queda no mesmo laço —
+a Fada da HH seguia acompanhando o líder com a janela fechada.
+
+### O que este conserto NÃO resolve
+
+Continuam abertos os buracos de **silêncio** do batimento (a Fada viva que passa
+mais de `SILENCIO_DA_FADA` sem bater, e o time conclui que ela sumiu) e a
+**espera sem teto** da vítima. São outro assunto, outro commit.

@@ -24,6 +24,14 @@ import win32gui
 
 from ..core.coords import coords_for_window
 from ..core.memory import Memory
+from .context import Disconnected
+
+# Respiro quando a Fada não consegue nem começar (memória fechada, por exemplo).
+#
+# `_operate` chama de novo assim que esta função devolve: sem a pausa, uma falha
+# de leitura vira laço quente -- a conta gira sem dormir, sem curar e sem cair,
+# que é o pior dos três estados.
+SEGUNDOS_ENTRE_TENTATIVAS = 1.0
 
 
 def rodar_a_fada(sup, so_montar: bool = False):
@@ -49,8 +57,13 @@ def rodar_a_fada(sup, so_montar: bool = False):
     try:
         memoria = Memory(sup.pid)
     except Exception as exc:
+        # MEMÓRIA QUE NÃO ABRE QUASE SEMPRE É JANELA QUE MORREU.
+        if not win32gui.IsWindow(sup.hwnd):
+            raise Disconnected(
+                "janela do cliente fechada antes de a Fada começar") from exc
         log.warning("FADA: não consegui abrir a memória (%s). Sem ela a "
                     "Fada não age.", exc)
+        time.sleep(SEGUNDOS_ENTRE_TENTATIVAS)
         return
 
     entrada = _Input(sup.hwnd)
@@ -172,6 +185,17 @@ def rodar_a_fada(sup, so_montar: bool = False):
             memoria.close()
         except Exception:
             pass
+
+    # A QUEDA DA FADA É QUEDA COMO QUALQUER OUTRA -- 04/09/2026.
+    #
+    # Até esta data a Fada era o ÚNICO modo que não percebia a própria queda:
+    # `rodar()` termina sozinho quando o `continuar` vê a janela morta, e o
+    # `_operate` só chamava tudo de novo -- sem relogin, sem Histórico. Relato
+    # do usuário: *"se a fada cai, muitas vezes o bot não reconhece"*. É a mesma
+    # linha que `_rodar_modo_app` tem desde 18/08/2026. Porquê em
+    # `docs/decisoes/fada.md`.
+    if not win32gui.IsWindow(sup.hwnd):
+        raise Disconnected("janela do cliente fechada durante o modo Fada")
     if not app.fada:
         sup._status("Fada desligada")
     return None

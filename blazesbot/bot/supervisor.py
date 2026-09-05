@@ -1475,6 +1475,11 @@ class AccountSupervisor(threading.Thread):
         """
         try:
             return self._rodar_fada(so_montar=True)
+        except Disconnected:
+            # QUEDA NÃO É "NÃO CONSEGUI MONTAR": ela sobe até o laço de sessão
+            # para virar relogin. Engolir aqui deixava a Fada da HH acompanhando
+            # com a janela morta.
+            raise
         except Exception as exc:
             ctx.log.warning("Não consegui montar a Fada (%s)", exc)
             return None

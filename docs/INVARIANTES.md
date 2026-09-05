@@ -592,6 +592,11 @@ Cada item é o que **não pode ser violado**. O detalhe de cada área mora em
 - **Trava de posição no APP** (`AppConfig.travar_posicao`, padrão True): salva a
   posição como base; andou > `TOLERANCIA_POSICAO` (1) ⇒ devolvido andando pelo
   minimapa. Só com memória respondendo.
+- **A FADA PERCEBE A PRÓPRIA QUEDA COMO QUALQUER OUTRO MODO** (04/09/2026).
+  Janela morta no fim de `rodar_a_fada` ⇒ `Disconnected` ⇒ relogin e Histórico
+  de Quedas, igual ao `_rodar_modo_app`. E `_montar_a_fada` **captura
+  `Disconnected` e relança ANTES** do `except Exception` — engolir a queda ali
+  deixava a Fada da HH acompanhando o líder com a janela fechada.
 - **A COLEIRA DOS 12 — mob longe do ponto NÃO é alvo** (04/09/2026,
   `core/coleira_do_ponto.py`, `MAXIMO_DE_PIXELS_DO_PONTO = 12`). A distância
   medida é a do **MOB até a base**, e ela é conferida **na AQUISIÇÃO**, dentro de
