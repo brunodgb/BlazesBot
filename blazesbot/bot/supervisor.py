@@ -70,6 +70,15 @@ _LOCK_JANELAS = threading.Lock()
 # no instante do `set()` e esta fatia nunca chega ao fim.
 TETO_DA_FATIA_DE_ESPERA = 0.25
 
+# Quanto uma vítima espera pela Fada antes de voltar para a poção.
+#
+# NÃO É O TEMPO DE UMA CURA -- uma cura leva segundos. É a rede para o caso
+# medido em 04/09/2026: Fada VIVA e INCAPAZ (vítima fora do painel do time, cura
+# que não pega), em que ela batia, a vítima esperava, e nenhum dos dois tinha
+# como sair. Sessenta segundos é muito mais que qualquer cura e muito menos que
+# uma noite parado.
+TETO_DA_ESPERA_PELA_FADA = 60.0
+
 
 class _AnyEvent:
     """Visão de "qualquer um destes eventos foi acionado".
@@ -1817,11 +1826,25 @@ class AccountSupervisor(threading.Thread):
         def chamar_a_fada(vida: float) -> bool:
             """Pede cura à Fada do time e espera. `False` = não há Fada, beba poção.
 
-            A ESPERA É INDEFINIDA ENQUANTO A FADA BATE no mural, e isso é
-            decisão do usuário: o tempo de uma cura depende dos itens dela e até
-            de crítico, então um teto fixo mandaria beber poção no meio de uma
-            cura que ia funcionar. O que encerra a espera é a Fada PARAR de
-            bater -- aí ela não está mais lá, e a poção volta a valer.
+            A ESPERA SEGUE ENQUANTO A FADA BATE, e isso é decisão do usuário:
+            o tempo de uma cura depende dos itens dela e até de crítico, então
+            um teto curto mandaria beber poção no meio de uma cura que ia
+            funcionar.
+
+            MAS ELA DEIXOU DE SER INDEFINIDA em 04/09/2026. Fada VIVA e INCAPAZ
+            era espera eterna: se a vítima não estivesse no painel do time (ou a
+            cura simplesmente não pegasse), a Fada continuava batendo, a vítima
+            continuava sentada, e nenhum dos dois tinha como sair. São três as
+            saídas novas, todas medidas naquele levantamento:
+
+              * a Fada AVISA que desistiu (`fada_desistiu_de`) -- antes ela só
+                apagava o pedido, e a vítima republicava em 0,2 s, perdendo o
+                lugar na fila e recomeçando o mesmo ciclo para sempre;
+              * o TETO (`TETO_DA_ESPERA_PELA_FADA`) fecha o caso em que nem o
+                aviso chega;
+              * entrar em BATALHA sentada devolve a vítima à macro, pela regra
+                do usuário: *"em batalha o personagem precisa estar atacando"*.
+                Sentado apanhando é como um ferido vira um morto.
 
             Quem chega aqui já saiu de batalha e já voltou ao ponto inicial: é o
             `CuraDoApp` que garante os dois antes de chamar.
@@ -1845,8 +1868,30 @@ class AccountSupervisor(threading.Thread):
             log.info("Pedi cura à Fada %s (vida %.0f%%, alvo %.0f%%).",
                      fada_login, vida, alvo)
 
+            venci_em = time.monotonic() + TETO_DA_ESPERA_PELA_FADA
             try:
                 while not self.stop_event.is_set():
+                    if mural.fada_desistiu_de(self.account.login):
+                        mural.esquecer_desistencia(self.account.login)
+                        log.warning("A Fada %s desistiu de mim — vou de poção.",
+                                    fada_login)
+                        return False
+                    if time.monotonic() >= venci_em:
+                        log.warning(
+                            "Esperei %.0fs pela Fada %s e a vida não chegou ao "
+                            "alvo — vou de poção.",
+                            TETO_DA_ESPERA_PELA_FADA, fada_login)
+                        return False
+                    if em_batalha() is True:
+                        # APANHANDO SENTADO: volto para a macro.
+                        #
+                        # `True` e não `False`: não é desistir da cura, é parar
+                        # de apanhar de graça. No fim da volta seguinte eu peço
+                        # de novo, e a poção continua reservada para quando não
+                        # há Fada.
+                        log.info("Entrei em batalha esperando a Fada — volto a "
+                                 "atacar em vez de apanhar sentado.")
+                        return True
                     if not mural.fada_de_pe(fada_login):
                         log.warning("A Fada %s parou de responder — vou de poção.",
                                     fada_login)

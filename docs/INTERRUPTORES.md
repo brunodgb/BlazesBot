@@ -71,7 +71,7 @@ ligar código não testado.
 
 ## Números medidos -- tolerância, limiar, teto, cadência
 
-545 constantes, agrupadas por arquivo.
+547 constantes, agrupadas por arquivo.
 
 | constante | valor | onde | quem lê | porquê (resumo) |
 |---|---|---|---|---|
@@ -320,9 +320,10 @@ ligar código não testado.
 | `CONVITE_VALIDO_SEGUNDOS` | `60.0` | [blazesbot/bot/mural.py:63](blazesbot/bot/mural.py#L63) | — | Validade do anúncio. Cobre a fila de resposta do outro cliente com folga; mais |
 | `ESTADO_VALIDO_SEGUNDOS` | `30.0` | [blazesbot/bot/mural.py:277](blazesbot/bot/mural.py#L277) | sincronia.py, supervisor.py | Quanto tempo o estado publicado por uma conta continua valendo. |
 | `LARGADA_VALIDA_SEGUNDOS` | `5.0` | [blazesbot/bot/mural.py:269](blazesbot/bot/mural.py#L269) | sincronia.py | Quanto tempo uma largada anunciada continua valendo. |
-| `SILENCIO_DA_FADA` | `5.0` | [blazesbot/bot/mural.py:473](blazesbot/bot/mural.py#L473) | — | Quanto silêncio já é "a Fada não está lá". |
+| `SILENCIO_DA_FADA` | `5.0` | [blazesbot/bot/mural.py:484](blazesbot/bot/mural.py#L484) | — | Quanto silêncio já é "a Fada não está lá". |
 | `SILENCIO_MAXIMO` | `5.0` | [blazesbot/bot/mural.py:129](blazesbot/bot/mural.py#L129) | — | Quanto silêncio já é "caiu". |
-| `TETO_DA_BATIDA_LONGA` | `15.0` | [blazesbot/bot/mural.py:487](blazesbot/bot/mural.py#L487) | fada.py | Quanto uma batida pode valer, no MÁXIMO, quando a Fada avisa que vai sumir. |
+| `TETO_DA_BATIDA_LONGA` | `15.0` | [blazesbot/bot/mural.py:498](blazesbot/bot/mural.py#L498) | fada.py | Quanto uma batida pode valer, no MÁXIMO, quando a Fada avisa que vai sumir. |
+| `VALIDADE_DA_DESISTENCIA` | `20.0` | [blazesbot/bot/mural.py:556](blazesbot/bot/mural.py#L556) | — | Por quanto tempo a desistência da Fada continua valendo. |
 | `ALCANCE_DA_EXPANSAO` | `4` | [blazesbot/bot/navegacao.py:216](blazesbot/bot/navegacao.py#L216) | — | ATÉ ONDE A MANOBRA SE AFASTA NA ROTA quando os vizinhos imediatos falham. |
 | `AVISAR_A_PE_NO_TRAJETO` | `4.0` | [blazesbot/bot/navegacao.py:314](blazesbot/bot/navegacao.py#L314) | — | Depois de quanto tempo a pé, no meio de um trajeto, o log passa a dizer isso em |
 | `CICLOS_ANTES_DE_DESTRAVAR` | `2` | [blazesbot/bot/navegacao.py:360](blazesbot/bot/navegacao.py#L360) | — | Depois de quantos ciclos sem montar o portao para de insistir MUDO e vai |
@@ -356,6 +357,7 @@ ligar código não testado.
 | `MINIMO_DE_LINHAS` | `2` | [blazesbot/bot/recorte_do_time.py:99](blazesbot/bot/recorte_do_time.py#L99) | — | Menos de dois casamentos não prova repetição -- prova que o recorte se achou a |
 | `NOME_DO_TEMPLATE` | `'state_team_member.png'` | [blazesbot/bot/recorte_do_time.py:73](blazesbot/bot/recorte_do_time.py#L73) | — | Nome que `bot/team.py` procura. Mudar aqui sem mudar lá deixa o arquivo |
 | `PASSO_VERTICAL` | `4` | [blazesbot/bot/recorte_do_time.py:90](blazesbot/bot/recorte_do_time.py#L90) | — | — |
+| `TETO_DA_ESPERA_PELA_FADA` | `60.0` | [blazesbot/bot/supervisor.py:80](blazesbot/bot/supervisor.py#L80) | — | Quanto uma vítima espera pela Fada antes de voltar para a poção. |
 | `TETO_DA_FATIA_DE_ESPERA` | `0.25` | [blazesbot/bot/supervisor.py:71](blazesbot/bot/supervisor.py#L71) | — | Teto de uma fatia dentro de `_AnyEvent.wait`. É REDE, não o caminho normal -- |
 | `ANCHOR_THRESHOLD` | `0.8` | [blazesbot/bot/team.py:91](blazesbot/bot/team.py#L91) | vendedor.py, ui_do_jogo.py, janelas_abertas.py | — |
 | `ESPERA_DO_MENU` | `0.35` | [blazesbot/bot/team.py:134](blazesbot/bot/team.py#L134) | — | Tempo para o menu de contexto aparecer depois do clique direito. |

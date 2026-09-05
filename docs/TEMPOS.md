@@ -31,7 +31,7 @@ desta lista é ou uma exceção justificada, ou dívida que ninguém converteu a
 mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 
 
-**319 tempos catalogados** — 232 FIXOS (espera cega), 87 entre TETO e PASSO.
+**320 tempos catalogados** — 232 FIXOS (espera cega), 88 entre TETO e PASSO.
 
 
 **6 estão diferentes do original:** `TETO_DA_CAIXA`, `PASSO_DA_ESPERA`, `ESPERA_DA_BOLSA_ABRIR`, `FATIA_DE_ESPERA`, `INTERVALO_ENTRE_INVOCACOES`, `PASSOS_DO_APP`
@@ -305,18 +305,19 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | `ACEITE_VALIDO_SEGUNDOS` | 15 s | = | FIXO | [mural.py:185](blazesbot/bot/mural.py#L185) | `aceite_pendente` | Validade do aceite. Curta de propósito: ele confirma UM convite recém-enviado, |
 | `LARGADA_VALIDA_SEGUNDOS` | 5 s | *novo* | FIXO | [mural.py:269](blazesbot/bot/mural.py#L269) | `largada_pendente` | Quanto tempo uma largada anunciada continua valendo. |
 | `ESTADO_VALIDO_SEGUNDOS` | 30 s | *novo* | FIXO | [mural.py:277](blazesbot/bot/mural.py#L277) | `estado_da_conta` | Quanto tempo o estado publicado por uma conta continua valendo. |
-| `TETO_DA_BATIDA_LONGA` | 15 s | *novo* | TETO | [mural.py:487](blazesbot/bot/mural.py#L487) | `bater_fada` | Quanto uma batida pode valer, no MÁXIMO, quando a Fada avisa que vai sumir. |
+| `TETO_DA_BATIDA_LONGA` | 15 s | *novo* | TETO | [mural.py:498](blazesbot/bot/mural.py#L498) | `bater_fada` | Quanto uma batida pode valer, no MÁXIMO, quando a Fada avisa que vai sumir. |
 | `PASSO_VERTICAL` | 4 s | = | PASSO | [recorte_do_time.py:90](blazesbot/bot/recorte_do_time.py#L90) | `_candidatos` |  |
 | `TETO_DA_FATIA_DE_ESPERA` | 0.25 s | = | TETO | [supervisor.py:71](blazesbot/bot/supervisor.py#L71) | `wait` | Teto de uma fatia dentro de `_AnyEvent.wait`. É REDE, não o caminho normal -- |
-| *literal em* `_sleep_interruptible` | 0.125 s | = | FIXO | [supervisor.py:248](blazesbot/bot/supervisor.py#L248) | `_sleep_interruptible` |  |
-| *literal em* `_launch_client` | 1 s | = | FIXO | [supervisor.py:336](blazesbot/bot/supervisor.py#L336) | `_launch_client` | Lança o Client.bat e devolve o PID da nova instância. |
-| *literal em* `_find_window` | 1 s | = | FIXO | [supervisor.py:353](blazesbot/bot/supervisor.py#L353) | `_find_window` | Localiza a janela de nível superior pertencente ao PID. |
-| *literal em* `_run_session` | 1.5 s | = | FIXO | [supervisor.py:928](blazesbot/bot/supervisor.py#L928) | `_run_session` | Uma sessão: obter uma janela, logar se preciso, e operar. |
-| *literal em* `_operate` | 2.5 s | *novo* | FIXO | [supervisor.py:1203](blazesbot/bot/supervisor.py#L1203) | `_operate` | Opera a conta logada, respeitando o farm ligado/desligado ao vivo. |
-| *literal em* `_operate` | 2.5 s | *novo* | FIXO | [supervisor.py:1224](blazesbot/bot/supervisor.py#L1224) | `_operate` | Opera a conta logada, respeitando o farm ligado/desligado ao vivo. |
-| *literal em* `_operate` | 0.5 s | = | FIXO | [supervisor.py:1323](blazesbot/bot/supervisor.py#L1323) | `_operate` | Opera a conta logada, respeitando o farm ligado/desligado ao vivo. |
-| *literal em* `_publicar_o_proprio_id` | 0.3 s | *novo* | FIXO | [supervisor.py:1508](blazesbot/bot/supervisor.py#L1508) | `_publicar_o_proprio_id` | o alvo leva ~0,1 s para virar |
-| *literal em* `chamar_a_fada` | 0.2 s | *novo* | FIXO | [supervisor.py:1888](blazesbot/bot/supervisor.py#L1888) | `chamar_a_fada` | Pede cura à Fada do time e espera. `False` = não há Fada, beba poção. |
+| `TETO_DA_ESPERA_PELA_FADA` | 60 s (1 min) | *novo* | TETO | [supervisor.py:80](blazesbot/bot/supervisor.py#L80) | `_rodar_modo_app, chamar_a_fada` | Quanto uma vítima espera pela Fada antes de voltar para a poção. |
+| *literal em* `_sleep_interruptible` | 0.125 s | = | FIXO | [supervisor.py:257](blazesbot/bot/supervisor.py#L257) | `_sleep_interruptible` |  |
+| *literal em* `_launch_client` | 1 s | = | FIXO | [supervisor.py:345](blazesbot/bot/supervisor.py#L345) | `_launch_client` | Lança o Client.bat e devolve o PID da nova instância. |
+| *literal em* `_find_window` | 1 s | = | FIXO | [supervisor.py:362](blazesbot/bot/supervisor.py#L362) | `_find_window` | Localiza a janela de nível superior pertencente ao PID. |
+| *literal em* `_run_session` | 1.5 s | = | FIXO | [supervisor.py:937](blazesbot/bot/supervisor.py#L937) | `_run_session` | Uma sessão: obter uma janela, logar se preciso, e operar. |
+| *literal em* `_operate` | 2.5 s | *novo* | FIXO | [supervisor.py:1212](blazesbot/bot/supervisor.py#L1212) | `_operate` | Opera a conta logada, respeitando o farm ligado/desligado ao vivo. |
+| *literal em* `_operate` | 2.5 s | *novo* | FIXO | [supervisor.py:1233](blazesbot/bot/supervisor.py#L1233) | `_operate` | Opera a conta logada, respeitando o farm ligado/desligado ao vivo. |
+| *literal em* `_operate` | 0.5 s | = | FIXO | [supervisor.py:1332](blazesbot/bot/supervisor.py#L1332) | `_operate` | Opera a conta logada, respeitando o farm ligado/desligado ao vivo. |
+| *literal em* `_publicar_o_proprio_id` | 0.3 s | *novo* | FIXO | [supervisor.py:1517](blazesbot/bot/supervisor.py#L1517) | `_publicar_o_proprio_id` | o alvo leva ~0,1 s para virar |
+| *literal em* `chamar_a_fada` | 0.2 s | *novo* | FIXO | [supervisor.py:1933](blazesbot/bot/supervisor.py#L1933) | `chamar_a_fada` | Pede cura à Fada do time e espera. `False` = não há Fada, beba poção. |
 | `ESPERA_DO_MENU` | 0.35 s | = | FIXO | [team.py:134](blazesbot/bot/team.py#L134) | `_enviar_convite` | Tempo para o menu de contexto aparecer depois do clique direito. |
 | `ESPERA_PELA_RESPOSTA` | 4 s | = | FIXO | [team.py:139](blazesbot/bot/team.py#L139) | `montar_time` | Quanto esperar a outra conta aceitar. Ela recebe o anúncio interno e clica no |
 | `PASSO_DA_ESPERA_DO_TIME` | 0.1 s | = | PASSO | [team.py:147](blazesbot/bot/team.py#L147) | `montar_time` | De quanto em quanto tempo conferir se o time já formou. |

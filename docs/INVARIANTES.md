@@ -592,6 +592,13 @@ Cada item é o que **não pode ser violado**. O detalhe de cada área mora em
 - **Trava de posição no APP** (`AppConfig.travar_posicao`, padrão True): salva a
   posição como base; andou > `TOLERANCIA_POSICAO` (1) ⇒ devolvido andando pelo
   minimapa. Só com memória respondendo.
+- **A ESPERA PELA FADA TEM TRÊS SAÍDAS, E NENHUMA É ETERNA** (04/09/2026):
+  a Fada AVISA que desistiu (`fada_desistiu_de` ⇒ poção), o teto de 60 s
+  (`TETO_DA_ESPERA_PELA_FADA` ⇒ poção) e **entrar em batalha sentada ⇒ voltar à
+  macro** (não é poção: é parar de apanhar de graça). A marca da desistência
+  **não pode ser apagada no `pedir_cura`** — a desistência já removeu o pedido,
+  então a republicação da vítima chega lá igual a um pedido novo, e limpar ali
+  reabre o laço desistir/re-pedir.
 - **A BATIDA DA FADA TEM VALIDADE, E TAREFA LONGA AVISA ANTES** (04/09/2026).
   `bater_fada(..., vale_por=)`; nunca encurta os 5 s padrão, nunca passa de
   `TETO_DA_BATIDA_LONGA` (15 s), e ao terminar a tarefa ela bate de novo com a

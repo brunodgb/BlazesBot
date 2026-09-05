@@ -286,3 +286,41 @@ de sempre.
 
 O buraco da HH se resolve sem validade nenhuma: a batida passou a sair também do
 topo de `_uma_volta`, que é o único ponto por onde os dois chamadores passam.
+
+
+## A espera da vítima deixou de ser eterna (04/09/2026)
+
+O levantamento achou dois casos em que a vítima ficava sentada para sempre com a
+Fada VIVA:
+
+**1. Fada viva e incapaz.** Se a vítima não estivesse no painel do time,
+`_atender` devolvia `(False, True)` e a Fada seguia batendo. O próprio código já
+admitia: *"como a Fada continua batendo, eles esperariam para sempre achando que
+há Fada disponível"*. Como `fada_de_pe` era a ÚNICA coisa capaz de fazer a
+vítima desistir, não havia saída.
+
+**2. O laço desistir/re-pedir.** Quando a Fada desistia (teto estourado,
+tentativas esgotadas, sem nick), ela só apagava o pedido. A vítima republica a
+própria vida a cada 0,2 s enquanto espera — então voltava para a fila em
+seguida, agora com hora NOVA, portanto no fim dela. A Fada desistia de novo. E
+de novo. Ninguém bebia a poção que resolveria.
+
+### As três saídas novas
+
+| saída | quando | o que faz |
+|---|---|---|
+| `fada_desistiu_de` | a Fada desistiu desta vítima | poção |
+| `TETO_DA_ESPERA_PELA_FADA` (60 s) | nem o aviso chegou | poção |
+| entrou em batalha | um mob atacou quem estava sentado | **volta à macro** (não é poção) |
+
+A terceira é a regra do usuário aplicada aqui: *"em batalha o personagem precisa
+estar atacando"*. Sentado apanhando é como um ferido vira um morto.
+
+### A marca da desistência não é apagada por um pedido
+
+`desistir_da_vitima` tira o pedido E grava a marca. A tentação era limpá-la no
+`pedir_cura` "quando o pedido for novo" — mas, como a desistência já apagou o
+pedido, a republicação da vítima chega lá **indistinguível de um pedido novo**,
+e limpar ali reabriria exatamente o laço que a marca fecha. Quem limpa é a
+vítima, ao LER o recado, ou o relógio (`VALIDADE_DA_DESISTENCIA`, 20 s) — curto
+de propósito, porque a marca é recado, não banimento.

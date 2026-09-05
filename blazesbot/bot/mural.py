@@ -463,6 +463,17 @@ _PEDIDOS: dict[str, tuple[float, float]] = {}  # login -> (vida_pct, quando)
 # login -> (última batida, em batalha, por quanto tempo ela vale)
 _FADAS: dict[str, tuple[float, bool, float]] = {}
 _LIMPEZAS: dict[str, float] = {}              # lider -> quando anunciou
+# login da vítima -> quando a Fada desistiu dela
+#
+# ISTO FECHA UM LAÇO INFINITO MEDIDO EM 04/09/2026. Quando a Fada desistia de
+# alguém (teto estourado, tentativas esgotadas, sem nick), ela só apagava o
+# pedido -- e a vítima, que republica a própria vida a cada 0,2 s, entrava de
+# novo na fila em seguida, agora com hora NOVA. Ou seja: perdia o lugar,
+# recomeçava a espera e a Fada desistia de novo, para sempre, sem que ninguém
+# bebesse a poção que resolveria.
+#
+# Apagar o pedido diz "não está mais na fila"; ISTO diz "e não adianta voltar".
+_DESISTENCIAS: dict[str, float] = {}
 _LOCK_FADA = threading.Lock()
 
 # Quanto silêncio já é "a Fada não está lá".
@@ -527,6 +538,50 @@ def pedir_cura(login: str, vida_pct: float) -> None:
         anterior = _PEDIDOS.get(chave)
         quando = anterior[1] if anterior else time.monotonic()
         _PEDIDOS[chave] = (float(vida_pct), quando)
+        # A DESISTÊNCIA NÃO É APAGADA AQUI, e isso é deliberado: `desistir_da_vitima`
+        # já tirou o pedido, então a republicação da vítima (a cada 0,2 s, enquanto
+        # ela espera) chega aqui indistinguível de um pedido novo. Apagar a marca
+        # neste ponto reabriria exatamente o laço que ela existe para fechar.
+        #
+        # Quem apaga é a VÍTIMA, ao ler o recado (`esquecer_desistencia`), ou o
+        # relógio (`VALIDADE_DA_DESISTENCIA`).
+
+
+# Por quanto tempo a desistência da Fada continua valendo.
+#
+# Curto de propósito: é para a vítima ENXERGAR a desistência antes de voltar
+# para a fila, não para bani-la. Passado isso, a próxima vez que ela ficar
+# ferida é um caso novo -- a Fada pode ter saído da briga, a vítima pode ter
+# voltado para o painel, e insistir de novo é barato.
+VALIDADE_DA_DESISTENCIA = 20.0
+
+
+def desistir_da_vitima(login: str) -> None:
+    """A Fada desiste desta vítima: tira da fila E avisa que desistiu."""
+    if not login:
+        return
+    chave = login.strip().lower()
+    with _LOCK_FADA:
+        _PEDIDOS.pop(chave, None)
+        _DESISTENCIAS[chave] = time.monotonic()
+
+
+def fada_desistiu_de(login: str) -> bool:
+    """A Fada desistiu de mim há pouco? `True` ⇒ pare de esperar, beba poção."""
+    if not login:
+        return False
+    chave = login.strip().lower()
+    with _LOCK_FADA:
+        quando = _DESISTENCIAS.get(chave)
+    return quando is not None and (time.monotonic() - quando) <= VALIDADE_DA_DESISTENCIA
+
+
+def esquecer_desistencia(login: str) -> None:
+    """Li o recado e vou de poção -- a marca já cumpriu o papel dela."""
+    if not login:
+        return
+    with _LOCK_FADA:
+        _DESISTENCIAS.pop(login.strip().lower(), None)
 
 
 def cancelar_pedido(login: str) -> None:

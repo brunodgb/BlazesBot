@@ -516,7 +516,7 @@ class FadaDoTime:
         if not nick:
             self.log.warning("FADA: %s não tem nick conhecido — não sei quem "
                              "clicar. Tirando da fila.", login_vitima)
-            self.mural.cancelar_pedido(login_vitima)
+            self.mural.desistir_da_vitima(login_vitima)
             return False, True
 
         slot = self._slot_do_nick(nick)
@@ -549,7 +549,7 @@ class FadaDoTime:
                 # DESISTE DELA, e isso é o freio: sem ele o laço volta em 100 ms
                 # e clica de novo, para sempre. Ela cai para a poção.
                 self._tentativas.pop(login_vitima, None)
-                self.mural.cancelar_pedido(login_vitima)
+                self.mural.desistir_da_vitima(login_vitima)
                 self.log.warning(
                     "FADA: %s não selecionou em %d tentativas — tirando da fila. "
                     "Ele se vira com poção.", nick, tentativas)
@@ -687,7 +687,7 @@ class FadaDoTime:
         # alcance, ou a cura não está saindo. Desistir dela é o que impede a
         # fila inteira de travar num caso perdido -- ela cai para a poção.
         self.curas_sem_efeito += 1
-        self.mural.cancelar_pedido(login_vitima)
+        self.mural.desistir_da_vitima(login_vitima)
         self.log.warning(
             "FADA: desisti de %s depois de %.0fs sem chegar a %.0f%%. Ele volta "
             "a se virar com poção.", nick, TETO_DA_CURA_SEGUNDOS, alvo_pct)

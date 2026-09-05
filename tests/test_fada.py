@@ -950,3 +950,92 @@ def test_em_batalha_a_batida_de_UMA_VOLTA_leva_o_estado_junto():
     f = _fada(jogo)
     f._uma_volta()
     assert mural.fada_em_batalha("fada") is True
+
+
+# ---------------------------------------------------------------------------
+# A DESISTÊNCIA PRECISA CHEGAR NA VÍTIMA -- laço infinito medido em 04/09/2026
+# ---------------------------------------------------------------------------
+#
+# A Fada desistia (teto estourado, tentativas esgotadas, sem nick) e só apagava
+# o pedido. A vítima, que republica a própria vida a cada 0,2 s enquanto espera,
+# voltava para a fila em seguida -- com hora NOVA, portanto no fim dela. A Fada
+# desistia de novo. E de novo. Ninguém bebia a poção que resolveria.
+
+
+def test_desistir_AVISA_a_vitima_e_nao_so_tira_da_fila():
+    mural.pedir_cura("aliado", 30.0)
+
+    mural.desistir_da_vitima("aliado")
+
+    assert mural.pedido_de("aliado") is None
+    assert mural.fada_desistiu_de("aliado") is True
+
+
+def test_republicar_o_pedido_NAO_apaga_a_desistencia():
+    """É exatamente o que fechava o laço: a vítima republica em 0,2 s, e se isso
+    limpasse o recado ela nunca o leria."""
+    mural.pedir_cura("aliado", 30.0)
+    mural.desistir_da_vitima("aliado")
+
+    mural.pedir_cura("aliado", 29.0)          # a republicação de sempre
+
+    assert mural.fada_desistiu_de("aliado") is True
+
+
+def test_a_vitima_LE_o_recado_e_ele_some():
+    mural.desistir_da_vitima("aliado")
+    mural.esquecer_desistencia("aliado")
+    assert mural.fada_desistiu_de("aliado") is False
+
+
+def test_a_marca_VENCE_sozinha():
+    """Ela é um recado, não um banimento: depois de beber a poção e voltar a
+    ficar ferido, insistir é barato -- a Fada pode ter saído da briga, a vítima
+    pode ter voltado ao painel. Por isso a validade é curta."""
+    assert 0 < mural.VALIDADE_DA_DESISTENCIA <= 60
+
+    mural.desistir_da_vitima("aliado")
+    mural._DESISTENCIAS["aliado"] -= mural.VALIDADE_DA_DESISTENCIA + 1
+
+    assert mural.fada_desistiu_de("aliado") is False
+
+
+def test_desistir_por_TENTATIVAS_avisa():
+    """O freio dos 3 cliques: a vítima tem de saber que caiu por ele."""
+    jogo = _Jogo(alvo=555)                     # o clique nunca seleciona
+    jogo.companheiros = ["Aliado"]
+    f = _fada(jogo)
+    mural.pedir_cura("aliado", 30.0)
+
+    for _ in range(mod.MAXIMO_DE_TENTATIVAS_POR_VITIMA):
+        f._atender("aliado")
+
+    assert mural.fada_desistiu_de("aliado") is True
+
+
+# ---------------------------------------------------------------------------
+# O LADO DA VÍTIMA -- `chamar_a_fada` é fechadura dentro do supervisor
+# ---------------------------------------------------------------------------
+#
+# Ela não dá para instanciar sem uma conta e uma janela de jogo, então o que se
+# trava aqui é a PRESENÇA das três saídas. Sem elas, a espera volta a ser
+# eterna -- que foi o estado medido.
+
+def test_a_espera_da_vitima_tem_as_tres_saidas():
+    import inspect
+
+    from blazesbot.bot import supervisor as mod_sup
+
+    fonte = inspect.getsource(mod_sup.AccountSupervisor._rodar_modo_app)
+    laco = fonte.split("def chamar_a_fada")[1]
+
+    assert "fada_desistiu_de" in laco, "a vítima não lê a desistência da Fada"
+    assert "TETO_DA_ESPERA_PELA_FADA" in laco, "a espera voltou a ser sem teto"
+    assert "em_batalha() is True" in laco, ("sentada apanhando, a vítima tem de "
+                                            "voltar a rodar a macro")
+
+
+def test_o_teto_da_espera_e_MUITO_maior_que_uma_cura():
+    from blazesbot.bot import supervisor as mod_sup
+
+    assert mod_sup.TETO_DA_ESPERA_PELA_FADA >= 10 * mod.ESPERA_ENTRE_CURAS
