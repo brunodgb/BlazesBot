@@ -301,8 +301,21 @@ Pistas já registradas para quando chegar aqui:
    explicar os 129/190 TABs sem troca de seleção.**
 6. **12 erros de ruff em `blazesbot/tools/find_target.py`** (imports fora de ordem
    e 3 não usados). Não são desta sessão e não foram tocados.
-7. **Pendência antiga que continua valendo:** rodar `14-RECORTAR-TIME.bat` — sem o
-   `state_team_member.png` o bot não sabe se está em time por caminho nenhum.
+7. **RESOLVIDA (05/09/2026) — era "rodar `14-RECORTAR-TIME.bat`".** A pendência
+   dizia que sem o `state_team_member.png` o bot não sabia se estava em time
+   "por caminho nenhum". **Isso deixou de ser verdade quando `team.py` passou a
+   perguntar à MEMÓRIA primeiro:** `estado_do_time` chama `team_size()` (número
+   exato, sem custo de captura) e só cai em `_time_pela_imagem` quando a memória
+   não responde. O template continua sem existir no repo, e isso não quebra
+   nada — `_time_pela_imagem` devolve `None` quando o arquivo falta, que é o
+   valor honesto de "não dá para saber".
+
+   **O `14-RECORTAR-TIME.bat` e o `bot/recorte_do_time.py` FICAM**, como manda a
+   regra "a fonte antiga vira reserva — não se apaga". A reserva está apenas
+   **não construída**: se um dia a memória do time parar de responder, rodar a
+   ferramenta é o conserto, e sem ela o bot reconvida para sempre com o
+   companheiro já do lado. Não é tarefa pendente — é peça de reposição
+   documentada.
 
 ---
 
