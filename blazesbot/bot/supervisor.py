@@ -442,6 +442,13 @@ class AccountSupervisor(threading.Thread):
                 esquecer_janela(self.hwnd)
             except Exception:
                 pass
+        # O ID PUBLICADO MORRE COM A SESSÃO. `mural._IDS` é dicionário de
+        # módulo e sobrevive ao relogin; o id da entidade, não. Ver
+        # `mural.esquecer_id`: id velho faz a Fada recusar a vítima certa.
+        try:
+            mural.esquecer_id(self.account.login)
+        except Exception:
+            pass
         self.pid = None
         self.hwnd = None
 

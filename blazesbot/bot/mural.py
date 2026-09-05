@@ -506,6 +506,23 @@ def publicar_id(login: str, ident: int | None) -> None:
         _IDS[login.strip().lower()] = int(ident)
 
 
+def esquecer_id(login: str) -> None:
+    """A entidade desta conta morreu com a sessão -- o id não vale mais nada.
+
+    ID VELHO É PIOR QUE ID NENHUM, e isto foi medido em 04/09/2026: `_IDS` é
+    dicionário de módulo, então sobrevive ao relogin inteiro. A Fada clica no
+    retrato, lê o id NOVO do jogo, compara com o VELHO daqui, e conclui que
+    clicou na pessoa errada -- descartando a vítima certa depois de três
+    tentativas. Sem id publicado ela confia no slot do painel, que é o que o
+    usuário mandou fazer: *"se sabe qual o slot, não precisa de outra
+    confirmação depois"*.
+    """
+    if not login:
+        return
+    with _LOCK_FADA:
+        _IDS.pop(login.strip().lower(), None)
+
+
 def id_publicado(login: str) -> int | None:
     if not login:
         return None

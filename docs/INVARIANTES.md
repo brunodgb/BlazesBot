@@ -592,6 +592,11 @@ Cada item é o que **não pode ser violado**. O detalhe de cada área mora em
 - **Trava de posição no APP** (`AppConfig.travar_posicao`, padrão True): salva a
   posição como base; andou > `TOLERANCIA_POSICAO` (1) ⇒ devolvido andando pelo
   minimapa. Só com memória respondendo.
+- **O ID PUBLICADO MORRE COM A SESSÃO** (04/09/2026, `mural.esquecer_id` em
+  `_release`). `mural._IDS` é dicionário de módulo e sobrevive ao relogin; a
+  entidade, não. **Id velho é pior que id nenhum**: a Fada compara o id novo do
+  jogo com o velho do mural, conclui que clicou na pessoa errada e descarta a
+  vítima certa. Sem id ela confia no slot do painel, que é a regra do usuário.
 - **A ESPERA PELA FADA TEM TRÊS SAÍDAS, E NENHUMA É ETERNA** (04/09/2026):
   a Fada AVISA que desistiu (`fada_desistiu_de` ⇒ poção), o teto de 60 s
   (`TETO_DA_ESPERA_PELA_FADA` ⇒ poção) e **entrar em batalha sentada ⇒ voltar à

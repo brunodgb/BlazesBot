@@ -323,7 +323,7 @@ ligar código não testado.
 | `SILENCIO_DA_FADA` | `5.0` | [blazesbot/bot/mural.py:484](blazesbot/bot/mural.py#L484) | — | Quanto silêncio já é "a Fada não está lá". |
 | `SILENCIO_MAXIMO` | `5.0` | [blazesbot/bot/mural.py:129](blazesbot/bot/mural.py#L129) | — | Quanto silêncio já é "caiu". |
 | `TETO_DA_BATIDA_LONGA` | `15.0` | [blazesbot/bot/mural.py:498](blazesbot/bot/mural.py#L498) | fada.py | Quanto uma batida pode valer, no MÁXIMO, quando a Fada avisa que vai sumir. |
-| `VALIDADE_DA_DESISTENCIA` | `20.0` | [blazesbot/bot/mural.py:556](blazesbot/bot/mural.py#L556) | — | Por quanto tempo a desistência da Fada continua valendo. |
+| `VALIDADE_DA_DESISTENCIA` | `20.0` | [blazesbot/bot/mural.py:573](blazesbot/bot/mural.py#L573) | — | Por quanto tempo a desistência da Fada continua valendo. |
 | `ALCANCE_DA_EXPANSAO` | `4` | [blazesbot/bot/navegacao.py:216](blazesbot/bot/navegacao.py#L216) | — | ATÉ ONDE A MANOBRA SE AFASTA NA ROTA quando os vizinhos imediatos falham. |
 | `AVISAR_A_PE_NO_TRAJETO` | `4.0` | [blazesbot/bot/navegacao.py:314](blazesbot/bot/navegacao.py#L314) | — | Depois de quanto tempo a pé, no meio de um trajeto, o log passa a dizer isso em |
 | `CICLOS_ANTES_DE_DESTRAVAR` | `2` | [blazesbot/bot/navegacao.py:360](blazesbot/bot/navegacao.py#L360) | — | Depois de quantos ciclos sem montar o portao para de insistir MUDO e vai |

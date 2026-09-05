@@ -1039,3 +1039,44 @@ def test_o_teto_da_espera_e_MUITO_maior_que_uma_cura():
     from blazesbot.bot import supervisor as mod_sup
 
     assert mod_sup.TETO_DA_ESPERA_PELA_FADA >= 10 * mod.ESPERA_ENTRE_CURAS
+
+
+# ---------------------------------------------------------------------------
+# ID VELHO É PIOR QUE ID NENHUM -- 04/09/2026
+# ---------------------------------------------------------------------------
+#
+# `mural._IDS` é dicionário de módulo: sobrevive ao relogin inteiro. O id da
+# ENTIDADE, não -- ela morre com a sessão. A Fada clicava no retrato, lia o id
+# novo, comparava com o velho daqui e concluía que tinha clicado na pessoa
+# errada, descartando a vítima certa depois de três tentativas.
+
+
+def test_esquecer_id_apaga_a_publicacao():
+    mural.publicar_id("aliado", 4242)
+    mural.esquecer_id("aliado")
+    assert mural.id_publicado("aliado") is None
+
+
+def test_sem_id_a_Fada_volta_a_CONFIAR_NO_SLOT():
+    """É o desfecho que torna esquecer melhor que manter: sem id publicado ela
+    usa o slot do painel, que é o que o usuário mandou fazer."""
+    jogo = _Jogo(alvo=999)                 # id do jogo != qualquer publicado
+    jogo.companheiros = ["Aliado"]
+    f = _fada(jogo)
+    mural.publicar_id("aliado", 111)       # id VELHO, de outra sessão
+    mural.pedir_cura("aliado", 30.0)
+
+    assert f._atender("aliado") == (False, True), "id velho curou alguém"
+
+    mural.esquecer_id("aliado")
+    assert f._atender("aliado")[0] is True
+
+
+def test_toda_morte_de_janela_esquece_o_id():
+    """`_release` é o caminho por onde passam os cinco jeitos de uma janela
+    morrer -- é por isso que o esquecimento mora lá, e não em `_encerrar_caido`."""
+    import inspect
+
+    from blazesbot.bot import supervisor as mod_sup
+
+    assert "esquecer_id" in inspect.getsource(mod_sup.AccountSupervisor._release)
