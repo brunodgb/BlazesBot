@@ -60,8 +60,9 @@ def _executor(em_batalha=None, passos=3, tecla="TAB"):
     # SEM TIME: alvo aliado não existe fora de um, e a pergunta
     # nem chega a ser feita (`None` = não há como ser aliado).
     e._alvo_e_aliado = None
-    # SEM PONTO INICIAL: `distancia_da_base` devolve None e a coleira
-    # dos 12 pixels não corta nada. Quem quiser testá-la troca o método.
+    # SEM PONTO INICIAL: `distancia_da_base` devolve None e nada que dependa
+    # de distância opina. A coleira dos 12 mora na AQUISIÇÃO -- ver
+    # tests/test_coleira_do_ponto_no_app.py.
     e._base_pos = None
     e._posicao_atual = None
     e._ultima_posicao_conhecida = None
@@ -504,58 +505,3 @@ def test_SEM_leitura_de_id_a_macro_roda_inteira():
 
     e._uma_volta_simples(passos)
     assert e.teclas.count("1") == 4, e.teclas
-
-# ===========================================================================
-# A COLEIRA DO PONTO INICIAL, DURANTE A MACRO -- 04/09/2026
-# ===========================================================================
-#
-# *"Tem vezes que o jogo dá bug e dá target em um mob bem longe, só que com isso
-# acaba chamando outros mobs e provavelmente vai morrer no caminho (...) essa
-# limitação é muito importante para não acabar puxando vários mobs ao mesmo
-# tempo por andar para muito longe."*
-#
-# A trava de posição já existia, mas só rodava no PRELÚDIO da volta: o
-# personagem saía andando na linha 2 e só era trazido de volta no fim da macro
-# -- com uma fila de mobs atrás.
-
-
-def _com_distancia(distancia):
-    e = _executor()
-    e._id_do_alvo = lambda: 777          # alvo válido: não é ele que corta
-    e.distancia_da_base = lambda: distancia
-    return e
-
-
-def test_andar_alem_do_teto_CORTA_a_volta():
-    e = _com_distancia(mod.MAXIMO_DE_PIXELS_DO_PONTO + 1)
-    passos = [SimpleNamespace(key="1", delay_ms=1) for _ in range(5)]
-
-    assert e._uma_volta_simples(passos) is True    # aborto normal, não parada
-    assert e.teclas.count("1") == 0, e.teclas
-    assert e.voltas == 0, "contou como volta completa"
-
-
-def test_dentro_do_teto_a_macro_roda():
-    """A folga existe para um passo lateral do jogo não interromper a volta."""
-    e = _com_distancia(mod.MAXIMO_DE_PIXELS_DO_PONTO)
-    passos = [SimpleNamespace(key="1", delay_ms=1) for _ in range(3)]
-
-    e._uma_volta_simples(passos)
-    assert e.teclas.count("1") == 3, e.teclas
-
-
-def test_sem_leitura_de_posicao_nao_corta():
-    """Sem trava de posição não há ponto inicial -- e sem ponto, não há do que
-    se afastar."""
-    e = _com_distancia(None)
-    passos = [SimpleNamespace(key="1", delay_ms=1) for _ in range(3)]
-
-    e._uma_volta_simples(passos)
-    assert e.teclas.count("1") == 3
-
-
-def test_o_teto_do_afastamento_e_MAIOR_que_a_tolerancia_da_trava():
-    """São perguntas diferentes: a tolerância é a folga do "já voltei"; o teto é
-    o quanto ele pode se afastar andando. Confundir as duas faria a volta ser
-    cortada por um pixel de diferença."""
-    assert mod.MAXIMO_DE_PIXELS_DO_PONTO > mod.TOLERANCIA_POSICAO

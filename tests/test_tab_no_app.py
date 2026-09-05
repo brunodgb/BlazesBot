@@ -119,6 +119,12 @@ def _executor(roda=None, tecla="TAB", sem_leitura=False, em_batalha=None):
     # SEM TIME: alvo aliado não existe fora de um, e a pergunta
     # nem chega a ser feita (`None` = não há como ser aliado).
     e._alvo_e_aliado = None
+    # SEM PONTO INICIAL: a coleira dos 12 (`_alvo_longe_demais`) não tem base
+    # para medir e devolve "não sei" -- ou seja, não recusa nada. Quem a testa
+    # é tests/test_coleira_do_ponto_no_app.py.
+    e._travar_posicao = False
+    e._base_pos = None
+    e._recusas_por_distancia = 0
     # O TAB só sai quando FALTA alvo (`_preciso_de_alvo`), e a decisão usa
     # estes dois: a batalha da volta anterior e as voltas seguidas com alvo
     # e sem batalha.

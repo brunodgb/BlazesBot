@@ -24,6 +24,7 @@ medição. Regra sem porquê apodrece; porquê aqui dentro faz o arquivo voltar 
 | **`docs/decisoes/reset-de-time.md`** | **conta de reset: lista fechada, batida, trava na porta** |
 | **`docs/decisoes/comida-do-pet.md`** | **a grade da comida: por que o APP nunca alimentava e por que a bolsa do BC não baixava** |
 | `docs/decisoes/deletador.md` | deletar itens no APP |
+| **`docs/decisoes/coleira-do-ponto.md`** | **a coleira dos 12: mob longe do ponto não é alvo — e por que conferir no meio da macro travava o bot** |
 | **`docs/decisoes/time-do-app.md`** | **time do APP: a mesma macro em ate 5 contas, largada junta, mesmo alvo** |
 | **`docs/decisoes/fada.md`** | **a Fada: a conta que cura o time em vez de atacar** |
 | `docs/decisoes/ferramentas-temporarias.md` | Testar Venda, Amostrar Cliques, link |

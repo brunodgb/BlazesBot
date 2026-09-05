@@ -592,16 +592,28 @@ Cada item é o que **não pode ser violado**. O detalhe de cada área mora em
 - **Trava de posição no APP** (`AppConfig.travar_posicao`, padrão True): salva a
   posição como base; andou > `TOLERANCIA_POSICAO` (1) ⇒ devolvido andando pelo
   minimapa. Só com memória respondendo.
-- **A COLEIRA DOS 12 PIXELS — o afastamento é conferido A CADA LINHA da macro,
-  não só no prelúdio** (04/09/2026, `MAXIMO_DE_PIXELS_DO_PONTO = 12`). Passou do
-  teto ⇒ a volta é CORTADA na hora; quem anda de volta é a trava de posição do
-  prelúdio seguinte, e ela continua sendo o único lugar que caminha. Motivo do
-  usuário: *"tem vezes que o jogo dá bug e dá target em um mob bem longe, só que
-  com isso acaba chamando outros mobs e provavelmente vai morrer no caminho"* —
-  antes disso o personagem só era trazido de volta no FIM da macro, chegando com
-  a fila atrás. **Não confundir com `TOLERANCIA_POSICAO` (1)**: aquela é a folga
-  do "já voltei", esta é o teto do quanto ele pode se afastar andando, e é maior
-  de propósito. `None` (sem leitura de posição, ou trava desligada) **não corta**.
+- **A COLEIRA DOS 12 — mob longe do ponto NÃO é alvo** (04/09/2026,
+  `core/coleira_do_ponto.py`, `MAXIMO_DE_PIXELS_DO_PONTO = 12`). A distância
+  medida é a do **MOB até a base**, e ela é conferida **na AQUISIÇÃO**, dentro de
+  `_alvo_aceitavel`: o alvo longe é recusado ANTES de o personagem correr até
+  ele, que é o único instante em que dá para evitar a caminhada. Motivo do
+  usuário: *"o jogo dá bug e dá target em um mob bem longe (...) acaba chamando
+  outros mobs e provavelmente vai morrer no caminho"*.
+- **A COLEIRA NUNCA CORTA A VOLTA NO MEIO DA MACRO — e isso é cicatriz.** A
+  primeira versão (04/09/2026, revertida no mesmo dia) cortava a volta a cada
+  linha em que o PERSONAGEM estivesse longe, contando que a trava de posição
+  andasse de volta no prelúdio seguinte. **A trava não anda**:
+  `_travar_posicao_se_preciso` sai na hora quando `_lutando()` diz que sim, e
+  `_lutando()` diz que sim para qualquer **alvo vivo selecionado**. Deu
+  travamento PERMANENTE — sem tecla, o mob não morria; sem andar, o personagem
+  não voltava; e ele ficava parado apanhando até morrer. Vale a regra do
+  usuário: *"em batalha o personagem precisa estar atacando e para isso a macro
+  tem que rodar"*.
+- **A RECUSA POR DISTÂNCIA TEM FIM** (`RECUSAS_POR_DISTANCIA = 3`, por rodada de
+  aquisição). Se todo mob em volta estiver fora do teto, recusar sem limite
+  deixaria a conta sem atacar nada — trocaria uma morte por outra. Sem base
+  salva, sem `pos` na leitura ou com a trava de posição desligada, **não há
+  recusa**: "não sei" não bloqueia.
 - O modo APP também alimenta o pet (`ExecutorDeMacro.feed_pet` via `PetFeeder`).
 - **A GRADE DA COMIDA É A MESMA NOS DOIS ECOSSISTEMAS, E VEM DO DISCO** — 27/08/2026.
   BC e APP constroem o `PetFeeder` com `vence_em=settings.pet.proxima_comida_em`

@@ -72,6 +72,7 @@ import time
 from collections.abc import Callable, Iterable
 from typing import Protocol
 
+from ...core import coleira_do_ponto
 from ...core.inputs import Input
 from ...core.pet import SEGUNDOS_PARA_A_COMIDA_SER_USADA, PetFeeder
 
@@ -156,22 +157,11 @@ ESPERA_DEPOIS_DE_INVOCAR = 1
 # O executor NÃO usa mais estas constantes para movimento (ecossistema cego).
 TOLERANCIA_POSICAO = 1
 
-# Quanto o personagem pode se AFASTAR do ponto inicial durante a macro.
-#
-# Decisão do usuário em 04/09/2026: *"tem vezes que o jogo dá bug e dá target
-# em um mob bem longe, só que com isso acaba chamando outros mobs e
-# provavelmente vai morrer no caminho (...) essa limitação é muito importante
-# para não acabar puxando vários mobs ao mesmo tempo por andar para muito
-# longe."*
-#
-# NÃO É A MESMA COISA QUE `TOLERANCIA_POSICAO`. Aquela é a folga do "já voltei"
-# -- de quanto o personagem pode estar fora do ponto para a trava considerar
-# que chegou. Esta é o TETO do quanto ele pode se afastar ANDANDO, e é maior
-# de propósito: um passo lateral do jogo não pode interromper a volta.
-#
-# Conferido a cada linha, junto com o alvo zerado, e pelo mesmo motivo: é
-# leitura de memória, não de tela.
-MAXIMO_DE_PIXELS_DO_PONTO = 12
+# A COLEIRA DOS 12 vem do módulo que a decide -- o nome fica visível aqui porque
+# é daqui que os testes e o índice de constantes a leem. O porquê está lá.
+MAXIMO_DE_PIXELS_DO_PONTO = coleira_do_ponto.MAXIMO_DE_PIXELS_DO_PONTO
+RECUSAS_POR_DISTANCIA = coleira_do_ponto.RECUSAS_POR_DISTANCIA
+
 
 # Teto da espera da TRAVA DE POSIÇÃO pela chegada à base.
 #
@@ -946,6 +936,9 @@ class ExecutorDeMacro:
         self._travar_posicao = travar_posicao
         self._shuffle_apos_n_voltas = shuffle_apos_n_voltas
         self._base_pos: tuple[int, int] | None = base_pos
+        # Recusas de alvo por DISTÂNCIA na rodada de aquisição em curso --
+        # ver `RECUSAS_POR_DISTANCIA`. Zerado no começo de cada `_garantir_alvo`.
+        self._recusas_por_distancia = 0
         # Função para ler posição atual (injetada pelo supervisor).
         self._posicao_atual = posicao_atual
         # Centro do minimapa para cliques de movimento.
@@ -1647,9 +1640,24 @@ class ExecutorDeMacro:
             return True
         if hp <= 0:
             return False
+        if self._alvo_longe_demais(alvo):
+            return False
         if not EXIGIR_ALVO_INTEIRO or not maximo:
             return True
         return hp >= maximo
+
+    def _alvo_longe_demais(self, alvo: dict) -> bool:
+        """Recuso este mob por estar longe do ponto? Ver `coleira_do_ponto`.
+
+        A régua e o PORQUÊ dela moram no módulo; aqui fica só o contador da
+        rodada, que é estado do executor.
+        """
+        base = self._base_pos if self._travar_posicao else None
+        if not coleira_do_ponto.longe_demais(
+                alvo, base, self._recusas_por_distancia, self.log):
+            return False
+        self._recusas_por_distancia += 1
+        return True
 
     def _comecar_a_regua(self, ident: int | None,
                          alvo: dict | None = None) -> None:
@@ -1957,6 +1965,10 @@ class ExecutorDeMacro:
 
     def _garantir_alvo(self, forcar: bool = False, urgente: bool = False) -> bool:
         """Garante um alvo VIVO antes de a macro rodar. `True` = tem alvo vivo."""
+        # AS RECUSAS POR DISTÂNCIA SÃO DESTA RODADA. Zerar aqui é o que garante
+        # que a válvula não vaze para a rodada seguinte -- e também que as três
+        # recusas não sejam gastas de uma vez para nunca mais recusar nada.
+        self._recusas_por_distancia = 0
         id_antes = self._ler_id_do_alvo()
         if id_antes is None:
             return True
@@ -2635,29 +2647,6 @@ class ExecutorDeMacro:
                               "e pego outro.", i + 1)
                 return self._abortar_a_volta()
 
-            # ANDOU DEMAIS -- a trava do ponto inicial, DURANTE a macro.
-            #
-            # A trava de posição já existia, mas só rodava no prelúdio da volta:
-            # o personagem podia sair andando na linha 2 e só ser trazido de
-            # volta no fim da macro. Nesse caminho ele passa por mobs que não
-            # eram dele e chega no destino com uma fila atrás -- que é
-            # exatamente o que o usuário descreveu.
-            #
-            # CORTAR A VOLTA JÁ RESOLVE: o prelúdio da volta seguinte é quem
-            # anda de volta (`_travar_posicao_se_preciso`), e ele é o único
-            # lugar que sabe fazer isso. Duplicar a caminhada aqui seria duas
-            # coisas mandando no mesmo personagem.
-            #
-            # `None` NÃO CORTA: sem leitura de posição (ou com a trava
-            # desligada) não há ponto inicial, e sem ponto não há do que se
-            # afastar.
-            longe = self.distancia_da_base()
-            if longe is not None and longe > MAXIMO_DE_PIXELS_DO_PONTO:
-                self.log.info(
-                    "APP: andei %.0f do ponto inicial (teto %d) na linha %d — "
-                    "corto a volta e volto antes de puxar mais mob.",
-                    longe, MAXIMO_DE_PIXELS_DO_PONTO, i + 1)
-                return self._abortar_a_volta()
 
             self.input.key(passo.key)
             self.teclas_enviadas += 1
