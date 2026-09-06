@@ -27,8 +27,9 @@ import logging
 
 import pytest
 
+import blazesbot.bot.fada_reviver as mod_reviver
 from blazesbot.bot import fada as mod
-from blazesbot.bot import mural
+from blazesbot.bot import mural, mural_da_morte
 
 
 @pytest.fixture(autouse=True)
@@ -1100,8 +1101,7 @@ def test_toda_morte_de_janela_esquece_o_id():
 # para se reviver sozinho; um ferido sentado esperando pode virar o próximo
 # morto.
 
-import blazesbot.bot.fada_reviver as mod_reviver
-from blazesbot.bot import mural_da_morte
+
 
 
 @pytest.fixture(autouse=True)

@@ -174,7 +174,6 @@ def test_TODA_saida_do_laco_incrementa_algum_contador():
     """A saída "sem alvo" era a única que não incrementava nada -- e era
     justamente a que dominava o log (401 dos 407 avisos)."""
     import inspect
-    import re
 
     from blazesbot.bot.app.executor import ExecutorDeMacro
 

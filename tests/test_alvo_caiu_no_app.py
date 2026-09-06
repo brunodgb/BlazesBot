@@ -96,15 +96,6 @@ def test_a_ORDEM_e_batalha_depois_HP():
 
 # ------------------------------------------- a conferência ativa da saída
 
-def _executor_de_batalha(respostas):
-    e = mod.ExecutorDeMacro.__new__(mod.ExecutorDeMacro)
-    e.log = logging.getLogger("teste.saida")
-    fila = list(respostas)
-    e._ler_em_batalha = lambda: fila.pop(0) if fila else fila_final
-    e._continuar = lambda: True
-    return e
-
-
 def test_sai_no_instante_em_que_a_flag_baixa(monkeypatch, executor):
     """ATIVA, e é isso que faz o teto ser barato: no caso comum ela devolve
     muito antes dos 2 s."""

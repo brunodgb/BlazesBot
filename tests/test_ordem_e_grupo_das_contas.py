@@ -195,9 +195,18 @@ def test_o_frontend_identifica_a_linha_por_uid():
     fonte = _ler("web/main.js")
     assert "tr.dataset.uid = c.uid;" in fonte
     assert 'closest("tr[data-uid]")' in fonte
-    # O poll do estado também: login é campo livre, dois iguais acertavam a
-    # linha errada.
-    assert 'tr[data-uid="${CSS.escape(c.uid)}"]' in fonte
+    # O POLL DO ESTADO TAMBÉM, e é o que importa aqui: login é campo livre, e
+    # dois iguais faziam a busca acertar a primeira linha, que podia ser de
+    # outra conta. A forma mudou (a busca virou um índice por uid dentro de
+    # `marcarNoAr`), a GARANTIA não: o casamento é por uid e uid sem valor é
+    # descartado em vez de virar palpite pelo login.
+    assert "function marcarNoAr(est)" in fonte
+    casamento = fonte.split("function marcarNoAr(est)")[1].split("\n}")[0]
+    assert "noAr.set(c.uid, c)" in casamento
+    assert "noAr.get(tr.dataset.uid)" in casamento
+    assert "if (c.uid)" in casamento, "uid vazio não pode virar chave"
+    assert "c.login" not in casamento, (
+        "o poll voltou a casar a linha pelo login")
     assert "dataset.id" not in fonte
 
 
