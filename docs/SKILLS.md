@@ -120,64 +120,69 @@ crédito não levanta) e `glm-5.2:free` alterna entre responder e
 não sustenta modelo útil. Medido antes de descartar: `qwen2.5-coder:14b` derruba
 o runner (`llama runner process has terminated`, falha também fora do plugin);
 `qwen3:14b` responde em 42 s; `qwen2.5-coder:32b` paga 19 GB de carga — contra
-8,7 s do OmniRoute. O **assento** `ollama` continua em uso, mas apontado para o
-OmniRoute (abaixo), não para um modelo da placa.
+~8 s do OmniRoute. O `ollama` não entra mais no roster local: o assento que
+usava esse nome foi substituído pelo provedor próprio `omniroute` (abaixo).
 
 **`thinkingmachines/inkling-small:free` NÃO entra:** a própria OpenRouter recusa
 chamada de API para ele ("only available on agentic harnesses"). Não é
 configuração — não há assento possível.
 
-## OmniRoute: o 5º assento (opcional, entra pelo `ollama`)
+## OmniRoute: o 5º assento (opcional, provedor próprio)
 
-O **OmniRoute** (`http://localhost:20128/v1`) é o gateway local do usuário, e
+O **OmniRoute** (`http://localhost:20128`) é o gateway local do usuário, e
 `BlazesBot-IA` é o combo de IAs dele. Ele fala OpenAI
-(`/v1/chat/completions` medido, roteando para `big-pickle`), e **responde em
-8,7 s** — o assento mais rápido e mais forte do council aqui.
+(`/v1/chat/completions`), e **responde em ~8 s**.
 
-**Como ele entra sem patchear o plugin.** Todo provedor tem o endpoint fixo no
-próprio script; o `ollama` é o **único com host configurável** (`OLLAMA_HOST`),
-e monta `${OLLAMA_HOST}/v1/chat/completions` — exatamente a rota do OmniRoute.
-O obstáculo era a chave: o `ollama.sh` **não manda header `Authorization`** (o
-comentário dele diz que um host remoto atrás de proxy "está fora de escopo").
-A saída medida: **a chave vai no userinfo da URL**. O curl converte userinfo em
-`Authorization: Basic`, e o OmniRoute aceita:
+**É um provedor de verdade, não emprestado do `ollama`.** A primeira versão
+desta configuração colocava a chave do OmniRoute dentro de `OLLAMA_HOST` — um
+atalho que funcionava, mas o `ollama` e o OmniRoute não têm relação nenhuma
+entre si, e o script do `ollama` não manda header de autenticação, então a
+chave precisava viajar escondida no userinfo da URL. Substituído por
+**`scripts/providers/omniroute.sh`**, um provedor próprio no mesmo molde do
+`openai.sh`/`grok.sh`: `Authorization: Bearer` normal, endpoint e modelo
+configuráveis por variável de ambiente própria. Rótulo da coluna: `omniroute`.
 
-```bash
-export OLLAMA_HOST="http://<chave-omniroute>@localhost:20128"
-export OLLAMA_MODEL="BlazesBot-IA"
-```
+Três arquivos do plugin foram tocados para isso (fora do repositório do
+BlazesBot — ver "Atenção: sobrevive a update?" abaixo):
 
-(Testado também `x-api-key` e `-u chave:` — os três passam. `-u chave:` roteou
-para `claude-sonnet-4.5` em vez do combo, então **use o userinfo**.)
+- `scripts/providers/omniroute.sh` — o provedor (novo arquivo).
+- `scripts/lib/providers.sh` — uma linha em `get_model()`:
+  `omniroute) echo "${OMNIROUTE_MODEL:-BlazesBot-IA}" ;;`. A descoberta
+  (`discover_providers`) não precisou de nada: um nome que não é nenhuma CLI
+  conhecida cai no caso genérico, gated em `OMNIROUTE_API_KEY`.
+- `scripts/check-status.sh` — uma sonda em `check_provider()` (`GET /v1/models`
+  com Bearer) e uma linha `format_status "OmniRoute" "omniroute" ...`. Antes
+  disso o `/claude-council:status` **reprovava o assento que funcionava**,
+  porque sondava com `ollama list` — protocolo que o OmniRoute nunca falou.
+  Medido depois do conserto: `✓ Connected (1769ms)`.
 
-**Por que ele NÃO está no `COUNCIL_PROVIDERS` default.** A chave está dentro da
-`OLLAMA_HOST`, e essa variável não pode ir para o settings global sem sequestrar
-todo uso de Ollama da máquina — então ela mora no `.claude/council.env`
-(ignorado pelo git). Consequência: o assento só existe **depois** de
-`set -a; source .claude/council.env; set +a`. Sem isso, `OLLAMA_HOST` cai no
-default `localhost:11434` — o Ollama de verdade — e o assento falha pedindo um
-modelo que não existe lá. Por isso ele é opt-in:
+**Env vars:** `OMNIROUTE_API_KEY` (obrigatória), `OMNIROUTE_MODEL` (obrigatória
+— sem default de vendor que faça sentido numa máquina que não configurou
+nada), `OMNIROUTE_HOST` (opcional, default `http://localhost:20128`).
+
+**Por que ele NÃO está no `COUNCIL_PROVIDERS` default.** A chave é
+infraestrutura local do usuário — decisão deliberada de não colocar no
+`settings.json` global, diferente da `OPENROUTER_API_KEY`. Fica em
+`.claude/council.env` (ignorado pelo git), opt-in:
 
 ```bash
 set -a; source .claude/council.env; set +a
-/claude-council:ask --providers=ollama,codex,openrouter-1 "..."
+/claude-council:ask --providers=omniroute,codex,openrouter-1 "..."
 ```
-
-O rótulo da coluna sai como `ollama`; o modelo aparece como `BlazesBot-IA`.
-
-**O `/claude-council:status` mente sobre este assento.** Ele sonda o `ollama`
-rodando `ollama list` (`check_cli_provider "ollama" "ollama" list`), e `ollama
-list` fala o protocolo nativo do daemon — que o OmniRoute não serve. Com a
-`OLLAMA_HOST` apontada para lá, o status sai
-`✗ Installed, not authenticated — fix: start the daemon`, e **mesmo assim a
-pergunta é respondida** (medido). Confie na resposta, não no painel.
-
-**Não deixar global.** `setx OLLAMA_HOST ...` resolveria o source manual, mas
-apontaria **todo** uso de Ollama da máquina para o OmniRoute. Fica no projeto.
 
 **Custo:** quem decide o que o `BlazesBot-IA` consome é a configuração do
 OmniRoute, não o council — a regra de "só grátis" abaixo não alcança esse
 assento.
+
+**Atenção: sobrevive a `claude plugin update`? NÃO.** As três edições acima
+vivem dentro do cache do plugin
+(`~/.claude/plugins/cache/hex-claude-marketplace/claude-council/2026.9.9/`),
+que o CLI **reconstrói do zero** a partir do marketplace a cada update —
+exatamente o motivo pelo qual clonar o plugin à mão não sobrevive (ver nota no
+topo deste documento). Um `claude plugin update claude-council` apaga
+`omniroute.sh` e as duas edições em `providers.sh`/`check-status.sh` sem
+avisar. Se isso acontecer, refazer é reaplicar este mesmo bloco — o conteúdo
+dos três trechos está descrito acima.
 
 ## Custo: ZERO, por desenho (diretiva permanente do usuário — 06/09/2026)
 
@@ -256,10 +261,11 @@ bash scripts/query-council.sh --providers=openrouter-1,codex -- "Your question"
   os 3 assentos gratuitos passaram a responder **sem** sourcear nada. Antes disso
   a chave só vivia no `council.env` e um turno normal tinha **só o codex** de pé
   (`Error: OPENROUTER_API_KEY not set` nos outros três).
-- **`.claude/council.env`** — o que **não** pode ser global: a `OLLAMA_HOST` do
-  OmniRoute (que carrega a chave no userinfo). Global, ela sequestraria todo uso
-  de Ollama da máquina. **Ignorado pelo git**; carregar com
-  `set -a; source .claude/council.env; set +a` só quando quiser o OmniRoute.
+- **`.claude/council.env`** — `OMNIROUTE_API_KEY` e `OMNIROUTE_MODEL`. Decisão
+  deliberada de não subir para o global: é infraestrutura local do usuário, não
+  algo que toda sessão de Claude Code devia herdar sem pensar. **Ignorado pelo
+  git**; carregar com `set -a; source .claude/council.env; set +a` só quando
+  quiser o OmniRoute.
 - **`.claude/council.env.example`** — o mesmo template, sem chave, versionado.
 - **`.claude/council-stop-gate.json`** — o Stop hook (abaixo).
 
@@ -289,7 +295,7 @@ quando falasse, seria justamente porque a regra 0 já tinha sido violada.
 **Se um dia ligar:** `provider` fica em `codex`. Com codex o diff não sai da
 assinatura já autenticada da máquina. **Nunca aponte para `openrouter`** — lá o
 diff é revelado duas vezes, à OpenRouter e ao upstream que serve o modelo. O
-assento do OmniRoute também não serve aqui: a `OLLAMA_HOST` mora no
+assento do OmniRoute também não serve aqui: `OMNIROUTE_API_KEY` mora no
 `council.env`, que o hook não carrega.
 
 Salvaguardas do gate, quando ligado: não roda em árvore limpa, não se re-dispara
