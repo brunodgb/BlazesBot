@@ -164,6 +164,13 @@ set -a; source .claude/council.env; set +a
 
 O rótulo da coluna sai como `ollama`; o modelo aparece como `BlazesBot-IA`.
 
+**O `/claude-council:status` mente sobre este assento.** Ele sonda o `ollama`
+rodando `ollama list` (`check_cli_provider "ollama" "ollama" list`), e `ollama
+list` fala o protocolo nativo do daemon — que o OmniRoute não serve. Com a
+`OLLAMA_HOST` apontada para lá, o status sai
+`✗ Installed, not authenticated — fix: start the daemon`, e **mesmo assim a
+pergunta é respondida** (medido). Confie na resposta, não no painel.
+
 **Não deixar global.** `setx OLLAMA_HOST ...` resolveria o source manual, mas
 apontaria **todo** uso de Ollama da máquina para o OmniRoute. Fica no projeto.
 
