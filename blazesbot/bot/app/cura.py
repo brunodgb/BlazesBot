@@ -276,6 +276,19 @@ class CuraDoApp:
             return False
         self._avisou_sem_leitura = False
 
+        if vida <= 0.0:
+            # CADÁVER NÃO SE CURA -- 06/09/2026.
+            #
+            # Medido em campo: *"APP: terminei de regenerar sentado com a vida
+            # em 0%"*, 60 s depois de o personagem já estar morto e um segundo
+            # ANTES de a macro perceber. Sentar, beber poção e pedir cura à Fada
+            # são todos inúteis num morto, e o ciclo da morte (`bot/morte.py`) é
+            # quem sabe o que fazer -- ele é conferido na linha seguinte da
+            # macro.
+            self.log.debug("APP: vida em 0% -- não há o que curar. Quem cuida "
+                           "disso é o ciclo da morte.")
+            return False
+
         if vida >= self._pedir_pct():
             self._voltas_presas = 0
             return False

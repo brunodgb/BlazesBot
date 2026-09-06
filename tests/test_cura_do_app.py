@@ -935,3 +935,33 @@ def test_a_pocao_para_no_alvo_DA_TELA():
     c = _cura(jogo, parar_pct=lambda: 60.0)
     c.cuidar()
     assert jogo.teclas.count("9") == 1, jogo.teclas
+
+
+# ---------------------------------------------------------------------------
+# CADÁVER NÃO SE CURA -- medido em campo em 06/09/2026
+# ---------------------------------------------------------------------------
+#
+# No log da única morte da noite:
+#
+#     00:09:43.013  APP: terminei de regenerar sentado com a vida em 0%.
+#     00:09:43.171  MORRI. A macro para aqui — avisando o time.
+#
+# A cura sentou e regenerou um cadáver por um minuto, e só então a macro
+# percebeu. Sentar, beber poção e pedir cura à Fada são todos inúteis num morto;
+# quem sabe o que fazer é o ciclo da morte (`bot/morte.py`).
+
+def test_vida_zero_NAO_e_curada():
+    jogo = _Jogo(vida=0.0)
+
+    assert _cura(jogo).cuidar() is False
+
+    assert jogo.teclas == [], f"mexeu em tecla com o personagem morto: {jogo.teclas}"
+
+
+def test_vida_zero_nao_senta_nem_pede_a_fada():
+    chamados = []
+    jogo = _Jogo(vida=0.0)
+
+    _cura(jogo, fada=lambda vida: chamados.append(vida) or True).cuidar()
+
+    assert chamados == [], "pediu cura à Fada estando morto"
