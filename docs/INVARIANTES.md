@@ -686,6 +686,22 @@ Cada item é o que **não pode ser violado**. O detalhe de cada área mora em
 - **TRÊS MORTES SEGUIDAS SEM VOLTAR AO PONTO PARAM A CONTA.** É "seguidas", não
   "no total": voltar zera o contador. Sem ele, um spot que virou armadilha vira
   um moedor de tentativas a noite toda.
+- **O ALVO CAÍDO CORTA A VOLTA, E A ORDEM É: SAÍDA DE BATALHA, DEPOIS HP**
+  (06/09/2026). *"Se ainda diz 'mob vivo' mas saiu de batalha, é porque a
+  leitura está errada e o sair de batalha manda mais, pois garante que não tem
+  ninguém batendo no personagem"* — por isso `_a_batalha_acabou` é conferida
+  ANTES de `_o_alvo_caiu_pelo_hp`. Inverter a ordem põe uma leitura ruim de HP
+  na frente da prova forte.
+- **DENTRO DA VOLTA, A PERGUNTA SOBRE O ALVO É SÓ DE MEMÓRIA.**
+  `_o_alvo_caiu_pelo_hp` lê `hp <= 0` e nada mais; **HP ilegível NÃO VOTA**.
+  `_alvo_morreu` (o veredito completo, da aquisição) continua PROIBIDO no laço:
+  ele cai na cascata da TELA quando o HP falta, e a tela custa uma captura por
+  consulta — travado por `tests/test_laco_simples_do_app.py`.
+- **CAIU O ALVO, A SAÍDA DE BATALHA É CONFIRMADA ATIVAMENTE POR ATÉ 2 s**
+  (`SEGUNDOS_PARA_CONFIRMAR_A_SAIDA`). Sai no instante em que a flag baixa;
+  estourar o teto **não é fracasso**, é o outro desfecho útil: quer dizer que há
+  outro mob batendo, e aí o bot volta a atacar em vez de sentar, andar ou abrir
+  a bolsa.
 - **A COLEIRA DOS 12 — mob longe do ponto NÃO é alvo** (04/09/2026,
   `core/coleira_do_ponto.py`, `MAXIMO_DE_PIXELS_DO_PONTO = 12`). A distância
   medida é a do **MOB até a base**, e ela é conferida **na AQUISIÇÃO**, dentro de

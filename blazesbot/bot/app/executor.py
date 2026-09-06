@@ -157,6 +157,23 @@ ESPERA_DEPOIS_DE_INVOCAR = 1
 # O executor NÃO usa mais estas constantes para movimento (ecossistema cego).
 TOLERANCIA_POSICAO = 1
 
+# Quanto se espera a flag de combate BAIXAR depois de o alvo cair.
+#
+# Decisão do usuário em 06/09/2026: *"durante esses 2 segundos tem que
+# ativamente ficar verificando se saiu de batalha, para não precisar ficar esse
+# tempo todo parado; de qualquer forma o sair de batalha garante que a batalha
+# já terminou (...) pois garante que não tem ninguém batendo no personagem"*.
+#
+# ATIVO, e é isso que faz o número ser barato: sai no instante em que a flag
+# baixa, e no caso comum isso leva bem menos que o teto. Os 2 s são o TETO, não
+# o gasto -- e estourá-los é informação, não desperdício: quer dizer que tem
+# outro mob batendo, e aí o bot volta a atacar em vez de ir cuidar da bolsa.
+SEGUNDOS_PARA_CONFIRMAR_A_SAIDA = 2.0
+
+# Passo da conferência ativa acima. É leitura de memória; 0,1 s dá 20 amostras
+# dentro do teto sem pesar.
+PASSO_DA_SAIDA_DE_BATALHA = 0.1
+
 # A COLEIRA DOS 12 vem do módulo que a decide -- o nome fica visível aqui porque
 # é daqui que os testes e o índice de constantes a leem. O porquê está lá.
 MAXIMO_DE_PIXELS_DO_PONTO = coleira_do_ponto.MAXIMO_DE_PIXELS_DO_PONTO
@@ -1558,6 +1575,45 @@ class ExecutorDeMacro:
             self._morto_pela_reserva = ident
         return True
 
+    def _o_alvo_caiu_pelo_hp(self) -> bool:
+        """`hp <= 0` numa leitura de MEMÓRIA. `False` = não sei ou está vivo.
+
+        A pergunta mais barata que existe sobre o alvo, e a única que pode ser
+        feita a cada linha: `alvo_atual()` já validou a struct antes de
+        responder, então um `hp` legível é confiável na primeira leitura.
+
+        ILEGÍVEL NÃO VOTA. Aqui não há cascata para a tela nem reserva: quem
+        cobre o buraco é `_a_batalha_acabou`, conferida na linha acima, e é ela
+        que o usuário definiu como a palavra final -- *"o sair de batalha manda
+        mais, pois garante que não tem ninguém batendo no personagem"*.
+        """
+        alvo = self._ler_alvo()
+        if alvo is None:
+            return False
+        hp = alvo.get("hp")
+        return hp is not None and hp <= 0
+
+    def _confirmar_a_saida_de_batalha(self) -> bool:
+        """Espera a flag de combate baixar. `True` = a luta acabou mesmo.
+
+        Chamada quando o ALVO CAI, e a pergunta que ela responde não é "o mob
+        morreu?" (isso o HP já respondeu) -- é **"sobrou alguém me batendo?"**.
+
+        ATIVA E COM TETO: devolve no instante em que a flag baixa. Estourar o
+        teto não é fracasso, é o outro desfecho útil -- quer dizer que há outro
+        mob em cima, e quem sabe disso não vai sentar, andar nem abrir a bolsa.
+        """
+        fim = time.time() + SEGUNDOS_PARA_CONFIRMAR_A_SAIDA
+        while time.time() < fim and self._continuar():
+            if self._ler_em_batalha() is False:
+                return True
+            time.sleep(PASSO_DA_SAIDA_DE_BATALHA)
+        self.log.info(
+            "APP: o alvo caiu mas continuo em batalha depois de %.0fs — tem "
+            "outro mob batendo. Volto a atacar em vez de cuidar da rotina.",
+            SEGUNDOS_PARA_CONFIRMAR_A_SAIDA)
+        return False
+
     def _cortar_a_volta(self) -> bool:
         """Devolve True quando a rotação deve parar AGORA porque o mob caiu.
 
@@ -2617,12 +2673,36 @@ class ExecutorDeMacro:
             if not self._esperar_saida_da_pausa():
                 return False
             
+            # A SAÍDA DE BATALHA MANDA MAIS QUE O HP, e é por isso que ela
+            # vem primeiro. Decisão do usuário em 06/09/2026: *"se ainda diz
+            # 'mob vivo' mas saiu de batalha é porque a leitura está errada, e
+            # o sair de batalha manda mais, pois garante que não tem ninguém
+            # batendo no personagem"*.
             if self._a_batalha_acabou():
                 self.log.warning(
                     "O mob morreu durante a execução da macro. Encerrando a "
                     "volta para evitar desperdício.")
                 self.voltas += 1
                 return self._abortar_a_volta(motivo="mob morreu")
+
+            # O ALVO CAIU PELO HP -- fonte primária desde 06/09/2026.
+            #
+            # É SÓ MEMÓRIA, e isso é o ponto: `_alvo_morreu` (o veredito
+            # completo, usado na aquisição) cai na cascata da TELA quando o HP
+            # está ilegível, e a tela custa uma captura por consulta. Dentro da
+            # volta a pergunta é a barata: *o HP legível diz zero?* A reserva
+            # para o HP ilegível já está na linha acima -- é a saída de batalha,
+            # que o usuário definiu como a palavra final.
+            #
+            # Confirmada a queda, a conferência ATIVA da saída de batalha diz o
+            # que fazer a seguir -- ver `_confirmar_a_saida_de_batalha`.
+            if self._o_alvo_caiu_pelo_hp():
+                self.log.info("APP: o alvo caiu (HP) na linha %d — encerro a "
+                              "volta.", i + 1)
+                self.mortes_vistas += 1
+                self.voltas += 1
+                self._confirmar_a_saida_de_batalha()
+                return self._abortar_a_volta(motivo="alvo caiu (HP)")
             
             if self.sincronia is not None:
                 linha = self.sincronia.linha_a_enviar(i, passo.delay_ms)

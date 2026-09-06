@@ -30,6 +30,7 @@ from types import SimpleNamespace
 import pytest
 
 from blazesbot.bot.app import executor as mod
+from blazesbot.core.target_hybrid import MorteDoAlvo
 
 
 def _executor(em_batalha=None, passos=3, tecla="TAB"):
@@ -60,6 +61,15 @@ def _executor(em_batalha=None, passos=3, tecla="TAB"):
     # SEM TIME: alvo aliado não existe fora de um, e a pergunta
     # nem chega a ser feita (`None` = não há como ser aliado).
     e._alvo_e_aliado = None
+    # O VEREDITO DE MORTE DO ALVO (`_alvo_morreu`) passou a ser conferido a
+    # cada linha em 06/09/2026, e ele guarda estado por identidade.
+    e._alvo_da_reserva = None
+    e._morto_pela_reserva = None
+    e._morte_do_alvo = MorteDoAlvo()
+    # O ALVO NÃO CAI nestes testes: eles são sobre as OUTRAS saídas da volta.
+    # O corte pelo HP tem os próprios, em tests/test_alvo_caiu_no_app.py.
+    e._alvo_morreu = lambda: False
+    e.mortes_vistas = 0
     # SEM CICLO DA MORTE: o dublê não morre, e a pergunta nem é feita.
     e.morte = None
     # SEM PONTO INICIAL: `distancia_da_base` devolve None e nada que dependa
