@@ -71,7 +71,7 @@ ligar código não testado.
 
 ## Números medidos -- tolerância, limiar, teto, cadência
 
-562 constantes, agrupadas por arquivo.
+563 constantes, agrupadas por arquivo.
 
 | constante | valor | onde | quem lê | porquê (resumo) |
 |---|---|---|---|---|
@@ -243,9 +243,10 @@ ligar código não testado.
 | `TETO_DA_CURA_SEGUNDOS` | `20.0` | [blazesbot/bot/fada.py:95](blazesbot/bot/fada.py#L95) | — | Quanto tempo insistir numa cura antes de desistir daquela vítima. |
 | `TETO_PARA_O_ALVO_VIRAR` | `0.4` | [blazesbot/bot/fada.py:87](blazesbot/bot/fada.py#L87) | — | Depois do clique no retrato, quanto esperar a memória mostrar o alvo novo. |
 | `SEGUNDOS_ENTRE_TENTATIVAS` | `1.0` | [blazesbot/bot/fada_montagem.py:34](blazesbot/bot/fada_montagem.py#L34) | — | Respiro quando a Fada não consegue nem começar (memória fechada, por exemplo). |
-| `PASSO_DA_ESPERA` | `0.2` | [blazesbot/bot/fada_reviver.py:41](blazesbot/bot/fada_reviver.py#L41) | deletador.py, morte.py | Passo entre duas perguntas enquanto o feitiço prepara. |
-| `TENTATIVAS_POR_MORTO` | `3` | [blazesbot/bot/fada_reviver.py:48](blazesbot/bot/fada_reviver.py#L48) | — | Tentativas de reviver a MESMA vítima antes de deixá-la para o prazo dela. |
-| `TETO_DO_FEITICO` | `12.0` | [blazesbot/bot/fada_reviver.py:38](blazesbot/bot/fada_reviver.py#L38) | — | Quanto se espera o feitiço pegar depois de apertar a tecla. |
+| `JANELA_DE_TENTATIVAS` | `10.0` | [blazesbot/bot/fada_reviver.py:69](blazesbot/bot/fada_reviver.py#L69) | — | Por quanto tempo a Fada insiste num mesmo morto antes de passar adiante. |
+| `MAXIMO_DE_TOQUES` | `3` | [blazesbot/bot/fada_reviver.py:87](blazesbot/bot/fada_reviver.py#L87) | — | Teto de TOQUES na janela, independente do relógio. |
+| `PASSO_DA_ESPERA` | `0.2` | [blazesbot/bot/fada_reviver.py:78](blazesbot/bot/fada_reviver.py#L78) | deletador.py, morte.py | Passo entre duas perguntas enquanto o feitiço prepara. |
+| `TETO_DO_FEITICO` | `8.0` | [blazesbot/bot/fada_reviver.py:75](blazesbot/bot/fada_reviver.py#L75) | — | Quanto se espera o feitiço pegar depois de apertar a tecla. |
 | `LINK_ENTRAR_HH` | `'link_enter_hh.png'` | [blazesbot/bot/hh/entrada.py:65](blazesbot/bot/hh/entrada.py#L65) | — | — |
 | `LINK_SAIR_HH` | `'link_leave_hh.png'` | [blazesbot/bot/hh/entrada.py:67](blazesbot/bot/hh/entrada.py#L67) | — | O link do diálogo do `Servant Child`, DENTRO da cave. |
 | `LINK_WEST_SUBURB` | `'link_west_suburb.png'` | [blazesbot/bot/hh/entrada.py:64](blazesbot/bot/hh/entrada.py#L64) | — | Links dentro dos diálogos, localizados por imagem. |
@@ -323,7 +324,7 @@ ligar código não testado.
 | `EXTENSAO_PELO_FEITICO` | `15.0` | [blazesbot/bot/morte.py:57](blazesbot/bot/morte.py#L57) | — | Quanto o prazo estica quando a Fada avisa que COMEÇOU a conjurar. |
 | `MORTES_SEGUIDAS_PARA_PARAR` | `3` | [blazesbot/bot/morte.py:91](blazesbot/bot/morte.py#L91) | — | Mortes seguidas SEM conseguir voltar ao ponto antes de parar a conta. |
 | `PASSO_DA_ESPERA` | `0.3` | [blazesbot/bot/morte.py:62](blazesbot/bot/morte.py#L62) | deletador.py, fada_reviver.py | Passo entre duas perguntas durante a espera. Tudo o que ele pergunta é |
-| `PRAZO_PARA_A_FADA` | `60.0` | [blazesbot/bot/morte.py:52](blazesbot/bot/morte.py#L52) | fada_reviver.py, mural_da_morte.py | Quanto o morto espera pela Fada antes de se reviver sozinho. |
+| `PRAZO_PARA_A_FADA` | `60.0` | [blazesbot/bot/morte.py:52](blazesbot/bot/morte.py#L52) | mural_da_morte.py | Quanto o morto espera pela Fada antes de se reviver sozinho. |
 | `TETO_DA_REGENERACAO` | `60.0` | [blazesbot/bot/morte.py:80](blazesbot/bot/morte.py#L80) | — | Teto da regeneração sentada antes de andar de volta. |
 | `TETO_DO_RETORNO` | `180.0` | [blazesbot/bot/morte.py:88](blazesbot/bot/morte.py#L88) | — | Teto da caminhada de volta ao ponto inicial. |
 | `TETO_PARA_O_REVIVE_PEGAR` | `10.0` | [blazesbot/bot/morte.py:73](blazesbot/bot/morte.py#L73) | — | Quanto se espera o `hp` subir depois de um clique que deveria reviver. |

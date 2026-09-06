@@ -624,6 +624,16 @@ Cada item é o que **não pode ser violado**. O detalhe de cada área mora em
   Teclas na tela continuava sem ele. Travado por
   `test_o_dist_COMPILADO_tem_o_campo` (pula quando não há `dist/`, porque ele é
   gerado e ignorado pelo git).
+- **NO REVIVER, QUEM MANDA É O SLOT — NÃO O ID** (06/09/2026). O retrato do
+  morto continua clicável, mas o clique **não põe o id dele no `TARGET_ID`**;
+  exigir que batesse reprovava a única coisa que ia funcionar (medido: a Fada
+  desistiu em 2 s e a vítima queimou 58 s de prazo). O id continua sendo lido e
+  vai para o log como diagnóstico. **Na CURA o id continua vetando** — lá o alvo
+  está vivo, o clique seleciona, e é ele que impede curar o aliado errado.
+- **A JANELA DO REVIVER É DE 10 s, COM NO MÁXIMO 3 TOQUES**, e o morto que não
+  levanta **continua na fila** — o prazo dele é de 60 s, e largar no primeiro
+  ciclo desperdiça 50. O teto de toques é cinto de segurança contra o laço de
+  357 cliques de 01/09/2026, não sobre tempo.
 - **A FADA REVIVE, E A CURA VEM PRIMEIRO** (04/09/2026, `bot/fada_reviver.py`).
   O morto só fura a fila dos feridos depois de `SEGUNDOS_DE_MORTO_PARA_FURAR_A_FILA`
   (40 s) — antes disso a cura tem prioridade, porque morto não apanha e tem
@@ -1059,3 +1069,50 @@ Pedido do usuário em 28/08/2026.
   **não** os widgets de célula: a senha de uma conta ficaria na linha de outra. A
   funcionalidade é a mesma nas duas telas; só o gesto difere.
 - Travado por `tests/test_ordem_e_grupo_das_contas.py` (28 testes).
+
+### A tabela de contas — o desenho (28/08/2026)
+
+- **UMA coluna "Função" com os três ecossistemas**, não três colunas de caixa. O
+  rótulo tem de ficar DENTRO do controle: no `<th>` ele está fora da linha, e ler
+  um ✓ obriga o olho a subir ao cabeçalho e voltar, por linha.
+- **PICTOGRAMA E SIGLA no selo, sempre.** BC e HH são as DUAS cavernas: dois
+  pictogramas de caverna não se distinguem a 16px, e o erro põe a conta na cave
+  errada. A sigla não é enfeite.
+- **O `<input type="checkbox">` NATIVO fica**, escondido sob o `<label>` e nunca
+  com `display: none` (tiraria do Tab). Trocar por `<button>` exigiria
+  reimplementar `role="switch"`, `aria-checked` e teclado.
+- **ALVO DE CLIQUE ≥ 24×24** (hoje 28). Eram 14×14, quatro por linha.
+- **QUATRO ESTADOS, QUATRO CANAIS**, porque coexistem: selecionada → BORDA;
+  inativa → OPACIDADE; no ar → PONTO próprio; ativa e parada → nada.
+  `.linha-ativa` significa **selecionada**, não "conta ativa".
+- **ZEBRA E CARDS SÃO PROIBIDOS** nesta tabela. Zebra consome o FUNDO, que é o
+  canal de "selecionada". Cards quebram o alinhamento vertical entre contas, o
+  arraste (que precisa de altura previsível) e o cabeçalho de grupo (`colspan`).
+- **O `colspan` do cabeçalho de grupo tem de bater com o número de colunas** —
+  já saiu de sincronia uma vez, em silêncio.
+- **Cor de selo é TOKEN, com variante de tema claro.** Valor fixo pensado para
+  fundo escuro deixou a sigla ilegível no tema claro; e o estado DESLIGADO
+  reprovou AA lá (3,28:1). Mínimo medido hoje: 4,78 escuro / 5,27 claro.
+- **A COLUNA RUN SÓ SE PREENCHE PARA CAVE.** O modo APP é macro de teclado: não
+  existe "run" ali, e um número seria inventar medida que o ecossistema não tem.
+  O filtro usa `farm`/`farm_hh` do RESUMO (o que a conta faz agora), não o disco.
+  Conta parada mostra **vazio, não zero** — zero diria "rodou e não fechou
+  nenhuma".
+- **O PONTO DE "NO AR" É SEPARADO DA CONTAGEM** e vale para qualquer ecossistema.
+  Juntos num rótulo só, a conta de APP ficava sem indicador nenhum: ela roda, mas
+  não tem run. O slot do ponto tem largura fixa e usa classe própria — a
+  `.escondida` global é `display: none !important` e faria o nome da conta pular
+  15px ao entrar no ar.
+- **O PONTO DE CONEXÃO É CONFERIDO, não deduzido.** "Estar na lista do resumo"
+  não é "estar no ar": a conta que caiu continua na lista por minutos. `conectada`
+  passa por `IsWindow` (o handle fica em cache depois da janela morrer) e
+  `relogando` exige `not stop_event.is_set()` — **encerrar de propósito não é
+  queda**. Vermelho tem pulso mais rápido além da cor: daltonismo vermelho-verde
+  é o mais comum.
+- **A SEGUIDORA DE TIME NÃO É "SÓ LOGIN".** Ela roda a macro do líder com
+  `AppConfig.enabled` DESLIGADO (quem liga é o líder), então as caixas vazias
+  mentiam. **Um líder que é ele próprio seguidor não lidera ninguém** — a cadeia
+  tem de ser resolvida, senão o selo aponta para quem não está liderando.
+- **O SELO DA COLUNA FUNÇÃO É SÓ A SIGLA**, sem pictograma: virão mais funções, e
+  quem removia a ambiguidade BC×HH sempre foi a sigla. Cada selo cabe em ~26px.
+- Travado por `tests/test_tabela_de_contas_visual.py` (25 testes).

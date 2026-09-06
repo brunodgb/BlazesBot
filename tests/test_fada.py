@@ -1140,6 +1140,7 @@ def test_o_morto_ANTIGO_fura_a_fila():
     mural.morri("outro", nick="Outro")
     _envelhecer_a_morte("outro",
                         mural.SEGUNDOS_DE_MORTO_PARA_FURAR_A_FILA + 1)
+    jogo.ao_reviver = lambda: mural.esquecer_morte("outro")
 
     f._uma_volta()
 
@@ -1174,32 +1175,54 @@ def test_sem_tecla_configurada_ela_nao_tenta_e_avisa_UMA_vez(caplog):
     assert len(avisos) == 1, "avisou mais de uma vez"
 
 
-def test_id_que_nao_bate_NAO_revive():
-    """A mesma regra da cura: o clique pode não ter pego, e o feitiço iria para
-    o aliado ANTERIOR -- gastando a mana inteira em quem está vivo."""
-    jogo = _Jogo(alvo=555)                  # o clique nunca seleciona
+def test_o_id_que_nao_bate_NAO_impede_o_reviver():
+    """AQUI A REGRA É O CONTRÁRIO DA CURA, e foi medido em 06/09/2026.
+
+    O retrato do morto continua clicável, mas o clique NÃO põe o id dele no
+    `TARGET_ID` -- então exigir que batesse reprovava a única coisa que ia
+    funcionar. Em campo: a Fada desistiu em 2 s e a vítima esperou 58 s de prazo
+    à toa. Quem manda no reviver é o SLOT do painel, que vem da memória.
+    """
+    jogo = _Jogo(alvo=555)                  # o id nunca bate
     jogo.companheiros = ["Aliado"]
     f = _fada(jogo)
     mural.publicar_id("aliado", 4242)
+    mural.morri("aliado", nick="Aliado")
+    jogo.ao_reviver = lambda: mural.esquecer_morte("aliado")
+
+    f._uma_volta()
+
+    assert jogo.revives == 1, "o id voltou a vetar o reviver"
+
+
+def test_o_morto_que_nao_levanta_CONTINUA_na_fila(monkeypatch):
+    """Ela passa adiante, mas não larga: o prazo do morto é de 60 s, e a janela
+    dela é de 10. Largar no primeiro ciclo desperdiça 50 s que ainda existiam --
+    foi o que aconteceu na medição de campo."""
+    monkeypatch.setattr(mod_reviver, "JANELA_DE_TENTATIVAS", 0.05)
+    jogo = _Jogo()
+    jogo.companheiros = ["Aliado"]
+    f = _fada(jogo)
+    mural.morri("aliado", nick="Aliado")   # ninguém tira o pedido: não levanta
+
+    f._uma_volta()
+
+    assert jogo.revives >= 1, "nem tentou"
+    assert mural.esta_morto("aliado") is True, "largou o morto cedo demais"
+
+
+def test_o_numero_de_TOQUES_na_janela_tem_teto(monkeypatch):
+    """Cinto de segurança do defeito de 01/09/2026: com a espera devolvendo na
+    hora, o laço clicou 357 vezes no mesmo retrato e o personagem saiu ANDANDO.
+    """
+    jogo = _Jogo()
+    jogo.companheiros = ["Aliado"]
+    f = _fada(jogo)
     mural.morri("aliado", nick="Aliado")
 
     f._uma_volta()
 
-    assert jogo.revives == 0
-
-
-def test_desiste_do_morto_depois_de_N_tentativas():
-    jogo = _Jogo(alvo=555)
-    jogo.companheiros = ["Aliado"]
-    f = _fada(jogo)
-    mural.publicar_id("aliado", 4242)
-    mural.morri("aliado", nick="Aliado")
-
-    for _ in range(mod_reviver.TENTATIVAS_POR_MORTO):
-        f._uma_volta()
-
-    assert mural.esta_morto("aliado") is False, ("não largou o morto; a fila "
-                                                 "trava num caso perdido")
+    assert jogo.revives == mod_reviver.MAXIMO_DE_TOQUES, jogo.revives
 
 
 def test_ela_AVISA_que_comecou_a_conjurar():
@@ -1211,7 +1234,12 @@ def test_ela_AVISA_que_comecou_a_conjurar():
     f = _fada(jogo)
     mural.morri("aliado", nick="Aliado")
     avisou = []
-    jogo.ao_reviver = lambda: avisou.append(mural.fada_conjurando_em("aliado"))
+
+    def de_pe():
+        avisou.append(mural.fada_conjurando_em("aliado"))
+        mural.esquecer_morte("aliado")     # de pé, ela sai da fila
+
+    jogo.ao_reviver = de_pe
 
     f._uma_volta()
 

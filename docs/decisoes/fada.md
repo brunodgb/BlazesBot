@@ -383,3 +383,45 @@ folga para começar, terminar e ainda avisar que começou.
 - **Mana contada antes do toque.** O reviver custa muito mais que uma cura;
   apertar sem ter só queima a recarga.
 - **Sem tecla configurada ela avisa UMA vez** e segue curando.
+
+
+## Por que a Fada não estava revivendo — 06/09/2026
+
+Na única morte da noite de 05→06/09:
+
+```
+00:09:43  blazestpas     MORRI. A macro para aqui — avisando o time.
+00:09:45  mfaustoapp069  FADA: BlazesAPP1 não selecionou em 3 tentativas —
+                         deixo o prazo dele correr, ele se revive sozinho.
+00:10:43  blazestpas     A Fada não me reviveu no prazo — revivo sozinho.
+```
+
+**Dois segundos de tentativa; 58 segundos de prazo desperdiçados.**
+
+A causa é a confirmação por id, herdada da cura. O usuário respondeu o que o
+jogo faz: o retrato do morto **continua no painel e continua clicável**, mas o
+clique **não põe o morto no `TARGET_ID`**. Ou seja, para um morto aquela
+pergunta não tem resposta certa — ela recusava corretamente e reprovava a única
+coisa que ia funcionar.
+
+### O que mudou
+
+| antes | agora |
+|---|---|
+| id tinha de bater | **o SLOT manda**; o id vira log, não veto |
+| 3 tentativas a 0,2 s (2 s) | **janela de 10 s**, no máximo 3 toques |
+| desistiu ⇒ tirava o morto da fila | **o morto CONTINUA na fila**; ela volta a tentar enquanto o prazo dele correr |
+
+O slot vem da memória (`companheiros`), na ordem do painel — e é a mesma regra
+que o usuário já tinha dado para a cura: *"se sabe qual o slot, não precisa de
+outra confirmação depois"*.
+
+**O teto de 3 toques não é sobre tempo**: é cinto de segurança contra o defeito
+de 01/09/2026, quando a espera devolveu na hora e o laço clicou 357 vezes no
+mesmo retrato, fazendo o personagem sair andando. Com 5 s de preparo, três
+toques é tudo o que cabe em 10 s de qualquer forma.
+
+### A confirmação por id CONTINUA valendo na cura
+
+Lá o alvo está vivo, o clique seleciona, e o id é o que impede curar o aliado
+errado — o defeito de 26/08 que produziu a regra. Não é o mesmo caso.

@@ -278,8 +278,8 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | `SEGUNDOS_ENTRE_CUIDADOS` | 30 s | *novo* | FIXO | [fada.py:130](blazesbot/bot/fada.py#L130) | `_cuidados_de_ociosa` | De quanto em quanto tempo a Fada cuida do pet e da bolsa, ESTANDO OCIOSA. |
 | `SEGUNDOS_DE_CUIDADO_LONGO` | 12 s | *novo* | FIXO | [fada.py:137](blazesbot/bot/fada.py#L137) | `_cuidados_de_ociosa` | Por quanto tempo vale a batida dada ANTES de uma tarefa longa da ociosa. |
 | `SEGUNDOS_ENTRE_TENTATIVAS` | 1 s | *novo* | FIXO | [fada_montagem.py:34](blazesbot/bot/fada_montagem.py#L34) | `rodar_a_fada` | Respiro quando a Fada não consegue nem começar (memória fechada, por exemplo). |
-| `TETO_DO_FEITICO` | 12 s | *novo* | TETO | [fada_reviver.py:38](blazesbot/bot/fada_reviver.py#L38) | `reviver` | Quanto se espera o feitiço pegar depois de apertar a tecla. |
-| `PASSO_DA_ESPERA` | 0.2 s | *novo* | PASSO | [fada_reviver.py:41](blazesbot/bot/fada_reviver.py#L41) | `reviver` | Passo entre duas perguntas enquanto o feitiço prepara. |
+| `TETO_DO_FEITICO` | 8 s | *novo* | TETO | [fada_reviver.py:75](blazesbot/bot/fada_reviver.py#L75) | `_esperar_levantar` | Quanto se espera o feitiço pegar depois de apertar a tecla. |
+| `PASSO_DA_ESPERA` | 0.2 s | *novo* | PASSO | [fada_reviver.py:78](blazesbot/bot/fada_reviver.py#L78) | `reviver, _esperar_levantar` | Passo entre duas perguntas enquanto o feitiço prepara. |
 | `SEGUNDOS_POR_TENTATIVA_DE_ENCOSTAR` | 1.8 s | *novo* | FIXO | [entrada.py:75](blazesbot/bot/hh/entrada.py#L75) | `garantir_coordenada_da_entrada, garantir_coordenada_da_saida` | Quanto tempo dar a cada tentativa de encostar no ponto exato. |
 | `TETO_DA_ENTRADA` | 0.25 s | *novo* | TETO | [entrada.py:95](blazesbot/bot/hh/entrada.py#L95) | `esperar_entrar` | Teto da espera pela troca de mapa depois de clicar no link de entrar. |
 | `PASSO_DA_ESPERA_DA_ENTRADA` | 0.04 s | *novo* | PASSO | [entrada.py:96](blazesbot/bot/hh/entrada.py#L96) | `esperar_sair, esperar_entrar` |  |
