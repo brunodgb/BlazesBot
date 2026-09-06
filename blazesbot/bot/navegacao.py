@@ -344,6 +344,19 @@ TETO_DO_PORTAO = 6.0
 # hipótese encheria o log de falso alarme.
 CICLOS_ANTES_DE_GRITAR = 5
 
+# Quantos ciclos o portão insiste antes de aceitar ir A PÉ.
+#
+# Decisão do usuário em 06/09/2026: *"caso tentou mais de 20 vezes ativar a
+# montaria e não foi, vai a pé mesmo"*. Vinte ciclos de `TETO_DO_PORTAO` são
+# ~2 minutos -- tempo de sobra para qualquer causa passageira (recarga, mob em
+# cima, barra na página errada) e muito menos que os 33 minutos parados que
+# esta regra existe para nunca mais acontecer.
+#
+# NÃO VALE DENTRO DA CAVE: lá "a pé" já foi medido como run perdida com atraso
+# (*"a pé ele não chega no boss"*), e o desfecho certo é abortar a run. Ver
+# `ANDAR_A_PE_MESMO_NA_CAVE`.
+CICLOS_ANTES_DE_IR_A_PE = 20
+
 # Depois de quantos ciclos sem montar o portao para de insistir MUDO e vai
 # PROCURAR A CAUSA -- e, quando a causa tem tratamento, tira ela do caminho.
 #
@@ -1921,6 +1934,21 @@ class Navigator:
 
             ciclo += 1
             gasto = time.time() - comeco
+            if ciclo >= CICLOS_ANTES_DE_IR_A_PE:
+                # DESISTE E VAI A PÉ. Parado é pior que devagar -- foi medido em
+                # 06/09/2026, com a conta líder do time 33 min sem andar um
+                # passo. Ver `CICLOS_ANTES_DE_IR_A_PE`.
+                ctx.log.error(
+                    "Não montei em %d tentativas (%.0fs) antes de %s. VOU A PÉ "
+                    "-- parado é pior. Se esta conta deveria ter montaria, "
+                    "confira a tecla e o item.", ciclo, gasto, motivo)
+                diario.registrar_evento(
+                    ctx.account_login, "sem-montaria",
+                    f"desisti de montar antes de {motivo} depois de {ciclo} "
+                    f"tentativas ({gasto:.0f}s); seguindo a pé",
+                    ctx.memory.position(), ctx.memory.location(),
+                )
+                return False
             # POR QUE nao monto -- e, quando da, TIRA A CAUSA do caminho. Isto
             # vem ANTES do grito de proposito: gritar sem diagnostico foi o que
             # produziu as 453 linhas identicas do log de 31/08.

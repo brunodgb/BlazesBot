@@ -73,26 +73,26 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | `INTERVALO_MANUTENCAO` | 0.6 s | = | FIXO | [navegacao.py:270](blazesbot/bot/navegacao.py#L270) | `follow_path` | Cadência da manutenção durante o deslocamento (poção). |
 | `INTERVALO_REMONTAR` | 3 s | = | FIXO | [navegacao.py:306](blazesbot/bot/navegacao.py#L306) | `_pode_tocar_na_montaria, _manter_montaria` | A MONTARIA É PRÉ-REQUISITO DE ANDAR, NÃO UMA OTIMIZAÇÃO |
 | `TETO_DO_PORTAO` | 6 s | = | TETO | [navegacao.py:333](blazesbot/bot/navegacao.py#L333) | `garantir_montaria_para_andar` | A ORDEM DO PORTÃO: CONFERIR -> ATIVAR -> CONFIRMAR -> ANDAR |
-| `INTERVALO_PARADA_POCAO` | 10 s | = | FIXO | [navegacao.py:405](blazesbot/bot/navegacao.py#L405) | `_manutencao_em_movimento` | Recarga da PARADA para tomar poção durante o trajeto. |
-| *literal em* `wait_until_still` | 0.25 s | = | FIXO | [navegacao.py:535](blazesbot/bot/navegacao.py#L535) | `wait_until_still` | Espera o personagem parar de andar. |
-| *literal em* `_abrir_mapa` | 0.5 s | = | FIXO | [navegacao.py:559](blazesbot/bot/navegacao.py#L559) | `_abrir_mapa` |  |
-| *literal em* `_fechar_mapa` | 0.3 s | = | FIXO | [navegacao.py:565](blazesbot/bot/navegacao.py#L565) | `_fechar_mapa` |  |
-| *literal em* `_mover_pelo_mapa` | 0.2 s | = | FIXO | [navegacao.py:603](blazesbot/bot/navegacao.py#L603) | `_mover_pelo_mapa` | Anda até `alvo` usando o mapa-múndi. |
-| *literal em* `_mover_pelo_mapa` | 1 s | = | FIXO | [navegacao.py:609](blazesbot/bot/navegacao.py#L609) | `_mover_pelo_mapa` | Anda até `alvo` usando o mapa-múndi. |
-| *literal em* `_clicar_offset_e_verificar` | 0.1 s | = | FIXO | [navegacao.py:968](blazesbot/bot/navegacao.py#L968) | `_clicar_offset_e_verificar` | Clique curto num offset e medição: o personagem andou? |
-| *literal em* `_parada_para_pocao` | 0.25 s | = | FIXO | [navegacao.py:1066](blazesbot/bot/navegacao.py#L1066) | `_parada_para_pocao` | Desmonta, toma poção e remonta. É a ÚNICA forma que funciona. |
-| *literal em* `_parada_para_pocao` | 0.2 s | = | FIXO | [navegacao.py:1077](blazesbot/bot/navegacao.py#L1077) | `_parada_para_pocao` | Desmonta, toma poção e remonta. É a ÚNICA forma que funciona. |
-| *literal em* `follow_path` | 0.25 s | = | FIXO | [navegacao.py:1360](blazesbot/bot/navegacao.py#L1360) | `follow_path` | Percorre waypoints em ordem, SEM parar entre eles. |
-| *literal em* `travel_via_surroundings` | 0.5 s | = | FIXO | [navegacao.py:1727](blazesbot/bot/navegacao.py#L1727) | `travel_via_surroundings` | Usa o painel Surroundings como teleporte por nome. |
-| *literal em* `travel_via_surroundings` | 0.2 s | = | FIXO | [navegacao.py:1729](blazesbot/bot/navegacao.py#L1729) | `travel_via_surroundings` | Usa o painel Surroundings como teleporte por nome. |
-| *literal em* `travel_via_surroundings` | 0.15 s | = | FIXO | [navegacao.py:1731](blazesbot/bot/navegacao.py#L1731) | `travel_via_surroundings` | Usa o painel Surroundings como teleporte por nome. |
-| *literal em* `travel_via_surroundings` | 0.4 s | = | FIXO | [navegacao.py:1733](blazesbot/bot/navegacao.py#L1733) | `travel_via_surroundings` | Usa o painel Surroundings como teleporte por nome. |
-| *literal em* `travel_via_surroundings` | 0.25 s | = | FIXO | [navegacao.py:1746](blazesbot/bot/navegacao.py#L1746) | `travel_via_surroundings` | Usa o painel Surroundings como teleporte por nome. |
-| *literal em* `travel_via_surroundings` | 0.5 s | = | FIXO | [navegacao.py:1752](blazesbot/bot/navegacao.py#L1752) | `travel_via_surroundings` | Usa o painel Surroundings como teleporte por nome. |
-| *literal em* `travel_via_surroundings` | 0.25 s | = | FIXO | [navegacao.py:1754](blazesbot/bot/navegacao.py#L1754) | `travel_via_surroundings` | Usa o painel Surroundings como teleporte por nome. |
-| *literal em* `ensure_mounted` | 1 s | = | FIXO | [navegacao.py:2127](blazesbot/bot/navegacao.py#L2127) | `ensure_mounted` |  |
-| *literal em* `ensure_mounted` | 1 s | = | FIXO | [navegacao.py:2138](blazesbot/bot/navegacao.py#L2138) | `ensure_mounted` |  |
-| *literal em* `ensure_dismounted` | 0.75 s | = | FIXO | [navegacao.py:2186](blazesbot/bot/navegacao.py#L2186) | `ensure_dismounted` |  |
+| `INTERVALO_PARADA_POCAO` | 10 s | = | FIXO | [navegacao.py:418](blazesbot/bot/navegacao.py#L418) | `_manutencao_em_movimento` | Recarga da PARADA para tomar poção durante o trajeto. |
+| *literal em* `wait_until_still` | 0.25 s | = | FIXO | [navegacao.py:548](blazesbot/bot/navegacao.py#L548) | `wait_until_still` | Espera o personagem parar de andar. |
+| *literal em* `_abrir_mapa` | 0.5 s | = | FIXO | [navegacao.py:572](blazesbot/bot/navegacao.py#L572) | `_abrir_mapa` |  |
+| *literal em* `_fechar_mapa` | 0.3 s | = | FIXO | [navegacao.py:578](blazesbot/bot/navegacao.py#L578) | `_fechar_mapa` |  |
+| *literal em* `_mover_pelo_mapa` | 0.2 s | = | FIXO | [navegacao.py:616](blazesbot/bot/navegacao.py#L616) | `_mover_pelo_mapa` | Anda até `alvo` usando o mapa-múndi. |
+| *literal em* `_mover_pelo_mapa` | 1 s | = | FIXO | [navegacao.py:622](blazesbot/bot/navegacao.py#L622) | `_mover_pelo_mapa` | Anda até `alvo` usando o mapa-múndi. |
+| *literal em* `_clicar_offset_e_verificar` | 0.1 s | = | FIXO | [navegacao.py:981](blazesbot/bot/navegacao.py#L981) | `_clicar_offset_e_verificar` | Clique curto num offset e medição: o personagem andou? |
+| *literal em* `_parada_para_pocao` | 0.25 s | = | FIXO | [navegacao.py:1079](blazesbot/bot/navegacao.py#L1079) | `_parada_para_pocao` | Desmonta, toma poção e remonta. É a ÚNICA forma que funciona. |
+| *literal em* `_parada_para_pocao` | 0.2 s | = | FIXO | [navegacao.py:1090](blazesbot/bot/navegacao.py#L1090) | `_parada_para_pocao` | Desmonta, toma poção e remonta. É a ÚNICA forma que funciona. |
+| *literal em* `follow_path` | 0.25 s | = | FIXO | [navegacao.py:1373](blazesbot/bot/navegacao.py#L1373) | `follow_path` | Percorre waypoints em ordem, SEM parar entre eles. |
+| *literal em* `travel_via_surroundings` | 0.5 s | = | FIXO | [navegacao.py:1740](blazesbot/bot/navegacao.py#L1740) | `travel_via_surroundings` | Usa o painel Surroundings como teleporte por nome. |
+| *literal em* `travel_via_surroundings` | 0.2 s | = | FIXO | [navegacao.py:1742](blazesbot/bot/navegacao.py#L1742) | `travel_via_surroundings` | Usa o painel Surroundings como teleporte por nome. |
+| *literal em* `travel_via_surroundings` | 0.15 s | = | FIXO | [navegacao.py:1744](blazesbot/bot/navegacao.py#L1744) | `travel_via_surroundings` | Usa o painel Surroundings como teleporte por nome. |
+| *literal em* `travel_via_surroundings` | 0.4 s | = | FIXO | [navegacao.py:1746](blazesbot/bot/navegacao.py#L1746) | `travel_via_surroundings` | Usa o painel Surroundings como teleporte por nome. |
+| *literal em* `travel_via_surroundings` | 0.25 s | = | FIXO | [navegacao.py:1759](blazesbot/bot/navegacao.py#L1759) | `travel_via_surroundings` | Usa o painel Surroundings como teleporte por nome. |
+| *literal em* `travel_via_surroundings` | 0.5 s | = | FIXO | [navegacao.py:1765](blazesbot/bot/navegacao.py#L1765) | `travel_via_surroundings` | Usa o painel Surroundings como teleporte por nome. |
+| *literal em* `travel_via_surroundings` | 0.25 s | = | FIXO | [navegacao.py:1767](blazesbot/bot/navegacao.py#L1767) | `travel_via_surroundings` | Usa o painel Surroundings como teleporte por nome. |
+| *literal em* `ensure_mounted` | 1 s | = | FIXO | [navegacao.py:2155](blazesbot/bot/navegacao.py#L2155) | `ensure_mounted` |  |
+| *literal em* `ensure_mounted` | 1 s | = | FIXO | [navegacao.py:2166](blazesbot/bot/navegacao.py#L2166) | `ensure_mounted` |  |
+| *literal em* `ensure_dismounted` | 0.75 s | = | FIXO | [navegacao.py:2214](blazesbot/bot/navegacao.py#L2214) | `ensure_dismounted` |  |
 
 
 ## FORA DA CAVE — pontos exatos
@@ -425,11 +425,11 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 
 | tempo | atual | original | natureza | onde | função | para que serve |
 |---|---|---|---|---|---|---|
-| `PET_FEED_MINUTOS_MIN` | 40 s | *novo* | FIXO | [config.py:264](blazesbot/config.py#L264) | `pet_feed_na_faixa, validate` | FAIXA FECHADA DO INTERVALO DE COMIDA (26/08/2026, decisão do usuário). |
-| `PET_FEED_MINUTOS_MAX` | 60 s (1 min) | *novo* | TETO | [config.py:265](blazesbot/config.py#L265) | `pet_feed_na_faixa, validate` |  |
-| `PASSOS_DO_APP` | 20 s | **16 s** ⚠ | PASSO | [config.py:477](blazesbot/config.py#L477) | `_app_from_dict` | Linhas oferecidas na aba APP. Dezesseis cobre com folga a macro mais longa que |
-| `MINIMO_DELAY_MS` | 100 s (2 min) | *novo* | FIXO | [config.py:496](blazesbot/config.py#L496) | `segundos_para_ms, ms_para_segundos` | Espera mínima de QUALQUER campo de tempo do APP, em milissegundos. |
-| `SPEED_DURACAO_SEGUNDOS` | 30 s | = | FIXO | [config.py:825](blazesbot/config.py#L825) |  | Skill de velocidade da montaria, valores do jogo. Ficam aqui e não na |
+| `PET_FEED_MINUTOS_MIN` | 40 s | *novo* | FIXO | [config.py:274](blazesbot/config.py#L274) | `pet_feed_na_faixa, validate` | FAIXA FECHADA DO INTERVALO DE COMIDA (26/08/2026, decisão do usuário). |
+| `PET_FEED_MINUTOS_MAX` | 60 s (1 min) | *novo* | TETO | [config.py:275](blazesbot/config.py#L275) | `pet_feed_na_faixa, validate` |  |
+| `PASSOS_DO_APP` | 20 s | **16 s** ⚠ | PASSO | [config.py:487](blazesbot/config.py#L487) | `_app_from_dict` | Linhas oferecidas na aba APP. Dezesseis cobre com folga a macro mais longa que |
+| `MINIMO_DELAY_MS` | 100 s (2 min) | *novo* | FIXO | [config.py:506](blazesbot/config.py#L506) | `segundos_para_ms, ms_para_segundos` | Espera mínima de QUALQUER campo de tempo do APP, em milissegundos. |
+| `SPEED_DURACAO_SEGUNDOS` | 30 s | = | FIXO | [config.py:835](blazesbot/config.py#L835) |  | Skill de velocidade da montaria, valores do jogo. Ficam aqui e não na |
 | `INTERVALO_DE_DESCARGA_MS` | 200 s (3 min) | = | FIXO | [main_window.py:96](blazesbot/gui/main_window.py#L96) | `__init__` | Cadência com que a interface esvazia a fila de log. 5 vezes por segundo é |
 | `PASSO` | 0.25 s | = | PASSO | [ler_camera.py:50](blazesbot/tools/ler_camera.py#L50) | `run_ler_camera` | Cadência da leitura. Barata: são 8 leituras de 4 bytes por volta. |
 | `SEGUNDOS_PADRAO` | 300 s (5 min) | = | TETO | [ler_camera.py:53](blazesbot/tools/ler_camera.py#L53) | `run_ler_camera` | Teto padrão, para a ferramenta fechar sozinha se você esquecer dela aberta. |

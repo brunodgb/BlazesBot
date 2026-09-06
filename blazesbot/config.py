@@ -89,7 +89,17 @@ class KeyBinds:
     pet_food: str = "6"
     stone_charm: str = "7"
     # Deslocamento e utilidades
-    mount: str = "SPACE"
+    # MONTARIA: VAZIA POR PADRÃO desde 06/09/2026.
+    #
+    # Era "SPACE", e o padrão mentia: conta de APP quase nunca tem montaria, mas
+    # a tecla vinha preenchida, então o portão do `Navigator` achava que só
+    # precisava insistir. Insistiu 315 vezes e 33 minutos numa conta que não
+    # tinha o que montar. Vazia, o portão sabe na primeira pergunta que não há
+    # montaria e segue a pé.
+    #
+    # Conta que USA montaria (a da BC) configura a tecla -- e quem já a tem
+    # salva no `config.json` não é afetado: o padrão só vale para conta nova.
+    mount: str = ""
     # Skill de velocidade da MONTARIA: +30% por 30 s, com 6 min de recarga.
     #
     # É a única skill que funciona montado -- todo o resto exige desmontar. Por
@@ -1462,6 +1472,38 @@ class BotConfig:
             if conta.garantir_uid() == alvo:
                 return conta
         return None
+
+    def lideres_do_time_do_app(self) -> dict[str, str]:
+        """Mapa `login da seguidora -> login do líder EFETIVO`, numa passada.
+
+        Existe por dois motivos, os dois achados na revisão:
+
+        1. **CUSTO.** `lider_do_time_do_app` varre todas as contas, e a tabela
+           a chamava uma vez POR CONTA -- O(n²) a cada leitura. Aqui é O(n).
+        2. **CADEIA.** Se C lidera A e A lidera B, a consulta direta devolve
+           "A" para B -- só que a lista de A é IGNORADA enquanto ela é
+           seguidora de C (`docs/INVARIANTES.md`, "Time do APP"), então B não
+           está em time nenhum. Dizer "segue A" seria mentira. Aqui um líder
+           que é seguidor de outro NÃO lidera ninguém.
+        """
+        # Quem é seguidor de alguém (por login, minúsculo -- o campo é livre).
+        puxado_por: dict[str, str] = {}
+        for conta in self.accounts:
+            meu = (conta.login or "").strip().lower()
+            if not meu:
+                continue
+            for seguidor in conta.settings.app.time_logins:
+                alvo = str(seguidor or "").strip().lower()
+                if alvo and alvo != meu:
+                    puxado_por.setdefault(alvo, conta.login)
+
+        # Um líder que é, ele próprio, seguidor de outro não lidera ninguém.
+        efetivo = {}
+        for seguidor, lider in puxado_por.items():
+            if (lider or "").strip().lower() in puxado_por:
+                continue
+            efetivo[seguidor] = lider
+        return efetivo
 
     def lider_do_time_do_app(self, login: str, ignorar: str = "") -> str:
         """Quem já puxa esta conta como seguidora do time do APP, ou "".

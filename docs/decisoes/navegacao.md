@@ -1038,3 +1038,33 @@ só terminaram porque o usuário desligou a HH na mão. Estourado o teto,
 `follow_path` devolve `False` e **quem decide é a rotina**, que sabe refazer o
 trecho, matar ou falhar — e que respira.
 
+
+## O portão da montaria passou a DESISTIR — 06/09/2026
+
+Até hoje ele insistia para sempre, e isso tinha medição por trás: *"nunca deve
+seguir a pé dentro da cave, pois ir até o last boss depende de ter a montaria"*.
+A pé não é "mais devagar", é a run perdida mais tarde.
+
+O que essa regra não previa: **conta que não TEM montaria.** A tecla vinha
+preenchida por padrão (`SPACE`), então o portão concluía que bastava insistir. Em
+campo, na conta líder de um time:
+
+```
+00:11:44  Não estou montado; montando antes de atravessar o mapa até (1771, 1668)
+...
+00:45:18  NÃO CONSIGO MONTAR ... há 2015s (315 tentativas). Continuo insistindo.
+```
+
+**33 minutos, 315 tentativas, zero passos** — e o time inteiro parado atrás dela.
+
+Duas mudanças, decididas pelo usuário no mesmo dia:
+
+1. **`KeyBinds.mount` nasce VAZIA.** O padrão mentia; conta que usa montaria
+   configura a tecla. Quem já tem a tecla salva no `config.json` não é afetado.
+2. **`CICLOS_ANTES_DE_IR_A_PE = 20`** (~2 min): *"caso tentou mais de 20 vezes
+   ativar a montaria e não foi, vai a pé mesmo"*. Vinte ciclos é tempo de sobra
+   para causa passageira — recarga, mob em cima, barra na página errada.
+
+O grito (`CICLOS_ANTES_DE_GRITAR = 5`) continua onde estava: ele é aviso, a
+desistência é decisão, e um teste trava a distância entre os dois para o bot não
+passar a andar a pé no primeiro soluço da montaria.

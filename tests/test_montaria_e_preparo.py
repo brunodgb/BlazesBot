@@ -94,11 +94,21 @@ def test_o_portao_insiste_ate_montar(monkeypatch):
     assert nav.tentativas == 4
 
 
-def test_o_portao_NUNCA_devolve_False_por_tempo(monkeypatch):
-    """O DENTE da regra: a pé não se chega no boss.
+def test_o_portao_insiste_MUITO_antes_de_desistir(monkeypatch):
+    """O DENTE da regra: insistir é o caminho normal, não a exceção.
 
-    Se este teste passar a falhar, alguém devolveu o "anda a pé mesmo assim" --
-    e o sintoma em produção é uma run inteira gasta para falhar no boss.
+    ATÉ 06/09/2026 ELE NÃO DESISTIA NUNCA, e isso tinha um motivo medido -- a
+    pé não se chega no boss, e a run se perde mais tarde, depois de gastar a
+    travessia inteira.
+
+    O que mudou: uma conta SEM MONTARIA ficou 33 minutos e 315 tentativas
+    parada, sem andar um passo, porque a tecla estava configurada (era o padrão)
+    e o portão concluía que bastava insistir. Decisão do usuário no mesmo dia:
+    *"caso tentou mais de 20 vezes ativar a montaria e não foi, vai a pé
+    mesmo"*. Parado é pior que devagar.
+
+    Este teste trava a PRIMEIRA metade: dentro do limite, ele insiste e monta.
+    A segunda metade -- desistir no vigésimo -- é o teste seguinte.
     """
     monkeypatch.setattr(navigation.hotbar, "garantir_pagina_1",
                         lambda *a, **k: None)
@@ -112,6 +122,31 @@ def test_o_portao_NUNCA_devolve_False_por_tempo(monkeypatch):
     assert gritos, "insistiu muito e não gritou nenhuma vez"
     assert "não chega no boss" in gritos[0].lower() or "boss" in gritos[0]
 
+
+def test_o_portao_DESISTE_e_vai_a_pe_no_limite(monkeypatch):
+    """A segunda metade: 20 tentativas sem montar e ele segue a pé.
+
+    Medido em campo em 06/09/2026: a conta líder do time ficou 2015 s presa
+    tentando montar para voltar ao ponto depois de reviver. 315 tentativas, zero
+    passos, o time inteiro parado atrás dela.
+    """
+    monkeypatch.setattr(navigation.hotbar, "garantir_pagina_1",
+                        lambda *a, **k: None)
+    monkeypatch.setattr(navigation.diario, "registrar_evento",
+                        lambda *a, **k: None)
+    nav, linhas = _portao(montar_na_tentativa=10_000, linhas=[])
+
+    assert nav.garantir_montaria_para_andar("atravessar o mapa") is False
+    assert nav.tentativas == navigation.CICLOS_ANTES_DE_IR_A_PE
+    gritos = [t for nivel, t in linhas if nivel == "ERROR"]
+    assert any("VOU A PÉ" in t for t in gritos), gritos
+
+
+def test_o_limite_de_desistencia_e_MUITO_maior_que_o_do_grito():
+    """O grito é aviso; a desistência é decisão. Se os dois se encostassem, o
+    bot passaria a andar a pé no primeiro soluço da montaria."""
+    assert (navigation.CICLOS_ANTES_DE_IR_A_PE
+            >= 3 * navigation.CICLOS_ANTES_DE_GRITAR)
 
 def test_o_grito_so_comeca_depois_do_limite(monkeypatch):
     """Insistir calado é o certo no caso comum (1 a 3 s)."""
