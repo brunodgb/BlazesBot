@@ -31,7 +31,7 @@ desta lista é ou uma exceção justificada, ou dívida que ninguém converteu a
 mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 
 
-**334 tempos catalogados** — 236 FIXOS (espera cega), 98 entre TETO e PASSO.
+**335 tempos catalogados** — 236 FIXOS (espera cega), 99 entre TETO e PASSO.
 
 
 **6 estão diferentes do original:** `TETO_DA_CAIXA`, `PASSO_DA_ESPERA`, `ESPERA_DA_BOLSA_ABRIR`, `FATIA_DE_ESPERA`, `INTERVALO_ENTRE_INVOCACOES`, `PASSOS_DO_APP`
@@ -159,26 +159,25 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | `PASSO_DA_ESPERA` | 0.08 s | **0.05 s** ⚠ | PASSO | [deletador.py:151](blazesbot/bot/app/deletador.py#L151) | `_esperar_a_caixa` |  |
 | `ESPERA_DA_BOLSA_ABRIR` | 0.58 s | **0.35 s** ⚠ | FIXO | [deletador.py:158](blazesbot/bot/app/deletador.py#L158) | `limpar_a_bolsa, _fechar_a_bolsa` | A janela do inventário terminar de pintar depois da tecla. A memória confirma |
 | *literal em* `_apagar_um` | 0.05 s | = | FIXO | [deletador.py:390](blazesbot/bot/app/deletador.py#L390) | `_apagar_um` | Uma exclusão completa: item -> ícone -> Ok. |
-| `FATIA_DE_ESPERA` | 0.08 s | **0.05 s** ⚠ | PASSO | [executor.py:89](blazesbot/bot/app/executor.py#L89) | `_esperar, _dormir (+1)` | Fatia máxima de espera antes de conferir se é para continuar. 0,05 s dá parada |
-| `INTERVALO_ENTRE_INVOCACOES` | 6 s | **10 s** ⚠ | FIXO | [executor.py:149](blazesbot/bot/app/executor.py#L149) | `garantir_pet` | Intervalo mínimo entre dois toques na tecla do pet. |
-| `ESPERA_DEPOIS_DE_INVOCAR` | 1 s | = | FIXO | [executor.py:154](blazesbot/bot/app/executor.py#L154) | `garantir_pet` | Espera depois de apertar a tecla do pet, antes de seguir para as teclas da |
-| `SEGUNDOS_PARA_CONFIRMAR_A_SAIDA` | 2 s | *novo* | FIXO | [executor.py:171](blazesbot/bot/app/executor.py#L171) | `_confirmar_a_saida_de_batalha` | Quanto se espera a flag de combate BAIXAR depois de o alvo cair. |
-| `PASSO_DA_SAIDA_DE_BATALHA` | 0.1 s | *novo* | PASSO | [executor.py:175](blazesbot/bot/app/executor.py#L175) | `_confirmar_a_saida_de_batalha` | Passo da conferência ativa acima. É leitura de memória; 0,1 s dá 20 amostras |
-| `SEGUNDOS_PARA_O_ALVO_APARECER` | 0.35 s | *novo* | FIXO | [executor.py:208](blazesbot/bot/app/executor.py#L208) | `_esperar_o_alvo_trocar` | O TAB DEIXOU DE SER LINHA DA MACRO |
-| `PASSO_DA_CONFERENCIA_DO_ALVO` | 0.16 s | *novo* | PASSO | [executor.py:246](blazesbot/bot/app/executor.py#L246) | `_esperar, _observar_depois_da_morte` | De quanto em quanto tempo perguntar "o alvo morreu?" DENTRO da espera de uma |
-| `SEGUNDOS_PARA_A_RODA_REINICIAR` | 1.6 s | *novo* | FIXO | [executor.py:305](blazesbot/bot/app/executor.py#L305) | `_garantir_alvo` | Quanto esperar depois de uma aquisição FRACASSADA, antes da volta seguinte. |
-| `ESPERA_SEM_ALVO` | 0.4 s | *novo* | FIXO | [executor.py:484](blazesbot/bot/app/executor.py#L484) | `uma_volta, _uma_volta_simples` | Quanto esperar antes de tentar de novo quando NÃO HÁ alvo vivo. |
-| `ESPERA_ANTES_DO_TAB` | 0.4 s | *novo* | FIXO | [executor.py:511](blazesbot/bot/app/executor.py#L511) | `_tab_simples, _garantir_alvo` | PAGO UMA VEZ POR AQUISIÇÃO, NÃO UMA VEZ POR TECLA |
-| `ESPERA_DEPOIS_DO_TAB` | 0.01 s | *novo* | FIXO | [executor.py:531](blazesbot/bot/app/executor.py#L531) | `_respiro_depois_do_tab` | Respiro entre o TAB e a PRIMEIRA linha da macro. |
-| `SEGUNDOS_PARA_A_TRAVA_DEVOLVER` | 2 s | = | FIXO | [executor.py:533](blazesbot/bot/app/executor.py#L533) | `_voltar_para_base` |  |
-| `MINIMO_DE_ESPERA_DO_APP_MS` | 100 s (2 min) | *novo* | FIXO | [executor.py:540](blazesbot/bot/app/executor.py#L540) | `_respiro_depois_do_tab` | Piso de qualquer tempo do APP, em milissegundos. O MESMO número vive em |
-| `SEGUNDOS_OBSERVANDO_DEPOIS_DA_MORTE` | 2.5 s | *novo* | FIXO | [executor.py:596](blazesbot/bot/app/executor.py#L596) | `_observar_depois_da_morte` | DEPOIS DE MATAR, O BOT OBSERVA -- E O QUE ELE OBSERVA É A BATALHA |
-| `INTERVALO_MINIMO_DA_TELA` | 0.5 s | *novo* | FIXO | [executor.py:664](blazesbot/bot/app/executor.py#L664) | `_olhar_a_tela` | Intervalo minimo entre duas capturas. |
-| `ESPERA_ENTRE_TABS` | 0.6 s | *novo* | FIXO | [executor.py:703](blazesbot/bot/app/executor.py#L703) | `_garantir_alvo` | Espaçamento entre um salto da roda do TAB e o seguinte. |
-| `PASSO_DA_ESPERA_DA_BASE` | 0.1 s | = | PASSO | [executor.py:718](blazesbot/bot/app/executor.py#L718) | `_esperar_chegar_na_base` | Cadência da pergunta "já cheguei?". Leitura de posição é de microssegundos; o |
-| `PASSO_DA_CONFIRMACAO_DO_TAB` | 0.01 s | *novo* | PASSO | [executor.py:742](blazesbot/bot/app/executor.py#L742) | `_esperar_o_alvo_trocar` | ERA AQUI O ATRASO ENTRE O TAB E A LINHA 1 -- 26/08/2026 |
-| `SEGUNDOS_DO_PASSO_DO_SHUFFLE` | 3 s | *novo* | PASSO | [executor.py:748](blazesbot/bot/app/executor.py#L748) | `_fazer_shuffle_anti_afk` | Cada perna do shuffle anti-AFK (ida e volta). Era `time.sleep(1.0)` cego duas |
-| *literal em* `rodar` | 0.25 s | = | FIXO | [executor.py:3040](blazesbot/bot/app/executor.py#L3040) | `rodar` | Laço contínuo: volta após volta, até `continuar()` devolver False. |
+| `FATIA_DE_ESPERA` | 0.08 s | **0.05 s** ⚠ | PASSO | [executor.py:100](blazesbot/bot/app/executor.py#L100) | `_esperar, _dormir (+1)` | Fatia máxima de espera antes de conferir se é para continuar. 0,05 s dá parada |
+| `INTERVALO_ENTRE_INVOCACOES` | 6 s | **10 s** ⚠ | FIXO | [executor.py:160](blazesbot/bot/app/executor.py#L160) | `garantir_pet` | Intervalo mínimo entre dois toques na tecla do pet. |
+| `ESPERA_DEPOIS_DE_INVOCAR` | 1 s | = | FIXO | [executor.py:165](blazesbot/bot/app/executor.py#L165) | `garantir_pet` | Espera depois de apertar a tecla do pet, antes de seguir para as teclas da |
+| `SEGUNDOS_PARA_CONFIRMAR_A_SAIDA` | 2 s | *novo* | FIXO | [executor.py:182](blazesbot/bot/app/executor.py#L182) | `_confirmar_a_saida_de_batalha` | Quanto se espera a flag de combate BAIXAR depois de o alvo cair. |
+| `PASSO_DA_SAIDA_DE_BATALHA` | 0.1 s | *novo* | PASSO | [executor.py:186](blazesbot/bot/app/executor.py#L186) | `_confirmar_a_saida_de_batalha` | Passo da conferência ativa acima. É leitura de memória; 0,1 s dá 20 amostras |
+| `SEGUNDOS_PARA_O_ALVO_APARECER` | 0.35 s | *novo* | FIXO | [executor.py:219](blazesbot/bot/app/executor.py#L219) | `_esperar_o_alvo_trocar` | O TAB DEIXOU DE SER LINHA DA MACRO |
+| `PASSO_DA_CONFERENCIA_DO_ALVO` | 0.16 s | *novo* | PASSO | [executor.py:257](blazesbot/bot/app/executor.py#L257) | `_esperar, _observar_depois_da_morte` | De quanto em quanto tempo perguntar "o alvo morreu?" DENTRO da espera de uma |
+| `SEGUNDOS_PARA_A_RODA_REINICIAR` | 1.6 s | *novo* | FIXO | [executor.py:316](blazesbot/bot/app/executor.py#L316) | `_garantir_alvo` | Quanto esperar depois de uma aquisição FRACASSADA, antes da volta seguinte. |
+| `ESPERA_SEM_ALVO` | 0.4 s | *novo* | FIXO | [executor.py:495](blazesbot/bot/app/executor.py#L495) | `uma_volta, _uma_volta_simples` | Quanto esperar antes de tentar de novo quando NÃO HÁ alvo vivo. |
+| `ESPERA_ANTES_DO_TAB` | 0.4 s | *novo* | FIXO | [executor.py:522](blazesbot/bot/app/executor.py#L522) | `_tab_simples, _garantir_alvo` | PAGO UMA VEZ POR AQUISIÇÃO, NÃO UMA VEZ POR TECLA |
+| `ESPERA_DEPOIS_DO_TAB` | 0.01 s | *novo* | FIXO | [executor.py:542](blazesbot/bot/app/executor.py#L542) | `_respiro_depois_do_tab` | Respiro entre o TAB e a PRIMEIRA linha da macro. |
+| `SEGUNDOS_PARA_A_TRAVA_DEVOLVER` | 2 s | = | FIXO | [executor.py:544](blazesbot/bot/app/executor.py#L544) | `_voltar_para_base` |  |
+| `MINIMO_DE_ESPERA_DO_APP_MS` | 100 s (2 min) | *novo* | FIXO | [executor.py:551](blazesbot/bot/app/executor.py#L551) | `_respiro_depois_do_tab` | Piso de qualquer tempo do APP, em milissegundos. O MESMO número vive em |
+| `SEGUNDOS_OBSERVANDO_DEPOIS_DA_MORTE` | 2.5 s | *novo* | FIXO | [executor.py:607](blazesbot/bot/app/executor.py#L607) | `_observar_depois_da_morte` | DEPOIS DE MATAR, O BOT OBSERVA -- E O QUE ELE OBSERVA É A BATALHA |
+| `INTERVALO_MINIMO_DA_TELA` | 0.5 s | *novo* | FIXO | [executor.py:675](blazesbot/bot/app/executor.py#L675) | `_olhar_a_tela` | Intervalo minimo entre duas capturas. |
+| `ESPERA_ENTRE_TABS` | 0.6 s | *novo* | FIXO | [executor.py:714](blazesbot/bot/app/executor.py#L714) | `_garantir_alvo` | Espaçamento entre um salto da roda do TAB e o seguinte. |
+| `PASSO_DA_ESPERA_DA_BASE` | 0.1 s | = | PASSO | [executor.py:729](blazesbot/bot/app/executor.py#L729) | `_esperar_chegar_na_base` | Cadência da pergunta "já cheguei?". Leitura de posição é de microssegundos; o |
+| `SEGUNDOS_DO_PASSO_DO_SHUFFLE` | 3 s | *novo* | PASSO | [executor.py:765](blazesbot/bot/app/executor.py#L765) | `_fazer_shuffle_anti_afk` | Cada perna do shuffle anti-AFK (ida e volta). Era `time.sleep(1.0)` cego duas |
+| *literal em* `rodar` | 0.25 s | = | FIXO | [executor.py:3063](blazesbot/bot/app/executor.py#L3063) | `rodar` | Laço contínuo: volta após volta, até `continuar()` devolver False. |
 | `ESPERA_ENTRE_TABS_DO_ALINHAMENTO` | 0.5 s | *novo* | FIXO | [sincronia.py:97](blazesbot/bot/app/sincronia.py#L97) |  | Cadência do TAB durante o alinhamento. |
 | `PASSO_DA_ESPERA_DA_LARGADA` | 0.04 s | *novo* | PASSO | [sincronia.py:100](blazesbot/bot/app/sincronia.py#L100) | `_esperar_os_seguidores, _entrar_na_largada` | De quanto em quanto tempo o seguidor confere se a largada saiu. |
 | `SEGUNDOS_SEM_MUDANCA_PARA_TAB` | 3 s | *novo* | FIXO | [sincronia.py:108](blazesbot/bot/app/sincronia.py#L108) | `conferir_a_parada` | Sem trocar de estado de batalha por este tempo, dá TAB. |
@@ -231,7 +230,7 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | `SEGUNDOS_SENTADO_APOS_GUARDAS` | 4 s | = | FIXO | [combate.py:74](blazesbot/bot/combate.py#L74) | `sentar_para_recuperar` | Quatro segundos sentado recuperam vida e mana de graça, e é o único momento da |
 | `SEGUNDOS_DA_POCAO_DE_VIDA` | 15 s | = | FIXO | [combate.py:90](blazesbot/bot/combate.py#L90) | `curar_ao_entrar, _beber_ate_encher (+1)` | A POÇÃO DE VIDA LEVA 15 SEGUNDOS, E ANDAR CANCELA |
 | `SEGUNDOS_DEPOIS_DA_SUPER_SKILL` | 12 s | = | FIXO | [combate.py:94](blazesbot/bot/combate.py#L94) | `curar_ao_entrar, curar_antes_do_boss` | Respiro depois da Super Skill de cura. Ela é instantânea; isto é só o tempo de |
-| `ESPERA_DEPOIS_DO_TAB` | 0.6 s | = | FIXO | [combate.py:114](blazesbot/bot/combate.py#L114) | `_trocar_de_alvo, lutar_contra_um_boss` | Espera depois de UM TAB, para a seleção chegar da rede antes de conferir. |
+| `ESPERA_DEPOIS_DO_TAB` | 0.6 s | = | FIXO | [combate.py:114](blazesbot/bot/combate.py#L114) | `lutar_contra_um_boss` | Espera depois de UM TAB, para a seleção chegar da rede antes de conferir. |
 | `FATIA_DA_ESPERA_DA_POCAO` | 0.5 s | = | PASSO | [combate.py:146](blazesbot/bot/combate.py#L146) | `_esperar_o_efeito_da_pocao` | Fatia da espera da poção. O TOTAL é medido por relógio (ver acima), então esta |
 | `SEGUNDOS_DE_CONJURACAO_DA_CURA` | 1.6 s | = | FIXO | [combate.py:236](blazesbot/bot/combate.py#L236) | `_a_cura_subiu` | Conjuração da skill de cura. Informado pelo usuário em 19/08/2026. |
 | `INTERVALO_DE_CONFERENCIA` | 0.1 s | = | FIXO | [combate.py:242](blazesbot/bot/combate.py#L242) | `_a_cura_subiu` | De quanto em quanto tempo perguntar se a vida subiu. É leitura de memória -- |
@@ -256,20 +255,20 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | *literal em* `_manter_vida_caminho_antigo` | 0.15 s | = | FIXO | [combate.py:1359](blazesbot/bot/combate.py#L1359) | `_manter_vida_caminho_antigo` | O comportamento anterior a 19/08/2026, inteiro. |
 | *literal em* `esperar_entrar_em_combate` | 0.2 s | = | FIXO | [combate.py:1742](blazesbot/bot/combate.py#L1742) | `esperar_entrar_em_combate` | Espera a flag de combate LIGAR. NÃO aperta TAB, não mira nada. |
 | *literal em* `_travar_no_alvo_proibido` | 0.28 s | *novo* | FIXO | [combate.py:1941](blazesbot/bot/combate.py#L1941) | `_travar_no_alvo_proibido` | A ÚNICA trava do waypoint dos guardas -- UMA porta, duas fontes. |
-| *literal em* `sentar_para_recuperar` | 0.25 s | = | FIXO | [combate.py:3117](blazesbot/bot/combate.py#L3117) | `sentar_para_recuperar` | Senta alguns segundos para recuperar vida e mana, e levanta. |
-| *literal em* `heal_to_full` | 0.125 s | = | FIXO | [combate.py:3470](blazesbot/bot/combate.py#L3470) | `heal_to_full` | Recuperação longa, com poção, Super Skill e sentar. |
-| *literal em* `heal_to_full` | 0.125 s | = | FIXO | [combate.py:3473](blazesbot/bot/combate.py#L3473) | `heal_to_full` | Recuperação longa, com poção, Super Skill e sentar. |
-| *literal em* `heal_to_full` | 0.125 s | = | FIXO | [combate.py:3476](blazesbot/bot/combate.py#L3476) | `heal_to_full` | Recuperação longa, com poção, Super Skill e sentar. |
-| *literal em* `heal_to_full` | 0.3 s | = | FIXO | [combate.py:3479](blazesbot/bot/combate.py#L3479) | `heal_to_full` | Recuperação longa, com poção, Super Skill e sentar. |
-| *literal em* `heal_to_full` | 0.25 s | = | FIXO | [combate.py:3508](blazesbot/bot/combate.py#L3508) | `heal_to_full` | Recuperação longa, com poção, Super Skill e sentar. |
-| *literal em* `heal_to_full` | 0.6 s | = | FIXO | [combate.py:3521](blazesbot/bot/combate.py#L3521) | `heal_to_full` | Recuperação longa, com poção, Super Skill e sentar. |
-| *literal em* `heal_to_full` | 0.15 s | = | FIXO | [combate.py:3530](blazesbot/bot/combate.py#L3530) | `heal_to_full` | Recuperação longa, com poção, Super Skill e sentar. |
-| *literal em* `heal_to_full` | 0.15 s | = | FIXO | [combate.py:3534](blazesbot/bot/combate.py#L3534) | `heal_to_full` | Recuperação longa, com poção, Super Skill e sentar. |
-| *literal em* `heal_to_full` | 0.4 s | = | FIXO | [combate.py:3538](blazesbot/bot/combate.py#L3538) | `heal_to_full` | Recuperação longa, com poção, Super Skill e sentar. |
-| *literal em* `heal_to_full` | 0.5 s | = | FIXO | [combate.py:3540](blazesbot/bot/combate.py#L3540) | `heal_to_full` | Recuperação longa, com poção, Super Skill e sentar. |
-| *literal em* `ensure_pet` | 1.5 s | = | FIXO | [combate.py:3568](blazesbot/bot/combate.py#L3568) | `ensure_pet` | Garante que o pet está invocado. |
-| *literal em* `ensure_pet` | 1.5 s | = | FIXO | [combate.py:3581](blazesbot/bot/combate.py#L3581) | `ensure_pet` | Garante que o pet está invocado. |
-| *literal em* `apply_buffs` | 0.6 s | = | FIXO | [combate.py:3608](blazesbot/bot/combate.py#L3608) | `apply_buffs` | Aplica os buffs configurados, em si mesmo. |
+| *literal em* `sentar_para_recuperar` | 0.25 s | = | FIXO | [combate.py:3167](blazesbot/bot/combate.py#L3167) | `sentar_para_recuperar` | Senta alguns segundos para recuperar vida e mana, e levanta. |
+| *literal em* `heal_to_full` | 0.125 s | = | FIXO | [combate.py:3520](blazesbot/bot/combate.py#L3520) | `heal_to_full` | Recuperação longa, com poção, Super Skill e sentar. |
+| *literal em* `heal_to_full` | 0.125 s | = | FIXO | [combate.py:3523](blazesbot/bot/combate.py#L3523) | `heal_to_full` | Recuperação longa, com poção, Super Skill e sentar. |
+| *literal em* `heal_to_full` | 0.125 s | = | FIXO | [combate.py:3526](blazesbot/bot/combate.py#L3526) | `heal_to_full` | Recuperação longa, com poção, Super Skill e sentar. |
+| *literal em* `heal_to_full` | 0.3 s | = | FIXO | [combate.py:3529](blazesbot/bot/combate.py#L3529) | `heal_to_full` | Recuperação longa, com poção, Super Skill e sentar. |
+| *literal em* `heal_to_full` | 0.25 s | = | FIXO | [combate.py:3558](blazesbot/bot/combate.py#L3558) | `heal_to_full` | Recuperação longa, com poção, Super Skill e sentar. |
+| *literal em* `heal_to_full` | 0.6 s | = | FIXO | [combate.py:3571](blazesbot/bot/combate.py#L3571) | `heal_to_full` | Recuperação longa, com poção, Super Skill e sentar. |
+| *literal em* `heal_to_full` | 0.15 s | = | FIXO | [combate.py:3580](blazesbot/bot/combate.py#L3580) | `heal_to_full` | Recuperação longa, com poção, Super Skill e sentar. |
+| *literal em* `heal_to_full` | 0.15 s | = | FIXO | [combate.py:3584](blazesbot/bot/combate.py#L3584) | `heal_to_full` | Recuperação longa, com poção, Super Skill e sentar. |
+| *literal em* `heal_to_full` | 0.4 s | = | FIXO | [combate.py:3588](blazesbot/bot/combate.py#L3588) | `heal_to_full` | Recuperação longa, com poção, Super Skill e sentar. |
+| *literal em* `heal_to_full` | 0.5 s | = | FIXO | [combate.py:3590](blazesbot/bot/combate.py#L3590) | `heal_to_full` | Recuperação longa, com poção, Super Skill e sentar. |
+| *literal em* `ensure_pet` | 1.5 s | = | FIXO | [combate.py:3618](blazesbot/bot/combate.py#L3618) | `ensure_pet` | Garante que o pet está invocado. |
+| *literal em* `ensure_pet` | 1.5 s | = | FIXO | [combate.py:3631](blazesbot/bot/combate.py#L3631) | `ensure_pet` | Garante que o pet está invocado. |
+| *literal em* `apply_buffs` | 0.6 s | = | FIXO | [combate.py:3658](blazesbot/bot/combate.py#L3658) | `apply_buffs` | Aplica os buffs configurados, em si mesmo. |
 | `FATIA_DA_ESPERA` | 0.25 s | = | PASSO | [context.py:211](blazesbot/bot/context.py#L211) | `tick` | Fatia máxima de sono dentro de um `tick`. |
 | *literal em* `wait_if_paused` | 0.075 s | = | FIXO | [context.py:512](blazesbot/bot/context.py#L512) | `wait_if_paused` | Bloqueia enquanto a pausa estiver ativa. |
 | `PASSO_DA_FADA` | 0.1 s | *novo* | PASSO | [fada.py:80](blazesbot/bot/fada.py#L80) | `rodar` | Cadência do laço da Fada quando não há nada a fazer. |
@@ -423,6 +422,8 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | `SEGUNDOS_PARA_O_LOG_CONFIRMAR` | 5 s | = | FIXO | [petbug.py:177](blazesbot/core/petbug.py#L177) | `aplicar_patch, _esperar_a_confirmacao` | Espera pela confirmação no log depois do clique. |
 | `FATIA_DA_ESPERA` | 0.25 s | = | PASSO | [petbug.py:178](blazesbot/core/petbug.py#L178) | `_abrir_o_programa, _esperar_a_confirmacao` |  |
 | `SEGUNDOS_POR_TENTATIVA_NA_FAY` | 1.8 s | = | FIXO | [stone_city.py:55](blazesbot/core/stone_city.py#L55) |  |  |
+| `TETO_PARA_O_ALVO_TROCAR` | 0.35 s | *novo* | TETO | [target_hybrid.py:692](blazesbot/core/target_hybrid.py#L692) | `esperar_o_alvo_trocar` | Teto da espera. Passado isto, a tecla nao pegou -- insistir e trabalho do |
+| `PASSO_DA_CONFIRMACAO_DO_TAB` | 0.01 s | *novo* | PASSO | [target_hybrid.py:697](blazesbot/core/target_hybrid.py#L697) | `esperar_o_alvo_trocar` | De quanto em quanto tempo perguntar. A leitura do id e UM `read_int` (~1 us): |
 | `PASSO_DA_AMOSTRAGEM_DO_QUADRO` | 8 s | *novo* | PASSO | [captura.py:27](blazesbot/core/vision/captura.py#L27) | `frame_is_blank` | De quantos em quantos pixels o `frame_is_blank` amostra o quadro. |
 
 

@@ -163,10 +163,10 @@ uma tarefa à parte.**
    identidade). NÃO subiu, e por quê: a reserva pela **TELA** fica no BC (o APP
    não captura) e a reserva pela **FLAG DE COMBATE** fica no APP.
 
-**Candidatos de promoção já identificados** (ainda em duplicata): confirmar o
-TAB pela troca do id (`app/executor._esperar_o_alvo_trocar` × o TAB do
-`bc/combat`), e a espera fatiada que responde ao Parar
-(`app/executor._dormir` × `BotContext.tick`).
+**Candidatos de promoção já identificados** (ainda em duplicata): a espera
+fatiada que responde ao Parar (`app/executor._dormir` × `BotContext.tick`).
+*Confirmar o TAB pela troca do id subiu em 06/09/2026 —
+`core/target_hybrid.esperar_o_alvo_trocar`.*
 
 - **COMPARTILHADO vs. ESPECÍFICO — o critério é UMA pergunta:** *isso é sobre o
   JOGO ou sobre o que este ecossistema faz?* Sobre o jogo desce para `core/`

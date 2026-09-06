@@ -43,6 +43,16 @@ class _FakeCtx:
         # números do BC. Aqui aponta para o `bc` deste dublê, que é a
         # cave que estes testes exercitam.
         self.cave = self.settings.bc
+        # O TAB PASSOU A SER CONFIRMADO PELA TROCA DO ID (06/09/2026,
+        # `core/target_hybrid.esperar_o_alvo_trocar`), então `_trocar_de_alvo`
+        # lê a memória antes e depois de apertar. O dublê modela o jogo: cada
+        # TAB entrega um alvo diferente. Sem isso a troca nunca confirmaria e
+        # cada TAB pagaria o teto inteiro.
+        self.memory = self
+        self._id = 1
+
+    def id_do_alvo(self):
+        return self._id
 
     # -- contexto --------------------------------------------------------
     def tick(self, seconds):
@@ -53,6 +63,10 @@ class _FakeCtx:
 
     def press(self, key, delay=0.0):
         self.teclas.append(key)
+        if key == self.settings.keys.next_target:
+            # O TAB entrega outro alvo -- e e a TROCA DO ID que
+            # `_trocar_de_alvo` espera para dar a tecla por confirmada.
+            self._id += 1
 
     def snapshot(self):
         return type("E", (), {"dead": False, "hp_pct": 100.0, "max_hp": 100,
@@ -189,15 +203,38 @@ def test_tab_continua_depois_do_teto_enquanto_a_flag_estiver_alta(monkeypatch):
 
 
 def test_flag_ilegivel_nao_autoriza_tab_alem_do_teto(monkeypatch):
-    """`None` é NÃO SEI, e não sei nunca gastou TAB nesta casa."""
+    """`None` é NÃO SEI, e não sei nunca gastou TAB nesta casa.
+
+    O QUE ESTE TESTE MEDE, e a distinção importa: TAB gasto DEPOIS que a flag
+    fica ilegível. Com a flag legivelmente ALTA (t < 3 s) o orçamento é
+    ilimitado de propósito -- é o `TAB_ATE_SAIR_DE_COMBATE_NOS_GUARDAS`, que
+    existe justamente para o teto não barrar a troca com a luta em curso.
+
+    Ele conferia o TOTAL até 06/09/2026, e passava por acidente: quem segurava
+    a contagem era a carência de 2,4 s aplicada a cada TAB, não o orçamento.
+    Com a carência valendo só quando a troca NÃO se confirma, o total durante a
+    flag alta subiu (12 no dublê, que tem `morreu=True` preso) -- e isso é o
+    comportamento pedido, não o defeito que este teste vigia.
+    """
     relogio = _Relogio()
     motor, ctx = _motor(monkeypatch, relogio,
                         flag=lambda t: True if t < 3.0 else None,
                         nomes=[combat.NOME_DOS_GUARDAS], morreu=True)
+
+    marca = []
+    press_original = ctx.press
+
+    def _press(key, delay=0.0):
+        press_original(key, delay)
+        if key == "tab":
+            marca.append(relogio.agora)
+    ctx.press = _press
 
     motor.atacar_ate_sair_de_combate(
         "guardas", usar_aoe=True, limite=20.0,
         tabs_ao_morrer=motor_de_combate.TABS_NOS_GUARDAS,
         alvo_esperado=combat.NOME_DOS_GUARDAS)
 
-    assert ctx.teclas.count("tab") <= motor_de_combate.TABS_NOS_GUARDAS
+    depois_de_ilegivel = [t for t in marca if t >= 3.0]
+    assert not depois_de_ilegivel, (
+        f"gastou TAB com a flag ilegível, em t={depois_de_ilegivel}")

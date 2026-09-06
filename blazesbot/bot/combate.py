@@ -57,7 +57,7 @@ from __future__ import annotations
 import time
 from dataclasses import dataclass
 
-from ..core import calibracao, diario, vision
+from ..core import calibracao, diario, target_hybrid, vision
 from ..core.pet import SEGUNDOS_PARA_A_COMIDA_SER_USADA, PetFeeder
 from ..core.target_hybrid import MorteDoAlvo, TargetHybrid
 from . import hotbar
@@ -2461,10 +2461,36 @@ class CombatEngine:
                     # e o destravamento precisava das mesmas: duas cópias do
                     # mesmo gesto divergiriam em silêncio, e a que ficasse para
                     # trás leria a barra do alvo ANTIGO.
-                    self._trocar_de_alvo()
-                    # Carência: o quadro do alvo novo leva um instante para
-                    # desenhar, e ler nesse vão veria a barra do alvo ANTIGO.
-                    proxima_leitura = agora + CARENCIA_APOS_O_TAB
+                    trocou = self._trocar_de_alvo()
+                    # A CARENCIA SO VALE QUANDO A TROCA NAO FOI CONFIRMADA.
+                    #
+                    # Ela nascia de um problema de TELA -- "o quadro do alvo
+                    # novo leva um instante para desenhar, e ler nesse vao veria
+                    # a barra do alvo ANTIGO". A leitura vem da MEMORIA desde
+                    # 25/08, e agora o TAB e confirmado pela TROCA DO ID: com o
+                    # id ja diferente, ler no proximo passo le o alvo NOVO. Os
+                    # 2,4 s viravam ate 2,4 s de cadaver na mira sem ninguem
+                    # perguntar -- que e o "stuck on corpse" relatado.
+                    #
+                    # E ela NAO protegia de bater no cadaver, ao contrario do
+                    # que o comentario antigo sugeria: nao olhar nao e proteger.
+                    # Quem protege e a trava por IDENTIDADE de `MorteDoAlvo`,
+                    # que impede contar duas vezes a morte do mesmo id.
+                    #
+                    # Sem confirmacao, a carencia continua inteira: ali o id
+                    # ainda pode ser o do cadaver, e reler na hora so gastaria
+                    # leitura para reencontrar a mesma morte ja contada.
+                    #
+                    # CONFIRMADA, vale a CADENCIA NORMAL -- e nao zero. Zerar
+                    # aqui fazia a leitura seguinte sair no passo seguinte do
+                    # laco (50 ms), e com uma leitura de morte presa em True
+                    # isso queima TAB na velocidade do laco: medido no dublê,
+                    # 12 TAB em 3 s. A trava por identidade de `MorteDoAlvo`
+                    # barra o MESMO id, nao uma pilha de cadaveres com ids
+                    # diferentes. 0,15 s ainda e 16x mais rapido que os 2,4 s.
+                    proxima_leitura = agora + (
+                        CADENCIA_DA_LEITURA_DO_ALVO if trocou
+                        else CARENCIA_APOS_O_TAB)
                     ctx.log.info(
                         "Alvo caiu em %s: TAB %s de %s (%.0fs de luta, %s "
                         "golpes) — %s",
@@ -2772,17 +2798,41 @@ class CombatEngine:
         )
         return False
 
-    def _trocar_de_alvo(self) -> None:
-        """UM TAB, com a espera que o jogo precisa para redesenhar o quadro.
+    def _trocar_de_alvo(self) -> bool:
+        """UM TAB, confirmado pela TROCA DO ID. Devolve se a troca foi vista.
 
-        A leitura do alvo e zerada junto: sem isso a primeira leitura depois do
-        TAB veria o alvo ANTIGO (morto) e o log contaria uma morte que ja foi
-        contada.
+        ERA ESPERA CEGA: `press(0.15)` mais `tick(0.6)` -- 750 ms fixos por
+        morte com o laco inteiro parado, nenhuma skill saindo. Medido em 274
+        mortes: mediana de 760 ms da deteccao ate o TAB registrado, 74% delas
+        entre 0,70 e 0,85 s, ou seja exatamente `press + tick`. NADA disso era
+        deteccao (ver o bloco da promocao em `core/target_hybrid.py`).
+
+        Agora pergunta de 10 em 10 ms e devolve no instante em que o jogo troca
+        o id -- tipicamente dezenas de milissegundos, teto de 0,35 s.
+
+        `False` NAO e falha a tratar aqui: quer dizer que o id nao mudou dentro
+        do teto. Quem chama decide (a luta usa a carencia; o destravamento
+        simplesmente tenta o alvo seguinte).
         """
         ctx = self.ctx
+        antes = ctx.memory.id_do_alvo()
         ctx.press(ctx.settings.keys.next_target, 0.15)
-        ctx.tick(ESPERA_DEPOIS_DO_TAB)
+        novo = target_hybrid.esperar_o_alvo_trocar(
+            ctx.memory.id_do_alvo, antes,
+            # `ctx.tick` e nao `time.sleep`: e a fatia que responde ao Parar e
+            # ao Pausar. O passo e curto o bastante para o jitter dela nao
+            # importar.
+            dormir=ctx.tick,
+        )
+        # A leitura anterior morre junto com o alvo anterior: sem isso a
+        # primeira leitura depois do TAB veria o alvo ANTIGO (morto).
         self._ultima_leitura_do_alvo = None
+        if novo is None:
+            ctx.log.debug(
+                "O TAB nao trocou o alvo em %.0f ms (id continua %s)",
+                target_hybrid.TETO_PARA_O_ALVO_TROCAR * 1000, antes)
+            return False
+        return True
 
     def _tem_alvo(self) -> bool:
         """Ha alguem na mira AGORA? So memoria, sem captura.

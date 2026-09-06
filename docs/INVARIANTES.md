@@ -470,6 +470,30 @@ time a flag não faz nada.
     string plausível e ERRADA. Ela desqualifica igualdade de nome como veredito
     único, e é por isso que o portão compara por `in` e trata `[]` como
     `ilegivel` em vez de "alvo errado".
+- **O TAB É CONFIRMADO PELA TROCA DO ID, NÃO POR SLEEP** (06/09/2026,
+  `core/target_hybrid.esperar_o_alvo_trocar`). Era `press(0,15) + tick(0,6)` =
+  **750 ms fixos por morte, com o laço inteiro parado** — nenhuma skill sai ali.
+  Medido em 274 mortes do log: mediana de 760 ms da detecção até o TAB, **204
+  delas (74%) entre 0,70 e 0,85 s**, ou seja exatamente `press + tick`. Agora
+  pergunta de 10 em 10 ms e devolve no instante em que o jogo troca o id.
+- **A CARÊNCIA DE 2,4 s SÓ VALE QUANDO A TROCA NÃO SE CONFIRMA.** Ela nasceu de
+  um problema de TELA ("o quadro do alvo novo leva um instante para desenhar");
+  a leitura vem da MEMÓRIA desde 25/08 e o id já é conferido. Confirmada a
+  troca, vale a **cadência normal (0,15 s)** — e **não zero**: zerar fazia a
+  leitura seguinte sair no passo do laço (50 ms), e com uma leitura de morte
+  presa em `True` isso queima TAB na velocidade do laço (medido no dublê: 12 TAB
+  em 3 s). A trava por identidade de `MorteDoAlvo` barra o MESMO id, não uma
+  pilha de cadáveres com ids diferentes.
+- **A CARÊNCIA NUNCA PROTEGEU DE BATER NO CADÁVER** — não olhar não é proteger.
+  Quem protege é a trava por IDENTIDADE. Confundir as duas foi o que manteve
+  2,4 s de cadáver na mira, que é o "stuck on corpse" relatado.
+- **AS DUAS HIPÓTESES SOBRE O PONTEIRO ESTÃO REPROVADAS** (bancada de ponteiros,
+  01/09/2026, `Teste-Ponteiros/RESULTADOS.md`): o HP **não** congela no último
+  valor (nome e vida vêm 321/321 e 361/361 quando o alvo é reconhecido) e a
+  morte **não** desaloca a instância — o oráculo varreu 912 MB de heap nos 6
+  casos de falha e achou o objeto **em 6 de 6**, com `hp=0/100` legível no
+  cadáver. Frase do relatório: *"a detecção de MORTE sempre funcionou. O erro
+  vive só no meio da luta."*
 - **Cave sem alvo proibido é caso legítimo.** `NOME_DO_ALVO_PROIBIDO` nasce
   `None` e só a BC o preenche; sem nome, o veredito é `bate` e **não**
   `acabaram` — `acabaram` encerraria a luta na primeira leitura, sem um golpe.

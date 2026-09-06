@@ -644,3 +644,89 @@ def investigar_alvo_perdido(memoria: Memory, alvo_id: int) -> list[str]:
             "não é a leitura do alvo: é o lugar onde procuramos. Ver o bloco "
             "acima sobre os slots de seleção visual.")
     return linhas
+
+
+# ===========================================================================
+# CONFIRMAR O TAB PELA TROCA DO ID -- promovido do APP em 06/09/2026
+# ===========================================================================
+#
+# DEPENDENCIA CRUZADA. Quem usa: `app/executor._esperar_o_alvo_trocar` (de onde
+# veio) e `combate.CombatEngine._trocar_de_alvo` (a BC e a HH). Mexer aqui mexe
+# nos tres ecossistemas.
+#
+# O CLAUDE.md ja listava esta funcao como promocao devida, em duplicata: *"
+# confirmar o TAB pela troca do id (`app/executor._esperar_o_alvo_trocar` x o
+# TAB do `bc/combat`)"*. Ela sobe agora porque o lado da BC estava pagando caro
+# pela duplicata.
+#
+# O QUE NAO SUBIU, e por que: a POLITICA do que fazer quando o id nao troca. No
+# APP isso e "a tecla nao pegou, tenta de novo"; na BC e "sigo com carencia e
+# releio depois". A pergunta ("trocou?") e a mesma; a resposta do chamador nao.
+#
+# RECEBE PECAS, NAO CONTEXTO -- mesmo desenho de `watchdog.avaliar_saude`. Assim
+# o APP a chama sem depender do farm e a BC sem depender do executor.
+#
+# ---------------------------------------------------------------------------
+# O DEFEITO QUE ELA CONSERTA NA BC, medido em 06/09/2026
+# ---------------------------------------------------------------------------
+#
+# A BC nao perguntava: ela DORMIA. `press('tab', 0.15)` + `tick(0.6)` = 750 ms
+# fixos por morte, com o laco inteiro parado -- nenhuma skill sai nesses 750 ms.
+# Medido em 274 mortes do log de producao, da deteccao da morte ate o TAB
+# registrado:
+#
+#     min 635 ms | mediana 760 ms | p90 847 ms | max 2013 ms
+#     204 das 274 (74%) entre 0,70 e 0,85 s  <- exatamente press+tick
+#
+# Zero disso e deteccao. O relatorio da bancada de ponteiros ja tinha fechado
+# esse lado: *"a deteccao de MORTE sempre funcionou. O erro vive so no meio da
+# luta"*, e o oraculo achou o objeto do cadaver vivo no heap em 6 de 6 casos
+# (`hp=0/100` legivel, zero desalocados). O atraso era espera cega.
+#
+# O APP ja fazia certo: pergunta de 10 em 10 ms e devolve no instante em que o
+# jogo responde. E a doutrina da casa -- *"onde havia espera cega, agora se
+# PERGUNTA"*.
+
+# Teto da espera. Passado isto, a tecla nao pegou -- insistir e trabalho do
+# chamador, que e quem sabe o que fazer com isso.
+TETO_PARA_O_ALVO_TROCAR = 0.35
+
+# De quanto em quanto tempo perguntar. A leitura do id e UM `read_int` (~1 us):
+# cem perguntas por segundo custam microssegundos e devolvem o controle
+# praticamente no instante em que o jogo responde.
+PASSO_DA_CONFIRMACAO_DO_TAB = 0.01
+
+
+def esperar_o_alvo_trocar(
+    ler_id,
+    id_antes,
+    *,
+    teto: float = TETO_PARA_O_ALVO_TROCAR,
+    passo: float = PASSO_DA_CONFIRMACAO_DO_TAB,
+    dormir=None,
+    continuar=None,
+) -> int | None:
+    """Espera o id do alvo ficar DIFERENTE de `id_antes`. Devolve o id novo.
+
+        <int>  -- trocou; este e o id de agora (pode ser `0`: o TAB pegou e
+                  ciclou para "nada selecionado", que e troca legitima)
+        None   -- NAO trocou dentro do teto, ou o chamador mandou parar
+
+    `ler_id` devolve o id cru ou `None` quando nao deu para ler. "Nao sei" NAO
+    conta como troca: seguir em frente por uma leitura que falhou seria dar por
+    confirmado o que nao foi.
+
+    `continuar` (opcional) e consultado a cada volta e faz a espera desistir --
+    e por onde o Parar do usuario atravessa.
+    """
+    if dormir is None:
+        dormir = time.sleep
+    fim = time.time() + teto
+    while time.time() < fim:
+        if continuar is not None and not continuar():
+            return None
+        agora = ler_id()
+        if agora is not None and agora != id_antes:
+            return agora
+        dormir(passo)
+    return None

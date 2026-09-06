@@ -39,6 +39,9 @@ class _FakeMemoria:
         self.em_batalha = True
         self.montado = False
         self.tem_alvo = True
+        # O TAB é confirmado pela TROCA DO ID desde 06/09/2026. Cada TAB
+        # entrega um alvo diferente, como no jogo.
+        self.id = 1
 
     def in_battle(self):
         return self.em_batalha
@@ -50,7 +53,10 @@ class _FakeMemoria:
         return True
 
     def alvo_atual(self):
-        return {"id": 1} if self.tem_alvo else None
+        return {"id": self.id} if self.tem_alvo else None
+
+    def id_do_alvo(self):
+        return self.id if self.tem_alvo else 0
 
     def position(self):
         return (110, -406)
@@ -192,6 +198,8 @@ def _motor(monkeypatch, relogio, mundo, *, nomes=("Gun Witch",)):
         press_original(key, delay)
         if key == "tab":
             mundo.tabulou()
+            # E o id MUDA -- é assim que `_trocar_de_alvo` confirma o TAB.
+            ctx.memory.id += 1
     ctx.press = _press
 
     return motor, ctx

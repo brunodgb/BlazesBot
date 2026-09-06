@@ -72,15 +72,26 @@ import time
 from collections.abc import Callable, Iterable
 from typing import Protocol
 
-from ...core import cadencia_da_bolsa, coleira_do_ponto, diagnostico_fino
-from ...core.inputs import Input
-from ...core.pet import SEGUNDOS_PARA_A_COMIDA_SER_USADA, PetFeeder
-
-# PECA COMPARTILHADA COM O BC -- ver `MorteDoAlvo` em `core/target_hybrid.py`.
-# "O mob morreu?" e a MESMA pergunta nos dois ecossistemas, com a MESMA struct e
-# o mesmo cadaver de 7 a 13 s; o que e de cada um e o que FAZER com a resposta.
+# DUAS PECAS COMPARTILHADAS COM O BC vem de `core/target_hybrid.py`, e as duas
+# sao a MESMA pergunta nos dois ecossistemas, com a MESMA struct:
+#
+#   `MorteDoAlvo` ............... "o mob morreu?" -- mesmo cadaver de 7 a 13 s;
+#   `esperar_o_alvo_trocar` ..... "o TAB pegou?" -- promovida DAQUI em 06/09/2026
+#                                 (o CLAUDE.md ja a listava como duplicata).
+#
+# O que e de cada um e o que FAZER com a resposta: aqui o teto e o `_continuar`
+# sao do APP, e o "nao trocou" vira nova tentativa.
+#
 # Importar do `core/` NAO quebra o isolamento deste modulo: o que ele nao pode e
 # importar `blazesbot.bot` (travado por `test_o_executor_do_app_so_usa_o_core`).
+from ...core import (
+    cadencia_da_bolsa,
+    coleira_do_ponto,
+    diagnostico_fino,
+    target_hybrid,
+)
+from ...core.inputs import Input
+from ...core.pet import SEGUNDOS_PARA_A_COMIDA_SER_USADA, PetFeeder
 from ...core.target_hybrid import MorteDoAlvo
 from ...core.zones import coord_para_pixel_do_minimapa, distancia_linear
 
@@ -737,9 +748,15 @@ PASSO_DA_ESPERA_DA_BASE = 0.1
 # segundo custam microssegundos de processador e devolvem o controle
 # praticamente no instante em que o jogo responde.
 #
-# NAO E "um numero lido por dois lados": sao duas perguntas diferentes
-# ("cheguei?" e "trocou?"), com custos e urgencias diferentes.
-PASSO_DA_CONFIRMACAO_DO_TAB = 0.01
+# NAO E "um numero lido por dois lados" em relacao ao passo da BASE: sao duas
+# perguntas diferentes ("cheguei?" e "trocou?"), com custos e urgencias
+# diferentes.
+#
+# MAS "trocou?" agora e perguntada pelos DOIS ecossistemas, e ai a regra vale:
+# o valor mora em `core/target_hybrid.py` e este nome e so o apelido local, para
+# o APP continuar lendo pelo nome que ele sempre usou. Duas copias de 0,01
+# divergiriam em silencio, e a que ficasse para tras perguntaria devagar.
+PASSO_DA_CONFIRMACAO_DO_TAB = target_hybrid.PASSO_DA_CONFIRMACAO_DO_TAB
 SHUFFLE_DEFAULT_PIXELS = 5
 
 # Cada perna do shuffle anti-AFK (ida e volta). Era `time.sleep(1.0)` cego duas
@@ -1677,17 +1694,23 @@ class ExecutorDeMacro:
         `0` = a tecla pegou e ciclou para "nada selecionado" -- o chamador
         trata como alvo inaceitável e continua tentando.
 
-        Aplica um loop de verificação rápida (15ms de intervalo com teto de 150ms)
-        para capturar a atualização do ponteiro de memória instantaneamente assim
-        que o motor do jogo processa o comando de TAB.
+        A PERGUNTA SUBIU PARA O `core` em 06/09/2026
+        (`target_hybrid.esperar_o_alvo_trocar`) -- ela era duplicata anotada no
+        CLAUDE.md, e a BC estava pagando caro por nao ter esta peca: la o TAB
+        era espera cega de 750 ms. O que ficou AQUI e a politica do APP: o teto
+        (`SEGUNDOS_PARA_O_ALVO_APARECER`, que e do APP e nao do core), o passo e
+        o `_continuar` do laco da macro.
+
+        Aplica um loop de verificação rápida para capturar a atualização do
+        ponteiro de memória instantaneamente assim que o motor do jogo processa
+        o comando de TAB.
         """
-        fim = time.time() + SEGUNDOS_PARA_O_ALVO_APARECER
-        while time.time() < fim and self._continuar():
-            agora = self._ler_id_do_alvo()
-            if agora is not None and agora != id_antes:
-                return agora
-            time.sleep(PASSO_DA_CONFIRMACAO_DO_TAB)
-        return None
+        return target_hybrid.esperar_o_alvo_trocar(
+            self._ler_id_do_alvo, id_antes,
+            teto=SEGUNDOS_PARA_O_ALVO_APARECER,
+            passo=PASSO_DA_CONFIRMACAO_DO_TAB,
+            continuar=self._continuar,
+        )
 
     def _alvo_aceitavel(self, alvo: dict | None) -> bool:
         """Este alvo serve para COMEÇAR uma luta?
