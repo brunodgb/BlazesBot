@@ -77,6 +77,29 @@
   --log-fio: rgba(255, 255, 255, 0.055);
   --log-realce: rgba(224, 138, 76, 0.11);
   --log-selecao: rgba(224, 138, 76, 0.3);
+
+  /* ---------- SELOS DE ECOSSISTEMA ----------
+     Cor por ecossistema, ligada. Precisam de token porque a SIGLA fica sobre o
+     preenchimento: com valor fixo pensado para fundo escuro, o tema claro punha
+     texto quase branco sobre fundo claro e a sigla sumia -- visto na tela. O
+     APP escapou por acaso, porque já usava `--accent-fg`, que tem as duas
+     variantes. */
+  /* Altura do cabeçalho da tabela. UM número, DOIS lugares: o `<th>` a impõe e o
+     cabeçalho de grupo (sticky) a usa como `top`. Era 27px chutado enquanto o
+     `<th>` media 27,5 -- meio pixel de fresta, e qualquer mudança de fonte,
+     padding ou zoom abriria mais. */
+  --altura-cabecalho-tabela: 28px;
+
+  /* Selo DESLIGADO. Medido na tela: `--color-faint` dá 4,78 aqui e passa, mas no
+     tema claro caía para 3,28 sobre o painel branco -- reprovado, e a sigla tem
+     9,5px. Token próprio porque "apagado" e "ilegível" não são a mesma coisa. */
+  --selo-off-texto: var(--color-faint);
+  --selo-bc-fundo: rgba(216, 74, 62, 0.18);
+  --selo-bc-borda: #d84a3e;
+  --selo-bc-texto: #ffbfb6;
+  --selo-hh-fundo: rgba(139, 122, 232, 0.18);
+  --selo-hh-borda: #8b7ae8;
+  --selo-hh-texto: #d9d2ff;
 }
 
 :root[data-tema="claro"] {
@@ -91,6 +114,15 @@
   --log-fio: rgba(0, 0, 0, 0.07);
   --log-realce: rgba(224, 138, 76, 0.16);
   --log-selecao: rgba(224, 138, 76, 0.35);
+
+  /* Fundo claro: a sigla precisa ser ESCURA. */
+  --selo-off-texto: #7a6863;   /* 5,3:1 sobre branco; `--color-faint` dava 3,28 */
+  --selo-bc-fundo: rgba(216, 74, 62, 0.14);
+  --selo-bc-borda: #c23b30;
+  --selo-bc-texto: #8a1e16;
+  --selo-hh-fundo: rgba(107, 88, 214, 0.14);
+  --selo-hh-borda: #6b58d6;
+  --selo-hh-texto: #392c8f;
 }
 
 * {
@@ -392,10 +424,18 @@ body {
 
   .tabela th {
     @apply bg-panel2 text-dim text-left px-2 py-1.5 text-[10px] uppercase tracking-wider font-semibold sticky top-0 z-5 border-b border-line;
+    /* Altura IMPOSTA, não medida: é ela que o cabeçalho de grupo usa como `top`
+       para grudar logo abaixo. Ver `--altura-cabecalho-tabela`. */
+    height: var(--altura-cabecalho-tabela);
+    box-sizing: border-box;
   }
 
+  /* AR: 6px -> 10px na vertical.
+     Não é gosto: com 6px a linha fechava em ~30px e as quatro caixas de 14px
+     ficavam a poucos pixels uma da outra. A altura sobe para ~40px, que é o
+     que permite o alvo de 28px sem apertar nada. */
   .tabela td {
-    @apply px-2 py-1.5 align-middle border-b border-linesoft;
+    @apply px-2 py-2.5 align-middle border-b border-linesoft;
   }
 
   .tabela tbody tr:hover {
@@ -413,6 +453,323 @@ body {
 
   .tabela .ctr {
     @apply text-center;
+  }
+
+  /* ============================================================
+     ALVO DE CLIQUE
+     ============================================================
+     As caixas eram 14x14 -- METADE do mínimo de 24x24 que a WCAG 2.5.8 pede --
+     e havia QUATRO por linha, encostadas. Era o defeito mais objetivo da tela:
+     acertar exigia mira.
+
+     O `<label>` vira o alvo e cobre 28x28; a caixa continua com 16px de
+     DESENHO. Área de clique 4x maior, altura de linha igual. */
+  .alvo-caixa {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    margin: -6px 0;      /* come o padding da célula em vez de esticá-la */
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.12s;
+  }
+
+  .alvo-caixa:hover {
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  /* ============================================================
+     GRADE DE LARGURAS DA TABELA DE CONTAS
+     ============================================================
+     Explícita porque a coluna Função entrou e o navegador redistribuiu sozinho:
+     "Center" virou "Cente", o servidor virou "Light in the Darkn" e o botão
+     Editar quebrou em duas linhas. Truncar dado é pior que apertar espaço.
+
+     Quem ESTICA é Login e Servidor (os dois de tamanho variável). Todo o resto
+     tem largura fixa e `nowrap` -- assim nenhuma coluna de controle encolhe
+     abaixo do que precisa para caber. */
+  .tabela .col-ativa {
+    width: 52px;
+  }
+
+  .tabela .col-senha {
+    width: 84px;
+  }
+
+  /* O nome do servidor é longo ("Light in the Darkness") e o `<select>` ainda
+     gasta a largura da setinha. Sem piso, ele truncava no último caractere -- e
+     servidor truncado é dado que o usuário não confere. */
+  .tabela .col-servidor {
+    min-width: 168px;
+  }
+
+  /* LOGIN E "NO AR" NA MESMA LINHA.
+     O indicador é um `<span>` depois de um input `w-full`, então ele CAÍA para
+     baixo e esticava a linha de 40 para 67px -- só nas contas em execução, o que
+     ainda deixava a tabela com duas alturas diferentes. Com 20 contas, 67px dá
+     1340px de rolagem por causa de um rótulo de 40 pixels de largura. */
+  .cel-login {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+  }
+
+  .cel-login .cel-texto {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .conta-ao-vivo {
+    flex-shrink: 0;
+  }
+
+  .tabela .col-posicao {
+    width: 92px;
+  }
+
+  .tabela .col-editar {
+    width: 82px;
+  }
+
+  /* RUN: estreita, e o número alinhado no centro para as contas se compararem
+     de cima a baixo sem o olho procurar onde cada um começa. */
+  .tabela .col-run,
+  .cel-run {
+    width: 54px;
+    text-align: center;
+  }
+
+  .conta-runs {
+    font-size: 11.5px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-ok);
+  }
+
+  .tabela .col-posicao,
+  .tabela .col-editar,
+  .cel-posicao,
+  .cel-editar {
+    white-space: nowrap;
+  }
+
+  /* O botão não pode empilhar ícone e texto -- foi o que aconteceu quando a
+     coluna encolheu. */
+  .bt-editar {
+    white-space: nowrap;
+  }
+
+  /* ============================================================
+     COLUNA FUNÇÃO — os três ecossistemas
+     ============================================================
+     PICTOGRAMA **E** SIGLA. BC e HH são as DUAS CAVERNAS: dois pictogramas de
+     caverna não se distinguem a 16px, e o erro é caro (põe a conta na cave
+     errada). O ícone dá o reconhecimento; a sigla remove a dúvida.
+
+     A caixa nativa continua ali, só invisível: `:has(:checked)` desenha o
+     estado e o navegador continua entregando Tab, espaço e leitor de tela. */
+  .tabela .col-funcao,
+  .cel-funcao {
+    width: 1%;
+    white-space: nowrap;
+  }
+
+  .selos-funcao {
+    display: inline-flex;
+    gap: 3px;
+  }
+
+  /* COMPACTO de propósito: esta coluna precisa aguentar a QUARTA função sem
+     espremer o resto da tabela. Saiu o pictograma (~18px), o padding lateral caiu
+     de 7 para 5 e a altura de 24 para 21 -- cada selo passou de ~52px para
+     ~34px. A sigla continua: era ela, e não o desenho, que separava BC de HH. */
+  .selo {
+    display: inline-flex;
+    align-items: center;
+    height: 21px;
+    padding: 0 5px;
+    border: 1px solid var(--color-line);
+    border-radius: 6px;
+    cursor: pointer;
+    user-select: none;
+    /* DESLIGADO: cinza dessaturado e SEM preenchimento. */
+    background: transparent;
+    color: var(--selo-off-texto);
+    transition: background 0.14s, border-color 0.14s, color 0.14s;
+  }
+
+  /* A caixa real fica escondida, mas ALCANÇÁVEL por Tab -- `display: none`
+     a tiraria da ordem de foco e mataria o teclado. */
+  .selo-caixa {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .selo-sigla {
+    font-size: 9.5px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+  }
+
+  /* Diz "isto é clicável" ANTES do clique. */
+  .selo:hover {
+    border-color: var(--color-dim);
+    color: var(--color-dim);
+  }
+
+  /* Foco de teclado visível no selo, já que a caixa está escondida. */
+  .selo:has(.selo-caixa:focus-visible) {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+  }
+
+  /* LIGADO: preenchido, sigla em alto contraste. */
+  .selo-bc:has(.selo-caixa:checked) {
+    background: var(--selo-bc-fundo);
+    border-color: var(--selo-bc-borda);
+    color: var(--selo-bc-texto);
+  }
+
+  .selo-hh:has(.selo-caixa:checked) {
+    background: var(--selo-hh-fundo);
+    border-color: var(--selo-hh-borda);
+    color: var(--selo-hh-texto);
+  }
+
+  .selo-app:has(.selo-caixa:checked) {
+    background: var(--color-accentsoft);
+    border-color: var(--color-accent);
+    color: var(--accent-fg);
+  }
+
+  /* SEGUIDORA DE UM TIME DO APP. Ela roda a macro de outra conta e mesmo assim
+     tem as três caixas vazias -- quem liga o APP é o LÍDER. Sem este rótulo, a
+     tabela a chamava de "só login", que é mentira: ela está trabalhando.
+
+     Contorno tracejado porque o estado não é dela: ninguém marcou nada aqui, e
+     desmarcar não é possível nesta linha. É informação, não controle. */
+  .selo-seguindo {
+    display: inline-flex;
+    align-items: center;
+    height: 21px;
+    padding: 0 6px;
+    border: 1px dashed var(--color-accent);
+    border-radius: 6px;
+    background: var(--color-accentsoft);
+    color: var(--accent-fg);
+    font-size: 9.5px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    max-width: 148px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* CONTA ATIVA SEM ECOSSISTEMA NENHUM -- quatro das sete contas reais.
+     Ela sobe, loga, reloga e não faz mais nada, e antes tinha o mesmo peso de
+     quem estava trabalhando. Os selos recuam para o usuário ver que ali não há
+     função escolhida, em vez de deduzir isso de três caixas vazias. */
+  .selos-so-login {
+    opacity: 0.45;
+  }
+
+  .selos-so-login::after {
+    content: "só login";
+    align-self: center;
+    margin-left: 6px;
+    font-size: 9.5px;
+    font-style: italic;
+    color: var(--color-faint);
+  }
+
+  /* ============================================================
+     OS QUATRO ESTADOS DA LINHA — um canal para cada
+     ============================================================
+     Eles COEXISTEM (uma conta pode estar selecionada, ativa e rodando ao mesmo
+     tempo), então nenhum pode usar o recurso visual de outro:
+
+       selecionada -> BARRA na borda esquerda   (`linha-ativa`, já existia)
+       inativa     -> OPACIDADE                 (`linha-inativa`)
+       no ar       -> PONTO verde ao lado do login
+       ativa/parada-> nada, que é o normal
+
+     É por isso que a faixa alternada (zebra) foi recusada: ela consumiria o
+     FUNDO, e o fundo já é de "selecionada". */
+  .tabela tbody tr.linha-inativa {
+    opacity: 0.45;
+  }
+
+  /* Os controles continuam clicáveis: apagada não é desabilitada -- é assim
+     que se REATIVA a conta. */
+  .tabela tbody tr.linha-inativa:hover {
+    opacity: 0.75;
+  }
+
+  /* Só o PONTO: o número saiu para a coluna Run, porque "está no ar" e "quantas
+     runs fez" são perguntas diferentes -- e a conta de APP tem a primeira sem
+     ter a segunda.
+
+     SLOT DE LARGURA FIXA, presente mesmo escondido: sem ele o nome da conta
+     deslocaria 13px quando ela entrasse no ar, e a coluna inteira dançaria a
+     cada poll. `visibility` em vez de `display` pelo mesmo motivo. */
+  .conta-ao-vivo {
+    display: inline-flex;
+    flex: 0 0 13px;
+    align-items: center;
+    justify-content: flex-start;
+  }
+
+  /* Classe PRÓPRIA, e não a `.escondida` global: aquela é
+     `display: none !important`, e o `!important` vencia -- o slot sumia, o nome
+     da conta pulava 15px ao entrar no ar e a coluna dançava a cada poll. Medido:
+     os nomes começavam em 325px ou 340px conforme a conta estivesse rodando. */
+  .conta-ao-vivo.parada {
+    visibility: hidden;
+  }
+
+  /* O pulso anima SÓ `opacity` e `transform` -- as duas propriedades que o
+     compositor resolve sozinho, sem repintar. Era `box-shadow`, que repinta a
+     cada quadro: com dezenas de contas no ar seriam dezenas de repaints
+     contínuos numa tabela que já tem poll de 1,5 s.
+
+     E é lento (2,4 s) de propósito: rápido, N pontos piscando viram nervosismo
+     em vez de informação. */
+  .conta-ao-vivo::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--color-ok);
+    animation: pulso-no-ar 2.4s ease-in-out infinite;
+  }
+
+  /* CAIU E ESTÁ VOLTANDO. Antes o ponto era verde por a conta estar na LISTA do
+     resumo -- e a conta que caiu continua nela, por minutos, tentando religar:
+     o ponto dizia "no ar" com o personagem fora do jogo.
+
+     Pulso mais RÁPIDO além da cor: quem não distingue vermelho de verde
+     (daltonismo vermelho-verde é o mais comum) precisa de um segundo sinal, e o
+     ritmo é o único canal livre aqui. */
+  .conta-ao-vivo.caida::before {
+    background: var(--color-err);
+    animation-duration: 1s;
+  }
+
+  @keyframes pulso-no-ar {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.8); }
+  }
+
+  /* A conta no ar recupera o contraste cheio mesmo dentro de um bloco
+     apagado -- rodando é o estado que sempre ganha atenção. */
+  .tabela tbody tr.linha-no-ar .cel-texto {
+    color: var(--color-ink);
   }
 
   /* ============================================================
@@ -485,10 +842,20 @@ body {
      Separação por AR e FIO, nunca por faixa colorida de fundo: é a mesma
      decisão já tomada na tela de Log, e por aqui ela vale duas vezes, porque a
      linha de conta já usa fundo para "selecionada" e para "arrastando". */
+  /* HIERARQUIA POR AR, não por peso: entre linhas há um FIO de 1px; entre
+     grupos há 20px de AR mais o cabeçalho. São pesos claramente diferentes, e
+     é isso que faz o agrupamento ler como agrupamento.
+
+     STICKY porque com 20 contas o scroll faz perder de vista em que grupo se
+     está -- e o cabeçalho custa zero altura extra grudado. O `top` é a altura
+     do `<th>`, senão ele cobre o cabeçalho da tabela. */
   .tabela tbody tr.linha-grupo td {
-    padding: 14px 8px 4px;
+    position: sticky;
+    top: var(--altura-cabecalho-tabela);
+    z-index: 4;
+    padding: 20px 8px 5px;
     border-bottom: 1px solid var(--color-line);
-    background: transparent;
+    background: var(--color-panel);
   }
 
   /* O primeiro grupo não precisa do ar de cima: ele já encosta no cabeçalho. */
@@ -577,11 +944,8 @@ body {
     display: flex;
     align-items: center;
     gap: 5px;
-    font: inherit;
-    color: inherit;
-    text-transform: none;
-    letter-spacing: normal;
   }
+
 
   /* "?" ao lado de um campo. A explicação mora aqui, não na tela: texto solto
      espalhado faz o olho pular os campos, que são o que a pessoa veio fazer. */
@@ -593,6 +957,20 @@ body {
 
   .ajuda:hover {
     @apply border-accent text-white;
+  }
+
+  /* O "?" ANCORA NO RÓTULO, NÃO NUMA LINHA PRÓPRIA. `.campo` é `flex-col`, e
+     com o "?" como terceiro filho ele caía ABAIXO do input: uma linha inteira
+     gasta por campo (medido: 20px x 8 campos só na aba HH) e um símbolo solto,
+     longe do rótulo que ele explica. Ancorado no canto do rótulo, ele custa
+     zero altura e fica onde o olho procura.
+     `.grade-teclas` fica de fora: lá o campo já é `flex-row` e não tem ajuda. */
+  .campo:has(> .ajuda) {
+    @apply relative;
+  }
+
+  .campo > .ajuda {
+    @apply absolute top-0 right-0;
   }
 
   /* O BALÃO VIVE NO <body>, e isso não é capricho: os painéis do modal rolam
@@ -630,9 +1008,14 @@ body {
     max-height: 90vh;
   }
 
+  /* SEM `max-height` CALCULADO À MÃO.
+     Era `calc(90vh - 160px)`, e 160 era um chute da soma de cabeçalho + abas +
+     rodapé -- medido, dá ~153px. Número mágico que mente assim que qualquer uma
+     das três barras muda de altura: o painel sobra ou vaza, e nada avisa.
+     `.painel-aba` já é `flex: 1; min-height: 0` dentro de um flex de altura
+     fixa, e é o flex que resolve a altura certa sozinho. */
   .modal-mascara .painel-aba,
   .modal-mascara .aba-conteudo {
-    max-height: calc(90vh - 160px);
     overflow-y: auto;
   }
 
@@ -682,10 +1065,35 @@ body {
     gap: 6px;
   }
 
+  /* TECLA COMO OS OUTROS CAMPOS DO MODAL: RÓTULO EM CIMA.
+     A primeira tentativa pôs rótulo e campo na MESMA linha, para cortar altura.
+     Cortava (410px contra 469px), alinhava depois de embrulhar o rótulo solto
+     num `<span>` -- e mesmo assim causava estranheza, porque esta era a ÚNICA
+     aba do modal com o rótulo ao lado. Consistência ganha dos 59px: o olho
+     aprende UM formato de campo e o aplica nas cinco abas.
+     A altura volta pela COLUNA, não pelo formato: 118px em vez de 190px são 7
+     colunas em vez de 4, e um grupo de 8 teclas cabe em duas linhas curtas. O
+     rótulo é o mesmo `.campo>span` do resto (caixa alta, 10.5px), que é o que
+     permite a coluna estreita -- em 13px ele não caberia. */
   .grade-teclas {
-    @apply grid gap-1.5;
-    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    @apply grid gap-x-3 gap-y-2;
+    grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
   }
+
+  /* O rótulo trunca em UMA linha. Sem `whitespace-nowrap` o `truncate` não
+     segura rótulo de duas palavras -- "Poção HP (luta)" quebrava em duas linhas
+     e desalinhava a grade inteira. O `title` de cada campo tem o nome completo. */
+  .grade-teclas .campo > .rotulo,
+  .grade-teclas .campo > span:first-child {
+    @apply block min-w-0 truncate whitespace-nowrap;
+  }
+
+  /* O campo de tecla com o texto centrado e sem truncar o símbolo. */
+  .grade-teclas .campo > .captura {
+    @apply w-full text-center;
+  }
+
+
 
   .grade-form {
     @apply grid gap-2;

@@ -13,35 +13,58 @@
   <!-- ================= Barra de título customizada ================= -->
   <header class="titlebar flex h-10 shrink-0 items-center justify-between border-b border-line bg-cab">
     <div class="flex items-center gap-2.5 pl-3.5">
-      <!-- MONOGRAMA "B" EM CHAMA, SVG INLINE.
-           Era `<img src="favicon.ico">` e o arquivo NÃO EXISTIA no repositório: o
-           que aparecia aqui era o placeholder de imagem quebrada do WebView2.
-           Inline porque zero requisição é imune ao CSP e ao `file://` do
-           pywebview; o `favicon.ico` de verdade existe agora, em `web/public/`, e
-           serve à ABA, à JANELA e à BARRA DE TAREFAS.
+      <!-- ÍCONE DO BLAZESBOT — chama com o "B" no miolo.
+           Desenhado a partir da referência que o usuário mandou: silhueta escura
+           com ombros RECORTADOS (é o recorte que faz ler "fogo" e não "gota
+           d'água"), contorno luminoso e miolo aceso.
 
-           DUAS COISAS SAÍRAM DE UMA PROVA A 16px, e nenhuma delas era visível no
-           desenho grande:
+           A referência é RICA em detalhe interno -- muitas línguas finas -- e
+           isso não sobrevive a 16px, que é o tamanho da barra de tarefas.
+           Comparadas três leituras nos tamanhos reais: com o B pequeno na base
+           ele desaparece; com o B VAZADO no miolo dourado ele fecha e some. A
+           que lê em todos os tamanhos é esta: **o B grande em ouro**, com as
+           línguas laterais recuadas para não competir.
 
-           1. A silhueta simétrica lia como GOTA D'ÁGUA, não chama. A ponta agora
-              VERGA para a direita e o ombro é de um lado só -- é a assimetria que
-              separa fogo de água.
-           2. O "B" de contorno fino DESAPARECIA a 16px. Agora é SÓLIDO. -->
+           Inline aqui porque zero requisição é imune ao CSP e ao `file://` do
+           pywebview. O MESMO desenho gera `web/public/favicon.ico`, que serve à
+           janela e à barra de tarefas — ver `ICONE_DO_APP`. -->
       <svg class="app-icon" viewBox="0 0 32 32" role="img" aria-label="BlazesBot"
-           width="19" height="19" style="margin-right:4px;">
-        <path d="M18.4 1.6c-.4 3.4-2 5.9-4.6 8.6-3.4 3.4-5.4 6.4-5.4 10.2
-                 0 5.7 4.6 9.8 11 9.8s11-4.1 11-9.8c0-3.2-1.5-6-4.6-9.2
-                 -2.4-2.4-3.8-4.3-4.3-6.3-1 1.7-2.3 3-4 4.2 1.2-2.4 1.6-4.7 1-7.5Z"
-              fill="#5A1F1A" stroke="#E08A4C" stroke-width="1.5"
+           width="20" height="20" style="margin-right:5px;">
+        <defs>
+          <linearGradient id="bb-ouro" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#FFE9A8" />
+            <stop offset=".5" stop-color="#FFC24D" />
+            <stop offset="1" stop-color="#F08A2C" />
+          </linearGradient>
+          <linearGradient id="bb-escuro" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#2B0F0A" />
+            <stop offset="1" stop-color="#120605" />
+          </linearGradient>
+        </defs>
+        <!-- Silhueta: gota de chama com ombros recortados. -->
+        <path d="M16 1.1c1.3 3.3 2.5 5.3 4.3 7.6 1.1-1.2 1.7-2.6 1.9-4.3
+                 1.7 3.2 3.6 5.5 5 7.9 1.6 2.8 2.4 5.4 2.4 8 0 6.1-5.8 10.5-13.6 10.5
+                 S2.4 26.4 2.4 20.3c0-2.8 1-5.6 3.1-8.5 1 .9 2.1 1.3 3.4 1.3
+                 -.9-2.7.5-6.2 3.6-9.1.2 1.9.8 3.3 1.9 4.4C17.9 5.8 16 1.1 16 1.1Z"
+              fill="url(#bb-escuro)" stroke="url(#bb-ouro)" stroke-width="1.6"
               stroke-linejoin="round" />
-        <path d="M11.9 11.4h5.2c2.4 0 4 1.3 4 3.3 0 1.3-.7 2.3-1.9 2.8
-                 1.6.5 2.6 1.7 2.6 3.3 0 2.2-1.8 3.6-4.5 3.6h-5.4V11.4Z
-                 m3.1 2.6v2.6h1.8c.9 0 1.5-.5 1.5-1.3 0-.8-.6-1.3-1.5-1.3H15Z
-                 m0 5.1v2.9h2c1 0 1.7-.6 1.7-1.5 0-.9-.7-1.4-1.7-1.4H15Z"
-              fill="#FFE3C2" fill-rule="evenodd" />
+        <!-- Línguas laterais, recuadas: dão o fogo sem disputar com o B. -->
+        <path d="M10.6 13.6c-1.6 2.2-2.4 4.1-2.4 5.9 0 1.5.5 2.8 1.4 3.9
+                 -2-1.4-3.1-3.4-3.1-5.7 0-1.8.6-3.4 1.9-5 .6.5 1.3.8 2.2.9Z"
+              fill="url(#bb-ouro)" opacity=".5" />
+        <path d="M21.4 13.6c1.6 2.2 2.4 4.1 2.4 5.9 0 1.5-.5 2.8-1.4 3.9
+                 2-1.4 3.1-3.4 3.1-5.7 0-1.8-.6-3.4-1.9-5-.6.5-1.3.8-2.2.9Z"
+              fill="url(#bb-ouro)" opacity=".5" />
+        <!-- O B: o miolo aceso, e o que carrega a identidade. -->
+        <g transform="translate(16 17.7) scale(1.04) translate(-16 -16)">
+          <path d="M11.9 11.4h5.2c2.4 0 4 1.3 4 3.3 0 1.3-.7 2.3-1.9 2.8
+                   1.6.5 2.6 1.7 2.6 3.3 0 2.2-1.8 3.6-4.5 3.6h-5.4V11.4Z
+                   m3.1 2.6v2.6h1.8c.9 0 1.5-.5 1.5-1.3 0-.8-.6-1.3-1.5-1.3H15Z
+                   m0 5.1v2.9h2c1 0 1.7-.6 1.7-1.5 0-.9-.7-1.4-1.7-1.4H15Z"
+                fill="url(#bb-ouro)" fill-rule="evenodd" />
+        </g>
       </svg>
       <span class="text-[13.5px] font-semibold tracking-[0.3px] text-white">BlazesBot</span>
-      <span class="border-l border-white/20 pl-2 text-[11px] text-white/50">Bewitcher Cave</span>
     </div>
     <div class="flex h-full">
       <button id="btn-tema" class="h-full w-10 text-sm" title="Alternar tema">🌙</button>
@@ -115,15 +138,21 @@
                 <!-- Coluna da alça de arraste. Sem rótulo: o cabeçalho "Ordem"
                      só ocuparia largura para dizer o que o ⠿ já diz. -->
                 <th class="col-alca" aria-label="Ordem"></th>
-                <th>Ativa</th>
+                <th class="col-ativa">Ativa</th>
                 <th>Login</th>
-                <th>Senha</th>
-                <th>Posição</th>
-                <th>Servidor</th>
-                <th>BC</th>
-                <th>HH</th>
-                <th>APP</th>
-                <th>Editar</th>
+                <th class="col-senha">Senha</th>
+                <!-- RUN é coluna própria, e só se preenche para quem roda CAVE:
+                     o modo APP é macro de teclado, não tem "run" nenhuma, e um
+                     número ali seria mentira. Preenchida pelo poll do estado. -->
+                <th class="col-run">Run</th>
+                <th class="col-servidor">Servidor</th>
+                <th class="col-posicao">Posição</th>
+                <!-- BC, HH e APP eram três colunas de caixa idêntica, e o que
+                     distinguia uma da outra ficava AQUI, fora da linha: para ler
+                     um ✓ o olho subia até o cabeçalho e voltava, por linha. Agora
+                     o rótulo está dentro do próprio controle. -->
+                <th class="col-funcao">Função</th>
+                <th class="col-editar">Editar</th>
               </tr>
             </thead>
             <tbody id="corpo-contas"></tbody>
@@ -399,15 +428,15 @@
         <div class="grupo mt-4">
           <div class="grupo-titulo text-red-500">Regras de Poções e HP</div>
           <div class="grade-form gap-6">
-            <label class="campo">HP alvo (%)
+            <label class="campo"><span>HP alvo (%)</span>
               <input id="ed-hp" type="range" min="1" max="99" step="1" data-passo-roda="5" class="accent-red-500" />
               <span class="valor-range text-[12px] text-red-400 font-bold" id="val-hp"></span>
             </label>
-            <label class="campo">HP de batalha (%)
+            <label class="campo"><span>HP de batalha (%)</span>
               <input id="ed-bhp" type="range" min="1" max="99" step="1" data-passo-roda="5" class="accent-red-500" />
               <span class="valor-range text-[12px] text-red-400 font-bold" id="val-bhp"></span>
             </label>
-            <label class="campo">Emergência (%)
+            <label class="campo"><span>Emergência (%)</span>
               <input id="ed-emergencia" type="range" min="1" max="99" step="1" data-passo-roda="5" class="accent-red-500" />
               <span class="valor-range text-[12px] text-red-400 font-bold" id="val-emergencia"></span>
             </label>
@@ -428,81 +457,81 @@
           <div class="grupo mt-0!">
             <div class="grupo-titulo">Combate Base</div>
             <div class="grade-teclas">
-              <label class="campo">Ataque 1 <input class="captura" id="ed-k-atk0" type="text" readonly
-                  placeholder="não usar tecla" /></label>
-              <label class="campo">Ataque 2 <input class="captura" id="ed-k-atk1" type="text" readonly
-                  placeholder="não usar tecla" /></label>
-              <label class="campo">Ataque 3 <input class="captura" id="ed-k-atk2" type="text" readonly
-                  placeholder="não usar tecla" /></label>
-              <label class="campo">Ataque 4 <input class="captura" id="ed-k-atk3" type="text" readonly
-                  placeholder="não usar tecla" /></label>
-              <label class="campo">AoE <input class="captura" id="ed-k-aoe" type="text" readonly
-                  placeholder="não usar tecla" /></label>
-              <label class="campo">Break Soul <input class="captura" id="ed-k-break" type="text" readonly
-                  placeholder="não usar tecla" /></label>
+              <label class="campo"><span class="rotulo">Ataque 1</span> <input class="captura" id="ed-k-atk0" type="text" readonly
+                  placeholder="—" title="Sem tecla: o bot não usa esta ação" /></label>
+              <label class="campo"><span class="rotulo">Ataque 2</span> <input class="captura" id="ed-k-atk1" type="text" readonly
+                  placeholder="—" title="Sem tecla: o bot não usa esta ação" /></label>
+              <label class="campo"><span class="rotulo">Ataque 3</span> <input class="captura" id="ed-k-atk2" type="text" readonly
+                  placeholder="—" title="Sem tecla: o bot não usa esta ação" /></label>
+              <label class="campo"><span class="rotulo">Ataque 4</span> <input class="captura" id="ed-k-atk3" type="text" readonly
+                  placeholder="—" title="Sem tecla: o bot não usa esta ação" /></label>
+              <label class="campo"><span class="rotulo">AoE</span> <input class="captura" id="ed-k-aoe" type="text" readonly
+                  placeholder="—" title="Sem tecla: o bot não usa esta ação" /></label>
+              <label class="campo"><span class="rotulo">Break Soul</span> <input class="captura" id="ed-k-break" type="text" readonly
+                  placeholder="—" title="Sem tecla: o bot não usa esta ação" /></label>
             </div>
           </div>
 
           <div class="grupo mt-0!">
             <div class="grupo-titulo text-blue-400">Magias de Suporte</div>
             <div class="grade-teclas">
-              <label class="campo">Super Skill <input class="captura" id="ed-k-super" type="text" readonly
-                  placeholder="não usar tecla" /></label>
-              <label class="campo text-red-500">Cura <input class="captura border-red-500/30" id="ed-k-heal" type="text"
-                  readonly placeholder="não usar tecla" /></label>
-              <label class="campo">Reviver <input class="captura" id="ed-k-revive" type="text" readonly
-                  placeholder="não usar tecla" /></label>
-              <label class="campo">Buff 1 <input class="captura" id="ed-k-buff1" type="text" readonly
-                  placeholder="não usar tecla" /></label>
-              <label class="campo">Buff 2 <input class="captura" id="ed-k-buff2" type="text" readonly
-                  placeholder="não usar tecla" /></label>
-              <label class="campo">Buff 3 <input class="captura" id="ed-k-buff3" type="text" readonly
-                  placeholder="não usar tecla" /></label>
-              <label class="campo">Buff 4 <input class="captura" id="ed-k-buff4" type="text" readonly
-                  placeholder="não usar tecla" /></label>
+              <label class="campo"><span class="rotulo">Super Skill</span> <input class="captura" id="ed-k-super" type="text" readonly
+                  placeholder="—" title="Sem tecla: o bot não usa esta ação" /></label>
+              <label class="campo text-red-500"><span class="rotulo">Cura</span> <input class="captura border-red-500/30" id="ed-k-heal" type="text"
+                  readonly placeholder="—" title="Sem tecla: o bot não usa esta ação" /></label>
+              <label class="campo"><span class="rotulo">Reviver</span> <input class="captura" id="ed-k-revive" type="text" readonly
+                  placeholder="—" title="Sem tecla: o bot não usa esta ação" /></label>
+              <label class="campo"><span class="rotulo">Buff 1</span> <input class="captura" id="ed-k-buff1" type="text" readonly
+                  placeholder="—" title="Sem tecla: o bot não usa esta ação" /></label>
+              <label class="campo"><span class="rotulo">Buff 2</span> <input class="captura" id="ed-k-buff2" type="text" readonly
+                  placeholder="—" title="Sem tecla: o bot não usa esta ação" /></label>
+              <label class="campo"><span class="rotulo">Buff 3</span> <input class="captura" id="ed-k-buff3" type="text" readonly
+                  placeholder="—" title="Sem tecla: o bot não usa esta ação" /></label>
+              <label class="campo"><span class="rotulo">Buff 4</span> <input class="captura" id="ed-k-buff4" type="text" readonly
+                  placeholder="—" title="Sem tecla: o bot não usa esta ação" /></label>
             </div>
           </div>
 
           <div class="grupo mt-0!">
             <div class="grupo-titulo">Consumíveis & Deslocamento</div>
             <div class="grade-teclas">
-              <label class="campo text-red-500">Poção HP <input class="captura border-red-500/30" id="ed-k-hp"
-                  type="text" readonly placeholder="não usar tecla" /></label>
-              <label class="campo text-red-500">Poção de HP em Batalha <input class="captura border-red-500/30"
-                  id="ed-k-bhp" type="text" readonly placeholder="não usar tecla" /></label>
-              <label class="campo">Comida Pet <input class="captura" id="ed-k-petfood" type="text" readonly
-                  placeholder="não usar tecla" /></label>
-              <label class="campo">Retorno <input class="captura" id="ed-k-stone" type="text" readonly
-                  placeholder="não usar tecla" /></label>
-              <label class="campo">Montaria <input class="captura" id="ed-k-mount" type="text" readonly
-                  placeholder="não usar tecla" /></label>
-              <label class="campo">Skill de Velocidade <input class="captura" id="ed-k-speed" type="text" readonly
-                  placeholder="não usar tecla" /></label>
+              <label class="campo text-red-500"><span class="rotulo">Poção HP</span> <input class="captura border-red-500/30" id="ed-k-hp"
+                  type="text" readonly placeholder="—" title="Sem tecla: o bot não usa esta ação" /></label>
+              <label class="campo text-red-500"><span class="rotulo">Poção HP (luta)</span> <input class="captura border-red-500/30"
+                  id="ed-k-bhp" type="text" readonly placeholder="—" title="Sem tecla: o bot não usa esta ação" /></label>
+              <label class="campo"><span class="rotulo">Comida Pet</span> <input class="captura" id="ed-k-petfood" type="text" readonly
+                  placeholder="—" title="Sem tecla: o bot não usa esta ação" /></label>
+              <label class="campo"><span class="rotulo">Retorno</span> <input class="captura" id="ed-k-stone" type="text" readonly
+                  placeholder="—" title="Sem tecla: o bot não usa esta ação" /></label>
+              <label class="campo"><span class="rotulo">Montaria</span> <input class="captura" id="ed-k-mount" type="text" readonly
+                  placeholder="—" title="Sem tecla: o bot não usa esta ação" /></label>
+              <label class="campo"><span class="rotulo">Velocidade</span> <input class="captura" id="ed-k-speed" type="text" readonly
+                  placeholder="—" title="Sem tecla: o bot não usa esta ação" /></label>
             </div>
           </div>
 
           <div class="grupo mt-0!">
             <div class="grupo-titulo">Interface & Sistema</div>
             <div class="grade-teclas">
-              <label class="campo">Guild Token <input class="captura" id="ed-k-guild" type="text" readonly
-                  placeholder="não usar tecla" /></label>
-              <label class="campo">Pet Invoc <input class="captura" id="ed-k-pet" type="text" readonly
-                  placeholder="não usar tecla" /></label>
-              <label class="campo"><span class="rotulo">Auto-seleção <span class="ajuda" data-ajuda="A tecla que seleciona o PRÓPRIO personagem (F1 no padrão do jogo).&#10;&#10;Para que serve: cada conta aperta essa tecla uma vez ao entrar no time e lê o próprio identificador na memória. É esse número que a Fada compara depois de clicar no retrato, para ter certeza de que selecionou quem pediu cura.&#10;&#10;SEM ELA A CONTA NÃO É CURÁVEL pela Fada: sem o identificador não há como confirmar o clique, e curar sem confirmar cura o aliado errado.">?</span></span><input class="captura" id="ed-k-self" type="text" readonly
-                  placeholder="não usar tecla" /></label>
-              <label class="campo"><span class="rotulo">Seguir <span class="ajuda" data-ajuda="A tecla de SEGUIR o alvo selecionado (o &quot;follow&quot; do jogo).&#10;&#10;Usada SÓ no modo HH + Fada: a curandeira clica no retrato do líder, aperta esta tecla, e o JOGO caminha por ela — seguir não tem como sair da rota, diferente de refazer os waypoints por conta própria.&#10;&#10;SEM ATALHO PADRÃO NO CLIENTE: configure no jogo primeiro e repita aqui. Deixada vazia, a Fada avisa no log e não tenta seguir — chutar uma tecla faria ela apertar algo que faz outra coisa.">?</span></span><input class="captura" id="ed-k-follow" type="text" readonly placeholder="(sem atalho padrão)" /></label>
-              <label class="campo">Sentar <input class="captura" id="ed-k-sit" type="text" readonly
-                  placeholder="não usar tecla" /></label>
-              <label class="campo">Prox Alvo <input class="captura" id="ed-k-next" type="text" readonly
-                  placeholder="não usar tecla" /></label>
-              <label class="campo">Inventário <input class="captura" id="ed-k-inv" type="text" readonly
-                  placeholder="não usar tecla" /></label>
-              <label class="campo">Amigos <input class="captura" id="ed-k-fl" type="text" readonly
-                  placeholder="não usar tecla" /></label>
-              <label class="campo"><span class="rotulo">Atalho Hotbar 1 <span class="ajuda" data-ajuda="Faz o bot voltar à página 1 da barra de atalhos, que é a usada pelo bot.&#10;&#10;Como configurar no jogo:&#10;1. Aperte ESC&#10;2. Clique em Keys&#10;3. Procure “Main Hotkey Page 1” e escolha uma tecla livre&#10;4. Apague as teclas de Page 2 e Page 3 — sem elas, nada tira a barra da página 1 por acidente&#10;&#10;É opcional: sem tecla configurada o bot continua clicando no botão, como sempre fez.">?</span></span><input class="captura" id="ed-k-hotbar" type="text" readonly
-                  placeholder="não usar tecla" /></label>
-              <label class="campo"><span class="rotulo">Esconder jogadores <span class="ajuda" data-ajuda="Esconde os outros jogadores da tela.&#10;&#10;Como configurar no jogo:&#10;1. Aperte ESC&#10;2. Clique em Keys&#10;3. Procure a tecla de esconder personagens (F12 costuma ser o padr&#227;o)&#10;&#10;Para que serve aqui: o catador de loot clica no CH&#195;O, e outro personagem em cima do cad&#225;ver muda o que o clique acerta. O bot usa o truque de segurar esta tecla e abrir o chat, que faz o esconder GRUDAR at&#233; o fim da sess&#227;o &#8212; e refaz isso antes de cada entrada na cave, porque apertar a tecla de novo desfaz.&#10;&#10;&#201; opcional: sem tecla configurada o bot n&#227;o mexe nisso.">?</span></span><input class="captura" id="ed-k-esconder" type="text" readonly
-                  placeholder="não usar tecla" /></label>
+              <label class="campo"><span class="rotulo">Guild Token</span> <input class="captura" id="ed-k-guild" type="text" readonly
+                  placeholder="—" title="Sem tecla: o bot não usa esta ação" /></label>
+              <label class="campo"><span class="rotulo">Pet Invoc</span> <input class="captura" id="ed-k-pet" type="text" readonly
+                  placeholder="—" title="Sem tecla: o bot não usa esta ação" /></label>
+              <label class="campo"><span class="rotulo">Auto-alvo <span class="ajuda" data-ajuda="A tecla que seleciona o PRÓPRIO personagem (F1 no padrão do jogo).&#10;&#10;Para que serve: cada conta aperta essa tecla uma vez ao entrar no time e lê o próprio identificador na memória. É esse número que a Fada compara depois de clicar no retrato, para ter certeza de que selecionou quem pediu cura.&#10;&#10;SEM ELA A CONTA NÃO É CURÁVEL pela Fada: sem o identificador não há como confirmar o clique, e curar sem confirmar cura o aliado errado.">?</span></span><input class="captura" id="ed-k-self" type="text" readonly
+                  placeholder="—" title="Sem tecla: o bot não usa esta ação" /></label>
+              <label class="campo"><span class="rotulo">Seguir <span class="ajuda" data-ajuda="A tecla de SEGUIR o alvo selecionado (o &quot;follow&quot; do jogo).&#10;&#10;Usada SÓ no modo HH + Fada: a curandeira clica no retrato do líder, aperta esta tecla, e o JOGO caminha por ela — seguir não tem como sair da rota, diferente de refazer os waypoints por conta própria.&#10;&#10;SEM ATALHO PADRÃO NO CLIENTE: configure no jogo primeiro e repita aqui. Deixada vazia, a Fada avisa no log e não tenta seguir — chutar uma tecla faria ela apertar algo que faz outra coisa.">?</span></span><input class="captura" id="ed-k-follow" type="text" readonly placeholder="—" title="Sem atalho: o bot não usa esta ação" /></label>
+              <label class="campo"><span class="rotulo">Sentar</span> <input class="captura" id="ed-k-sit" type="text" readonly
+                  placeholder="—" title="Sem tecla: o bot não usa esta ação" /></label>
+              <label class="campo"><span class="rotulo">Prox Alvo</span> <input class="captura" id="ed-k-next" type="text" readonly
+                  placeholder="—" title="Sem tecla: o bot não usa esta ação" /></label>
+              <label class="campo"><span class="rotulo">Inventário</span> <input class="captura" id="ed-k-inv" type="text" readonly
+                  placeholder="—" title="Sem tecla: o bot não usa esta ação" /></label>
+              <label class="campo"><span class="rotulo">Amigos</span> <input class="captura" id="ed-k-fl" type="text" readonly
+                  placeholder="—" title="Sem tecla: o bot não usa esta ação" /></label>
+              <label class="campo"><span class="rotulo">Hotbar 1 <span class="ajuda" data-ajuda="Faz o bot voltar à página 1 da barra de atalhos, que é a usada pelo bot.&#10;&#10;Como configurar no jogo:&#10;1. Aperte ESC&#10;2. Clique em Keys&#10;3. Procure “Main Hotkey Page 1” e escolha uma tecla livre&#10;4. Apague as teclas de Page 2 e Page 3 — sem elas, nada tira a barra da página 1 por acidente&#10;&#10;É opcional: sem tecla configurada o bot continua clicando no botão, como sempre fez.">?</span></span><input class="captura" id="ed-k-hotbar" type="text" readonly
+                  placeholder="—" title="Sem tecla: o bot não usa esta ação" /></label>
+              <label class="campo"><span class="rotulo">Esconder pl. <span class="ajuda" data-ajuda="Esconde os outros jogadores da tela.&#10;&#10;Como configurar no jogo:&#10;1. Aperte ESC&#10;2. Clique em Keys&#10;3. Procure a tecla de esconder personagens (F12 costuma ser o padr&#227;o)&#10;&#10;Para que serve aqui: o catador de loot clica no CH&#195;O, e outro personagem em cima do cad&#225;ver muda o que o clique acerta. O bot usa o truque de segurar esta tecla e abrir o chat, que faz o esconder GRUDAR at&#233; o fim da sess&#227;o &#8212; e refaz isso antes de cada entrada na cave, porque apertar a tecla de novo desfaz.&#10;&#10;&#201; opcional: sem tecla configurada o bot n&#227;o mexe nisso.">?</span></span><input class="captura" id="ed-k-esconder" type="text" readonly
+                  placeholder="—" title="Sem tecla: o bot não usa esta ação" /></label>
             </div>
           </div>
         </div>
@@ -643,7 +672,7 @@
               <span>Intervalo de ataque (ms)</span>
               <input id="ed-ataque-delay" type="number" min="100" max="5000" step="100" class="campo-input" />
             </div>
-            <label class="campo">AoE até mana (%)
+            <label class="campo"><span>AoE até mana (%)</span>
               <input id="ed-aoe-mana" type="range" min="1" max="100" step="1" data-passo-roda="5" class="accent-blue-500" />
               <span class="valor-range text-[12px] text-blue-400 font-bold" id="val-aoe-mana"></span>
             </label>
@@ -689,12 +718,12 @@
       <div id="aba-hh" class="painel-aba scroll-thin">
         <div class="grupo">
           <div class="grupo-titulo">Reset da cave (obrigatório)</div>
-          <p class="text-[12px] text-slate-400 mb-3">
+          <p class="text-[12px] text-slate-400 mb-2">
             <b>A cave NÃO renasce sozinha.</b> Sem desfazer e refazer o time, os
             quatro bosses não voltam e a run seguinte vem vazia — isso é regra do
             jogo, não do bot. Sem conta de reset o bot roda, mas avisa no log.
           </p>
-          <div class="grid grid-cols-2 gap-6">
+          <div class="grid grid-cols-2 gap-x-6 gap-y-3">
             <div class="campo">
               <span>Modo</span>
               <select id="ed-hh-modo" class="campo-input">
@@ -713,19 +742,19 @@
 
         <div class="grupo">
           <div class="grupo-titulo">Combate</div>
-          <p class="text-[12px] text-slate-400 mb-3">
+          <p class="text-[12px] text-slate-400 mb-2">
             São <b>quatro bosses</b> em sequência, um por trecho da cave. O bot
             desmonta antes de cada luta (montado o jogo recusa as skills) e
             remonta para andar. Quem encerra cada luta é a flag de combate do
             jogo, não um cronômetro.
           </p>
-          <div class="grid grid-cols-2 gap-6">
+          <div class="grid grid-cols-2 gap-x-6 gap-y-3">
             <div class="campo">
               <span>Intervalo de ataque (ms)</span>
               <input id="ed-hh-delay" type="number" min="100" max="5000" step="100" class="campo-input" />
               <span class="ajuda" data-ajuda="Tempo entre duas teclas da rotação de ataque. O medido no jogo é 500 ms. Não é limite de recarga: skill em recarga não sai e a rotação segue para a próxima.">?</span>
             </div>
-            <label class="campo">AoE até mana (%)
+            <label class="campo"><span>AoE até mana (%)</span>
               <input id="ed-hh-aoe" type="range" min="1" max="100" step="1" data-passo-roda="5" class="accent-blue-500" />
               <span class="valor-range text-[12px] text-blue-400 font-bold" id="val-hh-aoe"></span>
             </label>
@@ -739,13 +768,13 @@
 
         <div class="grupo">
           <div class="grupo-titulo">Venda</div>
-          <p class="text-[12px] text-slate-400 mb-3">
+          <p class="text-[12px] text-slate-400 mb-2">
             O vendedor da HH é o <b>Roaming Apothecary</b>, do lado de FORA da
             cave — a poucos passos da porta. Não gasta pedra de retorno nem token
             de guilda. Quem manda ir vender é a <b>bolsa</b> (aba Personagem); o
             número de runs abaixo é o teto para quando a leitura da bolsa falhar.
           </p>
-          <div class="grid grid-cols-2 gap-6">
+          <div class="grid grid-cols-2 gap-x-6 gap-y-3">
             <div class="campo">
               <span>Vender a partir do slot</span>
               <input id="ed-hh-slot" type="number" min="1" max="40" step="1" class="campo-input" />

@@ -35,6 +35,10 @@ from blazesbot.config import (
 
 RAIZ = Path(__file__).resolve().parents[1]
 
+# Assinatura de arquivo PNG, montada por CÓDIGOS: bytes de controle num
+# literal quebram o arquivo na primeira reescrita automática.
+ASSINATURA_PNG = bytes((137, 80, 78, 71, 13, 10, 26, 10))
+
 
 def _ler(rel: str) -> str:
     return (RAIZ / rel).read_text(encoding="utf-8")
@@ -314,10 +318,45 @@ def test_o_icone_existe_e_e_um_ICO_valido():
     reservado, tipo, quantas = struct.unpack("<HHH", dados[:6])
     assert reservado == 0 and tipo == 1, "não é um ICO"
     assert quantas >= 4, "ICO precisa de várias resoluções para a taskbar"
-    # 16px é o tamanho que a aba e a lista de tarefas pequena usam.
+    # Os tamanhos que o Windows realmente pede: 16 na aba e na barra pequena,
+    # 24 e 32 na barra normal, 48 no Alt+Tab. Não há 256: `System.Drawing.Icon`
+    # (o que o pywebview usa no WinForms) engasga com quadros grandes, e nada na
+    # barra de tarefas passa de 48.
     tamanhos = {struct.unpack("<BBBBHHII", dados[6 + 16 * i:22 + 16 * i])[0] or 256
                 for i in range(quantas)}
-    assert 16 in tamanhos and 32 in tamanhos and 256 in tamanhos, tamanhos
+    assert {16, 24, 32, 48} <= tamanhos, tamanhos
+
+    # E QUADROS EM DIB, não PNG embutido -- `System.Drawing.Icon` é o consumidor
+    # mais restrito da cadeia. O primeiro byte do quadro é o tamanho do
+    # BITMAPINFOHEADER (40); um PNG começaria com a assinatura PNG.
+    for i in range(quantas):
+        _, _, _, _, _, _, _, offset = struct.unpack(
+            "<BBBBHHII", dados[6 + 16 * i:22 + 16 * i])
+        quadro = dados[offset:offset + 8]
+        assert not quadro.startswith(ASSINATURA_PNG), "quadro em PNG embutido"
+        assert struct.unpack("<I", quadro[:4])[0] == 40, "não é BITMAPINFOHEADER"
+
+
+def test_a_janela_tem_IDENTIDADE_propria_na_barra_de_tarefas():
+    """O `icon=` do pywebview JÁ funcionava -- medido, a janela ganha ícone
+    próprio. O que faltava era o AppUserModelID: sem ele o Windows agrupa a
+    janela sob o processo que a criou (`python.exe`) e o botão da barra usa o
+    ícone DELE, por mais bonito que seja o da janela."""
+    fonte = _ler("blazesbot/web_app.py")
+    assert "SetCurrentProcessExplicitAppUserModelID" in fonte
+    # Antes de criar a janela: depois, o Windows já decidiu o agrupamento.
+    assert (fonte.index("SetCurrentProcessExplicitAppUserModelID")
+            < fonte.index("webview.create_window("))
+
+
+def test_o_titlebar_mostra_SO_o_nome_do_bot():
+    """*"no topo esta escrito 'BlazesBot | Bewitcher cave' nao faz sentido manter
+    assim"* — usuário, 06/09/2026. O bot roda BC, HH e APP; anunciar uma das
+    caves no topo é errado desde que a HH existe."""
+    html = _ler("web/index.html")
+    barra = html.split('class="titlebar')[1].split("</header>")[0]
+    assert "Bewitcher Cave" not in barra, barra[:400]
+    assert ">BlazesBot</span>" in barra
 
 
 def test_a_janela_e_a_GUI_usam_o_MESMO_arquivo_de_icone():

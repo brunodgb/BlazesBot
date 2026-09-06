@@ -20,6 +20,7 @@ personagem. Assim o jogador configura as teclas uma vez e reaproveita em tudo.
 from __future__ import annotations
 
 import json
+import logging
 import os
 import threading
 import uuid
@@ -1442,6 +1443,72 @@ class BotConfig:
         self.accounts = nova
         return mudou
 
+    def funcao_ativa_da_conta(self, conta: Account) -> str:
+        """Qual das funções está ligada nesta conta: `"bc"`, `"hh"`, `"app"` ou `""`.
+
+        AS TRÊS SÃO MUTUAMENTE EXCLUSIVAS (06/09/2026, pedido do usuário): não
+        existe conta rodando duas ao mesmo tempo, nem na tela nem no bot.
+
+        Antes disto a exclusividade era uma PRECEDÊNCIA IMPLÍCITA no laço do
+        supervisor -- ele testava `app.enabled` primeiro e dava `continue`, então
+        com BC e APP marcados rodava o APP e o BC ficava "ligado e ignorado". A
+        tela mostrava dois selos acesos para uma conta que fazia uma coisa só.
+
+        Esta função é a LEITURA canônica. Quando o arquivo traz mais de uma
+        marcada (config antigo, ou editado à mão), ela devolve a de maior
+        precedência LEGADA -- a mesma que o supervisor já praticava, para o bot
+        continuar fazendo o que fazia. Quem NORMALIZA o arquivo é
+        `normalizar_funcoes_exclusivas`, na leitura.
+        """
+        for nome, ligado in (("app", conta.settings.app.enabled),
+                             ("hh", conta.hh_farm),
+                             ("bc", conta.bc_farm)):
+            if ligado:
+                return nome
+        return ""
+
+    def definir_funcao_da_conta(self, conta: Account, qual: str) -> str:
+        """Liga UMA função e desliga as outras. `""` desliga todas.
+
+        É o ÚNICO ponto de escrita das três: as duas interfaces chamam aqui, e é
+        isso que garante que nunca existam duas ligadas. Devolve o que ficou
+        ativo, para quem chamou poder avisar a tela.
+        """
+        escolhida = str(qual or "").strip().lower()
+        if escolhida not in ("bc", "hh", "app", ""):
+            raise ValueError(f"função desconhecida: {qual!r}")
+        conta.bc_farm = escolhida == "bc"
+        conta.hh_farm = escolhida == "hh"
+        conta.settings.app.enabled = escolhida == "app"
+        return escolhida
+
+    def normalizar_funcoes_exclusivas(self) -> list[str]:
+        """Deixa no máximo UMA função ligada por conta. Devolve o que mudou.
+
+        Roda na LEITURA do `config.json`: arquivo salvo por versão antiga (ou
+        editado à mão) pode ter duas marcadas, e a partir de 06/09/2026 isso é
+        configuração inválida -- não algo para o laço "resolver" em silêncio a
+        cada ciclo.
+
+        O critério é a precedência LEGADA (app > hh > bc), que é a que o
+        supervisor já praticava: o bot continua fazendo exatamente o que fazia
+        antes da regra, e só o estado gravado passa a dizer a verdade.
+        """
+        mudancas: list[str] = []
+        for conta in self.accounts:
+            ativas = [n for n, ligado in (("app", conta.settings.app.enabled),
+                                          ("hh", conta.hh_farm),
+                                          ("bc", conta.bc_farm)) if ligado]
+            if len(ativas) <= 1:
+                continue
+            fica = ativas[0]                      # precedência legada
+            self.definir_funcao_da_conta(conta, fica)
+            saiu = ", ".join(ativas[1:])
+            mudancas.append(
+                f"{conta.login or '(sem login)'}: {fica} mantida; "
+                f"{saiu} desligada(s) por exclusividade")
+        return mudancas
+
     def garantir_uids_unicos(self) -> None:
         """Todo `Account` com `uid` próprio, sem repetição. Idempotente.
 
@@ -1921,6 +1988,12 @@ class BotConfig:
 
         # UID PARA TODA CONTA, E SEM REPETIÇÃO -- ver `garantir_uids_unicos`.
         cfg.garantir_uids_unicos()
+
+        # UMA FUNÇÃO POR CONTA -- ver `normalizar_funcoes_exclusivas`. Arquivo
+        # antigo com duas marcadas sobe corrigido, e o que sobra é o que o
+        # supervisor já rodava.
+        for aviso in cfg.normalizar_funcoes_exclusivas():
+            logging.getLogger("blazes").info("Config normalizada — %s", aviso)
 
         # SÓ AQUI, com TODAS as contas construídas: esta migração é a única que
         # olha uma conta a partir de OUTRA.

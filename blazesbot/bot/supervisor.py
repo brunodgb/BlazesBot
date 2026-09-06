@@ -2742,6 +2742,13 @@ class BotManager:
                 # usuário ligava a HH. Ver `Account.farms`.
                 "farm": sup.account.bc_farm,
                 "farm_hh": sup.account.hh_farm,
+                # A FUNÇÃO ATIVA, resolvida aqui. As duas chaves acima ficam
+                # para quem ainda lê booleano, mas quem manda é esta: as três
+                # funções são MUTUAMENTE EXCLUSIVAS, e mandar booleanos soltos
+                # deixava a tela marcar duas ao mesmo tempo no espelho ao vivo.
+                "funcao": ("app" if sup.account.settings.app.enabled
+                           else "hh" if sup.account.hh_farm
+                           else "bc" if sup.account.bc_farm else ""),
                 # CONECTADA = tem JANELA VIVA agora, CONFERIDA.
                 #
                 # Não existia sinal de "no ar" nenhum: a interface só sabia que a

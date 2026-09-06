@@ -63,9 +63,10 @@ def test_o_modulo_de_interface_importa(nome):
 # Cada linha é (o que é, o nome na ponte web, o nome na GUI). Um recurso novo
 # entra aqui, e é isso que faz o esquecimento aparecer.
 PARIDADE = [
-    ("ligar/desligar o BC", "alternar_farm", "_toggle_farm"),
-    ("ligar/desligar a HH", "alternar_hh", "_toggle_hh"),
-    ("ligar/desligar o APP", "alternar_app", "_toggle_app"),
+    # UMA operação exclusiva no lugar de três independentes -- ver
+    # `docs/INVARIANTES.md`, "A tela de contas".
+    ("trocar a função da conta (BC/HH/APP)",
+     "definir_funcao", "_trocar_funcao"),
 ]
 
 
@@ -79,7 +80,7 @@ def test_o_recurso_existe_nas_DUAS_interfaces(o_que, na_web, na_gui):
     """
     web = importlib.import_module("blazesbot.web_app")
     dono_web = next((c for c in vars(web).values()
-                     if isinstance(c, type) and hasattr(c, "alternar_farm")), None)
+                     if isinstance(c, type) and hasattr(c, "definir_funcao")), None)
     assert dono_web is not None, "não achei a classe da ponte web"
     assert hasattr(dono_web, na_web), f"{o_que}: falta na interface WEB"
 

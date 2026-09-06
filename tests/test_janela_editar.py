@@ -1,0 +1,248 @@
+"""A janela Editar: exclusividade das funções, tooltip e altura das abas.
+
+Refatoração pedida em 06/09/2026, com o council consultado antes de escrever
+código. O que estes testes travam, e o defeito real de cada um:
+
+1. **AS TRÊS FUNÇÕES SÃO MUTUAMENTE EXCLUSIVAS.** Eram três escritas
+   independentes, e a exclusividade era uma PRECEDÊNCIA IMPLÍCITA no laço do
+   supervisor -- com BC e APP marcados rodava o APP e o BC ficava "ligado e
+   ignorado", com a tela mostrando dois selos acesos para uma conta que fazia
+   uma coisa só.
+2. **O TOOLTIP SOMAVA A POSIÇÃO DA JANELA NA TELA** a coordenadas de viewport,
+   num elemento `position: fixed` -- ele era criado, preenchido e mostrado FORA
+   da área visível. Não era falta de binding: os ouvintes sempre estiveram
+   certos.
+3. **ALTURA POR NÚMERO MÁGICO.** O painel tinha `max-height: calc(90vh - 160px)`,
+   um chute da soma de cabeçalho + abas + rodapé (medido: ~153px).
+
+Ver `docs/decisoes/interface.md`.
+"""
+
+from __future__ import annotations
+
+import re
+from pathlib import Path
+
+from blazesbot.config import Account, BotConfig
+
+RAIZ = Path(__file__).resolve().parents[1]
+JS = (RAIZ / "web" / "main.js").read_text(encoding="utf-8")
+CSS = (RAIZ / "web" / "style.css").read_text(encoding="utf-8")
+HTML = (RAIZ / "web" / "index.html").read_text(encoding="utf-8")
+PONTE = (RAIZ / "blazesbot" / "web_app.py").read_text(encoding="utf-8")
+GUI = (RAIZ / "blazesbot" / "gui" / "main_window.py").read_text(encoding="utf-8")
+
+
+def _sem_comentarios(texto: str, marca: str) -> str:
+    """O texto sem as linhas de comentário.
+
+    Os comentários deste projeto CITAM o defeito que consertaram -- e é o
+    comentário que impede alguém de reintroduzi-lo sem saber por quê. Buscar a
+    citação no arquivo inteiro reprovaria justamente a documentação.
+    """
+    return "\n".join(l for l in texto.splitlines()
+                     if not l.lstrip().startswith(marca))
+
+
+def _conta(login: str, bc: bool = False, hh: bool = False,
+           app: bool = False) -> Account:
+    c = Account(login=login, bc_farm=bc, hh_farm=hh)
+    c.settings.app.enabled = app
+    return c
+
+
+# -- 1. uma função por conta ------------------------------------------------
+
+def test_ligar_uma_funcao_DESLIGA_as_outras():
+    cfg = BotConfig()
+    cfg.accounts = [_conta("x", bc=True)]
+    c = cfg.accounts[0]
+    for pedida, esperado in (("hh", "hh"), ("app", "app"),
+                             ("bc", "bc"), ("", "")):
+        assert cfg.definir_funcao_da_conta(c, pedida) == esperado
+        ligadas = [n for n, v in (("bc", c.bc_farm), ("hh", c.hh_farm),
+                                  ("app", c.settings.app.enabled)) if v]
+        assert ligadas == ([esperado] if esperado else []), (pedida, ligadas)
+
+
+def test_config_ANTIGO_com_duas_marcadas_sobe_corrigido():
+    """Duas marcadas é configuração INVÁLIDA a partir de 06/09/2026, não algo
+    para o laço resolver em silêncio a cada ciclo.
+
+    O critério é a precedência LEGADA (app > hh > bc) -- a que o supervisor já
+    praticava, para o bot continuar fazendo exatamente o que fazia.
+    """
+    cfg = BotConfig.from_dict({"accounts": [
+        {"login": "a", "bc_farm": True, "hh_farm": True},
+        {"login": "b", "bc_farm": True, "settings": {"app": {"enabled": True}}},
+    ]})
+    assert cfg.funcao_ativa_da_conta(cfg.accounts[0]) == "hh"
+    assert cfg.funcao_ativa_da_conta(cfg.accounts[1]) == "app"
+    for c in cfg.accounts:
+        ligadas = sum((c.bc_farm, c.hh_farm, c.settings.app.enabled))
+        assert ligadas == 1, c.login
+
+
+def test_funcao_desconhecida_e_RECUSADA():
+    """Erro de digitação na ponte não pode desligar as três em silêncio."""
+    cfg = BotConfig()
+    cfg.accounts = [_conta("x", bc=True)]
+    try:
+        cfg.definir_funcao_da_conta(cfg.accounts[0], "farm")
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("aceitou função inexistente")
+    assert cfg.accounts[0].bc_farm, "recusou e ainda desligou o que estava certo"
+
+
+def test_a_escrita_tem_UM_ponto_so():
+    """Três `alternar_*` independentes eram exatamente o que deixava duas
+    ligadas: em duas chamadas ("desliga BC", "liga HH") existe um instante com
+    as duas, e o supervisor lê os campos a cada volta."""
+    for antigo in ("def alternar_farm", "def alternar_hh", "def alternar_app"):
+        assert antigo not in PONTE, f"{antigo} voltou"
+    assert "def definir_funcao" in PONTE
+    assert "definir_funcao_da_conta" in PONTE
+    # E a GUI usa o MESMO ponto de escrita.
+    assert "_trocar_funcao" in GUI
+    assert "definir_funcao_da_conta" in GUI
+    for antigo in ("def _toggle_farm", "def _toggle_hh", "def _toggle_app"):
+        assert antigo not in GUI, f"{antigo} voltou"
+
+
+def test_o_controle_da_tela_e_RADIO():
+    """Caixa comunica semântica falsa -- sugere que a combinação é válida."""
+    assert 'cx.type = "radio"' in JS
+    assert "cx.name = `funcao-${c.uid}`" in JS, (
+        "sem `name` por conta, os grupos de rádio se misturam entre linhas")
+    # Clicar no que já está ligado desliga: "nenhuma função" é estado válido.
+    assert 'definirFuncao(tr.dataset.uid, "")' in JS
+
+
+def test_o_espelho_ao_vivo_tambem_e_exclusivo():
+    """Ele corrigia BC e HH de forma independente, e com rádio isso
+    reintroduzia a função antiga a cada poll de 1,5 s -- medido na tela."""
+    bloco = JS.split("function marcarNoAr(est)")[1].split("\n}")[0]
+    assert "const ativa = c.funcao" in bloco
+    assert "cx.dataset.acao === ativa" in bloco
+
+
+def test_a_troca_com_o_bot_rodando_AVISA_o_custo():
+    """Trocar no meio de uma run da cave perde aquela run (teleporte gasto,
+    boss vivo). Bloquear seria tirar uma função que o usuário usa; avisar deixa
+    a decisão com ele."""
+    assert "volta em andamento é perdida" in " ".join(PONTE.split())
+    assert "volta em andamento é" in " ".join(GUI.split())
+
+
+# -- 2. o tooltip -----------------------------------------------------------
+
+def test_o_tooltip_NAO_soma_a_posicao_da_janela():
+    """ESTE era o defeito: `getBoundingClientRect()` já é relativo ao viewport, e
+    o balão é `position: fixed`. Somar `screenX`/`screenY` o jogava para fora da
+    área visível -- ele existia, preenchido e visível, em lugar nenhum."""
+    bloco = JS.split("function mostrarAjuda(icone)")[1].split("\nfunction ")[0]
+    codigo = _sem_comentarios(bloco, "//")
+    for proibido in ("window.screenX", "window.screenY",
+                     "window.screenLeft", "window.screenTop"):
+        assert proibido not in codigo, f"{proibido} voltou ao posicionamento"
+    # Grampeia nas quatro bordas: a janela é travada em 1200x800 e o campo da
+    # borda é caso real, não hipótese.
+    assert "const grampo = (v, min, max)" in bloco
+    assert "window.innerWidth" in bloco and "window.innerHeight" in bloco
+
+
+def test_o_tooltip_nao_pisca_e_fecha_limpo():
+    """Sem atraso no fechar, atravessar dois ícones vizinhos apaga e reacende o
+    balão a cada pixel."""
+    assert "clearTimeout(esconderAjuda._t)" in JS
+    assert "esconderAjuda._t = setTimeout" in JS
+    # Movimento DENTRO do próprio ícone não é saída.
+    assert "!icone.contains(e.relatedTarget)" in JS
+
+
+def test_o_tooltip_responde_ao_TECLADO():
+    """Só no mouse, a ajuda não existe para quem navega por Tab."""
+    assert 'document.addEventListener("focusin"' in JS
+    depois = JS[JS.index("function esconderAjuda()"):]
+    assert "mostrarAjuda(icone)" in depois.split("captura de tecla")[0]
+
+
+# -- 3. altura e layout -----------------------------------------------------
+
+def test_a_altura_do_painel_NAO_e_numero_magico():
+    """Era `calc(90vh - 160px)`, e 160 era um chute da soma de cabeçalho + abas
+    + rodapé (medido: ~153px). Número mágico que mente assim que qualquer uma
+    das três barras muda de altura. O flex resolve sozinho."""
+    declaracoes = [l for l in CSS.splitlines() if "max-height:" in l]
+    assert not any("calc(" in l for l in declaracoes), declaracoes
+    bloco = CSS.split(".painel-aba {")[1].split("}")[0]
+    assert "flex: 1;" in bloco
+    assert "min-height: 0;" in bloco, (
+        "sem isto o `overflow-y: auto` falha dentro de flex")
+
+
+def test_a_tecla_tem_O_MESMO_FORMATO_dos_outros_campos():
+    """Rótulo EM CIMA, como as cinco abas inteiras. A primeira tentativa pôs
+    rótulo e campo lado a lado para cortar altura -- cortava (410px contra
+    469px) e ainda assim causava estranheza, porque era a única aba do modal com
+    outro formato. A altura volta pela COLUNA: 118px são 7 colunas em vez de 4.
+    Medido: 528px de conteúdo num painel de 565px, sem rolar."""
+    bloco = CSS.split(".grade-teclas {")[1].split("}")[0]
+    assert "minmax(118px" in bloco
+    assert ".grade-teclas .campo {" not in CSS, (
+        "o campo de tecla usa o `.campo` padrão -- é esse o ponto")
+    rotulo = CSS.split(".grade-teclas .campo > .rotulo,")[1].split("}")[0]
+    assert "truncate" in rotulo and "whitespace-nowrap" in rotulo
+    assert "font: inherit" not in CSS.split(".grade-teclas")[1][:600], (
+        "o rótulo da tecla usa a tipografia dos outros campos")
+
+
+def test_cabecalho_e_rodape_do_modal_ficam_FIXOS():
+    """Salvar e Cancelar têm de estar acessíveis em qualquer aba."""
+    modal = HTML.split('id="modal-editor"')[1]
+    modal = modal.split("Modal de confirma")[0]
+    assert modal.count("shrink-0") >= 3, (
+        "cabeçalho, abas e rodapé precisam de shrink-0")
+    inicio = modal.index("btn-cancelar-modal")
+    assert "shrink-0" in modal[max(0, inicio - 400):inicio]
+
+
+def test_o_placeholder_de_tecla_e_CURTO():
+    """"não usar tecla" truncava para "NÃO USAR TE..." no campo estreito -- uma
+    frase onde cabe um símbolo, e truncada não informava nada."""
+    assert 'placeholder="não usar tecla"' not in HTML
+    assert 'placeholder="(sem atalho padrão)"' not in HTML
+    assert HTML.count('placeholder="—"') >= 28, (
+        "os campos de tecla usam o travessão, com o `title` explicando")
+
+
+def test_o_ICONE_DE_AJUDA_nao_gasta_uma_linha():
+    """`.campo` é `flex-col`: com o "?" como terceiro filho ele caía ABAIXO do
+    input -- uma linha inteira por campo (medido: a aba HH transbordava 22px e
+    passou a ter 78px de folga) e um símbolo solto, longe do rótulo."""
+    bloco = CSS.split(".campo > .ajuda {")[1].split("}")[0]
+    assert "absolute" in bloco
+    assert ".campo:has(> .ajuda)" in CSS, "sem `relative` o âncora é o modal"
+
+
+def test_o_ROTULO_tem_UMA_tipografia_no_modal_INTEIRO():
+    """`font: inherit` no `.rotulo` deixava campo com ajuda ("Grupo") em
+    tipografia diferente de LOGIN/SENHA, lado a lado na mesma grade. Depois de
+    a grade de teclas voltar ao rótulo em cima, não sobrou nenhum lugar onde a
+    exceção se justifique."""
+    assert "font: inherit" not in CSS.split(".campo>.rotulo {")[1].split("}")[0]
+    for solto in ('<label class="campo">HP alvo (%)',
+                  '<label class="campo">AoE até mana (%)'):
+        assert solto not in HTML, f"rótulo solto voltou: {solto}"
+
+
+def test_o_ROTULO_DA_TECLA_e_um_elemento_de_verdade():
+    """Era NÓ DE TEXTO SOLTO -- e nó de texto não é selecionável em CSS: o
+    rótulo da tecla não recebia estilo nenhum, e a grade não tinha como alinhar
+    nem truncar. Embrulhado em `.rotulo`, ele é o mesmo rótulo dos outros
+    campos."""
+    soltos = re.findall(
+        r'<label class="campo[^"]*">[^<\s][^<]*?<input class="captura', HTML)
+    assert not soltos, soltos

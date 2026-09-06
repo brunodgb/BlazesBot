@@ -1023,3 +1023,206 @@ vermelho-verde é o mais comum, e o ritmo era o único canal livre.
 5. **Acessibilidade.** O estado era dito por COR e por `title`, e nenhum dos dois
    chega a leitor de tela. O ponto ganhou `role="img"` e `aria-label` reescrito
    junto com a cor; sem ponto, `aria-hidden` para não virar ruído.
+
+
+### 06/09/2026 (2) — o ícone do bot, e por que ele era o do Python
+
+Dois pedidos: tirar o `| Bewitcher Cave` do topo (o bot roda BC, HH **e** APP —
+anunciar uma das caves ali está errado desde que a HH existe), e dar ao bot um
+ícone de verdade, porque **a barra de tarefas mostrava a cobrinha do Python**.
+
+#### O desenho: a referência do usuário, com o B no miolo
+
+Base é a imagem que ele mandou: chama de silhueta escura com ombros
+**recortados** (é o recorte que faz ler "fogo" e não "gota d'água"), contorno
+luminoso e miolo aceso.
+
+A tensão: a referência é **rica em detalhe interno** — muitas línguas finas — e
+isso não sobrevive a 16px, que é o tamanho da barra de tarefas. Foram desenhadas
+e comparadas três leituras nos tamanhos reais (16/24/32/48) e sobre fundo claro
+**e** escuro:
+
+| leitura | veredito |
+|---|---|
+| B pequeno na base, três línguas (fiel à referência) | bonita a 110px, **desaparece a 16px** |
+| **B grande em ouro, línguas laterais recuadas** | **lê em todos os tamanhos — escolhida** |
+| B vazado num miolo dourado (negativo) | forte a 110px, o vazado **fecha e some** a 16/24px |
+
+É a terceira vez que essa mesma lição aparece nesta tela: **o que sobrevive a
+tamanho pequeno é massa e forma simples**, não detalhe.
+
+#### DUAS HIPÓTESES ERRADAS antes da causa real — vale registrar
+
+1. **"O pywebview não suporta `icon=` no Windows."** A docstring do próprio
+   `webview.start` diz *"Supported only on GTK/QT"* — mas o backend WinForms
+   **lê** `_state['icon']`. Refutada lendo o backend.
+2. **"O `.ico` estava em PNG embutido e o `System.Drawing.Icon` não lê."**
+   Plausível, e **medida**: montei o mesmo ícone nos dois formatos e pedi ao .NET
+   os dois. **Carregou os dois.** Hipótese morta.
+
+**A causa real, medida:** subi uma janela pywebview igual à do bot e perguntei o
+ícone dela com `WM_GETICON` — **a janela TEM ícone próprio**, nos dois tamanhos.
+O `icon=` sempre funcionou. O que faltava era o **AppUserModelID**: sem ele o
+Windows agrupa a janela sob o processo que a criou (`python.exe`) e o botão da
+barra de tarefas usa o ícone **dele**, por mais bonito que seja o da janela.
+
+`SetCurrentProcessExplicitAppUserModelID("BlazesOfGamer.BlazesBot")`, chamado no
+**começo** do `run()` — antes de qualquer janela existir. O teste de guarda exige
+essa ordem, e pegou a primeira versão, em que a chamada estava depois do
+`create_window`.
+
+#### O `.ico` continua em DIB clássico
+
+Mesmo com a hipótese refutada, o arquivo ficou em DIB e não em PNG embutido:
+`System.Drawing.Icon` é o consumidor mais restrito da cadeia, e não há vantagem
+em usar o formato que ele lê pior. Tamanhos 16/20/24/32/40/48/64 — **sem 256**,
+porque nada na barra de tarefas passa de 48 e quadros grandes são exatamente onde
+o .NET clássico costuma engasgar.
+
+## A janela Editar — o porquê medido (06/09/2026)
+
+Pedido: reduzir o scroll (principalmente na aba Teclas), consertar os tooltips
+que não apareciam, polir a nomenclatura, e — no meio do trabalho — tornar as
+funções mutuamente exclusivas. O **council** foi consultado antes de escrever
+código; **2 dos 4 assentos responderam** (openrouter-1 devolveu "model
+unavailable for free", openrouter-3 "rate limit exceeded"), e o codex revisou o
+diff depois.
+
+### Os tooltips: NÃO era o binding
+
+A suspeita natural é o ouvinte — e ela estava errada. Os ouvintes de
+`mouseover`/`mouseout` sempre estiveram certos e delegados. O balão era criado,
+preenchido e ficava com `opacity: 1`: **ele existia, visível, em lugar nenhum.**
+
+A causa é uma mistura de sistemas de coordenada. `getBoundingClientRect()`
+devolve posição relativa ao **viewport**; o balão é `position: fixed`, que também
+é resolvido no **viewport**. O código somava `window.screenX`/`window.screenY` —
+a posição da **JANELA NA TELA** — antes de escrever em `style.left/top`. Numa
+janela em (200, 100), o balão de um ícone a 400px do topo do viewport ia para
+500px… fora da área visível, porque a janela tem 800px e o resto do offset
+somava. Com a janela em (0,0) o defeito **desaparece**, e é por isso que ele
+sobreviveu tanto tempo.
+
+O conserto é remover as duas somas. Depois disso o balão precisa de duas coisas
+que não tinha:
+
+- **grampo nas quatro bordas** (`const grampo = (v, min, max)`): a janela é
+  travada em 1200×800 e campo na borda é caso real, não hipótese;
+- **atraso de 80 ms no fechar**: sem ele, atravessar dois ícones vizinhos apaga e
+  reacende o balão a cada pixel. E movimento **dentro** do próprio ícone não é
+  saída (`!icone.contains(e.relatedTarget)`).
+
+O balão vive no `<body>` de propósito: os painéis do modal rolam
+(`overflow-y: auto`), e um balão dentro deles seria **cortado**.
+
+`focusin`/`focusout` entraram junto — só no mouse, a ajuda não existe para quem
+navega por Tab.
+
+### A altura: o número mágico e a linha desperdiçada
+
+O painel tinha `max-height: calc(90vh - 160px)`. O 160 é um chute da soma de
+cabeçalho + abas + rodapé; **medido, dá ~153px**. Número mágico que mente assim
+que qualquer uma das três barras muda de altura — o painel sobra ou vaza, e nada
+avisa. Saiu: `.painel-aba` é `flex: 1; min-height: 0` dentro de um flex de altura
+fixa, e o flex resolve a altura certa sozinho. (`min-height: 0` não é enfeite:
+sem ele o `overflow-y: auto` não funciona dentro de flex.)
+
+Medições a 100% de DPI, painel de 565px, altura NATURAL do conteúdo:
+
+| aba | antes | depois | folga |
+|---|---|---|---|
+| Personagem | 458 | 452 | 113 |
+| Teclas | 560 | 528 | 37 |
+| APP | — | cabe | — |
+| Bewitcher Cave | 391 | 391 | 174 |
+| HH | 587 (rolava 22px) | 487 | 78 |
+
+Três mudanças, em ordem de resultado por unidade de risco:
+
+1. **Coluna mais estreita na grade de teclas** (190px → 118px): 7 colunas em vez
+   de 4, e um grupo de 8 teclas cabe em duas linhas em vez de três. Isso exigiu
+   embrulhar o rótulo — ele era **nó de texto solto**, e nó de texto não é
+   selecionável em CSS: não recebia estilo nenhum, não truncava, não alinhava.
+   Com `<span class="rotulo">` ele passa a ser o mesmo rótulo do resto do modal
+   (caixa alta, 10.5px), e é isso que permite a coluna estreita.
+2. **O "?" ancorado no rótulo** (`.campo:has(> .ajuda)` relativo, `.campo >
+   .ajuda` absoluto no canto). Como terceiro filho de um `flex-col` ele caía
+   ABAIXO do input: uma linha inteira por campo (20px × 8 campos só na HH) e um
+   símbolo solto, longe do rótulo que explica. Ancorado, custa **zero** altura.
+   Isso sozinho tirou a HH de 563 para 487.
+3. **Gap vertical e margem de parágrafo na HH** (`gap-y-3`, `mb-2`): pagou os
+   22px que faltavam, sem tirar informação da tela.
+
+**A folga era o requisito**, não o zero de scroll: o usuário avisou que vai
+ACRESCENTAR funções. 78px é o pior caso, e quando estourar o scroll interno já
+funciona com cabeçalho e rodapé fixos.
+
+#### O que NÃO se fez, e por quê
+
+- **Crescer o modal** (`h-[92vh]`, `max-h`): compra ~16px e some no primeiro
+  campo novo. Trata o sintoma.
+- **Fundir os 4 grupos de teclas**: economiza os títulos (~60px) e destrói a
+  única divisão semântica de 29 campos idênticos. Caro em legibilidade.
+- **Popover API / `anchor-positioning`**: o alvo é WebView2 evergreen e daria,
+  mas o defeito era aritmética de coordenada — trocar a tecnologia esconderia a
+  causa em vez de consertá-la.
+- **Padronizar os 25 rótulos de tecla em caixa alta**: na grade de teclas o
+  rótulo divide a linha com o campo, e ali texto normal se lê melhor. Foi por
+  isso que o `font: inherit` do `.rotulo` ficou **escopado** a `.grade-teclas`
+  em vez de sair: fora dela o vizinho é LOGIN/SENHA, e herdar deixava só o campo
+  com ajuda ("Grupo") com outra tipografia.
+
+### Exclusividade: na ESCRITA, não na leitura
+
+O supervisor tinha **precedência implícita** — o laço testava `app.enabled`
+primeiro e dava `continue`. Com BC e APP marcados rodava o APP e o BC ficava
+"ligado e ignorado", com a tela mostrando dois selos acesos para uma conta que
+fazia uma coisa só.
+
+Impor na **leitura** (uma `funcao_ativa()` que resolve e o resto obedece)
+manteria o arquivo mentindo e o defeito visual intacto. Impor na **escrita** é
+uma função só, `definir_funcao_da_conta`, que liga uma e desliga as outras — e
+`funcao_ativa_da_conta` fica como leitura de conveniência, não como árbitro.
+
+Config antigo com duas marcadas **sobe corrigido**, pelo critério da precedência
+legada (app > hh > bc): é a que o supervisor já praticava, então o bot continua
+fazendo exatamente o que fazia. Normaliza uma vez, na leitura do arquivo, não a
+cada ciclo do laço.
+
+Função desconhecida é **recusada** (`ValueError`): erro de digitação na ponte não
+pode desligar as três em silêncio.
+
+O controle virou **rádio** com `name` por conta. Caixa comunica semântica falsa —
+sugere que a combinação é válida. E clicar no que já está ligado **desliga**:
+"nenhuma função" é estado válido, a conta fica só no login e relogin.
+
+Trocar com o bot **rodando** continua permitido. Bloquear seria tirar uma função
+que o usuário usa; o que a troca custa (a run em andamento) vai para o log.
+
+#### O que quase passou: o espelho ao vivo
+
+O `marcarNoAr` corrigia BC e HH de forma **independente**. Com rádio, isso
+reintroduzia a função antiga **a cada poll de 1,5 s** — a pessoa clicava em HH e
+o BC voltava sozinho um segundo depois. Pegou na verificação em tela, não em
+teste: o teste de unidade não tem poll.
+
+#### A tentativa que foi REPROVADA PELO USUÁRIO: rótulo ao lado do campo
+
+O primeiro corte na aba Teclas foi pôr rótulo e campo na MESMA linha
+(`.grade-teclas .campo` como `flex-row`). Funcionou pelos números — a soma dos
+quatro grupos caiu de 469px para 410px, item de 47px para 24px — e depois de
+embrulhar o rótulo solto os 29 campos caíram em 4 colunas exatas (286, 504, 722,
+940). Duas rodadas de ajuste: com `flex: 1` no rótulo o campo ia para a borda da
+coluna e largava o rótulo que nomeia; com largura fixa (6,75rem) o par ficou
+junto e nada truncou.
+
+**O usuário reprovou mesmo assim**, e a palavra dele foi *estranheza* — sem
+conseguir apontar o quê. O quê era **consistência**: esta era a ÚNICA aba do
+modal com o rótulo ao lado. Em todas as outras (e nas outras telas do bot) o
+rótulo fica em cima, em caixa alta pequena. O olho aprende um formato de campo e
+o aplica nas cinco abas; a aba que foge do formato custa atenção toda vez.
+
+Lição, e ela não é sobre CSS: **59px de altura não pagam um formato só desta
+tela.** A altura voltou pela COLUNA (118px em vez de 190px), que é um ajuste
+invisível, em vez do FORMATO, que é o que a pessoa vê. A folga ficou em 37px, a
+menor do modal e menos que os 80px do desenho reprovado — e é a troca certa.

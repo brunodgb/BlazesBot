@@ -238,9 +238,110 @@ $("#btn-tema").addEventListener("click", () => {
    ============================================================ */
 
 // Quantas colunas a tabela de contas tem -- o `colSpan` do cabeçalho de grupo
-// precisa cobrir todas. Num lugar só: errar aqui deixa o cabeçalho estreito e a
-// tabela torta, e o erro é silencioso.
+// precisa cobrir todas. Num lugar só, e AINDA ASSIM saiu de sincronia: a coluna
+// da HH entrou depois e ninguém somou aqui, então o cabeçalho de grupo ficou uma
+// coluna curto -- o erro é silencioso, ninguém vê um `colspan` errado.
+// Agora BC/HH/APP são UMA coluna (Função), e o total voltou a bater.
+//
+// alça · Ativa · Login · Senha · Run · Servidor · Posição · Função · Editar
 const COLUNAS_DA_TABELA_DE_CONTAS = 9;
+
+// OS ECOSSISTEMAS, na coluna Função.
+//
+// SÓ A SIGLA -- o pictograma foi REMOVIDO. Ele entrou como reforço de
+// reconhecimento, mas quem removia a ambiguidade sempre foi a sigla: BC e HH
+// são as duas cavernas, e dois pictogramas de caverna não se distinguem a
+// 16px. Tirar o desenho custa nada em clareza e devolve ~18px por selo --
+// que é o que faz esta coluna aguentar a QUARTA função quando ela vier, sem
+// espremer o resto da tabela.
+const ECOSSISTEMAS = [
+  { acao: "bc", sigla: "BC", campo: "bc_farm",
+    titulo: "Bewitcher Cave — um boss por run." },
+  { acao: "hh", sigla: "HH", campo: "hh_farm",
+    titulo: "HH (Black Wind Camp Dungeon) — quatro bosses em sequência.\n"
+      + "Marcada junto com BC, roda a HH.\n"
+      + "A conta de reset fica em Editar conta > HH." },
+  { acao: "app", sigla: "APP", campo: "app_enabled",
+    titulo: "Modo APP — macro de teclado, sem cave." },
+];
+
+/* NO AR AGORA — o estado que a tabela não mostrava.
+   `estado().contas` só traz conta EM EXECUÇÃO, com `runs` e cronômetro. O dado
+   já chegava no navegador e era usado só para espelhar duas caixas; o resto ia
+   fora. Agora ele acende o ponto verde e diz quantas runs a conta fez.
+
+   Atualiza no lugar, SEM re-renderizar a linha -- redesenhar apagaria uma edição
+   inline em andamento (é a mesma razão que já valia para as caixas).
+
+   Sem cronômetro por linha, de propósito: um texto que muda a cada segundo em N
+   linhas é ruído e conserta nada. O cronômetro ao vivo já existe, inteiro, na
+   aba Estatísticas de BC. */
+function marcarNoAr(est) {
+  const corpo = $("#corpo-contas");
+  const noAr = new Map();
+  (est.contas || []).forEach((c) => { if (c.uid) noAr.set(c.uid, c); });
+
+  $$("#corpo-contas tr[data-uid]").forEach((tr) => {
+    const c = noAr.get(tr.dataset.uid);
+    tr.classList.toggle("linha-no-ar", !!c);
+
+    // O PONTO diz o ESTADO DA CONEXÃO, e vale para qualquer ecossistema:
+    //
+    //   verde    -> janela viva, a conta está jogando
+    //   vermelho -> caiu e está voltando (relogin), ou ainda subindo
+    //   nenhum   -> a conta não está em execução
+    //
+    // Antes o ponto era verde por estar na LISTA do resumo -- e a conta que
+    // caiu continua na lista, por minutos, tentando religar. O ponto dizia
+    // "no ar" enquanto o personagem estava fora do jogo.
+    const marca = tr.querySelector('[data-papel="ao-vivo"]');
+    if (marca) {
+      marca.classList.toggle("parada", !c);
+      const caida = !!c && !c.conectada;
+      marca.classList.toggle("caida", caida);
+      const dica = !c ? ""
+        : (caida
+            ? (c.relogando
+                ? `Caiu — reconectando (relogin #${c.relogins || 1})`
+                : "Conectando…")
+            : "No ar agora");
+      marca.title = dica;
+      // O MESMO texto como nome acessível: cor e tooltip não chegam a leitor de
+      // tela nem a quem navega por teclado. Sem rótulo, o ponto é invisível.
+      if (dica) {
+        marca.setAttribute("aria-label", dica);
+      } else {
+        marca.removeAttribute("aria-label");
+      }
+      marca.setAttribute("aria-hidden", dica ? "false" : "true");
+    }
+
+    // A CONTAGEM é só de cave. `farm`/`farm_hh` vêm do RESUMO do supervisor (o
+    // que a conta está fazendo AGORA), não do disco -- é a mesma fonte das duas
+    // caixas logo abaixo, então as três contam a mesma história.
+    const cel = tr.querySelector('[data-papel="runs"]');
+    if (cel) {
+      const cave = !!c && (c.farm || c.farm_hh);
+      const runs = cave ? (c.runs || 0) : 0;
+      cel.textContent = cave ? String(runs) : "";
+      cel.title = cave ? `${runs} run(s) fechada(s) nesta sessão` : "";
+    }
+    if (!c) return;
+    // O SELO SEGUE O RESUMO, e não o disco: o backend pode desligar a função
+    // sozinho (a conta tentou vender sem tecla de retorno configurada).
+    //
+    // UM RÁDIO, marcado por `c.funcao`. Antes isto marcava as caixas de BC e de
+    // HH de forma INDEPENDENTE, e com rádio isso reintroduzia a função antiga a
+    // cada poll de 1,5 s -- o teste pegou: trocar para BC e desligar deixava a
+    // tela mostrando HH de volta. As três são exclusivas, então o espelho tem
+    // de ser exclusivo também.
+    const ativa = c.funcao || "";
+    tr.querySelectorAll(".selo-caixa").forEach((cx) => {
+      const querido = cx.dataset.acao === ativa;
+      if (cx.checked !== querido) cx.checked = querido;
+    });
+  });
+}
 
 function renderContas() {
   const corpo = $("#corpo-contas");
@@ -301,7 +402,19 @@ function renderContas() {
     // buscava por login e login é campo livre: dois iguais faziam a busca
     // acertar a primeira linha, que podia ser de outra conta.
     tr.dataset.login = c.login || "";
+    // QUATRO ESTADOS, QUATRO CANAIS DIFERENTES -- eles coexistem, então nenhum
+    // pode disputar o mesmo recurso visual com outro:
+    //
+    //   selecionada (para remover) -> BARRA na borda esquerda  (`linha-ativa`)
+    //   inativa                    -> OPACIDADE reduzida       (`linha-inativa`)
+    //   rodando agora              -> PONTO verde ao lado do login
+    //   ativa e parada             -> nenhum enfeite, que é o normal
+    //
+    // `linha-ativa` tem nome infeliz e NÃO quer dizer "conta ativa": é a linha
+    // SELECIONADA. Por isso o fundo não pode carregar "ativa" -- já está
+    // ocupado. É a mesma razão de a faixa alternada (zebra) ter sido recusada.
     if (c.uid === contaUidSelecionado) tr.classList.add("linha-ativa");
+    if (!c.enabled) tr.classList.add("linha-inativa");
 
     // ALÇA DE ARRASTE. Coluna própria porque a linha é quase toda campo de
     // entrada (login, senha, dois combos, três caixas, botão): arrastar pela
@@ -317,13 +430,41 @@ function renderContas() {
 
     const tdAtiva = document.createElement("td");
     tdAtiva.className = "ctr";
+    // O `<label>` cobre a célula inteira: a caixa continua com ~16px de
+    // DESENHO, mas o ALVO passa a ser 28x28. Eram 14x14 -- metade do mínimo de
+    // 24x24 que a WCAG 2.5.8 pede --, e havia QUATRO desses por linha, a poucos
+    // pixels um do outro. Era o defeito mais objetivo da tela.
+    const rotAtiva = document.createElement("label");
+    rotAtiva.className = "alvo-caixa";
+    rotAtiva.title = "Conta ativa: entra no ar quando o bot roda.";
     const chkAtiva = document.createElement("input");
     chkAtiva.type = "checkbox"; chkAtiva.className = "chk";
     chkAtiva.dataset.acao = "ativa"; chkAtiva.checked = c.enabled;
-    tdAtiva.appendChild(chkAtiva);
+    rotAtiva.appendChild(chkAtiva);
+    tdAtiva.appendChild(rotAtiva);
 
     // Login — editável inline, como a célula COL_LOGIN da tabela da GUI.
     const tdLogin = document.createElement("td");
+    tdLogin.className = "cel-login";
+
+    // NO AR AGORA -- só o PONTO, sem número, e ANTES do login.
+    //
+    // Depois do login ele ficava solto no meio da célula: o campo é `flex: 1` e
+    // empurrava o ponto para a borda direita, longe do nome. À esquerda ele
+    // encosta no nome e os pontos ficam alinhados entre as linhas, que é o que
+    // permite varrer a coluna de cima a baixo procurando quem está no ar.
+    //
+    // Vale para QUALQUER conta em execução, APP incluído: "está rodando" e
+    // "quantas runs fez" são perguntas diferentes, e juntá-las deixaria a conta
+    // de APP sem indicador nenhum. A contagem mora na coluna Run.
+    const aoVivo = document.createElement("span");
+    aoVivo.className = "conta-ao-vivo parada";
+    aoVivo.dataset.papel = "ao-vivo";
+    // `role="img"` + `aria-label`: o estado é dito por COR e por título, e
+    // nenhum dos dois chega a um leitor de tela (tooltip não é nome acessível).
+    // O rótulo é reescrito junto com a cor, em `marcarNoAr`.
+    aoVivo.setAttribute("role", "img");
+    tdLogin.appendChild(aoVivo);
     const inpLogin = document.createElement("input");
     inpLogin.type = "text";
     inpLogin.className = "cel-texto";
@@ -331,6 +472,7 @@ function renderContas() {
     inpLogin.value = c.login || "";
     inpLogin.placeholder = "—";
     tdLogin.appendChild(inpLogin);
+
 
     // Senha — inline, tipo password. A senha real NUNCA sai do Python
     // (DPAPI); só um indicador visual de que existe uma gravada.
@@ -342,14 +484,30 @@ function renderContas() {
     inpSenha.value = "";
     if (c.tem_senha) {
       inpSenha.classList.add("tem-senha");
-      inpSenha.placeholder = "•••• (trocar)";
+      inpSenha.placeholder = "••••";
+      inpSenha.title = "Senha gravada. Digite para trocar; vazio mantém.";
     } else {
       inpSenha.placeholder = "nova";
+      inpSenha.title = "Nenhuma senha gravada nesta conta.";
     }
     tdSenha.appendChild(inpSenha);
 
+    // RUN — quantas runs a conta já fechou nesta sessão.
+    //
+    // SÓ PARA QUEM RODA CAVE. O modo APP é macro de teclado: não existe "run"
+    // ali, e pôr um número seria inventar uma medida que o ecossistema não tem.
+    // Conta parada mostra vazio, não zero -- zero diria "rodou e não fechou
+    // nenhuma", que é outra coisa.
+    const tdRun = document.createElement("td");
+    tdRun.className = "ctr cel-run";
+    const marcaRun = document.createElement("span");
+    marcaRun.className = "conta-runs";
+    marcaRun.dataset.papel = "runs";
+    tdRun.appendChild(marcaRun);
+
     // Posição — combo inline, como o QComboBox da tabela da GUI.
     const tdPos = document.createElement("td");
+    tdPos.className = "cel-posicao";
     const selPos = document.createElement("select");
     selPos.className = "cel-opt";
     selPos.dataset.acao = "posicao";
@@ -376,41 +534,84 @@ function renderContas() {
     selSrv.value = c.server || "";
     tdServ.appendChild(selSrv);
 
-    const tdBC = document.createElement("td");
-    tdBC.className = "ctr";
-    const chkBC = document.createElement("input");
-    chkBC.type = "checkbox"; chkBC.className = "chk";
-    chkBC.dataset.acao = "bc"; chkBC.checked = c.bc_farm;
-    chkBC.title = "Bewitcher Cave: um boss por run.";
-    tdBC.appendChild(chkBC);
+    // COLUNA FUNÇÃO: os três ecossistemas num lugar só.
+    //
+    // Eram TRÊS colunas de caixa idêntica de 14px, e o que distinguia uma da
+    // outra estava no `<th>` -- ou seja, FORA da linha: para saber o que aquele
+    // ✓ significava, o olho subia ao cabeçalho e voltava, uma vez por linha.
+    // Agora o rótulo está DENTRO do controle.
+    //
+    // O `<input type=checkbox>` NATIVO continua ali, escondido sob o `<label>`.
+    // Trocar por `<button>` custaria reimplementar `role=switch`, `aria-checked`,
+    // Tab e barra de espaço -- e é aí que esse tipo de reforma quebra a
+    // acessibilidade sem ninguém notar. Assim sai de graça, e o `:checked` do CSS
+    // desenha o estado.
+    const tdFuncao = document.createElement("td");
+    tdFuncao.className = "cel-funcao";
+    const selos = document.createElement("div");
+    selos.className = "selos-funcao";
+    let algumLigado = false;
 
-    // HH ao lado do BC: são duas caves, e trocar entre elas é o que se faz o
-    // tempo todo. Marcar as duas roda a HH -- o supervisor tem ordem fixa.
-    const tdHH = document.createElement("td");
-    tdHH.className = "ctr";
-    const chkHH = document.createElement("input");
-    chkHH.type = "checkbox"; chkHH.className = "chk";
-    chkHH.dataset.acao = "hh"; chkHH.checked = c.hh_farm;
-    chkHH.title = "HH (Black Wind Camp Dungeon): quatro bosses em sequência.\n"
-      + "Marcada junto com BC, roda a HH.\n"
-      + "A conta de reset fica em Editar conta > HH.";
-    tdHH.appendChild(chkHH);
+    // RÁDIO, e não caixas. As três funções são MUTUAMENTE EXCLUSIVAS
+    // (06/09/2026): marcar uma TROCA, nunca soma. Caixa comunica semântica
+    // falsa -- sugere que a combinação é válida --, e era isso que deixava a
+    // tela com dois selos acesos numa conta que fazia uma coisa só.
+    //
+    // `name` por CONTA (o uid) para os grupos não se misturarem entre linhas.
+    // Clicar no que já está ligado DESLIGA: "nenhuma função" é estado válido
+    // (a conta faz login e relogin), e sem isso não haveria como voltar a ele.
+    ECOSSISTEMAS.forEach((eco) => {
+      const ligado = (c.funcao || "") === eco.acao;
+      if (ligado) algumLigado = true;
+      const selo = document.createElement("label");
+      selo.className = `selo selo-${eco.acao}`;
+      selo.title = eco.titulo;
+      const cx = document.createElement("input");
+      cx.type = "radio";
+      cx.name = `funcao-${c.uid}`;
+      cx.className = "selo-caixa";
+      cx.dataset.acao = eco.acao;
+      cx.checked = ligado;
+      const sig = document.createElement("span");
+      sig.className = "selo-sigla";
+      sig.textContent = eco.sigla;
+      selo.appendChild(cx);
+      selo.appendChild(sig);
+      selos.appendChild(selo);
+    });
 
-    const tdAPP = document.createElement("td");
-    tdAPP.className = "ctr";
-    const chkAPP = document.createElement("input");
-    chkAPP.type = "checkbox"; chkAPP.className = "chk";
-    chkAPP.dataset.acao = "app"; chkAPP.checked = c.app_enabled;
-    tdAPP.appendChild(chkAPP);
+    // SEM ECOSSISTEMA PRÓPRIO -- mas isso pode significar DUAS coisas.
+    //
+    // A conta SEGUIDORA de um time do APP roda a macro do líder, e mesmo
+    // assim tem as três caixas vazias: quem liga `AppConfig.enabled` é o
+    // LÍDER, e o time dela própria é ignorado (`docs/INVARIANTES.md`, "Time
+    // do APP"). Chamar isso de "só login" era MENTIRA -- a conta está
+    // trabalhando, só que a mando de outra.
+    //
+    // Só é "só login" quem não tem função própria NEM líder: sobe, loga,
+    // reloga e não faz mais nada.
+    const lider = (c.lider_do_time || "").trim();
+    if (!algumLigado && lider) {
+      const seguindo = document.createElement("span");
+      seguindo.className = "selo-seguindo";
+      seguindo.textContent = `segue ${lider}`;
+      seguindo.title = `Roda a macro do time de "${lider}".\n`
+        + "Quem liga o modo APP é o líder; a caixa desta conta fica "
+        + "desmarcada de propósito.";
+      selos.appendChild(seguindo);
+    } else if (!algumLigado) {
+      selos.classList.add("selos-so-login");
+    }
+    tdFuncao.appendChild(selos);
 
     const tdEdit = document.createElement("td");
-    tdEdit.className = "ctr";
+    tdEdit.className = "ctr cel-editar";
     const btnEdit = document.createElement("button");
     btnEdit.className = "bt-editar"; btnEdit.textContent = "✏️  Editar";
     btnEdit.dataset.acao = "editar";
     tdEdit.appendChild(btnEdit);
 
-    [tdAlca, tdAtiva, tdLogin, tdSenha, tdPos, tdServ, tdBC, tdHH, tdAPP, tdEdit]
+    [tdAlca, tdAtiva, tdLogin, tdSenha, tdRun, tdServ, tdPos, tdFuncao, tdEdit]
       .forEach((td) => tr.appendChild(td));
     frag.appendChild(tr);
   });
@@ -657,6 +858,31 @@ $("#corpo-contas").addEventListener("click", (e) => {
   $("#btn-remover-conta").disabled = contaUidSelecionado === null;
 });
 
+const ROTULO_DA_FUNCAO = { bc: "BC", hh: "HH", app: "modo APP" };
+
+function definirFuncao(uid, qual) {
+  chamar("definir_funcao", uid, qual).then((r) => {
+    if (r && r.ok === false) { avisar(r.erro || "Não foi possível trocar."); }
+    else if (qual) toast(`${ROTULO_DA_FUNCAO[qual]} ligada — as outras saíram`);
+    else toast("Função desligada — a conta fica só no login");
+    carregarContas();
+  });
+}
+
+// CLICAR NO RÁDIO JÁ MARCADO DESLIGA. Rádio nativo não desmarca sozinho, e
+// "nenhuma função" é estado válido (a conta faz login e relogin): sem isto não
+// haveria como voltar a ele pela tabela. `mousedown` porque no `click` o rádio
+// já mudou de estado e não dá mais para saber se ele estava marcado.
+$("#corpo-contas").addEventListener("mousedown", (e) => {
+  const cx = e.target.closest && e.target.closest(".selo-caixa");
+  if (!cx || !cx.checked) return;
+  const tr = cx.closest("tr[data-uid]");
+  if (!tr) return;
+  e.preventDefault();
+  cx.checked = false;
+  definirFuncao(tr.dataset.uid, "");
+});
+
 $("#corpo-contas").addEventListener("change", (e) => {
   const tr = e.target.closest("tr[data-uid]");
   if (!tr || !e.target.dataset.acao) return;
@@ -680,21 +906,11 @@ $("#corpo-contas").addEventListener("change", (e) => {
       }
       carregarContas();
     });
-  } else if (acao === "bc") {
-    chamar("alternar_farm", uid, ligado).then(() => {
-      toast(ligado ? "BC farm ligado" : "BC farm desligado");
-      carregarContas();
-    });
-  } else if (acao === "hh") {
-    chamar("alternar_hh", uid, ligado).then(() => {
-      toast(ligado ? "HH ligada" : "HH desligada");
-      carregarContas();
-    });
-  } else if (acao === "app") {
-    chamar("alternar_app", uid, ligado).then(() => {
-      toast(ligado ? "Modo APP ligado" : "Modo APP desligado");
-      carregarContas();
-    });
+  } else if (acao === "bc" || acao === "hh" || acao === "app") {
+    // UMA chamada, e ela TROCA. Em duas chamadas ("desliga BC", "liga HH")
+    // existiria um instante com as duas ligadas -- e o supervisor lê os campos
+    // a cada volta.
+    definirFuncao(uid, ligado ? acao : "");
   } else if (acao === "posicao") {
     chamar("definir_posicao", uid, valor).then(() => {
       const c = contasCache.find((x) => x.uid === uid);
@@ -1354,9 +1570,11 @@ let balao = null;
 function mostrarAjuda(icone) {
   const texto = icone.dataset.ajuda;
   if (!texto) return;
+  clearTimeout(esconderAjuda._t);
   if (!balao) {
     balao = document.createElement("div");
     balao.id = "balao-ajuda";
+    balao.setAttribute("role", "tooltip");
     document.body.appendChild(balao);
   }
   balao.textContent = texto;
@@ -1367,36 +1585,58 @@ function mostrarAjuda(icone) {
   const b = balao.getBoundingClientRect();
   const folga = 8;
 
-  // WebView2 frameless: window.screenX/screenY dá a posição da janela na tela.
-  // getBoundingClientRect() é relativo ao viewport, então somamos o offset
-  // da janela para posicionar corretamente quando a janela não está em (0,0).
-  const winX = window.screenX || window.screenLeft || 0;
-  const winY = window.screenY || window.screenTop || 0;
+  // COORDENADAS DE VIEWPORT, E SÓ.
+  //
+  // ESTE ERA O DEFEITO: a versão anterior somava `window.screenX`/`screenY` --
+  // a posição da JANELA NA TELA -- às coordenadas de `getBoundingClientRect()`,
+  // que já são relativas ao VIEWPORT. Como o balão é `position: fixed` (e
+  // portanto posicionado pelo viewport), a soma o jogava para fora da área
+  // visível: com a janela em x=300, o balão ia 300px além de onde devia. Ele
+  // estava sendo criado, preenchido e mostrado -- só não em lugar nenhum que se
+  // pudesse ver. Não era falta de binding: os ouvintes sempre estiveram certos.
+  //
+  // Centraliza no ícone e GRAMPEIA nas quatro bordas; abre para cima quando não
+  // cabe embaixo. A janela é travada em 1200x800, então o campo da borda é caso
+  // real, não hipótese.
+  const grampo = (v, min, max) => Math.max(min, Math.min(v, max));
+  const x = grampo(r.left + r.width / 2 - b.width / 2,
+                   folga, window.innerWidth - b.width - folga);
+  let y = r.bottom + 6;
+  if (y + b.height + folga > window.innerHeight) y = r.top - b.height - 6;
+  y = grampo(y, folga, window.innerHeight - b.height - folga);
 
-  // Abre para a esquerda se não couber à direita, e para cima se não couber
-  // embaixo. Sem isto o balão sai da janela nos campos da borda -- e a janela
-  // é travada em 1200x800, então isso acontece de verdade.
-  let x = r.left + winX;
-  if (x + b.width + folga > window.innerWidth + winX) {
-    x = window.innerWidth + winX - b.width - folga;
-  }
-  let y = r.bottom + winY + 6;
-  if (y + b.height + folga > window.innerHeight + winY) {
-    y = r.top + winY - b.height - 6;
-  }
-  balao.style.left = `${Math.max(folga, x)}px`;
-  balao.style.top = `${Math.max(folga, y)}px`;
+  balao.style.left = `${x}px`;
+  balao.style.top = `${y}px`;
 }
 
 function esconderAjuda() {
-  if (balao) balao.classList.remove("visivel");
+  // ATRASO CURTO no fechar: sem ele, atravessar dois ícones vizinhos apagava e
+  // reacendia o balão a cada pixel, e o efeito é uma piscada contínua.
+  clearTimeout(esconderAjuda._t);
+  esconderAjuda._t = setTimeout(() => {
+    if (balao) balao.classList.remove("visivel");
+  }, 80);
 }
 
-document.addEventListener("mouseover", (e) => {
+document.addEventListener("pointerover", (e) => {
   const icone = e.target.closest && e.target.closest(".ajuda");
   if (icone) mostrarAjuda(icone);
 });
-document.addEventListener("mouseout", (e) => {
+document.addEventListener("pointerout", (e) => {
+  const icone = e.target.closest && e.target.closest(".ajuda");
+  // `relatedTarget` dentro do próprio ícone é movimento INTERNO: fechar ali
+  // seria piscar sem motivo.
+  if (icone && !icone.contains(e.relatedTarget)) esconderAjuda();
+});
+// Rolar ou redimensionar move o ícone e deixa o balão órfão no lugar antigo.
+window.addEventListener("scroll", esconderAjuda, true);
+window.addEventListener("resize", esconderAjuda);
+// O foco de teclado também mostra a ajuda: sem isto ela só existe para o mouse.
+document.addEventListener("focusin", (e) => {
+  const icone = e.target.closest && e.target.closest(".ajuda");
+  if (icone) mostrarAjuda(icone);
+});
+document.addEventListener("focusout", (e) => {
   if (e.target.closest && e.target.closest(".ajuda")) esconderAjuda();
 });
 
@@ -2063,18 +2303,7 @@ function atualizarEstado(est) {
   // sozinho (ex.: a conta tentou ir vender sem tecla de retorno configurada) —
   // deixa o checkbox da tabela acompanhar, sem re-renderizar a linha inteira
   // (que apagaria uma edição inline em andamento).
-  (est.contas || []).forEach((c) => {
-    // POR UID, não por login: o login é campo livre e dois iguais faziam esta
-    // busca acertar a primeira linha, que podia ser de outra conta. Cai fora
-    // sem uid em vez de adivinhar pelo login.
-    if (!c.uid) return;
-    const tr = $("#corpo-contas").querySelector(`tr[data-uid="${CSS.escape(c.uid)}"]`);
-    if (!tr) return;
-    const chkBC = tr.querySelector('input[data-acao="bc"]');
-    if (chkBC && chkBC.checked !== !!c.farm) chkBC.checked = !!c.farm;
-    const chkHH = tr.querySelector('input[data-acao="hh"]');
-    if (chkHH && chkHH.checked !== !!c.farm_hh) chkHH.checked = !!c.farm_hh;
-  });
+  marcarNoAr(est);
 
   // Toggle "log detalhado": só existe no ambiente dev (`BLAZES_MODO=dev`). Em
   // prod o backend força INFO+; aqui só expomos o controle de quem desenvolve

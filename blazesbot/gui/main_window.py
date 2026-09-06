@@ -537,7 +537,14 @@ class MainWindow(QMainWindow):
         farm = QCheckBox()
         farm.setChecked(conta.bc_farm)
         farm.setToolTip("Pode marcar e desmarcar com o bot rodando.")
-        farm.stateChanged.connect(lambda _v, c=conta: self._toggle_farm(c, farm))
+        # AS TRÊS CAIXAS SÃO UM GRUPO EXCLUSIVO. Não é `QRadioButton` porque a
+        # tabela precisa de "nenhuma" como estado válido (a conta faz só login e
+        # relogin) e rádio nativo não desmarca; a exclusividade é imposta em
+        # `_trocar_funcao`, que é o mesmo ponto de escrita da interface web.
+        caixas_da_funcao: dict[str, QCheckBox] = {}
+        caixas_da_funcao["bc"] = farm
+        farm.stateChanged.connect(
+            lambda _v, c=conta, d=caixas_da_funcao: self._trocar_funcao(c, "bc", d))
         wrap = QWidget()
         lay = QHBoxLayout(wrap)
         lay.setContentsMargins(0, 0, 0, 0)
@@ -556,7 +563,9 @@ class MainWindow(QMainWindow):
             "A conta de reset fica em Editar conta > HH -- sem ela os bosses\n"
             "não renascem e a cave vem vazia da segunda run em diante."
         )
-        hh.stateChanged.connect(lambda _v, c=conta: self._toggle_hh(c, hh))
+        caixas_da_funcao["hh"] = hh
+        hh.stateChanged.connect(
+            lambda _v, c=conta, d=caixas_da_funcao: self._trocar_funcao(c, "hh", d))
         wrap_hh = QWidget()
         lay_hh = QHBoxLayout(wrap_hh)
         lay_hh.setContentsMargins(0, 0, 0, 0)
@@ -573,7 +582,9 @@ class MainWindow(QMainWindow):
             "Pode marcar e desmarcar com o bot rodando.\n"
             "As linhas ficam em Editar conta > APP."
         )
-        app.stateChanged.connect(lambda _v, c=conta: self._toggle_app(c, app))
+        caixas_da_funcao["app"] = app
+        app.stateChanged.connect(
+            lambda _v, c=conta, d=caixas_da_funcao: self._trocar_funcao(c, "app", d))
         wrap_app = QWidget()
         lay_app = QHBoxLayout(wrap_app)
         lay_app.setContentsMargins(0, 0, 0, 0)
@@ -588,37 +599,50 @@ class MainWindow(QMainWindow):
         if novo:
             self._apply_live()
 
-    def _toggle_farm(self, conta: Account, caixa: QCheckBox) -> None:
-        conta.bc_farm = caixa.isChecked()
-        if self.manager and self.manager.running():
-            estado = "LIGADO" if conta.bc_farm else "desligado"
-            self.log_line.emit(f"[{conta.login}] BC farm {estado} em tempo real")
-        self._apply_live()
+    def _trocar_funcao(self, conta: Account, qual: str,
+                       caixas: dict[str, QCheckBox]) -> None:
+        """Liga UMA função nesta conta e desliga as outras.
 
-    def _toggle_hh(self, conta: Account, caixa: QCheckBox) -> None:
-        """Liga/desliga a HH direto da lista, valendo em tempo real.
+        SUBSTITUI `_toggle_farm`, `_toggle_hh` e `_toggle_app`, que eram três
+        escritas independentes -- e é por isso que duas ficavam ligadas. A partir
+        de 06/09/2026 as três são MUTUAMENTE EXCLUSIVAS: marcar uma TROCA, nunca
+        soma. Quem impõe é `BotConfig.definir_funcao_da_conta`, o mesmo ponto que
+        a interface web usa.
 
-        Espelha `_toggle_farm`. A rotina consulta `hh_farm` a cada volta e entre
-        estados, então desmarcar aqui devolve o controle no próximo ponto seguro
-        -- sem interromper uma ação pela metade.
+        `_loading` em volta da correção das caixas: mexer em `setChecked` dispara
+        `stateChanged` de novo, e sem a trava isto entraria em recursão.
+
+        Vale em TEMPO REAL, como já valia: o supervisor consulta os campos a cada
+        volta e a conta migra no próximo ponto seguro. Trocar no meio de uma run
+        da cave perde aquela run, e o aviso diz isso -- a decisão é do usuário.
         """
-        conta.hh_farm = caixa.isChecked()
-        if self.manager and self.manager.running():
-            estado = "LIGADA" if conta.hh_farm else "desligada"
-            self.log_line.emit(f"[{conta.login}] HH {estado} em tempo real")
-        self._apply_live()
+        if self._loading:
+            return
+        antes = self.config.funcao_ativa_da_conta(conta)
+        pedida = qual if caixas[qual].isChecked() else ""
+        agora = self.config.definir_funcao_da_conta(conta, pedida)
 
-    def _toggle_app(self, conta: Account, caixa: QCheckBox) -> None:
-        """Liga/desliga o modo APP direto da lista, valendo em tempo real.
+        self._loading = True
+        try:
+            for nome, caixa in caixas.items():
+                caixa.setChecked(nome == agora)
+        finally:
+            self._loading = False
 
-        Espelha `_toggle_farm`. O executor consulta `app.enabled` a cada volta e
-        entre teclas, então desmarcar aqui encerra a macro sem reiniciar nada --
-        e marcar volta a rodar na volta seguinte do laço de vida.
-        """
-        conta.settings.app.enabled = caixa.isChecked()
-        if self.manager and self.manager.running():
-            estado = "LIGADO" if conta.settings.app.enabled else "desligado"
-            self.log_line.emit(f"[{conta.login}] modo APP {estado} em tempo real")
+        if self.manager and self.manager.running() and antes != agora:
+            nomes = {"bc": "BC", "hh": "HH", "app": "modo APP"}
+            if agora and antes:
+                self.log_line.emit(
+                    f"[{conta.login}] trocando de {nomes[antes]} para "
+                    f"{nomes[agora]} em tempo real — a volta em andamento é "
+                    "perdida")
+            elif agora:
+                self.log_line.emit(
+                    f"[{conta.login}] {nomes[agora]} LIGADA em tempo real")
+            else:
+                self.log_line.emit(
+                    f"[{conta.login}] {nomes[antes]} desligada em tempo real — "
+                    "a conta fica só no login e relogin")
         self._apply_live()
 
     def _editar_conta(self, conta: Account) -> None:

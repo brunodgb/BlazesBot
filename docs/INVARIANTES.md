@@ -800,3 +800,103 @@ Cada item é o que **não pode ser violado**. O detalhe de cada área mora em
   anexação; um arquivo velho que recebeu linha hoje sobreviveria à retenção para
   sempre.
 - Travado por `tests/test_retencao_dos_logs.py`.
+
+
+## A tela de contas — `docs/decisoes/interface.md`
+
+Reordenação por arraste, grupos do usuário, coluna Função e estados da linha.
+Pedidos entre 28/08 e 06/09/2026.
+
+- **A ORDEM DAS CONTAS É A ORDEM DO ARRAY `accounts`.** Não existe campo de ordem
+  e **não pode existir**: seriam duas fontes de verdade, com a pergunta sem
+  resposta "se discordarem, quem manda?". Reordenar é
+  `BotConfig.reordenar_contas(uids)`, e `save()` grava.
+- **A IDENTIDADE DA CONTA NA INTERFACE É `Account.uid`, NUNCA O ÍNDICE.** Com a
+  tabela reordenável, escrita por índice grava **a senha na conta errada** —
+  login quebrado e senha certa perdida, sem desfazer. A tela nunca recebe uid
+  repetido (`garantir_uids_unicos`, na leitura do arquivo E antes de responder a
+  lista): duas contas com o mesmo uid são indistinguíveis para ela.
+- **REORDENAR NÃO PODE PERDER CONTA.** Desduplica por identidade de OBJETO, põe
+  no fim quem a tela não citou, e **aborta** em vez de gravar lista menor.
+- **`Account.grupo` É RÓTULO VISUAL.** **Nenhum caminho do bot pode ler dele** —
+  travado por AST. Ordem, **time do APP** (`time_logins`, por login, no líder) e
+  **grupo** são ORTOGONAIS; nenhuma deriva da outra.
+- **O ARRASTE NÃO TEM DEBOUNCE.** Grava no soltar; se falhar, a tabela recarrega
+  do backend — a tela nunca mostra ordem que o disco não tem. Debounce é o que
+  perde a última alteração quando a janela fecha.
+- **NA GUI A REORDENAÇÃO É POR BOTÃO.** A `QTableWidget` tem seis
+  `setCellWidget`, e o arraste do Qt move os itens mas **não** os widgets de
+  célula: a senha de uma conta ficaria na linha de outra.
+- **UMA coluna "Função"**, não três de caixa: o rótulo tem de ficar DENTRO do
+  controle. Selo é **só a sigla** (virão mais funções, e quem separava BC de HH
+  sempre foi a sigla — dois pictogramas de caverna não se distinguem a 16px).
+- **O `<input type="checkbox">` NATIVO fica**, escondido sob o `<label>` e nunca
+  com `display: none` (tiraria do Tab). **Alvo de clique ≥ 24×24** — eram 14×14,
+  quatro por linha.
+- **QUATRO ESTADOS, QUATRO CANAIS**, porque coexistem: selecionada → BORDA;
+  inativa → OPACIDADE; no ar → PONTO; ativa e parada → nada. `.linha-ativa`
+  significa **selecionada**, não "conta ativa". **ZEBRA E CARDS SÃO PROIBIDOS**:
+  zebra consome o fundo (canal de "selecionada") e card quebra o alinhamento
+  entre contas, o arraste e o cabeçalho de grupo (`colspan`).
+- **A COLUNA RUN SÓ SE PREENCHE PARA CAVE.** O APP é macro de teclado: não existe
+  "run" ali. Conta parada mostra **vazio, não zero**.
+- **O PONTO DE CONEXÃO É CONFERIDO, não deduzido.** "Estar na lista do resumo"
+  não é "estar no ar": `conectada` passa por `IsWindow` (o handle fica em cache
+  depois da janela morrer) e `relogando` exige `not stop_event.is_set()` —
+  **encerrar de propósito não é queda**. Vermelho tem pulso mais rápido além da
+  cor.
+- **A SEGUIDORA DE TIME NÃO É "SÓ LOGIN"** — ela roda a macro do líder com
+  `AppConfig.enabled` desligado. **Um líder que é ele próprio seguidor não lidera
+  ninguém**: a cadeia tem de ser resolvida.
+- **O ÍCONE DA BARRA DE TAREFAS EXIGE AppUserModelID**, não só `icon=`. O
+  `webview.start(icon=)` aplica na JANELA (medido com `WM_GETICON`), mas sem
+  `SetCurrentProcessExplicitAppUserModelID` o Windows agrupa sob o `python.exe` e
+  usa o ícone DELE. Vai no **começo** do `run()`. O `.ico` é gerado em **DIB
+  clássico** (o `System.Drawing.Icon` do WinForms é o consumidor mais restrito) e
+  **sem 256** — nada na barra passa de 48.
+- **O TOPO MOSTRA SÓ "BlazesBot".** O bot roda BC, HH e APP.
+- Travado por `tests/test_ordem_e_grupo_das_contas.py` (30) e
+  `tests/test_tabela_de_contas_visual.py` (25).
+
+## A janela Editar — `docs/decisoes/interface.md`
+
+Refatoração de 06/09/2026: exclusividade das funções, tooltip e altura das abas.
+
+- **UMA CONTA TEM UMA FUNÇÃO SÓ.** BC, HH e APP são MUTUAMENTE EXCLUSIVAS:
+  marcar uma **troca**, nunca soma. Não é regra de tela — quem impõe é
+  `BotConfig.definir_funcao_da_conta`, o **único** ponto de escrita das três
+  flags. `alternar_farm`/`alternar_hh`/`alternar_app` **não podem voltar**: em
+  duas chamadas ("desliga BC", "liga HH") existe um instante com as duas ligadas,
+  e o supervisor lê os campos a cada volta.
+- **CONFIGURAÇÃO COM DUAS MARCADAS É INVÁLIDA, e sobe CORRIGIDA.** O critério é a
+  precedência LEGADA (app > hh > bc) — a que o laço do supervisor já praticava —
+  para o bot continuar fazendo exatamente o que fazia. Não é o laço que resolve
+  em silêncio a cada ciclo: `from_dict` normaliza uma vez.
+- **O CONTROLE DA TELA É RÁDIO, com `name` por conta.** Caixa comunica semântica
+  falsa. Sem `name` único os grupos se misturam entre linhas. Clicar no que já
+  está ligado **desliga**: "nenhuma função" é estado válido (a conta fica só no
+  login e relogin).
+- **O ESPELHO AO VIVO TAMBÉM É EXCLUSIVO.** Ele corrigia BC e HH de forma
+  independente, e com rádio isso **reintroduzia a função antiga a cada poll de
+  1,5 s** — medido na tela.
+- **TROCAR COM O BOT RODANDO É PERMITIDO, e AVISA o custo.** Trocar no meio de
+  uma run da cave perde aquela run (teleporte gasto, boss vivo). Bloquear seria
+  tirar uma função que o usuário usa; avisar deixa a decisão com ele.
+- **O BALÃO DE AJUDA VIVE NO `<body>` E É POSICIONADO EM COORDENADA DE
+  VIEWPORT.** `getBoundingClientRect()` já é relativa ao viewport e o balão é
+  `position: fixed` — **somar `window.screenX`/`screenY` o joga para fora da área
+  visível**. Ele grampeia nas quatro bordas (a janela é travada em 1200×800).
+- **ALTURA DE PAINEL NÃO SE CALCULA À MÃO.** Nada de `calc(90vh - 160px)`: o
+  painel é `flex: 1; min-height: 0` dentro de um flex de altura fixa. Cabeçalho,
+  abas e rodapé são `shrink-0` — Salvar e Cancelar ficam acessíveis em qualquer
+  aba.
+- **O "?" ANCORA NO RÓTULO** (`absolute top-0 right-0`), não numa linha própria:
+  em `flex-col` ele caía abaixo do input e gastava uma linha por campo.
+- **O RÓTULO FICA EM CIMA DO CAMPO, NAS CINCO ABAS.** Em caixa alta pequena, e
+  sem exceção — a grade de teclas já teve o rótulo ao lado, cortava 59px de
+  altura e foi **reprovada pelo usuário** por ser a única aba com outro formato.
+  Altura se ganha pela largura da coluna, que é invisível, não pelo formato, que
+  é o que a pessoa vê.
+- **RÓTULO É ELEMENTO, NUNCA NÓ DE TEXTO SOLTO.** Texto solto dentro de `.campo`
+  não é selecionável em CSS: não recebe estilo, não trunca e não alinha.
+- Travado por `tests/test_janela_editar.py` (16).

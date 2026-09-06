@@ -157,7 +157,10 @@ def _payload_do_estado() -> set[str]:
 # As chaves que o espelho ao vivo lê de `est.contas`. Cada uma tem que existir
 # no payload -- `!!undefined` é `False`, então uma chave ausente DESMARCA a
 # caixa a cada volta do polling em vez de não fazer nada.
-CHAVES_DO_ESPELHO = ["farm", "farm_hh"]
+# `funcao` é o que o espelho lê AGORA: as três funções são exclusivas, e mandar
+# booleanos soltos deixava a tela marcar duas ao mesmo tempo. `farm`/`farm_hh`
+# continuam no payload para quem ainda lê booleano.
+CHAVES_DO_ESPELHO = ["farm", "farm_hh", "funcao"]
 
 
 @pytest.mark.parametrize("chave", CHAVES_DO_ESPELHO)
@@ -179,14 +182,32 @@ def test_o_espelho_usa_a_MESMA_variavel_da_linha():
     """O primeiro espelho da HH usava `linha.querySelector` num laço cuja
     variável se chama `tr` -- um `ReferenceError` a cada volta do polling, que
     matava o resto de `atualizarEstado` em silêncio (o `catch` de `chamar`
-    engole)."""
-    inicio = FONTE_JS.index("const chkBC = tr.querySelector")
+    engole).
+
+    A implementação mudou (06/09/2026): em vez de corrigir duas caixas
+    independentes, o espelho marca UM rádio a partir de `c.funcao`. A garantia é
+    a mesma -- os elementos saem da linha do laço, e o nome dela é `tr`.
+    """
+    inicio = FONTE_JS.index("const ativa = c.funcao")
     trecho = FONTE_JS[inicio:]
     trecho = trecho[:trecho.index("});")]
     assert "linha.querySelector" not in trecho, (
         "o espelho usa `linha`, e a variável do laço é `tr`")
-    assert trecho.count("tr.querySelector") == 2, (
-        "as duas caixas (BC e HH) têm que sair da MESMA linha da tabela")
+    assert "tr.querySelectorAll(" in trecho, (
+        "os selos têm de sair da MESMA linha da tabela")
+
+
+def test_o_espelho_ao_vivo_e_EXCLUSIVO():
+    """Ele marcava BC e HH de forma independente, e com rádio isso reintroduzia
+    a função antiga a cada poll de 1,5 s -- medido na tela: trocar para BC e
+    desligar deixava a tela mostrando HH de volta."""
+    inicio = FONTE_JS.index("const ativa = c.funcao")
+    trecho = FONTE_JS[inicio:]
+    trecho = trecho[:trecho.index("});")]
+    # Um laço que decide CADA selo pela função ativa -- não dois `if` soltos.
+    assert "cx.dataset.acao === ativa" in trecho
+    assert "chkBC" not in trecho and "chkHH" not in trecho, (
+        "voltou a corrigir caixa por caixa; com rádio isso marca duas")
 
 
 # ===========================================================================
@@ -199,9 +220,12 @@ def test_o_espelho_usa_a_MESMA_variavel_da_linha():
 # `_App.alternar` e `Api.ativar_conta`. Exigir o mesmo nome forçaria um rename
 # em código estável para o teste ficar bonito.
 LIGA_DESLIGA = [
-    ("o BC", "alternar_farm", "alternar_farm"),
-    ("a HH", "alternar_hh", "alternar_hh"),
-    ("o modo APP", "alternar_app", "alternar_app"),
+    # AS TRÊS VIRARAM UMA (06/09/2026): as funções são mutuamente exclusivas, e
+    # três escritas independentes eram exatamente o que deixava duas ligadas.
+    # Em duas chamadas ("desliga BC", "liga HH") existiria um instante com as
+    # duas ligadas -- e o supervisor lê os campos a cada volta.
+    ("a função da conta (BC/HH/APP, exclusivas)",
+     "definir_funcao", "definir_funcao"),
     ("a conta", "alternar", "ativar_conta"),
 ]
 

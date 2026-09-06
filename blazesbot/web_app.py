@@ -32,6 +32,7 @@ na thread dele — o mesmo cenário que a GUI PyQt6 já tinha, e aceitável.
 """
 from __future__ import annotations
 
+import ctypes
 import logging
 from collections import deque
 from datetime import date
@@ -276,6 +277,10 @@ class _App:
                 "enabled": c.enabled,
                 "position": c.position,
                 "server": _COORDS.normalize_server(c.server),
+                # A FUNÇÃO ATIVA, resolvida pelo backend. As três chaves
+                # abaixo continuam para compatibilidade de leitura, mas quem
+                # manda é esta -- as três são mutuamente exclusivas.
+                "funcao": self.config.funcao_ativa_da_conta(c),
                 "bc_farm": c.bc_farm,
                 "hh_farm": c.hh_farm,
                 "app_enabled": c.settings.app.enabled,
@@ -545,38 +550,45 @@ class _App:
         self._aplicar()
         return self._sincronizar()
 
-    def alternar_farm(self, uid: str, ligado: bool) -> None:
-        c = self._conta(uid)
-        c.bc_farm = bool(ligado)
-        if self.manager and self.manager.running():
-            self._status(c.login,
-                         f"BC farm {'LIGADO' if c.bc_farm else 'desligado'} "
-                         "em tempo real")
-        self._aplicar()
+    # RÓTULO DE CADA FUNÇÃO, para a mensagem de status. Num lugar só.
+    _NOME_DA_FUNCAO = {"bc": "BC (Bewitcher Cave)",
+                       "hh": "HH (Black Wind Camp)",
+                       "app": "modo APP"}
 
-    def alternar_hh(self, uid: str, ligado: bool) -> None:
-        """Liga/desliga a HH desta conta, valendo com o bot rodando.
+    def definir_funcao(self, uid: str, qual: str) -> str:
+        """Liga UMA função nesta conta e desliga as outras. `""` desliga todas.
 
-        Espelha `alternar_farm`. A rotina consulta `hh_farm` a cada volta e
-        entre estados, então desligar aqui devolve o controle no próximo ponto
-        seguro.
+        SUBSTITUI `alternar_farm`, `alternar_hh` e `alternar_app`, que eram três
+        escritas independentes -- e é por isso que duas ficavam ligadas ao mesmo
+        tempo. A partir de 06/09/2026 as três são MUTUAMENTE EXCLUSIVAS: marcar
+        uma TROCA, nunca soma. Quem impõe é `BotConfig.definir_funcao_da_conta`,
+        um ponto de escrita só.
+
+        VALE COM O BOT RODANDO, como já valia antes: o supervisor consulta os
+        campos a cada volta e a conta migra no próximo ponto seguro. O aviso diz
+        o que a troca custa -- trocar no meio de uma run da cave perde aquela run
+        (teleporte gasto, boss vivo). Bloquear seria tirar uma função que o
+        usuário usa; avisar deixa a decisão com ele.
         """
         c = self._conta(uid)
-        c.hh_farm = bool(ligado)
-        if self.manager and self.manager.running():
-            self._status(c.login,
-                         f"HH {'LIGADA' if c.hh_farm else 'desligada'} "
-                         "em tempo real")
+        antes = self.config.funcao_ativa_da_conta(c)
+        agora = self.config.definir_funcao_da_conta(c, qual)
+        if self.manager and self.manager.running() and antes != agora:
+            if agora and antes:
+                self._status(c.login,
+                             f"trocando de {self._NOME_DA_FUNCAO[antes]} para "
+                             f"{self._NOME_DA_FUNCAO[agora]} em tempo real — a "
+                             "volta em andamento é perdida")
+            elif agora:
+                self._status(
+                    c.login,
+                    f"{self._NOME_DA_FUNCAO[agora]} LIGADA em tempo real")
+            else:
+                self._status(c.login,
+                             f"{self._NOME_DA_FUNCAO[antes]} desligada em tempo "
+                             "real — a conta fica só no login e relogin")
         self._aplicar()
-
-    def alternar_app(self, uid: str, ligado: bool) -> None:
-        c = self._conta(uid)
-        c.settings.app.enabled = bool(ligado)
-        if self.manager and self.manager.running():
-            self._status(c.login,
-                         f"modo APP {'LIGADO' if c.settings.app.enabled else 'desligado'} "
-                         "em tempo real")
-        self._aplicar()
+        return agora
 
     def salvar_personagem(self, uid: str, dados: dict[str, Any]) -> None:
         """Aplica o editor da conta (espelha `AccountDialog._aplicar`).
@@ -832,6 +844,7 @@ class _App:
                 "nick": _nick(conta) if conta else login,
                 "farm": bool(d.get("farm")),
                 # Ver `BotManager.summary`: "está na lista" não é "está no ar".
+                "funcao": str(d.get("funcao") or ""),
                 "conectada": bool(d.get("conectada")),
                 "relogando": bool(d.get("relogando")),
                 # DO RESUMO, e não da configuração em disco: é o mesmo lugar
@@ -1175,17 +1188,18 @@ class Api:
                 return {"ok": False, "erro": bloqueio}
         return {"ok": True, "iniciadas": self._app.alternar(uid, bool(ativa))}
 
-    def alternar_farm(self, uid: Any, ligado: Any) -> dict[str, Any]:
-        self._app.alternar_farm(uid, bool(ligado))
-        return {"ok": True}
+    def definir_funcao(self, uid: Any, qual: Any) -> dict[str, Any]:
+        """Liga UMA função na conta e desliga as outras.
 
-    def alternar_hh(self, uid: Any, ligado: Any) -> dict[str, Any]:
-        self._app.alternar_hh(uid, bool(ligado))
-        return {"ok": True}
-
-    def alternar_app(self, uid: Any, ligado: Any) -> dict[str, Any]:
-        self._app.alternar_app(uid, bool(ligado))
-        return {"ok": True}
+        UMA chamada no lugar das três `alternar_*`: se a tela mandasse "desliga
+        BC" e "liga HH" em duas chamadas, entre elas existiria um instante com
+        as duas ligadas -- e o supervisor lê os campos a cada volta.
+        """
+        try:
+            ativa = self._app.definir_funcao(uid, qual)
+        except Exception as exc:
+            return {"ok": False, "erro": str(exc)}
+        return {"ok": True, "funcao": ativa}
 
     def salvar_personagem(self, uid: Any, dados: Any) -> dict[str, Any]:
         # DESMARCAR 'aceitar convites' de um reseter é o mesmo estrago que
@@ -1355,6 +1369,24 @@ def run() -> None:
     sempre carrega o frontend novo.
     """
     global _JANELA
+
+    # IDENTIDADE PRÓPRIA NA BARRA DE TAREFAS.
+    #
+    # O `icon=` do `webview.start` JÁ funcionava -- medido: a janela ganha ícone
+    # próprio (`WM_GETICON` devolve handle nos dois tamanhos). O que faltava era
+    # isto: sem um AppUserModelID, o Windows agrupa a janela sob o processo que a
+    # criou -- o `python.exe` -- e o botão da barra de tarefas usa o ícone DELE,
+    # a cobrinha azul e amarela, por mais bonito que seja o ícone da janela.
+    #
+    # Com o ID próprio, o BlazesBot passa a ser um aplicativo para o Windows:
+    # ícone certo na barra, no Alt+Tab e na fixação. Falha tolerada -- ícone
+    # errado não pode impedir o bot de abrir.
+    try:
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(
+            "BlazesOfGamer.BlazesBot")
+    except Exception as exc:                       # pragma: no cover
+        logging.getLogger("blazes").debug(
+            "AppUserModelID não aplicado: %s", exc)
 
     logger = logging.getLogger("blazes")
     if not any(isinstance(h, _LogHandler) for h in logger.handlers):
