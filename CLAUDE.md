@@ -257,6 +257,72 @@ Estas NÃO são regra de área: valem em toda tarefa, em qualquer arquivo.
 - **Ao investigar QUALQUER problema, ler os logs primeiro**
   (`logs/dev/blazes-dev.jsonl`).
 
+## Como a IA trabalha aqui (diretriz permanente — 06/09/2026)
+
+Diretrizes de comportamento para reduzir os erros típicos de LLM em código. Elas
+**se somam** às regras deste arquivo; onde houver conflito, a regra específica do
+projeto vence. **Contrapartida aceita: cautela acima de velocidade** — em tarefa
+trivial, use o bom senso.
+
+### 1. Pensar antes de escrever código
+
+**Não presuma. Não esconda a confusão. Exponha o custo-benefício.**
+
+- Diga as suas premissas em voz alta. Se estiver incerto, PERGUNTE.
+- Havendo mais de uma leitura do pedido, apresente as leituras — não escolha uma
+  calado.
+- Havendo caminho mais simples, diga. Discorde quando for o caso.
+- Se algo não estiver claro, PARE. Nomeie o que confunde. Pergunte.
+
+### 2. Simplicidade primeiro
+
+**O mínimo de código que resolve o problema. Nada especulativo.**
+
+- Nenhuma funcionalidade além da pedida.
+- Nenhuma abstração para código de uso único.
+- Nenhuma "flexibilidade" ou "configurabilidade" que não foi pedida.
+- Nenhum tratamento de erro para cenário impossível.
+- Escreveu 200 linhas e dava em 50? Reescreva.
+
+Pergunte a si mesmo: *"um engenheiro sênior diria que isto está
+complicado demais?"* Se sim, simplifique.
+
+### 3. Alterações cirúrgicas
+
+**Toque só no que precisa. Limpe só a sua própria sujeira.**
+
+- Não "melhore" código, comentário ou formatação vizinhos.
+- Não refatore o que não está quebrado.
+- Acompanhe o estilo existente, mesmo que você fizesse diferente.
+- Viu código morto sem relação com a tarefa? **Avise — não apague.**
+- Quando a SUA alteração deixa órfãos: remova os imports, variáveis e funções que
+  ela mesma deixou sem uso. Código morto **preexistente** só sai se pedirem.
+
+O teste: **toda linha alterada tem de remontar diretamente ao pedido do
+usuário.**
+
+### 4. Execução guiada por objetivo
+
+**Defina o critério de sucesso. Repita até verificar.**
+
+Transforme a tarefa em objetivo verificável:
+
+- "adicionar validação" → "escrever testes para entradas inválidas e fazê-los
+  passar"
+- "consertar o defeito" → "escrever um teste que o reproduz e fazê-lo passar"
+- "refatorar X" → "garantir que a suíte passa antes e depois"
+
+Em tarefa de vários passos, declare um plano curto:
+
+```
+1. [passo] → verificação: [conferência]
+2. [passo] → verificação: [conferência]
+3. [passo] → verificação: [conferência]
+```
+
+Critério forte deixa você fechar o laço sozinho; critério fraco ("fazer
+funcionar") obriga a esclarecer a cada passo.
+
 ## Skills e Agent skills
 
 As definições completas de skill (pywebview + Web Frontend, GUI e Interatividade,
