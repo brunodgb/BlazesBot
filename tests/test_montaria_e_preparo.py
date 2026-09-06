@@ -47,6 +47,9 @@ class _NavFalso:
         # exige montaria, que é o padrão da BC. O `False` tem testes próprios
         # em `test_morte_no_app` (a volta ao ponto do APP, que vai a pé).
         self._exigir_montaria = True
+        # FORA da cave por padrão: "East of Simen Mountain" é região conhecida
+        # do mapa-múndi, e é isso que libera a desistência dos 20 toques.
+        self.location_name = lambda: "East of Simen Mountain"
         self._avisou_a_pe = False
         # Sem destravamento ligado: estes testes são sobre INSISTIR, e a ligação
         # com o combate tem os seus próprios (`test_destravamento_do_combate`).
@@ -64,6 +67,9 @@ class _NavFalso:
         )
 
     _diagnosticar_o_portao = navigation.Navigator._diagnosticar_o_portao
+    # O DISCRIMINADOR DA CAVE também é o de verdade: ele é parte da decisão
+    # nova (desistir só FORA da cave), e um falso o esvaziaria de sentido.
+    _dentro_da_cave = navigation.Navigator._dentro_da_cave
 
     def ensure_mounted(self, timeout=0.0):
         self.tentativas += 1
@@ -140,6 +146,40 @@ def test_o_portao_DESISTE_e_vai_a_pe_no_limite(monkeypatch):
     assert nav.tentativas == navigation.CICLOS_ANTES_DE_IR_A_PE
     gritos = [t for nivel, t in linhas if nivel == "ERROR"]
     assert any("VOU A PÉ" in t for t in gritos), gritos
+
+
+def test_DENTRO_DA_CAVE_ele_nao_desiste_nunca(monkeypatch):
+    """A regra nova é para FORA da cave. Decisão do usuário em 06/09/2026:
+    *"mas isso é dentro da cave, APP não é cave e nunca será cave"*.
+
+    Lá dentro "a pé" já foi medido como run perdida com atraso -- o personagem
+    não chega no boss, e a travessia inteira se gasta para falhar no fim.
+    """
+    monkeypatch.setattr(navigation.hotbar, "garantir_pagina_1",
+                        lambda *a, **k: None)
+    monkeypatch.setattr(navigation.diario, "registrar_evento",
+                        lambda *a, **k: None)
+    nav, linhas = _portao(montar_na_tentativa=25, linhas=[])
+    # Instância NÃO é região do mapa-múndi -- é assim que ele sabe.
+    nav.location_name = lambda: "Bewitcher Cave"
+
+    assert nav.garantir_montaria_para_andar("atravessar a cave") is True
+    assert nav.tentativas == 25, ("desistiu dentro da cave; a pé não se chega "
+                                  "no boss")
+
+
+def test_sem_saber_ONDE_esta_ele_mantem_o_comportamento_antigo(monkeypatch):
+    """Sem leitura, insistir -- estrear a regra nova às cegas seria trocar um
+    defeito conhecido por um desconhecido."""
+    monkeypatch.setattr(navigation.hotbar, "garantir_pagina_1",
+                        lambda *a, **k: None)
+    monkeypatch.setattr(navigation.diario, "registrar_evento",
+                        lambda *a, **k: None)
+    nav, linhas = _portao(montar_na_tentativa=25, linhas=[])
+    nav.location_name = lambda: None
+
+    assert nav.garantir_montaria_para_andar("atravessar o mapa") is True
+    assert nav.tentativas == 25
 
 
 def test_o_limite_de_desistencia_e_MUITO_maior_que_o_do_grito():

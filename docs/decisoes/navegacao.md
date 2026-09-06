@@ -1109,3 +1109,16 @@ montaria não existe; no trajeto existe -- atravessar.
 está ligado por outro motivo não pode ser reaproveitado para uma decisão nova:
 quem o ligou concordou com a pergunta antiga, não com a nova.
 
+### A cave ficou de fora — 06/09/2026
+
+Perguntado sobre o conflito com a regra medida da cave, o usuário respondeu:
+*"mas isso é dentro da cave, APP não é cave e nunca será cave"*. Então a
+desistência dos 20 toques vale **fora** da cave; lá dentro o portão continua
+insistindo, porque a pé o personagem não chega no boss e a run se perde depois
+de a travessia inteira já ter sido gasta.
+
+O discriminador já existia e não precisou de nada novo: **instância não é região
+do mapa-múndi**. `zona_do_local` devolve `None` para a cave e um nome de região
+para qualquer lugar aberto — é a mesma pergunta que `_mover_pelo_mapa` faz para
+decidir se pode clicar no mapa. Sem leitura de lugar, a resposta é "estou na
+cave": manter o comportamento antigo é mais seguro que estrear o novo às cegas.

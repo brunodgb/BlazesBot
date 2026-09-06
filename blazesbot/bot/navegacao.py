@@ -353,8 +353,10 @@ CICLOS_ANTES_DE_GRITAR = 5
 # esta regra existe para nunca mais acontecer.
 #
 # NÃO VALE DENTRO DA CAVE: lá "a pé" já foi medido como run perdida com atraso
-# (*"a pé ele não chega no boss"*), e o desfecho certo é abortar a run. Ver
-# `ANDAR_A_PE_MESMO_NA_CAVE`.
+# (*"a pé ele não chega no boss"*). Decisão do usuário em 06/09/2026 quando
+# perguntado sobre o conflito: *"mas isso é dentro da cave, APP não é cave e
+# nunca será cave"* -- ou seja, a regra nova é para fora da cave, e a de dentro
+# fica como estava. Quem separa as duas é `Navigator._dentro_da_cave`.
 CICLOS_ANTES_DE_IR_A_PE = 20
 
 # Depois de quantos ciclos sem montar o portao para de insistir MUDO e vai
@@ -1840,6 +1842,22 @@ class Navigator:
     def _pode_tocar_na_montaria(self) -> bool:
         return (time.time() - self._ultimo_toque_na_montaria) >= INTERVALO_REMONTAR
 
+    def _dentro_da_cave(self) -> bool:
+        """Estou numa instância? Aí o portão da montaria NÃO desiste.
+
+        O DISCRIMINADOR JÁ EXISTIA e não precisou de nada novo: instância não é
+        região do mapa-múndi, então `zona_do_local` devolve `None` para ela e um
+        nome de região para qualquer lugar aberto. É a mesma pergunta que
+        `_mover_pelo_mapa` faz para decidir se pode clicar no mapa.
+
+        SEM LEITURA, RESPONDE "SIM" -- e isso é deliberado: sem saber onde está,
+        o certo é manter o comportamento antigo (insistir), não estrear o novo.
+        """
+        try:
+            return zona_do_local(self.location_name()) is None
+        except Exception:
+            return True
+
     def _sem_tecla_de_montaria(self, motivo: str) -> bool:
         """Verdadeiro (e avisa UMA vez) quando a tecla não está configurada.
 
@@ -1964,7 +1982,7 @@ class Navigator:
 
             ciclo += 1
             gasto = time.time() - comeco
-            if ciclo >= CICLOS_ANTES_DE_IR_A_PE:
+            if ciclo >= CICLOS_ANTES_DE_IR_A_PE and not self._dentro_da_cave():
                 # DESISTE E VAI A PÉ. Parado é pior que devagar -- foi medido em
                 # 06/09/2026, com a conta líder do time 33 min sem andar um
                 # passo. Ver `CICLOS_ANTES_DE_IR_A_PE`.
