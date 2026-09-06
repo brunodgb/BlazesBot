@@ -151,8 +151,9 @@ export OLLAMA_MODEL="BlazesBot-IA"
 para `claude-sonnet-4.5` em vez do combo, então **use o userinfo**.)
 
 **Por que ele NÃO está no `COUNCIL_PROVIDERS` default.** A chave está dentro da
-`OLLAMA_HOST`, então ela mora no `.claude/council.env` (ignorado pelo git) e não
-no `settings.json` (versionado). Consequência: o assento só existe **depois** de
+`OLLAMA_HOST`, e essa variável não pode ir para o settings global sem sequestrar
+todo uso de Ollama da máquina — então ela mora no `.claude/council.env`
+(ignorado pelo git). Consequência: o assento só existe **depois** de
 `set -a; source .claude/council.env; set +a`. Sem isso, `OLLAMA_HOST` cai no
 default `localhost:11434` — o Ollama de verdade — e o assento falha pedindo um
 modelo que não existe lá. Por isso ele é opt-in:
@@ -249,12 +250,16 @@ bash scripts/query-council.sh --providers=openrouter-1,codex -- "Your question"
   `OPENROUTER_MODELS`. O Claude Code exporta esse bloco para todo Bash e todo
   hook, então o council já nasce com o roster certo. **Nada de segredo aqui:
   este arquivo é versionado.**
-- **`.claude/council.env`** — as chaves: `OPENROUTER_API_KEY` e a `OLLAMA_HOST`
-  do OmniRoute (que carrega a chave no userinfo). **Ignorado pelo git**
-  (`.gitignore`), e é por isso que nada disso está no `settings.json`. Carregar
-  com `set -a; source .claude/council.env; set +a`. Para a OpenRouter há a
-  alternativa permanente `setx OPENROUTER_API_KEY "..."`; para a `OLLAMA_HOST`
-  **não** — global, ela sequestraria todo uso de Ollama da máquina.
+- **`~/.claude/settings.json` (settings GLOBAL do usuário), bloco `env`** — a
+  `OPENROUTER_API_KEY`. Fica fora de qualquer repositório, então não há risco de
+  commit, e vale para toda sessão de Claude Code sem cerimônia nenhuma. Medido:
+  os 3 assentos gratuitos passaram a responder **sem** sourcear nada. Antes disso
+  a chave só vivia no `council.env` e um turno normal tinha **só o codex** de pé
+  (`Error: OPENROUTER_API_KEY not set` nos outros três).
+- **`.claude/council.env`** — o que **não** pode ser global: a `OLLAMA_HOST` do
+  OmniRoute (que carrega a chave no userinfo). Global, ela sequestraria todo uso
+  de Ollama da máquina. **Ignorado pelo git**; carregar com
+  `set -a; source .claude/council.env; set +a` só quando quiser o OmniRoute.
 - **`.claude/council.env.example`** — o mesmo template, sem chave, versionado.
 - **`.claude/council-stop-gate.json`** — o Stop hook (abaixo).
 
