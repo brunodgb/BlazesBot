@@ -31,7 +31,7 @@ desta lista é ou uma exceção justificada, ou dívida que ninguém converteu a
 mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 
 
-**332 tempos catalogados** — 234 FIXOS (espera cega), 98 entre TETO e PASSO.
+**334 tempos catalogados** — 236 FIXOS (espera cega), 98 entre TETO e PASSO.
 
 
 **6 estão diferentes do original:** `TETO_DA_CAIXA`, `PASSO_DA_ESPERA`, `ESPERA_DA_BOLSA_ABRIR`, `FATIA_DE_ESPERA`, `INTERVALO_ENTRE_INVOCACOES`, `PASSOS_DO_APP`
@@ -411,6 +411,8 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | *literal em* `_click_sendmessage_rapido` | 0.002 s | = | FIXO | [inputs.py:856](blazesbot/core/inputs.py#L856) | `_click_sendmessage_rapido` | TESTE 2 (2026-08-14): SendMessage com sleep reduzido de 15ms → 1ms. |
 | *literal em* `_click_rapido_reafirmado` | 0.002 s | = | FIXO | [inputs.py:912](blazesbot/core/inputs.py#L912) | `_click_rapido_reafirmado` | O rápido, mais a coordenada REAFIRMADA entre o down e o up. |
 | *literal em* `_click_postmessage_puro` | 0.002 s | = | FIXO | [inputs.py:1021](blazesbot/core/inputs.py#L1021) | `_click_postmessage_puro` | AS QUATRO mensagens por `PostMessageW`. Nenhuma síncrona. |
+| `INTERVALO_ENTRE_LIMPEZAS` | 3600 s (60 min) | *novo* | FIXO | [log_limitado.py:89](blazesbot/core/log_limitado.py#L89) | `_limpar_de_tempos_em_tempos` | De quanto em quanto tempo varrer a pasta do arquivo morto. |
+| `SEGUNDOS_DE_SILENCIO_ANTES_DE_COMPRIMIR` | 60 s (1 min) | *novo* | FIXO | [log_limitado.py:97](blazesbot/core/log_limitado.py#L97) | `_esta_quieto` | Quanto tempo um arquivo precisa estar QUIETO para poder ser comprimido. |
 | `TETO_DA_PROVA_DA_CAMERA` | 1 s | = | TETO | [memory.py:336](blazesbot/core/memory.py#L336) | `_esperar_o_termometro` | Teto da espera pelo termômetro depois de uma escrita na câmera. |
 | `PASSO_DA_PROVA_DA_CAMERA` | 0.05 s | = | PASSO | [memory.py:337](blazesbot/core/memory.py#L337) | `_esperar_o_termometro` |  |
 | `PASSO_ENTRE_MEMBROS` | 136 s (2 min) | *novo* | PASSO | [memory.py:367](blazesbot/core/memory.py#L367) | `time_do_jogo, vida_do_time` |  |

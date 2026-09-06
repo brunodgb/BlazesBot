@@ -271,3 +271,80 @@ por uma linha de log — uma morte por vez, um handle por morte, e um `finally`
 que garante que ele não vaza. Como todo o resto do diagnóstico, ele **nunca
 levanta**: falha vira texto (`vizinhança=? (motivo)`), porque diagnóstico que
 derruba o ciclo da morte é pior que diagnóstico nenhum.
+
+
+## O LOG DE DEV SE LIMPAVA UMA VEZ POR PROCESSO (06/09/2026)
+
+### Os dois defeitos, e eles são independentes
+
+**1. A retenção existia no papel.** `_limpar_arquivo_morto` era chamada só no
+`__init__` do handler — uma vez por processo. O bot fica ligado por dias. Estado
+encontrado em 06/09, com o processo no ar desde a véspera:
+
+```
+blazes-dev-2026-08-31.jsonl.gz     2,3 MB
+blazes-dev-2026-09-01.jsonl.gz     2,7 MB
+blazes-dev-2026-09-02.jsonl.gz     2,5 MB
+blazes-dev-2026-09-03.jsonl.gz     2,0 MB
+blazes-dev-2026-09-04.jsonl.gz     1,0 MB
+blazes-dev-2026-09-05.jsonl.gz     1,1 MB   <- nunca comprimido pelo processo
+blazes-dev-2026-09-06.jsonl      312,8 MB   <- o do dia, sem comprimir
+                                 -------
+                                 324,4 MB
+```
+
+Com `DIAS_DE_ARQUIVO_MORTO = 7` nada tinha vencido ainda — mas a compressão de
+ontem também não tinha acontecido, e ela é 32×. O desenho estava certo; o
+gatilho é que nunca era puxado de novo.
+
+**2. Sete dias de retenção contaminaram um veredito.** Em 06/09 uma auditoria do
+ponteiro de nome do alvo varreu a pasta inteira — 1.160.883 linhas — e concluiu:
+
+| leitura | ocorrências |
+|---|---|
+| `nada` (ilegível) | 701 — **50,4 %** |
+| `['Gun Witch']` | 619 |
+| `['Cemetery Guard']` | 62 |
+| `['Blaze Skull Marshal']` | 7 |
+| `['PDtery Guard']` | 1 — corrompida |
+
+Só que `d9bc023` (*"o nome do alvo sai certo em 100% das leituras, não em 21%"*)
+e `1a5b19c` (*"o alvo resolve em 100%, e não em 62%"*) entraram em **01/09 às
+15:20 e 15:34**. Metade da amostra era de antes deles. Refeita na janela de dois
+dias (231 leituras):
+
+| leitura | ocorrências |
+|---|---|
+| `['Gun Witch']` | 111 — 48,1 % |
+| `nada` (ilegível) | 108 — **46,8 %** |
+| `['Cemetery Guard']` | 11 |
+| `['Blaze Skull Marshal']` | 1 |
+
+**O veredito não mudou** (nome ainda não serve de juiz único), mas o NÚMERO
+mudou, e a leitura corrompida saiu da janela — ela era do período contaminado.
+A lição não é sobre este número: é que média de dois mundos não descreve nenhum
+dos dois.
+
+### O que ficou
+
+`DIAS_DE_ARQUIVO_MORTO = 7 → 2`, e a varredura passa a rodar de hora em hora
+(`INTERVALO_ENTRE_LIMPEZAS = 3600`) numa **thread daemon**, disparada do `emit`
+por um portão de tempo. A thread não é enfeite: `emit` roda com o lock do
+handler segurado, e um gzip de centenas de MB ali dentro pararia o log de todas
+as contas.
+
+Duas guardas entraram junto, e as duas são sobre não perder evidência:
+`SEGUNDOS_DE_SILENCIO_ANTES_DE_COMPRIMIR = 60` (na virada da meia-noite o
+arquivo de "ontem" ainda pode receber a anexação de uma poda começada antes das
+00:00, e `_comprimir` copia e apaga o original), e uma trava que impede duas
+varreduras simultâneas.
+
+### Alternativas reprovadas
+
+| alternativa | por que não |
+|---|---|
+| Varrer a cada poda | O comentário original já dizia por que não: a resposta muda uma vez por dia, e varrer a cada 100 linhas é custo de disco repetido para nada. |
+| Varrer dentro do `emit`, síncrono | `emit` roda com o lock do handler. Comprimir 300 MB ali para o log de todas as contas. |
+| Thread permanente com `sleep` | Uma thread viva o tempo todo para acordar de hora em hora. A de vida curta faz o mesmo e morre. |
+| Retenção por BYTES | Dia é a unidade em que se pensa sobre isto ("o que aconteceu ontem à noite"). Byte não é — e o volume por dia varia 10× conforme o que está sendo depurado. |
+| Manter 7 dias e filtrar por data na consulta | Depende de quem consulta lembrar de filtrar. Foi exatamente o que não aconteceu na auditoria que errou. |

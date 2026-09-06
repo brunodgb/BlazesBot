@@ -745,3 +745,34 @@ Cada item é o que **não pode ser violado**. O detalhe de cada área mora em
   alvo vivo selecionado, ele é descartado. `_mesmo_alvo_verificado` já deveria
   barrar, mas depende do registro da aquisição — alvo herdado de outra volta
   escapava.
+
+
+## O log de dev — `docs/decisoes/sistema.md`
+
+- **RETENÇÃO DE 2 DIAS** (`DIAS_DE_ARQUIVO_MORTO = 2`, 06/09/2026). Era 7, e o
+  motivo da mudança **não é disco, é a qualidade da resposta**: o log de dev é a
+  fotografia do bot DE AGORA, e sete dias pressupõem código estável por sete
+  dias. **Já custou um veredito errado** — uma auditoria do ponteiro de nome
+  varreu os 7 dias (1.160.883 linhas) e deu "50,4% ilegível", mas os consertos
+  `d9bc023` e `1a5b19c` entraram em 01/09 às 15:20 e 15:34: metade da amostra
+  descrevia um bot que não existe mais. Refeita em 2 dias, a mesma medição deu
+  **46,8%** (231 leituras). Diretiva do usuário: *"ter lixo ou informação que se
+  tornou irrelevante atrapalha em vez de ajuda."*
+- **A VARREDURA É PERIÓDICA, NÃO SÓ NO ARRANQUE**
+  (`INTERVALO_ENTRE_LIMPEZAS = 3600`). Ela rodava uma vez por processo, no
+  `__init__`, e o bot fica ligado por dias — a retenção existia no papel e não
+  acontecia. Medido em 06/09: **324 MB** na pasta, 298 MB no arquivo do dia sem
+  comprimir, o de ontem nunca comprimido e **cinco dias velhos** que já deveriam
+  ter sido apagados.
+- **A VARREDURA RODA NUMA THREAD DAEMON, FORA DO CAMINHO QUENTE.** `emit` roda
+  com o lock do handler segurado: comprimir centenas de MB ali dentro pararia o
+  log de TODAS as contas pelo tempo do gzip.
+- **NUNCA SE COMPRIME O QUE AINDA RECEBE LINHA.** O arquivo de HOJE está fora por
+  construção, e o de ontem só entra depois de
+  `SEGUNDOS_DE_SILENCIO_ANTES_DE_COMPRIMIR = 60` — na virada da meia-noite ele
+  pode receber a última anexação de uma poda começada antes das 00:00, e
+  `_comprimir` copia e apaga o original.
+- **QUEM DIZ DE QUE DIA É O CONTEÚDO É O NOME, NÃO O MTIME.** O mtime muda a cada
+  anexação; um arquivo velho que recebeu linha hoje sobreviveria à retenção para
+  sempre.
+- Travado por `tests/test_retencao_dos_logs.py`.

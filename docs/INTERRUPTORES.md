@@ -56,14 +56,14 @@ ligar código não testado.
 | `MODO_SOLO_DA_HH` | `'solo'` | [blazesbot/config.py:912](blazesbot/config.py#L912) | account_dialog.py | Os dois modos de reset da HH. A cave não renasce sozinha -- regra do jogo. |
 | `NAO_LIMPAR_DUAS_VEZES_NA_MESMA_VOLTA` | `True` | [blazesbot/core/cadencia_da_bolsa.py:43](blazesbot/core/cadencia_da_bolsa.py#L43) | — | Interruptor do piso do conserto -- 06/09/2026. |
 | `ATIVADA` | `True` | [blazesbot/core/calibracao.py:82](blazesbot/core/calibracao.py#L82) | routine.py, vendedor.py | INTERRUPTOR |
-| `LIGADO` | `True` | [blazesbot/core/diagnostico_fino.py:28](blazesbot/core/diagnostico_fino.py#L28) | instrumentar_clique.py, supervisor.py, config.py, account_dialog.py, main_window.py, web_app.py | — |
+| `LIGADO` | `True` | [blazesbot/core/diagnostico_fino.py:28](blazesbot/core/diagnostico_fino.py#L28) | instrumentar_clique.py, supervisor.py, config.py, log_limitado.py, account_dialog.py, main_window.py, web_app.py | — |
 | `ATIVADO` | `False` | [blazesbot/core/esconder_jogadores.py:84](blazesbot/core/esconder_jogadores.py#L84) | deletador.py, diagnostico_do_link.py, supervisor.py, petbug.py | INTERRUPTOR -- DESLIGADO EM 19/08/2026 |
 | `SEGURAR_ATIVADO` | `False` | [blazesbot/core/esconder_jogadores.py:102](blazesbot/core/esconder_jogadores.py#L102) | petbug.py | INTERRUPTOR DO F12 PRESO -- DESLIGADO EM 19/08/2026 |
 | `CONFERIR_A_JANELA_ANTES_DE_ENVIAR` | `True` | [blazesbot/core/inputs.py:293](blazesbot/core/inputs.py#L293) | — | INTERRUPTOR. Desligar volta ao comportamento anterior (mandar sem conferir), e |
 | `MODO_DE_CLIQUE` | `'postmessage_puro'` | [blazesbot/core/inputs.py:131](blazesbot/core/inputs.py#L131) | ui_service.py, instrumentar_clique.py, teste_do_cursor.py | INTERRUPTOR DO MODO DE CLIQUE |
 | `MODO_DE_TECLA` | `'postmessage'` | [blazesbot/core/inputs.py:175](blazesbot/core/inputs.py#L175) | — | INTERRUPTOR DO TECLADO -- "sendmessage" \| "postmessage" |
 | `USAR_MOUSE_SHIELD` | `False` | [blazesbot/core/inputs.py:63](blazesbot/core/inputs.py#L63) | instrumentar_clique.py, teste_do_cursor.py | INTERRUPTOR DO MOUSE SHIELD |
-| `COMPRIMIR_ARQUIVO_MORTO` | `True` | [blazesbot/core/log_limitado.py:72](blazesbot/core/log_limitado.py#L72) | — | O arquivo morto de DIAS ANTERIORES é comprimido. Medido no arquivo da noite de |
+| `COMPRIMIR_ARQUIVO_MORTO` | `True` | [blazesbot/core/log_limitado.py:108](blazesbot/core/log_limitado.py#L108) | — | O arquivo morto de DIAS ANTERIORES é comprimido. Medido no arquivo da noite de |
 | `USAR_PAINEL_POR_MEMORIA` | `True` | [blazesbot/core/memory.py:578](blazesbot/core/memory.py#L578) | — | ESTADO DE PAINEL DE UI POR MEMÓRIA -- o que sobreviveu ao campo |
 | `USAR_REGIOES_QUENTES` | `True` | [blazesbot/core/memory.py:433](blazesbot/core/memory.py#L433) | — | REGIÕES QUENTES -- a rota que fecha os 38% que o array de entidades perde |
 | `ATIVADO` | `True` | [blazesbot/core/petbug.py:104](blazesbot/core/petbug.py#L104) | deletador.py, diagnostico_do_link.py, supervisor.py, esconder_jogadores.py | INTERRUPTOR |
@@ -73,7 +73,7 @@ ligar código não testado.
 
 ## Números medidos -- tolerância, limiar, teto, cadência
 
-566 constantes, agrupadas por arquivo.
+568 constantes, agrupadas por arquivo.
 
 | constante | valor | onde | quem lê | porquê (resumo) |
 |---|---|---|---|---|
@@ -534,9 +534,11 @@ ligar código não testado.
 | `TEMPLATE_DA_MOLDURA` | `'janela_moldura.png'` | [blazesbot/core/janelas_abertas.py:90](blazesbot/core/janelas_abertas.py#L90) | — | — |
 | `TEMPLATE_DO_X` | `'janela_fechar.png'` | [blazesbot/core/janelas_abertas.py:89](blazesbot/core/janelas_abertas.py#L89) | — | Templates. Medidos e recortados em 26/08/2026 -- ver o cabeçalho. |
 | `LOG_JSON_MAXIMO` | `4000` | [blazesbot/core/log_json.py:27](blazesbot/core/log_json.py#L27) | — | Quantos registros o JSON dev guarda (reusa a poda por linha do arquivo). |
-| `DIAS_DE_ARQUIVO_MORTO` | `7` | [blazesbot/core/log_limitado.py:61](blazesbot/core/log_limitado.py#L61) | log_json.py | O ARQUIVO MORTO: o que a poda descarta deixou de ser PERDIDO |
-| `FOLGA_ANTES_DE_PODAR` | `100` | [blazesbot/core/log_limitado.py:37](blazesbot/core/log_limitado.py#L37) | log_json.py | Quanto ele pode passar antes de a poda acontecer. Podar de cem em cem em vez de |
-| `LINHAS_MAXIMAS` | `500` | [blazesbot/core/log_limitado.py:33](blazesbot/core/log_limitado.py#L33) | — | Quantas linhas o arquivo guarda. As mais antigas são descartadas. |
+| `DIAS_DE_ARQUIVO_MORTO` | `2` | [blazesbot/core/log_limitado.py:77](blazesbot/core/log_limitado.py#L77) | log_json.py | O ARQUIVO MORTO: o que a poda descarta deixou de ser PERDIDO |
+| `FOLGA_ANTES_DE_PODAR` | `100` | [blazesbot/core/log_limitado.py:38](blazesbot/core/log_limitado.py#L38) | log_json.py | Quanto ele pode passar antes de a poda acontecer. Podar de cem em cem em vez de |
+| `INTERVALO_ENTRE_LIMPEZAS` | `3600.0` | [blazesbot/core/log_limitado.py:89](blazesbot/core/log_limitado.py#L89) | — | De quanto em quanto tempo varrer a pasta do arquivo morto. |
+| `LINHAS_MAXIMAS` | `500` | [blazesbot/core/log_limitado.py:34](blazesbot/core/log_limitado.py#L34) | — | Quantas linhas o arquivo guarda. As mais antigas são descartadas. |
+| `SEGUNDOS_DE_SILENCIO_ANTES_DE_COMPRIMIR` | `60.0` | [blazesbot/core/log_limitado.py:97](blazesbot/core/log_limitado.py#L97) | — | Quanto tempo um arquivo precisa estar QUIETO para poder ser comprimido. |
 | `LUGAR_FORA_DA_CAVE` | `'Ghost Din Woods'` | [blazesbot/core/lugares.py:102](blazesbot/core/lugares.py#L102) | localizacao.py, routine.py | O lugar em que o personagem está quando NÃO está na cave e o X é grande. |
 | `MINIMO_CAUDA` | `5` | [blazesbot/core/lugares.py:126](blazesbot/core/lugares.py#L126) | — | Menor cauda que ainda identifica um lugar com segurança. Abaixo disso, |
 | `ANGULO_DA_CAMERA` | `956.720459` | [blazesbot/core/memory.py:312](blazesbot/core/memory.py#L312) | ler_camera.py | O ângulo em que os cliques na cena 3D foram medidos. |

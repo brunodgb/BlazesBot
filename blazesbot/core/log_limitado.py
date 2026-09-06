@@ -26,6 +26,7 @@ from __future__ import annotations
 import gzip
 import logging
 import shutil
+import threading
 import time
 from pathlib import Path
 
@@ -58,7 +59,42 @@ FOLGA_ANTES_DE_PODAR = 100
 # Um arquivo POR DIA, e a retenção é em DIAS e não em bytes -- mesmo desenho da
 # retenção dos prints de queda. Dia é a unidade em que se pensa sobre isto ("o que
 # aconteceu ontem à noite"); byte não é.
-DIAS_DE_ARQUIVO_MORTO = 7
+# DOIS DIAS, e o motivo NAO e disco -- e a qualidade da resposta.
+#
+# Diretiva do usuario em 06/09/2026: *"os logs dev principalmente podem mudar
+# bastante a cada atualizacao que fizemos, e ter lixo ou informacao que se tornou
+# irrelevante atrapalha em vez de ajuda."*
+#
+# ISTO JA CUSTOU UM VEREDITO ERRADO. Em 06/09/2026 uma auditoria do ponteiro de
+# nome do alvo varreu 1.160.883 linhas -- os sete dias inteiros -- e concluiu
+# "50,4% ilegivel". Mas os consertos `d9bc023` ("o nome sai certo em 100% das
+# leituras, nao em 21%") e `1a5b19c` ("o alvo resolve em 100%, e nao em 62%")
+# entraram em **01/09 as 15:20 e 15:34**. Metade da amostra descrevia um bot que
+# nao existe mais, e a media dos dois mundos nao descreve nenhum dos dois.
+#
+# Log de dev nao e historico: e a fotografia do bot DE AGORA. Sete dias de
+# retencao pressupoem um codigo estavel por sete dias, e este nao e.
+DIAS_DE_ARQUIVO_MORTO = 2
+
+# De quanto em quanto tempo varrer a pasta do arquivo morto.
+#
+# ANTES A VARREDURA SO ACONTECIA NO `__init__` -- uma vez por processo. E o bot
+# fica LIGADO por dias: medido em 06/09/2026, com o processo no ar desde a
+# vespera, o arquivo do dia estava com **298 MB sem comprimir**, o de ontem nunca
+# tinha sido comprimido e nenhum dia velho tinha sido apagado. A retencao existia
+# no papel e nao acontecia.
+#
+# Uma hora: a resposta so muda na virada do dia, entao varrer de hora em hora
+# erra por no maximo uma hora e custa um `glob` por hora.
+INTERVALO_ENTRE_LIMPEZAS = 3600.0
+
+# Quanto tempo um arquivo precisa estar QUIETO para poder ser comprimido.
+#
+# Na virada da meia-noite o arquivo de "ontem" pode ainda receber a ultima
+# anexacao de uma poda que comecou antes das 00:00. `_comprimir` copia e apaga o
+# original, entao uma anexacao nesse vao se perderia. Um minuto de silencio e
+# folga de sobra para uma janela que dura milissegundos.
+SEGUNDOS_DE_SILENCIO_ANTES_DE_COMPRIMIR = 60.0
 
 # O arquivo morto de DIAS ANTERIORES é comprimido. Medido no arquivo da noite de
 # 20/08/2026: **23 MB -> 740 KB, 32x menos**, e é a mesma evidência -- JSONL é
@@ -101,10 +137,15 @@ class ArquivoDeLogLimitado(logging.FileHandler):
         self._linhas = self._contar()
         self.pasta_do_arquivo_morto = (
             self.caminho.parent / "arquivo" if arquivar else None)
+        # Quando a pasta foi varrida pela última vez, e a trava que impede duas
+        # varreduras ao mesmo tempo. Ver `INTERVALO_ENTRE_LIMPEZAS`.
+        self._ultima_limpeza = 0.0
+        self._limpando = threading.Lock()
         if self.pasta_do_arquivo_morto is not None:
-            # A LIMPEZA É UMA VEZ POR PROCESSO, não por poda. Varrer a pasta a
-            # cada poda seria custo de disco repetido para uma resposta que muda
-            # uma vez por dia.
+            # A primeira é SÍNCRONA, no arranque: o processo ainda não está
+            # logando, então não há caminho quente a atrapalhar, e começar já
+            # limpo é o certo.
+            self._ultima_limpeza = time.time()
             self._limpar_arquivo_morto()
 
     # -- contagem ------------------------------------------------------
@@ -133,6 +174,42 @@ class ArquivoDeLogLimitado(logging.FileHandler):
 
         if self._linhas > self.maximo + self.folga:
             self._podar()
+
+        self._limpar_de_tempos_em_tempos()
+
+    def _limpar_de_tempos_em_tempos(self) -> None:
+        """Varre a pasta do arquivo morto de hora em hora, FORA do caminho quente.
+
+        Numa THREAD, e isso não é enfeite: `emit` roda com o lock do handler
+        segurado, e comprimir o arquivo de ontem (centenas de MB) ali dentro
+        pararia o log de TODAS as contas pelo tempo do gzip. A thread é daemon
+        para não segurar o encerramento do bot.
+
+        O que ela varre não é o que está sendo escrito: comprimir pula o arquivo
+        de HOJE, e a retenção só alcança datas velhas. O arquivo quente e o
+        arquivo do dia nunca são tocados por ela.
+        """
+        if self.pasta_do_arquivo_morto is None:
+            return
+        agora = time.time()
+        if agora - self._ultima_limpeza < INTERVALO_ENTRE_LIMPEZAS:
+            return
+        # Carimba ANTES de disparar: se a varredura demorar mais que o intervalo,
+        # carimbar no fim faria a seguinte sair imediatamente atrás dela.
+        self._ultima_limpeza = agora
+        threading.Thread(target=self._limpar_sem_atropelar,
+                         name="limpeza-do-arquivo-morto", daemon=True).start()
+
+    def _limpar_sem_atropelar(self) -> None:
+        """Uma varredura por vez. Falha nunca sobe -- é thread solta."""
+        if not self._limpando.acquire(blocking=False):
+            return
+        try:
+            self._limpar_arquivo_morto()
+        except Exception:
+            pass
+        finally:
+            self._limpando.release()
 
     def _podar(self) -> None:
         """Reescreve o arquivo mantendo só as últimas `maximo` linhas.
@@ -204,9 +281,11 @@ class ArquivoDeLogLimitado(logging.FileHandler):
         arquivo de ontem que recebeu linha hoje pareceria de hoje -- e sobreviveria
         à retenção para sempre. O nome é o que diz de que dia é o conteúdo.
 
-        Roda UMA VEZ por processo (no `__init__`), não por poda: varrer a pasta a
-        cada poda seria custo de disco repetido para uma resposta que muda uma vez
-        por dia.
+        Roda no arranque e depois de hora em hora, numa thread -- ver
+        `_limpar_de_tempos_em_tempos`. Era SÓ no arranque, e como o bot fica
+        ligado por dias a retenção existia no papel e não acontecia: medido em
+        06/09/2026, 298 MB sem comprimir no arquivo do dia e cinco dias velhos
+        que deveriam ter sido apagados.
         """
         try:
             agora = time.time()
@@ -226,10 +305,26 @@ class ArquivoDeLogLimitado(logging.FileHandler):
                     antigo.unlink(missing_ok=True)
                     continue
                 if (COMPRIMIR_ARQUIVO_MORTO and data != hoje
-                        and antigo.suffix != ".gz"):
+                        and antigo.suffix != ".gz"
+                        and self._esta_quieto(antigo, agora)):
                     self._comprimir(antigo)
         except Exception:
             pass
+
+    @staticmethod
+    def _esta_quieto(arquivo: Path, agora: float) -> bool:
+        """O arquivo parou de receber linha? Ver
+        `SEGUNDOS_DE_SILENCIO_ANTES_DE_COMPRIMIR`.
+
+        Não ler o mtime devolve `False`: na dúvida não se comprime, porque o
+        preço de comprimir cedo é perder a última anexação e o de comprimir
+        tarde é uma hora a mais de disco.
+        """
+        try:
+            return (agora - arquivo.stat().st_mtime
+                    >= SEGUNDOS_DE_SILENCIO_ANTES_DE_COMPRIMIR)
+        except OSError:
+            return False
 
     @staticmethod
     def _data_no_nome(caminho: Path, prefixo: str) -> str | None:
