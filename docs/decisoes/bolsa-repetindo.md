@@ -77,3 +77,19 @@ instrumentado, a escolha vira medição.
 
 Rodar o APP como sempre e mandar `logs/dev/blazes-dev-*.jsonl`. As linhas
 `BOLSA/DIAGNÓSTICO` respondem sozinhas qual dos três consertos é o certo.
+
+
+## O piso do conserto — 06/09/2026
+
+Escolhida a opção (c) das três: **a mesma volta não abre a bolsa duas vezes**
+(`NAO_LIMPAR_DUAS_VEZES_NA_MESMA_VOLTA`).
+
+Ela não conserta a causa — o contador continua congelando quando a volta é
+cortada, e o log instrumentado provou de onde vem: **401 dos 407 avisos dizem
+`Último corte: sem alvo`**. Conserta o dano visível (a bolsa em rajada) sem
+mexer na semântica que o usuário configurou na tela ("a cada N voltas"), que é
+o que as opções (a) e (b) fariam.
+
+O aviso continua saindo a cada repetição — agora dizendo que a bolsa NÃO foi
+aberta —, então a medição da causa não se perde. E o interruptor existe para
+quem quiser ver a rajada acontecer de novo numa investigação.

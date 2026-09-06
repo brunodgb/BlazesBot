@@ -35,6 +35,13 @@ from __future__ import annotations
 
 import time
 
+# Interruptor do piso do conserto -- 06/09/2026.
+#
+# `True`: a mesma volta não abre a bolsa duas vezes. `False` devolve o
+# comportamento antigo (só o diagnóstico), e existe para quem for medir a causa
+# de novo poder ver a rajada acontecer. Ver `docs/decisoes/bolsa-repetindo.md`.
+NAO_LIMPAR_DUAS_VEZES_NA_MESMA_VOLTA = True
+
 
 class CadenciaDaBolsa:
     """Decide se é hora de limpar a bolsa, e denuncia quando se repete."""
@@ -60,6 +67,26 @@ class CadenciaDaBolsa:
 
         agora = time.monotonic()
         repetida = self._ultima_volta == voltas
+        if repetida and NAO_LIMPAR_DUAS_VEZES_NA_MESMA_VOLTA:
+            # A MESMA VOLTA NÃO LIMPA DUAS VEZES -- 06/09/2026.
+            #
+            # É o piso do conserto, e ele NÃO resolve a causa: o contador
+            # continua congelando quando a volta é cortada (401 dos 407 avisos
+            # mediam `sem alvo`). O que ele resolve é o dano visível -- a bolsa
+            # abrindo e fechando em rajada, até 275 vezes seguidas na mesma
+            # volta -- sem mexer na semântica que o usuário configurou na tela
+            # ("a cada N voltas").
+            #
+            # O aviso continua saindo, e é ele que segue medindo a causa.
+            self._repeticoes += 1
+            self.log.warning(
+                "BOLSA/DIAGNÓSTICO: a volta %d já foi limpa há %.1fs e o "
+                "contador não andou (%dª vez). NÃO abro a bolsa de novo. "
+                "Abortadas subiram %d; último corte: %s.",
+                voltas, agora - self._quando, self._repeticoes,
+                abortadas - self._ultimas_abortadas, motivo_do_corte)
+            self._ultimas_abortadas = abortadas
+            return False
         if repetida:
             self._repeticoes += 1
             self.log.warning(

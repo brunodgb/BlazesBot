@@ -54,16 +54,26 @@ def test_cadencia_desligada_nao_limpa(cadencia):
 
 # ------------------------------------------------- o defeito, exposto
 
-def test_a_MESMA_volta_limpa_de_novo(cadencia):
-    """O defeito em uma linha: a régua olha o RESTO, não a mudança.
+def test_a_MESMA_volta_NAO_limpa_de_novo(cadencia):
+    """O piso do conserto, 06/09/2026.
 
-    Enquanto o contador de voltas completas não andar, o resto continua zero e
-    a bolsa é aberta a cada giro do laço. Foi assim que saíram 275 limpezas
-    seguidas na volta 150.
+    A régua olha o RESTO, não a mudança: enquanto o contador de voltas completas
+    não andar, o resto continua zero e a bolsa era aberta a cada giro do laço --
+    275 vezes seguidas na volta 150, na medição de campo.
+
+    Isto NÃO conserta a causa (o contador continua congelando quando a volta é
+    cortada). Conserta o dano visível, sem mexer na semântica que o usuário
+    configurou na tela.
     """
     assert _perguntar(cadencia, 150) is True
+    assert _perguntar(cadencia, 150) is False
+    assert _perguntar(cadencia, 150) is False
+
+
+def test_a_volta_seguinte_no_multiplo_limpa_normalmente(cadencia):
+    """O bloqueio é da volta REPETIDA, não da cadência."""
     assert _perguntar(cadencia, 150) is True
-    assert _perguntar(cadencia, 150) is True
+    assert _perguntar(cadencia, 160) is True
 
 
 def test_a_repeticao_vira_AVISO_com_a_causa(cadencia, caplog):
@@ -76,9 +86,10 @@ def test_a_repeticao_vira_AVISO_com_a_causa(cadencia, caplog):
     avisos = [r.getMessage() for r in caplog.records
               if r.levelno >= logging.WARNING]
     assert len(avisos) == 1, avisos
-    assert "MESMA volta 150" in avisos[0]
+    assert "volta 150" in avisos[0]
+    assert "NÃO abro a bolsa" in avisos[0]
     assert "sem alvo" in avisos[0], "o aviso não nomeia o motivo do corte"
-    assert "abortadas subiram 1" in avisos[0]
+    assert "Abortadas subiram 1" in avisos[0]
 
 
 def test_a_primeira_limpeza_NAO_e_aviso(cadencia, caplog):
