@@ -34,6 +34,7 @@ from __future__ import annotations
 
 import logging
 
+from . import diagnostico_fino
 from .zones import distancia_linear
 
 # Quão longe do ponto inicial um mob pode estar para valer o engajamento.
@@ -61,7 +62,8 @@ RECUSAS_POR_DISTANCIA = 3
 
 
 def longe_demais(alvo: dict, base: tuple[int, int] | None, recusas_ja_feitas: int,
-                 log: logging.Logger) -> bool:
+                 log: logging.Logger,
+                 pos_do_personagem: tuple[int, int] | None = None) -> bool:
     """Este mob deve ser recusado por estar longe do ponto? `True` = recuse.
 
     `base` é o ponto inicial da conta, ou `None` quando não há um (trava de
@@ -78,6 +80,20 @@ def longe_demais(alvo: dict, base: tuple[int, int] | None, recusas_ja_feitas: in
     if pos is None:
         return False
     distancia = distancia_linear(pos, base)
+    # A MEDIÇÃO QUE FALTAVA PARA JULGAR O SPOT -- 06/09/2026.
+    #
+    # A régua compara o mob com a BASE, e só com isso não dá para distinguir
+    # "mob longe de mim" (spot espalhado) de "eu longe da base" (personagem
+    # deslocado). São defeitos diferentes com consertos diferentes, e o log não
+    # trazia o dado que os separa: a distância do mob ao PERSONAGEM.
+    corrida = (None if pos_do_personagem is None
+               else distancia_linear(pos, pos_do_personagem))
+    diagnostico_fino.anotar(
+        log, "ALVO %r id=%s hp=%s/%s | mob->base=%.0f (teto %d) | "
+        "mob->personagem=%s | recusas nesta rodada=%d",
+        alvo.get("nome") or "?", alvo.get("id"), alvo.get("hp"),
+        alvo.get("max_hp"), distancia, MAXIMO_DE_PIXELS_DO_PONTO,
+        "?" if corrida is None else f"{corrida:.0f}", recusas_ja_feitas)
     if distancia <= MAXIMO_DE_PIXELS_DO_PONTO:
         return False
     if recusas_ja_feitas >= RECUSAS_POR_DISTANCIA:

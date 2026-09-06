@@ -48,6 +48,8 @@ from __future__ import annotations
 import time
 from collections.abc import Callable
 
+from ..core import diagnostico_fino
+
 # Quanto o morto espera pela Fada antes de se reviver sozinho.
 PRAZO_PARA_A_FADA = 60.0
 
@@ -110,6 +112,10 @@ class CicloDaMorte:
         clicar_no_convite: Callable[[], None],
         clicar_no_ok_da_morte: Callable[[], None],
         voltar_ao_ponto: Callable[[], bool],
+        # SÓ DIAGNÓSTICO: onde o personagem está e a que distância do ponto.
+        # `None` nos dois é aceitável -- o log diz "?" e o ciclo não muda.
+        onde_estou: Callable[[], object] | None = None,
+        quao_longe: Callable[[], object] | None = None,
         parar_pct: Callable[[], float],
         continuar: Callable[[], bool],
         dormir: Callable[[float], bool],
@@ -128,6 +134,8 @@ class CicloDaMorte:
         self._clicar_no_convite = clicar_no_convite
         self._clicar_no_ok_da_morte = clicar_no_ok_da_morte
         self._voltar_ao_ponto = voltar_ao_ponto
+        self.__onde_estou = onde_estou
+        self.__quao_longe = quao_longe
         self._parar_pct = parar_pct
         self._continuar = continuar
         self._dormir = dormir
@@ -160,6 +168,14 @@ class CicloDaMorte:
         """Do aviso ao personagem de volta no ponto. `False` = pare a conta."""
         self.mortes += 1
         self.log.warning("MORRI. A macro para aqui — avisando o time.")
+        # ONDE e COM QUEM. É o que separa "morri no meu spot com dois adds" de
+        # "morri longe, arrastado" -- e sem isso a única pista de uma morte é a
+        # hora em que ela apareceu no log.
+        diagnostico_fino.anotar(
+            self.log, "MORTE #%d | posição=%s | em batalha=%s | "
+            "distância do ponto=%s",
+            self.mortes, self._onde_estou(), self._em_batalha(),
+            self._quao_longe())
         self.mural.morri(self.meu_login, nick=self._meu_nick())
         try:
             revivido_pela_fada = self._esperar_a_fada()
@@ -171,7 +187,14 @@ class CicloDaMorte:
                 # ficar tentando reviver a noite toda.
                 return self._contar_a_falha()
             self._regenerar_antes_de_andar()
-            if not self._voltar_ao_ponto():
+            comeco = time.monotonic()
+            longe_antes = self._quao_longe()
+            voltou = self._voltar_ao_ponto()
+            diagnostico_fino.anotar(
+                self.log, "RETORNO %s em %.0fs | distância antes=%s depois=%s",
+                "ok" if voltou else "FALHOU", time.monotonic() - comeco,
+                longe_antes, self._quao_longe())
+            if not voltou:
                 self.log.warning("Não consegui voltar ao ponto inicial depois "
                                  "de reviver.")
                 return self._contar_a_falha()
@@ -180,6 +203,22 @@ class CicloDaMorte:
         self.mortes_sem_voltar = 0
         self.log.info("De pé e de volta ao ponto — a macro recomeça.")
         return True
+
+    def _onde_estou(self):
+        return self._seguro(self.__onde_estou)
+
+    def _quao_longe(self):
+        return self._seguro(self.__quao_longe)
+
+    @staticmethod
+    def _seguro(fn):
+        """Diagnóstico NUNCA derruba o ciclo: sem função ou com erro, é "?"."""
+        if fn is None:
+            return "?"
+        try:
+            return fn()
+        except Exception:
+            return "?"
 
     def _contar_a_falha(self) -> bool:
         self.mortes_sem_voltar += 1
@@ -408,4 +447,9 @@ def montar_para_o_app(sup, executor, entrada, *, vida_pct, em_batalha,
         continuar=lambda: not sup.stop_event.is_set(),
         dormir=executor._dormir,
         nick=lambda: (sup.account.last_char_name or "").strip(),
+        # DIAGNÓSTICO: as duas perguntas que o log de uma morte precisava e não
+        # tinha -- onde ela aconteceu e a que distância do ponto de farm.
+        onde_estou=lambda: executor._posicao_atual() if executor._posicao_atual
+        else "?",
+        quao_longe=executor.distancia_da_base,
     )

@@ -56,6 +56,7 @@ ligar código não testado.
 | `MODO_SOLO_DA_HH` | `'solo'` | [blazesbot/config.py:912](blazesbot/config.py#L912) | account_dialog.py | Os dois modos de reset da HH. A cave não renasce sozinha -- regra do jogo. |
 | `NAO_LIMPAR_DUAS_VEZES_NA_MESMA_VOLTA` | `True` | [blazesbot/core/cadencia_da_bolsa.py:43](blazesbot/core/cadencia_da_bolsa.py#L43) | — | Interruptor do piso do conserto -- 06/09/2026. |
 | `ATIVADA` | `True` | [blazesbot/core/calibracao.py:82](blazesbot/core/calibracao.py#L82) | routine.py, vendedor.py | INTERRUPTOR |
+| `LIGADO` | `True` | [blazesbot/core/diagnostico_fino.py:28](blazesbot/core/diagnostico_fino.py#L28) | instrumentar_clique.py, supervisor.py, config.py, account_dialog.py, main_window.py, web_app.py | — |
 | `ATIVADO` | `False` | [blazesbot/core/esconder_jogadores.py:84](blazesbot/core/esconder_jogadores.py#L84) | deletador.py, diagnostico_do_link.py, supervisor.py, petbug.py | INTERRUPTOR -- DESLIGADO EM 19/08/2026 |
 | `SEGURAR_ATIVADO` | `False` | [blazesbot/core/esconder_jogadores.py:102](blazesbot/core/esconder_jogadores.py#L102) | petbug.py | INTERRUPTOR DO F12 PRESO -- DESLIGADO EM 19/08/2026 |
 | `CONFERIR_A_JANELA_ANTES_DE_ENVIAR` | `True` | [blazesbot/core/inputs.py:293](blazesbot/core/inputs.py#L293) | — | INTERRUPTOR. Desligar volta ao comportamento anterior (mandar sem conferir), e |
@@ -323,14 +324,14 @@ ligar código não testado.
 | `SEGUNDOS_CONECTANDO` | `6.0` | [blazesbot/bot/login.py:134](blazesbot/bot/login.py#L134) | — | "Connecting to the server, please wait a moment." -- espera LEGÍTIMA, com |
 | `WAIT_HEARTBEAT_SECONDS` | `150.0` | [blazesbot/bot/login.py:110](blazesbot/bot/login.py#L110) | — | Cadência do aviso de "continuo esperando", só para o log não ficar mudo. |
 | `THRESHOLD` | `0.8` | [blazesbot/bot/login_states.py:35](blazesbot/bot/login_states.py#L35) | — | — |
-| `CADENCIA_DO_CONVITE` | `0.5` | [blazesbot/bot/morte.py:70](blazesbot/bot/morte.py#L70) | — | Cadência da conferência do convite da Fada na TELA. |
-| `EXTENSAO_PELO_FEITICO` | `15.0` | [blazesbot/bot/morte.py:57](blazesbot/bot/morte.py#L57) | — | Quanto o prazo estica quando a Fada avisa que COMEÇOU a conjurar. |
-| `MORTES_SEGUIDAS_PARA_PARAR` | `3` | [blazesbot/bot/morte.py:91](blazesbot/bot/morte.py#L91) | — | Mortes seguidas SEM conseguir voltar ao ponto antes de parar a conta. |
-| `PASSO_DA_ESPERA` | `0.3` | [blazesbot/bot/morte.py:62](blazesbot/bot/morte.py#L62) | deletador.py, fada_reviver.py | Passo entre duas perguntas durante a espera. Tudo o que ele pergunta é |
-| `PRAZO_PARA_A_FADA` | `60.0` | [blazesbot/bot/morte.py:52](blazesbot/bot/morte.py#L52) | mural_da_morte.py | Quanto o morto espera pela Fada antes de se reviver sozinho. |
-| `TETO_DA_REGENERACAO` | `60.0` | [blazesbot/bot/morte.py:80](blazesbot/bot/morte.py#L80) | — | Teto da regeneração sentada antes de andar de volta. |
-| `TETO_DO_RETORNO` | `180.0` | [blazesbot/bot/morte.py:88](blazesbot/bot/morte.py#L88) | — | Teto da caminhada de volta ao ponto inicial. |
-| `TETO_PARA_O_REVIVE_PEGAR` | `10.0` | [blazesbot/bot/morte.py:73](blazesbot/bot/morte.py#L73) | — | Quanto se espera o `hp` subir depois de um clique que deveria reviver. |
+| `CADENCIA_DO_CONVITE` | `0.5` | [blazesbot/bot/morte.py:72](blazesbot/bot/morte.py#L72) | — | Cadência da conferência do convite da Fada na TELA. |
+| `EXTENSAO_PELO_FEITICO` | `15.0` | [blazesbot/bot/morte.py:59](blazesbot/bot/morte.py#L59) | — | Quanto o prazo estica quando a Fada avisa que COMEÇOU a conjurar. |
+| `MORTES_SEGUIDAS_PARA_PARAR` | `3` | [blazesbot/bot/morte.py:93](blazesbot/bot/morte.py#L93) | — | Mortes seguidas SEM conseguir voltar ao ponto antes de parar a conta. |
+| `PASSO_DA_ESPERA` | `0.3` | [blazesbot/bot/morte.py:64](blazesbot/bot/morte.py#L64) | deletador.py, fada_reviver.py | Passo entre duas perguntas durante a espera. Tudo o que ele pergunta é |
+| `PRAZO_PARA_A_FADA` | `60.0` | [blazesbot/bot/morte.py:54](blazesbot/bot/morte.py#L54) | mural_da_morte.py | Quanto o morto espera pela Fada antes de se reviver sozinho. |
+| `TETO_DA_REGENERACAO` | `60.0` | [blazesbot/bot/morte.py:82](blazesbot/bot/morte.py#L82) | — | Teto da regeneração sentada antes de andar de volta. |
+| `TETO_DO_RETORNO` | `180.0` | [blazesbot/bot/morte.py:90](blazesbot/bot/morte.py#L90) | — | Teto da caminhada de volta ao ponto inicial. |
+| `TETO_PARA_O_REVIVE_PEGAR` | `10.0` | [blazesbot/bot/morte.py:75](blazesbot/bot/morte.py#L75) | — | Quanto se espera o `hp` subir depois de um clique que deveria reviver. |
 | `ACEITE_VALIDO_SEGUNDOS` | `15.0` | [blazesbot/bot/mural.py:202](blazesbot/bot/mural.py#L202) | — | Validade do aceite. Curta de propósito: ele confirma UM convite recém-enviado, |
 | `CONVITE_VALIDO_SEGUNDOS` | `60.0` | [blazesbot/bot/mural.py:80](blazesbot/bot/mural.py#L80) | — | Validade do anúncio. Cobre a fila de resposta do outro cliente com folga; mais |
 | `ESTADO_VALIDO_SEGUNDOS` | `30.0` | [blazesbot/bot/mural.py:294](blazesbot/bot/mural.py#L294) | sincronia.py, supervisor.py | Quanto tempo o estado publicado por uma conta continua valendo. |
@@ -497,8 +498,8 @@ ligar código não testado.
 | `ESPERA_APOS_PEGAR` | `4.0` | [blazesbot/core/catador.py:112](blazesbot/core/catador.py#L112) | — | Espera entre o clique no botão e a próxima conferência. NÚMERO DO USUÁRIO. |
 | `ESPERA_ENTRE_CLIQUES` | `0.1` | [blazesbot/core/catador.py:96](blazesbot/core/catador.py#L96) | — | Espera entre dois cliques direitos. Também do T-R0XX. Não é tempo de abrir a |
 | `TETO_DE_CLIQUES` | `10` | [blazesbot/core/catador.py:124](blazesbot/core/catador.py#L124) | — | Teto de cliques no botão. REDE DE SEGURANÇA, não estratégia -- mesmo papel do |
-| `MAXIMO_DE_PIXELS_DO_PONTO` | `12` | [blazesbot/core/coleira_do_ponto.py:49](blazesbot/core/coleira_do_ponto.py#L49) | executor.py | Quão longe do ponto inicial um mob pode estar para valer o engajamento. |
-| `RECUSAS_POR_DISTANCIA` | `3` | [blazesbot/core/coleira_do_ponto.py:60](blazesbot/core/coleira_do_ponto.py#L60) | executor.py | Quantos mobs longe demais podem ser recusados numa MESMA rodada de aquisição |
+| `MAXIMO_DE_PIXELS_DO_PONTO` | `12` | [blazesbot/core/coleira_do_ponto.py:50](blazesbot/core/coleira_do_ponto.py#L50) | executor.py | Quão longe do ponto inicial um mob pode estar para valer o engajamento. |
+| `RECUSAS_POR_DISTANCIA` | `3` | [blazesbot/core/coleira_do_ponto.py:61](blazesbot/core/coleira_do_ponto.py#L61) | executor.py | Quantos mobs longe demais podem ser recusados numa MESMA rodada de aquisição |
 | `FRIEND_ROW_HEIGHT` | `15` | [blazesbot/core/coords.py:345](blazesbot/core/coords.py#L345) | — | Altura de linha nas listas da janela de amigos. |
 | `MAXIMO_DE_RETRATOS_DO_TIME` | `4` | [blazesbot/core/coords.py:113](blazesbot/core/coords.py#L113) | afericao_do_aliado.py | — |
 | `PASSO_ENTRE_RETRATOS_DO_TIME` | `80` | [blazesbot/core/coords.py:112](blazesbot/core/coords.py#L112) | afericao_do_aliado.py | — |

@@ -38,6 +38,9 @@ def executor():
     e._travar_posicao = True
     e._base_pos = (100, 100)
     e._recusas_por_distancia = 0
+    # SEM LEITURA DE POSIÇÃO: a medição do "mob->personagem" que o log tirou
+    # em 06/09/2026 é diagnóstico; ela não pode mudar quem é recusado.
+    e._posicao_atual = None
     return e
 
 

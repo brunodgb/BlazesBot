@@ -178,7 +178,7 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | `PASSO_DA_ESPERA_DA_BASE` | 0.1 s | = | PASSO | [executor.py:718](blazesbot/bot/app/executor.py#L718) | `_esperar_chegar_na_base` | Cadência da pergunta "já cheguei?". Leitura de posição é de microssegundos; o |
 | `PASSO_DA_CONFIRMACAO_DO_TAB` | 0.01 s | *novo* | PASSO | [executor.py:742](blazesbot/bot/app/executor.py#L742) | `_esperar_o_alvo_trocar` | ERA AQUI O ATRASO ENTRE O TAB E A LINHA 1 -- 26/08/2026 |
 | `SEGUNDOS_DO_PASSO_DO_SHUFFLE` | 3 s | *novo* | PASSO | [executor.py:748](blazesbot/bot/app/executor.py#L748) | `_fazer_shuffle_anti_afk` | Cada perna do shuffle anti-AFK (ida e volta). Era `time.sleep(1.0)` cego duas |
-| *literal em* `rodar` | 0.25 s | = | FIXO | [executor.py:2956](blazesbot/bot/app/executor.py#L2956) | `rodar` | Laço contínuo: volta após volta, até `continuar()` devolver False. |
+| *literal em* `rodar` | 0.25 s | = | FIXO | [executor.py:2976](blazesbot/bot/app/executor.py#L2976) | `rodar` | Laço contínuo: volta após volta, até `continuar()` devolver False. |
 | `ESPERA_ENTRE_TABS_DO_ALINHAMENTO` | 0.5 s | *novo* | FIXO | [sincronia.py:97](blazesbot/bot/app/sincronia.py#L97) |  | Cadência do TAB durante o alinhamento. |
 | `PASSO_DA_ESPERA_DA_LARGADA` | 0.04 s | *novo* | PASSO | [sincronia.py:100](blazesbot/bot/app/sincronia.py#L100) | `_esperar_os_seguidores, _entrar_na_largada` | De quanto em quanto tempo o seguidor confere se a largada saiu. |
 | `SEGUNDOS_SEM_MUDANCA_PARA_TAB` | 3 s | *novo* | FIXO | [sincronia.py:108](blazesbot/bot/app/sincronia.py#L108) | `conferir_a_parada` | Sem trocar de estado de batalha por este tempo, dá TAB. |
@@ -305,12 +305,12 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | `TETO_DA_SONDA` | 1.2 s | = | TETO | [instrumentar_clique.py:113](blazesbot/bot/instrumentar_clique.py#L113) | `_sondar_ate_mudar, _um_modo` | Teto da espera pelo efeito. Passou disso, o clique é dado como PERDIDO. |
 | *literal em* `rodar` | 0.05 s | = | FIXO | [instrumentar_clique.py:390](blazesbot/bot/instrumentar_clique.py#L390) | `rodar` |  |
 | *literal em* `main` | 8 s | = | FIXO | [instrumentar_clique.py:488](blazesbot/bot/instrumentar_clique.py#L488) | `main` |  |
-| `PRAZO_PARA_A_FADA` | 60 s (1 min) | *novo* | TETO | [morte.py:52](blazesbot/bot/morte.py#L52) | `_esperar_a_fada` | Quanto o morto espera pela Fada antes de se reviver sozinho. |
-| `PASSO_DA_ESPERA` | 0.3 s | *novo* | PASSO | [morte.py:62](blazesbot/bot/morte.py#L62) | `_esperar_a_fada, _esperar_ficar_de_pe (+1)` | Passo entre duas perguntas durante a espera. Tudo o que ele pergunta é |
-| `CADENCIA_DO_CONVITE` | 0.5 s | *novo* | PASSO | [morte.py:70](blazesbot/bot/morte.py#L70) | `_esperar_a_fada` | Cadência da conferência do convite da Fada na TELA. |
-| `TETO_PARA_O_REVIVE_PEGAR` | 10 s | *novo* | TETO | [morte.py:73](blazesbot/bot/morte.py#L73) | `_esperar_ficar_de_pe` | Quanto se espera o `hp` subir depois de um clique que deveria reviver. |
-| `TETO_DA_REGENERACAO` | 60 s (1 min) | *novo* | TETO | [morte.py:80](blazesbot/bot/morte.py#L80) | `_regenerar_antes_de_andar` | Teto da regeneração sentada antes de andar de volta. |
-| `TETO_DO_RETORNO` | 180 s (3 min) | *novo* | TETO | [morte.py:88](blazesbot/bot/morte.py#L88) | `montar_para_o_app, voltar_ao_ponto` | Teto da caminhada de volta ao ponto inicial. |
+| `PRAZO_PARA_A_FADA` | 60 s (1 min) | *novo* | TETO | [morte.py:54](blazesbot/bot/morte.py#L54) | `_esperar_a_fada` | Quanto o morto espera pela Fada antes de se reviver sozinho. |
+| `PASSO_DA_ESPERA` | 0.3 s | *novo* | PASSO | [morte.py:64](blazesbot/bot/morte.py#L64) | `_esperar_a_fada, _esperar_ficar_de_pe (+1)` | Passo entre duas perguntas durante a espera. Tudo o que ele pergunta é |
+| `CADENCIA_DO_CONVITE` | 0.5 s | *novo* | PASSO | [morte.py:72](blazesbot/bot/morte.py#L72) | `_esperar_a_fada` | Cadência da conferência do convite da Fada na TELA. |
+| `TETO_PARA_O_REVIVE_PEGAR` | 10 s | *novo* | TETO | [morte.py:75](blazesbot/bot/morte.py#L75) | `_esperar_ficar_de_pe` | Quanto se espera o `hp` subir depois de um clique que deveria reviver. |
+| `TETO_DA_REGENERACAO` | 60 s (1 min) | *novo* | TETO | [morte.py:82](blazesbot/bot/morte.py#L82) | `_regenerar_antes_de_andar` | Teto da regeneração sentada antes de andar de volta. |
+| `TETO_DO_RETORNO` | 180 s (3 min) | *novo* | TETO | [morte.py:90](blazesbot/bot/morte.py#L90) | `montar_para_o_app, voltar_ao_ponto` | Teto da caminhada de volta ao ponto inicial. |
 | `CONVITE_VALIDO_SEGUNDOS` | 60 s (1 min) | = | FIXO | [mural.py:80](blazesbot/bot/mural.py#L80) | `convite_pendente` | Validade do anúncio. Cobre a fila de resposta do outro cliente com folga; mais |
 | `ACEITE_VALIDO_SEGUNDOS` | 15 s | = | FIXO | [mural.py:202](blazesbot/bot/mural.py#L202) | `aceite_pendente` | Validade do aceite. Curta de propósito: ele confirma UM convite recém-enviado, |
 | `LARGADA_VALIDA_SEGUNDOS` | 5 s | *novo* | FIXO | [mural.py:286](blazesbot/bot/mural.py#L286) | `largada_pendente` | Quanto tempo uma largada anunciada continua valendo. |

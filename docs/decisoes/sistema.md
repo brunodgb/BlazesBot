@@ -223,3 +223,39 @@ ideia: **trocar um defeito raro por um permanente é o pior negócio possível.*
 Travado por `tests/test_trava_da_janela.py` (21 testes), incluindo uma varredura
 de AST que reprova qualquer módulo que mande mensagem de TECLADO fora do
 `Input` — um ponto de saída novo sem `_janela_confiavel` é um vazamento novo.
+
+
+## O diagnóstico fino do APP — 06/09/2026
+
+> *"Vamos tentar trackear todo tipo de problema com vários logs em vários pontos
+> que você considerar que pode ser problemático, pois assim vamos ter
+> comprovações e conseguir tomar medidas mais precisas do que fazer, mas pode
+> ser log dev, não precisa mostrar tudo na UI."* — usuário
+
+`core/diagnostico_fino.py` é um interruptor só (`LIGADO`) e um `anotar()` que
+prefixa tudo com **`DIAG:`** — o prefixo é o que permite separar medição de
+operação com um `grep`, sem depender do nível do log.
+
+### O que passou a ser medido, e por quê
+
+| ponto | linha | a pergunta que ela responde |
+|---|---|---|
+| aquisição | `DIAG: ALVO ... mob->base=N mob->personagem=N` | **o problema é o spot ou o bot?** A régua compara o mob com a BASE, e só com isso não dá para separar "mob longe de mim" de "eu longe da base" |
+| saída de batalha | `DIAG: SAIDA DE BATALHA: a flag baixou N.NNs depois de o alvo cair` | os 2 s do teto são generosos ou apertados? O teto foi posto **antes** de existir esta medição |
+| volta | `DIAG: VOLTA completa em N.Ns` / `VOLTA cortada: <motivo>` | quanto tempo cada volta custa, e qual saída domina |
+| morte | `DIAG: MORTE #N \| posição=... \| em batalha=... \| distância do ponto=...` | morri no meu spot com adds, ou longe, arrastado? |
+| retorno | `DIAG: RETORNO ok/FALHOU em Ns \| distância antes=... depois=...` | a volta ao ponto funciona, e quanto custa |
+| Fada (reviver) | `FADA/REVIVER: clique N ... id esperado=... lido=...` | o clique no retrato pega? É o dado que explicou os 1583 cliques "em outro alvo" |
+
+**Nenhuma dessas linhas muda comportamento**, e o diagnóstico da morte é
+explicitamente à prova de falha: leitura que explode vira `"?"` em vez de
+derrubar o ciclo — log de medição que leva a macro junto seria pior que não
+medir.
+
+### O que ficou de fora, e por quê
+
+**Quantos mobs estão batendo no personagem.** Precisa de `entidades_vivas()`, que
+mora na memória e chegaria por injeção do supervisor — e o supervisor estava
+sendo editado em paralelo pelo usuário quando isto foi escrito. Fica anotado
+como o próximo ponto útil: é o dado que fecharia a pergunta "morri por causa do
+spot?".

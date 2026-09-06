@@ -361,3 +361,54 @@ def test_o_portao_da_montaria_respeita_quem_aceita_ir_a_pe():
     # E a INSISTÊNCIA continua sendo o padrão -- é regra da cave.
     assert inspect.signature(Navigator.__init__).parameters[
         "exigir_montaria"].default is True
+
+
+# ---------------------------------------------------------------------------
+# O DIAGNÓSTICO FINO -- 06/09/2026
+# ---------------------------------------------------------------------------
+#
+# *"Vamos tentar trackear todo tipo de problema com vários logs em vários pontos
+# (...) pois assim vamos ter comprovações e conseguir tomar medidas mais
+# precisas."*
+
+def test_a_morte_registra_ONDE_e_COM_QUEM(caplog):
+    from blazesbot.core import diagnostico_fino
+
+    mundo = _Mundo(fada=None)
+    ciclo = _ciclo(mundo)
+    ciclo._CicloDaMorte__onde_estou = lambda: (1750, 1607)
+    ciclo._CicloDaMorte__quao_longe = lambda: 42.0
+
+    with caplog.at_level(logging.INFO):
+        ciclo.resolver()
+
+    linhas = [r.getMessage() for r in caplog.records if "DIAG:" in r.getMessage()]
+    assert any("MORTE #1" in x and "(1750, 1607)" in x for x in linhas), linhas
+    assert any("RETORNO ok" in x for x in linhas), linhas
+    assert diagnostico_fino.LIGADO is True
+
+
+def test_o_diagnostico_NUNCA_derruba_o_ciclo():
+    """Log de medição que explode e leva a macro junto seria pior que não medir."""
+    mundo = _Mundo(fada=None)
+    ciclo = _ciclo(mundo)
+
+    def _explode():
+        raise RuntimeError("memória sumiu")
+
+    ciclo._CicloDaMorte__onde_estou = _explode
+    ciclo._CicloDaMorte__quao_longe = _explode
+
+    assert ciclo.resolver() is True
+
+
+def test_desligar_o_interruptor_CALA_as_linhas_de_medicao(monkeypatch, caplog):
+    from blazesbot.core import diagnostico_fino
+
+    monkeypatch.setattr(diagnostico_fino, "LIGADO", False)
+    mundo = _Mundo(fada=None)
+
+    with caplog.at_level(logging.INFO):
+        _ciclo(mundo).resolver()
+
+    assert not [r for r in caplog.records if "DIAG:" in r.getMessage()]

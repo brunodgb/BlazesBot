@@ -72,7 +72,7 @@ import time
 from collections.abc import Callable, Iterable
 from typing import Protocol
 
-from ...core import cadencia_da_bolsa, coleira_do_ponto
+from ...core import cadencia_da_bolsa, coleira_do_ponto, diagnostico_fino
 from ...core.inputs import Input
 from ...core.pet import SEGUNDOS_PARA_A_COMIDA_SER_USADA, PetFeeder
 
@@ -1603,9 +1603,17 @@ class ExecutorDeMacro:
         teto não é fracasso, é o outro desfecho útil -- quer dizer que há outro
         mob em cima, e quem sabe disso não vai sentar, andar nem abrir a bolsa.
         """
-        fim = time.time() + SEGUNDOS_PARA_CONFIRMAR_A_SAIDA
+        comeco = time.time()
+        fim = comeco + SEGUNDOS_PARA_CONFIRMAR_A_SAIDA
         while time.time() < fim and self._continuar():
             if self._ler_em_batalha() is False:
+                # QUANTO A FLAG ATRASA depois de o HP zerar. É a medida que diz
+                # se os 2 s do teto são generosos ou apertados -- e o teto foi
+                # posto antes de existir esta medição.
+                diagnostico_fino.anotar(
+                    self.log, "SAIDA DE BATALHA: a flag baixou %.2fs depois de "
+                    "o alvo cair (teto %.0fs).",
+                    time.time() - comeco, SEGUNDOS_PARA_CONFIRMAR_A_SAIDA)
                 return True
             time.sleep(PASSO_DA_SAIDA_DE_BATALHA)
         self.log.info(
@@ -1716,8 +1724,15 @@ class ExecutorDeMacro:
         rodada, que é estado do executor.
         """
         base = self._base_pos if self._travar_posicao else None
+        onde_estou = None
+        if self._posicao_atual is not None:
+            try:
+                onde_estou = self._posicao_atual()
+            except Exception:
+                onde_estou = None
         if not coleira_do_ponto.longe_demais(
-                alvo, base, self._recusas_por_distancia, self.log):
+                alvo, base, self._recusas_por_distancia, self.log,
+                pos_do_personagem=onde_estou):
             return False
         self._recusas_por_distancia += 1
         return True
@@ -2666,6 +2681,7 @@ class ExecutorDeMacro:
 
         self._lutava_na_volta_anterior = lutando or lutava_antes
         cega = self.sincronia is not None and self.sincronia.volta_cega()
+        comeco_da_volta = time.time()
 
         for i, passo in enumerate(passos):
             if not self._continuar():
@@ -2760,6 +2776,9 @@ class ExecutorDeMacro:
 
         self.voltas += 1
         self._ultimo_corte = "volta completa"
+        diagnostico_fino.anotar(
+            self.log, "VOLTA completa em %.1fs (%d linha(s)).",
+            time.time() - comeco_da_volta, len(passos))
         return True
 
     def _abortar_a_volta(self, morreu: bool = False,
@@ -2800,6 +2819,7 @@ class ExecutorDeMacro:
         """
         self._ultimo_corte = motivo
         self.voltas_abortadas += 1
+        diagnostico_fino.anotar(self.log, "VOLTA cortada: %s.", motivo)
         if morreu and not LACO_SIMPLES:
             self._observar_depois_da_morte()
         return True

@@ -124,6 +124,7 @@ def _executor(roda=None, tecla="TAB", sem_leitura=False, em_batalha=None):
     # é tests/test_coleira_do_ponto_no_app.py.
     e._travar_posicao = False
     e._base_pos = None
+    e._posicao_atual = None
     e._recusas_por_distancia = 0
     # O TAB só sai quando FALTA alvo (`_preciso_de_alvo`), e a decisão usa
     # estes dois: a batalha da volta anterior e as voltas seguidas com alvo
