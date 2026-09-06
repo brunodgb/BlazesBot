@@ -1664,6 +1664,19 @@ class BossRushRoutine:
             # ainda estar em combate, e 15 s parado aí é perigo.)
             self.combat.curar_antes_do_boss()
 
+        # LARGAR A MIRA ANTES DE ANDAR -- os dois desfechos passam por aqui.
+        #
+        # DEPOIS do top-up e nao antes: `curar_antes_do_boss` pode SENTAR, e o
+        # ESC no meio disso cancelaria o descanso que acabou de comecar.
+        #
+        # O cadaver do ultimo Gun Witch fica selecionavel por 7 a 13 s (medido),
+        # entao chegar no waypoint do boss com `target_id != 0` e o caso NORMAL,
+        # nao a excecao. Quem decide se o ESC sai e a MEMORIA, dentro de
+        # `largar_a_mira`: sem alvo confirmado nada e apertado, porque ESC sem
+        # mira abre o menu do jogo -- e menu aberto na frente do boss engole o
+        # clique na cena 3D.
+        self.combat.largar_a_mira("seguir para o waypoint do boss")
+
         self._succeed(State.ATE_O_BOSS)
 
     def _do_ate_o_boss(self) -> None:

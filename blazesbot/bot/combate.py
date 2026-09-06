@@ -373,6 +373,35 @@ TABS_PARA_REFUTAR_A_MORTE = 4
 # é ruído, mesmo com quatro clientes.
 PASSO_DA_VIGIA_DE_COMBATE = 0.05
 
+# ===========================================================================
+# LARGAR A MIRA ANTES DE ANDAR -- e conferir na MEMORIA que ela caiu
+# ===========================================================================
+#
+# Chegar no waypoint seguinte com alvo selecionado nao e teoria: o cadaver fica
+# selecionavel por SEGUNDOS depois da morte (medido: 7 a 13 s; ver a trava por
+# identidade em `core/target_hybrid.MorteDoAlvo`), entao a mira sobrevive a fase
+# inteira. `Memory.ha_alvo_selecionado` chama esse estado de "id orfao".
+#
+# O ESC nao e invencao aqui -- `_travar_no_alvo_proibido` ja o usa desde 26/08
+# para largar o Cemetery Guard, e funciona. O que faltava era CONFERIR: aquele
+# ESC sai e ninguem le o `target_id` depois. Aqui se le.
+#
+# Quantas vezes insistir. Dois, e o teto e curto de proposito: o ESC deste jogo
+# NAO e inofensivo -- ele tambem fecha janela aberta (ver o "ESC repetido fecha
+# janela do jogo que ninguem pediu para fechar", em `_travar_no_alvo_proibido`).
+# Martelar ESC para zerar um id teimoso trocaria um problema pequeno por um
+# grande.
+TENTATIVAS_DE_LARGAR_A_MIRA = 2
+
+# Quanto esperar o `target_id` zerar depois de cada ESC.
+#
+# NAO e numero novo: largar a mira e acao de UI do CLIENTE, da mesma classe de
+# abrir o dialogo de NPC, cujo teto medido e `LIMITE_MAXIMO_DA_ESPERA_DO_DIALOGO
+# = 0.60` (ver `ui_do_jogo.py`, a secao "TETO DA ESPERA DO DIALOGO"). Passado
+# isso o cliente nao vai responder mesmo. E e TETO, nao gasto: a leitura e de
+# memoria (~1 us) e sai no instante em que o id zera.
+TETO_PARA_A_MIRA_CAIR = 0.60
+
 # Quanto esperar a flag LIGAR depois de chegar no waypoint.
 #
 # Não é o tempo da luta -- é só o tempo até os mobs encostarem. Se estourar, é
@@ -1811,6 +1840,79 @@ class CombatEngine:
         nomes = self._ultimos_nomes_do_alvo if nomes is None else nomes
         procurado = self.NOME_DO_ALVO_PROIBIDO.lower()
         return any(procurado in (n or "").lower() for n in (nomes or ()))
+
+    def largar_a_mira(self, motivo: str) -> bool | None:
+        """Zera a selecao com ESC e CONFERE na memoria. Nao bloqueia a run.
+
+        Tres respostas, e a do meio e o ponto:
+
+            True  -- nao havia mira, ou havia e caiu
+            False -- havia mira, o ESC saiu e o `target_id` NAO zerou
+            None  -- nao deu para ler o `target_id`; NADA foi apertado
+
+        O ESC SO SAI COM ALVO CONFIRMADO NA MEMORIA. Disparar as cegas e o erro
+        que esta funcao existe para nao cometer: sem alvo, o ESC deste jogo abre
+        o menu -- e o bot seguiria para o waypoint do boss com um menu na frente,
+        que engole clique na cena 3D (ver `docs/decisoes/janela-na-frente.md`).
+
+        POR ISSO `None` NAO APERTA NADA. "Nao sei se ha mira" nao autoriza um
+        ESC, pela mesma regra de sempre: nao saber nao decide. O custo de errar
+        para este lado e chegar no boss com um cadaver selecionado, que e o
+        estado de hoje; o de errar para o outro e um menu aberto no meio da run.
+
+        `False` tambem NAO trava nada -- quem chama registra e segue. Um id que
+        nao zera e informacao para o log, nao motivo para parar a run no covil.
+        """
+        ctx = self.ctx
+
+        antes = ctx.memory.id_do_alvo()
+        if antes is None:
+            ctx.log.debug(
+                "Nao consegui ler o target_id antes de %s; NAO aperto ESC "
+                "(sem alvo, ESC abre o menu do jogo).", motivo)
+            return None
+        if antes == 0:
+            ctx.log.debug("Sem mira antes de %s; nada a largar.", motivo)
+            return True
+
+        for tentativa in range(1, TENTATIVAS_DE_LARGAR_A_MIRA + 1):
+            ctx.raise_if_stopped()
+            ctx.press("esc", 0.16)
+            depois = self._esperar_a_mira_cair()
+            if depois == 0:
+                ctx.log.info(
+                    "Mira largada antes de %s: target_id %s -> 0 no ESC %s.",
+                    motivo, antes, tentativa)
+                return True
+            if depois is None:
+                # A leitura parou de responder DEPOIS do ESC. Nao da para dizer
+                # que falhou, e insistir seria apertar no escuro.
+                ctx.log.debug(
+                    "target_id ilegivel depois do ESC %s (%s); paro de "
+                    "insistir.", tentativa, motivo)
+                return None
+
+        ctx.log.warning(
+            "Apertei ESC %s vez(es) antes de %s e o target_id continua em %s. "
+            "Sigo assim mesmo -- alvo grudado nao justifica parar a run.",
+            TENTATIVAS_DE_LARGAR_A_MIRA, motivo, depois,
+        )
+        return False
+
+    def _esperar_a_mira_cair(self) -> int | None:
+        """Le o `target_id` ate ele zerar ou o teto passar. Devolve a leitura.
+
+        Le, nao dorme: a leitura custa ~1 us e sai no instante em que o id cai.
+        O teto so existe para o caso de ele nunca cair.
+        """
+        ctx = self.ctx
+        fim = time.time() + TETO_PARA_A_MIRA_CAIR
+        alvo = ctx.memory.id_do_alvo()
+        while alvo not in (0, None) and time.time() < fim:
+            ctx.raise_if_stopped()
+            ctx.tick(PASSO_DA_VIGIA_DE_COMBATE)
+            alvo = ctx.memory.id_do_alvo()
+        return alvo
 
     def _travar_no_alvo_proibido(self, quem: str, fonte: str) -> None:
         """A ÚNICA trava do waypoint dos guardas -- UMA porta, duas fontes.

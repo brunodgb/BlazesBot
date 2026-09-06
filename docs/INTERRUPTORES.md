@@ -36,18 +36,18 @@ ligar código não testado.
 | `USAR_A_TELA_COMO_SEGUNDA_PORTA` | `True` | [blazesbot/bot/app/executor.py:634](blazesbot/bot/app/executor.py#L634) | — | A SEGUNDA PORTA: A VIDA PELA TELA -- 26/08/2026 |
 | `USAR_COMBATE_COMO_RESERVA_DE_MORTE` | `True` | [blazesbot/bot/app/executor.py:466](blazesbot/bot/app/executor.py#L466) | supervisor.py | A RESERVA: QUANDO O HP É ILEGÍVEL, QUEM RESPONDE É A FLAG DE COMBATE |
 | `ATIVADO` | `True` | [blazesbot/bot/bc/diagnostico_do_link.py:62](blazesbot/bot/bc/diagnostico_do_link.py#L62) | deletador.py, supervisor.py, esconder_jogadores.py, petbug.py | Interruptor, no padrão do `USAR_TAB_NOS_GUARDAS`: desligar é trocar uma |
-| `ATACAR_DURANTE_A_CONFIRMACAO_NO_BOSS` | `True` | [blazesbot/bot/combate.py:468](blazesbot/bot/combate.py#L468) | — | SÓ NO BOSS, e a razão é o motivo pelo qual o golpe parava |
-| `DESMONTAR_FORA_DA_CAVE_SO_SEM_PET` | `True` | [blazesbot/bot/combate.py:954](blazesbot/bot/combate.py#L954) | — | FORA DA CAVE, SÓ DESMONTA SE O PET NÃO ESTIVER ATIVO |
-| `DESTRAVAMENTO_BATE_NO_ALVO_PROIBIDO` | `True` | [blazesbot/bot/combate.py:769](blazesbot/bot/combate.py#L769) | — | O DESTRAVAMENTO BATE NO CEMETERY GUARD? Decisao do usuario, 01/09/2026. |
-| `EXIGIR_SAIR_DE_COMBATE_NOS_GUARDAS` | `True` | [blazesbot/bot/combate.py:527](blazesbot/bot/combate.py#L527) | — | O CUSTO, DITO INTEIRO |
+| `ATACAR_DURANTE_A_CONFIRMACAO_NO_BOSS` | `True` | [blazesbot/bot/combate.py:497](blazesbot/bot/combate.py#L497) | — | SÓ NO BOSS, e a razão é o motivo pelo qual o golpe parava |
+| `DESMONTAR_FORA_DA_CAVE_SO_SEM_PET` | `True` | [blazesbot/bot/combate.py:983](blazesbot/bot/combate.py#L983) | — | FORA DA CAVE, SÓ DESMONTA SE O PET NÃO ESTIVER ATIVO |
+| `DESTRAVAMENTO_BATE_NO_ALVO_PROIBIDO` | `True` | [blazesbot/bot/combate.py:798](blazesbot/bot/combate.py#L798) | — | O DESTRAVAMENTO BATE NO CEMETERY GUARD? Decisao do usuario, 01/09/2026. |
+| `EXIGIR_SAIR_DE_COMBATE_NOS_GUARDAS` | `True` | [blazesbot/bot/combate.py:556](blazesbot/bot/combate.py#L556) | — | O CUSTO, DITO INTEIRO |
 | `MODO_DE_CURA` | `'skill_em_laco'` | [blazesbot/bot/combate.py:233](blazesbot/bot/combate.py#L233) | — | O TETO É POR TENTATIVA SEM EFEITO, NÃO POR RELÓGIO |
-| `SO_A_MEMORIA_DECLARA_MORTE` | `True` | [blazesbot/bot/combate.py:841](blazesbot/bot/combate.py#L841) | executor.py, target_hybrid.py | SÓ A MEMÓRIA DECLARA MORTE. A TELA SÓ SABE DIZER "AINDA VIVO". |
-| `SO_O_ALVO_PROIBIDO_PARA_O_GOLPE` | `True` | [blazesbot/bot/combate.py:581](blazesbot/bot/combate.py#L581) | combat.py | O QUE MUDA |
-| `TAB_ATE_SAIR_DE_COMBATE_NOS_GUARDAS` | `True` | [blazesbot/bot/combate.py:598](blazesbot/bot/combate.py#L598) | mapa_hh.py, routine.py | O TETO DE TAB DEIXA DE BARRAR A TROCA ENQUANTO A FLAG ESTIVER ALTA. |
+| `SO_A_MEMORIA_DECLARA_MORTE` | `True` | [blazesbot/bot/combate.py:870](blazesbot/bot/combate.py#L870) | executor.py, target_hybrid.py | SÓ A MEMÓRIA DECLARA MORTE. A TELA SÓ SABE DIZER "AINDA VIVO". |
+| `SO_O_ALVO_PROIBIDO_PARA_O_GOLPE` | `True` | [blazesbot/bot/combate.py:610](blazesbot/bot/combate.py#L610) | combat.py | O QUE MUDA |
+| `TAB_ATE_SAIR_DE_COMBATE_NOS_GUARDAS` | `True` | [blazesbot/bot/combate.py:627](blazesbot/bot/combate.py#L627) | mapa_hh.py, routine.py | O TETO DE TAB DEIXA DE BARRAR A TROCA ENQUANTO A FLAG ESTIVER ALTA. |
 | `USAR_BREAK_SOUL_SO_NA_FASE_2` | `True` | [blazesbot/bot/combate.py:277](blazesbot/bot/combate.py#L277) | combat.py | BREAK SOUL -- SÓ NA SEGUNDA FASE DO BOSS |
-| `USAR_IMAGEM_DA_FASE_2` | `True` | [blazesbot/bot/combate.py:863](blazesbot/bot/combate.py#L863) | combat.py | A SEGUNDA FASE DO BOSS TAMBÉM É VISTA NA TELA |
-| `USAR_PORTAO_DE_NOME` | `True` | [blazesbot/bot/combate.py:809](blazesbot/bot/combate.py#L809) | memory.py, target_hybrid.py | RELIGADO EM 25/08/2026 -- O NOME VOLTOU |
-| `USAR_TAB_NOS_GUARDAS` | `True` | [blazesbot/bot/combate.py:630](blazesbot/bot/combate.py#L630) | combat.py, diagnostico_do_link.py, inputs.py | >>>  INTERRUPTOR DO EXPERIMENTO -- TROCA DE ALVO POR TAB NOS GUARDAS  <<< |
+| `USAR_IMAGEM_DA_FASE_2` | `True` | [blazesbot/bot/combate.py:892](blazesbot/bot/combate.py#L892) | combat.py | A SEGUNDA FASE DO BOSS TAMBÉM É VISTA NA TELA |
+| `USAR_PORTAO_DE_NOME` | `True` | [blazesbot/bot/combate.py:838](blazesbot/bot/combate.py#L838) | memory.py, target_hybrid.py | RELIGADO EM 25/08/2026 -- O NOME VOLTOU |
+| `USAR_TAB_NOS_GUARDAS` | `True` | [blazesbot/bot/combate.py:659](blazesbot/bot/combate.py#L659) | combat.py, diagnostico_do_link.py, inputs.py | >>>  INTERRUPTOR DO EXPERIMENTO -- TROCA DE ALVO POR TAB NOS GUARDAS  <<< |
 | `CIRCULO_POR_RAIO` | `True` | [blazesbot/bot/navegacao.py:263](blazesbot/bot/navegacao.py#L263) | — | True = raio por raio (1,2,3,5; em cada raio os 8 pontos); False = bússola por |
 | `CONFIRMAR_CHEGADA_POR_COORDENADA` | `False` | [blazesbot/bot/ui_do_jogo.py:431](blazesbot/bot/ui_do_jogo.py#L431) | — | INTERRUPTOR: a coordenada do painel CONFIRMA a chegada? |
 | `CONFERIR_SLOT_VAZIO` | `False` | [blazesbot/bot/vendedor.py:236](blazesbot/bot/vendedor.py#L236) | — | INTERRUPTOR -- A CONFERÊNCIA DE SLOT VAZIO ESTÁ DESLIGADA (decisão do usuário, |
@@ -73,7 +73,7 @@ ligar código não testado.
 
 ## Números medidos -- tolerância, limiar, teto, cadência
 
-564 constantes, agrupadas por arquivo.
+566 constantes, agrupadas por arquivo.
 
 | constante | valor | onde | quem lê | porquê (resumo) |
 |---|---|---|---|---|
@@ -200,41 +200,43 @@ ligar código não testado.
 | `TETO_DO_TELEPORTE_DA_FAY` | `2.0` | [blazesbot/bot/bc/ui_service.py:52](blazesbot/bot/bc/ui_service.py#L52) | — | TELEPORTE DA FAY (Stone City -> Ghost Din Woods) |
 | `TOLERANCIA_DO_NPC_DA_ENTRADA` | `2` | [blazesbot/bot/bc/ui_service.py:75](blazesbot/bot/bc/ui_service.py#L75) | routine.py | O SKULL HERALD DA ENTRADA EXIGE A COORDENADA EXATA |
 | `ALVO_DO_TOPUP_ANTES_DO_BOSS` | `100.0` | [blazesbot/bot/combate.py:141](blazesbot/bot/combate.py#L141) | — | TOP-UP ANTES DO BOSS: ATÉ 100%, SENTADO, E OS 15 s INTEIROS |
-| `AVISO_DA_ESPERA_SEM_PRAZO` | `10` | [blazesbot/bot/combate.py:407](blazesbot/bot/combate.py#L407) | — | Cadência do aviso enquanto espera sem prazo. Uma espera sem limite PRECISA |
-| `CADENCIA_DA_LEITURA_DO_ALVO` | `0.15` | [blazesbot/bot/combate.py:875](blazesbot/bot/combate.py#L875) | routine.py | De quanto em quanto tempo olhar a barra do alvo durante a luta. |
-| `CARENCIA_APOS_O_TAB` | `2.4` | [blazesbot/bot/combate.py:884](blazesbot/bot/combate.py#L884) | routine.py | Depois de apertar TAB, quanto tempo ignorar a leitura. |
-| `CARENCIA_SEM_LER_O_NOME` | `3.0` | [blazesbot/bot/combate.py:671](blazesbot/bot/combate.py#L671) | — | Quantos TAB gastar tentando SAIR de um alvo errado, por luta. |
-| `CONFIRMACAO_DE_SAIDA_DE_COMBATE` | `2.5` | [blazesbot/bot/combate.py:415](blazesbot/bot/combate.py#L415) | — | Por quanto tempo CONTÍNUO a flag precisa ficar em falso para a saída valer. |
+| `AVISO_DA_ESPERA_SEM_PRAZO` | `10` | [blazesbot/bot/combate.py:436](blazesbot/bot/combate.py#L436) | — | Cadência do aviso enquanto espera sem prazo. Uma espera sem limite PRECISA |
+| `CADENCIA_DA_LEITURA_DO_ALVO` | `0.15` | [blazesbot/bot/combate.py:904](blazesbot/bot/combate.py#L904) | routine.py | De quanto em quanto tempo olhar a barra do alvo durante a luta. |
+| `CARENCIA_APOS_O_TAB` | `2.4` | [blazesbot/bot/combate.py:913](blazesbot/bot/combate.py#L913) | routine.py | Depois de apertar TAB, quanto tempo ignorar a leitura. |
+| `CARENCIA_SEM_LER_O_NOME` | `3.0` | [blazesbot/bot/combate.py:700](blazesbot/bot/combate.py#L700) | — | Quantos TAB gastar tentando SAIR de um alvo errado, por luta. |
+| `CONFIRMACAO_DE_SAIDA_DE_COMBATE` | `2.5` | [blazesbot/bot/combate.py:444](blazesbot/bot/combate.py#L444) | — | Por quanto tempo CONTÍNUO a flag precisa ficar em falso para a saída valer. |
 | `CONFIRMACOES_DE_MORTE` | `6` | [blazesbot/bot/combate.py:290](blazesbot/bot/combate.py#L290) | — | CONFIRMAÇÃO DA MORTE DO BOSS -- três exigências, e cada uma cobre uma falha |
-| `ESPERA_APOS_A_MORTE_ANTES_DO_TAB` | `3.0` | [blazesbot/bot/combate.py:745](blazesbot/bot/combate.py#L745) | routine.py | Quanto esperar PARADO, sem bater, depois de cada morte, antes de gastar o TAB |
+| `ESPERA_APOS_A_MORTE_ANTES_DO_TAB` | `3.0` | [blazesbot/bot/combate.py:774](blazesbot/bot/combate.py#L774) | routine.py | Quanto esperar PARADO, sem bater, depois de cada morte, antes de gastar o TAB |
 | `ESPERA_DEPOIS_DO_TAB` | `0.6` | [blazesbot/bot/combate.py:114](blazesbot/bot/combate.py#L114) | executor.py, config.py | Espera depois de UM TAB, para a seleção chegar da rede antes de conferir. |
-| `ESPERA_ENTRAR_EM_COMBATE_GUARDAS` | `5.0` | [blazesbot/bot/combate.py:390](blazesbot/bot/combate.py#L390) | combat.py | Prazo curto para os GUARDAS (os 4 mobs no waypoint antes do boss). |
-| `ESPERA_PARA_ENTRAR_EM_COMBATE` | `5.0` | [blazesbot/bot/combate.py:381](blazesbot/bot/combate.py#L381) | — | Quanto esperar a flag LIGAR depois de chegar no waypoint. |
+| `ESPERA_ENTRAR_EM_COMBATE_GUARDAS` | `5.0` | [blazesbot/bot/combate.py:419](blazesbot/bot/combate.py#L419) | combat.py | Prazo curto para os GUARDAS (os 4 mobs no waypoint antes do boss). |
+| `ESPERA_PARA_ENTRAR_EM_COMBATE` | `5.0` | [blazesbot/bot/combate.py:410](blazesbot/bot/combate.py#L410) | — | Quanto esperar a flag LIGAR depois de chegar no waypoint. |
 | `FATIA_DA_ESPERA_DA_POCAO` | `0.5` | [blazesbot/bot/combate.py:146](blazesbot/bot/combate.py#L146) | — | Fatia da espera da poção. O TOTAL é medido por relógio (ver acima), então esta |
 | `INTERVALO_DE_CONFERENCIA` | `0.1` | [blazesbot/bot/combate.py:242](blazesbot/bot/combate.py#L242) | — | De quanto em quanto tempo perguntar se a vida subiu. É leitura de memória -- |
-| `LIMIAR_CEMETERY_GUARD` | `0.85` | [blazesbot/bot/combate.py:684](blazesbot/bot/combate.py#L684) | combat.py | Limiar para detecção do Cemetery Guard (guarda do cemitério) na tela. |
+| `LIMIAR_CEMETERY_GUARD` | `0.85` | [blazesbot/bot/combate.py:713](blazesbot/bot/combate.py#L713) | combat.py | Limiar para detecção do Cemetery Guard (guarda do cemitério) na tela. |
 | `LIMINAR_TOPUP_ANTES_DO_BOSS` | `50.0` | [blazesbot/bot/combate.py:111](blazesbot/bot/combate.py#L111) | routine.py | TOP-UP PRÉ-BOSS ESTÁ FORA DE COMBATE, NÃO NA ESPERA DO BOSS |
-| `LIMITE_DA_FASE_DOS_GUARDAS` | `40.0` | [blazesbot/bot/combate.py:605](blazesbot/bot/combate.py#L605) | combat.py | Prazo total de cada fase. Contrapeso da ressalva (c): flag presa em ligado. |
-| `LIMITE_PARA_A_LUTA_COMECAR` | `10.0` | [blazesbot/bot/combate.py:894](blazesbot/bot/combate.py#L894) | — | Depois de forçar o TAB no boss, quanto tempo a flag tem para subir. |
-| `LIMITE_POR_MOB_NO_DESTRAVAMENTO` | `20.0` | [blazesbot/bot/combate.py:753](blazesbot/bot/combate.py#L753) | — | Teto para UM mob dentro do destravamento. |
-| `LIMITE_SEM_LER_A_FLAG` | `5.0` | [blazesbot/bot/combate.py:613](blazesbot/bot/combate.py#L613) | — | A flag ILEGÍVEL (`None`) não conta como "fora de combate". |
+| `LIMITE_DA_FASE_DOS_GUARDAS` | `40.0` | [blazesbot/bot/combate.py:634](blazesbot/bot/combate.py#L634) | combat.py | Prazo total de cada fase. Contrapeso da ressalva (c): flag presa em ligado. |
+| `LIMITE_PARA_A_LUTA_COMECAR` | `10.0` | [blazesbot/bot/combate.py:923](blazesbot/bot/combate.py#L923) | — | Depois de forçar o TAB no boss, quanto tempo a flag tem para subir. |
+| `LIMITE_POR_MOB_NO_DESTRAVAMENTO` | `20.0` | [blazesbot/bot/combate.py:782](blazesbot/bot/combate.py#L782) | — | Teto para UM mob dentro do destravamento. |
+| `LIMITE_SEM_LER_A_FLAG` | `5.0` | [blazesbot/bot/combate.py:642](blazesbot/bot/combate.py#L642) | — | A flag ILEGÍVEL (`None`) não conta como "fora de combate". |
 | `MARGEM_DA_CONJURACAO` | `0.6` | [blazesbot/bot/combate.py:239](blazesbot/bot/combate.py#L239) | — | Folga sobre a conjuração: latência da mensagem mais o jogo processar e a |
 | `PASSO_DA_VIGIA_DE_COMBATE` | `0.05` | [blazesbot/bot/combate.py:374](blazesbot/bot/combate.py#L374) | — | Passo da vigia da flag. É o que "não bloqueante" significa na prática: o laço |
-| `PREFIXO_DA_VARREDURA` | `'varredura:'` | [blazesbot/bot/combate.py:778](blazesbot/bot/combate.py#L778) | combat.py | A FAIXA cobre a struct do personagem. Os offsets conhecidos vão até |
-| `SEGUNDOS_ANTES_DO_TAB_NO_BOSS` | `4.0` | [blazesbot/bot/combate.py:885](blazesbot/bot/combate.py#L885) | — | — |
+| `PREFIXO_DA_VARREDURA` | `'varredura:'` | [blazesbot/bot/combate.py:807](blazesbot/bot/combate.py#L807) | combat.py | A FAIXA cobre a struct do personagem. Os offsets conhecidos vão até |
+| `SEGUNDOS_ANTES_DO_TAB_NO_BOSS` | `4.0` | [blazesbot/bot/combate.py:914](blazesbot/bot/combate.py#L914) | — | — |
 | `SEGUNDOS_DA_POCAO_DE_VIDA` | `15.0` | [blazesbot/bot/combate.py:90](blazesbot/bot/combate.py#L90) | account_dialog.py | A POÇÃO DE VIDA LEVA 15 SEGUNDOS, E ANDAR CANCELA |
 | `SEGUNDOS_DEPOIS_DA_SUPER_SKILL` | `12.0` | [blazesbot/bot/combate.py:94](blazesbot/bot/combate.py#L94) | — | Respiro depois da Super Skill de cura. Ela é instantânea; isto é só o tempo de |
 | `SEGUNDOS_DE_CONJURACAO_DA_CURA` | `1.6` | [blazesbot/bot/combate.py:236](blazesbot/bot/combate.py#L236) | — | Conjuração da skill de cura. Informado pelo usuário em 19/08/2026. |
 | `SEGUNDOS_SEM_ALVO_PARA_MORTE` | `3.0` | [blazesbot/bot/combate.py:294](blazesbot/bot/combate.py#L294) | — | 2. TEMPO -- segundos contínuos sem nada vivo selecionado. Dá lastro à contagem: |
 | `SEGUNDOS_SENTADO_APOS_GUARDAS` | `4.0` | [blazesbot/bot/combate.py:74](blazesbot/bot/combate.py#L74) | — | Quatro segundos sentado recuperam vida e mana de graça, e é o único momento da |
 | `SUBIDA_MINIMA_PARA_CONTAR` | `1.0` | [blazesbot/bot/combate.py:248](blazesbot/bot/combate.py#L248) | — | Quanto a vida precisa subir para a conjuração contar como bem-sucedida. Um |
-| `TABS_NOS_GUARDAS` | `3` | [blazesbot/bot/combate.py:678](blazesbot/bot/combate.py#L678) | combat.py, mapa_hh.py | Quantos TAB no máximo. São 4 mobs e o primeiro vira alvo sozinho quando ataca, |
+| `TABS_NOS_GUARDAS` | `3` | [blazesbot/bot/combate.py:707](blazesbot/bot/combate.py#L707) | combat.py, mapa_hh.py | Quantos TAB no máximo. São 4 mobs e o primeiro vira alvo sozinho quando ataca, |
 | `TABS_PARA_REFUTAR_A_MORTE` | `4` | [blazesbot/bot/combate.py:303](blazesbot/bot/combate.py#L303) | — | 3. REFUTAÇÃO ATIVA -- antes de declarar vitória, o bot TENTA achar algo vivo. |
 | `TECLA_AUTO_SELECAO` | `'F1'` | [blazesbot/bot/combate.py:69](blazesbot/bot/combate.py#L69) | — | Tecla que seleciona o PRÓPRIO personagem. É padrão do cliente e não é |
-| `TEMPLATE_FASE_2_DO_BOSS` | `'boss_2_fase.png'` | [blazesbot/bot/combate.py:868](blazesbot/bot/combate.py#L868) | combat.py | O recorte é o PEDAÇO DO MEIO do par vida+mana do quadro do alvo, com a vida |
-| `TEMPLATE_INIMIGO_MORTO` | `'EnemyDead.png'` | [blazesbot/bot/combate.py:843](blazesbot/bot/combate.py#L843) | — | Nome do template do marcador. Veio do usuário em 19/08/2026. |
+| `TEMPLATE_FASE_2_DO_BOSS` | `'boss_2_fase.png'` | [blazesbot/bot/combate.py:897](blazesbot/bot/combate.py#L897) | combat.py | O recorte é o PEDAÇO DO MEIO do par vida+mana do quadro do alvo, com a vida |
+| `TEMPLATE_INIMIGO_MORTO` | `'EnemyDead.png'` | [blazesbot/bot/combate.py:872](blazesbot/bot/combate.py#L872) | — | Nome do template do marcador. Veio do usuário em 19/08/2026. |
+| `TENTATIVAS_DE_LARGAR_A_MIRA` | `2` | [blazesbot/bot/combate.py:394](blazesbot/bot/combate.py#L394) | — | LARGAR A MIRA ANTES DE ANDAR -- e conferir na MEMORIA que ela caiu |
 | `TENTATIVAS_SEM_EFEITO` | `3` | [blazesbot/bot/combate.py:244](blazesbot/bot/combate.py#L244) | — | Conjurações seguidas sem a vida subir antes de concluir que a cura não sai. |
-| `TETO_DO_DESTRAVAMENTO` | `60.0` | [blazesbot/bot/combate.py:731](blazesbot/bot/combate.py#L731) | — | Teto de UMA rodada de destravamento. Palavra do usuario: *"no maximo atrasar 1 |
+| `TETO_DO_DESTRAVAMENTO` | `60.0` | [blazesbot/bot/combate.py:760](blazesbot/bot/combate.py#L760) | — | Teto de UMA rodada de destravamento. Palavra do usuario: *"no maximo atrasar 1 |
+| `TETO_PARA_A_MIRA_CAIR` | `0.6` | [blazesbot/bot/combate.py:403](blazesbot/bot/combate.py#L403) | — | Quanto esperar o `target_id` zerar depois de cada ESC. |
 | `FATIA_DA_ESPERA` | `0.25` | [blazesbot/bot/context.py:211](blazesbot/bot/context.py#L211) | petbug.py | Fatia máxima de sono dentro de um `tick`. |
 | `TENTATIVAS_DE_AJUSTE_DA_CAMERA` | `3` | [blazesbot/bot/context.py:244](blazesbot/bot/context.py#L244) | — | Quantas vezes insistir para a câmera ficar no ângulo certo. |
 | `ESPERA_DEPOIS_DE_ERRAR` | `0.333` | [blazesbot/bot/fada.py:120](blazesbot/bot/fada.py#L120) | — | Depois de uma tentativa que não pegou, espera antes da seguinte. |
@@ -423,7 +425,7 @@ ligar código não testado.
 | `LIMITE_DA_ESPERA_DO_PAINEL` | `0.8` | [blazesbot/bot/ui_do_jogo.py:281](blazesbot/bot/ui_do_jogo.py#L281) | — | O teto é EXATAMENTE a espera fixa que havia antes (1,2 s), e isso é de propósito: |
 | `LIMITE_DA_ESPERA_DO_RESULTADO` | `0.8` | [blazesbot/bot/ui_do_jogo.py:304](blazesbot/bot/ui_do_jogo.py#L304) | — | — |
 | `LIMITE_INICIAL_DA_ESPERA_DO_DIALOGO` | `0.65` | [blazesbot/bot/ui_do_jogo.py:181](blazesbot/bot/ui_do_jogo.py#L181) | — | TETO DA ESPERA DO DIÁLOGO -- ajustado pelo que foi MEDIDO, não chutado |
-| `LIMITE_MAXIMO_DA_ESPERA_DO_DIALOGO` | `0.6` | [blazesbot/bot/ui_do_jogo.py:189](blazesbot/bot/ui_do_jogo.py#L189) | — | Teto do teto. Passado disto, o diálogo não vai abrir mesmo, e insistir só |
+| `LIMITE_MAXIMO_DA_ESPERA_DO_DIALOGO` | `0.6` | [blazesbot/bot/ui_do_jogo.py:189](blazesbot/bot/ui_do_jogo.py#L189) | combate.py | Teto do teto. Passado disto, o diálogo não vai abrir mesmo, e insistir só |
 | `LIMITE_MINIMO_DA_ESPERA_DO_DIALOGO` | `0.18` | [blazesbot/bot/ui_do_jogo.py:185](blazesbot/bot/ui_do_jogo.py#L185) | — | Piso: o valor que valia antes. Abaixo disto não se aperta nem com evidência -- |
 | `LIMPEZA_DO_CAMPO` | `8` | [blazesbot/bot/ui_do_jogo.py:295](blazesbot/bot/ui_do_jogo.py#L295) | — | Quantos BACKSPACE para limpar o campo. O texto buscado é curto ("Fay", "Skull", |
 | `MEMORIA_DE_ABERTURAS_DO_DIALOGO` | `12` | [blazesbot/bot/ui_do_jogo.py:198](blazesbot/bot/ui_do_jogo.py#L198) | — | Quantas aberturas guardar. Poucas de propósito: o que interessa é a condição |

@@ -441,6 +441,35 @@ time a flag não faz nada.
   de cliques não é atômico (180–420 ms de espera do diálogo no meio), e dentro
   da cave o mesmo ângulo é o NPC de SAÍDA — o bot entrava e saía na mesma volta.
   A conferência é ENTRE os dois cliques (`ainda_vale`), não só antes do par.
+- **NÃO SE CHEGA NO WAYPOINT DO BOSS COM A MIRA PRESA** (02/09/2026,
+  `combate.largar_a_mira`, chamado no fim de `_do_guardas`). O cadáver do último
+  Gun Witch fica selecionável por 7 a 13 s (medido), então `target_id != 0` na
+  saída da fase é o caso NORMAL, não a exceção. **O ESC SÓ SAI COM ALVO
+  CONFIRMADO NA MEMÓRIA** — sem mira o ESC abre o MENU do jogo, e menu aberto
+  engole o clique na cena 3D (`docs/decisoes/janela-na-frente.md`).
+  `id_do_alvo() is None` ("não sei") **não aperta nada**. Teto de
+  `TENTATIVAS_DE_LARGAR_A_MIRA = 2`, porque o ESC também fecha janela aberta;
+  `TETO_PARA_A_MIRA_CAIR = 0.60` é o mesmo teto medido das ações de UI do
+  cliente. Falhar **não trava a run**: registra e segue. Roda DEPOIS de
+  `curar_antes_do_boss` (que pode sentar) e FORA do `if/else`, para cobrir também
+  o desfecho que não fechou pela flag. Travado por `tests/test_largar_a_mira.py`.
+- **O NOME DO ALVO NÃO É CONFIÁVEL O BASTANTE PARA SER JUIZ ÚNICO** (auditado em
+  02/09/2026 sobre 1.160.883 linhas de log). Das 1.390 leituras do portão de
+  nome: **701 `ilegivel` / `lido=nada` (50,4%)**, 619 `'Gun Witch'`, 62
+  `'Cemetery Guard'`, 7 `'Blaze Skull Marshal'` — e **uma leitura corrompida,
+  `'PDtery Guard'`**, que é `'Cemetery Guard'` com os dois primeiros bytes
+  trocados. Três consequências:
+  - **Filtro estrito de nome ("só ataca se ler o nome certo") está PROIBIDO.**
+    Com metade das leituras ilegíveis ele para o golpe em metade dos ciclos —
+    exatamente o defeito medido em 26/08 ("sobrou 1 Gun Witch de pé e o bot
+    parado") que `SO_O_ALVO_PROIBIDO_PARA_O_GOLPE` corrigiu.
+  - **A TELA continua como reserva do alvo proibido** (`cemetery_guard.png`).
+    Tirá-la deixaria a trava cega em metade das leituras. Duas fontes que falham
+    por motivos diferentes é a única redundância que vale algo.
+  - **A leitura corrompida é o achado mais grave**: não é uma falha, é uma
+    string plausível e ERRADA. Ela desqualifica igualdade de nome como veredito
+    único, e é por isso que o portão compara por `in` e trata `[]` como
+    `ilegivel` em vez de "alvo errado".
 - **Cave sem alvo proibido é caso legítimo.** `NOME_DO_ALVO_PROIBIDO` nasce
   `None` e só a BC o preenche; sem nome, o veredito é `bate` e **não**
   `acabaram` — `acabaram` encerraria a luta na primeira leitura, sem um golpe.
