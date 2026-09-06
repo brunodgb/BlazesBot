@@ -412,3 +412,19 @@ def test_desligar_o_interruptor_CALA_as_linhas_de_medicao(monkeypatch, caplog):
         _ciclo(mundo).resolver()
 
     assert not [r for r in caplog.records if "DIAG:" in r.getMessage()]
+
+
+def test_leitura_de_batalha_que_explode_no_diagnostico_nao_derruba():
+    """Achado do Codex em 06/09/2026: o diagnóstico da morte chamava
+    `_em_batalha()` cru. Uma leitura que falhasse ali interromperia o ciclo
+    ANTES de avisar o time -- ou seja, o log de medição derrubaria justamente a
+    recuperação que ele existe para medir."""
+    mundo = _Mundo(fada=None)
+    ciclo = _ciclo(mundo)
+
+    def _explode():
+        raise RuntimeError("memória sumiu")
+
+    ciclo._em_batalha = _explode
+
+    assert ciclo.resolver() is True

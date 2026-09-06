@@ -1268,3 +1268,22 @@ def test_a_propria_Fada_nao_entra_na_fila_dos_mortos():
     f._uma_volta()
 
     assert jogo.revives == 0
+
+
+def test_o_pedido_de_PARAR_sobe_de_dentro_do_reviver():
+    """Achado do Codex em 06/09/2026: `_esperar_levantar` devolve `False` tanto
+    para "o feitiço não pegou" quanto para "mandaram parar", e o laço tratava os
+    dois como "passo adiante" -- a Fada seguia mais uma volta depois da ordem de
+    parada."""
+    jogo = _Jogo()
+    jogo.companheiros = ["Aliado"]
+    parar = {"agora": False}
+    f = _fada(jogo, continuar=lambda: not parar["agora"])
+    mural.morri("aliado", nick="Aliado")
+
+    def ao_apertar():
+        parar["agora"] = True          # o usuário mandou parar no meio da espera
+
+    jogo.ao_reviver = ao_apertar
+
+    assert mod_reviver.reviver(f, "aliado") is False

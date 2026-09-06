@@ -155,6 +155,13 @@ def _insistir(fada, login_vitima: str, nick: str, slot: int) -> bool:
 
         if _esperar_levantar(fada, login_vitima, nick, fim):
             return True
+        if not fada._continuar():
+            # PARAR SOBE INTEIRO. `_esperar_levantar` devolve `False` tanto para
+            # "o feitiço não pegou" quanto para "mandaram parar no meio da
+            # espera", e só quem chama sabe separar os dois: sem esta linha, o
+            # pedido de parada virava "passo adiante" e o laço da Fada seguia
+            # mais uma volta depois da ordem.
+            return False
 
     fada.revives_sem_efeito += 1
     fada.log.warning(

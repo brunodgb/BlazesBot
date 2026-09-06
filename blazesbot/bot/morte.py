@@ -174,8 +174,8 @@ class CicloDaMorte:
         diagnostico_fino.anotar(
             self.log, "MORTE #%d | posição=%s | em batalha=%s | "
             "distância do ponto=%s",
-            self.mortes, self._onde_estou(), self._em_batalha(),
-            self._quao_longe())
+            self.mortes, self._onde_estou(),
+            self._na_briga(), self._quao_longe())
         self.mural.morri(self.meu_login, nick=self._meu_nick())
         try:
             revivido_pela_fada = self._esperar_a_fada()
@@ -203,6 +203,25 @@ class CicloDaMorte:
         self.mortes_sem_voltar = 0
         self.log.info("De pé e de volta ao ponto — a macro recomeça.")
         return True
+
+    def _na_briga(self):
+        """A flag de combate, PROTEGIDA. `"?"` quando a leitura falha.
+
+        LEITURA DE MEMÓRIA EXPLODE -- o processo do jogo morre, o handle fecha,
+        o endereço sai do lugar. Em qualquer outro estado isso é aceitável;
+        aqui, não: uma exceção no meio do ciclo da morte interrompe a
+        recuperação e deixa o personagem no chão. Achado do Codex em
+        06/09/2026, ampliado -- ele viu o caso do diagnóstico, e o mesmo padrão
+        estava em `_regenerar_antes_de_andar`.
+
+        `"?"` nunca é `True` nem `False`, então todo `is True` / `is not True`
+        deste arquivo continua respondendo o que respondia com `None`.
+        """
+        return self._seguro(self._em_batalha)
+
+    def _sentado(self):
+        """`esta_sentado`, protegido pelo mesmo motivo de `_na_briga`."""
+        return self._seguro(self._esta_sentado)
 
     def _onde_estou(self):
         return self._seguro(self.__onde_estou)
@@ -340,18 +359,18 @@ class CicloDaMorte:
         de novo levantaria. Regra geral do usuário: *"sempre antes de sentar
         verifica se já não está sentado, pois se tiver é só não fazer nada"*.
         """
-        if self._em_batalha() is True:
+        if self._na_briga() is True:
             self.log.info("Tem mob em cima — ando assim mesmo.")
             return
         alvo = self._parar_pct()
         vida = self._ler_vida()
         if vida is not None and vida >= alvo:
             return
-        if self._esta_sentado() is not True:
+        if self._sentado() is not True:
             self._apertar_sentar()
         fim = time.monotonic() + TETO_DA_REGENERACAO
         while time.monotonic() < fim and self._continuar():
-            if self._em_batalha() is True:
+            if self._na_briga() is True:
                 self.log.info("Entrei em batalha regenerando — paro por aqui.")
                 break
             vida = self._ler_vida()
@@ -359,7 +378,7 @@ class CicloDaMorte:
                 break
             if not self._dormir(PASSO_DA_ESPERA):
                 break
-        if self._esta_sentado() is True:
+        if self._sentado() is True:
             self._apertar_sentar()
 
 
