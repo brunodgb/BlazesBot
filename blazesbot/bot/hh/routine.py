@@ -217,6 +217,17 @@ class HHRoutine:
         # A ROTINA É QUEM PODE FAZER A LIGAÇÃO: `combate` já importa
         # `navegacao`, e o contrário faria ciclo.
         self.nav.destravar_o_combate = self.combat.limpar_o_combate
+        # E TAMBÉM QUANDO O TRAJETO TRAVA -- isto é decisão DESTA cave.
+        #
+        # Regra do usuário, 04/09/2026: *"é importante não deixar ficar sem
+        # progresso, arranjar uma forma de continuar a cave, mas sem pular a
+        # morte dos boss, pois aqui em HH, junto com os boss, tem vários mobs
+        # que precisam ser mortos"*. Matar é continuar.
+        #
+        # O BC NÃO LIGA ESTE, e a diferença é regra dele: nunca sair da montaria
+        # antes do waypoint dos Gun Witch. Ver `bot/navegacao.py`, o bloco dos
+        # dois ganchos.
+        self.nav.matar_quando_o_trajeto_trava = self.combat.limpar_o_combate
         self.ui = EntradaDaHH(ctx, self.nav)
         self.vendedor = VendedorDaHH(ctx, self.nav)
         self.team = TeamService(

@@ -46,7 +46,10 @@ def test_o_teto_de_ficar_preso_e_o_numero_do_usuario():
 def test_sem_progresso_e_EM_BATALHA_o_bot_MATA():
     """Insistir no clique de minimapa contra um combate não anda um passo."""
     ramo = _ramo_da_parada()
-    assert "destravar_o_combate" in ramo
+    # O GANCHO É PRÓPRIO da parada de trajeto desde 06/09/2026 -- ver
+    # `tests/test_montaria_do_bc_no_caminho.py`. Era o do portão da montaria, e
+    # isso fez o BC desmontar no corredor do Altar Stone.
+    assert "matar_quando_o_trajeto_trava" in ramo
     assert "in_battle() is True" in ramo, (
         "ilegível não pode autorizar sair batendo")
 
@@ -59,16 +62,16 @@ def test_matar_vem_ANTES_do_teto_e_ANTES_da_manobra():
     continuar a cave, mas sem pular a morte dos boss"*.
     """
     ramo = _ramo_da_parada()
-    assert ramo.index("destravar_o_combate") < ramo.index(
+    assert ramo.index("matar_quando_o_trajeto_trava") < ramo.index(
         "TETO_PRESO_NO_MESMO_PONTO")
-    assert ramo.index("destravar_o_combate") < ramo.index(
+    assert ramo.index("matar_quando_o_trajeto_trava") < ramo.index(
         "destravar_pelos_vizinhos")
 
 
 def test_matar_ZERA_o_relogio_de_preso():
     """Matar mob é trabalho útil mesmo com o personagem parado no lugar."""
     ramo = _ramo_da_parada()
-    depois_de_matar = ramo[ramo.index("destravar_o_combate"):]
+    depois_de_matar = ramo[ramo.index("matar_quando_o_trajeto_trava"):]
     corte = depois_de_matar.index("TETO_PRESO_NO_MESMO_PONTO")
     assert "preso_desde = 0.0" in depois_de_matar[:corte]
 

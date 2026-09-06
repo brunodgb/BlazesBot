@@ -492,7 +492,41 @@ class Navigator:
         # Quem usa: `_diagnosticar_o_portao`. O que NAO subiu para ca: o COMO
         # matar, que e todo do `CombatEngine.limpar_o_combate`. Daqui sai so o
         # QUANDO. Mexer neste contrato mexe nos dois arquivos.
+        # ==============================================================
+        # DOIS GANCHOS, PORQUE SAO DUAS DECISOES DIFERENTES
+        # ==============================================================
+        #
+        # Os dois chamam a MESMA funcao (`combate.limpar_o_combate`), e mesmo
+        # assim precisam ser separados -- porque a PERGUNTA que cada um responde
+        # e outra, e as caves respondem diferente:
+        #
+        #   `destravar_o_combate`  "nao consigo MONTAR porque estou em batalha"
+        #                          Matar e a unica saida: o jogo recusa a
+        #                          montaria em combate, e insistir na tecla nao
+        #                          resolve nunca. Vale para TODA cave -- foi o
+        #                          conserto do travamento de 24 minutos do BC em
+        #                          31/08/2026.
+        #
+        #   `matar_quando_o_trajeto_trava`  "estou montado, andando, e sem
+        #                          progresso". Aqui matar e ESCOLHA, e a
+        #                          resposta muda por cave:
+        #
+        #                            HH  -- SIM. Regra do usuario, 04/09/2026:
+        #                                   junto com os bosses ha varios mobs
+        #                                   que PRECISAM ser mortos.
+        #                            BC  -- NAO. Regra do usuario: nunca sair da
+        #                                   montaria ate o waypoint dos Gun
+        #                                   Witch. No caminho do covil os mobs
+        #                                   sao para IGNORAR.
+        #
+        # NASCE DESLIGADO. Quem quiser, liga -- e foi por nao ser assim que o BC
+        # regrediu: em 04/09 a matanca entrou direto no laco compartilhado e o
+        # personagem passou a desmontar no corredor do Altar Stone. Medido no
+        # log de 06/09/2026, fase ENTRAR_NO_COVIL: "Desmontando antes da luta de
+        # destravar (andar ate (242,22))", e sessenta segundos depois
+        # "NAO DESTRAVEI em 60s: 9 morte(s), 8 TAB, 176 golpes".
         self.destravar_o_combate: Callable[[str], bool] | None = None
+        self.matar_quando_o_trajeto_trava: Callable[[str], bool] | None = None
         # Desde quando está a pé, e quanto tempo do trajeto atual foi a pé. É o
         # número que diz se a exigência de andar montado está sendo cumprida de
         # verdade -- sem ele, "andou a pé metade da cave" não aparece em log nenhum.
@@ -1547,22 +1581,18 @@ class Navigator:
                 )
 
                 # =======================================================
-                # EM BATALHA NÃO SE ANDA -- E A NAVEGAÇÃO PASSA A SABER
+                # EM BATALHA NÃO SE ANDA -- SE ESTA CAVE QUISER MATAR
                 # =======================================================
                 #
                 # O jogo prende o personagem em combate, e insistir no clique de
                 # minimapa contra isso é o que o log de 04/09 mostra: `Failed to
                 # auto-path` repetido enquanto os mobs batiam.
                 #
-                # Este remédio já existia -- `destravar_o_combate`, o mesmo
-                # gancho que o portão da montaria usa --, mas só o PORTÃO sabia
-                # dele. E o portão só é chamado quando se vai montar; aqui o
-                # personagem já está montado e andando, então ele nunca entrava.
-                #
-                # Regra do usuário, 04/09/2026: *"é importante não deixar ficar
-                # sem progresso, arranjar uma forma de continuar a cave, mas sem
-                # pular a morte dos boss, pois aqui em HH, junto com os boss, tem
-                # vários mobs que precisam ser mortos"*. Matar é continuar.
+                # QUEM DECIDE É O ECOSSISTEMA, e o gancho é PRÓPRIO -- não o do
+                # portão da montaria. Ver o bloco dos dois ganchos no
+                # `__init__`: na HH os mobs do caminho precisam morrer; no BC
+                # eles são para ignorar, e desmontar aqui viola a regra de nunca
+                # sair da montaria antes do waypoint dos Gun Witch.
                 #
                 # MATAR ZERA O RELÓGIO DE "PRESO": é trabalho útil, mesmo que o
                 # personagem não saia do lugar. O teto existe para insistência
@@ -1570,13 +1600,13 @@ class Navigator:
                 #
                 # `is True` e não `not ...`: leitura ilegível não autoriza sair
                 # batendo -- puxaria mob por causa de uma leitura que falhou.
-                if (self.destravar_o_combate is not None
+                if (self.matar_quando_o_trajeto_trava is not None
                         and ctx.memory.in_battle() is True):
                     ctx.log.info(
                         "Sem progresso indo para %s e EM BATALHA: o jogo prende "
                         "o personagem em combate. Matando até sair, antes de "
                         "tentar andar de novo.", alvo)
-                    self.destravar_o_combate(f"andar até {alvo}")
+                    self.matar_quando_o_trajeto_trava(f"andar até {alvo}")
                     preso_desde = 0.0
                     ultimo_progresso = time.time()
                     travas = 0
