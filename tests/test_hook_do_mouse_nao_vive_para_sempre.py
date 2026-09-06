@@ -82,32 +82,16 @@ def test_o_callback_sai_na_PRIMEIRA_pergunta_quando_nada_bloqueia():
         "bloqueio ativo — isso é trabalho em todo movimento do mouse do usuário")
 
 
-def test_nao_existe_injecao_na_fila_do_SO():
-    """O bot NÃO pode afogar o barramento de input: ele não injeta nada nele.
-
-    Todo clique vai por `SendMessageW` direto ao WndProc do jogo, que não passa
-    pela fila de input do sistema. `SendInput`/`mouse_event`/`SetCursorPos`
-    passariam — e é por isso que nenhum deles pode aparecer aqui.
-    """
-    from pathlib import Path
-
-    from blazesbot.core import inputs as mod_inputs
-
-    fonte = Path(mod_inputs.__file__).read_text(encoding="utf-8")
-    # Só o CÓDIGO, sem comentários nem docstrings: o arquivo cita `SendInput` no
-    # cabeçalho para explicar por que NÃO é usado.
-    import ast
-    arvore = ast.parse(fonte)
-    usados: set[str] = set()
-    for no in ast.walk(arvore):
-        if isinstance(no, ast.Attribute):
-            usados.add(no.attr)
-        elif isinstance(no, ast.Name):
-            usados.add(no.id)
-    for proibido in ("SendInput", "mouse_event", "SetCursorPos"):
-        assert proibido not in usados, (
-            f"`{proibido}` injeta na fila de input do SISTEMA — isso rouba o "
-            f"mouse do usuário e quebra o contrato de várias contas em paralelo")
+# A TRAVA DA INJEÇÃO MUDOU DE ARQUIVO -- e de ESCOPO.
+#
+# Aqui vivia `test_nao_existe_injecao_na_fila_do_SO`, que reprovava
+# `SendInput`/`mouse_event`/`SetCursorPos` **dentro de `inputs.py`**. O
+# vazamento que ela existe para impedir (o mouse FÍSICO do usuário sendo puxado
+# pelo bot) nunca precisou passar por lá: um `import pyautogui` no `catador.py`
+# ou numa ferramenta de `tools/` faria o mesmo estrago sem tocar neste módulo.
+#
+# A mesma trava agora varre o PACOTE INTEIRO, e ganhou de companhia a do roubo
+# de foco: `tests/test_bot_fantasma.py`. Não foi apagada -- foi promovida.
 
 
 # =====================================================================
