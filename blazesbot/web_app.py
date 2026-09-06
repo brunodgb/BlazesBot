@@ -255,12 +255,23 @@ class _App:
         # arrastar a segunda moveria a primeira. Barato (uma passada) e fecha o
         # caminho de vez.
         self.config.garantir_uids_unicos()
+        # UMA passada para todos os líderes, em vez de uma varredura por conta
+        # (era O(n²) por leitura da tabela). Ver `lideres_do_time_do_app`.
+        lideres = self.config.lideres_do_time_do_app()
         out = []
         for i, c in enumerate(self.config.accounts):
             out.append({
                 "uid": c.uid,
                 "ordem": i,
                 "grupo": c.grupo,
+                # QUEM PUXA ESTA CONTA como seguidora do time do APP, ou "".
+                #
+                # Sem isto a tabela chamava de "só login" uma conta que na
+                # verdade roda a macro de outra: `AppConfig.enabled` fica
+                # DESLIGADO na seguidora (quem liga o APP é o líder), então as
+                # três caixas vazias contavam uma mentira. Ver
+                # `docs/INVARIANTES.md`, "Time do APP".
+                "lider_do_time": lideres.get((c.login or "").strip().lower(), ""),
                 "login": c.login,
                 "enabled": c.enabled,
                 "position": c.position,
@@ -820,6 +831,9 @@ class _App:
                 "uid": conta.garantir_uid() if conta else "",
                 "nick": _nick(conta) if conta else login,
                 "farm": bool(d.get("farm")),
+                # Ver `BotManager.summary`: "está na lista" não é "está no ar".
+                "conectada": bool(d.get("conectada")),
+                "relogando": bool(d.get("relogando")),
                 # DO RESUMO, e não da configuração em disco: é o mesmo lugar
                 # de onde `farm` vem, então as duas caixas contam a mesma
                 # história. Sem esta chave o espelho lia `undefined`, e

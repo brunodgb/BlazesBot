@@ -2488,6 +2488,28 @@ class AccountSupervisor(threading.Thread):
                 pass
 
 
+def _janela_viva(hwnd: int | None) -> bool:
+    """O handle em cache ainda aponta para uma janela? Barato e tolerante.
+
+    O `hwnd` guardado no supervisor sobrevive à morte da janela até o laço
+    perceber, e nessa fresta a interface pintava a conta de VERDE com o
+    personagem fora do jogo (achado na revisão). `IsWindow` é syscall local; uma
+    por conta a cada 1,5 s não aparece em medição nenhuma.
+
+    Erro aqui NUNCA pode derrubar o resumo -- ele alimenta a tela inteira. Sem
+    resposta, responde o que o handle diz.
+    """
+    if not hwnd:
+        return False
+    try:
+        from ctypes.wintypes import HWND
+
+        from ..core.inputs import user32
+        return bool(user32.IsWindow(HWND(int(hwnd))))
+    except Exception:
+        return True
+
+
 class BotManager:
     """Coordena um supervisor por conta habilitada."""
 
@@ -2720,6 +2742,28 @@ class BotManager:
                 # usuário ligava a HH. Ver `Account.farms`.
                 "farm": sup.account.bc_farm,
                 "farm_hh": sup.account.hh_farm,
+                # CONECTADA = tem JANELA VIVA agora, CONFERIDA.
+                #
+                # Não existia sinal de "no ar" nenhum: a interface só sabia que a
+                # conta estava na lista do resumo, e estar na lista não quer dizer
+                # estar conectada -- a conta que caiu continua aqui, tentando
+                # religar, por minutos.
+                #
+                # `bool(sup.hwnd)` SOZINHO não bastava, e foi achado na revisão:
+                # entre a janela morrer e o laço perceber, o handle continua em
+                # cache e a tela ficava VERDE com o personagem fora do jogo. O
+                # `IsWindow` fecha essa janela de mentira e é barato -- syscall
+                # local, uma por conta a cada 1,5 s.
+                "conectada": _janela_viva(sup.hwnd),
+                # RECONECTANDO -- e só se o bot NÃO estiver parando.
+                #
+                # `tentativas_de_login` só zera quando o login CONCLUI, e o Parar
+                # também mata a janela: sem olhar o `stop_event`, apertar Parar
+                # pintava "Caiu — reconectando" em toda conta que já tinha tentado
+                # logar alguma vez. Encerrar de propósito não é queda.
+                "relogando": bool(not sup.hwnd
+                                  and sup.tentativas_de_login
+                                  and not sup.stop_event.is_set()),
                 "last_run": 0.0,
                 "total_run": 0.0,
                 "uptime": 0.0,

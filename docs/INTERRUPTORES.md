@@ -73,7 +73,7 @@ ligar código não testado.
 
 ## Números medidos -- tolerância, limiar, teto, cadência
 
-569 constantes, agrupadas por arquivo.
+564 constantes, agrupadas por arquivo.
 
 | constante | valor | onde | quem lê | porquê (resumo) |
 |---|---|---|---|---|
@@ -127,7 +127,7 @@ ligar código não testado.
 | `SEGUNDOS_PARA_O_ALVO_APARECER` | `0.35` | [blazesbot/bot/app/executor.py:208](blazesbot/bot/app/executor.py#L208) | — | O TAB DEIXOU DE SER LINHA DA MACRO |
 | `SHUFFLE_DEFAULT_PIXELS` | `5` | [blazesbot/bot/app/executor.py:743](blazesbot/bot/app/executor.py#L743) | — | — |
 | `TABS_SEM_RESPOSTA_PARA_DESISTIR` | `1` | [blazesbot/bot/app/executor.py:341](blazesbot/bot/app/executor.py#L341) | — | Quantos TABs seguidos SEM O ID MUDAR antes de desistir. |
-| `TENTATIVAS_DE_TAB` | `1` | [blazesbot/bot/app/executor.py:291](blazesbot/bot/app/executor.py#L291) | coleira_do_ponto.py | A RODA É ORDENADA POR DISTÂNCIA, E ISSO MUDA TUDO -- 26/08/2026 |
+| `TENTATIVAS_DE_TAB` | `1` | [blazesbot/bot/app/executor.py:291](blazesbot/bot/app/executor.py#L291) | — | A RODA É ORDENADA POR DISTÂNCIA, E ISSO MUDA TUDO -- 26/08/2026 |
 | `TOLERANCIA_POSICAO` | `1` | [blazesbot/bot/app/executor.py:158](blazesbot/bot/app/executor.py#L158) | — | Constantes mantidas para compatibilidade com testes e configuração. |
 | `VOLTAS_COM_ALVO_ILEGIVEL_PARA_TROCAR` | `2` | [blazesbot/bot/app/executor.py:478](blazesbot/bot/app/executor.py#L478) | — | Quantas VOLTAS inteiras com o alvo selecionado e o HP ilegível antes de |
 | `VOLTAS_SEM_ALVO_ANTES_DE_DESCANSAR` | `3` | [blazesbot/bot/app/executor.py:316](blazesbot/bot/app/executor.py#L316) | — | Quantas voltas SEGUIDAS sem conseguir alvo antes de pagar a pausa acima. |
@@ -499,11 +499,6 @@ ligar código não testado.
 | `ESPERA_APOS_PEGAR` | `4.0` | [blazesbot/core/catador.py:112](blazesbot/core/catador.py#L112) | — | Espera entre o clique no botão e a próxima conferência. NÚMERO DO USUÁRIO. |
 | `ESPERA_ENTRE_CLIQUES` | `0.1` | [blazesbot/core/catador.py:96](blazesbot/core/catador.py#L96) | — | Espera entre dois cliques direitos. Também do T-R0XX. Não é tempo de abrir a |
 | `TETO_DE_CLIQUES` | `10` | [blazesbot/core/catador.py:124](blazesbot/core/catador.py#L124) | — | Teto de cliques no botão. REDE DE SEGURANÇA, não estratégia -- mesmo papel do |
-| `MAXIMO_DE_PASSOS_ATE_O_MOB` | `30` | [blazesbot/core/coleira_do_ponto.py:73](blazesbot/core/coleira_do_ponto.py#L73) | — | Quão longe do PERSONAGEM um mob pode estar para valer a corrida até ele. |
-| `PELA_VALVULA` | `'pela_valvula'` | [blazesbot/core/coleira_do_ponto.py:92](blazesbot/core/coleira_do_ponto.py#L92) | executor.py | — |
-| `PERTO` | `'perto'` | [blazesbot/core/coleira_do_ponto.py:90](blazesbot/core/coleira_do_ponto.py#L90) | executor.py, routine.py, entrada.py, mapa_hh.py, supervisor.py, ui_do_jogo.py, mouse_shield.py, stone_city.py | Os três vereditos. São três e não dois porque "aceito" tem duas causas com |
-| `RECUSAR` | `'recusar'` | [blazesbot/core/coleira_do_ponto.py:91](blazesbot/core/coleira_do_ponto.py#L91) | config.py | — |
-| `RECUSAS_ANTES_DE_ACEITAR` | `3` | [blazesbot/core/coleira_do_ponto.py:81](blazesbot/core/coleira_do_ponto.py#L81) | — | Recusas SEGUIDAS antes de a válvula abrir e aceitar o que vier. |
 | `FRIEND_ROW_HEIGHT` | `15` | [blazesbot/core/coords.py:345](blazesbot/core/coords.py#L345) | — | Altura de linha nas listas da janela de amigos. |
 | `MAXIMO_DE_RETRATOS_DO_TIME` | `4` | [blazesbot/core/coords.py:113](blazesbot/core/coords.py#L113) | afericao_do_aliado.py | — |
 | `PASSO_ENTRE_RETRATOS_DO_TIME` | `80` | [blazesbot/core/coords.py:112](blazesbot/core/coords.py#L112) | afericao_do_aliado.py | — |

@@ -136,3 +136,50 @@ mediana, 174 no p90).
 
 **E a válvula é o que torna esse chute seguro:** mesmo com o número errado, ela
 abre em três TABs e a conta volta a atacar.
+
+
+## HOTFIX: a régua saiu de cena — 06/09/2026, com conta morta
+
+> *"O bot está dando 2 a 3 TABs consecutivos. O primeiro TAB já adquire um alvo
+> válido e perfeitamente posicionado, mas o código ignora e continua dando TAB
+> (...) a conta 'BlazesAPP1' acabou de morrer por causa disso."* — usuário
+
+### O vazamento lógico, em dois parágrafos
+
+A régua da 3ª versão media certo — a corrida do personagem até o mob — e mesmo
+assim era fatal, porque ela **não tinha como recusar sem gastar um TAB**. O TAB
+do jogo é um ciclo ordenado por proximidade: entrega o mob mais perto, depois o
+seguinte, depois o seguinte. Cada recusa devolvia o controle ao laço, que na
+volta seguinte apertava TAB de novo — e o TAB seguinte, por definição, trazia um
+mob **mais longe** que o recusado. Três recusas empurravam a seleção três
+posições para fora do spot. Quando a válvula finalmente aceitava, o personagem
+corria até um mob distante, atravessando tudo o que havia no caminho.
+
+O segundo vazamento estava no relógio de 4 s do time. Ele só PEDE TAB, e o
+pedido é filtrado por `_mesmo_alvo_verificado` — que chama `_alvo_aceitavel`.
+Com a régua dentro do `_alvo_aceitavel`, um alvo vivo porém "longe" fazia essa
+verificação devolver `False`, o pedido do relógio passava, e saía um TAB **por
+cima de um alvo perfeitamente bom**. Os dois vazamentos somados dão os 2 a 3
+TABs consecutivos relatados.
+
+### O conserto
+
+1. **`_alvo_aceitavel` não recusa mais por distância.** Só cadáver é recusado —
+   o motivo pelo qual a função existe.
+2. **O relógio pergunta ao jogo antes de trocar**: `_tenho_alvo_vivo()` lê id e
+   HP na hora. Com alvo vivo, o pedido é descartado.
+3. **A coleira virou medição.** `medir()` continua anotando `corrida=` e
+   `mob->base=` no log de diagnóstico. Os tetos foram **removidos**, não
+   comentados: constante morta é convite para religar a régua sem ler a
+   cicatriz.
+
+### A lição, para a próxima vez que alguém quiser uma régua aqui
+
+**Ela não pode ser feita de recusa.** Recusar custa um TAB, e cada TAB afasta a
+seleção — a régua produz exatamente o dano que ela pretende evitar. Uma régua
+viável teria de perguntar **antes** do TAB (varrer `entidades_vivas()` e só
+apertar quando houver mob ao alcance), ou não existir.
+
+E o *"não andar longe do ponto"* nunca precisou dela: quem faz isso é a **trava
+de posição**, que devolve o personagem ao ponto quando a luta acaba, sem gastar
+TAB nenhum.

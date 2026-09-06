@@ -174,10 +174,10 @@ SEGUNDOS_PARA_CONFIRMAR_A_SAIDA = 2.0
 # dentro do teto sem pesar.
 PASSO_DA_SAIDA_DE_BATALHA = 0.1
 
-# A COLEIRA DOS 12 vem do módulo que a decide -- o nome fica visível aqui porque
-# é daqui que os testes e o índice de constantes a leem. O porquê está lá.
-MAXIMO_DE_PIXELS_DO_PONTO = coleira_do_ponto.MAXIMO_DE_PIXELS_DO_PONTO
-RECUSAS_POR_DISTANCIA = coleira_do_ponto.RECUSAS_POR_DISTANCIA
+# A COLEIRA NÃO EXPORTA MAIS TETO NENHUM -- ver `core/coleira_do_ponto.py`.
+# Ela virou medição em 06/09/2026, depois de a recusa por distância matar uma
+# conta: recusar o primeiro alvo do TAB empurra a seleção para o mob seguinte,
+# que é mais longe, e o personagem corre até lá com o spot inteiro atrás.
 
 
 # Teto da espera da TRAVA DE POSIÇÃO pela chegada à base.
@@ -1712,22 +1712,33 @@ class ExecutorDeMacro:
             return True
         if hp <= 0:
             return False
-        if self._alvo_longe_demais(alvo):
-            return False
+        # A DISTÂNCIA NÃO VETA MAIS -- HOTFIX de 06/09/2026, com conta morta.
+        #
+        # O TAB do jogo entrega o alvo MAIS PRÓXIMO primeiro e vai afastando a
+        # cada toque. Recusar o primeiro empurrava a seleção para fora: recusa,
+        # TAB, mob mais longe, recusa, TAB, mob mais longe ainda -- até o bot
+        # aceitar um mob distante, correr até ele e chegar com meia dúzia de
+        # outros atrás. Foi assim que a conta `BlazesAPP1` morreu.
+        #
+        # A régua estava brigando com a única coisa que o jogo já fazia certo. O
+        # primeiro alvo vivo que o TAB traz é, por construção, o mais perto que
+        # existe -- não há alvo melhor a procurar, e procurar é o próprio dano.
+        #
+        # A COLEIRA VIROU MEDIÇÃO: `_medir_a_corrida` continua registrando a
+        # distância no log de diagnóstico, para o número sair de dado e não de
+        # palpite. Ela não decide mais nada.
+        self._medir_a_corrida(alvo)
         if not EXIGIR_ALVO_INTEIRO or not maximo:
             return True
         return hp >= maximo
 
-    def _alvo_longe_demais(self, alvo: dict) -> bool:
-        """Recuso este mob por estar longe DE MIM? Ver `coleira_do_ponto`.
+    def _medir_a_corrida(self, alvo: dict) -> None:
+        """Anota no log a que distância está o mob que acabou de ser aceito.
 
-        A régua e o PORQUÊ dela moram no módulo; aqui fica o contador de recusas
-        SEGUIDAS, que é estado do executor.
-
-        SEGUIDAS, e não "por rodada de aquisição": com `TENTATIVAS_DE_TAB = 1`,
-        uma rodada faz no máximo UMA recusa, então um limiar de 3 zerado a cada
-        rodada nunca é alcançado -- foi por isso que a válvula abriu 1 vez em
-        3179 recusas. Ele zera quando um alvo é ACEITO.
+        SÓ MEDE. A régua já vetou alvo duas vezes neste projeto e as duas foram
+        para trás -- ver `core/coleira_do_ponto.py` e o HOTFIX de 06/09/2026 em
+        `_alvo_aceitavel`. O que sobrou dela é o dado: quanto o personagem
+        correu, e a que distância do ponto o mob estava.
         """
         base = self._base_pos if self._travar_posicao else None
         onde_estou = None
@@ -1736,20 +1747,8 @@ class ExecutorDeMacro:
                 onde_estou = self._posicao_atual()
             except Exception:
                 onde_estou = None
-        veredito = coleira_do_ponto.avaliar(
-            alvo, base, self._recusas_por_distancia, self.log,
-            pos_do_personagem=onde_estou)
-        if veredito == coleira_do_ponto.PERTO:
-            # SÓ O MOB PERTO ZERA. Zerar também no aceite da válvula fazia o
-            # contador voltar a zero e recusar de novo no lance seguinte -- um
-            # mob longe aceito a cada quatro tentativas, e três TABs girando à
-            # toa entre eles.
-            self._recusas_por_distancia = 0
-            return False
-        if veredito == coleira_do_ponto.PELA_VALVULA:
-            return False
-        self._recusas_por_distancia += 1
-        return True
+        coleira_do_ponto.medir(alvo, base, self.log,
+                               pos_do_personagem=onde_estou)
 
     def _comecar_a_regua(self, ident: int | None,
                          alvo: dict | None = None) -> None:
@@ -1980,9 +1979,44 @@ class ExecutorDeMacro:
         if self._mesmo_alvo_verificado():
             return True
         # 3) O PEDIDO DO RELÓGIO do time (`_tab_solicitado`).
+        #
+        # TRAVA DE VIDA -- HOTFIX de 06/09/2026. O relógio pede TAB quando a
+        # conta passa 4 s sem trocar de estado de batalha, e esse pedido chegava
+        # aqui SEM conferir se já existe alvo vivo selecionado. Com um alvo bom
+        # na mão, o TAB do relógio joga a seleção para o mob seguinte -- que é
+        # mais longe, porque é assim que o TAB do jogo caminha.
+        #
+        # `_mesmo_alvo_verificado` (passo 2) deveria ter barrado isso, mas ele
+        # depende de o alvo ter sido REGISTRADO na aquisição; alvo herdado de
+        # outra volta, ou registrado antes de uma leitura ruim, escapava.
+        # Perguntar direto ao jogo não escapa.
         if solicitado:
+            if self._tenho_alvo_vivo():
+                self.log.debug("APP: o relógio pediu TAB, mas há alvo vivo "
+                               "selecionado. NÃO troco.")
+                return True
             return self._conseguir_o_tab()
         return True
+
+    def _tenho_alvo_vivo(self) -> bool:
+        """Há alvo selecionado e vivo AGORA, pela memória? `False` = não sei.
+
+        A pergunta mais direta que existe, e ela existe porque toda pergunta
+        indireta sobre isto já falhou pelo menos uma vez: o id sozinho não
+        distingue mob de cadáver (o corpo fica selecionável de 7 a 13 s), e o
+        registro da aquisição não cobre alvo herdado de outra volta.
+
+        "NÃO SEI" VALE FALSE de propósito: sem leitura, o TAB volta a ser
+        permitido -- é o comportamento cego de sempre, e um TAB a mais é barato
+        perto de uma macro rodando contra o vazio.
+        """
+        if not self._ler_id_do_alvo():
+            return False
+        alvo = self._ler_alvo()
+        if alvo is None:
+            return False
+        hp = alvo.get("hp")
+        return hp is None or hp > 0
 
     def _conseguir_o_tab(self) -> bool:
         """Aperta o TAB com a conferência certa para o caso.

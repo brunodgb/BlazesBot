@@ -83,3 +83,98 @@ Issues e specs vivem como arquivos markdown em `.scratch/<feature>/`. See `docs/
 ### Domain docs
 
 Layout single-context: um `CONTEXT.md` + `docs/adr/` na raiz. See `docs/agents/domain.md`.
+
+# Skill: claude-council (consulta multi-agente)
+
+Plugin de Claude Code que consulta múltiplos IAs em paralelo (Gemini, OpenAI,
+Grok, Perplexity, Kimi, OpenRouter, codex CLI, Antigravity, **Ollama local**)
+e mostra as respostas lado a lado, com síntese honesta de concordância.
+
+- **Fonte:** `https://github.com/hex/claude-council` (MIT, autor `hex`).
+- **Instalado em:** `~/.claude/plugins/marketplaces/hex-claude-marketplace/claude-council`
+  (versão 2026.9.8, commit `9d49926`).
+- **Ativação:** `.claude/settings.local.json` (escopo local no projeto,
+  como o usuário pediu).
+- **Status atual dos provedores** (verificado em 2026-09-06):
+  - **Ollama** ✓ conectado (703ms, v0.21.0) — modelo default `llama3.2`
+    (não instalado). Para usar o `qwen2.5-coder:14b` já presente no host,
+    exportar `OLLAMA_MODEL="qwen2.5-coder:14b"` antes de invocar.
+  - **Codex CLI** ✓ conectado (761ms, v0.150.1) — reusa a subscription
+    OpenAI já autenticada do projeto.
+  - **Gemini, OpenAI, Grok, Perplexity, Kimi, OpenRouter** — chave não
+    setada. Adicionar via env var para ativar.
+  - **Kimi CLI, Antigravity, Grok CLI** — não instalados.
+
+## Quando usar (e quando NÃO)
+
+**Usar:**
+- Decisões de arquitetura com tradeoffs reais (qual lib, qual design pattern).
+- Debugging dead-end (já tentou 2+ vezes, nada bateu).
+- Cross-check de segurança/performance/maintainability em mudança grande.
+- "Estou em dúvida entre A e B, o que o council acha?"
+
+**NÃO usar:**
+- Implementação mecânica (uma linha, um fix óbvio).
+- Perguntas com resposta única e clara.
+- Decisões de código deste projeto que dependem do **estado do jogo** —
+  council é externo, **não tem acesso à memória do bot, ao graphify nem
+  aos logs JSONL**. Para debugging real do BlazesBot: graphify + logs.
+- Em loop, sem filtro — o cache já cuida, mas invocar o council para cada
+  alteração de 3 linhas custa Ollama/Codex sem retorno.
+
+## Como invocar
+
+```
+# Padrão: usa COUNCIL_PROVIDERS ou todos os conectados
+/claude-council:ask "Should I use UUID or BIGINT primary keys here?"
+
+# Forçando provedores específicos
+/claude-council:ask --providers=ollama,codex "Review this design"
+
+# Com lentes (roles)
+/claude-council:ask --roles=balanced "Compare these two strategies"
+
+# Debate em duas rodadas (cada provedor vê os outros e rebate)
+/claude-council:ask --debate --providers=ollama,codex "..."
+
+# Verificar o que está funcionando
+/claude-council:status
+```
+
+Direto pela shell (sem slash command):
+```bash
+cd ~/.claude/plugins/marketplaces/hex-claude-marketplace/claude-council
+bash scripts/query-council.sh --providers=ollama,codex -- "Your question"
+```
+
+## Configuração local
+
+- **Template de env:** `.claude/council.env.example` (copie para
+  `council.env` e descomente o que quiser). Ativar com `set -a; source
+  .claude/council.env; set +a` antes de invocar.
+- **Ollama model:** fixar via `OLLAMA_MODEL="qwen2.5-coder:14b"`. Sem isto,
+  o default `llama3.2` falha e o plugin escolhe fallback verificado.
+- **Stop-gate:** **DESLIGADO por padrão** (decisão do usuário em 2026-09-06).
+  Razão: o stop-gate envia o diff não-commitado para um provedor revisar;
+  o bot tem offsets de memória do jogo, paths internos e padrões que não
+  devem vazar. Ollama local seria aceitável, mas o desenho "um commit por
+  menor alteração" (governança) já é o próprio gate. Para ativar: ver
+  `.claude/council.env.example` e a doc do plugin.
+
+## Princípio de uso neste projeto
+
+- Council **complementa** graphify, INVARIANTES e REGRAS — **não substitui**.
+- Para qualquer decisão sobre o jogo: graphify + memória primeiro; council
+  só se a dúvida for metodológica/arquitetural.
+- `task-observer` continua sendo a meta-skill auto-invocada para observar
+  padrões. Não acionar o council a partir de observação do task-observer.
+
+## Limitações conhecidas
+
+- Sem `tmux` no host Windows → streaming side pane indisponível; o council
+  cai no renderer perl/Rich (output bufferizado no terminal).
+- Sem `jq` global → scripts falham. Já resolvido (jq 1.8.2 em
+  `~/.local/bin/jq.exe`, que está no PATH do usuário).
+- README menciona flags `--list-default`, `--list-default-models` e
+  `--list-available` no `check-status.sh` que NÃO existem na versão
+  2026.9.8 (issue upstream menor).

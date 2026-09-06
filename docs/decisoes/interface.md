@@ -810,3 +810,216 @@ Pode, com uma condição: **pular quando não existe.** Num clone novo ou na CI 
 teste é irrelevante; na máquina de quem desenvolve, ele é a única coisa que
 separa "mexi no HTML" de "o usuário viu". `test_o_dist_COMPILADO_tem_o_campo`
 não cobra que o build seja feito — cobra que o build **que existe** esteja em dia.
+
+
+## 28/08/2026 (2) — a tela de contas: coluna Função, estados e alvos
+
+Pedido: *"ele deve bater o olho e identificar instantaneamente qual conta está
+rodando, em qual ecossistema (APP, BC, HH) e quais são as divisões lógicas"*.
+
+### O diagnóstico mudou o problema
+
+Lendo o `config.json` de verdade antes de desenhar: **quatro das sete contas
+estão ativas SEM ecossistema nenhum marcado** — só logam e relogam. A tela dava a
+elas o mesmo peso visual das que trabalham. E `creubo` está no grupo `BC` mas
+roda **HH**, com duas contas no grupo `APPs` sem APP marcado: o usuário estava
+usando o GRUPO como substituto do ecossistema, porque o ecossistema não era
+escaneável.
+
+Ou seja, a pergunta que a tela não respondia não era "onde está a linha" — era
+**"o que esta conta faz?"**.
+
+**Segundo achado: o dado de "está rodando" já chegava no navegador e era jogado
+fora.** `estado().contas` só traz conta EM EXECUÇÃO, com `runs`, `uptime`,
+`relogins` e cronômetro; a tabela usava isso para espelhar DUAS caixas e
+descartava o resto.
+
+### As três colunas de caixa viraram UMA coluna Função
+
+BC, HH e APP eram três checkboxes idênticos de 14px, e o que distinguia um do
+outro estava no `<th>` — **fora da linha**: para ler um ✓ o olho subia ao
+cabeçalho e voltava, uma vez por linha.
+
+Cada selo é **pictograma + sigla**, e a sigla não é enfeite: **BC e HH são as
+duas cavernas**, dois pictogramas de caverna não se distinguem a 16px, e o erro
+que isso causa é caro (põe a conta na cave errada). Os símbolos saem do que cada
+ecossistema tem de próprio: **caveira** para BC (o boss é o `Blaze Skull
+Marshal`), **fada** para HH (a Fada é a mecânica que só a HH tem), **teclado**
+para APP (o APP é uma sequência de teclas). Espadas e alvo foram recusados:
+descrevem COMBATE, e os três combatem.
+
+**O `<input type="checkbox">` NATIVO continua ali**, escondido sob o `<label>`,
+com o estado desenhado por `:has(.selo-caixa:checked)`. Trocar por `<button>`
+custaria reimplementar `role="switch"`, `aria-checked`, Tab e barra de espaço — e
+é aí que esse tipo de reforma quebra acessibilidade sem ninguém notar.
+
+### O alvo de clique era metade do mínimo
+
+`.chk` media **14×14 px** — metade dos 24×24 que a WCAG 2.5.8 pede — e havia
+**quatro por linha**, encostados. O `<label>` passou a ser o alvo, com 28×28: área
+de clique **4× maior sem crescer a linha**. Medido depois: o alvo fica dentro da
+célula (205→233 contra 195,8→245,3) e o clique acerta nas duas bordas.
+
+### Quatro estados, quatro canais — e por que a zebra foi recusada
+
+Os estados COEXISTEM, então nenhum pode usar o recurso visual de outro:
+
+| estado | canal |
+|---|---|
+| selecionada (para remover) | barra na borda esquerda (`linha-ativa`, já existia) |
+| inativa | opacidade 45% |
+| **no ar agora** | ponto verde + contagem de runs |
+| ativa e parada | nada, que é o normal |
+
+`.linha-ativa` tem nome infeliz e **não** quer dizer "conta ativa": é a linha
+SELECIONADA. Por isso o fundo não podia carregar "ativa" — já estava ocupado, e é
+a mesma razão de a **faixa alternada (zebra) ter sido recusada**: ela consumiria
+o fundo inteiro para decoração.
+
+**Cards individuais também foram recusados**, por quatro motivos: quebram o
+alinhamento vertical que permite comparar servidor e posição entre contas;
+o arraste depende de linhas de altura previsível; o cabeçalho de grupo é um
+`<tr colspan>` e deixaria de existir; e com padding de card 7 contas já não
+caberiam numa tela.
+
+**Sem cronômetro por linha**, de propósito: texto que muda a cada segundo em N
+linhas é ruído e re-render à toa. O cronômetro ao vivo já existe inteiro na aba
+Estatísticas de BC.
+
+### Um defeito silencioso corrigido no caminho
+
+`COLUNAS_DA_TABELA_DE_CONTAS` estava em **9** com a tabela em **10** colunas: a
+coluna HH entrou depois e a constante não acompanhou, então o `colspan` do
+cabeçalho de grupo ficava uma coluna curto. `colspan` errado não dá erro — só
+deixa a tabela torta em silêncio. Agora são 8 colunas e um teste trava a
+sincronia.
+
+### O que só apareceu MEDINDO na tela
+
+1. **A coluna Função comeu a largura**: "Center" virou "Cente", o servidor virou
+   "Light in the Darkn" e o botão Editar quebrou em duas linhas. A grade de
+   larguras passou a ser explícita; esticam só Login e Servidor.
+2. **O indicador empilhou abaixo do login** e a linha foi de 40 para **67px** —
+   e só nas contas em execução, deixando a tabela com duas alturas. A célula do
+   login virou flex; as alturas ficaram uniformes em 49-50px.
+3. **O tema claro reprovou**: as siglas dos selos LIGADOS usavam cor clara fixa
+   sobre preenchimento claro e sumiam. O APP escapou por acaso, porque já usava
+   `--accent-fg`, que tem as duas variantes. Viraram tokens.
+4. **O estado DESLIGADO reprovou AA no tema claro**: `--color-faint` dá 4,78:1 no
+   escuro mas **3,28:1** sobre o painel branco, com sigla de 9,5px. Virou
+   `--selo-off-texto`, `#7a6863` no claro (5,27:1). Medição final: **mínimo 4,78
+   no escuro e 5,27 no claro**, todos acima de AA.
+
+### Achados da revisão do Codex
+
+- **`top: 27px` no cabeçalho de grupo era número mágico** e o `<th>` media 27,5 —
+  meio pixel de fresta, que qualquer mudança de fonte ou zoom abriria. Virou
+  `--altura-cabecalho-tabela`, que o `<th>` impõe e o sticky consome.
+- **O pulso do ponto verde animava `box-shadow`**, que repinta a cada quadro: com
+  dezenas de contas no ar seriam dezenas de repaints contínuos. Passou a animar
+  só `opacity` e `transform`, que o compositor resolve sozinho.
+- **A margem negativa do alvo** foi apontada como risco e **medida**: não vaza da
+  célula nem invade a linha vizinha. Fica como está, com a medição registrada.
+
+### Densidade
+
+50px por linha (era ~30). Com 20 contas dá ~1000px de rolagem, e é por isso que o
+**cabeçalho de grupo é `sticky`**: rolar sem saber em que grupo se está era o
+custo real do scroll, não a altura.
+
+
+### 28/08/2026 (3) — a ordem das colunas, e RUN como coluna própria
+
+Pedido: *"o ideal é ser ativo|login|senha|run|servidor|posiçao|função|editar"*, e
+*"as runs so aparece para aqueles que tiverem rodando cave, o APP nao deve
+aparecer a quantidade de runs pois nao faz sentido"*.
+
+**As duas informações que eu tinha juntado foram separadas**, e é a parte que
+importa deste ajuste:
+
+- **O PONTO VERDE** diz "está no ar" e vale para **qualquer** ecossistema, APP
+  incluído. Fica ao lado do login.
+- **A COLUNA RUN** diz quantas runs a conta fechou, e **só se preenche para
+  cave**. O modo APP é macro de teclado: não existe "run" ali, e um número seria
+  inventar uma medida que o ecossistema não tem.
+
+Juntas num rótulo só, como estavam, a conta de APP ficaria **sem indicador
+nenhum** — ela roda, mas não tem run. Conferido na tela com o cenário real:
+`creubo` (HH, no ar) mostra `12`; `blazestpas` (APP, no ar) mostra o ponto e a
+coluna Run **vazia**, embora o resumo do supervisor tenha mandado 7 runs para
+ela. Quem filtra é a tela.
+
+Conta parada mostra **vazio, não zero**: zero diria "rodou e não fechou nenhuma",
+que é outra coisa.
+
+**O filtro usa `farm`/`farm_hh` do RESUMO**, não do disco — é a mesma fonte que
+alimenta as duas caixas de cave, então as três contam a mesma história.
+
+### O slot do ponto tem largura fixa, e a classe é PRÓPRIA
+
+Movido para ANTES do login: depois dele ficava solto no meio da célula, porque o
+campo é `flex: 1` e empurrava o ponto para a borda direita, longe do nome.
+
+E ele usa `.conta-ao-vivo.parada`, **não** a classe `.escondida` global: aquela é
+`display: none !important`, e o `!important` vencia — o slot sumia e o nome da
+conta pulava 15px ao entrar no ar, fazendo a coluna dançar a cada poll. Medido:
+os logins começavam em **325px ou 340px** conforme a conta estivesse rodando;
+depois do conserto, **340px para todas**.
+
+
+### 06/09/2026 — o seguidor de time, selos compactos e o ponto vermelho
+
+Três pedidos: mostrar que a conta de APP ativa **por causa do líder** está
+trabalhando (e não "só login"); **encolher os selos**, porque virão mais funções;
+e o ponto ficar **vermelho quando a conta caiu e está em relogin**.
+
+#### "só login" estava MENTINDO sobre a conta seguidora
+
+A conta que roda a macro de outra tem `AppConfig.enabled` **desligado** — quem
+liga o APP é o LÍDER, e o time dela própria é ignorado (`INVARIANTES.md`, "Time
+do APP"). Resultado: três caixas vazias, e a tabela a chamava de "só login". Ela
+está trabalhando, só que a mando de outra.
+
+Agora `contas()` manda `lider_do_time` e a coluna Função mostra **`segue <login>`**
+num selo tracejado — tracejado porque o estado **não é dela**: ninguém marcou
+nada ali e não há o que desmarcar naquela linha. É informação, não controle.
+
+#### O pictograma saiu
+
+Ele entrou como reforço, mas quem removia a ambiguidade BC×HH sempre foi a
+**sigla** — dois pictogramas de caverna não se distinguem a 16px. Tirar o desenho
+não custa clareza e devolve espaço: cada selo caiu de **~52px para 26px**, e o
+trio de ~170px para **93px**. É o que faz esta coluna aguentar a quarta função
+sem espremer o resto da tabela.
+
+#### O ponto verde MENTIA sobre a conexão
+
+Ele era verde por a conta estar na **lista** do resumo — e a conta que caiu
+continua nela, por minutos, tentando religar. O ponto dizia "no ar" com o
+personagem fora do jogo. Quem responde de verdade é o `hwnd`: é ele que morre
+junto com a sessão.
+
+Vermelho além da cor tem **pulso mais rápido** (1s contra 2,4s): daltonismo
+vermelho-verde é o mais comum, e o ritmo era o único canal livre.
+
+### Os cinco achados da revisão do Codex
+
+1. **Parar não é cair.** O Parar também mata a janela, e `tentativas_de_login` só
+   zera quando o login CONCLUI: sem olhar o `stop_event`, apertar Parar pintava
+   "Caiu — reconectando" em toda conta que já tivesse tentado logar.
+2. **Falso verde.** `bool(sup.hwnd)` sozinho deixava a tela verde entre a janela
+   morrer e o laço perceber — o handle fica em cache. Agora passa por
+   `_janela_viva`, que confere com `IsWindow` (syscall local, uma por conta a
+   cada 1,5 s) e **tolera falha**: erro ali não pode derrubar o resumo, que
+   alimenta a tela inteira.
+3. **O(n²).** `lider_do_time_do_app` varre todas as contas e era chamada **uma
+   vez por conta**. Virou `lideres_do_time_do_app()`, um índice montado numa
+   passada.
+4. **CADEIA DE LÍDERES.** Com C liderando A e A liderando B, a consulta direta
+   devolvia "A" para B — mas a lista de A é **ignorada** enquanto ela é seguidora
+   de C, então B não está em time nenhum e "segue A" seria mentira. Um líder que
+   é ele próprio seguidor não lidera ninguém. Conferido:
+   `{C→A, A→B}` resolve para `{a: "C"}` apenas.
+5. **Acessibilidade.** O estado era dito por COR e por `title`, e nenhum dos dois
+   chega a leitor de tela. O ponto ganhou `role="img"` e `aria-label` reescrito
+   junto com a cor; sem ponto, `aria-hidden` para não virar ruído.
