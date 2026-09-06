@@ -258,20 +258,39 @@ bash scripts/query-council.sh --providers=openrouter-1,codex -- "Your question"
 - **`.claude/council.env.example`** — o mesmo template, sem chave, versionado.
 - **`.claude/council-stop-gate.json`** — o Stop hook (abaixo).
 
-## Stop-gate (revisão automática do diff)
+## Stop-gate (revisão automática do diff) — DESLIGADO
 
-**LIGADO**, `provider: "codex"`, `max_iterations: 1`. A cada fim de turno o
-Codex CLI lê o `git diff HEAD` e pode devolver um BLOCK com o motivo.
+O que é: um hook de `Stop` que, no fim de cada turno, pega o `git diff HEAD` e
+manda para um provedor revisar. Se o revisor responder BLOCK, o turno não fecha
+— a IA é obrigada a continuar trabalhando no que ele apontou.
 
-Ele não roda em árvore limpa, não se re-dispara numa continuação que ele mesmo
-provocou, bloqueia no máximo 1× por sessão, e **qualquer falha do revisor libera
-o Stop** (falha aberta, incluindo `jq` ausente). Desligar = `"enabled": false`
-ou apagar o arquivo.
+**Está `"enabled": false`** em `.claude/council-stop-gate.json`. O arquivo fica
+no lugar, com `provider` e `max_iterations` já ajustados, para ligar trocando uma
+palavra.
 
-**Privacidade:** o gate manda o diff **não commitado inteiro** para o provedor.
-Com `codex` ele fica dentro da subscription OpenAI já autenticada da máquina —
-não vai para API de terceiro. **Nunca aponte o gate para `openrouter`**: lá o
-diff é revelado duas vezes, à OpenRouter e ao upstream que serve o modelo.
+**Por que desligado, medido em 06/09/2026:** ele só se cala em árvore limpa
+(`[[ -z "$DIFF" ]] && exit 0`), e **esta árvore nunca está limpa**. Há alteração
+não commitada em `web/main.js`, `web/style.css`, `web/index.html` e
+`.claude-flow/` desde 05/09 — **8.595 linhas em 5 arquivos**. O gate mandaria
+esse diff velho inteiro para revisão no fim de **todo** turno, sem relação
+nenhuma com a tarefa em curso: latência de até 120 s e risco de bloqueio por
+ruído, para revisar o que ninguém pediu.
+
+Some o motivo se essa sujeira for commitada ou descartada. Mesmo aí o ganho é
+pequeno: pela regra 0 do `CLAUDE.md` (**toda alteração ⇒ commit no mesmo passo**)
+a árvore deveria estar limpa ao fim do turno, então o gate ficaria mudo — e
+quando falasse, seria justamente porque a regra 0 já tinha sido violada.
+
+**Se um dia ligar:** `provider` fica em `codex`. Com codex o diff não sai da
+assinatura já autenticada da máquina. **Nunca aponte para `openrouter`** — lá o
+diff é revelado duas vezes, à OpenRouter e ao upstream que serve o modelo. O
+assento do OmniRoute também não serve aqui: a `OLLAMA_HOST` mora no
+`council.env`, que o hook não carrega.
+
+Salvaguardas do gate, quando ligado: não roda em árvore limpa, não se re-dispara
+numa continuação que ele mesmo provocou, bloqueia no máximo `max_iterations`
+vezes por sessão, e **qualquer falha do revisor libera o Stop** (falha aberta,
+`jq` ausente incluído).
 
 ## Princípio de uso neste projeto
 
