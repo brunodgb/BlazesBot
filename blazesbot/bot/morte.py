@@ -79,6 +79,14 @@ TETO_PARA_O_REVIVE_PEGAR = 10.0
 # atravessar o spot, que é tudo o que se quer aqui.
 TETO_DA_REGENERACAO = 60.0
 
+# Teto da caminhada de volta ao ponto inicial.
+#
+# O `Navigator` tem o teto dele (180 s x `time_factor`), mas ele é para a rota
+# da BC. Aqui o número é o desta viagem: se em três minutos o personagem não
+# chegou, alguma coisa está errada -- e insistir custa mais que contar a falha
+# e deixar a volta seguinte tentar de novo.
+TETO_DO_RETORNO = 180.0
+
 # Mortes seguidas SEM conseguir voltar ao ponto antes de parar a conta.
 MORTES_SEGUIDAS_PARA_PARAR = 3
 
@@ -351,7 +359,13 @@ def montar_para_o_app(sup, executor, entrada, *, vida_pct, em_batalha,
         try:
             from .navegacao import Navigator
 
-            return Navigator(ctx).goto(base)
+            # A PÉ, E COM TETO. As duas coisas foram medidas no mesmo
+            # defeito de 06/09/2026: sem `exigir_montaria=False` o portão da
+            # montaria insiste para sempre (315 tentativas, 33 min parado numa
+            # conta que não tem montaria), e sem teto a volta ficaria tentando
+            # a noite inteira em vez de contar a falha e deixar o laço seguir.
+            return Navigator(ctx, exigir_montaria=False).goto(
+                base, max_seconds=TETO_DO_RETORNO)
         except Exception as exc:
             sup.log.warning("Falhei ao voltar para o ponto (%s).", exc)
             return False

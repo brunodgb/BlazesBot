@@ -404,6 +404,8 @@ def _navegador(monkeypatch, relogio, ctx, *, montagens):
     nav = object.__new__(navigation.Navigator)
     nav.ctx = ctx
     nav._avisou_sem_tecla = False
+    nav._exigir_montaria = True           # a BC nunca anda a pé; ver Navigator
+    nav._avisou_a_pe = False
     nav._ultimo_toque_na_montaria = 0.0
     nav.destravar_o_combate = None
 

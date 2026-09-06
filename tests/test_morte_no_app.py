@@ -328,3 +328,36 @@ def test_a_conta_PARA_quando_o_ciclo_desiste():
     passos = [SimpleNamespace(key="1", delay_ms=1)]
 
     assert e._uma_volta_simples(passos) is False, "seguiu depois do 'pare'"
+
+
+# ---------------------------------------------------------------------------
+# A VOLTA AO PONTO É A PÉ -- medido em campo em 06/09/2026
+# ---------------------------------------------------------------------------
+#
+# A conta líder ficou 33 MINUTOS e 315 tentativas presa tentando montar para
+# voltar ao ponto depois de reviver. O portão da montaria insiste para sempre
+# de propósito -- é regra da BC ("nunca a pé dentro da cave") -- e personagem
+# de APP normalmente não TEM montaria: a tecla está configurada (é o padrão da
+# conta), mas não há o que montar, então o portão nunca confirma.
+
+def test_a_volta_do_APP_nao_exige_montaria():
+    import inspect
+
+    fonte = inspect.getsource(mod.montar_para_o_app)
+    assert "exigir_montaria=False" in fonte, (
+        "a volta ao ponto voltou a exigir montaria -- é o travamento de 33 min")
+    assert "max_seconds=TETO_DO_RETORNO" in fonte, (
+        "sem teto, a volta tenta a noite inteira em vez de contar a falha")
+
+
+def test_o_portao_da_montaria_respeita_quem_aceita_ir_a_pe():
+    import inspect
+
+    from blazesbot.bot.navegacao import Navigator
+
+    fonte = inspect.getsource(Navigator.garantir_montaria_para_andar)
+    corpo = fonte.split('"""')[-1]
+    assert "_exigir_montaria" in corpo, "o portão ignora o pedido de ir a pé"
+    # E a INSISTÊNCIA continua sendo o padrão -- é regra da cave.
+    assert inspect.signature(Navigator.__init__).parameters[
+        "exigir_montaria"].default is True

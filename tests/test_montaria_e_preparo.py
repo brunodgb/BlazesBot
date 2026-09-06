@@ -43,6 +43,11 @@ class _NavFalso:
     def __init__(self, montar_na_tentativa: int, log) -> None:
         self.tentativas = 0
         self._alvo = montar_na_tentativa
+        # ESTES TESTES SÃO SOBRE INSISTIR: o portão só insiste quando o trajeto
+        # exige montaria, que é o padrão da BC. O `False` tem testes próprios
+        # em `test_morte_no_app` (a volta ao ponto do APP, que vai a pé).
+        self._exigir_montaria = True
+        self._avisou_a_pe = False
         # Sem destravamento ligado: estes testes são sobre INSISTIR, e a ligação
         # com o combate tem os seus próprios (`test_destravamento_do_combate`).
         self.destravar_o_combate = None

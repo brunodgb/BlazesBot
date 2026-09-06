@@ -423,8 +423,25 @@ class _SemMapa:
 
 
 class Navigator:
-    def __init__(self, ctx: BotContext, mapa=None) -> None:
+    def __init__(self, ctx: BotContext, mapa=None,
+                 exigir_montaria: bool = True) -> None:
         self.ctx = ctx
+        # PODE ANDAR A PÉ? -- 06/09/2026.
+        #
+        # `True` (padrão) é a regra da BC: *"nunca deve seguir a pé dentro da
+        # cave"*, e por isso o portão da montaria INSISTE para sempre.
+        #
+        # `False` existe para o APP. Personagem de macro normalmente NÃO TEM
+        # montaria -- a tecla está configurada (é o padrão da conta), mas não há
+        # o que montar, então o portão nunca confirma. Medido em campo em
+        # 06/09/2026: a conta líder ficou **33 minutos e 315 tentativas** presa
+        # tentando montar para voltar ao ponto depois de reviver, sem andar um
+        # passo. Decisão do usuário: *"só volta montado se tiver a tecla
+        # configurada, pois normalmente os personagens que rodam APP não vão ter
+        # montaria"*.
+        self._exigir_montaria = exigir_montaria
+        # Um aviso só por navegador -- ver `garantir_montaria_para_andar`.
+        self._avisou_a_pe = False
         # O MAPA DA CAVE, INJETADO. É a única coisa que este navegador precisa
         # saber sobre qual ecossistema o está usando.
         #
@@ -1860,6 +1877,14 @@ class Navigator:
         configuração -- não situação de jogo.
         """
         ctx = self.ctx
+        if not self._exigir_montaria:
+            # TRAJETO QUE ACEITA IR A PÉ. Não insiste, não grita: devolve
+            # "não montei" e quem chamou segue andando. Ver `_exigir_montaria`.
+            if not self._avisou_a_pe:
+                self._avisou_a_pe = True
+                ctx.log.info("Vou a pé (%s): este trajeto não exige montaria.",
+                             motivo)
+            return False
         if self._sem_tecla_de_montaria(motivo):
             return False
 

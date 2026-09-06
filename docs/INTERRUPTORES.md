@@ -71,7 +71,7 @@ ligar código não testado.
 
 ## Números medidos -- tolerância, limiar, teto, cadência
 
-560 constantes, agrupadas por arquivo.
+561 constantes, agrupadas por arquivo.
 
 | constante | valor | onde | quem lê | porquê (resumo) |
 |---|---|---|---|---|
@@ -321,10 +321,11 @@ ligar código não testado.
 | `THRESHOLD` | `0.8` | [blazesbot/bot/login_states.py:35](blazesbot/bot/login_states.py#L35) | — | — |
 | `CADENCIA_DO_CONVITE` | `0.5` | [blazesbot/bot/morte.py:70](blazesbot/bot/morte.py#L70) | — | Cadência da conferência do convite da Fada na TELA. |
 | `EXTENSAO_PELO_FEITICO` | `15.0` | [blazesbot/bot/morte.py:57](blazesbot/bot/morte.py#L57) | — | Quanto o prazo estica quando a Fada avisa que COMEÇOU a conjurar. |
-| `MORTES_SEGUIDAS_PARA_PARAR` | `3` | [blazesbot/bot/morte.py:83](blazesbot/bot/morte.py#L83) | — | Mortes seguidas SEM conseguir voltar ao ponto antes de parar a conta. |
+| `MORTES_SEGUIDAS_PARA_PARAR` | `3` | [blazesbot/bot/morte.py:91](blazesbot/bot/morte.py#L91) | — | Mortes seguidas SEM conseguir voltar ao ponto antes de parar a conta. |
 | `PASSO_DA_ESPERA` | `0.3` | [blazesbot/bot/morte.py:62](blazesbot/bot/morte.py#L62) | deletador.py, fada_reviver.py | Passo entre duas perguntas durante a espera. Tudo o que ele pergunta é |
 | `PRAZO_PARA_A_FADA` | `60.0` | [blazesbot/bot/morte.py:52](blazesbot/bot/morte.py#L52) | fada_reviver.py, mural_da_morte.py | Quanto o morto espera pela Fada antes de se reviver sozinho. |
 | `TETO_DA_REGENERACAO` | `60.0` | [blazesbot/bot/morte.py:80](blazesbot/bot/morte.py#L80) | — | Teto da regeneração sentada antes de andar de volta. |
+| `TETO_DO_RETORNO` | `180.0` | [blazesbot/bot/morte.py:88](blazesbot/bot/morte.py#L88) | — | Teto da caminhada de volta ao ponto inicial. |
 | `TETO_PARA_O_REVIVE_PEGAR` | `10.0` | [blazesbot/bot/morte.py:73](blazesbot/bot/morte.py#L73) | — | Quanto se espera o `hp` subir depois de um clique que deveria reviver. |
 | `ACEITE_VALIDO_SEGUNDOS` | `15.0` | [blazesbot/bot/mural.py:202](blazesbot/bot/mural.py#L202) | — | Validade do aceite. Curta de propósito: ele confirma UM convite recém-enviado, |
 | `CONVITE_VALIDO_SEGUNDOS` | `60.0` | [blazesbot/bot/mural.py:80](blazesbot/bot/mural.py#L80) | — | Validade do anúncio. Cobre a fila de resposta do outro cliente com folga; mais |

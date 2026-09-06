@@ -88,3 +88,32 @@ o mesmo assunto.
 O lado da **Fada** — clicar no retrato do morto, conferir a mana, apertar a
 tecla e furar a fila dos feridos depois de 40 s — está em
 `docs/decisoes/fada.md`.
+
+
+## A volta ao ponto vai A PÉ — medido em campo, 06/09/2026
+
+A primeira versão chamou `Navigator.goto` como a BC chama. Resultado na conta
+líder (`blazestpas`), depois de reviver às 00:10:43:
+
+```
+00:11:44  Não estou montado; montando antes de atravessar o mapa até (1771, 1668)
+00:11:51  Não conseguiu montar em 6s
+...       (mais 314 vezes)
+00:45:18  NÃO CONSIGO MONTAR ... há 2015s (315 tentativas). Continuo insistindo.
+```
+
+**33 minutos parada, sem andar um passo** — e o usuário só percebeu porque o
+líder do time não fazia nada.
+
+O portão da montaria insiste **de propósito**: é regra da BC, *"nunca deve
+seguir a pé dentro da cave"*. Ele só desiste quando **não há tecla**
+configurada — e aqui a tecla existe (é o padrão da conta); o que não existe é a
+montaria no personagem. Então ele nunca confirma e nunca desiste.
+
+`Navigator(ctx, exigir_montaria=False)` resolve na origem, e é a decisão que o
+usuário já tinha dado: *"só volta montado se tiver a tecla configurada, pois
+normalmente os personagens que rodam APP não vão ter montaria"*. O padrão
+continua `True` — a cave não mudou.
+
+Junto veio o teto (`TETO_DO_RETORNO`, 180 s): sem ele, a volta tentaria a noite
+inteira em vez de contar a falha e deixar a volta seguinte tentar de novo.
