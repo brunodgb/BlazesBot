@@ -536,7 +536,12 @@ class MainWindow(QMainWindow):
 
         farm = QCheckBox()
         farm.setChecked(conta.bc_farm)
-        farm.setToolTip("Pode marcar e desmarcar com o bot rodando.")
+        farm.setToolTip(
+            "Bewitcher Cave: um boss por run.\n"
+            "Pode marcar e desmarcar com o bot rodando.\n"
+            "Uma função por conta: marcar esta desliga a outra.\n"
+            "Desmarque para a conta ficar só no login e relogin."
+        )
         # AS TRÊS CAIXAS SÃO UM GRUPO EXCLUSIVO. Não é `QRadioButton` porque a
         # tabela precisa de "nenhuma" como estado válido (a conta faz só login e
         # relogin) e rádio nativo não desmarca; a exclusividade é imposta em
@@ -559,7 +564,8 @@ class MainWindow(QMainWindow):
         hh.setToolTip(
             "HH (Black Wind Camp Dungeon): quatro bosses em sequência.\n"
             "Pode marcar e desmarcar com o bot rodando.\n"
-            "Marcada junto com BC, roda a HH.\n"
+            "Uma função por conta: marcar esta desliga a outra.\n"
+            "Desmarque para a conta ficar só no login e relogin.\n"
             "A conta de reset fica em Editar conta > HH -- sem ela os bosses\n"
             "não renascem e a cave vem vazia da segunda run em diante."
         )
@@ -580,6 +586,8 @@ class MainWindow(QMainWindow):
         app.setToolTip(
             "Modo APP: macro de teclado em laço.\n"
             "Pode marcar e desmarcar com o bot rodando.\n"
+            "Uma função por conta: marcar esta desliga a outra.\n"
+            "Desmarque para a conta ficar só no login e relogin.\n"
             "As linhas ficam em Editar conta > APP."
         )
         caixas_da_funcao["app"] = app

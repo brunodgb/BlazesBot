@@ -873,9 +873,14 @@ Refatoração de 06/09/2026: exclusividade das funções, tooltip e altura das a
   para o bot continuar fazendo exatamente o que fazia. Não é o laço que resolve
   em silêncio a cada ciclo: `from_dict` normaliza uma vez.
 - **O CONTROLE DA TELA É RÁDIO, com `name` por conta.** Caixa comunica semântica
-  falsa. Sem `name` único os grupos se misturam entre linhas. Clicar no que já
-  está ligado **desliga**: "nenhuma função" é estado válido (a conta fica só no
-  login e relogin).
+  falsa. Sem `name` único os grupos se misturam entre linhas.
+- **"NENHUMA FUNÇÃO" É ESTADO VÁLIDO, e tem de ser ALCANÇÁVEL pela tabela.** A
+  conta sobe, loga, reloga e não faz mais nada. Clicar no que já está ligado
+  desliga — e esse clique se resolve **a partir do selo**: o rádio é escondido
+  (`position: absolute; opacity: 0`) e quem o recebe é o `<span>` IRMÃO dele
+  dentro do mesmo `<label>`. Rádio nativo não desmarca sozinho, e no rádio já
+  marcado o `change` também não dispara: sem tratamento próprio, ligar o BC era
+  uma porta sem volta. Na GUI, desmarcar a caixa manda `""`.
 - **O ESPELHO AO VIVO TAMBÉM É EXCLUSIVO.** Ele corrigia BC e HH de forma
   independente, e com rádio isso **reintroduzia a função antiga a cada poll de
   1,5 s** — medido na tela.

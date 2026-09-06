@@ -1226,3 +1226,26 @@ Lição, e ela não é sobre CSS: **59px de altura não pagam um formato só des
 tela.** A altura voltou pela COLUNA (118px em vez de 190px), que é um ajuste
 invisível, em vez do FORMATO, que é o que a pessoa vê. A folga ficou em 37px, a
 menor do modal e menos que os 80px do desenho reprovado — e é a troca certa.
+
+#### O que a exclusividade quebrou: não havia como DESLIGAR
+
+Reportado pelo usuário logo depois: com BC ligado não dava para voltar a
+"nenhuma função". O tratamento existia — clicar no rádio marcado desliga — e
+mesmo assim não funcionava.
+
+O rádio é **escondido** (`position: absolute; opacity: 0`, nunca `display: none`,
+que o tiraria do foco por Tab) e quem recebe o clique é o `<span class=
+"selo-sigla">` que fica **ao lado** dele, dentro do mesmo `<label>`. O handler
+procurava `.selo-caixa` a partir do alvo com `closest()` — e `closest` sobe pela
+árvore: o rádio é **IRMÃO** do span, nunca ancestral. Nunca achava nada.
+
+O que fecha a armadilha é o rádio marcado **não disparar `change`**: o caminho
+normal também não corrigia. Ligar o BC era uma porta sem volta, e nenhum teste
+pegou porque o teste de unidade clica no input, não no que a pessoa vê.
+
+O conserto resolve pelo `.selo` (`closest(".selo")` e então
+`querySelector(".selo-caixa")`), que é o elemento que de fato recebe o clique.
+Verificado em tela: BC ligado → clique no selo → nenhum rádio marcado, o backend
+grava `""`, e o poll de 1,5 s não reacende. As dicas das três funções passaram a
+dizer a regra — a antiga ainda ensinava "Marcada junto com BC, roda a HH", a
+combinação que deixou de existir.

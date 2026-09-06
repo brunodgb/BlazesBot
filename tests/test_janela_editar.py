@@ -246,3 +246,34 @@ def test_o_ROTULO_DA_TECLA_e_um_elemento_de_verdade():
     soltos = re.findall(
         r'<label class="campo[^"]*">[^<\s][^<]*?<input class="captura', HTML)
     assert not soltos, soltos
+
+
+def test_clicar_na_funcao_LIGADA_desliga():
+    """"Nenhuma função" é estado válido: a conta sobe, loga, reloga e não faz
+    mais nada. Rádio nativo não desmarca sozinho, e no rádio já marcado o
+    `change` também não dispara -- sem tratamento próprio não havia como voltar
+    a esse estado pela tabela.
+
+    O clique tem de ser resolvido A PARTIR DO SELO: o rádio é escondido
+    (`position: absolute; opacity: 0`) e quem recebe o clique é o `<span>` ao
+    lado dele, DENTRO do mesmo `<label>` -- procurar `.selo-caixa` a partir do
+    alvo não achava nada, porque são IRMÃOS, não ancestral.
+    """
+    bloco = JS.split('$("#corpo-contas").addEventListener("mousedown"')[1]
+    bloco = bloco.split("});")[0]
+    assert 'closest(".selo")' in bloco
+    assert 'querySelector(".selo-caixa")' in bloco
+    assert "if (!cx || !cx.checked) return;" in bloco, (
+        "só o selo JÁ marcado desliga; o desmarcado tem de seguir para o change")
+    assert 'definirFuncao(tr.dataset.uid, "")' in bloco
+    # A GUI tem o mesmo estado: desmarcar a caixa manda `""`.
+    assert 'pedida = qual if caixas[qual].isChecked() else ""' in GUI
+
+
+def test_a_dica_das_funcoes_diz_a_REGRA():
+    """A dica ensinava "Marcada junto com BC, roda a HH" -- a combinação que
+    deixou de existir. Três selos não deixam adivinhar nem que a escolha é
+    exclusiva, nem que clicar na ligada desliga."""
+    for texto in (JS, GUI):
+        assert "Marcada junto com BC" not in texto
+        assert "Uma função por conta" in texto

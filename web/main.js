@@ -254,15 +254,18 @@ const COLUNAS_DA_TABELA_DE_CONTAS = 9;
 // 16px. Tirar o desenho custa nada em clareza e devolve ~18px por selo --
 // que é o que faz esta coluna aguentar a QUARTA função quando ela vier, sem
 // espremer o resto da tabela.
+// A DICA DIZ A REGRA, porque a regra não é óbvia olhando três selos: uma função
+// por conta, e clicar na que está ligada desliga.
+const TROCA = "\n\nUma função por conta: marcar esta desliga a outra.\n"
+  + "Clique na que está ligada para desligar — a conta fica só no login.";
 const ECOSSISTEMAS = [
   { acao: "bc", sigla: "BC", campo: "bc_farm",
-    titulo: "Bewitcher Cave — um boss por run." },
+    titulo: "Bewitcher Cave — um boss por run." + TROCA },
   { acao: "hh", sigla: "HH", campo: "hh_farm",
     titulo: "HH (Black Wind Camp Dungeon) — quatro bosses em sequência.\n"
-      + "Marcada junto com BC, roda a HH.\n"
-      + "A conta de reset fica em Editar conta > HH." },
+      + "A conta de reset fica em Editar conta > HH." + TROCA },
   { acao: "app", sigla: "APP", campo: "app_enabled",
-    titulo: "Modo APP — macro de teclado, sem cave." },
+    titulo: "Modo APP — macro de teclado, sem cave." + TROCA },
 ];
 
 /* NO AR AGORA — o estado que a tabela não mostrava.
@@ -869,12 +872,19 @@ function definirFuncao(uid, qual) {
   });
 }
 
-// CLICAR NO RÁDIO JÁ MARCADO DESLIGA. Rádio nativo não desmarca sozinho, e
+// CLICAR NO SELO JÁ MARCADO DESLIGA. Rádio nativo não desmarca sozinho, e
 // "nenhuma função" é estado válido (a conta faz login e relogin): sem isto não
 // haveria como voltar a ele pela tabela. `mousedown` porque no `click` o rádio
 // já mudou de estado e não dá mais para saber se ele estava marcado.
+//
+// PELO SELO, NÃO PELO RÁDIO: o rádio é escondido (`position: absolute;
+// opacity: 0`) e quem recebe o clique é o `<span class="selo-sigla">` ao lado
+// dele, DENTRO do mesmo `<label>`. Procurar `.selo-caixa` a partir do alvo não
+// achava nada -- são irmãos, não ancestral -- e desligar era impossível: no
+// rádio já marcado o `change` também não dispara, então nada acontecia.
 $("#corpo-contas").addEventListener("mousedown", (e) => {
-  const cx = e.target.closest && e.target.closest(".selo-caixa");
+  const selo = e.target.closest && e.target.closest(".selo");
+  const cx = selo && selo.querySelector(".selo-caixa");
   if (!cx || !cx.checked) return;
   const tr = cx.closest("tr[data-uid]");
   if (!tr) return;
