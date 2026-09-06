@@ -93,3 +93,31 @@ o que as opções (a) e (b) fariam.
 O aviso continua saindo a cada repetição — agora dizendo que a bolsa NÃO foi
 aberta —, então a medição da causa não se perde. E o interruptor existe para
 quem quiser ver a rajada acontecer de novo numa investigação.
+
+
+## A raiz, atacada — 06/09/2026
+
+> *"Se trava, então é importante ajustar; tente ajustar a raiz do problema para
+> não travar nada de forma alguma."* — usuário
+
+Duas causas, as duas removidas:
+
+**1. Havia uma saída do laço que não incrementava NADA.** Quando `_adquirir_alvo`
+falhava, `_uma_volta_simples` devolvia sem tocar em `voltas` nem em
+`voltas_abortadas` — e era justamente a saída que dominava o log (401 dos 407
+avisos). Enquanto o TAB não trazia alvo, todo contador do executor ficava
+congelado, e com ele qualquer cadência ancorada neles. Agora **toda** saída de
+fim de volta conta (as de PARADA não são fim de volta e continuam de fora).
+
+**2. A cadência olhava só as voltas COMPLETAS.** Em farm normal metade das voltas
+aborta — numa sessão medida, 285 completas contra 289 abortadas. Ancorada só nas
+completas, "a cada N voltas" virava "enquanto o contador não andar". Agora ela
+conta **tentativas** (`voltas + voltas_abortadas`), que sempre andam.
+
+O piso (`NAO_LIMPAR_DUAS_VEZES_NA_MESMA_VOLTA`) fica como cinto: com a raiz
+consertada ele não deve mais disparar, e se disparar é sinal de que apareceu uma
+terceira saída sem contador.
+
+E a causa a montante — a aquisição não trazer alvo — foi consertada no mesmo
+dia, em `docs/decisoes/coleira-do-ponto.md`: a régua passou a medir a corrida
+até o mob, e a válvula deixou de ser aritmeticamente inalcançável.

@@ -148,3 +148,55 @@ def test_o_caminho_SEM_ALVO_tambem_se_rotula():
 
     fonte = inspect.getsource(ExecutorDeMacro._uma_volta_simples)
     assert '_ultimo_corte = "sem alvo"' in fonte
+
+
+# ---------------------------------------------------------------------------
+# A RAIZ: nenhum contador pode congelar -- 06/09/2026
+# ---------------------------------------------------------------------------
+#
+# *"Se trava, então é importante ajustar; tente ajustar a raiz do problema para
+# não travar nada de forma alguma."* -- usuário.
+#
+# A cadência ancorada só nas voltas COMPLETAS congelava junto com elas. Em farm
+# normal metade das voltas aborta (285 completas contra 289 abortadas, numa
+# sessão medida), e quando a aquisição para de trazer alvo, NENHUMA completa.
+
+def test_a_cadencia_conta_TENTATIVAS_e_nao_so_voltas_completas():
+    import inspect
+
+    from blazesbot.bot.app.executor import ExecutorDeMacro
+
+    fonte = inspect.getsource(ExecutorDeMacro._limpar_a_bolsa_se_for_a_hora)
+    assert "self.voltas + self.voltas_abortadas" in fonte
+
+
+def test_TODA_saida_do_laco_incrementa_algum_contador():
+    """A saída "sem alvo" era a única que não incrementava nada -- e era
+    justamente a que dominava o log (401 dos 407 avisos)."""
+    import inspect
+    import re
+
+    from blazesbot.bot.app.executor import ExecutorDeMacro
+
+    fonte = inspect.getsource(ExecutorDeMacro._uma_volta_simples)
+    # Cada `return False` que representa "esta volta acabou sem completar" tem
+    # de vir depois de um incremento; os únicos isentos são os de PARADA
+    # (`_continuar`/`_esperar_saida_da_pausa`), que não são fim de volta.
+    for trecho, esperado in (("sem alvo", "self.voltas_abortadas += 1"),
+                             ("portão: alvo ausente ou morto",
+                              "self.voltas_abortadas += 1")):
+        i = fonte.index(trecho)
+        depois = fonte[i:i + 400]
+        assert esperado in depois, trecho
+
+
+def test_a_bolsa_volta_a_limpar_mesmo_com_a_aquisicao_falhando(cadencia):
+    """O desfecho prático: com a aquisição falhando, o contador de tentativas
+    continua andando, então a cadência anda -- e a bolsa é limpa na hora certa
+    em vez de em rajada ou nunca."""
+    # 12 tentativas, todas abortadas por falta de alvo.
+    resultados = [_perguntar(cadencia, voltas=n, abortadas=n, a_cada=12,
+                             motivo="sem alvo")
+                  for n in range(1, 25)]
+
+    assert resultados.count(True) == 2, "deveria limpar em 12 e em 24"

@@ -2665,7 +2665,16 @@ class ExecutorDeMacro:
             if permitido:
                 # O motor nativo do bot (_garantir_alvo) já cuida de dar TAB e ciclar se precisar.
                 if not self._adquirir_alvo(lutando):
+                    # ISTO TAMBÉM É UMA VOLTA ABORTADA -- 06/09/2026.
+                    #
+                    # Era a única saída do laço que não incrementava NADA, e por
+                    # isso a mais perigosa: enquanto o TAB não trazia alvo, todo
+                    # contador do executor ficava congelado, e junto com ele
+                    # qualquer cadência ancorada neles. Foi assim que a limpeza
+                    # de bolsa entrou em rajada -- 401 dos 407 avisos daquele
+                    # dia dizem exatamente `último corte: sem alvo`.
                     self._ultimo_corte = "sem alvo"
+                    self.voltas_abortadas += 1
                     time.sleep(ESPERA_SEM_ALVO)
                     return False
 
@@ -2686,6 +2695,7 @@ class ExecutorDeMacro:
                         # o bot a dar um TAB imediato no início da próxima volta.
                         self._lutava_na_volta_anterior = True
                         self._ultimo_corte = "portão: alvo ausente ou morto"
+                        self.voltas_abortadas += 1
                         time.sleep(ESPERA_SEM_ALVO)
                         return False
 
@@ -2944,8 +2954,18 @@ class ExecutorDeMacro:
         """
         if self._limpar_a_bolsa is None:
             return
+        # A CADÊNCIA CONTA TENTATIVAS, NÃO VOLTAS COMPLETAS -- 06/09/2026.
+        #
+        # Ancorada só nas completas, ela congelava junto com elas: metade das
+        # voltas aborta em farm normal (285 completas contra 289 abortadas numa
+        # sessão medida), e quando a aquisição para de trazer alvo NENHUMA
+        # completa. "A cada N voltas" virava "enquanto o contador não andar".
+        #
+        # Somar as abortadas é o que garante que a cadência SEMPRE anda -- e,
+        # com o conserto acima, não existe mais saída do laço que não conte.
+        tentativas = self.voltas + self.voltas_abortadas
         if not self._cadencia_da_bolsa.deve_limpar(
-                voltas=self.voltas, abortadas=self.voltas_abortadas,
+                voltas=tentativas, abortadas=self.voltas_abortadas,
                 a_cada=self._voltas_por_limpeza(),
                 motivo_do_corte=self._ultimo_corte):
             return
