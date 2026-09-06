@@ -702,13 +702,17 @@ Cada item é o que **não pode ser violado**. O detalhe de cada área mora em
   estourar o teto **não é fracasso**, é o outro desfecho útil: quer dizer que há
   outro mob batendo, e aí o bot volta a atacar em vez de sentar, andar ou abrir
   a bolsa.
-- **A COLEIRA DOS 12 — mob longe do ponto NÃO é alvo** (04/09/2026,
-  `core/coleira_do_ponto.py`, `MAXIMO_DE_PIXELS_DO_PONTO = 12`). A distância
-  medida é a do **MOB até a base**, e ela é conferida **na AQUISIÇÃO**, dentro de
-  `_alvo_aceitavel`: o alvo longe é recusado ANTES de o personagem correr até
-  ele, que é o único instante em que dá para evitar a caminhada. Motivo do
-  usuário: *"o jogo dá bug e dá target em um mob bem longe (...) acaba chamando
-  outros mobs e provavelmente vai morrer no caminho"*.
+- **A COLEIRA MEDE A CORRIDA: mob longe DO PERSONAGEM não é alvo**
+  (06/09/2026, `core/coleira_do_ponto.py`, `MAXIMO_DE_PASSOS_ATE_O_MOB = 30`,
+  **provisório**). Medir contra a BASE estava errado: não distingue "o mob está
+  longe de mim" de "eu estou longe da base", e com o personagem deslocado nada
+  era aceitável — 3179 recusas contra 52 macros em uma hora. O *"não andar longe
+  do ponto"* é da **trava de posição**, não desta régua.
+- **A VÁLVULA DA COLEIRA TEM DE SER ALCANÇÁVEL, E ISSO É ARITMÉTICA.** O
+  contador é de **recusas SEGUIDAS** (atravessa rodadas de aquisição, porque
+  `TENTATIVAS_DE_TAB` é 1) e zera **só quando aparece um mob ao alcance** —
+  nunca no aceite da própria válvula, que reabriria o ciclo recusa-recusa-
+  recusa-aceita-zera. Por isso o veredito tem três valores.
 - **A COLEIRA NUNCA CORTA A VOLTA NO MEIO DA MACRO — e isso é cicatriz.** A
   primeira versão (04/09/2026, revertida no mesmo dia) cortava a volta a cada
   linha em que o PERSONAGEM estivesse longe, contando que a trava de posição

@@ -956,7 +956,8 @@ class ExecutorDeMacro:
         self._shuffle_apos_n_voltas = shuffle_apos_n_voltas
         self._base_pos: tuple[int, int] | None = base_pos
         # Recusas de alvo por DISTÂNCIA na rodada de aquisição em curso --
-        # ver `RECUSAS_POR_DISTANCIA`. Zerado no começo de cada `_garantir_alvo`.
+        # Recusas SEGUIDAS por distância -- ver `_alvo_longe_demais`. Zera no
+        # ACEITE, e é isso que faz a válvula ser alcançável.
         self._recusas_por_distancia = 0
         # Como a volta ANTERIOR terminou. Só diagnóstico -- ver
         # `_abortar_a_volta` e `core/cadencia_da_bolsa.py`.
@@ -1718,10 +1719,15 @@ class ExecutorDeMacro:
         return hp >= maximo
 
     def _alvo_longe_demais(self, alvo: dict) -> bool:
-        """Recuso este mob por estar longe do ponto? Ver `coleira_do_ponto`.
+        """Recuso este mob por estar longe DE MIM? Ver `coleira_do_ponto`.
 
-        A régua e o PORQUÊ dela moram no módulo; aqui fica só o contador da
-        rodada, que é estado do executor.
+        A régua e o PORQUÊ dela moram no módulo; aqui fica o contador de recusas
+        SEGUIDAS, que é estado do executor.
+
+        SEGUIDAS, e não "por rodada de aquisição": com `TENTATIVAS_DE_TAB = 1`,
+        uma rodada faz no máximo UMA recusa, então um limiar de 3 zerado a cada
+        rodada nunca é alcançado -- foi por isso que a válvula abriu 1 vez em
+        3179 recusas. Ele zera quando um alvo é ACEITO.
         """
         base = self._base_pos if self._travar_posicao else None
         onde_estou = None
@@ -1730,9 +1736,17 @@ class ExecutorDeMacro:
                 onde_estou = self._posicao_atual()
             except Exception:
                 onde_estou = None
-        if not coleira_do_ponto.longe_demais(
-                alvo, base, self._recusas_por_distancia, self.log,
-                pos_do_personagem=onde_estou):
+        veredito = coleira_do_ponto.avaliar(
+            alvo, base, self._recusas_por_distancia, self.log,
+            pos_do_personagem=onde_estou)
+        if veredito == coleira_do_ponto.PERTO:
+            # SÓ O MOB PERTO ZERA. Zerar também no aceite da válvula fazia o
+            # contador voltar a zero e recusar de novo no lance seguinte -- um
+            # mob longe aceito a cada quatro tentativas, e três TABs girando à
+            # toa entre eles.
+            self._recusas_por_distancia = 0
+            return False
+        if veredito == coleira_do_ponto.PELA_VALVULA:
             return False
         self._recusas_por_distancia += 1
         return True
@@ -2043,10 +2057,6 @@ class ExecutorDeMacro:
 
     def _garantir_alvo(self, forcar: bool = False, urgente: bool = False) -> bool:
         """Garante um alvo VIVO antes de a macro rodar. `True` = tem alvo vivo."""
-        # AS RECUSAS POR DISTÂNCIA SÃO DESTA RODADA. Zerar aqui é o que garante
-        # que a válvula não vaze para a rodada seguinte -- e também que as três
-        # recusas não sejam gastas de uma vez para nunca mais recusar nada.
-        self._recusas_por_distancia = 0
         id_antes = self._ler_id_do_alvo()
         if id_antes is None:
             return True

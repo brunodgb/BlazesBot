@@ -81,3 +81,58 @@ custou **11 a 16 minutos** presa no laço de relogin: login → servidor → "co
 interrompida" → fecha → login, a cada ~8,5 s, sem backoff. Enquanto isso o
 personagem fica no mundo como fantasma. É um segundo suspeito de morte,
 independente da coleira — ver `docs/decisoes/login-e-relogin.md`.
+
+
+## A terceira versão: a régua é a CORRIDA — 06/09/2026
+
+A 2ª versão (mob contra a base) consertou o travamento e criou outro, mais
+silencioso. Medido no log de 05/09, numa hora de farm:
+
+| medida | valor |
+|---|---|
+| recusas da coleira | **3179** |
+| distância mediana do mob recusado (até a BASE) | 113 |
+| macros iniciadas no mesmo período | **52** |
+| aceites pela válvula | **1** |
+
+O bot passou a hora girando TAB. E como nenhuma volta completava, o contador de
+voltas congelava — foi de lá que veio a rajada de limpeza de bolsa (401 dos 407
+avisos `BOLSA/DIAGNÓSTICO` dizem `último corte: sem alvo`).
+
+### Por que a base era a régua errada
+
+Ela não distingue **"o mob está longe de mim"** de **"eu estou longe da base"**.
+Com o personagem deslocado — o que acontece: às 15:03 ele estava a 188,5 da
+base — *todo* mob ao lado dele fica longe da base, e nada é aceitável.
+
+A distância que o usuário sempre descreveu é a **corrida**: *"correr até lá
+puxaria mob pelo caminho"*. Ela responde a mesma coisa esteja o personagem no
+ponto ou deslocado, e é a única que corresponde ao dano que se quer evitar.
+
+O *"não andar mais de N do ponto"* não sumiu: voltou para quem sempre foi dono
+dele, a **trava de posição**, que devolve o personagem ao ponto quando a luta
+acaba.
+
+### A válvula era aritmeticamente inalcançável
+
+`TENTATIVAS_DE_TAB = 1`, e o contador de recusas era zerado no começo de cada
+rodada de aquisição. Somando de um em um e zerando toda vez, um limiar de 3
+nunca chega — daí **1 aceite em 3179 recusas**.
+
+Agora ele é de **recusas seguidas**, atravessa rodadas, e zera **só quando
+aparece um mob de verdade ao alcance**. Zerar também no aceite da própria
+válvula seria o mesmo defeito com outra roupa: recusa, recusa, recusa, aceita,
+zera, recusa de novo — um mob longe aceito a cada quatro tentativas, com três
+TABs girando à toa entre eles. É por isso que o veredito tem **três** valores,
+e não dois.
+
+### O 30 é PROVISÓRIO, e está declarado como tal
+
+O 12 antigo media distância até a base; esta régua mede outra coisa, e o valor
+certo depende do spot. Não há medição dele ainda — o log só passou a registrar
+`corrida=` em 06/09/2026. O 30 foi escolhido para ficar claramente acima do
+engajamento normal (12 a 26 no spot atual) e ainda recusar a anomalia (113 na
+mediana, 174 no p90).
+
+**E a válvula é o que torna esse chute seguro:** mesmo com o número errado, ela
+abre em três TABs e a conta volta a atacar.
