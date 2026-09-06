@@ -72,7 +72,7 @@ import time
 from collections.abc import Callable, Iterable
 from typing import Protocol
 
-from ...core import coleira_do_ponto
+from ...core import cadencia_da_bolsa, coleira_do_ponto
 from ...core.inputs import Input
 from ...core.pet import SEGUNDOS_PARA_A_COMIDA_SER_USADA, PetFeeder
 
@@ -941,6 +941,10 @@ class ExecutorDeMacro:
         # Recusas de alvo por DISTÂNCIA na rodada de aquisição em curso --
         # ver `RECUSAS_POR_DISTANCIA`. Zerado no começo de cada `_garantir_alvo`.
         self._recusas_por_distancia = 0
+        # Como a volta ANTERIOR terminou. Só diagnóstico -- ver
+        # `_abortar_a_volta` e `core/cadencia_da_bolsa.py`.
+        self._ultimo_corte = "início"
+        self._cadencia_da_bolsa = cadencia_da_bolsa.CadenciaDaBolsa(self.log)
         # Função para ler posição atual (injetada pelo supervisor).
         self._posicao_atual = posicao_atual
         # Centro do minimapa para cliques de movimento.
@@ -2536,7 +2540,7 @@ class ExecutorDeMacro:
             if self._alvo_intocavel():
                 self.alvos_inalcancaveis += 1
                 self._largar_o_alvo_inalcancavel()
-                return self._abortar_a_volta()
+                return self._abortar_a_volta(motivo="alvo inalcançável")
 
         # =================================================================
         # A ÚNICA VOLTA QUE CONTA
@@ -2580,6 +2584,7 @@ class ExecutorDeMacro:
             if permitido:
                 # O motor nativo do bot (_garantir_alvo) já cuida de dar TAB e ciclar se precisar.
                 if not self._adquirir_alvo(lutando):
+                    self._ultimo_corte = "sem alvo"
                     time.sleep(ESPERA_SEM_ALVO)
                     return False
 
@@ -2599,6 +2604,7 @@ class ExecutorDeMacro:
                         # Engana a validação dizendo que estávamos lutando para FORÇAR
                         # o bot a dar um TAB imediato no início da próxima volta.
                         self._lutava_na_volta_anterior = True
+                        self._ultimo_corte = "portão: alvo ausente ou morto"
                         time.sleep(ESPERA_SEM_ALVO)
                         return False
 
@@ -2616,19 +2622,19 @@ class ExecutorDeMacro:
                     "O mob morreu durante a execução da macro. Encerrando a "
                     "volta para evitar desperdício.")
                 self.voltas += 1
-                return self._abortar_a_volta()
+                return self._abortar_a_volta(motivo="mob morreu")
             
             if self.sincronia is not None:
                 linha = self.sincronia.linha_a_enviar(i, passo.delay_ms)
                 if linha is None:
                     return False
                 if linha < 0:
-                    return self._abortar_a_volta()
+                    return self._abortar_a_volta(motivo="time: volta vetada")
                 if not (0 <= linha < len(passos)):
                     self.log.warning(
                         "Time: linha %d fora da macro (%d linhas) -- encerro a "
                         "volta em vez de repetir tecla.", linha, len(passos))
-                    return self._abortar_a_volta()
+                    return self._abortar_a_volta(motivo="time: linha fora")
                 passo = passos[linha]
 
             # ALVO ZERADO NO MEIO DA MACRO -- decisão do usuário em
@@ -2651,12 +2657,12 @@ class ExecutorDeMacro:
             if self.morte is not None and self.morte.estou_morto():
                 if not self.morte.resolver():
                     return False
-                return self._abortar_a_volta()
+                return self._abortar_a_volta(motivo="morri")
 
             if self._ler_id_do_alvo() == 0:
                 self.log.info("APP: fiquei sem alvo na linha %d — corto a volta "
                               "e pego outro.", i + 1)
-                return self._abortar_a_volta()
+                return self._abortar_a_volta(motivo="alvo zerado")
 
 
             self.input.key(passo.key)
@@ -2669,13 +2675,15 @@ class ExecutorDeMacro:
             if not (self._esperar_cego(espera) if cega else self._esperar(espera)):
                 if self._continuar():
                     self.voltas += 1
-                    return self._abortar_a_volta()
+                    return self._abortar_a_volta(motivo="pausa/parada")
                 return False
 
         self.voltas += 1
+        self._ultimo_corte = "volta completa"
         return True
 
-    def _abortar_a_volta(self, morreu: bool = False) -> bool:
+    def _abortar_a_volta(self, morreu: bool = False,
+                         motivo: str = "?") -> bool:
         """A volta terminou ANTES do fim da sequência.
 
         Devolve `True` porque a interrupção é normal e o laço de `rodar()` deve
@@ -2683,11 +2691,15 @@ class ExecutorDeMacro:
 
         `morreu=True` abre a OBSERVAÇÃO: ver `_observar_depois_da_morte`.
 
+        `motivo` NÃO muda nada: ele só fica guardado para o log da cadência da
+        bolsa dizer POR QUE o contador de voltas completas não andou. Ver
+        `core/cadencia_da_bolsa.py`.
+
         =================================================================
         QUEM CONTA COMO VOLTA NÃO SE DECIDE AQUI -- E OS DOIS LAÇOS DIFEREM
         =================================================================
 
-        Esta função só incrementa `voltas_abortadas`. `self.voltas` é problema
+        Esta função só incrementa `voltas_abortadas` (e guarda o `motivo`). `self.voltas` é problema
         de quem chama, e a regra NÃO é a mesma nos dois laços:
 
           `uma_volta` (complexo, `LACO_SIMPLES = False`)
@@ -2706,6 +2718,7 @@ class ExecutorDeMacro:
         Travado por `tests/test_laco_simples_do_app.py` (as duas metades) e por
         `tests/test_tab_no_app.py` (o contrato do laço complexo).
         """
+        self._ultimo_corte = motivo
         self.voltas_abortadas += 1
         if morreu and not LACO_SIMPLES:
             self._observar_depois_da_morte()
@@ -2805,15 +2818,15 @@ class ExecutorDeMacro:
         self._inalcancavel_id = self._ler_id_do_alvo()
 
     def _limpar_a_bolsa_se_for_a_hora(self) -> None:
-        """A cada N voltas, apaga o lixo da bolsa. N vem da configuração.
+        """Manda limpar quando a cadência disser que é hora.
 
-        DEPOIS da volta, e não antes: a volta é a unidade de trabalho da macro,
-        e interromper no meio dela deixaria a sequência pela metade.
+        A RÉGUA E O DIAGNÓSTICO MORAM EM `core/cadencia_da_bolsa.py` -- é lá que
+        está escrito por que ela se repete quando a volta é cortada, e é lá que
+        sai o aviso que nomeia a causa na hora.
 
-        A limpeza chega como FUNÇÃO INJETADA (`limpar_a_bolsa`), pelo mesmo
-        motivo do pet e da barra de atalhos: este executor importa só
-        `core.inputs` e continua assim. Ele não sabe o que é inventário,
-        template ou `BotContext` -- só sabe contar voltas e chamar quem sabe.
+        A limpeza chega como FUNÇÃO INJETADA, pelo mesmo motivo do pet: este
+        executor importa só `core.inputs`. Ele não sabe o que é inventário,
+        template ou `BotContext`.
 
         COMPLEMENTO QUE NUNCA DERRUBA A MACRO: qualquer falha vira aviso. O modo
         APP roda por horas sozinho, e parar por causa de uma limpeza seria
@@ -2821,18 +2834,17 @@ class ExecutorDeMacro:
         """
         if self._limpar_a_bolsa is None:
             return
-        a_cada = self._voltas_por_limpeza()
-        if a_cada <= 0 or self.voltas == 0 or self.voltas % a_cada:
+        if not self._cadencia_da_bolsa.deve_limpar(
+                voltas=self.voltas, abortadas=self.voltas_abortadas,
+                a_cada=self._voltas_por_limpeza(),
+                motivo_do_corte=self._ultimo_corte):
             return
         try:
             self.limpezas += 1
-            self.log.info("Volta %s: hora de limpar a bolsa (a cada %s voltas)",
-                          self.voltas, a_cada)
             self._limpar_a_bolsa()
         except Exception as exc:
             self.log.warning("Limpeza da bolsa falhou: %s", exc)
 
-    
     def rodar(self) -> None:
         """Laço contínuo: volta após volta, até `continuar()` devolver False."""
         self.log.info("Modo APP iniciado -- %s", self.resumo())
