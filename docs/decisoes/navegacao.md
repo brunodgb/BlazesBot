@@ -1068,3 +1068,44 @@ Duas mudanças, decididas pelo usuário no mesmo dia:
 O grito (`CICLOS_ANTES_DE_GRITAR = 5`) continua onde estava: ele é aviso, a
 desistência é decisão, e um teste trava a distância entre os dois para o bot não
 passar a andar a pé no primeiro soluço da montaria.
+
+---
+
+## O GANCHO ÚNICO PARA DUAS PERGUNTAS — E A REGRESSÃO DO BC (06/09/2026)
+
+Em 04/09 a HH pediu que o bot **matasse** quando o trajeto ficasse sem progresso
+(*"junto com os boss tem vários mobs que precisam ser mortos"*). A implementação
+pôs a chamada direto no ramo de parada de `follow_path` — que é **compartilhado**
+— reusando `destravar_o_combate`, o gancho que o portão da montaria já usava.
+
+O BC herdou a decisão da HH sem ninguém pedir. O log de 06/09, fase
+`ENTRAR_NO_COVIL`:
+
+    Sem progresso indo para (242, 22) e EM BATALHA ... Matando até sair
+    DESTRAVANDO (andar até (242, 22)) ...
+    Desmontando antes da luta de destravar
+    NÃO DESTRAVEI em 60s: 9 morte(s), 8 TAB, 176 golpes
+
+Sessenta segundos e nove mobs, **a pé**, num corredor que era para atravessar --
+violando a regra do BC de nunca sair da montaria antes do waypoint dos Gun
+Witch. E ainda falhou.
+
+### O erro de desenho, e ele não é "faltou um `if`"
+
+Foi **reusar um gancho para duas perguntas**. Elas chamam a mesma função e
+continuam sendo duas:
+
+| gancho | pergunta | por que a resposta muda |
+|---|---|---|
+| `destravar_o_combate` | *"não consigo MONTAR porque estou em batalha"* | matar é a **única** saída -- o jogo recusa a montaria em combate. Universal. |
+| `matar_quando_o_trajeto_trava` | *"estou montado, andando, e sem progresso"* | matar é **escolha**: na HH os mobs do caminho precisam morrer; no BC são para ignorar. |
+
+A pergunta que separa as duas é *"existe alternativa a matar?"*. No portão da
+montaria não existe; no trajeto existe -- atravessar.
+
+### A regra que fica
+
+**Gancho de POLÍTICA nasce desligado**, e quem quiser liga. Um gancho que já
+está ligado por outro motivo não pode ser reaproveitado para uma decisão nova:
+quem o ligou concordou com a pergunta antiga, não com a nova.
+

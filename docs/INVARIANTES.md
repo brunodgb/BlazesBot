@@ -385,6 +385,31 @@ time a flag não faz nada.
 - **O vendedor é o `Roaming Apothecary`, fora da cave** — a venda da BC com outro
   NPC. Isso é dado de rota, não módulo de venda novo.
 
+#### Decisão de cave NÃO mora em código compartilhado (06/09/2026)
+
+> **Regra do usuário:** *"tem decisões que só servem para um, mas para o outro
+> não, então vão ter funções que até podem ser compartilhadas, mas tem funções
+> que não devem ser compartilhadas"*.
+
+- **NO BC NÃO SE DESMONTA ANTES DO WAYPOINT DOS GUN WITCH.** No caminho do
+  covil os mobs são para **ignorar**. Travado por
+  `tests/test_montaria_do_bc_no_caminho.py`.
+- **UM GANCHO POR PERGUNTA, NÃO POR FUNÇÃO.** `destravar_o_combate` e
+  `matar_quando_o_trajeto_trava` chamam a MESMA função (`limpar_o_combate`) e
+  mesmo assim são dois, porque respondem a perguntas diferentes:
+
+  | gancho | pergunta | quem liga |
+  |---|---|---|
+  | `destravar_o_combate` | *"não consigo MONTAR porque estou em batalha"* — matar é a única saída, o jogo recusa a montaria em combate | **as duas** caves |
+  | `matar_quando_o_trajeto_trava` | *"estou montado, andando, e sem progresso"* — matar é **escolha** | **só a HH** |
+
+- **GANCHO DE POLÍTICA NASCE DESLIGADO.** Foi por não ser assim que o BC
+  regrediu: em 04/09 a matança da HH entrou direto no laço de deslocamento
+  compartilhado, e em 06/09 o log da fase `ENTRAR_NO_COVIL` mostrou
+  *"Desmontando antes da luta de destravar (andar até (242,22))"* seguido de
+  *"NÃO DESTRAVEI em 60s: 9 morte(s), 8 TAB, 176 golpes"* — sessenta segundos
+  e nove mobs, a pé, num corredor que era para atravessar.
+
 #### Navegação presa — vale para as DUAS caves (`navegacao.md`, 04/09/2026)
 
 - **MANOBRA QUE ANDA ZERO UNIDADE NÃO É MANOBRA.** O destravamento descarta o
