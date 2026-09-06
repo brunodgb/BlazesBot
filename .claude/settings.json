@@ -1,74 +1,86 @@
 {
-  "permissions": {
-    "allow": [
-      "Bash(./.venv/Scripts/python.exe -c ' *)",
-      "Bash(./.venv/Scripts/python.exe -m py_compile main.py)",
-      "Bash(timeout 6 ./.venv/Scripts/python.exe -c ' *)",
-      "Bash(timeout 120 python \"C:/Users/bruno/AppData/Local/Temp/claude/d--Versoes-do-Bot-BlazesBot22---Copia/de9e943e-9afc-43be-bc7a-df64571ca084/scratchpad/sim_app.py\")",
-      "Bash(python -c ' *)",
-      "Bash(./.venv/Scripts/python.exe -m ruff check blazesbot/web_app.py)"
-    ],
-    "defaultMode": "bypassPermissions"
-  },
-  "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "Bash|Grep",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "C:/Users/bruno/.local/bin/graphify.EXE hook-guard search"
-          }
-        ]
-      },
-      {
-        "matcher": "Read|Glob",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "C:/Users/bruno/.local/bin/graphify.EXE hook-guard read"
-          }
-        ]
-      }
-    ],
-    "SessionStart": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": ".venv\\Scripts\\python.exe .claude\\hooks\\task_observer_hook.py"
-          }
-        ]
-      }
-    ]
-  },
-  "enabledPlugins": {
-    "ecc@ecc": true,
-    "superpowers@claude-plugins-official": true,
-    "codex@openai-codex": true,
-    "humanizer@humanizer": true,
-    "ruflo-core@ruflo": true,
-    "ruflo-swarm@ruflo": true,
-    "ruflo-rag-memory@ruflo": true
-  },
-  "extraKnownMarketplaces": {
-    "openai-codex": {
-      "source": {
-        "source": "github",
-        "repo": "openai/codex-plugin-cc"
-      }
-    },
-    "humanizer": {
-      "source": {
-        "source": "github",
-        "repo": "blader/humanizer"
-      }
-    },
-    "ruflo": {
-      "source": {
-        "source": "github",
-        "repo": "ruvnet/ruflo"
-      }
-    }
-  }
+	"permissions": {
+		"allow": [
+			"Bash(./.venv/Scripts/python.exe -c ' *)",
+			"Bash(./.venv/Scripts/python.exe -m py_compile main.py)",
+			"Bash(timeout 6 ./.venv/Scripts/python.exe -c ' *)",
+			"Bash(timeout 120 python \"C:/Users/bruno/AppData/Local/Temp/claude/d--Versoes-do-Bot-BlazesBot22---Copia/de9e943e-9afc-43be-bc7a-df64571ca084/scratchpad/sim_app.py\")",
+			"Bash(python -c ' *)",
+			"Bash(./.venv/Scripts/python.exe -m ruff check blazesbot/web_app.py)"
+		],
+		"defaultMode": "bypassPermissions"
+	},
+	"hooks": {
+		"PreToolUse": [
+			{
+				"matcher": "Bash|Grep",
+				"hooks": [
+					{
+						"type": "command",
+						"command": "C:/Users/bruno/.local/bin/graphify.EXE hook-guard search"
+					}
+				]
+			},
+			{
+				"matcher": "Read|Glob",
+				"hooks": [
+					{
+						"type": "command",
+						"command": "C:/Users/bruno/.local/bin/graphify.EXE hook-guard read"
+					}
+				]
+			}
+		],
+		"SessionStart": [
+			{
+				"hooks": [
+					{
+						"type": "command",
+						"command": ".venv\\Scripts\\python.exe .claude\\hooks\\task_observer_hook.py"
+					}
+				]
+			}
+		]
+	},
+	"enabledPlugins": {
+		"ecc@ecc": true,
+		"superpowers@claude-plugins-official": true,
+		"codex@openai-codex": true,
+		"humanizer@humanizer": true,
+		"ruflo-core@ruflo": true,
+		"ruflo-swarm@ruflo": true,
+		"ruflo-rag-memory@ruflo": true,
+		"claude-council@hex-claude-marketplace": true
+	},
+	"extraKnownMarketplaces": {
+		"openai-codex": {
+			"source": {
+				"source": "github",
+				"repo": "openai/codex-plugin-cc"
+			}
+		},
+		"humanizer": {
+			"source": {
+				"source": "github",
+				"repo": "blader/humanizer"
+			}
+		},
+		"ruflo": {
+			"source": {
+				"source": "github",
+				"repo": "ruvnet/ruflo"
+			}
+		},
+		"hex-claude-marketplace": {
+			"source": {
+				"source": "github",
+				"repo": "hex/claude-marketplace"
+			}
+		}
+	},
+	"env": {
+		"COUNCIL_PROVIDERS": "openrouter-1,openrouter-2,openrouter-3,codex",
+		"OPENROUTER_MODELS": "z-ai/glm-5.2:free,cohere/north-mini-code:free,minimax/minimax-m3:free",
+		"OPENROUTER_MODEL": "z-ai/glm-5.2:free"
+	}
 }

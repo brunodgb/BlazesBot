@@ -33,3 +33,7 @@ nul
 # Experimentos de multi-agente do usuário. Não é do bot, e o `.env` daqui
 # guarda credencial -- já foi varrido para um commit uma vez (03/09/2026).
 multi-agentes/
+
+# claude-council: chaves de provedor externo (nunca versionar)
+.claude/council.env
+.claude/council-cache/

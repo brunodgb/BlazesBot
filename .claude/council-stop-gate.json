@@ -1,0 +1,5 @@
+{
+	"enabled": true,
+	"provider": "codex",
+	"max_iterations": 1
+}
