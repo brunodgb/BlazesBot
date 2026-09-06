@@ -776,7 +776,9 @@ def test_so_limpa_se_JA_estiver_em_combate_e_a_pe():
     assert "bloqueia_a_passagem" in chamadas
     assert "is_mounted" in chamadas
     assert "in_battle" in chamadas
-    assert "limpar_o_combate" in chamadas
+    # O CORE LOOP DA HH desde 06/09/2026, e não mais `limpar_o_combate`: a
+    # coreografia com pausa de três segundos é medição do BC.
+    assert "_matar_ate_sair_de_batalha" in chamadas
     fonte = _fonte(HHRoutine._ao_chegar_no_waypoint)
     assert "in_battle() is not True" in fonte, (
         "ilegível não pode virar 'estou em combate' -- pararia por nada")

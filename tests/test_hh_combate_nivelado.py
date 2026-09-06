@@ -366,8 +366,9 @@ def test_a_emergencia_MATA_para_poder_curar():
     Quando perguntado o que fazer estando em batalha com a vida baixa, o
     usuário escolheu matar: *"você deve matar os mobs até sair de batalha"*.
     """
+    # O CORE LOOP DA HH desde 06/09/2026 -- ver `tests/test_core_loop_do_hh.py`.
     _em_ordem(HHRoutine._curar_em_emergencia,
-              "in_battle", "limpar_o_combate", "curar_ao_entrar")
+              "in_battle", "_matar_ate_sair_de_batalha", "curar_ao_entrar")
 
 
 def test_a_emergencia_usa_o_limiar_de_EMERGENCIA_e_nao_o_normal():
@@ -391,8 +392,8 @@ def test_a_emergencia_usa_o_limiar_de_EMERGENCIA_e_nao_o_normal():
 def test_nao_sair_de_batalha_NAO_trava_a_recuperacao():
     """"Não consegui" devolve o controle; travar aqui pararia a conta."""
     fonte = _fonte(HHRoutine._curar_em_emergencia)
-    assert "if not self.combat.limpar_o_combate" in fonte
-    assert "return" in fonte.split("limpar_o_combate")[-1]
+    assert "if not self._matar_ate_sair_de_batalha" in fonte
+    assert "return" in fonte.split("_matar_ate_sair_de_batalha")[-1]
 
 
 def test_cair_NAO_joga_fora_o_trecho_em_andamento():
@@ -469,12 +470,15 @@ def test_o_ponto_de_DOIS_alvos_pede_TAB_e_o_de_um_nao():
     do boss -- perdendo dano.
     """
     assert mapa_hh.tabs_ao_morrer(mapa_hh.BOSS_2) > 0
-    # E ZERO NOS PACOTES por motivo OPOSTO: lá quem dá o TAB é
-    # `limpar_o_combate`, depois de parar e conferir a flag. Dois donos do mesmo
-    # TAB gastariam dois por morte, e o segundo miraria quem está FORA do
-    # combate -- que é como se puxa mob novo.
-    for rotulo in (mapa_hh.BOSS_1, mapa_hh.BOSS_3, mapa_hh.BOSS_4):
-        assert mapa_hh.tabs_ao_morrer(rotulo) == 0
+    # E OS PACOTES TAMBÉM PEDEM, desde 06/09/2026. Era zero porque quem dava o
+    # TAB ali era `limpar_o_combate`, que PARA três segundos depois de cada
+    # morte antes de trocar. Essa parada saiu da HH (é medição do BC), e o TAB
+    # voltou para dentro do laço de ataque -- sem pausa, e sem parar de bater.
+    for rotulo in (mapa_hh.BOSS_1, mapa_hh.BOSS_3):
+        assert mapa_hh.tabs_ao_morrer(rotulo) == mapa_hh.TABS_NO_PACOTE > 0
+    # BOSS ÚNICO continua com zero: não há para quem trocar, e o TAB no meio da
+    # luta de um boss só troca o alvo e perde dano.
+    assert mapa_hh.tabs_ao_morrer(mapa_hh.BOSS_4) == 0
 
 
 def test_rotulo_desconhecido_NAO_gasta_TAB():

@@ -300,20 +300,49 @@ ALVOS_POR_PONTO: dict[str, int] = {
 # mesmo motivo de `TABS_NOS_GUARDAS` ser 3 para quatro Gun Witch.
 TABS_ENTRE_OS_ALVOS_DO_PONTO = 2
 
+# Orçamento de TAB num ponto de PACOTE (número indeterminado de mobs).
+#
+# NÃO É TETO -- `combate.TAB_ATE_SAIR_DE_COMBATE_NOS_GUARDAS` mantém a troca
+# liberada enquanto a flag de combate estiver alta. Este número é o PISO que
+# liga o ramo de "morreu, troca de alvo" dentro do laço de ataque; quem encerra
+# a fase é a saída de combate, não a contagem.
+#
+# Vale o mesmo `2` da Dupla de propósito: um piso maior não compra nada (a flag
+# já libera), e um piso zero desligaria a troca -- que é justamente o defeito
+# que a mudança de 06/09/2026 corrigiu.
+TABS_NO_PACOTE = TABS_ENTRE_OS_ALVOS_DO_PONTO
+
 
 def tabs_ao_morrer(rotulo: str) -> int:
     """Quantos TABs dar depois de uma morte, neste ponto de boss.
 
-    `0` para ponto de um alvo só -- e o zero é decisão, não omissão: TAB no meio
-    da luta de um boss único troca o alvo e perde dano.
+    =====================================================================
+    O ZERO É DECISÃO, E O NÃO-ZERO TAMBÉM
+    =====================================================================
 
-    `0` TAMBÉM para ponto de PACOTE, e por motivo oposto: lá quem dá o TAB é
-    `limpar_o_combate`, depois de parar e conferir a flag. Dois donos do mesmo
-    TAB gastariam dois por morte, e o segundo miraria quem está FORA do
-    combate -- que é como se puxa mob novo.
+    `0` para ponto de UM ALVO SÓ: TAB no meio da luta de um boss único troca o
+    alvo e perde dano. Não há para quem trocar.
+
+    `TABS_ENTRE_OS_ALVOS_DO_PONTO` para o ponto de DOIS (a "Dupla"): sem ele o
+    segundo boss nunca é adquirido.
+
+    `TABS_NO_PACOTE` para ponto de VÁRIOS (os pontos de mob ranged). Aqui era
+    `0` até 06/09/2026, porque quem dava o TAB era `limpar_o_combate` -- que
+    PARA três segundos depois de cada morte antes de trocar.
+
+    Essa parada saiu (ver `HHRoutine._matar_ate_sair_de_batalha`): a regra do
+    usuário para a HH é bater e trocar de alvo ININTERRUPTAMENTE até a flag de
+    combate cair. Com o TAB de volta ao laço de ataque, a morte dispara a troca
+    na leitura seguinte -- sem pausa, e sem parar de bater.
+
+    O ORÇAMENTO NÃO É TETO enquanto a flag estiver alta: ver
+    `combate.TAB_ATE_SAIR_DE_COMBATE_NOS_GUARDAS`. Ele é o piso que LIGA o ramo
+    de troca por morte; quem encerra é a saída de combate.
     """
-    return (TABS_ENTRE_OS_ALVOS_DO_PONTO
-            if ALVOS_POR_PONTO.get(rotulo, 1) > 1 else 0)
+    alvos = ALVOS_POR_PONTO.get(rotulo, 1)
+    if alvos == VARIOS:
+        return TABS_NO_PACOTE
+    return TABS_ENTRE_OS_ALVOS_DO_PONTO if alvos > 1 else 0
 
 # ONDE O BOT PARA PARA LUTAR: o último waypoint do trecho correspondente.
 #

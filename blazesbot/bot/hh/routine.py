@@ -227,7 +227,8 @@ class HHRoutine:
         # O BC NÃO LIGA ESTE, e a diferença é regra dele: nunca sair da montaria
         # antes do waypoint dos Gun Witch. Ver `bot/navegacao.py`, o bloco dos
         # dois ganchos.
-        self.nav.matar_quando_o_trajeto_trava = self.combat.limpar_o_combate
+        self.nav.matar_quando_o_trajeto_trava = (
+            self._matar_ate_sair_de_batalha)
         self.ui = EntradaDaHH(ctx, self.nav)
         self.vendedor = VendedorDaHH(ctx, self.nav)
         self.team = TeamService(
@@ -968,7 +969,7 @@ class HHRoutine:
             "HH: cheguei no %s em combate -- é o ponto onde os mobs bloqueiam a "
             "passagem. Limpando antes de seguir.", waypoint)
         try:
-            self.combat.limpar_o_combate(f"passagem em {waypoint}")
+            self._matar_ate_sair_de_batalha(f"passagem em {waypoint}")
         except StopRequested:
             raise
         except Exception as exc:
@@ -1007,7 +1008,7 @@ class HHRoutine:
         try:
             ctx.log.info("HH: a pé no trecho do %s; limpando os mobs do caminho",
                          rotulo)
-            self.combat.limpar_o_combate(f"caminho do {rotulo}")
+            self._matar_ate_sair_de_batalha(f"caminho do {rotulo}")
         except StopRequested:
             raise
         except Exception as exc:
@@ -1085,7 +1086,8 @@ class HHRoutine:
                     "HH: fora do ponto do %s (%s, o ponto é %s) e EM BATALHA. "
                     "Não dá para andar nem montar assim -- matando até sair de "
                     "combate.", rotulo, pos, ponto)
-                self.combat.limpar_o_combate(f"voltar ao ponto do {rotulo}")
+                self._matar_ate_sair_de_batalha(
+                    f"voltar ao ponto do {rotulo}")
                 return
 
             ctx.log.info(
@@ -1175,6 +1177,82 @@ class HHRoutine:
                           "feito.", ", ".join(nomes), rotulo)
         return True
 
+    def _matar_ate_sair_de_batalha(self, motivo: str, *,
+                                   usar_aoe: bool = False) -> bool:
+        """O CORE LOOP de combate da HH: bate e troca de alvo até sair.
+
+        =================================================================
+        SEM PAUSA ENTRE UMA MORTE E O TAB SEGUINTE
+        =================================================================
+
+        Regra do usuário, 06/09/2026: *"o bot deve atacar e alternar alvos (TAB)
+        ininterruptamente até que o estado global confirme a saída da batalha
+        (`in_battle == False`)"*.
+
+        O que isto SUBSTITUIU na HH foi `combate.limpar_o_combate`, cuja
+        coreografia é: mata um, **PARA três segundos sem bater** olhando a flag,
+        e só então TAB. Aqueles três segundos são `ESPERA_APOS_A_MORTE_ANTES_DO_TAB`
+        e existem por medição -- **do BC**: lá o TAB imediato depois da morte
+        mira o mob seguinte, o golpe o puxa, e o bot troca um travamento por
+        outro. Na HH os mobs do ponto PRECISAM morrer, então puxar o seguinte é
+        o objetivo, não o acidente.
+
+        `limpar_o_combate` continua existindo e continua sendo do BC. Ela não
+        foi tocada -- ver `docs/INVARIANTES.md`, "Decisão de cave NÃO mora em
+        código compartilhado".
+
+        =================================================================
+        QUEM DÁ O TAB É O PRÓPRIO LAÇO DE ATAQUE
+        =================================================================
+
+        `atacar_ate_sair_de_combate` com `tabs_ao_morrer > 0` lê o HP do alvo a
+        cada `CADENCIA_DA_LEITURA_DO_ALVO` e, na leitura em que o alvo cai,
+        dispara `_trocar_de_alvo()` NA HORA -- dentro do mesmo laço que segue
+        girando a rotação de skills. Não há espera; a única carência é
+        `CARENCIA_APOS_O_TAB`, que existe para não ler a barra do alvo antigo.
+
+        É a mesma mecânica da luta do segundo boss, que é o padrão que o usuário
+        apontou como ideal.
+
+        =================================================================
+        ALVO SUMIDO COM A FLAG ALTA NÃO ENCERRA A LUTA
+        =================================================================
+
+        `TAB_ATE_SAIR_DE_COMBATE_NOS_GUARDAS` mantém a troca liberada enquanto a
+        flag estiver alta, mesmo depois de o orçamento de TAB acabar. Apanhar de
+        algo que o TAB não pegou continua sendo luta, e o laço continua tentando
+        adquirir. Quem protege disso virar eternidade é o teto
+        (`cave.max_fight_seconds`), não a contagem de alvos.
+        """
+        ctx = self.ctx
+        # MONTADO O PERSONAGEM NÃO ATACA -- o jogo ignora a tecla de skill e não
+        # devolve erro. É a armadilha silenciosa de sempre.
+        self.nav.ensure_dismounted()
+        fim = self.combat.atacar_ate_sair_de_combate(
+            motivo,
+            usar_aoe=usar_aoe,
+            limite=float(ctx.cave.max_fight_seconds),
+            tabs_ao_morrer=mapa_hh.TABS_NO_PACOTE,
+            # O GOLPE NÃO PARA ENQUANTO A SAÍDA É CONFIRMADA: é o que a regra
+            # pede -- ininterrupto até `in_battle == False`.
+            atacar_na_confirmacao=True,
+        )
+        ctx.log.info("HH: %s -- %s", motivo, fim.resumo())
+        return fim.saiu_de_combate
+
+    def _montar_ao_sair_do_combate(self, motivo: str) -> None:
+        """Montaria no instante em que a luta acaba, e não no trecho seguinte.
+
+        Regra do usuário, 06/09/2026: *"somente após sair oficialmente de
+        batalha, o bot deve invocar a montaria e retomar a navegação"*.
+
+        Antes disso a montaria só subia no começo de `ATE_O_BOSS` -- ou seja,
+        depois do loot e da contabilidade do trecho, tudo a pé. O portão já sabe
+        não fazer nada quando já está montado, então em batalha nenhuma isto
+        custa uma tecla a mais.
+        """
+        self.nav.garantir_montaria_para_andar(motivo)
+
     def _lutar_no_ponto(self, rotulo: str) -> bool:
         """A luta deste ponto, com o ritual que a NATUREZA dele pede.
 
@@ -1183,24 +1261,27 @@ class HHRoutine:
         =================================================================
 
         BOSS (um ou dois): `lutar_contra_um_boss` -- o ritual inteiro do BC,
-        com AoE, TAB de aquisição se ele não vem, e golpe durante a confirmação
-        de saída.
+        que já é o "matou, TAB, continua batendo" do segundo boss, mais o TAB de
+        aquisição quando o boss não vem sozinho.
 
-        PACOTE DE MOBS RANGED: `limpar_o_combate` -- mata UM, PARA e olha a flag
-        por três segundos, e só então TAB para o próximo. É a coreografia que o
-        bot em Lua usa neste mesmo ponto (`hh.killAtPosition`), e ela existe
-        porque o que encerra a luta é a lista acabar: cada morte pode ou não ser
-        a última, e a pausa é como se descobre sem puxar mob novo.
+        PACOTE DE MOBS RANGED: `_matar_ate_sair_de_batalha` -- o MESMO laço de
+        ataque, com orçamento de TAB e sem AoE. Até 06/09/2026 era
+        `limpar_o_combate`, que para três segundos depois de cada morte antes de
+        trocar; a parada é medição do BC e não vale aqui.
 
         E SEM AoE nos pontos ranged (`mapa_hh.PONTOS_SEM_AOE`): a skill de área
         é de curta distância, o mob ranged fica parado longe atirando, e a área
         passa embaixo dele. Girar AoE ali é gastar o tempo da rotação sem dano.
+
+        OS DOIS CAMINHOS TERMINAM IGUAL: só saem quando a flag de combate cai.
         """
         ctx = self.ctx
         self.combat._morte.esquecer()   # por episódio; ver `hh/bosses.py`
 
         if mapa_hh.e_pacote_de_mobs(rotulo):
-            if self.combat.limpar_o_combate(f"o pacote do {rotulo}"):
+            if self._matar_ate_sair_de_batalha(
+                    f"o pacote do {rotulo}", usar_aoe=mapa_hh.usa_aoe(rotulo)):
+                self._montar_ao_sair_do_combate(f"sair do {rotulo}")
                 return True
             self._falhar(f"não saí de batalha no pacote do {rotulo}")
             return False
@@ -1211,10 +1292,10 @@ class HHRoutine:
             tabs_ao_morrer=mapa_hh.tabs_ao_morrer(rotulo))
         ctx.log.info("HH: %s -- %s", rotulo, fim.resumo())
 
-        # `saiu_de_combate` É A VITÓRIA, e é como a BC lê o mesmo objeto
-        # (`_do_boss`: `venceu = fim.saiu_de_combate`). Morte, prazo estourado e
-        # flag ilegível devolvem False.
+        # `saiu_de_combate` É A VITÓRIA, e é como a BC lê o mesmo objeto.
+        # Morte, prazo estourado e flag ilegível devolvem False.
         if fim.saiu_de_combate:
+            self._montar_ao_sair_do_combate(f"sair do {rotulo}")
             return True
         self._falhar(f"não venci o {rotulo}: {fim.motivo}")
         return False
@@ -1515,7 +1596,7 @@ class HHRoutine:
             ctx.log.warning(
                 "HH: vida em %.0f%% e ainda EM BATALHA. Não dá para curar assim "
                 "-- matando até sair de combate.", pct)
-            if not self.combat.limpar_o_combate("curar em emergência"):
+            if not self._matar_ate_sair_de_batalha("curar em emergência"):
                 ctx.log.warning(
                     "HH: não saí de batalha no teto; deixo a cura para a volta "
                     "seguinte em vez de travar aqui.")

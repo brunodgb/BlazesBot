@@ -43,7 +43,7 @@ ligar código não testado.
 | `MODO_DE_CURA` | `'skill_em_laco'` | [blazesbot/bot/combate.py:233](blazesbot/bot/combate.py#L233) | — | O TETO É POR TENTATIVA SEM EFEITO, NÃO POR RELÓGIO |
 | `SO_A_MEMORIA_DECLARA_MORTE` | `True` | [blazesbot/bot/combate.py:841](blazesbot/bot/combate.py#L841) | executor.py, target_hybrid.py | SÓ A MEMÓRIA DECLARA MORTE. A TELA SÓ SABE DIZER "AINDA VIVO". |
 | `SO_O_ALVO_PROIBIDO_PARA_O_GOLPE` | `True` | [blazesbot/bot/combate.py:581](blazesbot/bot/combate.py#L581) | combat.py | O QUE MUDA |
-| `TAB_ATE_SAIR_DE_COMBATE_NOS_GUARDAS` | `True` | [blazesbot/bot/combate.py:598](blazesbot/bot/combate.py#L598) | — | O TETO DE TAB DEIXA DE BARRAR A TROCA ENQUANTO A FLAG ESTIVER ALTA. |
+| `TAB_ATE_SAIR_DE_COMBATE_NOS_GUARDAS` | `True` | [blazesbot/bot/combate.py:598](blazesbot/bot/combate.py#L598) | mapa_hh.py, routine.py | O TETO DE TAB DEIXA DE BARRAR A TROCA ENQUANTO A FLAG ESTIVER ALTA. |
 | `USAR_BREAK_SOUL_SO_NA_FASE_2` | `True` | [blazesbot/bot/combate.py:277](blazesbot/bot/combate.py#L277) | combat.py | BREAK SOUL -- SÓ NA SEGUNDA FASE DO BOSS |
 | `USAR_IMAGEM_DA_FASE_2` | `True` | [blazesbot/bot/combate.py:863](blazesbot/bot/combate.py#L863) | combat.py | A SEGUNDA FASE DO BOSS TAMBÉM É VISTA NA TELA |
 | `USAR_PORTAO_DE_NOME` | `True` | [blazesbot/bot/combate.py:809](blazesbot/bot/combate.py#L809) | memory.py, target_hybrid.py | RELIGADO EM 25/08/2026 -- O NOME VOLTOU |
@@ -201,12 +201,12 @@ ligar código não testado.
 | `TOLERANCIA_DO_NPC_DA_ENTRADA` | `2` | [blazesbot/bot/bc/ui_service.py:75](blazesbot/bot/bc/ui_service.py#L75) | routine.py | O SKULL HERALD DA ENTRADA EXIGE A COORDENADA EXATA |
 | `ALVO_DO_TOPUP_ANTES_DO_BOSS` | `100.0` | [blazesbot/bot/combate.py:141](blazesbot/bot/combate.py#L141) | — | TOP-UP ANTES DO BOSS: ATÉ 100%, SENTADO, E OS 15 s INTEIROS |
 | `AVISO_DA_ESPERA_SEM_PRAZO` | `10` | [blazesbot/bot/combate.py:407](blazesbot/bot/combate.py#L407) | — | Cadência do aviso enquanto espera sem prazo. Uma espera sem limite PRECISA |
-| `CADENCIA_DA_LEITURA_DO_ALVO` | `0.15` | [blazesbot/bot/combate.py:875](blazesbot/bot/combate.py#L875) | — | De quanto em quanto tempo olhar a barra do alvo durante a luta. |
-| `CARENCIA_APOS_O_TAB` | `2.4` | [blazesbot/bot/combate.py:884](blazesbot/bot/combate.py#L884) | — | Depois de apertar TAB, quanto tempo ignorar a leitura. |
+| `CADENCIA_DA_LEITURA_DO_ALVO` | `0.15` | [blazesbot/bot/combate.py:875](blazesbot/bot/combate.py#L875) | routine.py | De quanto em quanto tempo olhar a barra do alvo durante a luta. |
+| `CARENCIA_APOS_O_TAB` | `2.4` | [blazesbot/bot/combate.py:884](blazesbot/bot/combate.py#L884) | routine.py | Depois de apertar TAB, quanto tempo ignorar a leitura. |
 | `CARENCIA_SEM_LER_O_NOME` | `3.0` | [blazesbot/bot/combate.py:671](blazesbot/bot/combate.py#L671) | — | Quantos TAB gastar tentando SAIR de um alvo errado, por luta. |
 | `CONFIRMACAO_DE_SAIDA_DE_COMBATE` | `2.5` | [blazesbot/bot/combate.py:415](blazesbot/bot/combate.py#L415) | — | Por quanto tempo CONTÍNUO a flag precisa ficar em falso para a saída valer. |
 | `CONFIRMACOES_DE_MORTE` | `6` | [blazesbot/bot/combate.py:290](blazesbot/bot/combate.py#L290) | — | CONFIRMAÇÃO DA MORTE DO BOSS -- três exigências, e cada uma cobre uma falha |
-| `ESPERA_APOS_A_MORTE_ANTES_DO_TAB` | `3.0` | [blazesbot/bot/combate.py:745](blazesbot/bot/combate.py#L745) | — | Quanto esperar PARADO, sem bater, depois de cada morte, antes de gastar o TAB |
+| `ESPERA_APOS_A_MORTE_ANTES_DO_TAB` | `3.0` | [blazesbot/bot/combate.py:745](blazesbot/bot/combate.py#L745) | routine.py | Quanto esperar PARADO, sem bater, depois de cada morte, antes de gastar o TAB |
 | `ESPERA_DEPOIS_DO_TAB` | `0.6` | [blazesbot/bot/combate.py:114](blazesbot/bot/combate.py#L114) | executor.py, config.py | Espera depois de UM TAB, para a seleção chegar da rede antes de conferir. |
 | `ESPERA_ENTRAR_EM_COMBATE_GUARDAS` | `5.0` | [blazesbot/bot/combate.py:390](blazesbot/bot/combate.py#L390) | combat.py | Prazo curto para os GUARDAS (os 4 mobs no waypoint antes do boss). |
 | `ESPERA_PARA_ENTRAR_EM_COMBATE` | `5.0` | [blazesbot/bot/combate.py:381](blazesbot/bot/combate.py#L381) | — | Quanto esperar a flag LIGAR depois de chegar no waypoint. |
@@ -271,18 +271,18 @@ ligar código não testado.
 | `BOSS_3` | `'Green Robmaster'` | [blazesbot/bot/hh/mapa_hh.py:217](blazesbot/bot/hh/mapa_hh.py#L217) | bosses.py | — |
 | `BOSS_4` | `'Purple'` | [blazesbot/bot/hh/mapa_hh.py:218](blazesbot/bot/hh/mapa_hh.py#L218) | bosses.py | — |
 | `DESTINO_DO_TRANSPORTE` | `'West Suburb of Stone City'` | [blazesbot/bot/hh/mapa_hh.py:147](blazesbot/bot/hh/mapa_hh.py#L147) | — | O destino no diálogo do Fay. **SÓ APARECE ROLANDO A LISTA ATÉ O FIM.** |
-| `ETAPA_DENTRO` | `'dentro da cave'` | [blazesbot/bot/hh/mapa_hh.py:617](blazesbot/bot/hh/mapa_hh.py#L617) | routine.py | EM QUE ETAPA DA VIAGEM O PERSONAGEM ESTÁ |
-| `ETAPA_LONGE` | `'longe, viagem completa'` | [blazesbot/bot/hh/mapa_hh.py:620](blazesbot/bot/hh/mapa_hh.py#L620) | — | — |
-| `ETAPA_NA_PORTA` | `'na porta da cave'` | [blazesbot/bot/hh/mapa_hh.py:618](blazesbot/bot/hh/mapa_hh.py#L618) | routine.py | — |
-| `ETAPA_NA_VIZINHANCA` | `'já passei do teleporte'` | [blazesbot/bot/hh/mapa_hh.py:619](blazesbot/bot/hh/mapa_hh.py#L619) | routine.py | — |
-| `FOLGA_DA_CAIXA` | `25` | [blazesbot/bot/hh/mapa_hh.py:549](blazesbot/bot/hh/mapa_hh.py#L549) | mapa_bc.py | A caixa que envolve o interior da cave |
+| `ETAPA_DENTRO` | `'dentro da cave'` | [blazesbot/bot/hh/mapa_hh.py:646](blazesbot/bot/hh/mapa_hh.py#L646) | routine.py | EM QUE ETAPA DA VIAGEM O PERSONAGEM ESTÁ |
+| `ETAPA_LONGE` | `'longe, viagem completa'` | [blazesbot/bot/hh/mapa_hh.py:649](blazesbot/bot/hh/mapa_hh.py#L649) | — | — |
+| `ETAPA_NA_PORTA` | `'na porta da cave'` | [blazesbot/bot/hh/mapa_hh.py:647](blazesbot/bot/hh/mapa_hh.py#L647) | routine.py | — |
+| `ETAPA_NA_VIZINHANCA` | `'já passei do teleporte'` | [blazesbot/bot/hh/mapa_hh.py:648](blazesbot/bot/hh/mapa_hh.py#L648) | routine.py | — |
+| `FOLGA_DA_CAIXA` | `25` | [blazesbot/bot/hh/mapa_hh.py:578](blazesbot/bot/hh/mapa_hh.py#L578) | mapa_bc.py | A caixa que envolve o interior da cave |
 | `GRUPO_DOS_ARREDORES` | `'Outside Black Wind Camp'` | [blazesbot/bot/hh/mapa_hh.py:81](blazesbot/bot/hh/mapa_hh.py#L81) | — | O grupo do painel de arredores naquele lugar. Serve para conferir que o painel |
 | `LUGAR_FORA_DA_HH` | `'Black Wind Camp Dungeon'` | [blazesbot/bot/hh/mapa_hh.py:77](blazesbot/bot/hh/mapa_hh.py#L77) | — | A zona de FORA da cave, lida da tela em 01/09/2026 (o rótulo do canto superior |
 | `NOME_DA_INSTANCIA` | `'Happiness Hall'` | [blazesbot/bot/hh/mapa_hh.py:92](blazesbot/bot/hh/mapa_hh.py#L92) | — | O QUE "HH" SIGNIFICA: **Happiness Hall**. |
 | `NPC_DA_ENTRADA` | `'Elite Axe Monk Soldier'` | [blazesbot/bot/hh/mapa_hh.py:187](blazesbot/bot/hh/mapa_hh.py#L187) | entrada.py | O NPC com quem se fala para entrar na cave. |
-| `NPC_DA_SAIDA` | `'Servant Child'` | [blazesbot/bot/hh/mapa_hh.py:455](blazesbot/bot/hh/mapa_hh.py#L455) | entrada.py, routine.py | Do boss 4 até o ponto de onde se sai da cave pelo NPC. |
+| `NPC_DA_SAIDA` | `'Servant Child'` | [blazesbot/bot/hh/mapa_hh.py:484](blazesbot/bot/hh/mapa_hh.py#L484) | entrada.py, routine.py | Do boss 4 até o ponto de onde se sai da cave pelo NPC. |
 | `PRECISAO_NO_PONTO_DA_ENTRADA` | `1.5` | [blazesbot/bot/hh/mapa_hh.py:184](blazesbot/bot/hh/mapa_hh.py#L184) | entrada.py, routine.py | Folga aceita para considerar que já se está no ponto de conversa. |
-| `RAIO_DA_PORTA` | `30` | [blazesbot/bot/hh/mapa_hh.py:640](blazesbot/bot/hh/mapa_hh.py#L640) | — | Quão perto da porta ainda conta como "estou nela". |
+| `RAIO_DA_PORTA` | `30` | [blazesbot/bot/hh/mapa_hh.py:669](blazesbot/bot/hh/mapa_hh.py#L669) | — | Quão perto da porta ainda conta como "estou nela". |
 | `ROTULO_DE_TELA_DA_CHEGADA` | `'Happiness Hall Dungeon'` | [blazesbot/bot/hh/mapa_hh.py:120](blazesbot/bot/hh/mapa_hh.py#L120) | — | NÃO COMPARE ESTES NOMES COM `Memory.location()` |
 | `TABS_ENTRE_OS_ALVOS_DO_PONTO` | `2` | [blazesbot/bot/hh/mapa_hh.py:301](blazesbot/bot/hh/mapa_hh.py#L301) | — | Quantos TABs dar depois de cada morte, num ponto com mais de um alvo. |
 | `ENTRE_TENTATIVAS_DE_ENTRAR` | `0.025` | [blazesbot/bot/hh/routine.py:101](blazesbot/bot/hh/routine.py#L101) | — | Entre uma tentativa de entrada e a seguinte. É o RESTO do orçamento da |
