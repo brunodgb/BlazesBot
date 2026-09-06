@@ -116,6 +116,8 @@ class CicloDaMorte:
         # `None` nos dois é aceitável -- o log diz "?" e o ciclo não muda.
         onde_estou: Callable[[], object] | None = None,
         quao_longe: Callable[[], object] | None = None,
+        # SÓ DIAGNÓSTICO: quem estava por perto na hora da morte.
+        vizinhanca: Callable[[], str] | None = None,
         parar_pct: Callable[[], float],
         continuar: Callable[[], bool],
         dormir: Callable[[float], bool],
@@ -136,6 +138,7 @@ class CicloDaMorte:
         self._voltar_ao_ponto = voltar_ao_ponto
         self.__onde_estou = onde_estou
         self.__quao_longe = quao_longe
+        self.__vizinhanca = vizinhanca
         self._parar_pct = parar_pct
         self._continuar = continuar
         self._dormir = dormir
@@ -176,6 +179,8 @@ class CicloDaMorte:
             "distância do ponto=%s",
             self.mortes, self._onde_estou(),
             self._na_briga(), self._quao_longe())
+        diagnostico_fino.anotar(self.log, "MORTE #%d | %s",
+                                self.mortes, self._quem_estava_em_cima())
         self.mural.morri(self.meu_login, nick=self._meu_nick())
         try:
             revivido_pela_fada = self._esperar_a_fada()
@@ -222,6 +227,21 @@ class CicloDaMorte:
     def _sentado(self):
         """`esta_sentado`, protegido pelo mesmo motivo de `_na_briga`."""
         return self._seguro(self._esta_sentado)
+
+    def _quem_estava_em_cima(self) -> str:
+        """Os mobs vivos em volta no instante da morte -- a pergunta que fecha
+        "morri por causa do spot?".
+
+        É a diferença entre *"morri com um mob só, então é dano ou cura"* e
+        *"morri com quatro em cima, então é o spot ou a corrida"* -- e sem ela a
+        única pista de uma morte era a hora em que ela apareceu no log.
+        """
+        if self.__vizinhanca is None:
+            return "vizinhança=?"
+        try:
+            return self.__vizinhanca()
+        except Exception as exc:
+            return f"vizinhança=? ({exc})"
 
     def _onde_estou(self):
         return self._seguro(self.__onde_estou)
@@ -471,4 +491,52 @@ def montar_para_o_app(sup, executor, entrada, *, vida_pct, em_batalha,
         onde_estou=lambda: executor._posicao_atual() if executor._posicao_atual
         else "?",
         quao_longe=executor.distancia_da_base,
+        vizinhanca=lambda: _vizinhanca(sup),
     )
+
+
+# Raio, em unidades de jogo, do que conta como "em cima de mim" na hora da morte.
+#
+# Não é uma régua de decisão -- é o recorte do diagnóstico. 40 é largo o
+# bastante para pegar o trem de mobs que mata um personagem de macro e estreito
+# o bastante para não listar o spot inteiro.
+RAIO_DA_VIZINHANCA = 40
+
+
+def _vizinhanca(sup) -> str:
+    """Quem estava por perto, lido no instante da morte.
+
+    ABRE A LEITURA AQUI, E FECHA NA SAÍDA. O `Memory` do modo APP é um local do
+    supervisor, e puxá-lo até aqui obrigaria a mexer na montagem inteira por uma
+    linha de log. Uma morte por vez, um handle por morte -- e o `finally` garante
+    que ele não vaza.
+
+    NUNCA LEVANTA: diagnóstico que derruba o ciclo da morte é pior que
+    diagnóstico nenhum.
+    """
+    from ..core.memory import Memory
+    from ..core.zones import distancia_linear
+
+    memoria = None
+    try:
+        memoria = Memory(sup.pid)
+        eu = memoria.position()
+        if eu is None:
+            return "vizinhança=? (posição ilegível)"
+        perto = []
+        for e in memoria.entidades_vivas():
+            pos = e.get("pos")
+            if pos is None:
+                continue
+            d = distancia_linear(pos, eu)
+            if d <= RAIO_DA_VIZINHANCA:
+                perto.append(f"{e.get('nome') or '?'}@{d:.0f}")
+        return f"mobs vivos a até {RAIO_DA_VIZINHANCA}: {len(perto)} [{', '.join(perto[:8])}]"
+    except Exception as exc:
+        return f"vizinhança=? ({exc})"
+    finally:
+        if memoria is not None:
+            try:
+                memoria.close()
+            except Exception:
+                pass

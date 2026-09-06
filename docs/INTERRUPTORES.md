@@ -73,7 +73,7 @@ ligar código não testado.
 
 ## Números medidos -- tolerância, limiar, teto, cadência
 
-568 constantes, agrupadas por arquivo.
+569 constantes, agrupadas por arquivo.
 
 | constante | valor | onde | quem lê | porquê (resumo) |
 |---|---|---|---|---|
@@ -329,6 +329,7 @@ ligar código não testado.
 | `MORTES_SEGUIDAS_PARA_PARAR` | `3` | [blazesbot/bot/morte.py:93](blazesbot/bot/morte.py#L93) | — | Mortes seguidas SEM conseguir voltar ao ponto antes de parar a conta. |
 | `PASSO_DA_ESPERA` | `0.3` | [blazesbot/bot/morte.py:64](blazesbot/bot/morte.py#L64) | deletador.py, fada_reviver.py | Passo entre duas perguntas durante a espera. Tudo o que ele pergunta é |
 | `PRAZO_PARA_A_FADA` | `60.0` | [blazesbot/bot/morte.py:54](blazesbot/bot/morte.py#L54) | mural_da_morte.py | Quanto o morto espera pela Fada antes de se reviver sozinho. |
+| `RAIO_DA_VIZINHANCA` | `40` | [blazesbot/bot/morte.py:503](blazesbot/bot/morte.py#L503) | — | Raio, em unidades de jogo, do que conta como "em cima de mim" na hora da morte. |
 | `TETO_DA_REGENERACAO` | `60.0` | [blazesbot/bot/morte.py:82](blazesbot/bot/morte.py#L82) | — | Teto da regeneração sentada antes de andar de volta. |
 | `TETO_DO_RETORNO` | `180.0` | [blazesbot/bot/morte.py:90](blazesbot/bot/morte.py#L90) | — | Teto da caminhada de volta ao ponto inicial. |
 | `TETO_PARA_O_REVIVE_PEGAR` | `10.0` | [blazesbot/bot/morte.py:75](blazesbot/bot/morte.py#L75) | — | Quanto se espera o `hp` subir depois de um clique que deveria reviver. |

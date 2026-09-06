@@ -8,6 +8,7 @@ macro seguia apertando tecla contra um cadáver.
 from __future__ import annotations
 
 import logging
+from types import SimpleNamespace
 
 import pytest
 
@@ -293,8 +294,9 @@ def test_o_laco_do_APP_pergunta_a_cada_linha():
 
 
 def test_morrer_no_meio_da_macro_INTERROMPE_a_volta():
-    import tests.test_laco_simples_do_app as base
     from types import SimpleNamespace
+
+    import tests.test_laco_simples_do_app as base
 
     e = base._executor()
     e._id_do_alvo = lambda: 777
@@ -319,8 +321,9 @@ def test_morrer_no_meio_da_macro_INTERROMPE_a_volta():
 
 
 def test_a_conta_PARA_quando_o_ciclo_desiste():
-    import tests.test_laco_simples_do_app as base
     from types import SimpleNamespace
+
+    import tests.test_laco_simples_do_app as base
 
     e = base._executor()
     e._id_do_alvo = lambda: 777
@@ -428,3 +431,69 @@ def test_leitura_de_batalha_que_explode_no_diagnostico_nao_derruba():
     ciclo._em_batalha = _explode
 
     assert ciclo.resolver() is True
+
+
+# ---------------------------------------------------------------------------
+# QUEM ESTAVA EM CIMA -- a pergunta que fecha "morri por causa do spot?"
+# ---------------------------------------------------------------------------
+
+def test_a_morte_lista_os_mobs_em_volta(caplog):
+    mundo = _Mundo(fada=None)
+    ciclo = _ciclo(mundo)
+    ciclo._CicloDaMorte__vizinhanca = lambda: "mobs vivos a até 40: 4 [A@3, B@9]"
+
+    with caplog.at_level(logging.INFO):
+        ciclo.resolver()
+
+    assert any("mobs vivos a até 40: 4" in r.getMessage()
+               for r in caplog.records), [r.getMessage() for r in caplog.records]
+
+
+def test_a_vizinhanca_que_falha_vira_texto_e_nao_excecao():
+    """Diagnóstico que derruba o ciclo da morte é pior que diagnóstico nenhum."""
+    mundo = _Mundo(fada=None)
+    ciclo = _ciclo(mundo)
+
+    def _explode():
+        raise RuntimeError("processo sumiu")
+
+    ciclo._CicloDaMorte__vizinhanca = _explode
+
+    assert ciclo.resolver() is True
+    assert "vizinhança=?" in ciclo._quem_estava_em_cima()
+
+
+def test_sem_leitura_de_vizinhanca_o_ciclo_segue():
+    mundo = _Mundo(fada=None)
+    ciclo = _ciclo(mundo)          # a fixture não injeta `vizinhanca`
+    assert ciclo._quem_estava_em_cima() == "vizinhança=?"
+    assert ciclo.resolver() is True
+
+
+def test_a_leitura_da_vizinhanca_FECHA_o_handle(monkeypatch):
+    """Um handle por morte é aceitável; um handle vazado por morte, não."""
+    from blazesbot.bot import morte as mod_morte
+
+    fechou = []
+
+    class _MemoriaFalsa:
+        def __init__(self, pid):
+            pass
+
+        def position(self):
+            return (10, 10)
+
+        def entidades_vivas(self):
+            return [{"nome": "Mob", "pos": (12, 10)},
+                    {"nome": "Longe", "pos": (900, 900)}]
+
+        def close(self):
+            fechou.append(True)
+
+    import blazesbot.core.memory as mod_mem
+    monkeypatch.setattr(mod_mem, "Memory", _MemoriaFalsa)
+
+    texto = mod_morte._vizinhanca(SimpleNamespace(pid=1))
+
+    assert "1 [Mob@2]" in texto, texto
+    assert fechou == [True]

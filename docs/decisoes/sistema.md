@@ -252,10 +252,22 @@ explicitamente à prova de falha: leitura que explode vira `"?"` em vez de
 derrubar o ciclo — log de medição que leva a macro junto seria pior que não
 medir.
 
-### O que ficou de fora, e por quê
+### A vizinhança da morte — fechado em 06/09/2026
 
-**Quantos mobs estão batendo no personagem.** Precisa de `entidades_vivas()`, que
-mora na memória e chegaria por injeção do supervisor — e o supervisor estava
-sendo editado em paralelo pelo usuário quando isto foi escrito. Fica anotado
-como o próximo ponto útil: é o dado que fecharia a pergunta "morri por causa do
-spot?".
+**Quantos mobs estavam em cima** era o ponto que faltava, e é o que separa
+*"morri com um mob só, então é dano ou cura"* de *"morri com quatro em cima,
+então é o spot ou a corrida"*.
+
+Ele lê `entidades_vivas()` e conta quem está a até `RAIO_DA_VIZINHANCA` (40) do
+personagem, no instante da morte:
+
+```
+DIAG: MORTE #1 | mobs vivos a até 40: 4 [Guly Horn Horse@6, Evil Apprentice@11, ...]
+```
+
+**A leitura é aberta e fechada ali mesmo.** O `Memory` do modo APP é um local do
+supervisor, e puxá-lo até o ciclo da morte obrigaria a mexer na montagem inteira
+por uma linha de log — uma morte por vez, um handle por morte, e um `finally`
+que garante que ele não vaza. Como todo o resto do diagnóstico, ele **nunca
+levanta**: falha vira texto (`vizinhança=? (motivo)`), porque diagnóstico que
+derruba o ciclo da morte é pior que diagnóstico nenhum.
