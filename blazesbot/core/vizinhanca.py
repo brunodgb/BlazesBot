@@ -78,3 +78,24 @@ def resumo(memoria, raio: int = RAIO) -> str:
                 f"[{', '.join(t for _d, t in perto[:8])}]")
     except Exception as exc:
         return f"vizinhança=? ({exc})"
+
+def contar_pelo_injetado(ler) -> tuple[int, float | None]:
+    """`(quantos, o mais perto)`. `(0, None)` = nenhum OU não deu para ler.
+
+    A MESMA pergunta de `contar`, para quem recebe a leitura como FUNÇÃO em vez
+    de receber a memória -- é o caso do executor do APP, que não abre memória.
+
+    Veio de `bot/app/executor._quantos_mobs_por_perto` em 07/09/2026, quando o
+    aviso do teclado mudo subiu para `core/teclado_mudo.py` e passou a precisar
+    da mesma resposta. `ler` é injetado -- este módulo não abre memória.
+
+    "NÃO SEI" VIRA `(0, None)`, e quem chama trata os dois iguais de propósito:
+    a decisão que depende disto (acusar a tecla ou dizer que o spot está vazio)
+    só pode ser tomada com leitura, e sem ela o texto genérico é o honesto.
+    """
+    if ler is None:
+        return 0, None
+    try:
+        return ler()
+    except Exception:
+        return 0, None

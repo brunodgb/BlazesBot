@@ -30,6 +30,7 @@ from types import SimpleNamespace
 import pytest
 
 from blazesbot.bot.app import executor as mod
+from blazesbot.core import teclado_mudo
 from blazesbot.core.target_hybrid import MorteDoAlvo
 
 
@@ -70,12 +71,17 @@ def _executor(em_batalha=None, passos=3, tecla="TAB"):
     # O corte pelo HP tem os próprios, em tests/test_alvo_caiu_no_app.py.
     e._alvo_morreu = lambda: False
     e.mortes_vistas = 0
-    # O AVISO DO TAB MUDO rearma por relógio e consulta a vizinhança -- ver
-    # `_avisar_do_tab_mudo`. Aqui nenhum dos dois é exercitado.
-    e._falei_do_tab_mudo_em = 0.0
+    # O AVISO DO TAB MUDO rearma por relógio e consulta a vizinhança -- ver
+    # `_avisar_do_tab_mudo`. Aqui nenhum dos dois é exercitado.
+    e._falei_do_tab_mudo_em = 0.0
+    e._teclado_mudo = teclado_mudo.TecladoMudo()
+    e._declarar_queda = None
     e._mobs_por_perto = None
     # SEM CICLO DA MORTE: o dublê não morre, e a pergunta nem é feita.
     e.morte = None
+    # SEM CURA: quem tem testes de vida é tests/test_cura_do_app.py. Aqui o
+    # socorro em batalha não deve nem ser consultado.
+    e.cura = None
     # SEM PONTO INICIAL: `distancia_da_base` devolve None e nada que dependa
     # de distância opina. A coleira dos 12 mora na AQUISIÇÃO -- ver
     # tests/test_coleira_do_ponto_no_app.py.

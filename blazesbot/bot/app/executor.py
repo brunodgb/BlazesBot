@@ -89,6 +89,8 @@ from ...core import (
     coleira_do_ponto,
     diagnostico_fino,
     target_hybrid,
+    teclado_mudo,
+    vizinhanca,
     volta_ao_ponto,
 )
 from ...core.inputs import Input
@@ -358,16 +360,6 @@ VOLTAS_SEM_ALVO_ANTES_DE_DESCANSAR = 3
 # manda configurar.
 TABS_SEM_RESPOSTA_PARA_DESISTIR = 1
 
-# De quanto em quanto tempo o TAB MUDO volta a falar -- 06/09/2026.
-#
-# Medido em campo: duas contas passaram 96 e 212 minutos apertando TAB a cada 2 s
-# sem UMA linha no log. O aviso da tecla morta saía uma vez e nunca mais, e a
-# linha "o TAB não trouxe mob vivo" era suprimida justamente quando o TAB parava
-# de responder. Da segunda linha em diante, silêncio total.
-#
-# Um minuto é o intervalo que faz o problema aparecer no log sem afogá-lo: são
-# ~30 tentativas de TAB entre duas linhas.
-SEGUNDOS_ENTRE_AVISOS_DO_TAB_MUDO = 60.0
 
 # Quantas LINHAS da macro sem o alvo perder vida antes de trocar de alvo.
 #
@@ -841,6 +833,14 @@ class ExecutorDeMacro:
         # "Connection interrupted" pelas horas seguintes, que foi exatamente o
         # que aconteceu em 18/08/2026.
         conferir_saude: Callable[[], None] | None = None,
+        # DECLARAR QUEDA: o desfecho do teclado mudo, quando nem o ESC resolve.
+        #
+        # Chega como função pelo mesmo motivo de todo o resto: `Disconnected`
+        # mora em `bot/context.py`, e este executor importa só `core.*`. Quem
+        # sabe derrubar a sessão é o supervisor -- aqui só se constata que a
+        # entrada morreu. `None` = ninguém ligou o desfecho, e aí o bot faz o
+        # que fazia: avisa e continua. Ver `core/teclado_mudo.py`.
+        declarar_queda: Callable[[str], None] | None = None,
         limpar_a_bolsa: Callable[[], None] | None = None,
         voltas_por_limpeza: Callable[[], int] | None = None,
         # Trava de posição: campos de configuração (salvos no config.json).
@@ -1001,9 +1001,9 @@ class ExecutorDeMacro:
         # Como a volta ANTERIOR terminou. Só diagnóstico -- ver
         # `_abortar_a_volta` e `core/cadencia_da_bolsa.py`.
         self._ultimo_corte = "início"
-        # Quando o TAB mudo falou por último -- ver
-        # `SEGUNDOS_ENTRE_AVISOS_DO_TAB_MUDO`.
-        self._falei_do_tab_mudo_em = 0.0
+        self._declarar_queda = declarar_queda
+        # A CONTABILIDADE DO TECLADO MUDO -- ver `core/teclado_mudo.py`.
+        self._teclado_mudo = teclado_mudo.TecladoMudo()
         self._cadencia_da_bolsa = cadencia_da_bolsa.CadenciaDaBolsa(self.log)
         # Função para ler posição atual (injetada pelo supervisor).
         self._posicao_atual = posicao_atual
@@ -1674,7 +1674,7 @@ class ExecutorDeMacro:
         # O ESTOURO NÃO É MAIS UM PALPITE: flag travada, leitura inválida e
         # desync caem na MESMA classe de "não baixou", e nenhuma se resolve
         # voltando a atacar. Quem separa é a tabela de entidades.
-        quantos, mais_perto = self._quantos_mobs_por_perto()
+        quantos, mais_perto = vizinhanca.contar_pelo_injetado(self._mobs_por_perto)
         self.log.info(
             "APP: o alvo caiu mas continuo em batalha depois de %.1fs — %s. "
             "Volto a atacar em vez de cuidar da rotina.",
@@ -2085,60 +2085,6 @@ class ExecutorDeMacro:
         hp = alvo.get("hp")
         return hp is None or hp > 0
 
-    def _avisar_do_tab_mudo(self, tecla: str) -> None:
-        """Fala do TAB que não responde -- e VOLTA A FALAR, a cada minuto.
-
-        =================================================================
-        O SILÊNCIO DE 96 MINUTOS -- medido em 06/09/2026
-        =================================================================
-
-        O aviso saía UMA vez por sessão (`_avisou_tecla_morta`) e a linha "o TAB
-        não trouxe mob vivo" era suprimida exatamente quando o TAB parava de
-        responder. Da segunda tentativa em diante, silêncio: duas contas ficaram
-        96 e 212 minutos apertando TAB a cada 2 s sem uma única linha no log, e
-        o usuário só descobriu olhando a tela.
-
-        E O AVISO SOZINHO NÃO BASTAVA, porque ele acusava a coisa errada: dizia
-        "a tecla não está pegando" quando a causa mais provável é não haver mob
-        vivo ao alcance. As duas são indistinguíveis pelo `TARGET_ID` -- só a
-        tabela de entidades separa uma da outra, e é ela que entra aqui.
-        """
-        agora = time.time()
-        if (agora - self._falei_do_tab_mudo_em
-                < SEGUNDOS_ENTRE_AVISOS_DO_TAB_MUDO):
-            return
-        primeiro = self._falei_do_tab_mudo_em == 0.0
-        self._falei_do_tab_mudo_em = agora
-        self._avisou_tecla_morta = True
-
-        quantos, mais_perto = self._quantos_mobs_por_perto()
-        if quantos:
-            self.log.error(
-                "APP: %s TAB(s) sem resposta, e HÁ %d mob(s) vivo(s) por perto "
-                "(o mais próximo a %.0f). Ou a tecla %r não chega ao jogo, ou "
-                "eles estão fora do alcance do TAB. NADA está sendo atacado.",
-                self._tabs_sem_resposta, quantos, mais_perto or 0, tecla)
-            return
-        self.log.warning(
-            "APP: %s TAB(s) sem resposta e NENHUM mob vivo por perto — o spot "
-            "está vazio %s. Sigo tentando; não há o que atacar.",
-            self._tabs_sem_resposta,
-            "(ou a leitura da vizinhança não respondeu)" if primeiro else "")
-
-    def _quantos_mobs_por_perto(self) -> tuple[int, float | None]:
-        """`(quantos, o mais perto)`. `(0, None)` = nenhum OU não deu para ler.
-
-        Chega injetado como todo o resto -- o executor continua sem saber ler
-        memória. Sem a injeção a resposta é "não sei", e aí o aviso cai para o
-        texto genérico em vez de acusar a tecla.
-        """
-        if self._mobs_por_perto is None:
-            return 0, None
-        try:
-            return self._mobs_por_perto()
-        except Exception:
-            return 0, None
-
     def _conseguir_o_tab(self) -> bool:
         """Aperta o TAB com a conferência certa para o caso.
 
@@ -2249,8 +2195,18 @@ class ExecutorDeMacro:
             novo = self._esperar_o_alvo_trocar(id_antes)
             if novo is None:
                 self._tabs_sem_resposta += 1
+                quantos, _ = vizinhanca.contar_pelo_injetado(self._mobs_por_perto)
+                self._teclado_mudo.tab_sem_resposta(time.time(),
+                                                    ha_mob_por_perto=bool(quantos))
+                teclado_mudo.reagir(
+                    self._teclado_mudo, self.log, time.time(),
+                    lambda: self.input.key("esc"), self._declarar_queda)
                 if self._tabs_sem_resposta >= TABS_SEM_RESPOSTA_PARA_DESISTIR:
-                    self._avisar_do_tab_mudo(tecla)
+                    quantos, mais_perto = vizinhanca.contar_pelo_injetado(self._mobs_por_perto)
+                    teclado_mudo.avisar(
+                        self._teclado_mudo, self.log, time.time(), tecla,
+                        self._tabs_sem_resposta, quantos, mais_perto)
+                    self._avisou_tecla_morta = True
                     break 
                 if not self._dormir(ESPERA_ENTRE_TABS):
                     return False
@@ -2258,6 +2214,7 @@ class ExecutorDeMacro:
 
             self._tabs_sem_resposta = 0
             self._avisou_tecla_morta = False
+            self._teclado_mudo.tab_respondeu()
             try:
                 alvo = self._alvo_atual() if self._alvo_atual else None
             except Exception:
@@ -3145,9 +3102,19 @@ class ExecutorDeMacro:
             return
         try:
             self.limpezas += 1
-            self._limpar_a_bolsa()
+            resultado = self._limpar_a_bolsa()
         except Exception as exc:
             self.log.warning("Limpeza da bolsa falhou: %s", exc)
+            return
+
+        # A BOLSA É A SEGUNDA TESTEMUNHA do teclado mudo. Um TAB sem efeito
+        # pode ser circunstância do jogo; a tecla de inventário TAMBÉM sem
+        # efeito, no mesmo período, é entrada inoperante. Ver
+        # `core/teclado_mudo.py` -- e as 9 h 30 min de 07/09/2026.
+        if resultado == teclado_mudo.BOLSA_NAO_ABRIU:
+            self._teclado_mudo.bolsa_nao_abriu(time.time())
+        elif resultado is not None:
+            self._teclado_mudo.bolsa_abriu()
 
     def rodar(self) -> None:
         """Laço contínuo: volta após volta, até `continuar()` devolver False."""

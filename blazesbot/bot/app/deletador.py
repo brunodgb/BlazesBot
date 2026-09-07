@@ -61,7 +61,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from ...core import vision
+from ...core import teclado_mudo, vision
 from ...core.coords import TEMPLATE_ANCHORS
 
 if TYPE_CHECKING:
@@ -594,7 +594,7 @@ def limpar_a_bolsa(ctx: BotContext, tecla_do_inventario: str,
                     "da limpeza desta volta; se ela abrir atrasada, o "
                     "fechamento a encontra.",
                     TETO_DA_BOLSA_ABRIR, tecla_do_inventario)
-                return 0
+                return teclado_mudo.BOLSA_NAO_ABRIU
         else:
             ctx.log.debug("Inventário já estava aberto; não vou mexer na tecla.")
         return deletar_lixo(ctx, teto_segundos)

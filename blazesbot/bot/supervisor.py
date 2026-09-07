@@ -1517,7 +1517,7 @@ class AccountSupervisor(threading.Thread):
         return (centro[0] + DO_CENTRO_ATE_O_OK[0],
                 centro[1] + DO_CENTRO_ATE_O_OK[1])
 
-    def abrir_a_bolsa_e_apagar(self, tecla: str) -> None:
+    def abrir_a_bolsa_e_apagar(self, tecla: str) -> int:
         """Abre a bolsa e apaga o lixo. UMA receita, dois chamadores.
 
         O modo APP e a Fada montavam este mesmo `BotContext` cada um por si --
@@ -1538,7 +1538,9 @@ class AccountSupervisor(threading.Thread):
             pid=self.pid, hwnd=self.hwnd,
             stop_event=self.stop_event, pause_event=self.pause_event)
         try:
-            deletador.limpar_a_bolsa(ctx, tecla)
+            # DEVOLVE O QUE O DELETADOR DISSE. `deletador.BOLSA_NAO_ABRIU` é a
+            # segunda testemunha do teclado mudo -- ver `core/teclado_mudo.py`.
+            return deletador.limpar_a_bolsa(ctx, tecla)
         finally:
             ctx.close()
 
@@ -1765,8 +1767,8 @@ class AccountSupervisor(threading.Thread):
             tecla_do_inventario = (
                 getattr(self.account.settings.keys, "inventory", "") or "")
             if deletador.ATIVADO and tecla_do_inventario:
-                def limpar_a_bolsa() -> None:
-                    self.abrir_a_bolsa_e_apagar(tecla_do_inventario)
+                def limpar_a_bolsa() -> int:
+                    return self.abrir_a_bolsa_e_apagar(tecla_do_inventario)
             elif not tecla_do_inventario:
                 log.info(
                     "Limpeza da bolsa desligada: a tecla de Inventário não está "
@@ -2157,6 +2159,24 @@ class AccountSupervisor(threading.Thread):
                     ctx_do_historico.ultima_queda = (chave, quadro)
             raise Disconnected(motivo.value)
 
+        def declarar_queda(motivo: str) -> None:
+            """O executor constatou que a entrada morreu. Vira queda de verdade.
+
+            MESMO DESFECHO DE UMA JANELA FECHADA, e de propósito: a conta
+            reloga e VOLTA SOZINHA para o modo em que estava (regra de login e
+            relogin). Uma conta que não recebe tecla produz exatamente o mesmo
+            que uma conta deslogada -- nada --, com a diferença de que a
+            deslogada tem conserto automático.
+
+            Ver `core/teclado_mudo.py`: só se chega aqui depois de duas teclas
+            independentes mudas por 5 min, com mob vivo por perto, e depois de
+            o ESC não ter resolvido.
+            """
+            ctx_do_historico = getattr(self, "_ctx_atual", None)
+            if ctx_do_historico is not None:
+                ctx_do_historico.ultima_queda = (motivo, None)
+            raise Disconnected(motivo)
+
         def max_hp_do_time() -> int | None:
             """A vida MÁXIMA desta conta -- o critério de quem assume o time.
 
@@ -2266,6 +2286,7 @@ class AccountSupervisor(threading.Thread):
             gravar_grade_da_comida=self._gravar_grade_da_comida_do_app,
             antes_da_volta=garantir_barra,
             conferir_saude=conferir_saude,
+            declarar_queda=declarar_queda,
             limpar_a_bolsa=limpar_a_bolsa,
             # FUNÇÃO, e não número: mudar o "a cada N voltas" na interface com o
             # bot rodando passa a valer na volta seguinte, sem religar nada.
