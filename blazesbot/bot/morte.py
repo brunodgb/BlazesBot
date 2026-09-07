@@ -151,13 +151,23 @@ class CicloDaMorte:
     # -- a pergunta --------------------------------------------------------
 
     def estou_morto(self) -> bool:
-        """`hp == 0`. `None` (sem leitura) é NÃO -- cego não declara morte.
+        """`hp == 0` em DUAS leituras seguidas. `None` é NÃO.
 
-        Declarar morte sem leitura pararia a macro de uma conta viva, que é o
-        oposto do que este arquivo existe para consertar.
+        Cego não declara morte: sem leitura, dizer que morreu pararia a macro de
+        uma conta viva -- o oposto do que este arquivo existe para consertar.
+
+        E UMA LEITURA NÃO BASTA, apontado pelo council em 07/09/2026: `hp == 0`
+        aparece transitoriamente em troca de mapa, em tela de carregamento, no
+        respawn e em leitura de ponteiro inconsistente. A segunda amostra custa
+        microssegundos e é o que separa "morreu" de "pisquei". Duas leituras
+        seguidas de zero num personagem vivo exigiriam duas falhas no mesmo
+        instante -- e aí o problema já não é este arquivo.
         """
-        vida = self._ler_vida()
-        return vida is not None and vida <= 0.0
+        primeira = self._ler_vida()
+        if primeira is None or primeira > 0.0:
+            return False
+        segunda = self._ler_vida()
+        return segunda is not None and segunda <= 0.0
 
     def _ler_vida(self) -> float | None:
         try:

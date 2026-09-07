@@ -117,3 +117,45 @@ continua `True` — a cave não mudou.
 
 Junto veio o teto (`TETO_DO_RETORNO`, 180 s): sem ele, a volta tentaria a noite
 inteira em vez de contar a falha e deixar a volta seguinte tentar de novo.
+
+
+## A pergunta estava no lugar errado — 07/09/2026, com 96 minutos de prova
+
+`hp == 0` era conferido **só dentro do laço das linhas**. E morto não consegue
+adquirir alvo: a volta aborta na aquisição e **nunca chega às linhas**.
+
+O que isso produziu em campo, na conta `blazestpas`:
+
+```
+20:25:20  APP: 1 TAB(s) seguidos e o alvo não mudou.
+   ...    96 minutos: TAB a cada 2 s, pedido de cura à Fada, poção,
+          "APP: terminei de regenerar sentado com a vida em 0%",
+          268 tentativas de abrir a bolsa. E nenhum "MORRI".
+```
+
+O ciclo da morte existia, funcionava (na mesma noite ele foi revivido pela Fada
+às 20:23) — e não era chamado, porque a única porta de entrada dele ficava atrás
+de uma etapa que um morto não consegue passar.
+
+**Agora a pergunta é a PRIMEIRA coisa da volta**, antes de pet, comida, trava de
+posição, bolsa e aquisição. A conferência por linha continua, para a morte que
+acontece no meio da macro.
+
+### E uma leitura não basta
+
+Apontado pelo council: `hp == 0` aparece transitoriamente em **troca de mapa,
+tela de carregamento, respawn e leitura de ponteiro inconsistente**. Declarar
+morte na primeira amostra pararia a macro de uma conta viva — o oposto do que
+este ciclo existe para consertar.
+
+`estou_morto()` passou a exigir **duas leituras seguidas de zero**. A segunda
+custa microssegundos, e duas falhas no mesmo instante num personagem vivo já
+seriam um problema de outra natureza. `None` (ilegível) continua valendo NÃO,
+em qualquer das duas.
+
+### O que isso implica, e o council foi direto
+
+*"96 minutos enviando input para um personagem morto é assinatura fortíssima
+para anti-cheat."* Não é só produtividade perdida: um bot que aperta TAB 2 880
+vezes contra um cadáver é um padrão que nenhum jogador humano produz. Detectar
+rápido é proteção de conta, não só de farm.

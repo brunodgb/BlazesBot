@@ -2786,6 +2786,18 @@ class ExecutorDeMacro:
             saiu de batalha  -> corta a macro no meio, volta ao topo
         """
         lutava_antes = self._estava_em_batalha
+        # MORRI? A PERGUNTA VEM ANTES DE TUDO -- 07/09/2026.
+        #
+        # Ela era conferida só DENTRO do laço das linhas, e morto não consegue
+        # adquirir alvo: a volta abortava na aquisição e nunca chegava às
+        # linhas. Uma conta ficou 96 minutos morta, apertando TAB a cada 2 s,
+        # pedindo cura e "regenerando sentada com a vida em 0%", sem o ciclo de
+        # morte disparar uma vez. Detalhe em `docs/decisoes/morte-no-app.md`.
+        if self.morte is not None and self.morte.estou_morto():
+            if not self.morte.resolver():
+                return False
+            return self._abortar_a_volta(motivo="morri (prelúdio)")
+
         lutando = self._ler_em_batalha() is True
 
         if not lutando:

@@ -497,3 +497,66 @@ def test_a_leitura_da_vizinhanca_FECHA_o_handle(monkeypatch):
 
     assert "1 [Mob@2]" in texto, texto
     assert fechou == [True]
+
+
+# ---------------------------------------------------------------------------
+# A MORTE É CONFERIDA NO PRELÚDIO -- 07/09/2026, com 96 minutos de prova
+# ---------------------------------------------------------------------------
+#
+# A pergunta vivia só DENTRO do laço das linhas. Morto não consegue adquirir
+# alvo, então a volta abortava na aquisição e nunca chegava às linhas: uma conta
+# ficou 96 minutos morta, apertando TAB a cada 2 s, pedindo cura à Fada, bebendo
+# poção e "regenerando sentada com a vida em 0%", sem o ciclo disparar uma vez.
+
+def test_morto_ANTES_da_aquisicao_dispara_o_ciclo():
+    import tests.test_laco_simples_do_app as base
+
+    e = base._executor()
+    # A aquisição nem chega a ser tentada: o dublê responde "sem alvo".
+    e._id_do_alvo = lambda: 0
+    resolvidas = []
+    e.morte = SimpleNamespace(estou_morto=lambda: True,
+                              resolver=lambda: resolvidas.append(1) or True)
+
+    assert e._uma_volta_simples([SimpleNamespace(key="1", delay_ms=1)]) is True
+    assert resolvidas == [1], "a morte passou batido no prelúdio"
+    assert e.teclas == []
+
+
+def test_a_pergunta_do_preludio_vem_ANTES_da_aquisicao():
+    """Se ela vier depois, volta ao defeito: morto não adquire alvo, a volta
+    aborta antes, e a morte nunca é vista."""
+    import inspect
+
+    from blazesbot.bot.app.executor import ExecutorDeMacro
+
+    fonte = inspect.getsource(ExecutorDeMacro._uma_volta_simples)
+    assert fonte.index("morri (prelúdio)") < fonte.index("_adquirir_alvo")
+
+
+def test_a_morte_exige_DUAS_leituras_de_zero():
+    """Apontado pelo council: `hp == 0` aparece transitoriamente em troca de
+    mapa, carregamento, respawn e leitura de ponteiro inconsistente."""
+    mundo = _Mundo(fada=None)
+    ciclo = _ciclo(mundo)
+    leituras = iter([0.0, 87.0])
+    ciclo._vida_pct = lambda: next(leituras)
+
+    assert ciclo.estou_morto() is False, "uma amostra de zero declarou morte"
+
+
+def test_duas_leituras_de_zero_SAO_morte():
+    mundo = _Mundo(fada=None)
+    ciclo = _ciclo(mundo)
+    ciclo._vida_pct = lambda: 0.0
+
+    assert ciclo.estou_morto() is True
+
+
+def test_a_segunda_leitura_ilegivel_NAO_declara_morte():
+    mundo = _Mundo(fada=None)
+    ciclo = _ciclo(mundo)
+    leituras = iter([0.0, None])
+    ciclo._vida_pct = lambda: next(leituras)
+
+    assert ciclo.estou_morto() is False

@@ -720,6 +720,14 @@ Cada item é o que **não pode ser violado**. O detalhe de cada área mora em
   lados desse contrato existem para o feitiço de 5 s não ser desperdiçado.
   Valem as mesmas regras da cura: id que não bate não revive, freio de 3
   tentativas, mana conferida antes do toque, sem tecla avisa uma vez e segue.
+- **A MORTE É A PRIMEIRA PERGUNTA DA VOLTA** (07/09/2026), antes de pet, comida,
+  trava de posição, bolsa e aquisição — e continua sendo conferida por linha.
+  Só dentro das linhas ela era inalcançável: morto não adquire alvo, a volta
+  abortava na aquisição, e uma conta ficou **96 minutos morta** apertando TAB
+  sem o ciclo disparar.
+- **MORTE EXIGE DUAS LEITURAS SEGUIDAS DE `hp == 0`.** Uma amostra não basta:
+  zero aparece transitoriamente em troca de mapa, carregamento, respawn e
+  leitura de ponteiro inconsistente. `None` continua valendo NÃO nas duas.
 - **O APP RECONHECE A PRÓPRIA MORTE** (04/09/2026, `bot/morte.py`). `hp == 0`
   lido da memória, conferido **a cada linha** junto do alvo zerado — antes disso
   a macro seguia apertando tecla contra um cadáver, e no log de 7 h de duas

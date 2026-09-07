@@ -130,6 +130,9 @@ def _executor(roda=None, tecla="TAB", sem_leitura=False, em_batalha=None):
     # para dizer se o spot está vazio ou se a tecla não chega ao jogo.
     e._falei_do_tab_mudo_em = 0.0
     e._mobs_por_perto = None
+    # SEM CICLO DA MORTE: o dublê não morre, e a pergunta do prelúdio nem é
+    # feita. Ela tem testes próprios em tests/test_morte_no_app.py.
+    e.morte = None
     e._recusas_por_distancia = 0
     # O TAB só sai quando FALTA alvo (`_preciso_de_alvo`), e a decisão usa
     # estes dois: a batalha da volta anterior e as voltas seguidas com alvo
