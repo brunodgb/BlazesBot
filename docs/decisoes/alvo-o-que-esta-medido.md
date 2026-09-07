@@ -565,3 +565,41 @@ Alargar `LIMITE_DE_ENTIDADES` continua errado, e agora dá para dizer por quê:
 as entidades estão em `0x3670xxxx` e a janela é estática em `0x0107Cxxx`. Não é
 questão de varrer mais slots — **é outra região**. Achar o array de verdade é
 uma investigação de memória própria, não um número maior.
+
+
+## MEDIDO: o atraso da flag de combate depois de o alvo cair (07/09/2026)
+
+4977 saídas de batalha registradas em produção (duas contas de APP, um dia):
+
+| medida | valor |
+|---|---|
+| mínimo | 0,00 s |
+| mediana | 1,41 s |
+| p90 / p95 / p99 | **1,91 / 1,91 / 1,91** |
+| máximo | **1,92 s** |
+| média / desvio | 1,27 / 0,57 |
+| estouros do teto de 2,0 s | **517** (9,4% de 5494 eventos) |
+
+**`p90 = p95 = p99` com máximo 1,92 não é uma distribuição — é uma parede.** O
+teto de 2,0 s estava CENSURANDO a cauda: todo atraso real acima dele saía do
+lado dos "estouros". Parte dos 517 "tem outro mob batendo" era só a flag
+demorando um pouco mais.
+
+O council resumiu em uma frase: *"sem a cauda, qualquer teto é chute"*.
+
+### O que mudou
+
+- **Teto: 2,0 → 2,5 s** (número aceito pelo usuário). Custo conhecido: meio
+  segundo a mais nos casos em que realmente há outro mob — 517 × 0,5 s ≈ 4 min
+  numa sessão de horas.
+- **O estouro passou a ser MEDIDO, não presumido.** Concluir "tem outro mob
+  batendo" só porque a flag não baixou era o furo da regra: flag travada,
+  leitura inválida e desync do cliente caem na mesma classe de "não baixou", e
+  nenhuma delas se resolve voltando a atacar. Agora o estouro pergunta à tabela
+  de entidades (`core/vizinhanca.py`) e o log diz qual dos dois casos é.
+
+### O que o próximo log tem de responder
+
+Se os estouros continuarem em ~9% **com mob por perto**, 2,5 s basta e o
+diagnóstico está certo. Se aparecerem estouros **sem mob nenhum por perto**, o
+problema não é o teto — é a flag ou a leitura, e aí a decisão muda de lugar.

@@ -34,6 +34,7 @@ def executor():
     e = mod.ExecutorDeMacro.__new__(mod.ExecutorDeMacro)
     e.log = logging.getLogger("teste.alvo-caiu")
     e._alvo_atual = None
+    e._mobs_por_perto = None
     return e
 
 
@@ -117,7 +118,8 @@ def test_o_teto_estourado_diz_que_TEM_OUTRO_MOB(monkeypatch, executor, caplog):
     with caplog.at_level(logging.INFO):
         assert executor._confirmar_a_saida_de_batalha() is False
 
-    assert any("outro mob batendo" in r.getMessage() for r in caplog.records)
+    assert any("continuo em batalha depois de" in r.getMessage()
+               for r in caplog.records)
 
 
 def test_ilegivel_NAO_conta_como_saida(monkeypatch, executor):
@@ -139,7 +141,42 @@ def test_o_pedido_de_PARAR_interrompe_a_espera(monkeypatch, executor):
 
 
 def test_o_teto_de_confirmacao_e_o_combinado():
-    assert mod.SEGUNDOS_PARA_CONFIRMAR_A_SAIDA == 2.0
+    """2,0 -> 2,5 em 07/09/2026: a medição de 4977 saídas deu p90 = p95 = p99 =
+    1,91 com máximo 1,92 -- uma PAREDE, não uma distribuição. O teto antigo
+    cortava a cauda e mandava o excedente para o lado dos "estouros"."""
+    assert mod.SEGUNDOS_PARA_CONFIRMAR_A_SAIDA == 2.5
+
+
+def test_o_estouro_MEDE_a_vizinhanca_em_vez_de_presumir(monkeypatch, executor,
+                                                        caplog):
+    """Apontado pelo council: flag travada, leitura inválida e desync caem na
+    MESMA classe de "não baixou", e nenhuma se resolve voltando a atacar. Quem
+    separa é a tabela de entidades."""
+    monkeypatch.setattr(mod, "PASSO_DA_SAIDA_DE_BATALHA", 0.0)
+    monkeypatch.setattr(mod, "SEGUNDOS_PARA_CONFIRMAR_A_SAIDA", 0.05)
+    executor._continuar = lambda: True
+    executor._ler_em_batalha = lambda: True
+    executor._mobs_por_perto = lambda: (2, 6.0)
+
+    with caplog.at_level(logging.INFO):
+        executor._confirmar_a_saida_de_batalha()
+
+    assert any("há 2 mob(s) vivo(s) por perto" in r.getMessage()
+               for r in caplog.records), [r.getMessage() for r in caplog.records]
+
+
+def test_o_estouro_SEM_mob_por_perto_denuncia_a_leitura(monkeypatch, executor,
+                                                        caplog):
+    monkeypatch.setattr(mod, "PASSO_DA_SAIDA_DE_BATALHA", 0.0)
+    monkeypatch.setattr(mod, "SEGUNDOS_PARA_CONFIRMAR_A_SAIDA", 0.05)
+    executor._continuar = lambda: True
+    executor._ler_em_batalha = lambda: True
+    executor._mobs_por_perto = lambda: (0, None)
+
+    with caplog.at_level(logging.INFO):
+        executor._confirmar_a_saida_de_batalha()
+
+    assert any("flag presa?" in r.getMessage() for r in caplog.records)
 
 
 # ------------------------------------------------- o corte, no laço vivo

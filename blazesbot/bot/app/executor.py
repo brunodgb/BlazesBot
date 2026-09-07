@@ -176,10 +176,13 @@ TOLERANCIA_POSICAO = 1
 # já terminou (...) pois garante que não tem ninguém batendo no personagem"*.
 #
 # ATIVO, e é isso que faz o número ser barato: sai no instante em que a flag
-# baixa, e no caso comum isso leva bem menos que o teto. Os 2 s são o TETO, não
-# o gasto -- e estourá-los é informação, não desperdício: quer dizer que tem
-# outro mob batendo, e aí o bot volta a atacar em vez de ir cuidar da bolsa.
-SEGUNDOS_PARA_CONFIRMAR_A_SAIDA = 2.0
+# baixa, e no caso comum isso leva bem menos que o teto.
+#
+# 2,0 -> 2,5 EM 07/09/2026: a medição de 4977 saídas deu p90 = p95 = p99 = 1,91
+# com máximo 1,92 -- uma PAREDE, não uma distribuição. O teto antigo cortava a
+# cauda e mandava o excedente para o lado dos "estouros". O porquê medido e o
+# que o council apontou estão em `docs/decisoes/alvo-o-que-esta-medido.md`.
+SEGUNDOS_PARA_CONFIRMAR_A_SAIDA = 2.5
 
 # Passo da conferência ativa acima. É leitura de memória; 0,1 s dá 20 amostras
 # dentro do teto sem pesar.
@@ -1653,10 +1656,17 @@ class ExecutorDeMacro:
                     time.time() - comeco, SEGUNDOS_PARA_CONFIRMAR_A_SAIDA)
                 return True
             time.sleep(PASSO_DA_SAIDA_DE_BATALHA)
+        # O ESTOURO NÃO É MAIS UM PALPITE: flag travada, leitura inválida e
+        # desync caem na MESMA classe de "não baixou", e nenhuma se resolve
+        # voltando a atacar. Quem separa é a tabela de entidades.
+        quantos, mais_perto = self._quantos_mobs_por_perto()
         self.log.info(
-            "APP: o alvo caiu mas continuo em batalha depois de %.0fs — tem "
-            "outro mob batendo. Volto a atacar em vez de cuidar da rotina.",
-            SEGUNDOS_PARA_CONFIRMAR_A_SAIDA)
+            "APP: o alvo caiu mas continuo em batalha depois de %.1fs — %s. "
+            "Volto a atacar em vez de cuidar da rotina.",
+            SEGUNDOS_PARA_CONFIRMAR_A_SAIDA,
+            (f"há {quantos} mob(s) vivo(s) por perto, o mais próximo a "
+             f"{mais_perto:.0f}" if quantos
+             else "e NÃO vejo mob vivo por perto (flag presa? leitura ruim?)"))
         return False
 
     def _cortar_a_volta(self) -> bool:
