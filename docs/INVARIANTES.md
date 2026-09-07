@@ -394,6 +394,35 @@ time a flag não faz nada.
 - **NO BC NÃO SE DESMONTA ANTES DO WAYPOINT DOS GUN WITCH.** No caminho do
   covil os mobs são para **ignorar**. Travado por
   `tests/test_montaria_do_bc_no_caminho.py`.
+- **FORA DE COMBATE E SEM MONTAR HÁ 10 s: O BOT ANDA 6 UNIDADES** (06/09/2026,
+  `_passo_para_destravar_a_montaria`). Relato do usuário: *"às vezes ao tentar
+  ativar a montaria o jogo fica cancelando sozinho... o fato de andar desbuga
+  esse problema"*. **Medido:** dos 26 episódios de "Montaria confirmada depois
+  de Ns insistindo" (mediana 40 s), **23 tinham combate** — já cobertos por
+  `limpar_o_combate` — e **3 não tinham**: 9 s, 13 s e 35 s. O de 35 s é o
+  retrato: parado em (423, 53), dentro da cave, fora de combate, 35 s de tecla
+  sem efeito, e então a montaria sobe sozinha. Insistir mais não resolve — a
+  tecla já saía a cada `INTERVALO_REMONTAR`; faltava mudar o ESTADO.
+  - `SEGUNDOS_ANTES_DE_CUTUCAR = 10.0` e `PASSO_PARA_DESTRAVAR_A_MONTARIA = 6`,
+    os dois números do usuário. O passo é minúsculo de propósito: ~17,6 unidades
+    é um clique de minimapa e 7 é a tolerância do waypoint — **6 cabe DENTRO da
+    tolerância** e não tira o personagem do ponto.
+  - **UM passo por intervalo, não um por ciclo** — passo demais tira do ponto e
+    o remédio vira o problema. **A direção GIRA** (`BUSSOLA`): sempre para o
+    mesmo lado, uma parede faria todo passo falhar calado.
+  - **EXIGE `in_battle() is False`**, confirmação POSITIVA e não `is not True`:
+    andar puxa mob, e em combate quem resolve é o golpe. "Não sei" mantém o
+    comportamento antigo (insistir na tecla).
+  - **O passo é CONFERIDO** (`_clicar_offset_e_verificar` mede a posição antes e
+    depois), não é clique no escuro. Travado por
+    `tests/test_passo_para_destravar_a_montaria.py`.
+- **ATRIBUTO COM NOME DE MÉTODO APAGA O MÉTODO** (06/09/2026). `Navigator.
+  __init__` guardava `self._dentro_da_cave = False` e depois nasceu um método
+  homônimo: `self._dentro_da_cave()` virava `False()` — **55 `TypeError` no
+  log**, derrubando `CURAR` e `ATE_O_ALTAR` para `RECUPERAR` sempre que o portão
+  chegava no ciclo de `CICLOS_ANTES_DE_IR_A_PE`. O atributo era escrito e nunca
+  lido. Travado genericamente por `tests/test_init_nao_sombreia_metodo.py`, que
+  cruza por AST os `self.X = ...` do `__init__` com os métodos da classe.
 - **UM GANCHO POR PERGUNTA, NÃO POR FUNÇÃO.** `destravar_o_combate` e
   `matar_quando_o_trajeto_trava` chamam a MESMA função (`limpar_o_combate`) e
   mesmo assim são dois, porque respondem a perguntas diferentes:

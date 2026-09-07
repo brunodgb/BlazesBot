@@ -54,6 +54,18 @@ class _NavFalso:
         # Sem destravamento ligado: estes testes são sobre INSISTIR, e a ligação
         # com o combate tem os seus próprios (`test_destravamento_do_combate`).
         self.destravar_o_combate = None
+        # O PASSO DE DESTRAVE também é o de verdade (06/09/2026): fora de
+        # combate, passados 10 s, o portão anda 6 unidades porque o jogo cancela
+        # a montaria sozinho. Estes testes têm `in_battle` = False, então ele
+        # ENTRA — e é isso que se quer, senão o dublê deixaria de exercitar o
+        # ramo que mais roda. O clique é o único ponto substituído: aqui ele
+        # apenas registra, para o teste poder contar os passos.
+        self._ultimo_passo_de_destrave = 0.0
+        self._direcao_do_passo_de_destrave = 0
+        self.passos = []
+        self.position = lambda: (1, 2)
+        self._clicar_offset_e_verificar = (
+            lambda centro, raio, dx, dy: self.passos.append((raio, dx, dy)) or True)
         self.ctx = SimpleNamespace(
             log=log,
             raise_if_stopped=lambda: None,
@@ -67,6 +79,8 @@ class _NavFalso:
         )
 
     _diagnosticar_o_portao = navigation.Navigator._diagnosticar_o_portao
+    _passo_para_destravar_a_montaria = (
+        navigation.Navigator._passo_para_destravar_a_montaria)
     # O DISCRIMINADOR DA CAVE também é o de verdade: ele é parte da decisão
     # nova (desistir só FORA da cave), e um falso o esvaziaria de sentido.
     _dentro_da_cave = navigation.Navigator._dentro_da_cave

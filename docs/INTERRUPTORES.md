@@ -73,7 +73,7 @@ ligar código não testado.
 
 ## Números medidos -- tolerância, limiar, teto, cadência
 
-572 constantes, agrupadas por arquivo.
+574 constantes, agrupadas por arquivo.
 
 | constante | valor | onde | quem lê | porquê (resumo) |
 |---|---|---|---|---|
@@ -348,22 +348,24 @@ ligar código não testado.
 | `VALIDADE_DO_FEITICO` | `8.0` | [blazesbot/bot/mural_da_morte.py:133](blazesbot/bot/mural_da_morte.py#L133) | mural.py | Por quanto tempo o aviso "estou conjurando" continua de pé. |
 | `ALCANCE_DA_EXPANSAO` | `4` | [blazesbot/bot/navegacao.py:216](blazesbot/bot/navegacao.py#L216) | — | ATÉ ONDE A MANOBRA SE AFASTA NA ROTA quando os vizinhos imediatos falham. |
 | `AVISAR_A_PE_NO_TRAJETO` | `4.0` | [blazesbot/bot/navegacao.py:314](blazesbot/bot/navegacao.py#L314) | — | Depois de quanto tempo a pé, no meio de um trajeto, o log passa a dizer isso em |
-| `CICLOS_ANTES_DE_DESTRAVAR` | `2` | [blazesbot/bot/navegacao.py:375](blazesbot/bot/navegacao.py#L375) | — | Depois de quantos ciclos sem montar o portao para de insistir MUDO e vai |
+| `CICLOS_ANTES_DE_DESTRAVAR` | `2` | [blazesbot/bot/navegacao.py:416](blazesbot/bot/navegacao.py#L416) | — | Depois de quantos ciclos sem montar o portao para de insistir MUDO e vai |
 | `CICLOS_ANTES_DE_GRITAR` | `5` | [blazesbot/bot/navegacao.py:345](blazesbot/bot/navegacao.py#L345) | — | Quantos ciclos do portão sem montar antes de o log passar a GRITAR. |
 | `CICLOS_ANTES_DE_IR_A_PE` | `20` | [blazesbot/bot/navegacao.py:360](blazesbot/bot/navegacao.py#L360) | — | Quantos ciclos o portão insiste antes de aceitar ir A PÉ. |
 | `CIRCULO_TETO_SEGUNDOS` | `6.5` | [blazesbot/bot/navegacao.py:266](blazesbot/bot/navegacao.py#L266) | — | Teto de tempo TOTAL do círculo antes de desistir e devolver o controle. É a |
 | `DEFAULT_TOLERANCE` | `3` | [blazesbot/bot/navegacao.py:64](blazesbot/bot/navegacao.py#L64) | — | — |
 | `FOLGA_ROLLBACK` | `1` | [blazesbot/bot/navegacao.py:131](blazesbot/bot/navegacao.py#L131) | — | Folga do detector de rollback: voltar ATÉ 1 índice é ruído normal de leitura; |
 | `INTERVALO_MANUTENCAO` | `0.6` | [blazesbot/bot/navegacao.py:270](blazesbot/bot/navegacao.py#L270) | — | Cadência da manutenção durante o deslocamento (poção). |
-| `INTERVALO_PARADA_POCAO` | `10.0` | [blazesbot/bot/navegacao.py:420](blazesbot/bot/navegacao.py#L420) | — | Recarga da PARADA para tomar poção durante o trajeto. |
+| `INTERVALO_PARADA_POCAO` | `10.0` | [blazesbot/bot/navegacao.py:461](blazesbot/bot/navegacao.py#L461) | — | Recarga da PARADA para tomar poção durante o trajeto. |
 | `INTERVALO_RECLIQUE` | `1.1` | [blazesbot/bot/navegacao.py:96](blazesbot/bot/navegacao.py#L96) | — | Intervalo MÁXIMO entre cliques enquanto anda. Não é a cadência normal -- o |
 | `INTERVALO_REMONTAR` | `3.0` | [blazesbot/bot/navegacao.py:306](blazesbot/bot/navegacao.py#L306) | — | A MONTARIA É PRÉ-REQUISITO DE ANDAR, NÃO UMA OTIMIZAÇÃO |
-| `JANELA_ADIANTE` | `2` | [blazesbot/bot/navegacao.py:397](blazesbot/bot/navegacao.py#L397) | — | Quantos waypoints à frente podem ser aproveitados de uma vez. |
+| `JANELA_ADIANTE` | `2` | [blazesbot/bot/navegacao.py:438](blazesbot/bot/navegacao.py#L438) | — | Quantos waypoints à frente podem ser aproveitados de uma vez. |
 | `MANOBRAS_DE_PARADO` | `2` | [blazesbot/bot/navegacao.py:238](blazesbot/bot/navegacao.py#L238) | — | Quantas vezes a manobra pode rodar no mesmo trajeto. |
 | `MARGEM_RECLIQUE` | `2.0` | [blazesbot/bot/navegacao.py:101](blazesbot/bot/navegacao.py#L101) | — | Distância do fim do trecho já clicado em que o próximo clique é disparado. |
 | `PASSADAS_DO_DESTRAVAMENTO` | `2` | [blazesbot/bot/navegacao.py:196](blazesbot/bot/navegacao.py#L196) | — | Quantas voltas a manobra dá sobre os dois candidatos: frente, trás, frente, trás. |
+| `PASSO_PARA_DESTRAVAR_A_MONTARIA` | `6` | [blazesbot/bot/navegacao.py:401](blazesbot/bot/navegacao.py#L401) | — | O tamanho do passo, em unidades de posicao. Numero do usuario ("6px"). |
 | `POLL_MOVIMENTO` | `0.22` | [blazesbot/bot/navegacao.py:104](blazesbot/bot/navegacao.py#L104) | — | Intervalo de leitura de posição. É o que define quanto tempo o personagem fica |
 | `RUIDO_DA_POSICAO` | `1.0` | [blazesbot/bot/navegacao.py:161](blazesbot/bot/navegacao.py#L161) | — | Quanto a posição pode variar e ainda contar como "não saiu do lugar". Uma |
+| `SEGUNDOS_ANTES_DE_CUTUCAR` | `10.0` | [blazesbot/bot/navegacao.py:393](blazesbot/bot/navegacao.py#L393) | — | Quanto esperar, desde a PRIMEIRA tentativa, antes de andar um passo. Numero do |
 | `SEGUNDOS_PARADO_DE_VERDADE` | `1.5` | [blazesbot/bot/navegacao.py:156](blazesbot/bot/navegacao.py#L156) | — | PERSONAGEM COMPLETAMENTE PARADO DENTRO DA CAVE |
 | `SEGUNDOS_POR_CLIQUE_CIRCULO` | `1.0` | [blazesbot/bot/navegacao.py:268](blazesbot/bot/navegacao.py#L268) | — | Janela por ponto do círculo para saber se o clique fez o personagem andar. |
 | `SEGUNDOS_POR_TENTATIVA_DE_DESTRAVAR` | `4.0` | [blazesbot/bot/navegacao.py:184](blazesbot/bot/navegacao.py#L184) | — | Prazo para alcançar CADA candidato da manobra de destravamento. |

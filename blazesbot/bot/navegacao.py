@@ -359,6 +359,47 @@ CICLOS_ANTES_DE_GRITAR = 5
 # fica como estava. Quem separa as duas é `Navigator._dentro_da_cave`.
 CICLOS_ANTES_DE_IR_A_PE = 20
 
+# ===========================================================================
+# O JOGO CANCELA A MONTARIA SOZINHO -- E ANDAR DESTRAVA
+# ===========================================================================
+#
+# Relato do usuario em 06/09/2026: *"as vezes ao tentar ativar a montaria o jogo
+# ficava cancelando sozinho, e claramente um bug do jogo ... o fato de andar
+# desbuga esse problema"*.
+#
+# O LOG CONFIRMA que o episodio existe e nao e raro: 26 casos de "Montaria
+# confirmada depois de Ns insistindo", mediana de 40 s. Separando por causa:
+#
+#     23 casos  COM combate  -> ja tratados por `limpar_o_combate`
+#      3 casos  SEM combate  -> 9 s, 13 s e 35 s
+#
+# O de 35 s e o retrato do bug: personagem parado em (423, 53), dentro da cave,
+# FORA de combate, 35 segundos de tecla sem efeito -- e entao a montaria sobe
+# sozinha, sem nada ter mudado. Nao ha o que "insistir mais" resolva: a tecla ja
+# estava sendo apertada a cada `INTERVALO_REMONTAR`.
+#
+# POR QUE ANDAR E DIFERENTE DE APERTAR DE NOVO: a tecla e um interruptor e o
+# cliente estava recusando o pedido; andar muda o ESTADO do personagem, e e o
+# estado que estava preso. E a mesma familia de conserto do "clique que nao
+# produz movimento" logo abaixo (`DESVIOS_DO_MAPA`).
+
+# Quanto esperar, desde a PRIMEIRA tentativa, antes de andar um passo. Numero do
+# usuario: *"se em 10 segundos depois da primeira tentativa o bot nao
+# identificar que ativou a montaria, anda 6px"*.
+#
+# Dez segundos e folgado sobre a montagem normal (1 a 3 s medidos, 25/08) e
+# abaixo do menor episodio SEM combate do log (9 s) -- ou seja, pega os tres
+# casos medidos sem disparar no caso comum.
+SEGUNDOS_ANTES_DE_CUTUCAR = 10.0
+
+# O tamanho do passo, em unidades de posicao. Numero do usuario ("6px").
+#
+# Deliberadamente MINUSCULO: o objetivo e mudar o estado do personagem, nao
+# viajar. Um clique de minimapa alcanca ~17,6 unidades, entao 6 e menos de meio
+# clique -- e a tolerancia dos waypoints da rota e 7, entao o passo cabe DENTRO
+# da tolerancia e nao tira o personagem do ponto.
+PASSO_PARA_DESTRAVAR_A_MONTARIA = 6
+
 # Depois de quantos ciclos sem montar o portao para de insistir MUDO e vai
 # PROCURAR A CAUSA -- e, quando a causa tem tratamento, tira ela do caminho.
 #
@@ -490,6 +531,11 @@ class Navigator:
         # interruptor: dois toques próximos se cancelam. Com cronômetros
         # separados, o bot remontava e desmontava em seguida.
         self._ultimo_toque_na_montaria = 0.0
+        # Quando o portao andou um passo para destravar a montaria, e para que
+        # lado. A direcao gira a cada passo: se houver parede de um lado, o
+        # passo seguinte tenta outro. Ver `SEGUNDOS_ANTES_DE_CUTUCAR`.
+        self._ultimo_passo_de_destrave = 0.0
+        self._direcao_do_passo_de_destrave = 0
         # DEPENDENCIA CRUZADA, injetada pela rotina (`BossRushRoutine.__init__`).
         #
         # O portao da montaria precisa de COMBATE para se destravar: em batalha
@@ -2054,6 +2100,18 @@ class Navigator:
                 f"({gasto:.0f}s, {ciclo} tentativas)"
             )
 
+        em_batalha = ctx.memory.in_battle()
+
+        # FORA DE COMBATE, o jogo as vezes CANCELA a montaria sozinho -- e andar
+        # destrava. Ver `SEGUNDOS_ANTES_DE_CUTUCAR` para o log que mediu.
+        #
+        # `is False` e nao `is not True`: andar tem custo (puxa mob), entao
+        # exige confirmacao POSITIVA de que nao ha combate. "Nao sei" mantem o
+        # comportamento antigo, que e insistir na tecla.
+        if em_batalha is False:
+            self._passo_para_destravar_a_montaria(motivo, gasto)
+            return
+
         if ciclo < CICLOS_ANTES_DE_DESTRAVAR:
             return
 
@@ -2061,7 +2119,7 @@ class Navigator:
         # se esta em combate e motivo para continuar insistindo na tecla, nunca
         # para gastar um minuto puxando mob -- ver `MEMORIA PRIMEIRO`, e a regra
         # de que "nao sei" nao decide nada.
-        if ctx.memory.in_battle() is not True:
+        if em_batalha is not True:
             return
 
         if self.destravar_o_combate is None:
@@ -2080,6 +2138,48 @@ class Navigator:
             motivo, gasto,
         )
         self.destravar_o_combate(motivo)
+
+    def _passo_para_destravar_a_montaria(self, motivo: str,
+                                         gasto: float) -> bool:
+        """Anda um passo curto. Andar destrava a montaria que o jogo cancelou.
+
+        So depois de `SEGUNDOS_ANTES_DE_CUTUCAR` desde a primeira tentativa, e
+        no maximo um passo por esse mesmo intervalo -- passo demais tira o
+        personagem do ponto, e o remedio viraria o problema.
+
+        A DIRECAO GIRA a cada passo (`BUSSOLA`). Sempre para o mesmo lado, uma
+        parede faria todos os passos falharem em silencio; girando, o segundo
+        tenta outro lado. Quem diz se andou e `_clicar_offset_e_verificar`, que
+        mede a posicao antes e depois -- nao e clique no escuro.
+
+        Devolve se o personagem realmente se moveu.
+        """
+        ctx = self.ctx
+        agora = time.time()
+        if gasto < SEGUNDOS_ANTES_DE_CUTUCAR:
+            return False
+        if agora - self._ultimo_passo_de_destrave < SEGUNDOS_ANTES_DE_CUTUCAR:
+            return False
+
+        onde = self.position()
+        if onde is None:
+            # Sem saber onde esta nao da para calcular o offset do minimapa.
+            return False
+
+        self._ultimo_passo_de_destrave = agora
+        dx, dy = BUSSOLA[self._direcao_do_passo_de_destrave % len(BUSSOLA)]
+        self._direcao_do_passo_de_destrave += 1
+
+        andou = self._clicar_offset_e_verificar(
+            onde, PASSO_PARA_DESTRAVAR_A_MONTARIA, dx, dy)
+        ctx.log.info(
+            "Nao monto para %s ha %.0fs e NAO estou em batalha: o jogo deve ter "
+            "cancelado a montaria sozinho. Andei %s unidades de %s (%s) -- "
+            "andar destrava esse bug.",
+            motivo, gasto, PASSO_PARA_DESTRAVAR_A_MONTARIA, onde,
+            "o personagem se moveu" if andou else "NAO saiu do lugar",
+        )
+        return andou
 
     def _manter_montaria(self) -> None:
         """Repõe a montaria DURANTE o trajeto. Chamado a cada volta do laço.
