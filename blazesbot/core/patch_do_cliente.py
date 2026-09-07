@@ -128,13 +128,37 @@ class Assinatura:
     nome: str
     bytes_: bytes
     instrucao: str
+    # RVA MEDIDO, não suposto -- ver `O SÍTIO É CONHECIDO` abaixo.
+    rva: int
 
 
+# ===========================================================================
+# O SÍTIO É CONHECIDO -- medido em memória viva, 07/09/2026
+# ===========================================================================
+#
+# Conferido nos SEIS clientes abertos da máquina do usuário, com o patcher já
+# aplicado, lendo a imagem do módulo de cada processo:
+#
+#     6 cliente(s): base 0x00400000 em todos (o ASLR não moveu nada)
+#     guardar  rva 0x5CFA0B  PATCHEADO (6 NOPs)   em todos
+#     limpar   rva 0x057A02  PATCHEADO (6 NOPs)   em todos
+#     padrão original ainda na imagem: 0x         em todos
+#     sequências de 6 NOPs na imagem inteira: 2x  em todos
+#
+# As duas últimas linhas são o que dá confiança: o padrão sumiu (era único e
+# foi patcheado) e existem EXATAMENTE DUAS sequências de seis NOPs em 15,8 MB
+# de imagem -- os nossos dois sítios, e mais nada.
+#
+# POR QUE O RVA PRECISOU VIRAR CONSTANTE: sem ele, um cliente JÁ PATCHEADO (o
+# caso normal, porque o `.exe` roda no login) fazia a busca encontrar ZERO
+# ocorrências do padrão -- e a recusa dizia "o cliente pode ter sido
+# atualizado", que é falso. Com o RVA, olha-se o sítio primeiro; a busca ficou
+# para quando o que está lá não é nem o padrão nem os NOPs.
 ASSINATURAS = (
     Assinatura("guardar", bytes.fromhex("898fa8100000"),
-               "mov dword ptr [edi+0x10A8], ecx"),
+               "mov dword ptr [edi+0x10A8], ecx", 0x5CFA0B),
     Assinatura("limpar", bytes.fromhex("89bea8100000"),
-               "mov dword ptr [esi+0x10A8], edi"),
+               "mov dword ptr [esi+0x10A8], edi", 0x057A02),
 )
 
 
@@ -288,12 +312,28 @@ def aplicar(pid: int, log, pecas=None) -> Resultado:
 
 
 def _patchar(j, handle: int, base: int, tamanho: int, log) -> Resultado:
+    """OLHA O SÍTIO CONHECIDO PRIMEIRO; a busca é a reserva.
+
+    A ordem importa e foi corrigida em 07/09/2026, depois da conferência em
+    memória viva: buscar primeiro fazia um cliente JÁ PATCHEADO parecer um
+    cliente atualizado, porque o padrão original não está mais lá.
+    """
     resultado = Resultado()
     imagem: bytes | None = None
 
     for assinatura in ASSINATURAS:
-        rva = _RVA_CONHECIDO.get(assinatura.nome)
-        if rva is None:
+        rva = _RVA_CONHECIDO.get(assinatura.nome, assinatura.rva)
+        endereco = base + rva
+        atual = j.ler(handle, endereco, len(SUBSTITUICAO))
+
+        if atual == SUBSTITUICAO:
+            resultado.ja_estavam += 1
+            continue
+
+        if atual != assinatura.bytes_:
+            # O SÍTIO CONHECIDO NÃO TEM NEM O PADRÃO NEM OS NOPs. Aí sim vale
+            # procurar: ou o cliente foi atualizado e o código andou, ou a
+            # leitura veio errada. Escrever no escuro está fora de questão.
             if imagem is None:
                 imagem = j.ler(handle, base, tamanho)
                 if imagem is None:
@@ -305,33 +345,25 @@ def _patchar(j, handle: int, base: int, tamanho: int, log) -> Resultado:
                 # Com zero não há o que patchear; com dois, não se sabe qual --
                 # e NOPar o errado derruba o cliente.
                 resultado.recusados.append(
-                    f"{assinatura.nome}: {len(achado)} ocorrência(s) do padrão "
-                    f"{assinatura.bytes_.hex(' ')} (esperava exatamente 1). "
-                    "O cliente pode ter sido atualizado.")
+                    f"{assinatura.nome}: em 0x{endereco:X} li "
+                    f"{atual.hex(' ') if atual else '<nada>'} e o padrão "
+                    f"{assinatura.bytes_.hex(' ')} aparece {len(achado)} "
+                    "vez(es) na imagem (esperava exatamente 1). O cliente "
+                    "pode ter sido atualizado.")
                 log.warning(
-                    "PET BUG: padrão %r apareceu %d vez(es) no client.exe — "
-                    "NÃO vou escrever. Seis bytes no lugar errado derrubam o "
-                    "cliente.", assinatura.nome, len(achado))
+                    "PET BUG: o sítio %r não tem o padrão nem os NOPs, e a "
+                    "busca achou %d candidato(s) — NÃO vou escrever. Seis "
+                    "bytes no lugar errado derrubam o cliente.",
+                    assinatura.nome, len(achado))
                 continue
             rva = achado
             _RVA_CONHECIDO[assinatura.nome] = rva
-            log.info("PET BUG: padrão %r (%s) encontrado em rva 0x%X.",
-                     assinatura.nome, assinatura.instrucao, rva)
-
-        endereco = base + rva
-        atual = j.ler(handle, endereco, len(SUBSTITUICAO))
-        if atual == SUBSTITUICAO:
-            resultado.ja_estavam += 1
-            continue
-        if atual != assinatura.bytes_:
-            # O RVA GUARDADO NÃO BATE MAIS. É a rede do atalho: em vez de
-            # escrever no escuro, esquece o que aprendeu e recusa esta volta.
-            _RVA_CONHECIDO.pop(assinatura.nome, None)
-            resultado.recusados.append(
-                f"{assinatura.nome}: em 0x{endereco:X} eu esperava "
-                f"{assinatura.bytes_.hex(' ')} e li "
-                f"{atual.hex(' ') if atual else '<nada>'}")
-            continue
+            endereco = base + rva
+            log.warning(
+                "PET BUG: o sítio %r saiu do lugar conhecido (0x%X) e foi "
+                "achado em rva 0x%X. O cliente provavelmente foi atualizado — "
+                "vale conferir `docs/decisoes/pet-bug-engenharia-reversa.md`.",
+                assinatura.nome, assinatura.rva, rva)
 
         antiga = j.proteger(handle, endereco, len(SUBSTITUICAO),
                             PAGE_EXECUTE_READWRITE)

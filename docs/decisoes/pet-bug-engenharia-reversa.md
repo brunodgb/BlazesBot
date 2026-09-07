@@ -182,9 +182,11 @@ diferenças deliberadas em relação ao original:
    de ser único.
 2. **Confere depois de escrever**, relendo os seis bytes.
 3. **É idempotente e diz isso** — sítio já com NOPs responde "já estava".
-4. **Guarda o RVA** depois da primeira busca (sem ASLR ele não muda) e **confere
-   os bytes antes de escrever**. É a conferência que torna o atalho seguro: se o
-   que está lá não for o padrão esperado, esquece o que aprendeu e recusa.
+4. **Olha o sítio CONHECIDO primeiro**, e usa a busca como reserva. O RVA é
+   constante medida (sem ASLR ele não muda), e os bytes são conferidos antes de
+   escrever -- é a conferência que torna o atalho seguro. Ver
+   "a conferência derrubou uma suposição" mais abaixo: a ordem inversa fazia
+   um cliente já patcheado parecer um cliente atualizado.
 
 **O F12 continua sendo do programa.** Só o patch de memória subiu.
 
@@ -215,6 +217,49 @@ Já era o portão que existia: a chamada mora atrás de `if self.account.farms:`
 fica de fora sozinha. Travado por `tests/test_patch_do_cliente.py`, porque
 mover a chamada para fora daquele `if` passaria despercebido.
 
+## CONFERIDO EM MEMÓRIA VIVA — 07/09/2026, seis clientes
+
+O usuário rodou o patcher como administrador e pediu a conferência. Com o shell
+elevado (o `OpenProcess` de antes falhava por causa do MEU processo, não do
+patcher), a leitura dos seis `client.exe` abertos deu isto, **igual em todos**:
+
+```
+6 cliente(s): 75820, 65504, 8512, 26996, 37572, 34072
+base 0x00400000        -> o ASLR não moveu nada, em nenhum
+imagem 15.835.136 bytes, lida em ~7 ms
+guardar  rva 0x5CFA0B  PATCHEADO (6 NOPs)
+limpar   rva 0x057A02  PATCHEADO (6 NOPs)
+padrão original ainda na imagem: 0x
+sequências de 6 NOPs na imagem inteira: 2x
+```
+
+**As duas últimas linhas são o fecho da conta.** O padrão sumiu (era único e foi
+patcheado) e existem **exatamente duas** sequências de seis NOPs em 15,8 MB de
+imagem: os nossos dois sítios, e mais nada. Os endereços deduzidos do arquivo em
+disco batem com a memória, byte a byte, nos seis processos.
+
+*(15.835.136 é o tamanho VIRTUAL do módulo; o arquivo em disco tem 13.127.680.
+A diferença é alinhamento de seção, e o `.text` mapeia RVA = offset, que é por
+isso que os dois endereços coincidem nas duas medições.)*
+
+### E a conferência derrubou uma suposição do nosso código
+
+A primeira versão do patch nativo **procurava o padrão primeiro**. Só que em
+produção o `.exe` roda no login, então quando o nativo chega **o padrão original
+já não está lá** — a busca achava ZERO e o código concluía *"o cliente pode ter
+sido atualizado"*. Alarme falso a cada sessão, e no melhor caso ruído no log.
+
+A ordem foi invertida: **olha-se o sítio conhecido primeiro** (o RVA agora é uma
+constante medida, não uma suposição), e a busca ficou como reserva para quando
+o que está lá não é nem o padrão nem os NOPs. Três desfechos, todos travados por
+teste:
+
+| o que está no sítio | o que acontece |
+|---|---|
+| os seis NOPs | "já estava" — não escreve, não varre |
+| o padrão original | patcheia e confere a releitura |
+| outra coisa | varre a imagem; único candidato → patcheia e AVISA que o sítio mudou de lugar; zero ou dois → RECUSA |
+
 ## O que falta, se um dia interessar
 
 - **Descobrir o que é `+0x10A8`.** Precisa do jogo rodando: achar o objeto que
@@ -223,8 +268,7 @@ mover a chamada para fora daquele `if` passaria despercebido.
 - **Trazer o F12.** É uma linha (`PostMessage(hwnd, 0x100, 0x7B, 0)`), e aí o
   `.exe` sai de cena. Não foi feito hoje porque o KEYDOWN sem KEYUP mexe com o
   estado de tecla do cliente, e isso merece ser ligado com o usuário olhando.
-- **Verificar em memória viva.** A conferência de hoje foi contra o arquivo em
-  disco: o shell da auditoria não estava elevado e o `OpenProcess` nos seis
-  clientes abertos devolveu ACCESS_DENIED (erro 5). O bot roda como
-  administrador, então em produção a leitura funciona — e o log do item acima é
-  o que fecha essa conta.
+- **Ver o nativo patchar um cliente LIMPO.** A conferência de hoje pegou os
+  clientes já patcheados pelo `.exe`, então o que ficou provado é que os
+  endereços estão certos e que o nativo os reconhece. Falta o log de uma sessão
+  em que ele chegue primeiro -- `PET BUG: guardar NOPado em 0x9CFA0B`.

@@ -20,16 +20,22 @@ BASE = 0x400000
 A = mod.ASSINATURAS[0]
 B = mod.ASSINATURAS[1]
 
+# A IMAGEM DE MENTIRA USA OS RVAs DE VERDADE (0x5CFA0B e 0x057A02), medidos em
+# memória viva nos seis clientes do usuário. Custa 6 MB de bytearray por teste e
+# paga: com endereços inventados, TODO teste passaria pelo caminho de exceção
+# ("o sítio saiu do lugar") e o caminho normal ficaria sem cobertura nenhuma.
+TAMANHO = 0x5D0000
+
 
 class Cliente:
     """Um `client.exe` de mentira: uma imagem de bytes que se pode escrever."""
 
-    def __init__(self, imagem: bytes | None = None, pode_abrir=True,
+    def __init__(self, imagem: bytearray | None = None, pode_abrir=True,
                  tem_modulo=True, escrita_falha=False, protecao_falha=False):
         if imagem is None:
-            imagem = bytearray(b"\x00" * 0x400)
-            imagem[0x100:0x106] = A.bytes_
-            imagem[0x200:0x206] = B.bytes_
+            imagem = bytearray(TAMANHO)
+            imagem[A.rva:A.rva + 6] = A.bytes_
+            imagem[B.rva:B.rva + 6] = B.bytes_
         self.imagem = bytearray(imagem)
         self._pode_abrir = pode_abrir
         self._tem_modulo = tem_modulo
@@ -37,6 +43,7 @@ class Cliente:
         self._protecao_falha = protecao_falha
         self.protecoes: list[tuple[int, int]] = []
         self.escritas: list[tuple[int, bytes]] = []
+        self.leituras_da_imagem = 0
 
     # -- as pecas que `aplicar` consome --------------------------------
     def abrir(self, pid):
@@ -52,6 +59,8 @@ class Cliente:
         i = endereco - BASE
         if i < 0 or i + tamanho > len(self.imagem):
             return None
+        if tamanho == len(self.imagem):
+            self.leituras_da_imagem += 1
         return bytes(self.imagem[i:i + tamanho])
 
     def proteger(self, handle, endereco, tamanho, protecao):
@@ -84,15 +93,26 @@ def test_patcheia_os_DOIS_sitios():
     c = Cliente()
     r = mod.aplicar(1, LOG, pecas=c)
     assert r.ok and r.aplicou == 2, str(r)
-    assert bytes(c.imagem[0x100:0x106]) == mod.SUBSTITUICAO
-    assert bytes(c.imagem[0x200:0x206]) == mod.SUBSTITUICAO
+    assert bytes(c.imagem[A.rva:A.rva + 6]) == mod.SUBSTITUICAO
+    assert bytes(c.imagem[B.rva:B.rva + 6]) == mod.SUBSTITUICAO
+
+
+def test_o_caminho_normal_NAO_le_a_imagem_inteira():
+    """O sítio é conhecido: olha-se lá primeiro, e a busca é reserva.
+
+    Ler 15,8 MB custa ~7 ms por cliente (medido). Não é caro, mas fazer isso
+    quando já se sabe o endereço é gasto sem pergunta.
+    """
+    c = Cliente()
+    mod.aplicar(1, LOG, pecas=c)
+    assert c.leituras_da_imagem == 0
 
 
 def test_devolve_a_protecao_antiga():
     """Deixar a página do CÓDIGO gravável é um presente para qualquer coisa."""
     c = Cliente()
     mod.aplicar(1, LOG, pecas=c)
-    for endereco in (BASE + 0x100, BASE + 0x200):
+    for endereco in (BASE + A.rva, BASE + B.rva):
         deste = [p for e, p in c.protecoes if e == endereco]
         assert deste == [mod.PAGE_EXECUTE_READWRITE, 0x20], deste
 
@@ -107,49 +127,85 @@ def test_rodar_DE_NOVO_nao_escreve_nada():
     assert c.escritas == []
 
 
+def test_cliente_JA_PATCHEADO_pelo_exe_e_reconhecido():
+    """O caso NORMAL em produção -- e o que quebrou antes da conferência viva.
+
+    O `.exe` roda no login, então quando o patch nativo chega o padrão original
+    JÁ NÃO ESTÁ na imagem. A primeira versão buscava o padrão primeiro, achava
+    zero e concluía "o cliente pode ter sido atualizado" -- alarme falso a cada
+    sessão. Agora se olha o sítio conhecido, e ele responde "já estava".
+    """
+    c = Cliente()
+    c.imagem[A.rva:A.rva + 6] = mod.SUBSTITUICAO
+    c.imagem[B.rva:B.rva + 6] = mod.SUBSTITUICAO
+
+    r = mod.aplicar(1, LOG, pecas=c)
+    assert r.ok and r.ja_estavam == 2 and r.aplicou == 0, str(r)
+    assert r.recusados == []
+    assert c.escritas == []
+    assert c.leituras_da_imagem == 0, "varreu 15 MB sem precisar"
+
+
 # ---------------------------------------------------------------------------
 # O QUE ELE RECUSA -- a parte que protege o cliente do usuário
 # ---------------------------------------------------------------------------
 
-def test_padrao_que_aparece_DUAS_vezes_e_RECUSADO():
-    """Com dois candidatos não se sabe qual é o certo, e o errado derruba."""
-    imagem = bytearray(b"\x00" * 0x400)
-    imagem[0x100:0x106] = A.bytes_
-    imagem[0x180:0x186] = A.bytes_        # o duplicado
-    imagem[0x200:0x206] = B.bytes_
+def test_sitio_que_SAIU_do_lugar_com_sosia_e_RECUSADO():
+    """Cliente atualizado + padrão em dois lugares = não dá para escolher.
+
+    Com dois candidatos não se sabe qual é o certo, e o errado derruba.
+    """
+    imagem = bytearray(TAMANHO)
+    imagem[A.rva + 0x40:A.rva + 0x46] = A.bytes_   # saiu do lugar conhecido...
+    imagem[0x180:0x186] = A.bytes_                 # ...e tem um sósia
+    imagem[B.rva:B.rva + 6] = B.bytes_
     c = Cliente(imagem)
     r = mod.aplicar(1, LOG, pecas=c)
 
     assert not r.ok
     assert any("guardar" in x for x in r.recusados), r.recusados
-    assert bytes(c.imagem[0x100:0x106]) == A.bytes_, "escreveu mesmo assim"
+    assert bytes(c.imagem[A.rva + 0x40:A.rva + 0x46]) == A.bytes_, \
+        "escreveu mesmo assim"
     assert r.aplicou == 1, "o outro sítio, que é único, tinha de ser aplicado"
 
 
-def test_padrao_que_NAO_aparece_e_RECUSADO():
-    """Zero ocorrências = o jogo mudou. Recusa e grita, não adivinha."""
-    imagem = bytearray(b"\x00" * 0x400)
-    imagem[0x200:0x206] = B.bytes_
+def test_sitio_que_SAIU_do_lugar_e_UNICO_e_seguido():
+    """Cliente atualizado, padrão único: aceita, mas GRITA que mudou de lugar."""
+    imagem = bytearray(TAMANHO)
+    novo = A.rva + 0x40
+    imagem[novo:novo + 6] = A.bytes_
+    imagem[B.rva:B.rva + 6] = B.bytes_
+    c = Cliente(imagem)
+    r = mod.aplicar(1, LOG, pecas=c)
+
+    assert r.ok and r.aplicou == 2, str(r)
+    assert bytes(c.imagem[novo:novo + 6]) == mod.SUBSTITUICAO
+    assert c.leituras_da_imagem == 1, "tinha de ter varrido para achar"
+
+
+def test_padrao_que_NAO_aparece_em_lugar_nenhum_e_RECUSADO():
+    """Zero ocorrências e o sítio sem NOPs = o jogo mudou. Recusa e grita."""
+    imagem = bytearray(TAMANHO)
+    imagem[B.rva:B.rva + 6] = B.bytes_
     c = Cliente(imagem)
     r = mod.aplicar(1, LOG, pecas=c)
     assert not r.ok
-    assert any("guardar" in x and "0 ocorrência" in x for x in r.recusados)
+    assert any("guardar" in x and "0 vez(es)" in x for x in r.recusados), \
+        r.recusados
 
 
-def test_o_RVA_GUARDADO_e_conferido_antes_de_escrever():
-    """O atalho sem ASLR só é seguro porque os bytes são conferidos.
+def test_o_RVA_APRENDIDO_e_conferido_antes_de_escrever():
+    """O atalho só é seguro porque os bytes são conferidos.
 
-    Aqui o cliente MUDA embaixo do endereço aprendido -- e o patch tem de
-    recusar em vez de NOPar o que estiver ali.
+    Aqui o sítio conhecido tem lixo -- e o patch tem de procurar em vez de
+    NOPar o que estiver ali.
     """
-    c = Cliente()
-    mod.aplicar(1, LOG, pecas=c)          # aprende os RVAs
     outro = Cliente()
-    outro.imagem[0x100:0x106] = b"\x11\x22\x33\x44\x55\x66"
+    outro.imagem[A.rva:A.rva + 6] = b"\x11\x22\x33\x44\x55\x66"
     r = mod.aplicar(2, LOG, pecas=outro)
 
     assert any("guardar" in x for x in r.recusados), r.recusados
-    assert bytes(outro.imagem[0x100:0x106]) == b"\x11\x22\x33\x44\x55\x66"
+    assert bytes(outro.imagem[A.rva:A.rva + 6]) == b"\x11\x22\x33\x44\x55\x66"
 
 
 def test_a_escrita_que_falha_NAO_vira_sucesso():
@@ -183,20 +239,29 @@ def test_o_interruptor_DESLIGA_tudo(monkeypatch):
 
 
 # ---------------------------------------------------------------------------
-# OS BYTES -- eles vieram de uma medição, e não podem mudar por acidente
+# OS NÚMEROS -- eles vieram de uma medição, e não podem mudar por acidente
 # ---------------------------------------------------------------------------
 
 def test_os_bytes_sao_os_MESMOS_do_patcher():
     """Extraídos do inicializador estático do `BlazesBot - PetBug.exe`.
 
     Se alguém "arrumar" um destes valores sem medir de novo, o patch passa a
-    escrever outra coisa no código do jogo. Ver
-    `docs/decisoes/pet-bug-engenharia-reversa.md`.
+    escrever outra coisa no código do jogo.
     """
     assert A.bytes_ == bytes.fromhex("898fa8100000")   # mov [edi+0x10A8], ecx
     assert B.bytes_ == bytes.fromhex("89bea8100000")   # mov [esi+0x10A8], edi
     assert mod.SUBSTITUICAO == b"\x90" * 6
     assert len(A.bytes_) == len(B.bytes_) == len(mod.SUBSTITUICAO) == 6
+
+
+def test_os_RVAs_sao_os_MEDIDOS_em_memoria_viva():
+    """Conferidos nos SEIS clientes abertos, com o patcher já aplicado:
+
+        guardar  rva 0x5CFA0B  PATCHEADO (6 NOPs)  em todos
+        limpar   rva 0x057A02  PATCHEADO (6 NOPs)  em todos
+    """
+    assert A.rva == 0x5CFA0B
+    assert B.rva == 0x057A02
 
 
 # ---------------------------------------------------------------------------
