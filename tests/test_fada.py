@@ -30,6 +30,7 @@ import pytest
 
 import blazesbot.bot.fada_reviver as mod_reviver
 from blazesbot.bot import fada as mod
+from blazesbot.bot import fada_ociosa
 from blazesbot.bot import mural, mural_da_morte
 
 
@@ -870,7 +871,7 @@ def test_ja_de_pe_nao_aperta_ao_levantar():
     jogo.sentado = False
     f = _fada(jogo)
     f._sentada = True                     # controle interno errado
-    f._levantar()
+    fada_ociosa.levantar(f)
     assert jogo.sentadas == 0
     assert f._sentada is False
 
@@ -911,7 +912,7 @@ def test_a_limpeza_da_bolsa_AVISA_que_vai_sumir():
         validades.append(mural._FADAS["fada"][2])
 
     f = _fada(jogo, cuidar_do_pet=lambda: None, limpar_a_bolsa=limpar)
-    f._cuidados_de_ociosa()
+    fada_ociosa.cuidados(f)
 
     assert validades, "a bolsa nem foi limpa"
     assert validades[0] > mural.SILENCIO_DA_FADA, validades
@@ -923,7 +924,7 @@ def test_a_validade_longa_NAO_SOBRA_depois_da_limpeza():
     sempre -- senão o aviso vira desculpa permanente."""
     jogo = _Jogo()
     f = _fada(jogo, cuidar_do_pet=lambda: None, limpar_a_bolsa=lambda: None)
-    f._cuidados_de_ociosa()
+    fada_ociosa.cuidados(f)
 
     assert mural._FADAS["fada"][2] == mural.SILENCIO_DA_FADA
 

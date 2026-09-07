@@ -209,6 +209,19 @@ time a flag não faz nada.
   bate (aí há prova de que o clique pegou outra pessoa). Exigi-lo para curar
   fez a Fada clicar 357 vezes sem curar ninguém: portão que falha fechado é
   pior que portão nenhum.
+- **ELA VOLTA AO PONTO ONDE COMEÇOU** (07/09/2026). A Fada não anda sozinha,
+  mas é ARRASTADA: a cura em grupo tem alcance e seguir o time que avança a
+  tira do lugar seguro. O ponto é a **primeira posição lida** quando ela
+  começa — não há waypoint fora da cave. A conferência tem cadência
+  (`fada_ociosa.SEGUNDOS_ENTRE_CONFERENCIAS_DO_PONTO`) e a mecânica é a MESMA
+  do APP (`core/volta_ao_ponto.py`).
+- **ANDAR EXCLUI SENTAR, e sentar exclui andar.** A tecla de sentar
+  interrompe a ordem de andar do minimapa, e a Fada senta a cada giro por
+  desenho — então, enquanto ela está voltando ao ponto, o descanso e os
+  cuidados de ociosa NÃO acontecem. A marca de "estou indo" dura a cadência
+  inteira; sem isso ela mandaria andar e se sentaria 0,1 s depois.
+- **ANDAR SÓ COM A FILA VAZIA E FORA DE BATALHA** — o mesmo lugar do laço em
+  que ela cuida do pet e da bolsa, e pelo mesmo motivo.
 - **NENHUMA VÍTIMA LEVA MAIS QUE `MAXIMO_DE_TENTATIVAS_POR_VITIMA` CLIQUES.**
   A contagem é POR VÍTIMA, e quem estoura sai da fila e se vira com poção.
   Sem esse freio, qualquer defeito de seleção vira centenas de cliques — e

@@ -89,6 +89,7 @@ from ...core import (
     coleira_do_ponto,
     diagnostico_fino,
     target_hybrid,
+    volta_ao_ponto,
 )
 from ...core.inputs import Input
 from ...core.pet import SEGUNDOS_PARA_A_COMIDA_SER_USADA, PetFeeder
@@ -166,7 +167,10 @@ ESPERA_DEPOIS_DE_INVOCAR = 1
 
 # Constantes mantidas para compatibilidade com testes e configuração.
 # O executor NÃO usa mais estas constantes para movimento (ecossistema cego).
-TOLERANCIA_POSICAO = 1
+#
+# A TOLERÂNCIA MORA NO `core/` desde 07/09/2026: a Fada passou a usar a mesma
+# régua, e número lido por dois lados mora num lugar só.
+TOLERANCIA_POSICAO = volta_ao_ponto.TOLERANCIA
 
 # Quanto se espera a flag de combate BAIXAR depois de o alvo cair.
 #
@@ -2391,12 +2395,12 @@ class ExecutorDeMacro:
         """
         if self._base_pos is None:
             return
-        # Converte coordenada da base em pixel do minimapa a partir da posição ATUAL.
-        pixel = coord_para_pixel_do_minimapa(
-            pos_atual, self._base_pos, self._minimap_center
-        )
-        # Clique direito único no minimapa = ordem de andar.
-        self.input.right_click(pixel[0], pixel[1], repetir=False)
+        # A MECÂNICA MORA NO `core/` desde 07/09/2026 -- a Fada manda andar do
+        # mesmo jeito, e duas cópias disto seriam duas chances de só uma ser
+        # corrigida. A espera continua aqui: ela é política do APP.
+        volta_ao_ponto.mandar_andar(
+            pos_atual, self._base_pos, self._minimap_center,
+            lambda x, y: self.input.right_click(x, y, repetir=False))
         self._esperar_chegar_na_base(SEGUNDOS_PARA_A_TRAVA_DEVOLVER)
 
     def _esperar_chegar_na_base(self, teto: float) -> bool:

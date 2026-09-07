@@ -70,7 +70,7 @@ import time
 from collections.abc import Callable
 from typing import Any
 
-from . import fada_reviver
+from . import fada_ociosa, fada_reviver
 
 # Cadência do laço da Fada quando não há nada a fazer.
 #
@@ -119,23 +119,6 @@ MAXIMO_DE_TENTATIVAS_POR_VITIMA = 3
 # de fato uma tentativa nova.
 ESPERA_DEPOIS_DE_ERRAR = 0.333
 
-# De quanto em quanto tempo a Fada cuida do pet e da bolsa, ESTANDO OCIOSA.
-#
-# Decisão do usuário em 01/09/2026: *"essas verificações podem ser feitas
-# enquanto a fada está ociosa, mas não deixa direto, para não ficar pesando"*.
-#
-# Trinta segundos porque nenhuma das duas é urgente: pet sumido e bolsa cheia se
-# resolvem em minutos, não em segundos. O que NÃO pode é a Fada gastar o laço
-# nisso -- ela existe para estar pronta quando alguém pedir cura.
-SEGUNDOS_ENTRE_CUIDADOS = 30.0
-
-# Por quanto tempo vale a batida dada ANTES de uma tarefa longa da ociosa.
-#
-# Medido pelo teto do próprio deletador: `TETO_DE_SEGUNDOS = 10.0` mais folga
-# para abrir e fechar a bolsa. Não é espera nova -- é a validade que a Fada
-# anuncia para o time enquanto está de cabeça na mochila.
-SEGUNDOS_DE_CUIDADO_LONGO = 12.0
-
 
 class FadaDoTime:
     """O laço da Fada. Não ataca, não roda macro: cura e senta.
@@ -166,6 +149,9 @@ class FadaDoTime:
         # REVIVER UM ALIADO CAÍDO. `None` = a conta não tem a tecla configurada,
         # e aí a Fada só cura -- os mortos se reviverm sozinhos no prazo deles.
         apertar_reviver: Callable[[], None] | None = None,
+        # VOLTAR AO PONTO INICIAL. Devolve `True` quando mandou andar. `None`
+        # (sem injeção) = a Fada fica onde está, como sempre ficou.
+        voltar_ao_ponto: Callable[[], bool] | None = None,
         apertar_sentar: Callable[[], None],
         auto_selecionar: Callable[[], None],
         # -- o mural
@@ -196,6 +182,9 @@ class FadaDoTime:
         self._clicar_no_retrato = clicar_no_retrato
         self._apertar_cura = apertar_cura
         self._apertar_reviver = apertar_reviver
+        self._voltar_ao_ponto = voltar_ao_ponto
+        self._proxima_conferencia_do_ponto = 0.0
+        self._andando_para_o_ponto = False
         self._avisou_sem_tecla_de_reviver = False
         self._tentativas_de_reviver: dict[str, int] = {}
         self.revives = 0
@@ -330,11 +319,17 @@ class FadaDoTime:
         if not fila:
             if mortos:
                 return fada_reviver.reviver(self, mortos[0])
-            self._cuidados_de_ociosa()
-            return self._descansar()
+            if fada_ociosa.voltar_ao_ponto_se_preciso(self):
+                # ANDANDO: não senta e não cuida de pet/bolsa nesta volta.
+                # `_descansar` aperta a tecla de sentar, e sentar no meio do
+                # caminho interrompe a ordem de andar -- a Fada ficaria a meio
+                # trajeto, que é o pior dos dois lugares.
+                return True
+            fada_ociosa.cuidados(self)
+            return fada_ociosa.descansar(self)
 
         if not self._tenho_mana_para_curar():
-            return self._descansar(por_falta_de_mana=True)
+            return fada_ociosa.descansar(self, por_falta_de_mana=True)
 
         # PERCORRE A FILA, não trava no primeiro.
         #
@@ -362,7 +357,7 @@ class FadaDoTime:
         Ela sai no instante em que a batalha acaba: quem termina isto é o time
         matando o que está batendo nela.
         """
-        self._levantar()
+        fada_ociosa.levantar(self)
         self._auto_selecionar()
         # TETO, e ele não é sobre desistir: é sobre DEVOLVER O CONTROLE ao laço
         # principal de tempos em tempos. Sem ele, uma batalha que não acaba (ou
@@ -382,124 +377,6 @@ class FadaDoTime:
             if not self._dormir(ESPERA_ENTRE_CURAS):
                 return False
         return self._continuar()
-
-    # -- descanso ----------------------------------------------------------
-
-    def _descansar(self, por_falta_de_mana: bool = False) -> bool:
-        """Sem ninguém para curar (ou sem mana), senta e recupera.
-
-        Sentar é a única coisa útil que ela pode fazer: não ataca, não coleta,
-        e a mana é o insumo da próxima cura.
-
-        PERGUNTA À MEMÓRIA ANTES DE APERTAR. A tecla é INTERRUPTOR: apertá-la
-        com ela já sentada a faz LEVANTAR -- o oposto do que se queria. O
-        controle interno (`_sentada`) não basta, porque ele descreve o que o bot
-        fez, e não o que aconteceu: um golpe levanta o personagem sem passar por
-        aqui, e um relogin devolve o estado sem avisar ninguém.
-
-        Regra do usuário em 01/09/2026, e vale para TODO lugar que senta: *"se
-        já estiver sentado é só não fazer nada"*.
-        """
-        no_chao = self._esta_sentado()
-        if no_chao is True:
-            # Já está lá. Só acerta o controle interno e sai.
-            self._sentada = True
-            return True
-        if no_chao is None and self._sentada:
-            # Sem leitura, o controle interno é tudo o que há.
-            return True
-        if por_falta_de_mana:
-            self.log.info("FADA: mana abaixo de %.0f%% — sentando para recuperar.",
-                          self.mana_para_sentar)
-        self._apertar_sentar()
-        self._sentada = True
-        return True
-
-    def _sair_do_descanso(self) -> None:
-        """Registra que o descanso acabou. **NÃO aperta tecla nenhuma.**
-
-        SENTAR NÃO É UMA TRAVA (regra do jogo, usuário, 01/09/2026): sentada, a
-        Fada clica, seleciona e cura normalmente, e o estado sai sozinho na
-        primeira ação que ela tomar. O que sentar faz é AUMENTAR a regeneração
-        base de vida e de mana -- que é exatamente o que ela veio buscar.
-
-        ISTO APERTAVA A TECLA E CHAMAVA-SE `_levantar`. Apertar era pior que
-        inútil: a tecla é INTERRUPTOR, então se ela já tivesse saído do chão
-        sozinha (levou dano, a volta anterior clicou em alguém), o toque a
-        SENTAVA -- bem na hora de curar, que é o único momento em que ela tem
-        pressa. O toque também jogava fora a regeneração do caminho.
-
-        O QUE FICOU É SÓ A CONTABILIDADE, e ela continua necessária: `_sentada`
-        é a histerese da mana (`_tenho_mana_para_curar` pede
-        `mana_para_voltar` enquanto sentada e `mana_para_sentar` de pé). Sem
-        zerar a marca aqui, ela ficaria presa no patamar alto para sempre.
-        """
-        self._sentada = False
-
-    def _cuidados_de_ociosa(self) -> None:
-        """Pet e bolsa, só com a fila vazia e fora de batalha.
-
-        A CADÊNCIA EXISTE PARA NÃO PESAR: os dois abrem janela e clicam, e fazer
-        isso a cada giro do laço gastaria a Fada em manutenção quando ela
-        deveria estar pronta para curar.
-
-        PARA NA HORA se alguém entrar na fila ou se ela entrar em batalha -- por
-        isso a condição é conferida ANTES de cada um dos dois, e não só na
-        entrada. Abrir o inventário com alguém esperando cura mata o alguém.
-
-        SEM TECLA DE PET NÃO HÁ NADA A FAZER -- nem pet, nem bolsa. Decisão do
-        usuário: uma Fada sem pet não cata item nenhum, então não tem lixo para
-        apagar. É quem injeta que decide isso (passa `None` nos dois).
-        """
-        if time.monotonic() < self._proximo_cuidado:
-            return
-        if not self._posso_cuidar():
-            return
-        self._proximo_cuidado = time.monotonic() + SEGUNDOS_ENTRE_CUIDADOS
-        if self._cuidar_do_pet is not None:
-            self._bater_por(SEGUNDOS_DE_CUIDADO_LONGO)
-            self._cuidar_do_pet()
-        if self._limpar_a_bolsa is not None and self._posso_cuidar():
-            # A BOLSA É A TAREFA MAIS LONGA DA FADA -- teto de 10 s no
-            # deletador, o dobro do silêncio que a mata. Ela avisa ANTES por
-            # quanto tempo vai sumir, senão quem chegar na fila no meio da
-            # limpeza conclui que ela morreu e vai de poção.
-            self._bater_por(SEGUNDOS_DE_CUIDADO_LONGO)
-            self._limpar_a_bolsa()
-            # E bate de novo ao voltar, para a validade longa não sobrar: a
-            # partir daqui ela está pronta, e uma morte agora tem de aparecer
-            # nos 5 s de sempre.
-            self.mural.bater_fada(self.meu_login, em_batalha=self._em_briga)
-
-    def _bater_por(self, segundos: float) -> None:
-        """"Vou sumir por até `segundos`, e estou viva." Ver `TETO_DA_BATIDA_LONGA`."""
-        self.mural.bater_fada(self.meu_login, em_batalha=self._em_briga,
-                              vale_por=segundos)
-
-    def _posso_cuidar(self) -> bool:
-        """Nada na fila e fora de batalha."""
-        if self._em_batalha() is True:
-            return False
-        fila = [x for x in self.mural.fila_de_cura(self._membros_do_time())
-                if x != self.meu_login]
-        return not fila
-
-    def _levantar(self) -> None:
-        """Sai do chão para agir.
-
-        A tecla de sentar é INTERRUPTOR e o bot não sabe em que estado está --
-        por isso só este par de métodos mexe em `_sentada`. Apertar por engano
-        com ela de pé a faria sentar bem na hora de curar.
-        """
-        no_chao = self._esta_sentado()
-        if no_chao is False:
-            # Já está de pé -- apertar aqui a faria SENTAR bem na hora de curar.
-            self._sentada = False
-            return
-        if no_chao is None and not self._sentada:
-            return
-        self._apertar_sentar()
-        self._sentada = False
 
     def _tenho_mana_para_curar(self) -> bool:
         """Piso para começar, teto para voltar.
@@ -561,7 +438,7 @@ class FadaDoTime:
             return False, self._dormir(ESPERA_DEPOIS_DE_ERRAR)
         self._avisei_fora_do_painel.discard(nick)
 
-        self._sair_do_descanso()
+        fada_ociosa.sair_do_descanso(self)
         if not self._clicar_no_retrato(slot):
             return False, False
 
@@ -725,7 +602,7 @@ class FadaDoTime:
         Ela se seleciona com a tecla de auto-seleção -- a mesma que a medição de
         28/08/2026 provou pôr o próprio id no `TARGET_ID`.
         """
-        self._sair_do_descanso()
+        fada_ociosa.sair_do_descanso(self)
         self._auto_selecionar()
         alvo_pct = self._parar_pct()
         self.log.info("FADA: minha vida em %.0f%% — curando a mim mesma até %.0f%%.",

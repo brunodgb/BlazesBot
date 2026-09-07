@@ -474,3 +474,72 @@ sozinha e segue farmando até o time existir de novo. Recriar a party
 automaticamente continua sendo trabalho pendente — e quando existir, este portão
 passa a ser o gatilho natural dele (é o único lugar do código que sabe, com
 prova, que a party caiu).
+
+## A Fada volta ao ponto inicial — 07/09/2026
+
+*"A fada deve voltar ao ponto inicial para evitar zonas de risco. Implemente uma
+rotina de verificação de distância que opere com baixo custo computacional.
+Ative a rotina de retorno ao ponto de origem para ela tambem"* — usuário.
+
+**Ela não anda sozinha, e ainda assim sai do lugar.** Não há nada no laço dela
+que ande: o que a move é o jogo. A cura em grupo tem alcance, o time avança
+matando, e a Fada acaba puxada atrás — até parar num lugar que ninguém escolheu.
+Era o único modo do bot sem trava de posição, e o APP já tinha a dele desde o
+início.
+
+**O ponto é onde ela estava quando começou**, guardado na primeira leitura de
+posição. Não é coordenada configurada, e por três motivos: é o mesmo critério
+que o APP já usa, o usuário posiciona a Fada onde quer antes de ligar, e fora da
+cave não existem waypoints (decisão dele em 06/09/2026: *"como no caso do APP
+não vão existir waypoints, vai ter que usar o ponto inicial como base"*).
+
+**A mecânica foi PROMOVIDA, não copiada.** `core/volta_ao_ponto.py` tem as duas
+coisas que o APP já fazia — a régua do "já cheguei" e o clique direito único no
+minimapa — e agora os dois ecossistemas leem o mesmo `TOLERANCIA = 1`. O que
+NÃO subiu é a política, porque ali eles são diferentes: o APP não anda em
+batalha, a Fada não anda com alguém na fila de cura.
+
+### O que quase virou defeito: sentar cancela a caminhada
+
+A Fada senta a cada giro do laço por desenho (sentada ela regenera, e é a única
+coisa útil que tem para fazer). A primeira versão desta rotina mandava andar e
+devolvia o controle — e o giro seguinte, 0,1 s depois, apertava a tecla de
+sentar e cancelava a ordem. Ela ficaria a meio caminho: fora do ponto seguro e
+sem chegar em lugar nenhum.
+
+Por isso `voltar_ao_ponto_se_preciso` devolve **`True` enquanto está indo**, e o
+ramo ocioso sai na hora quando ele diz isso — sem sentar, sem pet e sem bolsa. E
+a marca **dura a cadência inteira** (3 s, ~30 giros), senão a proteção valeria
+para um giro só. Está travado em `tests/test_volta_ao_ponto.py`.
+
+### O custo: medido, porque a pergunta foi feita
+
+*"E hoje o bot fica olhando direto se está ou não sentado a fada, isso não
+consome muito? Não seria melhor otimizar e deixar de forma que opere com baixo
+custo computacional"* — usuário, 07/09/2026.
+
+**Medido nesta máquina no mesmo dia:**
+
+| operação | custo | quantas vezes é um `is_sitting` |
+|---|---|---|
+| `ReadProcessMemory` (uma leitura) | **0,86 µs** | — |
+| `is_sitting` (duas leituras: o ponteiro do jogador + o byte) | **1,71 µs** | 1x |
+| `capture_window` (uma captura de janela) | **22,2 ms** | **12 985x** |
+
+A 10 Hz, que é a cadência do laço da Fada, `is_sitting` custa **0,017 ms por
+segundo — 0,0017% de um núcleo**. Não há o que otimizar ali: a conta é quatro
+ordens de grandeza menor que qualquer coisa que a tela custe, e a leitura não é
+enfeite — ela é o que impede o erro do INTERRUPTOR (apertar a tecla sem saber o
+estado sentaria a Fada bem na hora de curar, que é o único momento em que ela
+tem pressa).
+
+**Onde o custo realmente mora, se um dia importar, é no giro do laço** (10 Hz), e
+não em qualquer leitura individual dele: baixar a cadência da Fada corta TODAS
+as leituras dela de uma vez. Não foi feito porque não há sintoma — e porque
+reagir mais devagar a um pedido de cura tem custo em vida, que é caro de
+verdade.
+
+**A conferência do ponto, por outro lado, TEM cadência (3 s).** Não por causa do
+custo da leitura — pelo mesmo motivo que o pet e a bolsa têm: perguntar dez
+vezes por segundo uma coisa que só muda quando o time anda é gastar sem chance
+de resposta diferente.

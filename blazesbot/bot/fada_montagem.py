@@ -22,6 +22,7 @@ import time
 
 import win32gui
 
+from ..core import volta_ao_ponto
 from ..core.coords import coords_for_window
 from ..core.memory import Memory
 from .context import Disconnected
@@ -91,6 +92,55 @@ def rodar_a_fada(sup, so_montar: bool = False):
                 return False
             time.sleep(min(0.05, max(0.0, fim - time.monotonic())))
         return not sup.stop_event.is_set()
+
+    # ==================================================================
+    # O PONTO INICIAL DA FADA
+    # ==================================================================
+    #
+    # Pedido do usuário em 07/09/2026: *"a fada deve voltar ao ponto inicial
+    # para evitar zonas de risco"*. Ela não anda de propósito, mas é ARRASTADA:
+    # a cura em grupo tem alcance, e seguir o time que avança a tira do lugar
+    # seguro sem ninguém mandar.
+    #
+    # O PONTO É ONDE ELA ESTAVA QUANDO COMEÇOU, e não uma coordenada
+    # configurada. Motivo: é o mesmo critério que o APP já usa (a base é a
+    # primeira posição lida), o usuário posiciona a Fada onde quer antes de
+    # ligar, e não existe waypoint fora da cave -- decisão dele em 06/09/2026:
+    # *"como no caso do APP não vão existir waypoints, vai ter que usar o ponto
+    # inicial como base"*.
+    #
+    # SEM CENTRO DE MINIMAPA, NÃO ANDA. `coords_for_window` responde por
+    # resolução, então isso só acontece com janela em tamanho não medido -- e
+    # aí a resposta certa é ficar parada, não clicar num pixel adivinhado.
+    ponto_inicial: list[tuple[int, int] | None] = [None]
+    centro_do_minimapa = getattr(pontos, "minimap_center", None)
+
+    def voltar_ao_ponto() -> bool:
+        """`True` = mandei andar de volta. A distância é UMA leitura de memória.
+
+        BARATO POR DESENHO (o pedido era explícito: *"uma rotina de verificação
+        de distância que opere com baixo custo computacional"*). O caro seria
+        decidir isto por tela; aqui não há captura nenhuma: lê-se a posição
+        (quatro bytes) e compara-se com a guardada. A cadência é de quem chama
+        -- `fada.SEGUNDOS_ENTRE_CONFERENCIAS_DO_PONTO`.
+        """
+        pos = _seguro(memoria.position)
+        if pos is None:
+            return False
+        if ponto_inicial[0] is None:
+            ponto_inicial[0] = pos
+            log.info("FADA: ponto inicial guardado em %s — volto para cá se "
+                     "me arrastarem.", pos)
+            return False
+        if volta_ao_ponto.cheguei(pos, ponto_inicial[0]) is not False:
+            # `True` (estou no ponto) e `None` (não sei) têm o mesmo desfecho:
+            # não andar. Andar sem saber onde se está é como o bot se perde.
+            return False
+        log.info("FADA: fui arrastada para %s (o ponto é %s) — voltando.",
+                 pos, ponto_inicial[0])
+        return volta_ao_ponto.mandar_andar(
+            pos, ponto_inicial[0], centro_do_minimapa,
+            lambda x, y: entrada.right_click(x, y, repetir=False))
 
     # ==================================================================
     # OS CUIDADOS DE OCIOSA: pet e bolsa
@@ -169,6 +219,7 @@ def rodar_a_fada(sup, so_montar: bool = False):
         parar_pct=lambda: float(sup._dono_da_macro().settings.app.cura_parar_pct),
         cuidar_do_pet=cuidar_do_pet,
         limpar_a_bolsa=limpar_a_bolsa_da_fada,
+        voltar_ao_ponto=voltar_ao_ponto,
     )
 
     # O PRÓPRIO ID, PUBLICADO ANTES DE COMEÇAR. É o que permite a QUALQUER

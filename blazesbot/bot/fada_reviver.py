@@ -57,6 +57,8 @@ from __future__ import annotations
 
 import time
 
+from . import fada_ociosa
+
 # Por quanto tempo a Fada insiste num mesmo morto antes de passar adiante.
 #
 # Decisão do usuário em 06/09/2026: *"deve tentar por pelo menos 10 segundos, aí
@@ -101,7 +103,7 @@ def reviver(fada, login_vitima: str) -> bool:
                 "configurada (Editar conta > Teclas > Magias de Suporte). Ele "
                 "vai se reviver sozinho quando o prazo dele vencer.",
                 login_vitima)
-        return fada._descansar()
+        return fada_ociosa.descansar(fada)
 
     nick = fada._nick_de(login_vitima) or fada.mural.nick_do_morto(login_vitima)
     if not nick:
@@ -109,7 +111,7 @@ def reviver(fada, login_vitima: str) -> bool:
         # sozinho e ela se revive; aqui só não há como ajudar.
         fada.log.warning("FADA: %s morreu e eu não sei o nick dele — não sei "
                          "em quem clicar.", login_vitima)
-        return fada._descansar()
+        return fada_ociosa.descansar(fada)
 
     slot = fada._slot_do_nick(nick)
     if slot is None:
@@ -125,7 +127,7 @@ def reviver(fada, login_vitima: str) -> bool:
         # (1168 na medição), e apertar sem ter só queima a recarga.
         fada.log.info("FADA: %s está morto, mas minha mana não dá para o "
                       "reviver agora.", nick)
-        return fada._descansar(por_falta_de_mana=True)
+        return fada_ociosa.descansar(fada, por_falta_de_mana=True)
 
     return _insistir(fada, login_vitima, nick, slot)
 
@@ -137,7 +139,7 @@ def _insistir(fada, login_vitima: str, nick: str, slot: int) -> bool:
     while (time.monotonic() < fim and tentativa < MAXIMO_DE_TOQUES
            and fada._continuar()):
         tentativa += 1
-        fada._sair_do_descanso()
+        fada_ociosa.sair_do_descanso(fada)
         if not fada._clicar_no_retrato(slot):
             return False
 
