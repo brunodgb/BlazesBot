@@ -676,6 +676,13 @@ class HHRoutine:
         limite = comeco + MAX_SEGUNDOS_NA_PORTA
         tentativa = 0
 
+        # REAFIRMA A TECLA PRESA -- o mesmo que o BC faz antes de cada
+        # tentativa de entrada. Tecla fisicamente presa repete sozinha, e
+        # reafirmar é o que devolve o esconder depois de um relogin (janela
+        # nova, estado zerado). Ver `esconder_jogadores.prender_a_tecla`.
+        esconder_jogadores.prender_a_tecla(
+            ctx.settings.keys.hide_players, ctx.segurar_para_sempre, ctx.log)
+
         with esconder_jogadores.segurado(
                 tecla=ctx.settings.keys.hide_players,
                 segurar=ctx.key_down, soltar=ctx.key_up, log=ctx.log):

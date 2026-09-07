@@ -39,6 +39,8 @@ def _entrada(hwnd, pid_da_janela, nome_do_processo="client.exe"):
     e._bloqueadas = 0
     e._motivo_do_bloqueio = None
     e._teclas_presas = {}
+    # A lista de INTOCÁVEIS -- ver `Input.segurar_para_sempre`.
+    e._presas_para_sempre = set()
     e._shield = None
     return e
 

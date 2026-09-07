@@ -238,26 +238,59 @@ class AccountSupervisor(threading.Thread):
         self.own_stop.set()
 
     def _aplicar_petbug(self) -> None:
-        """Clica em `Patch` no `RaaskiBot - PetBug.exe`. COMPLEMENTO.
+        """Esconde os jogadores e aplica o pet bug -- NESTA conta, por conta.
 
-        Nunca derruba a sessão: é um programa de terceiro, e uma conta logada e
-        pronta para farmar não pode ser perdida porque um patcher externo não
-        respondeu. Falha vira aviso.
+        =================================================================
+        POR CONTA, E ESSE É O PONTO -- 07/09/2026
+        =================================================================
+
+        Isto era um clique no `BlazesBot - PetBug.exe`. Decisão do usuário
+        depois de o programa ser lido por dentro:
+
+            *"O ideal é ou usar o 'BlazesBot - PetBug.exe' ou fazer por dentro
+            do bot; os 2 ao mesmo tempo não faz sentido (...) ele executa isso
+            em TODOS os 'client.exe' SEM DISTINÇÃO, até por isso queria trazer
+            para dentro do bot, juntamente com o fato de que, como o bot é meu,
+            eu não queria executar algo de terceiro."*
+
+        O programa não sabia distinguir conta: um clique patchava tudo que
+        estivesse aberto, inclusive as contas de APP, que o usuário decidiu não
+        tocar. Daqui de dentro o alvo é `self.pid` e mais nada -- e quem chega
+        aqui já passou pelo `if self.account.farms:` (só BC e HH).
+
+        Duas metades, e as duas vieram da engenharia reversa
+        (`docs/decisoes/pet-bug-engenharia-reversa.md`):
+
+          ESCONDER ... `WM_KEYDOWN` da tecla de esconder, sem `WM_KEYUP`;
+          PET BUG .... dois `mov` de seis bytes NOPados no `client.exe`.
+
+        NUNCA DERRUBA A SESSÃO: uma conta logada e pronta para farmar não pode
+        ser perdida porque um patch não pegou. Falha vira aviso.
         """
-        from ..core import patch_do_cliente, petbug
+        from ..core import esconder_jogadores, patch_do_cliente, petbug
+        from ..core.inputs import Input as _Input
 
-        # O PATCH NATIVO RODA JUNTO, NÃO NO LUGAR -- 07/09/2026.
+        # ESCONDER JOGADORES: a tecla PRESA, e nunca solta -- 07/09/2026.
         #
-        # A engenharia reversa do patcher está em
-        # `docs/decisoes/pet-bug-engenharia-reversa.md`: são dois `mov` de seis
-        # bytes NOPados no `client.exe`, mais um F12 preso na janela. O patch de
-        # memória agora existe aqui dentro; o F12 ainda é do programa.
+        # Relato do usuário depois de reabrir o bot: *"não desapareceu com
+        # todos, é importante desaparecer com todo mundo assim que começa a
+        # executar; realmente é sobre deixar a tecla F12 down sempre clicado,
+        # nunca soltar"*.
         #
-        # OS DOIS JUNTOS DE PROPÓSITO, e é a regra da casa para mecanismo novo:
-        # mede-se contra a fonte antiga NO MESMO INSTANTE, e a antiga vira
-        # reserva em vez de sair. Como o patch é idempotente, quem chegar
-        # depois lê "já estava" -- e é essa linha no log que vai dizer, em
-        # produção, se o nativo pode assumir sozinho.
+        # É exatamente o que o patcher faz, e agora o bot faz sozinho -- sem
+        # depender de o programa de terceiro ter achado a janela certa. Ver
+        # `core/esconder_jogadores.prender_a_tecla`.
+        try:
+            tecla = getattr(self.account.settings.keys, "hide_players", "")
+            if esconder_jogadores.prender_a_tecla(
+                    tecla, _Input(self.hwnd).segurar_para_sempre, self.log):
+                self.log.info(
+                    "Esconder jogadores: tecla %r PRESA (KEYDOWN sem KEYUP) — "
+                    "os outros personagens somem e ficam sumidos.", tecla)
+        except Exception as exc:
+            self.log.warning("Esconder jogadores: não deu para prender a "
+                             "tecla (a sessão segue): %s", exc)
+
         try:
             nativo = patch_do_cliente.aplicar(self.pid, self.log)
             if nativo.ok:
@@ -267,6 +300,9 @@ class AccountSupervisor(threading.Thread):
         except Exception as exc:
             self.log.warning("PET BUG (nativo) falhou (a sessão segue): %s", exc)
 
+        # O PROGRAMA DE TERCEIRO É A RESERVA, e está DESLIGADO
+        # (`petbug.ATIVADO`). Ele continua aqui porque desligar não é apagar:
+        # se o nativo precisar ser desligado um dia, religar este é uma linha.
         try:
             resultado = petbug.aplicar_patch(log=self.log)
         except Exception as exc:

@@ -5,24 +5,7 @@ O BotContext é o objeto que todos os módulos recebem: memória, input,
 coordenadas, configuração, log e sinalização de parada. Ter um único ponto
 de acesso evita passar seis parâmetros em cada função.
 """
-from __future__ import annotations
-
-import logging
-import threading
-import time
-from dataclasses import dataclass
-from pathlib import Path
-from time import monotonic
-from typing import TYPE_CHECKING
-
-from ..config import CAVE_BC, CAVE_HH, Account, AccountSettings, BotConfig
-from ..core.coords import Coords, coords_for_size
-from ..core.inputs import Input, jitter
-from ..core.memory import POSE_DA_CAMERA, Memory
-from ..core.target_hybrid import TargetHybrid
-from ..core.vision import TemplateLibrary
-
-if TYPE_CHECKING:
+from __future__ import annotationsimport loggingimport threadingimport timefrom dataclasses import dataclassfrom pathlib import Pathfrom time import monotonicfrom typing import TYPE_CHECKINGfrom ..config import CAVE_BC, CAVE_HH, Account, AccountSettings, BotConfigfrom ..core.coords import Coords, coords_for_sizefrom ..core.inputs import Input, jitterfrom ..core.memory import POSE_DA_CAMERA, Memoryfrom ..core.target_hybrid import TargetHybridfrom ..core.vision import TemplateLibraryif TYPE_CHECKING:
     from .watchdog import Watchdog
 
 
@@ -530,6 +513,10 @@ class BotContext:
             return False
         self.wait_if_paused()
         return self.input.key_down(key)
+
+    def segurar_para_sempre(self, key: str) -> bool:
+        """A tecla que NUNCA se solta -- ver `Input.segurar_para_sempre`."""
+        return self.input.segurar_para_sempre(key)
 
     def key_up(self, key: str) -> bool:
         if not key:

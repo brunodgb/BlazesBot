@@ -77,20 +77,7 @@ quatro veem que acabou de ser aplicado e seguem. O estado é de MÓDULO com lock
 igual ao quadro de convites do `bot/mural.py` -- os supervisores rodam no mesmo
 processo.
 """
-from __future__ import annotations
-
-import ctypes
-import re
-import subprocess
-import threading
-import time
-from dataclasses import dataclass
-from pathlib import Path
-
-import win32con
-import win32gui
-
-__all__ = ["ATIVADO", "Resultado", "aplicar_patch"]
+from __future__ import annotationsimport ctypesimport reimport subprocessimport threadingimport timefrom dataclasses import dataclassfrom pathlib import Pathimport win32conimport win32gui__all__ = ["ATIVADO", "Resultado", "aplicar_patch"]
 
 # ===========================================================================
 # INTERRUPTOR
@@ -101,7 +88,28 @@ __all__ = ["ATIVADO", "Resultado", "aplicar_patch"]
 # Existe porque isto CHAMA UM PROGRAMA DE TERCEIRO cujo código ninguém tem. Se
 # ele mudar de layout, de título ou de comportamento, desligar aqui é mais rápido
 # que descobrir o que quebrou.
-ATIVADO = True
+# =========================================================================
+# DESLIGADO EM 07/09/2026 -- o bot passou a fazer isto sozinho
+# =========================================================================
+#
+# Decisão do usuário, depois da engenharia reversa
+# (`docs/decisoes/pet-bug-engenharia-reversa.md`):
+#
+#     *"O ideal é ou usar o 'BlazesBot - PetBug.exe' ou fazer por dentro do
+#     bot; os 2 ao mesmo tempo não faz sentido, pois fazem a mesma função (...)
+#     ele executa isso em TODOS os 'client.exe' SEM DISTINÇÃO, até por isso
+#     queria trazer para dentro do bot, juntamente com o fato de que, como o
+#     bot é meu, eu não queria executar algo de terceiro."*
+#
+# As três razões, e a do meio é a técnica: um clique no programa patcha TODO
+# cliente aberto, inclusive as contas de APP, que o usuário decidiu não tocar.
+# Por conta, isso só dá para fazer de dentro -- e é o que
+# `core/patch_do_cliente.py` mais `esconder_jogadores.prender_a_tecla` fazem.
+#
+# INTERRUPTOR E NÃO REMOÇÃO, pela regra da casa: o caminho continua testado
+# (`tests/test_petbug.py` força `ATIVADO = True`), então religar não é ligar
+# código não verificado. Serve de rede se o nativo precisar ser desligado.
+ATIVADO = False
 
 # Onde o programa mora -- junto do bot, na raiz do projeto.
 #

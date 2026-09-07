@@ -389,6 +389,8 @@ class Input:
         # `key_down`. Por `Input`, ou seja por janela: uma conta não solta a
         # tecla da outra.
         self._teclas_presas: dict[str, int] = {}
+        # Teclas que NUNCA se solta -- ver `segurar_para_sempre`.
+        self._presas_para_sempre: set[str] = set()
 
         _logger.info(f"Input.__init__ chamado (hwnd={hwnd})")
 
@@ -565,6 +567,58 @@ class Input:
             self._enviar_tecla(WM_KEYDOWN, vk)
         return True
 
+    def segurar_para_sempre(self, name: str) -> bool:
+        """Aperta e NUNCA solta -- e REAFIRMA a cada chamada.
+
+        =================================================================
+        DE ONDE VEIO: o `BlazesBot - PetBug.exe`, lido por dentro em 07/09/2026
+        =================================================================
+
+        O patcher esconde os jogadores mandando
+        `PostMessage(hwnd, WM_KEYDOWN, VK_F12, 0)` **e nunca o WM_KEYUP**. Não é
+        descuido: a tecla esconde ENQUANTO ESTÁ APERTADA, então um KEYDOWN que
+        nunca é solto deixa o cliente achando que ela continua pressionada.
+        Detalhe em `docs/decisoes/pet-bug-engenharia-reversa.md`.
+
+        É o mesmo efeito que o truque do chat de `esconder_jogadores` produzia
+        (grudar a tecla), por um caminho que não abre o chat -- e o chat aberto
+        é o defeito mais caro daquele módulo.
+
+        REAFIRMA A CADA CHAMADA, e é isso que a separa de `key_down`. Uma tecla
+        fisicamente presa não manda UM `WM_KEYDOWN`: ela manda a repetição
+        automática, dezenas por segundo. Reenviar é ser fiel ao que se está
+        imitando, e é o que recupera o estado se o cliente o tiver perdido.
+        `key_down` faz o contrário de propósito -- conta aninhamento e manda a
+        mensagem UMA vez.
+
+        A TECLA FICA NA LISTA DE INTOCÁVEIS: `key_up` passa a recusá-la. Sem
+        isso, qualquer `segurado(...)` da mesma tecla soltaria no fim do bloco
+        justamente o que aqui se quer permanente.
+        """
+        vk = VK_CODES.get(str(name).upper())
+        if vk is None:
+            return False
+        chave = str(name).upper()
+        self._presas_para_sempre.add(chave)
+        self._teclas_presas[chave] = max(1, self._teclas_presas.get(chave, 0))
+        self._enviar_tecla(WM_KEYDOWN, vk)
+        return True
+
+    def soltar_de_vez(self, name: str) -> bool:
+        """Tira a tecla dos intocáveis e SOLTA. O desfazer de `segurar_para_sempre`.
+
+        Existe para o caso em que alguém precise devolver o controle -- e para o
+        teste, que não pode depender de um estado que nada desfaz.
+        """
+        chave = str(name).upper()
+        self._presas_para_sempre.discard(chave)
+        self._teclas_presas.pop(chave, None)
+        vk = VK_CODES.get(chave)
+        if vk is None:
+            return False
+        self._enviar_tecla(WM_KEYUP, vk)
+        return True
+
     def key_up(self, name: str) -> bool:
         """Solta a tecla quando o ÚLTIMO `key_down` aninhado for desfeito.
 
@@ -578,6 +632,11 @@ class Input:
         if vk is None:
             return False
         chave = str(name).upper()
+        if chave in self._presas_para_sempre:
+            # INTOCÁVEL -- ver `segurar_para_sempre`. Soltar aqui desfaria o
+            # esconder jogadores no fim de qualquer bloco que segure a mesma
+            # tecla, e o efeito só apareceria na tela, sem nada no log.
+            return False
         atual = self._teclas_presas.get(chave, 0)
         if atual <= 1:
             self._teclas_presas.pop(chave, None)

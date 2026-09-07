@@ -48,13 +48,26 @@ devolve "não sei" -- deixar como está é melhor que apostar.
 MÓDULO DE USO GERAL: recebe PEÇAS e não `BotContext`, no molde do
 `watchdog.avaliar_saude`. Qualquer ecossistema pode chamar.
 """
-from __future__ import annotations
+from __future__ import annotationsfrom collections.abc import Callablefrom dataclasses import dataclass__all__ = ["ATIVADO", "PRENDER_A_TECLA", "SEGURAR_ATIVADO", "TECLA_DO_CHAT",
+           "Resultado", "esconder_jogadores", "prender_a_tecla", "segurado"]
 
-from collections.abc import Callable
-from dataclasses import dataclass
-
-__all__ = ["ATIVADO", "SEGURAR_ATIVADO", "TECLA_DO_CHAT", "Resultado",
-           "esconder_jogadores", "segurado"]
+# ===========================================================================
+# A TECLA PRESA PARA SEMPRE -- o caminho do patcher, trazido em 07/09/2026
+# ===========================================================================
+#
+# `True` = o bot manda `WM_KEYDOWN` da tecla de esconder e NUNCA o `WM_KEYUP`,
+#          reafirmando de tempos em tempos. Sem chat, sem Enter, sem risco.
+#
+# É o que o `BlazesBot - PetBug.exe` faz, descoberto lendo o binário
+# (`docs/decisoes/pet-bug-engenharia-reversa.md`): a tecla esconde ENQUANTO
+# ESTÁ APERTADA, então um KEYDOWN que nunca é solto esconde para sempre.
+#
+# POR QUE ISTO É MELHOR QUE O TRUQUE DO CHAT: o truque desta casa prendia a
+# tecla e ABRIA O CHAT com Enter para "grudar" o estado -- e o chat que não
+# fecha é o defeito mais caro deste módulo (toda tecla do bot vira texto, e um
+# Enter posterior PUBLICA aquilo). O caminho do patcher chega no mesmo lugar
+# sem nunca tocar no chat.
+PRENDER_A_TECLA = True
 
 # ===========================================================================
 # INTERRUPTOR -- DESLIGADO EM 19/08/2026
@@ -100,6 +113,32 @@ ATIVADO = False
 # o caminho longo já corrigia o defeito do bloco curto e continua testado, então
 # religar não é ligar código não verificado.
 SEGURAR_ATIVADO = False
+
+def prender_a_tecla(tecla: str, segurar_para_sempre, log) -> bool:
+    """Deixa a tecla de esconder jogadores apertada, para sempre. `True` = mandou.
+
+    `segurar_para_sempre` é injetado (`Input.segurar_para_sempre`) -- este
+    módulo continua sem saber o que é janela.
+
+    PODE (E DEVE) SER CHAMADA DE NOVO. Uma tecla fisicamente presa repete
+    sozinha; reafirmar é imitar isso, e é o que recupera o estado quando o
+    cliente o perde -- num relogin, por exemplo, em que a janela é outra.
+
+    SEM TECLA CONFIGURADA NÃO HÁ O QUE FAZER, e isso não é erro: quem não
+    configurou o esconder simplesmente não usa.
+    """
+    if not PRENDER_A_TECLA:
+        return False
+    tecla = (tecla or "").strip()
+    if not tecla:
+        return False
+    try:
+        return bool(segurar_para_sempre(tecla))
+    except Exception as exc:
+        log.debug("Esconder jogadores: não deu para prender %r (%s).",
+                  tecla, exc)
+        return False
+
 
 # Tecla que abre e fecha o chat. Não é configurável: é o Enter, e ele não muda.
 TECLA_DO_CHAT = "ENTER"

@@ -101,7 +101,30 @@ idempotente, não cego por timer. O porquê está em
   `_procurar_entidade` varre (`docs/decisoes/alvo-o-que-esta-medido.md`, itens
   39–41). Achar o array de verdade é o que devolve a leitura do alvo.
 
-## PetBug — o que esconde os jogadores
+## Esconder jogadores e pet bug — feito PELO BOT, por conta
+
+- **O PROGRAMA DE TERCEIRO ESTÁ DESLIGADO** (`petbug.ATIVADO = False`,
+  07/09/2026). Decisão do usuário: *"ou usar o PetBug.exe ou fazer por dentro do
+  bot; os 2 ao mesmo tempo não faz sentido (...) ele executa isso em TODOS os
+  client.exe SEM DISTINÇÃO"*. Um clique no programa patchava até as contas de
+  APP. Interruptor e não remoção — religar é uma linha.
+- **A TECLA DE ESCONDER FICA PRESA, e nunca é solta** (`WM_KEYDOWN` sem
+  `WM_KEYUP`, `esconder_jogadores.prender_a_tecla`). A tecla esconde ENQUANTO
+  está apertada; nunca soltar é esconder para sempre — sem abrir o chat, que é
+  o defeito mais caro do truque antigo. `Input.key_up` RECUSA soltá-la.
+- **REAFIRMA-SE A TECLA**, no login e antes de cada tentativa de entrada (BC e
+  HH). Tecla fisicamente presa repete sozinha; reafirmar é imitar isso, e é o
+  que devolve o esconder depois de um relogin.
+- **O PATCH DE MEMÓRIA É NOSSO** (`core/patch_do_cliente.py`): dois
+  `mov [reg+0x10A8]` NOPados no `client.exe`, com os mesmos bytes do programa.
+  RECUSA quando o padrão não aparece exatamente uma vez, confere a releitura, e
+  é idempotente. Engenharia reversa completa em
+  `docs/decisoes/pet-bug-engenharia-reversa.md`.
+- **SÓ CONTAS DE CAVE (BC e HH).** Decisão do usuário: *"os APP não precisa
+  aplicar"*. O portão é `if self.account.farms:` (= `bc_farm or hh_farm`) e ele
+  não pode ser alargado.
+
+## PetBug (o programa de terceiro, hoje desligado)
 
 - **O PATCH DE MEMÓRIA É NOSSO AGORA** (`core/patch_do_cliente.py`, 07/09/2026):
   dois `mov [reg+0x10A8]` NOPados no `client.exe`, com os mesmos bytes do

@@ -57,8 +57,9 @@ ligar código não testado.
 | `NAO_LIMPAR_DUAS_VEZES_NA_MESMA_VOLTA` | `True` | [blazesbot/core/cadencia_da_bolsa.py:43](blazesbot/core/cadencia_da_bolsa.py#L43) | — | Interruptor do piso do conserto -- 06/09/2026. |
 | `ATIVADA` | `True` | [blazesbot/core/calibracao.py:82](blazesbot/core/calibracao.py#L82) | routine.py, vendedor.py | INTERRUPTOR |
 | `LIGADO` | `True` | [blazesbot/core/diagnostico_fino.py:28](blazesbot/core/diagnostico_fino.py#L28) | instrumentar_clique.py, supervisor.py, config.py, log_limitado.py, account_dialog.py | — |
-| `ATIVADO` | `False` | [blazesbot/core/esconder_jogadores.py:84](blazesbot/core/esconder_jogadores.py#L84) | deletador.py, diagnostico_do_link.py, supervisor.py, patch_do_cliente.py, petbug.py | INTERRUPTOR -- DESLIGADO EM 19/08/2026 |
-| `SEGURAR_ATIVADO` | `False` | [blazesbot/core/esconder_jogadores.py:102](blazesbot/core/esconder_jogadores.py#L102) | petbug.py | INTERRUPTOR DO F12 PRESO -- DESLIGADO EM 19/08/2026 |
+| `ATIVADO` | `False` | [blazesbot/core/esconder_jogadores.py:102](blazesbot/core/esconder_jogadores.py#L102) | deletador.py, diagnostico_do_link.py, supervisor.py, patch_do_cliente.py, petbug.py | INTERRUPTOR -- DESLIGADO EM 19/08/2026 |
+| `PRENDER_A_TECLA` | `True` | [blazesbot/core/esconder_jogadores.py:75](blazesbot/core/esconder_jogadores.py#L75) | — | A TECLA PRESA PARA SEMPRE -- o caminho do patcher, trazido em 07/09/2026 |
+| `SEGURAR_ATIVADO` | `False` | [blazesbot/core/esconder_jogadores.py:120](blazesbot/core/esconder_jogadores.py#L120) | petbug.py | INTERRUPTOR DO F12 PRESO -- DESLIGADO EM 19/08/2026 |
 | `CONFERIR_A_JANELA_ANTES_DE_ENVIAR` | `True` | [blazesbot/core/inputs.py:293](blazesbot/core/inputs.py#L293) | — | INTERRUPTOR. Desligar volta ao comportamento anterior (mandar sem conferir), e |
 | `MODO_DE_CLIQUE` | `'postmessage_puro'` | [blazesbot/core/inputs.py:131](blazesbot/core/inputs.py#L131) | ui_service.py, instrumentar_clique.py, teste_do_cursor.py | INTERRUPTOR DO MODO DE CLIQUE |
 | `MODO_DE_TECLA` | `'postmessage'` | [blazesbot/core/inputs.py:175](blazesbot/core/inputs.py#L175) | — | INTERRUPTOR DO TECLADO -- "sendmessage" \| "postmessage" |
@@ -66,9 +67,9 @@ ligar código não testado.
 | `COMPRIMIR_ARQUIVO_MORTO` | `True` | [blazesbot/core/log_limitado.py:108](blazesbot/core/log_limitado.py#L108) | — | O arquivo morto de DIAS ANTERIORES é comprimido. Medido no arquivo da noite de |
 | `USAR_PAINEL_POR_MEMORIA` | `True` | [blazesbot/core/memory.py:578](blazesbot/core/memory.py#L578) | — | ESTADO DE PAINEL DE UI POR MEMÓRIA -- o que sobreviveu ao campo |
 | `USAR_REGIOES_QUENTES` | `True` | [blazesbot/core/memory.py:433](blazesbot/core/memory.py#L433) | — | REGIÕES QUENTES -- a rota que fecha os 38% que o array de entidades perde |
-| `ATIVADO` | `True` | [blazesbot/core/patch_do_cliente.py:118](blazesbot/core/patch_do_cliente.py#L118) | deletador.py, diagnostico_do_link.py, supervisor.py, esconder_jogadores.py, petbug.py | INTERRUPTOR |
-| `ATIVADO` | `True` | [blazesbot/core/petbug.py:104](blazesbot/core/petbug.py#L104) | deletador.py, diagnostico_do_link.py, supervisor.py, esconder_jogadores.py, patch_do_cliente.py | INTERRUPTOR |
-| `NOVA_INSTANCIA_SEMPRE` | `True` | [blazesbot/core/petbug.py:197](blazesbot/core/petbug.py#L197) | — | INSTÂNCIA NOVA A CADA APLICAÇÃO -- 07/09/2026 |
+| `ATIVADO` | `True` | [blazesbot/core/patch_do_cliente.py:132](blazesbot/core/patch_do_cliente.py#L132) | deletador.py, diagnostico_do_link.py, supervisor.py, esconder_jogadores.py, petbug.py | INTERRUPTOR |
+| `ATIVADO` | `False` | [blazesbot/core/petbug.py:125](blazesbot/core/petbug.py#L125) | deletador.py, diagnostico_do_link.py, supervisor.py, esconder_jogadores.py, patch_do_cliente.py | DESLIGADO EM 07/09/2026 -- o bot passou a fazer isto sozinho |
+| `NOVA_INSTANCIA_SEMPRE` | `True` | [blazesbot/core/petbug.py:218](blazesbot/core/petbug.py#L218) | — | INSTÂNCIA NOVA A CADA APLICAÇÃO -- 07/09/2026 |
 | `USAR_OFFSET_FIXO_DA_BARRA` | `True` | [blazesbot/core/vision/barra.py:259](blazesbot/core/vision/barra.py#L259) | __init__.py | INTERRUPTOR: o offset fixo é a régua; a âncora azul é a reserva |
 
 ---
@@ -522,10 +523,10 @@ ligar código não testado.
 | `LINHAS_MAXIMAS_DO_DIARIO` | `20000` | [blazesbot/core/diario.py:39](blazesbot/core/diario.py#L39) | — | Teto de linhas por diário. Generoso de propósito -- o diário existe para ser |
 | `HP_MAXIMO_PLAUSIVEL` | `5000000` | [blazesbot/core/entidades.py:40](blazesbot/core/entidades.py#L40) | — | Teto de HP que ainda é HP. Cinco milhões é folgado de sobra para qualquer |
 | `NIVEL_MAXIMO_PLAUSIVEL` | `200` | [blazesbot/core/entidades.py:43](blazesbot/core/entidades.py#L43) | — | Faixa de nível. 200 é folga: o jogo vai a 8x, e o boss da cave é nv51. |
-| `ESPERA_ENTRE_PASSOS` | `0.3` | [blazesbot/core/esconder_jogadores.py:109](blazesbot/core/esconder_jogadores.py#L109) | — | Espera entre os passos da sequência. O cliente precisa processar a abertura do |
-| `LEITURAS_SEM_RESPOSTA` | `2` | [blazesbot/core/esconder_jogadores.py:117](blazesbot/core/esconder_jogadores.py#L117) | — | Leituras seguidas sem resposta antes de desistir de conferir. A captura falha |
-| `TECLA_DO_CHAT` | `'ENTER'` | [blazesbot/core/esconder_jogadores.py:105](blazesbot/core/esconder_jogadores.py#L105) | — | Tecla que abre e fecha o chat. Não é configurável: é o Enter, e ele não muda. |
-| `TENTATIVAS_DE_FECHAR` | `3` | [blazesbot/core/esconder_jogadores.py:113](blazesbot/core/esconder_jogadores.py#L113) | amostragem_de_cliques.py | Enters de fechamento antes de desistir. Enter ALTERNA o chat, então cada |
+| `ESPERA_ENTRE_PASSOS` | `0.3` | [blazesbot/core/esconder_jogadores.py:153](blazesbot/core/esconder_jogadores.py#L153) | — | Espera entre os passos da sequência. O cliente precisa processar a abertura do |
+| `LEITURAS_SEM_RESPOSTA` | `2` | [blazesbot/core/esconder_jogadores.py:161](blazesbot/core/esconder_jogadores.py#L161) | — | Leituras seguidas sem resposta antes de desistir de conferir. A captura falha |
+| `TECLA_DO_CHAT` | `'ENTER'` | [blazesbot/core/esconder_jogadores.py:149](blazesbot/core/esconder_jogadores.py#L149) | — | Tecla que abre e fecha o chat. Não é configurável: é o Enter, e ele não muda. |
+| `TENTATIVAS_DE_FECHAR` | `3` | [blazesbot/core/esconder_jogadores.py:157](blazesbot/core/esconder_jogadores.py#L157) | amostragem_de_cliques.py | Enters de fechamento antes de desistir. Enter ALTERNA o chat, então cada |
 | `ASSENTAR_A_PAGINA` | `0.08` | [blazesbot/core/hotbar.py:94](blazesbot/core/hotbar.py#L94) | combate.py, hotbar.py | DEPOIS DE CHEGAR NA PÁGINA 1, ANTES DE DEVOLVER |
 | `CLIQUES_PARA_VOLTAR_A_PAGINA_1` | `2` | [blazesbot/core/hotbar.py:62](blazesbot/core/hotbar.py#L62) | hotbar.py | Três páginas: do pior caso (página 3) até a 1 são dois cliques para cima. |
 | `ENTRE_CLIQUES` | `0.025` | [blazesbot/core/hotbar.py:66](blazesbot/core/hotbar.py#L66) | hotbar.py, instrumentar_clique.py | Entre um clique e o outro. Curto porque o clique deste bot é SÍNCRONO |
@@ -571,18 +572,18 @@ ligar código não testado.
 | `HC_ACTION` | `0` | [blazesbot/core/mouse_shield.py:126](blazesbot/core/mouse_shield.py#L126) | instrumentar_clique.py | — |
 | `VALIDADE_DO_RETANGULO` | `2.0` | [blazesbot/core/mouse_shield.py:130](blazesbot/core/mouse_shield.py#L130) | — | Quanto tempo o retângulo da janela vale antes de ser relido. A janela do jogo |
 | `WH_MOUSE_LL` | `14` | [blazesbot/core/mouse_shield.py:118](blazesbot/core/mouse_shield.py#L118) | instrumentar_clique.py, supervisor.py, inputs.py | Constantes Win32 |
-| `NOME_DO_MODULO` | `'client.exe'` | [blazesbot/core/patch_do_cliente.py:120](blazesbot/core/patch_do_cliente.py#L120) | — | — |
+| `NOME_DO_MODULO` | `'client.exe'` | [blazesbot/core/patch_do_cliente.py:134](blazesbot/core/patch_do_cliente.py#L134) | — | — |
 | `SEGUNDOS_PARA_A_COMIDA_SER_USADA` | `1.5` | [blazesbot/core/pet.py:131](blazesbot/core/pet.py#L131) | executor.py, combate.py | QUANTO TEMPO A COMIDA PRECISA ANTES DA PRÓXIMA AÇÃO |
-| `BM_CLICK` | `245` | [blazesbot/core/petbug.py:163](blazesbot/core/petbug.py#L163) | — | — |
-| `CLASSE_DO_BOTAO` | `'TButton'` | [blazesbot/core/petbug.py:149](blazesbot/core/petbug.py#L149) | — | Como o botão é reconhecido: classe e texto, medidos na janela real. |
-| `CLASSE_DO_LOG` | `'TMemo'` | [blazesbot/core/petbug.py:152](blazesbot/core/petbug.py#L152) | — | O log do programa. |
-| `FATIA_DA_ESPERA` | `0.25` | [blazesbot/core/petbug.py:215](blazesbot/core/petbug.py#L215) | context.py | — |
-| `INTERVALO_MINIMO` | `30.0` | [blazesbot/core/petbug.py:206](blazesbot/core/petbug.py#L206) | ui_service.py | Tempos |
-| `PEDACO_DO_TITULO` | `'PetBug'` | [blazesbot/core/petbug.py:123](blazesbot/core/petbug.py#L123) | — | A JANELA É PROCURADA PELO PEDAÇO COMUM, e é isso que permite renomeá-la. |
-| `SEGUNDOS_PARA_A_JANELA_ABRIR` | `10.0` | [blazesbot/core/petbug.py:209](blazesbot/core/petbug.py#L209) | — | Espera pela janela aparecer depois de lançar o programa. |
-| `SEGUNDOS_PARA_O_LOG_CONFIRMAR` | `5.0` | [blazesbot/core/petbug.py:214](blazesbot/core/petbug.py#L214) | — | Espera pela confirmação no log depois do clique. |
-| `SEGUNDOS_PARA_O_PROGRAMA_MORRER` | `3.0` | [blazesbot/core/petbug.py:212](blazesbot/core/petbug.py#L212) | — | Espera o processo antigo MORRER antes de abrir o novo. Curto: é um formulário |
-| `TEXTO_DO_BOTAO` | `'Patch'` | [blazesbot/core/petbug.py:150](blazesbot/core/petbug.py#L150) | — | — |
+| `BM_CLICK` | `245` | [blazesbot/core/petbug.py:184](blazesbot/core/petbug.py#L184) | — | — |
+| `CLASSE_DO_BOTAO` | `'TButton'` | [blazesbot/core/petbug.py:170](blazesbot/core/petbug.py#L170) | — | Como o botão é reconhecido: classe e texto, medidos na janela real. |
+| `CLASSE_DO_LOG` | `'TMemo'` | [blazesbot/core/petbug.py:173](blazesbot/core/petbug.py#L173) | — | O log do programa. |
+| `FATIA_DA_ESPERA` | `0.25` | [blazesbot/core/petbug.py:236](blazesbot/core/petbug.py#L236) | context.py | — |
+| `INTERVALO_MINIMO` | `30.0` | [blazesbot/core/petbug.py:227](blazesbot/core/petbug.py#L227) | ui_service.py | Tempos |
+| `PEDACO_DO_TITULO` | `'PetBug'` | [blazesbot/core/petbug.py:144](blazesbot/core/petbug.py#L144) | — | A JANELA É PROCURADA PELO PEDAÇO COMUM, e é isso que permite renomeá-la. |
+| `SEGUNDOS_PARA_A_JANELA_ABRIR` | `10.0` | [blazesbot/core/petbug.py:230](blazesbot/core/petbug.py#L230) | — | Espera pela janela aparecer depois de lançar o programa. |
+| `SEGUNDOS_PARA_O_LOG_CONFIRMAR` | `5.0` | [blazesbot/core/petbug.py:235](blazesbot/core/petbug.py#L235) | — | Espera pela confirmação no log depois do clique. |
+| `SEGUNDOS_PARA_O_PROGRAMA_MORRER` | `3.0` | [blazesbot/core/petbug.py:233](blazesbot/core/petbug.py#L233) | — | Espera o processo antigo MORRER antes de abrir o novo. Curto: é um formulário |
+| `TEXTO_DO_BOTAO` | `'Patch'` | [blazesbot/core/petbug.py:171](blazesbot/core/petbug.py#L171) | — | — |
 | `DIAS_GUARDADOS` | `3` | [blazesbot/core/quedas.py:57](blazesbot/core/quedas.py#L57) | main_window.py, web_app.py | Por TEMPO, e não por contagem: a pergunta é "o que aconteceu essa noite", e |
 | `FASE_DESCONHECIDA` | `'Estava começando a rodar'` | [blazesbot/core/quedas.py:119](blazesbot/core/quedas.py#L119) | — | — |
 | `LARGURA_DA_MINIATURA` | `320` | [blazesbot/core/quedas.py:79](blazesbot/core/quedas.py#L79) | — | Largura da MINIATURA, gravada ao lado do print inteiro. |

@@ -24,13 +24,7 @@ estado tem metade de chance de ABRIR o que se queria fechar. Por isso
 `test_nao_aperta_enter_no_escuro` -- com a leitura sem resposta, o módulo não
 aperta nada e devolve "não sei". Deixar como está é melhor que apostar.
 """
-from types import SimpleNamespace
-
-import pytest
-
-from blazesbot.core import esconder_jogadores as ej
-
-TECLA = "F12"
+import loggingfrom types import SimpleNamespaceimport pytestfrom blazesbot.core import esconder_jogadores as ejTECLA = "F12"
 
 # Lido NA IMPORTAÇÃO, antes de o `autouse` abaixo forçar o caminho ligado. Sem
 # isto, o teste que confere o estado real do interruptor leria o valor
@@ -375,10 +369,7 @@ def test_o_par_de_cliques_do_NPC_esta_dentro_do_bloco():
     """Estrutural: se alguém tirar o `with` de `_abrir_dialogo_e_clicar`, os
     quatro cliques de NPC perdem a proteção de uma vez -- e nada no comportamento
     denunciaria isso."""
-    import ast
-    import inspect
-
-    from blazesbot.bot.bc.ui_service import UIService
+    import ast    import inspect    from blazesbot.bot.bc.ui_service import UIService
 
     fonte = inspect.getsource(UIService._abrir_dialogo_e_clicar)
     arvore = ast.parse(fonte.lstrip())
@@ -405,6 +396,9 @@ def test_o_par_de_cliques_do_NPC_esta_dentro_do_bloco():
 # tecla entram na MESMA fila POSTADA do clique, encostadas nele.
 
 
+_LOG = logging.getLogger("teste.esconder")
+
+
 VK_DA_TECLA = 0x7B          # F12
 VK_DOS_MODIFICADORES = (16, 17, 18)   # SHIFT, CTRL, ALT
 
@@ -415,6 +409,8 @@ def _input_falso():
     entrada = Input.__new__(Input)
     entrada.hwnd = 1
     entrada._teclas_presas = {}
+    # A lista de INTOCÁVEIS -- ver `Input.segurar_para_sempre`.
+    entrada._presas_para_sempre = set()
     entrada.enviadas: list[tuple[str, int]] = []
     entrada._enviar_tecla = lambda m, vk: entrada.enviadas.append(
         ("down" if m == 0x0100 else "up", vk))
@@ -502,12 +498,7 @@ def test_os_tres_processos_seguram_a_tecla():
     jogadores na tela -- e o sintoma seria "às vezes o clique não pega", que é
     exatamente o que já custou uma rodada de investigação.
     """
-    import ast
-    import inspect
-
-    from blazesbot.bot.bc.ui_service import UIService
-    from blazesbot.bot.bc.vendor import VendorService
-    from blazesbot.bot.ui_do_jogo import UIDoJogo
+    import ast    import inspect    from blazesbot.bot.bc.ui_service import UIService    from blazesbot.bot.bc.vendor import VendorService    from blazesbot.bot.ui_do_jogo import UIDoJogo
 
     # `viajar_pelo_transporte` subiu para `UIDoJogo` em 01/09/2026: a viagem pelo
     # NPC de transporte é a mesma nas duas caves, então segurar o F12 durante
@@ -540,3 +531,91 @@ def test_desligado_o_bloco_roda_sem_tocar_no_teclado(monkeypatch):
     assert r.eventos == [("clique", "")], (
         "com o F12 preso desligado, o bloco não pode mexer no teclado"
     )
+
+
+# ===========================================================================
+# A TECLA PRESA PARA SEMPRE -- o caminho do patcher, 07/09/2026
+# ===========================================================================
+
+def test_prender_a_tecla_manda_KEYDOWN_e_nenhum_KEYUP():
+    """*"É sobre deixar a tecla F12 down sempre clicado, nunca soltar"* —
+    usuário, 07/09/2026, depois de os jogadores não sumirem.
+
+    É o que o `BlazesBot - PetBug.exe` faz, lido por dentro: `WM_KEYDOWN` e
+    nunca o `WM_KEYUP`. A tecla esconde ENQUANTO está apertada, então nunca
+    soltar é esconder para sempre.
+    """
+    from blazesbot.core import esconder_jogadores as mod
+
+    entrada = _input_falso()
+    assert mod.prender_a_tecla("F12", entrada.segurar_para_sempre, _LOG)
+    assert entrada.enviadas == [("down", 0x7B)], entrada.enviadas
+
+
+def test_a_tecla_presa_e_REAFIRMADA_a_cada_chamada():
+    """Tecla fisicamente presa repete sozinha -- reafirmar é imitar isso.
+
+    E é o que devolve o esconder depois de um relogin, quando a janela é outra.
+    `key_down` faz o contrário de propósito: conta aninhamento e manda UMA vez.
+    """
+    from blazesbot.core import esconder_jogadores as mod
+
+    entrada = _input_falso()
+    for _ in range(3):
+        mod.prender_a_tecla("F12", entrada.segurar_para_sempre, _LOG)
+    assert entrada.enviadas == [("down", 0x7B)] * 3, entrada.enviadas
+
+
+def test_a_tecla_presa_NAO_e_solta_por_um_bloco_segurado():
+    """O furo que a lista de intocáveis fecha.
+
+    Qualquer `segurado(...)` da MESMA tecla soltaria no fim do bloco justamente
+    o que se quer permanente -- e o efeito só apareceria na tela, sem uma linha
+    no log.
+    """
+    from blazesbot.core import esconder_jogadores as mod
+
+    entrada = _input_falso()
+    mod.prender_a_tecla("F12", entrada.segurar_para_sempre, _LOG)
+    entrada.enviadas.clear()
+
+    entrada.key_down("F12")
+    entrada.key_up("F12")
+    entrada.key_up("F12")          # até soltar a mais não pode soltar
+
+    assert ("up", 0x7B) not in entrada.enviadas, entrada.enviadas
+
+
+def test_soltar_de_vez_desfaz_a_tecla_presa():
+    """Tem de haver um caminho de volta -- senão o estado é uma armadilha."""
+    from blazesbot.core import esconder_jogadores as mod
+
+    entrada = _input_falso()
+    mod.prender_a_tecla("F12", entrada.segurar_para_sempre, _LOG)
+    entrada.enviadas.clear()
+
+    assert entrada.soltar_de_vez("F12")
+    assert entrada.enviadas == [("up", 0x7B)]
+    entrada.enviadas.clear()
+    entrada.key_down("F12")
+    entrada.key_up("F12")
+    assert ("up", 0x7B) in entrada.enviadas, "continuou intocável"
+
+
+def test_o_interruptor_DESLIGA_a_tecla_presa(monkeypatch):
+    from blazesbot.core import esconder_jogadores as mod
+
+    monkeypatch.setattr(mod, "PRENDER_A_TECLA", False)
+    entrada = _input_falso()
+    assert mod.prender_a_tecla("F12", entrada.segurar_para_sempre, _LOG) is False
+    assert entrada.enviadas == []
+
+
+def test_sem_tecla_configurada_nao_aperta_nada():
+    """Quem não configurou o esconder simplesmente não usa. Não é erro."""
+    from blazesbot.core import esconder_jogadores as mod
+
+    entrada = _input_falso()
+    assert mod.prender_a_tecla("", entrada.segurar_para_sempre, _LOG) is False
+    assert mod.prender_a_tecla("   ", entrada.segurar_para_sempre, _LOG) is False
+    assert entrada.enviadas == []

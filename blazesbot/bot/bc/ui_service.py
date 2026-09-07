@@ -13,18 +13,7 @@ fica só o que é DESTA cave:
 `UIService` herda de `UIDoJogo`, então tudo que a rotina da BC já chamava
 continua no mesmo objeto e com o mesmo nome.
 """
-from __future__ import annotations
-
-import time
-
-from ...core import esconder_jogadores, petbug
-from ..ui_do_jogo import (
-    ESPERA_ANTES_DE_CONFERIR,
-    FALHAS_ANTES_DE_REDESCOBRIR,
-    UIDoJogo,
-)
-
-# Nomes usados nas buscas e a confirmação esperada.
+from __future__ import annotationsimport timefrom ...core import esconder_jogadores, petbugfrom ..ui_do_jogo import (    ESPERA_ANTES_DE_CONFERIR,    FALHAS_ANTES_DE_REDESCOBRIR,    UIDoJogo,)# Nomes usados nas buscas e a confirmação esperada.
 NPC_TRANSPORTE = ("Fay", "Transport Fay")
 NPC_ENTRADA_BC = ("Skull", "Skull Herald")
 
@@ -127,8 +116,7 @@ class UIService(UIDoJogo):
         Não é o chamador que tem de lembrar: é o ecossistema que sabe o mapa
         dele. Mesmo princípio de um ecossistema funcionar sozinho.
         """
-        from ..navegacao import Navigator
-        from . import mapa_bc
+        from ..navegacao import Navigator        from . import mapa_bc
 
         super().__init__(ctx, navigator or Navigator(ctx, mapa_bc))
 
@@ -379,6 +367,14 @@ class UIService(UIDoJogo):
         #
         # `segurado` CONTA aninhamento (ver `Input.key_down`), então o `with` que
         # já existe dentro de `_abrir_dialogo_e_clicar` não solta a tecla aqui.
+        # REAFIRMA A TECLA PRESA antes de cada tentativa. Uma tecla
+        # fisicamente presa repete sozinha; reafirmar é imitar isso, e é o que
+        # devolve o esconder depois de um relogin (janela nova, estado zerado).
+        # Custa uma mensagem. Ver `esconder_jogadores.prender_a_tecla`.
+        esconder_jogadores.prender_a_tecla(
+            self.ctx.settings.keys.hide_players,
+            self.ctx.segurar_para_sempre, self.ctx.log)
+
         with esconder_jogadores.segurado(
                 tecla=self.ctx.settings.keys.hide_players,
                 segurar=self.ctx.key_down, soltar=self.ctx.key_up,
