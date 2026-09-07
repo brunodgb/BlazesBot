@@ -162,6 +162,40 @@ PONTO_FIXO_DO_PATCH = (190, 297)
 
 BM_CLICK = 0x00F5
 
+# ===========================================================================
+# INSTÂNCIA NOVA A CADA APLICAÇÃO -- 07/09/2026
+# ===========================================================================
+#
+# Relato do usuário: *"tem vezes que se já está aberto não funciona, acredito
+# que seja pq deve estar minimizado (...) e se não usa ele, fica outros players
+# na frente e isso faz ele não conseguir clicar no NPC de entrar na cave"*.
+#
+# E O LOG DE 07/09/2026 MOSTRA O ESTRAGO: o patch foi aplicado UMA vez, às
+# 23:27:03, e nunca mais em 13 h. Depois do relogin das 07:55 o cliente era
+# outro e ninguém reaplicou -- e a conta passou 3 h 51 min clicando num NPC que
+# tinha outros jogadores na frente. As 13.449 tentativas perdidas não eram
+# lentidão do diálogo: era clique batendo em jogador.
+#
+# POR QUE MATAR E ABRIR DE NOVO, e não só reusar a janela:
+#
+# 1. **A CONFIRMAÇÃO SÓ VALE COM O LOG LIMPO.** `_esperar_a_confirmacao` aceita
+#    o texto que JÁ ESTAVA lá (o programa reescreve as mesmas linhas a cada
+#    Patch, então exigir mudança reprovaria aplicação boa). Com a janela
+#    reusada, um "patch applied" de uma hora atrás confirma um clique que não
+#    fez nada -- o bot diz CONFIRMADO e o jogador continua na frente do NPC.
+#    Programa recém-aberto começa com o log vazio: aí "applied" só pode ser
+#    desta vez. **A instância nova é o que torna a prova honesta.**
+# 2. É a saída que o usuário mediu em campo para o caso de "já aberto e não
+#    funciona", sem precisar descobrir por que o programa de terceiro travou.
+#
+# O CUSTO É PEQUENO E CONHECIDO: o patcher sobe em menos de
+# `SEGUNDOS_PARA_A_JANELA_ABRIR`, e o `INTERVALO_MINIMO` garante que cinco
+# contas caindo juntas produzem UMA reabertura, não cinco.
+#
+# INTERRUPTOR, e não apagar o outro caminho: `False` volta a reusar a janela
+# aberta -- travado por `tests/test_petbug.py`.
+NOVA_INSTANCIA_SEMPRE = True
+
 # ---------------------------------------------------------------------------
 # Tempos
 # ---------------------------------------------------------------------------
@@ -173,6 +207,9 @@ INTERVALO_MINIMO = 30.0
 
 # Espera pela janela aparecer depois de lançar o programa.
 SEGUNDOS_PARA_A_JANELA_ABRIR = 10.0
+# Espera o processo antigo MORRER antes de abrir o novo. Curto: é um formulário
+# Delphi sem estado em disco, e o teto só é pago quando ele não sai.
+SEGUNDOS_PARA_O_PROGRAMA_MORRER = 3.0
 # Espera pela confirmação no log depois do clique.
 SEGUNDOS_PARA_O_LOG_CONFIRMAR = 5.0
 FATIA_DA_ESPERA = 0.25
@@ -268,6 +305,47 @@ def ler_texto(controle: int) -> str:
         return ""
 
 
+def matar_o_programa() -> int:
+    """Mata toda instância do patcher. Devolve quantas morreram.
+
+    Pelo NOME DO EXECUTÁVEL e não pelo `hwnd`: o que atrapalha é o processo em
+    estado ruim, e uma janela some sem o processo sair. Os dois nomes contam --
+    ver `NOMES_DO_PATCHER`.
+    """
+    alvos = {nome.lower() for nome in NOMES_DO_PATCHER}
+    mortos = 0
+    try:
+        import psutil
+    except Exception:
+        return 0
+    for processo in psutil.process_iter(["name"]):
+        try:
+            if (processo.info.get("name") or "").lower() not in alvos:
+                continue
+            processo.kill()
+            mortos += 1
+        except Exception:
+            continue
+    return mortos
+
+
+def restaurar_janela(janela: int) -> bool:
+    """Tira a janela do minimizado SEM ativá-la. `True` = estava minimizada.
+
+    `SW_SHOWNOACTIVATE` e não `SW_RESTORE`: restaurar ativando roubaria o foco
+    do cliente do jogo, e foco perdido é justamente o que deixou uma conta
+    9 h 30 min sem receber tecla (ver `core/teclado_mudo.py`). Aqui só se quer a
+    janela desenhada.
+    """
+    try:
+        if not win32gui.IsIconic(janela):
+            return False
+        win32gui.ShowWindow(janela, win32con.SW_SHOWNOACTIVATE)
+        return True
+    except Exception:
+        return False
+
+
 def clicar_no_botao(botao: int) -> bool:
     """`BM_CLICK` no botão. Sem coordenada, e funciona minimizado."""
     try:
@@ -330,6 +408,25 @@ def aplicar_patch(
 
     janela = j.achar_janela(PEDACO_DO_TITULO)
     lancou = False
+    if janela is not None and NOVA_INSTANCIA_SEMPRE:
+        # INSTÂNCIA NOVA: ver o bloco no topo. Não é higiene -- é o que faz a
+        # confirmação no log significar alguma coisa.
+        mortos = j.matar_o_programa()
+        log.info("PetBug: fechei %s instância(s) abertas — vou usar uma nova, "
+                 "com o log limpo (é o que prova que o patch saiu AGORA).",
+                 mortos)
+        gasto = 0.0
+        while gasto < SEGUNDOS_PARA_O_PROGRAMA_MORRER:
+            if j.achar_janela(PEDACO_DO_TITULO) is None:
+                break
+            j.esperar(FATIA_DA_ESPERA)
+            gasto += FATIA_DA_ESPERA
+        janela = j.achar_janela(PEDACO_DO_TITULO)
+        if janela is not None:
+            log.warning("PetBug: a janela antiga não fechou em %.0fs; sigo com "
+                        "ela — a confirmação vale menos, mas clicar é melhor "
+                        "que não clicar.", SEGUNDOS_PARA_O_PROGRAMA_MORRER)
+
     if janela is None:
         resultado_ou_janela = _abrir_o_programa(j, log, raiz)
         if isinstance(resultado_ou_janela, Resultado):
@@ -337,6 +434,13 @@ def aplicar_patch(
         janela, lancou = resultado_ou_janela, True
     else:
         log.info("PetBug: usando a janela que já está aberta")
+
+    # MINIMIZADA NÃO É O CASO COMUM, mas é um dos que o usuário viu falhar. O
+    # `BM_CLICK` funciona minimizado; desenhar a janela custa nada e cobre o
+    # caso em que o programa ignora a mensagem por não ter sido pintado.
+    if j.restaurar_janela(janela):
+        log.info("PetBug: a janela estava minimizada — restaurei antes de "
+                 "clicar (sem roubar o foco do jogo).")
 
     controle_do_log = j.achar_log(janela)
     antes = j.ler_texto(controle_do_log) if controle_do_log else ""
@@ -434,6 +538,8 @@ class _Win32:
     ler_texto = staticmethod(ler_texto)
     clicar_no_botao = staticmethod(clicar_no_botao)
     clicar_por_coordenada = staticmethod(clicar_por_coordenada)
+    matar_o_programa = staticmethod(matar_o_programa)
+    restaurar_janela = staticmethod(restaurar_janela)
 
     @staticmethod
     def esperar(segundos: float) -> None:

@@ -67,13 +67,14 @@ ligar código não testado.
 | `USAR_PAINEL_POR_MEMORIA` | `True` | [blazesbot/core/memory.py:578](blazesbot/core/memory.py#L578) | — | ESTADO DE PAINEL DE UI POR MEMÓRIA -- o que sobreviveu ao campo |
 | `USAR_REGIOES_QUENTES` | `True` | [blazesbot/core/memory.py:433](blazesbot/core/memory.py#L433) | — | REGIÕES QUENTES -- a rota que fecha os 38% que o array de entidades perde |
 | `ATIVADO` | `True` | [blazesbot/core/petbug.py:104](blazesbot/core/petbug.py#L104) | deletador.py, diagnostico_do_link.py, supervisor.py, esconder_jogadores.py | INTERRUPTOR |
+| `NOVA_INSTANCIA_SEMPRE` | `True` | [blazesbot/core/petbug.py:197](blazesbot/core/petbug.py#L197) | — | INSTÂNCIA NOVA A CADA APLICAÇÃO -- 07/09/2026 |
 | `USAR_OFFSET_FIXO_DA_BARRA` | `True` | [blazesbot/core/vision/barra.py:259](blazesbot/core/vision/barra.py#L259) | __init__.py | INTERRUPTOR: o offset fixo é a régua; a âncora azul é a reserva |
 
 ---
 
 ## Números medidos -- tolerância, limiar, teto, cadência
 
-582 constantes, agrupadas por arquivo.
+585 constantes, agrupadas por arquivo.
 
 | constante | valor | onde | quem lê | porquê (resumo) |
 |---|---|---|---|---|
@@ -193,12 +194,14 @@ ligar código não testado.
 | `TENTATIVAS_POR_LINHA_DE_LOG` | `15` | [blazesbot/bot/bc/routine.py:156](blazesbot/bot/bc/routine.py#L156) | routine.py, indice_de_tempos.py | A cada quantas tentativas o log conta como vai a disputa. Uma linha por |
 | `TOLERANCIA_DA_ENTRADA` | `12` | [blazesbot/bot/bc/routine.py:351](blazesbot/bot/bc/routine.py#L351) | — | DUAS PERGUNTAS DIFERENTES sobre a mesma coordenada, e por isso dois números. |
 | `TOLERANCIA_DO_PONTO_DO_BOSS` | `15` | [blazesbot/bot/bc/routine.py:191](blazesbot/bot/bc/routine.py#L191) | routine.py | Quão perto do ponto do boss conta como "estou no waypoint". |
-| `LINK_ENTRAR_BC` | `'link_enter_bc.png'` | [blazesbot/bot/bc/ui_service.py:31](blazesbot/bot/bc/ui_service.py#L31) | — | — |
-| `LINK_GHOST_DIN_WOODS` | `'link_ghost_din_woods.png'` | [blazesbot/bot/bc/ui_service.py:30](blazesbot/bot/bc/ui_service.py#L30) | — | Links dentro dos diálogos, localizados por imagem. |
-| `PASSO_DA_ESPERA_DO_TELEPORTE` | `0.08` | [blazesbot/bot/bc/ui_service.py:53](blazesbot/bot/bc/ui_service.py#L53) | entrada.py, vendedor.py | — |
-| `TENTATIVAS_DE_POSICIONAR_NA_ENTRADA` | `3` | [blazesbot/bot/bc/ui_service.py:80](blazesbot/bot/bc/ui_service.py#L80) | — | Quantas vezes refazer a caminhada pelo painel de arredores antes de desistir de |
-| `TETO_DO_TELEPORTE_DA_FAY` | `2.0` | [blazesbot/bot/bc/ui_service.py:52](blazesbot/bot/bc/ui_service.py#L52) | — | TELEPORTE DA FAY (Stone City -> Ghost Din Woods) |
-| `TOLERANCIA_DO_NPC_DA_ENTRADA` | `2` | [blazesbot/bot/bc/ui_service.py:75](blazesbot/bot/bc/ui_service.py#L75) | routine.py | O SKULL HERALD DA ENTRADA EXIGE A COORDENADA EXATA |
+| `FALHAS_MECANICAS_PARA_REAPLICAR_O_PETBUG` | `20` | [blazesbot/bot/bc/ui_service.py:105](blazesbot/bot/bc/ui_service.py#L105) | — | REAPLICAR O PETBUG QUANDO A ENTRADA NÃO ABRE -- 07/09/2026 |
+| `LINK_ENTRAR_BC` | `'link_enter_bc.png'` | [blazesbot/bot/bc/ui_service.py:33](blazesbot/bot/bc/ui_service.py#L33) | — | — |
+| `LINK_GHOST_DIN_WOODS` | `'link_ghost_din_woods.png'` | [blazesbot/bot/bc/ui_service.py:32](blazesbot/bot/bc/ui_service.py#L32) | — | Links dentro dos diálogos, localizados por imagem. |
+| `PASSO_DA_ESPERA_DO_TELEPORTE` | `0.08` | [blazesbot/bot/bc/ui_service.py:55](blazesbot/bot/bc/ui_service.py#L55) | entrada.py, vendedor.py | — |
+| `SEGUNDOS_ENTRE_REAPLICACOES` | `120.0` | [blazesbot/bot/bc/ui_service.py:114](blazesbot/bot/bc/ui_service.py#L114) | — | Espaço mínimo entre duas reaplicações vindas DAQUI. |
+| `TENTATIVAS_DE_POSICIONAR_NA_ENTRADA` | `3` | [blazesbot/bot/bc/ui_service.py:82](blazesbot/bot/bc/ui_service.py#L82) | — | Quantas vezes refazer a caminhada pelo painel de arredores antes de desistir de |
+| `TETO_DO_TELEPORTE_DA_FAY` | `2.0` | [blazesbot/bot/bc/ui_service.py:54](blazesbot/bot/bc/ui_service.py#L54) | — | TELEPORTE DA FAY (Stone City -> Ghost Din Woods) |
+| `TOLERANCIA_DO_NPC_DA_ENTRADA` | `2` | [blazesbot/bot/bc/ui_service.py:77](blazesbot/bot/bc/ui_service.py#L77) | routine.py | O SKULL HERALD DA ENTRADA EXIGE A COORDENADA EXATA |
 | `ALVO_DO_TOPUP_ANTES_DO_BOSS` | `100.0` | [blazesbot/bot/combate.py:141](blazesbot/bot/combate.py#L141) | — | TOP-UP ANTES DO BOSS: ATÉ 100%, SENTADO, E OS 15 s INTEIROS |
 | `AVISO_DA_ESPERA_SEM_PRAZO` | `10` | [blazesbot/bot/combate.py:436](blazesbot/bot/combate.py#L436) | — | Cadência do aviso enquanto espera sem prazo. Uma espera sem limite PRECISA |
 | `CADENCIA_DA_LEITURA_DO_ALVO` | `0.15` | [blazesbot/bot/combate.py:904](blazesbot/bot/combate.py#L904) | routine.py | De quanto em quanto tempo olhar a barra do alvo durante a luta. |
@@ -571,11 +574,12 @@ ligar código não testado.
 | `BM_CLICK` | `245` | [blazesbot/core/petbug.py:163](blazesbot/core/petbug.py#L163) | — | — |
 | `CLASSE_DO_BOTAO` | `'TButton'` | [blazesbot/core/petbug.py:149](blazesbot/core/petbug.py#L149) | — | Como o botão é reconhecido: classe e texto, medidos na janela real. |
 | `CLASSE_DO_LOG` | `'TMemo'` | [blazesbot/core/petbug.py:152](blazesbot/core/petbug.py#L152) | — | O log do programa. |
-| `FATIA_DA_ESPERA` | `0.25` | [blazesbot/core/petbug.py:178](blazesbot/core/petbug.py#L178) | context.py | — |
-| `INTERVALO_MINIMO` | `30.0` | [blazesbot/core/petbug.py:172](blazesbot/core/petbug.py#L172) | — | Tempos |
+| `FATIA_DA_ESPERA` | `0.25` | [blazesbot/core/petbug.py:215](blazesbot/core/petbug.py#L215) | context.py | — |
+| `INTERVALO_MINIMO` | `30.0` | [blazesbot/core/petbug.py:206](blazesbot/core/petbug.py#L206) | ui_service.py | Tempos |
 | `PEDACO_DO_TITULO` | `'PetBug'` | [blazesbot/core/petbug.py:123](blazesbot/core/petbug.py#L123) | — | A JANELA É PROCURADA PELO PEDAÇO COMUM, e é isso que permite renomeá-la. |
-| `SEGUNDOS_PARA_A_JANELA_ABRIR` | `10.0` | [blazesbot/core/petbug.py:175](blazesbot/core/petbug.py#L175) | — | Espera pela janela aparecer depois de lançar o programa. |
-| `SEGUNDOS_PARA_O_LOG_CONFIRMAR` | `5.0` | [blazesbot/core/petbug.py:177](blazesbot/core/petbug.py#L177) | — | Espera pela confirmação no log depois do clique. |
+| `SEGUNDOS_PARA_A_JANELA_ABRIR` | `10.0` | [blazesbot/core/petbug.py:209](blazesbot/core/petbug.py#L209) | — | Espera pela janela aparecer depois de lançar o programa. |
+| `SEGUNDOS_PARA_O_LOG_CONFIRMAR` | `5.0` | [blazesbot/core/petbug.py:214](blazesbot/core/petbug.py#L214) | — | Espera pela confirmação no log depois do clique. |
+| `SEGUNDOS_PARA_O_PROGRAMA_MORRER` | `3.0` | [blazesbot/core/petbug.py:212](blazesbot/core/petbug.py#L212) | — | Espera o processo antigo MORRER antes de abrir o novo. Curto: é um formulário |
 | `TEXTO_DO_BOTAO` | `'Patch'` | [blazesbot/core/petbug.py:150](blazesbot/core/petbug.py#L150) | — | — |
 | `DIAS_GUARDADOS` | `3` | [blazesbot/core/quedas.py:57](blazesbot/core/quedas.py#L57) | main_window.py, web_app.py | Por TEMPO, e não por contagem: a pergunta é "o que aconteceu essa noite", e |
 | `FASE_DESCONHECIDA` | `'Estava começando a rodar'` | [blazesbot/core/quedas.py:119](blazesbot/core/quedas.py#L119) | — | — |

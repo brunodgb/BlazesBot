@@ -8,7 +8,7 @@ memória: nas três o bot **sabia** o que estava acontecendo e não tinha desfec
 
 | conta | modo | o que produziu | o que aconteceu |
 |---|---|---|---|
-| `creubo` | BC | 79 bosses até 07h, **0 das 08h às 12h** | teto do diálogo congelado |
+| `creubo` | BC | 79 bosses até 07h, **0 das 08h às 12h** | jogador na frente do NPC + teto congelado |
 | `blazestpas` | APP | mobs até 02:32, **0 até 12:05** | teclas não chegavam ao cliente |
 | `gamerblazes` | APP | ~330 alvos/h a noite inteira | saudável (1 morte) |
 | `mfaustoapp069` | Fada | 686 curas | saudável |
@@ -19,7 +19,7 @@ diante foi **do laço travado**, não de degradação.
 
 ---
 
-## TRAVA 1 — o teto que só sabia apertar (`creubo`, 3 h 51 min)
+## TRAVA 1 — a entrada da cave parou por 3 h 51 min (`creubo`)
 
 A espera pelo diálogo do NPC tem teto adaptativo: `max(12 últimas aberturas) ×
 2`, limitado a [180, 600] ms. **A amostra só entra quando o diálogo ABRE.**
@@ -42,6 +42,39 @@ relogar às 07:55), passou dos 427 ms, e toda tentativa virou reprovação. Como
 reprovação não gera amostra, o teto não podia subir. **A medição que levantaria
 o teto só podia vir do sucesso que o próprio teto impedia.** A conta só saiu
 quando, por acaso, uma abertura veio abaixo dos 427 ms.
+
+### A causa REAL, dada pelo usuário depois da auditoria
+
+*"Se não usa ele [o `BlazesBot - PetBug.exe`], fica outros players na frente e
+isso faz ele não conseguir clicar no NPC de entrar na cave."*
+
+E o log confirma, em uma linha: **o patch foi aplicado UMA vez em 13 h**, às
+23:27:03. Nunca mais — nem depois do relogin das 07:55, que trocou o cliente
+(`hwnd` novo às 07:55:06). Das 08h às 12h a conta clicou 13.449 vezes num NPC
+que tinha jogador na frente. **O diálogo não abria porque o clique direito não
+chegava nele.** O teto congelado não era a causa: era o que impedia a
+recuperação por acaso de acontecer mais cedo.
+
+Duas correções, então, e as duas são necessárias:
+
+**1. O patcher passou a ser confiável.** `NOVA_INSTANCIA_SEMPRE`: mata a
+instância aberta e abre outra antes de clicar. Foi o que o usuário pediu
+(*"tem vezes que se já está aberto não funciona, acredito que seja pq deve
+estar minimizado"*) e há uma razão de engenharia junto: a confirmação lê o log
+do programa e **aceita o texto que já estava lá** — com a janela reusada, um
+`patch applied` de uma hora atrás confirma um clique que não fez nada. Log
+limpo é o que torna a prova honesta. A janela também é restaurada se estiver
+minimizada, sem roubar o foco (`SW_SHOWNOACTIVATE`).
+
+Isto INVERTE a regra anterior (*"caso esteja aberto, não reabra"*), e o motivo
+dela — dois patchers mexendo nos mesmos clientes — continua respeitado: mata-se
+ANTES de abrir, então em nenhum instante existem dois.
+
+**2. A entrada da cave sabe pedir o patch de novo.** Vinte falhas MECÂNICAS
+seguidas (o diálogo não abriu) reaplicam o PetBug, com cadência de 2 min.
+Instância cheia não conta: ali os cliques saíram e não há ninguém no caminho.
+
+### O teto congelado, que continua sendo um defeito
 
 **O conserto:** falhas CONSECUTIVAS passam a afrouxar o teto em degraus
 (`ui_do_jogo._afrouxar_o_teto`), até `TETO_DO_DESESPERO`; qualquer abertura zera

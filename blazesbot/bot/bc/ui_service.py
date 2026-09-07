@@ -15,7 +15,9 @@ continua no mesmo objeto e com o mesmo nome.
 """
 from __future__ import annotations
 
-from ...core import esconder_jogadores
+import time
+
+from ...core import esconder_jogadores, petbug
 from ..ui_do_jogo import (
     ESPERA_ANTES_DE_CONFERIR,
     FALHAS_ANTES_DE_REDESCOBRIR,
@@ -78,6 +80,38 @@ TOLERANCIA_DO_NPC_DA_ENTRADA = 2
 # acertar a coordenada. Três: a primeira resolve no caso normal, e insistir sem
 # limite prenderia a run aqui.
 TENTATIVAS_DE_POSICIONAR_NA_ENTRADA = 3
+
+
+# ===========================================================================
+# REAPLICAR O PETBUG QUANDO A ENTRADA NÃO ABRE -- 07/09/2026
+# ===========================================================================
+#
+# O que o usuário explicou depois da auditoria: *"se não usa ele [o PetBug],
+# fica outros players na frente e isso faz ele não conseguir clicar no NPC de
+# entrar na cave"*.
+#
+# E o log dá o número: o patch foi aplicado UMA vez, às 23:27:03, e nunca mais
+# em 13 h -- nem depois do relogin das 07:55, que trocou o cliente. Das 08h às
+# 12h a conta clicou 13.449 vezes num NPC que tinha gente na frente. O diálogo
+# não abria porque o clique direito não chegava nele.
+#
+# A APLICAÇÃO SÓ ACONTECIA NO LOGIN, e é lá que ela continua acontecendo. O que
+# muda é que a entrada agora sabe pedir de novo: o patcher é a única coisa que
+# tira os jogadores da frente, e falha mecânica em série é o sintoma exato de
+# ter alguém na frente.
+#
+# SÓ A FALHA MECÂNICA CONTA (o diálogo não abriu). Instância cheia é a razão
+# NORMAL de não entrar, os cliques saíram, e não há jogador nenhum no caminho.
+FALHAS_MECANICAS_PARA_REAPLICAR_O_PETBUG = 20
+
+# Espaço mínimo entre duas reaplicações vindas DAQUI.
+#
+# Maior que o `petbug.INTERVALO_MINIMO` (30 s) de propósito: aquele existe para
+# cinco contas caindo juntas não produzirem cinco cliques. Este existe para uma
+# conta presa não matar e reabrir um programa de terceiro a cada 30 s por horas.
+# Dois minutos dá ~4 tentativas em 8 min de disputa ruim -- e se o problema for
+# jogador na frente, a primeira resolve.
+SEGUNDOS_ENTRE_REAPLICACOES = 120.0
 
 
 class UIService(UIDoJogo):
@@ -355,8 +389,14 @@ class UIService(UIDoJogo):
             if (self._ponto_npc_entrada is None
                     or self._ponto_link_entrada is None
                     or self._falhas_rapidas >= FALHAS_ANTES_DE_REDESCOBRIR):
-                return self._entrar_descobrindo()
-            return self._entrar_rapido()
+                saiu = self._entrar_descobrindo()
+            else:
+                saiu = self._entrar_rapido()
+            if saiu:
+                # OS CLIQUES SAÍRAM: não há jogador no caminho. O que vier
+                # depois é o servidor, e o PetBug não tem nada com isso.
+                self._falhas_mecanicas_seguidas = 0
+            return saiu
 
     def _entrar_descobrindo(self) -> bool:
         """Tentativa completa, por imagem, que APRENDE as coordenadas."""
@@ -418,6 +458,31 @@ class UIService(UIDoJogo):
             esperar_depois=0.0,
         )
 
+    def _reaplicar_o_petbug_se_preciso(self) -> None:
+        """Falha mecânica em série = provavelmente tem jogador na frente do NPC.
+
+        NUNCA DERRUBA NADA: o patcher é programa de terceiro, e a disputa da
+        cave não pode parar porque ele não respondeu. Falha vira aviso.
+        """
+        seguidas = getattr(self, "_falhas_mecanicas_seguidas", 0)
+        if seguidas < FALHAS_MECANICAS_PARA_REAPLICAR_O_PETBUG:
+            return
+        agora = time.monotonic()
+        ultima = getattr(self, "_petbug_reaplicado_em", 0.0)
+        if ultima and agora - ultima < SEGUNDOS_ENTRE_REAPLICACOES:
+            return
+        self._petbug_reaplicado_em = agora
+        self.ctx.log.warning(
+            "Entrada na cave: %s falhas mecânicas seguidas (o diálogo não "
+            "abre). Provavelmente há jogador na frente do NPC — reaplicando o "
+            "PetBug, que é o que os esconde.", seguidas)
+        try:
+            resultado = petbug.aplicar_patch(log=self.ctx.log)
+        except Exception as exc:
+            self.ctx.log.warning("PetBug falhou (a entrada segue): %s", exc)
+            return
+        self.ctx.log.info("PetBug (pela entrada): %s", resultado)
+
     def registrar_falha_de_entrada(self) -> None:
         """Contabiliza uma tentativa cuja MECÂNICA falhou.
 
@@ -441,6 +506,12 @@ class UIService(UIDoJogo):
         que devolve False quando a mecânica falhou e True quando os cliques saíram.
         """
         self._falhas_rapidas += 1
+        # CONTADOR SEPARADO, e é por isso que ele existe: `_falhas_rapidas`
+        # ZERA a cada redescoberta (de cinco em cinco), então ele nunca chegaria
+        # a vinte. Este só zera quando os cliques SAEM.
+        self._falhas_mecanicas_seguidas = (
+            getattr(self, "_falhas_mecanicas_seguidas", 0) + 1)
+        self._reaplicar_o_petbug_se_preciso()
 
     def esquecer_entrada(self) -> None:
         """Descarta as coordenadas aprendidas (o personagem saiu do lugar)."""

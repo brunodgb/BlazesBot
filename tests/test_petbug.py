@@ -51,7 +51,7 @@ class JanelasFalsas:
 
     def __init__(self, aberta=True, tem_botao=True, tem_log=True,
                  texto=LOG_DE_SUCESSO, abre_ao_lancar=True,
-                 clique_falha=False):
+                 clique_falha=False, minimizada=False):
         self._aberta = aberta
         self._tem_botao = tem_botao
         self._tem_log = tem_log
@@ -62,9 +62,26 @@ class JanelasFalsas:
         self.cliques_no_botao: list[int] = []
         self.cliques_por_coordenada: list[tuple[int, tuple[int, int]]] = []
         self.esperas: list[float] = []
+        self.mortes = 0
+        self.restauracoes = 0
+        self.minimizada = minimizada
 
     def achar_janela(self, _pedaco):
         return JANELA if self._aberta else None
+
+    def matar_o_programa(self):
+        """Mata o que estiver aberto -- ver `NOVA_INSTANCIA_SEMPRE`."""
+        mortos = 1 if self._aberta else 0
+        self.mortes += mortos
+        self._aberta = False
+        return mortos
+
+    def restaurar_janela(self, _janela):
+        """`True` = estava minimizada. O dublê nasce restaurada."""
+        self.restauracoes += 1
+        estava = self.minimizada
+        self.minimizada = False
+        return estava
 
     def achar_botao(self, _janela):
         return BOTAO if self._tem_botao else None
@@ -117,18 +134,53 @@ def _aplicar(janelas, **kw):
 # 1. Usa a janela aberta -- regra explícita
 # ---------------------------------------------------------------------------
 
-def test_nao_reabre_se_ja_estiver_aberto():
-    """"Caso esteja aberto, não reabra; use o que tiver aberto."
+def test_MATA_o_que_esta_aberto_antes_de_abrir_de_novo(tmp_path):
+    """A regra virou o contrário em 07/09/2026, e o usuário tem o campo a favor.
 
-    Dois processos do patcher mexendo nos mesmos clientes é a receita para um
-    desfazer o do outro.
+    ANTES: *"caso esteja aberto, não reabra; use o que tiver aberto"* -- e o
+    motivo era bom: dois processos do patcher mexendo nos mesmos clientes é a
+    receita para um desfazer o do outro.
+
+    AGORA: *"sempre que precisar dele mata o que está sendo executado e executa
+    novamente, pois tem vezes que se já está aberto não funciona"*. O motivo
+    antigo NÃO é violado -- mata-se ANTES de abrir, então em nenhum instante
+    existem dois.
+
+    E há uma razão de engenharia que o log de 07/09 escancarou: a confirmação
+    lê o log do programa, que aceita o texto que já estava lá. Com a janela
+    reusada, um "patch applied" de uma hora atrás confirma um clique que não
+    fez nada. Log limpo é o que torna a prova honesta.
     """
+    (tmp_path / "BlazesBot - PetBug.exe").write_bytes(b"")
+    j = JanelasFalsas(aberta=True)
+    resultado = _aplicar(j, raiz=tmp_path)
+
+    assert j.mortes == 1, "não matou a instância aberta"
+    assert j.lancamentos, "matou e não abriu de novo"
+    assert resultado.aplicou is True
+    assert resultado.lancou_o_programa is True
+
+
+def test_com_o_interruptor_DESLIGADO_reusa_a_janela(monkeypatch):
+    """O caminho antigo não foi apagado -- ver `NOVA_INSTANCIA_SEMPRE`."""
+    monkeypatch.setattr(petbug, "NOVA_INSTANCIA_SEMPRE", False)
     j = JanelasFalsas(aberta=True)
     resultado = _aplicar(j)
 
-    assert j.lancamentos == [], "abriu um segundo processo do patcher"
+    assert j.mortes == 0 and j.lancamentos == []
     assert resultado.aplicou is True
     assert resultado.lancou_o_programa is False
+
+
+def test_a_janela_MINIMIZADA_e_restaurada_antes_do_clique():
+    """Relato do usuário: já aberto às vezes não funciona, "deve estar minimizado".
+
+    Restaurar é barato e cobre o caso em que o programa ignora o `BM_CLICK` por
+    não ter sido pintado. SEM roubar o foco -- ver `restaurar_janela`.
+    """
+    j = JanelasFalsas(aberta=True, minimizada=True)
+    _aplicar(j)
+    assert j.restauracoes >= 1
 
 
 def test_abre_o_programa_quando_nao_esta_aberto(tmp_path):
@@ -311,3 +363,60 @@ def test_o_sinal_nao_casa_qualquer_coisa():
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
+
+
+# ===========================================================================
+# REAPLICAR PELA ENTRADA DA CAVE -- 07/09/2026
+# ===========================================================================
+
+def _ui_service():
+    """Um `UIService` cru: só o que a reaplicação toca."""
+    from blazesbot.bot.bc import ui_service as mod_ui
+    ui = mod_ui.UIService.__new__(mod_ui.UIService)
+    ui.ctx = SimpleNamespace(log=_log())
+    ui._falhas_rapidas = 0
+    return ui, mod_ui
+
+
+def test_falha_mecanica_em_serie_REAPLICA_o_petbug(monkeypatch):
+    """*"Se não usa ele, fica outros players na frente e isso faz ele não
+    conseguir clicar no NPC de entrar na cave"* — usuário, 07/09/2026.
+
+    O log daquela madrugada: 13.449 falhas em 4 h, com o patch aplicado uma
+    única vez, 9 h antes, num cliente que nem existia mais.
+    """
+    ui, mod_ui = _ui_service()
+    aplicacoes = []
+    monkeypatch.setattr(mod_ui.petbug, "aplicar_patch",
+                        lambda **kw: aplicacoes.append(1))
+
+    for _ in range(mod_ui.FALHAS_MECANICAS_PARA_REAPLICAR_O_PETBUG - 1):
+        ui.registrar_falha_de_entrada()
+    assert aplicacoes == [], "reaplicou cedo demais"
+
+    ui.registrar_falha_de_entrada()
+    assert len(aplicacoes) == 1
+
+
+def test_a_reaplicacao_TEM_CADENCIA(monkeypatch):
+    """Conta presa não pode matar e reabrir um programa de terceiro sem parar."""
+    ui, mod_ui = _ui_service()
+    aplicacoes = []
+    monkeypatch.setattr(mod_ui.petbug, "aplicar_patch",
+                        lambda **kw: aplicacoes.append(1))
+
+    for _ in range(mod_ui.FALHAS_MECANICAS_PARA_REAPLICAR_O_PETBUG * 5):
+        ui.registrar_falha_de_entrada()
+    assert len(aplicacoes) == 1
+
+
+def test_o_PETBUG_que_explode_nao_derruba_a_entrada(monkeypatch):
+    """Programa de terceiro não pode custar a disputa da cave."""
+    ui, mod_ui = _ui_service()
+
+    def explode(**kw):
+        raise RuntimeError("o patcher sumiu")
+
+    monkeypatch.setattr(mod_ui.petbug, "aplicar_patch", explode)
+    for _ in range(mod_ui.FALHAS_MECANICAS_PARA_REAPLICAR_O_PETBUG):
+        ui.registrar_falha_de_entrada()

@@ -31,7 +31,7 @@ desta lista é ou uma exceção justificada, ou dívida que ninguém converteu a
 mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 
 
-**345 tempos catalogados** — 242 FIXOS (espera cega), 103 entre TETO e PASSO.
+**347 tempos catalogados** — 244 FIXOS (espera cega), 103 entre TETO e PASSO.
 
 
 **6 estão diferentes do original:** `TETO_DA_CAIXA`, `PASSO_DA_ESPERA`, `ESPERA_DA_BOLSA_ABRIR`, `FATIA_DE_ESPERA`, `INTERVALO_ENTRE_INVOCACOES`, `PASSOS_DO_APP`
@@ -53,10 +53,11 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 
 | tempo | atual | original | natureza | onde | função | para que serve |
 |---|---|---|---|---|---|---|
-| `TETO_DO_TELEPORTE_DA_FAY` | 2 s | = | TETO | [ui_service.py:52](blazesbot/bot/bc/ui_service.py#L52) | `viajar_para_ghost_din_woods, _esperar_o_teleporte` | TELEPORTE DA FAY (Stone City -> Ghost Din Woods) |
-| `PASSO_DA_ESPERA_DO_TELEPORTE` | 0.08 s | = | PASSO | [ui_service.py:53](blazesbot/bot/bc/ui_service.py#L53) | `viajar_para_ghost_din_woods, _esperar_o_teleporte` |  |
-| *literal em* `entrar_no_covil_do_boss` | 1.5 s | = | FIXO | [ui_service.py:497](blazesbot/bot/bc/ui_service.py#L497) | `entrar_no_covil_do_boss` | Altar Stone -> "Secret Cemetery", que é a sala do boss. |
-| *literal em* `sair_da_cave` | 1.5 s | = | FIXO | [ui_service.py:534](blazesbot/bot/bc/ui_service.py#L534) | `sair_da_cave` | Skull Herald do covil -> "Leave Bewitcher Cave". |
+| `TETO_DO_TELEPORTE_DA_FAY` | 2 s | = | TETO | [ui_service.py:54](blazesbot/bot/bc/ui_service.py#L54) | `viajar_para_ghost_din_woods, _esperar_o_teleporte` | TELEPORTE DA FAY (Stone City -> Ghost Din Woods) |
+| `PASSO_DA_ESPERA_DO_TELEPORTE` | 0.08 s | = | PASSO | [ui_service.py:55](blazesbot/bot/bc/ui_service.py#L55) | `viajar_para_ghost_din_woods, _esperar_o_teleporte` |  |
+| `SEGUNDOS_ENTRE_REAPLICACOES` | 120 s (2 min) | *novo* | FIXO | [ui_service.py:114](blazesbot/bot/bc/ui_service.py#L114) | `_reaplicar_o_petbug_se_preciso` | Espaço mínimo entre duas reaplicações vindas DAQUI. |
+| *literal em* `entrar_no_covil_do_boss` | 1.5 s | = | FIXO | [ui_service.py:568](blazesbot/bot/bc/ui_service.py#L568) | `entrar_no_covil_do_boss` | Altar Stone -> "Secret Cemetery", que é a sala do boss. |
+| *literal em* `sair_da_cave` | 1.5 s | = | FIXO | [ui_service.py:605](blazesbot/bot/bc/ui_service.py#L605) | `sair_da_cave` | Skull Herald do covil -> "Leave Bewitcher Cave". |
 
 
 ## FORA DA CAVE — montaria e trajeto
@@ -423,10 +424,11 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | `PASSO_ENTRE_MEMBROS` | 136 s (2 min) | *novo* | PASSO | [memory.py:367](blazesbot/core/memory.py#L367) | `time_do_jogo, vida_do_time` |  |
 | *literal em* `_ensure_hook_installed` | 0.05 s | = | FIXO | [mouse_shield.py:223](blazesbot/core/mouse_shield.py#L223) | `_ensure_hook_installed` | Sobe o hook uma vez. NADA aqui bloqueia o callback. |
 | `SEGUNDOS_PARA_A_COMIDA_SER_USADA` | 1.5 s | *novo* | FIXO | [pet.py:131](blazesbot/core/pet.py#L131) |  | QUANTO TEMPO A COMIDA PRECISA ANTES DA PRÓXIMA AÇÃO |
-| `INTERVALO_MINIMO` | 30 s | = | FIXO | [petbug.py:172](blazesbot/core/petbug.py#L172) | `aplicar_patch` | Tempos |
-| `SEGUNDOS_PARA_A_JANELA_ABRIR` | 10 s | = | FIXO | [petbug.py:175](blazesbot/core/petbug.py#L175) | `_abrir_o_programa` | Espera pela janela aparecer depois de lançar o programa. |
-| `SEGUNDOS_PARA_O_LOG_CONFIRMAR` | 5 s | = | FIXO | [petbug.py:177](blazesbot/core/petbug.py#L177) | `aplicar_patch, _esperar_a_confirmacao` | Espera pela confirmação no log depois do clique. |
-| `FATIA_DA_ESPERA` | 0.25 s | = | PASSO | [petbug.py:178](blazesbot/core/petbug.py#L178) | `_abrir_o_programa, _esperar_a_confirmacao` |  |
+| `INTERVALO_MINIMO` | 30 s | = | FIXO | [petbug.py:206](blazesbot/core/petbug.py#L206) | `aplicar_patch` | Tempos |
+| `SEGUNDOS_PARA_A_JANELA_ABRIR` | 10 s | = | FIXO | [petbug.py:209](blazesbot/core/petbug.py#L209) | `_abrir_o_programa` | Espera pela janela aparecer depois de lançar o programa. |
+| `SEGUNDOS_PARA_O_PROGRAMA_MORRER` | 3 s | *novo* | FIXO | [petbug.py:212](blazesbot/core/petbug.py#L212) | `aplicar_patch` | Espera o processo antigo MORRER antes de abrir o novo. Curto: é um formulário |
+| `SEGUNDOS_PARA_O_LOG_CONFIRMAR` | 5 s | = | FIXO | [petbug.py:214](blazesbot/core/petbug.py#L214) | `aplicar_patch, _esperar_a_confirmacao` | Espera pela confirmação no log depois do clique. |
+| `FATIA_DA_ESPERA` | 0.25 s | = | PASSO | [petbug.py:215](blazesbot/core/petbug.py#L215) | `aplicar_patch, _abrir_o_programa (+1)` |  |
 | `SEGUNDOS_POR_TENTATIVA_NA_FAY` | 1.8 s | = | FIXO | [stone_city.py:55](blazesbot/core/stone_city.py#L55) |  |  |
 | `TETO_PARA_O_ALVO_TROCAR` | 0.35 s | *novo* | TETO | [target_hybrid.py:692](blazesbot/core/target_hybrid.py#L692) | `esperar_o_alvo_trocar` | Teto da espera. Passado isto, a tecla nao pegou -- insistir e trabalho do |
 | `PASSO_DA_CONFIRMACAO_DO_TAB` | 0.01 s | *novo* | PASSO | [target_hybrid.py:697](blazesbot/core/target_hybrid.py#L697) | `esperar_o_alvo_trocar` | De quanto em quanto tempo perguntar. A leitura do id e UM `read_int` (~1 us): |

@@ -101,6 +101,20 @@ idempotente, não cego por timer. O porquê está em
   `_procurar_entidade` varre (`docs/decisoes/alvo-o-que-esta-medido.md`, itens
   39–41). Achar o array de verdade é o que devolve a leitura do alvo.
 
+## PetBug — o que esconde os jogadores
+
+- **INSTÂNCIA NOVA A CADA APLICAÇÃO** (07/09/2026). Mata o que estiver aberto e
+  abre outro antes de clicar em `Patch`. Não é higiene: a confirmação lê o log
+  do programa e aceita o texto que já estava lá, então **janela reusada
+  confirma clique que não fez nada**. Log limpo é a prova. Interruptor:
+  `petbug.NOVA_INSTANCIA_SEMPRE`.
+- **A JANELA MINIMIZADA É RESTAURADA SEM SER ATIVADA** (`SW_SHOWNOACTIVATE`) —
+  ativar roubaria o foco do cliente do jogo.
+- **A ENTRADA DA CAVE REAPLICA O PATCH** depois de N falhas MECÂNICAS seguidas:
+  jogador na frente do NPC é a causa medida de o diálogo não abrir. Instância
+  cheia NÃO conta (ali os cliques saíram). Porquê em
+  `docs/decisoes/madrugada-07-09-2026.md`.
+
 ## Deletar itens: LIGADO, e só no ecossistema APP
 
 `blazesbot/bot/app/deletador.py`. O BC resolve bolsa cheia vendendo; o APP roda
