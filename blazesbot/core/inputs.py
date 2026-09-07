@@ -35,6 +35,8 @@ import random
 import time
 from ctypes.wintypes import DWORD, HWND, LPARAM, RECT, WPARAM
 
+from .cronometro import cronometrar
+
 try:
     from .mouse_shield import MouseShield
     MOUSE_SHIELD_DISPONIVEL = True
@@ -683,6 +685,7 @@ class Input:
         )
         user32.SendMessageW(HWND(self.hwnd), WM_MOUSEMOVE, WPARAM(0), _lparam(x, y))
 
+    @cronometrar("input.clique")
     def _click(self, down: int, down_wparam: int, up: int,
                x: int, y: int) -> None:
         """Um clique (down ... up) em (x, y) em coordenadas de client.

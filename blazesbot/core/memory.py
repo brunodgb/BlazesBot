@@ -21,6 +21,7 @@ import time
 import pymem
 import pymem.memory
 
+from .cronometro import cronometrar
 from .rebase import SeletorDeEndereco
 
 # Este módulo nunca teve log, e por bom motivo: leitura de memória falha o tempo
@@ -1489,6 +1490,7 @@ class Memory:
                         if tamanho == PEDACO_DA_VARREDURA else tamanho)
         return None
 
+    @cronometrar("memoria.alvo_atual")
     def alvo_atual(self) -> dict | None:
         """O ALVO, inteiro, da memória. `None` = sem alvo ou não achei.
 

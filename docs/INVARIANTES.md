@@ -920,6 +920,33 @@ Cada item é o que **não pode ser violado**. O detalhe de cada área mora em
   escapava.
 
 
+## Telemetria de latência — `core/cronometro.py`
+
+- **NÃO SE CRONOMETRA NADA ABAIXO DE `PISO_PARA_CRONOMETRAR = 10 µs`.** Medir
+  custa **+298 ns** por chamada (medido em 07/09/2026, 200.000 repetições, esta
+  implementação): 30% num alvo de 1 µs, 3,0% em 10 µs, 1,2% em 25 µs. Daí
+  `Memory.read_int` (~1 µs documentado) **não** ser instrumentado — custaria 30%
+  da operação mais repetida do bot para medir o que já se sabe. Quem quer o
+  custo da leitura mede a leitura COMPOSTA (`alvo_atual`, `snapshot`).
+- **NÃO EXISTE ESCRITA POR CHAMADA.** Cada medição soma num acumulador em
+  memória e uma thread solta despeja UMA linha por nome a cada
+  `INTERVALO_DE_DESPEJO = 30 s`. Cem mil medições viram **uma** linha — e a
+  linha diz mais que as cem mil (n, mínimo, média, máximo). O motivo é medido:
+  em 06/09 uma única mensagem gerou 531.411 linhas e 290 MB em 48 minutos.
+- **DESLIGADO CUSTA ZERO, não "quase zero"**: com `TELEMETRIA_LIGADA = False`,
+  `@cronometrar` devolve a **função original**, sem embrulho. Um `if` dentro do
+  wrapper custaria a chamada extra que a medição acima cobra.
+- **O ACUMULADOR É POR THREAD.** `ac.n += 1` não é atômico entre threads e um
+  `Lock` no caminho quente pagaria mais que a medição. Por thread resolve os
+  dois — e o despejo já sai separado por conta.
+- **O LOG É SEPARADO E NÃO PROPAGA** (`logs/latencia/`, `propagate = False`).
+  Misturar com o log de dev empurraria a evidência de defeito para fora da
+  janela curta dele (4.000 linhas). A retenção, a compressão e o arquivo morto
+  são REUSADOS de `core/log_limitado.py`, não reescritos.
+- **TELEMETRIA QUE DERRUBA O BOT É PIOR QUE TELEMETRIA NENHUMA**: o laço do
+  despejo engole exceção, e exceção no bloco medido é **medida e sobe**.
+- Travado por `tests/test_cronometro.py`.
+
 ## O log de dev — `docs/decisoes/sistema.md`
 
 - **RETENÇÃO DE 2 DIAS** (`DIAS_DE_ARQUIVO_MORTO = 2`, 06/09/2026). Era 7, e o

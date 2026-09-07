@@ -28,6 +28,7 @@ import win32gui
 import win32process
 
 from ..config import CAVE_BC, CAVE_HH, MODO_FADA_DA_HH, Account, BotConfig
+from ..core import cronometro as cronometro_mod
 from ..core import logmodo, quedas, vizinhanca
 from ..core.coords import coords_for_window
 from ..core.memory import Memory
@@ -2482,6 +2483,11 @@ class AccountSupervisor(threading.Thread):
         # linha, uma falha antes do primeiro log deixava o bot silencioso e sem
         # pista nenhuma do que aconteceu.
         self._status("supervisor iniciado")
+        # TELEMETRIA. Aqui e nao no `main`, porque este e o unico ponto por onde
+        # TODO ecossistema passa -- e a thread ja e a da conta, entao o carimbo
+        # sai certo sem ninguem precisar passar o login adiante.
+        cronometro_mod.ligar()
+        cronometro_mod.marcar_a_conta(self.account.login)
         self.tentativas_de_login = 0
         stopped = False
         try:

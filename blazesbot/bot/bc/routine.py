@@ -78,6 +78,7 @@ from ...core import (
     stats_diarias,
     vision,
 )
+from ...core.cronometro import cronometro
 from ...core.lugares import LUGAR_FORA_DA_CAVE
 from ...core.quedas import frase_do_tempo
 from ...core.vision import capture_window, find_template, frame_is_blank
@@ -2559,7 +2560,16 @@ class BossRushRoutine:
                 # por waypoint. Sem esta linha, otimizar é adivinhar.
                 comecou = time.time()
                 try:
-                    handler()
+                    # UM NOME POR ESTADO. O `comecou` logo acima ja mede e loga a
+                    # passagem individual; o cronometro agrega a DISTRIBUICAO
+                    # (n, minimo, media, maximo por estado), que e o que mostra
+                    # se um estado piorou -- uma linha solta nao mostra.
+                    #
+                    # Custo zero de verdade aqui: o estado mais curto da rotina
+                    # leva dezenas de milissegundos contra os 310 ns do
+                    # cronometro. Ver o piso em `core/cronometro.py`.
+                    with cronometro(f"bc.estado.{previous.name}"):
+                        handler()
                 except (StopRequested, Disconnected):
                     raise
                 except PersonagemMortoNoPortao as exc:
