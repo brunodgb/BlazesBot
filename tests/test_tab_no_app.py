@@ -76,6 +76,7 @@ def _executor(roda=None, tecla="TAB", sem_leitura=False, em_batalha=None):
     e.log = SimpleNamespace(
         info=lambda f, *a: e.linhas.append(("INFO", f % a if a else f)),
         warning=lambda f, *a: e.linhas.append(("WARNING", f % a if a else f)),
+        error=lambda f, *a: e.linhas.append(("ERROR", f % a if a else f)),
         debug=lambda *a, **k: None)
 
     if sem_leitura:
@@ -125,6 +126,10 @@ def _executor(roda=None, tecla="TAB", sem_leitura=False, em_batalha=None):
     e._travar_posicao = False
     e._base_pos = None
     e._posicao_atual = None
+    # O AVISO DO TAB MUDO agora REARMA por relógio, e ele consulta a vizinhança
+    # para dizer se o spot está vazio ou se a tecla não chega ao jogo.
+    e._falei_do_tab_mudo_em = 0.0
+    e._mobs_por_perto = None
     e._recusas_por_distancia = 0
     # O TAB só sai quando FALTA alvo (`_preciso_de_alvo`), e a decisão usa
     # estes dois: a batalha da volta anterior e as voltas seguidas com alvo
@@ -303,14 +308,22 @@ def test_TECLA_QUE_NAO_PEGA_desiste_rapido():
     for _ in range(mod.TABS_SEM_RESPOSTA_PARA_DESISTIR):
         e._garantir_alvo()
 
-    assert any("não está pegando" in t for _n, t in e.linhas), e.linhas
+    assert any("sem resposta" in t for _n, t in e.linhas), e.linhas
     assert not any("roda voltar ao começo" in t for _n, t in e.linhas), (
         "confundiu tecla morta com falta de mob perto")
 
 
-def test_o_aviso_de_tecla_morta_sai_UMA_vez_e_REARMA():
-    """Uma sessão de APP roda por horas; um aviso por volta afogaria o log. Mas
-    consertar a tecla tem que voltar a valer."""
+def test_o_aviso_do_TAB_MUDO_sai_uma_vez_por_MINUTO_e_REARMA():
+    """O CONTRATO MUDOU EM 06/09/2026, e o motivo está medido.
+
+    Antes o aviso saía UMA vez por sessão -- e a linha "o TAB não trouxe mob
+    vivo" era suprimida exatamente quando o TAB parava de responder. Resultado:
+    duas contas ficaram **96 e 212 minutos** apertando TAB a cada 2 s sem uma
+    única linha no log, e o usuário só descobriu olhando a tela.
+
+    Um aviso por volta afogaria o log; um por sessão esconde o defeito. Um por
+    minuto é o meio que faz o problema aparecer.
+    """
     roda = _Roda([_mob(0x111, hp=0), _mob(0x222)])
     pegando = [False]
     original = roda.tab
@@ -319,12 +332,58 @@ def test_o_aviso_de_tecla_morta_sai_UMA_vez_e_REARMA():
 
     for _ in range(6):
         e._garantir_alvo()
-    avisos = [t for _n, t in e.linhas if "não está pegando" in t]
-    assert len(avisos) == 1, avisos
+    avisos = [t for _n, t in e.linhas if "sem resposta" in t]
+    assert len(avisos) == 1, ("dentro do mesmo minuto o aviso não pode "
+                              f"repetir: {avisos}")
+
+    # Passou o minuto: ele TEM de voltar a falar.
+    e._falei_do_tab_mudo_em -= mod.SEGUNDOS_ENTRE_AVISOS_DO_TAB_MUDO + 1
+    e._garantir_alvo()
+    assert len([t for _n, t in e.linhas if "sem resposta" in t]) == 2
 
     pegando[0] = True
     assert e._garantir_alvo() is True
     assert e._tabs_sem_resposta == 0
+
+
+def test_o_aviso_ACUSA_A_TECLA_quando_ha_mob_por_perto():
+    """A distinção que faltava: "a tecla não pega" e "não tem mob" produzem o
+    MESMO silêncio no `TARGET_ID`, e pedem consertos opostos. Só a tabela de
+    entidades separa as duas."""
+    roda = _Roda([_mob(0x111, hp=0)])
+    roda.tab = lambda: None
+    e = _executor(roda)
+    e._mobs_por_perto = lambda: (3, 7.0)
+
+    e._garantir_alvo()
+
+    erros = [t for n, t in e.linhas if n == "ERROR"]
+    assert any("HÁ 3 mob(s) vivo(s)" in t for t in erros), e.linhas
+
+
+def test_o_aviso_diz_SPOT_VAZIO_quando_nao_ha_mob():
+    roda = _Roda([_mob(0x111, hp=0)])
+    roda.tab = lambda: None
+    e = _executor(roda)
+    e._mobs_por_perto = lambda: (0, None)
+
+    e._garantir_alvo()
+
+    assert any("spot" in t and "vazio" in t for _n, t in e.linhas), e.linhas
+
+
+def test_a_vizinhanca_que_explode_nao_derruba_a_aquisicao():
+    roda = _Roda([_mob(0x111, hp=0)])
+    roda.tab = lambda: None
+    e = _executor(roda)
+
+    def _explode():
+        raise RuntimeError("memória sumiu")
+
+    e._mobs_por_perto = _explode
+
+    e._garantir_alvo()          # não levanta
+    assert any("sem resposta" in t for _n, t in e.linhas)
 
 
 def test_UM_TAB_POR_AQUISICAO_e_mais_nenhum():
@@ -618,14 +677,14 @@ def test_desistir_AVISA_e_diz_QUAL_foi_o_motivo():
     e1 = _executor(so_cadaveres)
     e1._garantir_alvo()
     assert any("só cadáver por aqui" in t for _n, t in e1.linhas), e1.linhas
-    assert not any("não está pegando" in t for _n, t in e1.linhas), e1.linhas
+    assert not any("sem resposta" in t for _n, t in e1.linhas), e1.linhas
 
     travada = _Roda([_mob(0x111, hp=0)])
     travada.tab = lambda: None
     e2 = _executor(travada)
     for _ in range(mod.TABS_SEM_RESPOSTA_PARA_DESISTIR):
         e2._garantir_alvo()
-    assert any("não está pegando" in t for _n, t in e2.linhas), e2.linhas
+    assert any("sem resposta" in t for _n, t in e2.linhas), e2.linhas
 
 
 def test_a_ORDEM_da_volta_e_confere_voltar_TAB_macro():

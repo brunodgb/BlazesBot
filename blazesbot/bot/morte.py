@@ -495,14 +495,6 @@ def montar_para_o_app(sup, executor, entrada, *, vida_pct, em_batalha,
     )
 
 
-# Raio, em unidades de jogo, do que conta como "em cima de mim" na hora da morte.
-#
-# Não é uma régua de decisão -- é o recorte do diagnóstico. 40 é largo o
-# bastante para pegar o trem de mobs que mata um personagem de macro e estreito
-# o bastante para não listar o spot inteiro.
-RAIO_DA_VIZINHANCA = 40
-
-
 def _vizinhanca(sup) -> str:
     """Quem estava por perto, lido no instante da morte.
 
@@ -514,24 +506,13 @@ def _vizinhanca(sup) -> str:
     NUNCA LEVANTA: diagnóstico que derruba o ciclo da morte é pior que
     diagnóstico nenhum.
     """
+    from ..core import vizinhanca
     from ..core.memory import Memory
-    from ..core.zones import distancia_linear
 
     memoria = None
     try:
         memoria = Memory(sup.pid)
-        eu = memoria.position()
-        if eu is None:
-            return "vizinhança=? (posição ilegível)"
-        perto = []
-        for e in memoria.entidades_vivas():
-            pos = e.get("pos")
-            if pos is None:
-                continue
-            d = distancia_linear(pos, eu)
-            if d <= RAIO_DA_VIZINHANCA:
-                perto.append(f"{e.get('nome') or '?'}@{d:.0f}")
-        return f"mobs vivos a até {RAIO_DA_VIZINHANCA}: {len(perto)} [{', '.join(perto[:8])}]"
+        return vizinhanca.resumo(memoria)
     except Exception as exc:
         return f"vizinhança=? ({exc})"
     finally:

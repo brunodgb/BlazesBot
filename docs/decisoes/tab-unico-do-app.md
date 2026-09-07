@@ -74,3 +74,50 @@ o modo cego (sem leitura de alvo) continuam intactos. A mudança está SÓ no
 caminho com alvo injetado: o `False` de `_garantir_alvo` deixou de ser engolido
 quando a macro é de ataque. A cura continua entre voltas (`rodar()`), não entrou
 no bloco pré-TAB.
+
+
+## O TAB MUDO: 96 e 212 minutos de silêncio — 06/09/2026
+
+Medido no log do dia, em duas contas:
+
+```
+20:25:18  APP: o TAB não trouxe mob vivo (1 salto) — só cadáver por aqui.
+20:25:20  APP: 1 TAB(s) seguidos e o alvo não mudou — a tecla 'TAB' não pega.
+   ...    96 minutos. Uma linha de pet feed, 16 shuffles anti-AFK, e nada mais.
+```
+
+`gamerblazes`: 17:00:29 → 20:32:12, **3 h 32 min**. `blazestpas`: 20:25:20 até o
+fim do log, **1 h 36 min**. Nos dois casos o bot continuou apertando TAB a cada
+~2 s, sem atacar nada e **sem escrever uma linha**.
+
+### Por que ficou mudo
+
+Duas supressões que se somaram:
+
+1. `_avisou_tecla_morta` fazia o aviso sair **uma vez por sessão**;
+2. a linha `"o TAB não trouxe mob vivo"` é guardada por
+   `if not self._tabs_sem_resposta:` — ou seja, ela cala exatamente quando o TAB
+   para de responder.
+
+Da segunda tentativa em diante, silêncio total. O log ficou cego no estado em
+que ele era mais necessário.
+
+### E o aviso acusava a coisa errada
+
+*"A tecla 'TAB' não está pegando"* é só uma das duas causas possíveis, e a menos
+provável: a outra é **não haver mob vivo ao alcance**. As duas produzem
+exatamente o mesmo silêncio no `TARGET_ID` e pedem consertos opostos — trocar a
+tecla não resolve spot vazio, e esperar não resolve tecla morta.
+
+**Só a tabela de entidades separa as duas**, e é ela que entra no aviso agora
+(`core/vizinhanca.py`):
+
+- **há mob vivo por perto** ⇒ `ERROR`, dizendo quantos e a que distância está o
+  mais próximo. Ou a tecla não chega ao jogo, ou eles estão fora do alcance do
+  TAB — nos dois casos é defeito, e nos dois casos nada está sendo atacado.
+- **nenhum mob por perto** ⇒ `WARNING` dizendo que o spot está vazio. O bot está
+  certo em esperar; o que faltava era dizer isso.
+
+O aviso passou a **rearmar a cada minuto** (`SEGUNDOS_ENTRE_AVISOS_DO_TAB_MUDO`):
+um por volta afogaria o log, um por sessão esconde o defeito. Um por minuto são
+~30 tentativas de TAB entre duas linhas.

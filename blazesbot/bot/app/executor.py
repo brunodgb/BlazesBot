@@ -351,6 +351,17 @@ VOLTAS_SEM_ALVO_ANTES_DE_DESCANSAR = 3
 # manda configurar.
 TABS_SEM_RESPOSTA_PARA_DESISTIR = 1
 
+# De quanto em quanto tempo o TAB MUDO volta a falar -- 06/09/2026.
+#
+# Medido em campo: duas contas passaram 96 e 212 minutos apertando TAB a cada 2 s
+# sem UMA linha no log. O aviso da tecla morta saía uma vez e nunca mais, e a
+# linha "o TAB não trouxe mob vivo" era suprimida justamente quando o TAB parava
+# de responder. Da segunda linha em diante, silêncio total.
+#
+# Um minuto é o intervalo que faz o problema aparecer no log sem afogá-lo: são
+# ~30 tentativas de TAB entre duas linhas.
+SEGUNDOS_ENTRE_AVISOS_DO_TAB_MUDO = 60.0
+
 # Quantas LINHAS da macro sem o alvo perder vida antes de trocar de alvo.
 #
 # Pedido do usuário em 25/08/2026:
@@ -895,6 +906,10 @@ class ExecutorDeMacro:
         # descendo também"*. É prova POSITIVA de que há outro mob batendo, e
         # chega antes do teto -- a flag só diz "ainda em batalha".
         vida_pct: Callable[[], float | None] | None = None,
+        # QUANTOS MOBS VIVOS EM VOLTA -- só diagnóstico, e é o que separa "o
+        # spot está vazio" de "a tecla não chega ao jogo". Ver
+        # `_avisar_do_tab_mudo` e `core/vizinhanca.py`.
+        mobs_por_perto: Callable[[], tuple[int, float | None]] | None = None,
         # A ESPERA DEPOIS DO TAB, agora CONFIGURÁVEL -- é a "linha 0" da macro.
         # Chega como função pelo mesmo motivo que `fonte_dos_passos` chega:
         # mudar o valor na tela com o bot rodando passa a valer na volta
@@ -979,6 +994,9 @@ class ExecutorDeMacro:
         # Como a volta ANTERIOR terminou. Só diagnóstico -- ver
         # `_abortar_a_volta` e `core/cadencia_da_bolsa.py`.
         self._ultimo_corte = "início"
+        # Quando o TAB mudo falou por último -- ver
+        # `SEGUNDOS_ENTRE_AVISOS_DO_TAB_MUDO`.
+        self._falei_do_tab_mudo_em = 0.0
         self._cadencia_da_bolsa = cadencia_da_bolsa.CadenciaDaBolsa(self.log)
         # Função para ler posição atual (injetada pelo supervisor).
         self._posicao_atual = posicao_atual
@@ -1027,6 +1045,7 @@ class ExecutorDeMacro:
         self._em_batalha = em_batalha
         self._estava_em_batalha = False
         self._vida_pct = vida_pct
+        self._mobs_por_perto = mobs_por_perto
         self._espera_depois_do_tab_ms = espera_depois_do_tab_ms
         # A SEGUNDA PORTA e a cadência dela -- ver `USAR_A_TELA_COMO_SEGUNDA_
         # PORTA`, `LINHAS_ANTES_DE_OLHAR_A_TELA` e `INTERVALO_MINIMO_DA_TELA`.
@@ -2041,6 +2060,60 @@ class ExecutorDeMacro:
         hp = alvo.get("hp")
         return hp is None or hp > 0
 
+    def _avisar_do_tab_mudo(self, tecla: str) -> None:
+        """Fala do TAB que não responde -- e VOLTA A FALAR, a cada minuto.
+
+        =================================================================
+        O SILÊNCIO DE 96 MINUTOS -- medido em 06/09/2026
+        =================================================================
+
+        O aviso saía UMA vez por sessão (`_avisou_tecla_morta`) e a linha "o TAB
+        não trouxe mob vivo" era suprimida exatamente quando o TAB parava de
+        responder. Da segunda tentativa em diante, silêncio: duas contas ficaram
+        96 e 212 minutos apertando TAB a cada 2 s sem uma única linha no log, e
+        o usuário só descobriu olhando a tela.
+
+        E O AVISO SOZINHO NÃO BASTAVA, porque ele acusava a coisa errada: dizia
+        "a tecla não está pegando" quando a causa mais provável é não haver mob
+        vivo ao alcance. As duas são indistinguíveis pelo `TARGET_ID` -- só a
+        tabela de entidades separa uma da outra, e é ela que entra aqui.
+        """
+        agora = time.time()
+        if (agora - self._falei_do_tab_mudo_em
+                < SEGUNDOS_ENTRE_AVISOS_DO_TAB_MUDO):
+            return
+        primeiro = self._falei_do_tab_mudo_em == 0.0
+        self._falei_do_tab_mudo_em = agora
+        self._avisou_tecla_morta = True
+
+        quantos, mais_perto = self._quantos_mobs_por_perto()
+        if quantos:
+            self.log.error(
+                "APP: %s TAB(s) sem resposta, e HÁ %d mob(s) vivo(s) por perto "
+                "(o mais próximo a %.0f). Ou a tecla %r não chega ao jogo, ou "
+                "eles estão fora do alcance do TAB. NADA está sendo atacado.",
+                self._tabs_sem_resposta, quantos, mais_perto or 0, tecla)
+            return
+        self.log.warning(
+            "APP: %s TAB(s) sem resposta e NENHUM mob vivo por perto — o spot "
+            "está vazio %s. Sigo tentando; não há o que atacar.",
+            self._tabs_sem_resposta,
+            "(ou a leitura da vizinhança não respondeu)" if primeiro else "")
+
+    def _quantos_mobs_por_perto(self) -> tuple[int, float | None]:
+        """`(quantos, o mais perto)`. `(0, None)` = nenhum OU não deu para ler.
+
+        Chega injetado como todo o resto -- o executor continua sem saber ler
+        memória. Sem a injeção a resposta é "não sei", e aí o aviso cai para o
+        texto genérico em vez de acusar a tecla.
+        """
+        if self._mobs_por_perto is None:
+            return 0, None
+        try:
+            return self._mobs_por_perto()
+        except Exception:
+            return 0, None
+
     def _conseguir_o_tab(self) -> bool:
         """Aperta o TAB com a conferência certa para o caso.
 
@@ -2152,13 +2225,7 @@ class ExecutorDeMacro:
             if novo is None:
                 self._tabs_sem_resposta += 1
                 if self._tabs_sem_resposta >= TABS_SEM_RESPOSTA_PARA_DESISTIR:
-                    if not self._avisou_tecla_morta:
-                        self._avisou_tecla_morta = True
-                        self.log.warning(
-                            "APP: %s TAB(s) seguidos e o alvo não mudou — a "
-                            "tecla %r não está pegando. Confira em Editar conta "
-                            "> Teclas > Próximo alvo.",
-                            self._tabs_sem_resposta, tecla)
+                    self._avisar_do_tab_mudo(tecla)
                     break 
                 if not self._dormir(ESPERA_ENTRE_TABS):
                     return False

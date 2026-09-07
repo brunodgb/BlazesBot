@@ -70,6 +70,10 @@ def _executor(em_batalha=None, passos=3, tecla="TAB"):
     # O corte pelo HP tem os próprios, em tests/test_alvo_caiu_no_app.py.
     e._alvo_morreu = lambda: False
     e.mortes_vistas = 0
+    # O AVISO DO TAB MUDO rearma por relógio e consulta a vizinhança -- ver
+    # `_avisar_do_tab_mudo`. Aqui nenhum dos dois é exercitado.
+    e._falei_do_tab_mudo_em = 0.0
+    e._mobs_por_perto = None
     # SEM CICLO DA MORTE: o dublê não morre, e a pergunta nem é feita.
     e.morte = None
     # SEM PONTO INICIAL: `distancia_da_base` devolve None e nada que dependa

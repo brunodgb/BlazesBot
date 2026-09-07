@@ -755,6 +755,14 @@ Cada item é o que **não pode ser violado**. O detalhe de cada área mora em
   estourar o teto **não é fracasso**, é o outro desfecho útil: quer dizer que há
   outro mob batendo, e aí o bot volta a atacar em vez de sentar, andar ou abrir
   a bolsa.
+- **O TAB QUE NÃO RESPONDE TEM DE FALAR, E DIZER QUAL DAS DUAS CAUSAS É**
+  (06/09/2026). "A tecla não pega" e "não há mob ao alcance" produzem o MESMO
+  silêncio no `TARGET_ID` e pedem consertos opostos; só `core/vizinhanca.py`
+  separa as duas. Há mob por perto ⇒ **ERROR** (a tecla não chega, ou eles estão
+  fora do alcance do TAB); nenhum mob ⇒ **WARNING** de spot vazio. O aviso
+  **rearma a cada minuto** — medido: duas contas ficaram 96 e 212 minutos
+  apertando TAB sem uma linha no log, porque o aviso saía uma vez por sessão e a
+  linha "não trouxe mob vivo" era suprimida justamente quando o TAB emudecia.
 - **NADA RECUSA UM ALVO VIVO POR DISTÂNCIA** (HOTFIX de 06/09/2026, com conta
   morta). O TAB do jogo entrega o mob **mais próximo primeiro** e vai afastando
   a cada toque: recusar o primeiro empurra a seleção para fora, e o bot acaba

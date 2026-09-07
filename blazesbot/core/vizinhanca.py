@@ -1,0 +1,80 @@
+"""QUEM ESTÁ EM VOLTA — a pergunta que separa "não tem mob" de "não estou agindo".
+
+Nasceu no ciclo da morte (*"morri com um mob só ou com quatro em cima?"*) e subiu
+para o `core/` em 06/09/2026, quando o mesmo dado passou a ser necessário na
+aquisição de alvo. O caso que forçou a promoção está no log daquele dia:
+
+```
+20:25:18  APP: o TAB não trouxe mob vivo (1 salto) — só cadáver por aqui.
+20:25:20  APP: 1 TAB(s) seguidos e o alvo não mudou — a tecla 'TAB' não pega.
+   ...    (96 minutos sem uma única linha, com TAB saindo a cada 2 s)
+```
+
+Duas causas produzem exatamente esse silêncio e pedem consertos opostos:
+
+* **não há mob vivo ao alcance** — o bot está certo, o spot esvaziou, e o que
+  falta é DIZER isso em vez de calar;
+* **há mob e a tecla não chega ao jogo** — o bot está mudo de verdade, e o
+  desfecho certo é tratar como queda.
+
+Ler a tabela de entidades responde qual das duas é, e é a única coisa que
+responde: a tecla "não pegar" é indistinguível de "não tem o que pegar" olhando
+só o `TARGET_ID`.
+"""
+
+from __future__ import annotations
+
+from .zones import distancia_linear
+
+# Raio, em unidades de jogo, do que conta como "em volta".
+#
+# Não é régua de decisão -- é o recorte da pergunta. 40 é largo o bastante para
+# pegar o trem de mobs que mata um personagem de macro e estreito o bastante
+# para não descrever o spot inteiro.
+RAIO = 40
+
+
+def contar(memoria, raio: int = RAIO) -> tuple[int, float | None]:
+    """`(quantos mobs vivos em volta, distância do mais perto)`.
+
+    `(0, None)` também é a resposta para "não deu para ler" -- e quem chama tem
+    de tratar os dois casos igual, porque não há como distingui-los sem inventar.
+    Ver `resumo` quando o destino for log: lá a diferença aparece em texto.
+    """
+    try:
+        eu = memoria.position()
+        if eu is None:
+            return 0, None
+        distancias = sorted(
+            distancia_linear(e["pos"], eu)
+            for e in memoria.entidades_vivas() if e.get("pos") is not None
+        )
+    except Exception:
+        return 0, None
+    perto = [d for d in distancias if d <= raio]
+    return len(perto), (perto[0] if perto else None)
+
+
+def resumo(memoria, raio: int = RAIO) -> str:
+    """A mesma leitura em uma linha de log, com os nomes e as distâncias.
+
+    NUNCA LEVANTA: diagnóstico que derruba quem o chamou é pior que diagnóstico
+    nenhum. Falha vira texto, e o texto diz que falhou.
+    """
+    try:
+        eu = memoria.position()
+        if eu is None:
+            return "vizinhança=? (posição ilegível)"
+        perto = []
+        for e in memoria.entidades_vivas():
+            pos = e.get("pos")
+            if pos is None:
+                continue
+            d = distancia_linear(pos, eu)
+            if d <= raio:
+                perto.append((d, f"{e.get('nome') or '?'}@{d:.0f}"))
+        perto.sort()
+        return (f"mobs vivos a até {raio}: {len(perto)} "
+                f"[{', '.join(t for _d, t in perto[:8])}]")
+    except Exception as exc:
+        return f"vizinhança=? ({exc})"

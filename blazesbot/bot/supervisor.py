@@ -28,7 +28,7 @@ import win32gui
 import win32process
 
 from ..config import CAVE_BC, CAVE_HH, MODO_FADA_DA_HH, Account, BotConfig
-from ..core import logmodo, quedas
+from ..core import logmodo, quedas, vizinhanca
 from ..core.coords import coords_for_window
 from ..core.memory import Memory
 from ..core.target_hybrid import TargetHybrid
@@ -2252,6 +2252,11 @@ class AccountSupervisor(threading.Thread):
             # QUEDA dela como prova positiva de que há outro mob batendo. A
             # MESMA leitura que a cura já usa.
             vida_pct=vida_pct if memoria_do_pet is not None else None,
+            # A VIZINHANÇA -- só diagnóstico. É ela que separa "o spot esvaziou"
+            # de "a tecla não chega ao jogo" quando o TAB para de responder.
+            mobs_por_perto=(
+                (lambda: vizinhanca.contar(memoria_do_pet))
+                if memoria_do_pet is not None else None),
             # A LINHA 0 DA MACRO: o tempo depois do TAB. Função e não número,
             # pelo mesmo motivo de `fonte_dos_passos` -- mudar na tela com o bot
             # rodando passa a valer na volta seguinte.
