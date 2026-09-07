@@ -82,6 +82,18 @@ Antes de responder sobre **biblioteca externa** (PyQt6, pywebview, Tailwind v4,
 Vite, pymem, OpenCV, pytest, ruff), use a skill `find-docs` (Context7) em vez de
 responder de memória — essas libs mudam. Não substitui o graphify.
 
+## Segunda opinião: `claude-council` (diretriz permanente — 06/09/2026)
+
+Peça uma segunda opinião ao council **sempre que a dúvida for real, sem se
+policiar por custo** — o roster default é zero-custo (ver `docs/SKILLS.md`).
+A resposta é **insumo para análise, nunca veredito**: avalie criticamente os
+pontos levantados, compare com abordagens alternativas e teste a solução
+escolhida contra o cenário mais extremo antes de aplicar — a decisão final é
+sempre sua, não do council. Ele é externo: **não tem acesso à memória do bot,
+ao graphify nem aos logs** — não substitui essas fontes para decisão sobre o
+estado do jogo. Contrato completo, assentos ativos e quando NÃO vale a pena
+invocar: `docs/SKILLS.md`, seção "claude-council".
+
 ## Skills instaladas no projeto (`.claude/skills/`)
 
 - **`find-docs`** (Context7) — documentação atual de biblioteca externa.

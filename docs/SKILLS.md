@@ -206,22 +206,42 @@ para de responder — não existe troca por alternativa paga. O que sustenta iss
   quebra:** esses cinco TÊM degrade automático para modelo pago no mapa acima.
   Não adicione chave desses provedores sem antes tratar isso.
 
-## Quando usar (e quando NÃO)
+## Quando usar (e quando NÃO) — diretiva permanente do usuário (06/09/2026)
+
+**Sem limite de uso.** O roster default é zero-custo (seção acima), então não
+há cota a poupar — peça uma segunda opinião sempre que a dúvida for real, sem
+se policiar por frequência. O que resta é critério de **sinal**, não de custo:
 
 **Usar:**
 - Decisões de arquitetura com tradeoffs reais (qual lib, qual design pattern).
 - Debugging dead-end (já tentou 2+ vezes, nada bateu).
 - Cross-check de segurança/performance/maintainability em mudança grande.
 - "Estou em dúvida entre A e B, o que o council acha?"
+- Qualquer dúvida real, mesmo pequena — o custo zero já resolveu a hesitação.
 
 **NÃO usar:**
-- Implementação mecânica (uma linha, um fix óbvio).
+- Implementação mecânica (uma linha, um fix óbvio) — não é limite de cota,
+  é que não há pergunta real ali para perguntar a ninguém.
 - Perguntas com resposta única e clara.
 - Decisões de código deste projeto que dependem do **estado do jogo** —
   council é externo, **não tem acesso à memória do bot, ao graphify nem
   aos logs JSONL**. Para debugging real do BlazesBot: graphify + logs.
-- Em loop, sem filtro — invocar o council a cada alteração de 3 linhas gasta
-  cota do andar gratuito sem retorno.
+
+**A resposta é insumo, nunca veredito.** Trate todo retorno do council como
+material de análise, não como verdade absoluta:
+- Avalie criticamente os pontos levantados — um assento pode estar certo,
+  errado, ou certo pela razão errada.
+- Compare as respostas dos assentos entre si e contra a alternativa que você
+  já tinha em mente antes de perguntar.
+- Teste a solução escolhida contra o cenário mais extremo que ela precisa
+  aguentar antes de aplicar — o council opina sobre o caso geral; quem conhece
+  o caso extremo deste projeto (memória, offsets, o que já reprovou em
+  `docs/decisoes/`) é você.
+- A decisão final é sempre sua. Concordância entre assentos não é prova —
+  é só mais um dado. Os 3 assentos da OpenRouter hoje são 3 modelos distintos
+  (tabela acima), então concordância entre eles não é o mesmo modelo
+  respondendo duas vezes — mas isso muda se `OPENROUTER_MODELS` for editado
+  para repetir um id.
 
 ## Como invocar
 
