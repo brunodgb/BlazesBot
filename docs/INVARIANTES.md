@@ -192,8 +192,11 @@ seguidores). Pedido do usuário em 27/08/2026.
   do time e não é convocada. Convocar arrancaria a conta do meio de uma run
   (teleporte gasto, boss vivo) — run perdida em silêncio.
 - **A ESCOLHA DO TIME MOSTRA SÓ QUEM DÁ PARA CONVOCAR** (07/09/2026). Fica de
-  fora quem está **inativa**, com **outra função** (BC ou HH) ou **já no time de
-  outro líder**. A regra mora num lugar só, `_App._candidatas_do_time`: a tela
+  fora quem está **inativa**, com **outra função** (BC, HH ou o **APP próprio**)
+  ou **já no time de outro líder**. Esconder quem tem o APP marcado NÃO impede
+  montar time: o seguidor roda com a caixa "Ativar Modo APP" **dele** desmarcada
+  — é a convocação que o faz rodar (`_SupervisorDaConta._lider_do_time`), e
+  candidata com a caixa marcada é conta que já trabalha por si. A regra mora num lugar só, `_App._candidatas_do_time`: a tela
   recebe o motivo pronto, não três campos para remontar. A **contagem** do que
   ficou de fora vai junto — conta que some sem explicação é o usuário procurando
   uma conta que ele sabe que cadastrou.

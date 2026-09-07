@@ -213,6 +213,15 @@ class _App:
                 motivo = "farmando a cave"
             elif o.hh_farm:
                 motivo = "farmando a HH"
+            elif o.settings.app.enabled:
+                # O APP PRÓPRIO TAMBÉM ESCONDE (07/09/2026, pedido do usuário
+                # olhando a tela: o líder de um time aparecia como candidato
+                # para as outras contas). Isto NÃO impede montar time: seguidor
+                # roda com a caixa "Ativar Modo APP" DELE desmarcada -- é a
+                # convocação que o faz rodar (`_SupervisorDaConta._lider_do_time`).
+                # Candidata com a caixa marcada é conta que já trabalha por si.
+                motivo = ("líder de um time" if o.settings.app.time_logins
+                          else "rodando o APP")
             else:
                 outro = self.config.lider_do_time_do_app(
                     o.login, ignorar=lider.login)

@@ -308,12 +308,23 @@ Vale notar que `docs/INVARIANTES.md` **sempre** disse que conta farmando a cave
 "não aparece na escolha do time". Era o código que divergia do invariante escrito.
 
 O que ficou de fora, e a ordem em que o motivo é decidido: **inativa** → **BC** →
-**HH** → **já no time de outro**. Conta com o **APP próprio ligado continua
-aparecendo**, e isso é de propósito: seguidor não precisa de `app.enabled`, quem
-liga é o líder, e o projeto resolve o nó "A lidera B enquanto B lidera A" pela
-regra de que quem aparece na lista de outro é seguidora e o time dela é ignorado.
-Esconder quem tem APP tiraria a possibilidade de puxar para o time uma conta que
-hoje roda a macro sozinha — que é o caso normal de montar um time.
+**HH** → **APP próprio** → **já no time de outro**.
+
+O APP próprio entrou numa segunda passada, e a primeira versão errou aqui. Eu
+deixei quem tem `app.enabled` aparecendo, com o argumento de que "puxar para o
+time uma conta que hoje roda a macro sozinha é o caso normal de montar um time".
+O usuário olhou a tela e apontou o contrário: *"faltou esconder o que está
+rodando APP, no caso o líder BlazesAPP1, está aparecendo para outras contas, mas
+ele que está com a flag APP ativo e já é líder de um time."*
+
+Ele está certo, e o argumento que eu usei estava simplesmente errado: **o
+seguidor roda com a caixa "Ativar Modo APP" DELE desmarcada** — é a convocação
+que o faz rodar (`_SupervisorDaConta._lider_do_time`, pedido do usuário em
+27/08/2026). Então esconder quem tem a caixa marcada não fecha nenhuma porta:
+candidata com a caixa marcada é conta que **já trabalha por si**, e puxá-la seria
+tirá-la do que ela faz. O motivo distingue os dois casos, porque para quem olha
+eles são diferentes: **"líder de um time"** (tem `time_logins`) explica por que
+várias contas sumiram de uma vez; **"rodando o APP"** é a conta solitária.
 
 ### Duas coisas que este ajuste consertou de quebra
 

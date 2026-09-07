@@ -204,10 +204,39 @@ def test_conta_com_OUTRA_FUNCAO_nao_aparece():
 
 
 def test_conta_em_OUTRO_TIME_nao_aparece():
+    """Com o APP de 'dois' DESLIGADO o time dele não roda, e ele mesmo continua
+    convocável -- é a caixa "Ativar Modo APP" que diz se a conta trabalha por
+    si, não a lista guardada."""
     cfg = _cfg(_conta("um"), _conta("dois", segue=["tres"]), _conta("tres"))
     vis, fora = _candidatas(cfg, "um")
-    assert vis == {"dois": ""}, "quem lidera outro time continua convocável"
+    assert vis == {"dois": ""}
     assert fora == 1, "a seguidora de 'dois' não pode ser puxada por 'um'"
+
+
+def test_conta_RODANDO_O_APP_nao_aparece():
+    """Pedido do usuário em 07/09/2026, olhando a tela: o líder de um time
+    aparecia como candidato para as outras contas.
+
+    Não impede montar time: o seguidor roda com a caixa "Ativar Modo APP" DELE
+    desmarcada -- é a convocação que o faz rodar. Candidata com a caixa marcada
+    é conta que já trabalha por si.
+    """
+    cfg = _cfg(_conta("um"), _conta("dois"))
+    cfg.definir_funcao_da_conta(cfg.accounts[1], "app")
+    vis, fora = _candidatas(cfg, "um")
+    assert vis == {}
+    assert fora == 1
+
+
+def test_o_LIDER_DE_OUTRO_TIME_diz_que_e_lider():
+    """"rodando o APP" e "líder de um time" são situações diferentes para quem
+    olha: a segunda explica por que várias contas sumiram de uma vez."""
+    cfg = _cfg(_conta("um", segue=["dois"]), _conta("dois"),
+               _conta("tres", segue=["quatro"]), _conta("quatro"))
+    cfg.definir_funcao_da_conta(cfg.accounts[2], "app")
+    cfg.accounts[0].settings.app.time_logins = ["tres"]
+    vis, _ = _candidatas(cfg, "um")
+    assert vis["tres"] == "líder de um time"
 
 
 def test_o_PROPRIO_time_aparece_marcavel():
