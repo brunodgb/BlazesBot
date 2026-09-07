@@ -199,6 +199,54 @@ MEMORIA_DE_ABERTURAS_DO_DIALOGO = 12
 
 _ABERTURAS_DO_DIALOGO: deque[float] = deque(maxlen=MEMORIA_DE_ABERTURAS_DO_DIALOGO)
 
+# ===========================================================================
+# O TETO TAMBÉM APRENDE COM A FALHA -- 07/09/2026
+# ===========================================================================
+#
+# MEDIDO NO LOG DE PRODUÇÃO (13 h, conta `creubo`):
+#
+#     08:14:05  o teto congela em 427 ms
+#     08h  427ms x 2733   | entradas na cave: 0
+#     09h  427ms x 3574   | entradas na cave: 0
+#     10h  427ms x 3573   | entradas na cave: 0
+#     11h  427ms x 3569   | entradas na cave: 0
+#     12:05:07  um diálogo abre  ->  DENTRO da cave 25 s depois
+#
+# Nas horas saudáveis o teto varia o tempo todo (180, 286, 327, 650...) porque
+# cada abertura entra na amostra. A partir das 08:14 ele fica IDÊNTICO por
+# 3 h 51 min e 13.449 tentativas seguidas -- e teto adaptativo que não se mexe é
+# a assinatura de uma realimentação que morreu.
+#
+# A CAUSA É ESTRUTURAL, não é o número: a amostra só entra quando o diálogo
+# ABRE. Se a latência real sobe acima do teto, toda tentativa é reprovada, e
+# uma tentativa reprovada não produz amostra. **A medição que levantaria o teto
+# só pode ser feita pelo sucesso que o próprio teto impede.** A conta ficou
+# quatro horas presa num laço que se alimentava sozinho, e só saiu quando uma
+# abertura por acaso veio abaixo dos 427 ms.
+#
+# ENTÃO A FALHA TAMBÉM PASSA A INFORMAR. Falhas CONSECUTIVAS afrouxam o teto,
+# em degraus, até um limite de desespero; qualquer abertura zera a contagem e
+# devolve o teto aprendido. É a única saída que não depende de sorte.
+#
+# POR QUE 5 FALHAS: é o mesmo número de `FALHAS_ANTES_DE_REDESCOBRIR`, e pela
+# mesma razão -- abaixo disso é ruído normal de disputa (o clique erra o NPC, o
+# servidor engasga), acima disso é padrão. Nas horas saudáveis nunca houve 5
+# falhas seguidas sem uma abertura no meio.
+FALHAS_SEGUIDAS_ANTES_DE_AFROUXAR = 5
+
+# Quanto o teto dobra a cada degrau de falhas.
+FATOR_DE_AFROUXAMENTO = 2.0
+
+# O teto do desespero. Passado daqui não é mais latência: é NPC errado, cliente
+# preso ou tecla que não chega -- e nenhum deles se resolve esperando.
+#
+# 1,2 s, e o número é do council (06/09/2026): *"teto duro de 1,0-1,2 s, não
+# 2 s, para um NPC competitivo"*. Bate com o medido -- o maior teto que o
+# aprendizado já produziu foi 650 ms (o `LIMITE_INICIAL`), então o dobro disso
+# cobre qualquer abertura legítima com folga. Passado daí não é lentidão, e
+# esperar 2 s só faz a conta perder a disputa duas vezes.
+TETO_DO_DESESPERO = 1.2
+
 
 def limite_da_espera_do_dialogo() -> float:
     """O teto de agora, derivado das aberturas já cronometradas."""
@@ -585,6 +633,11 @@ class UIDoJogo:
         # Aberturas do painel neste trajeto. Ver `ABERTURAS_POR_TRAJETO`.
         self._aberturas_do_trajeto = 0
         self._falhas_rapidas = 0
+        # Diálogos seguidos que não abriram. Ver `TETO_DO_DESESPERO`: é o que
+        # tira o teto adaptativo do poço em que ele caiu por 4 h em 07/09/2026.
+        # POR INSTÂNCIA, e não global como a amostra de aberturas: com duas
+        # contas rodando, uma saudável zeraria a contagem da travada.
+        self._dialogos_seguidos_sem_abrir = 0
         self._visao_resetada_em = 0.0
         # Buscas seguidas em que a leitura de arredores por memória não respondeu.
         # Chegando no limite, o bot para de esperar por ela -- ver
@@ -1399,6 +1452,17 @@ class UIDoJogo:
             return None
         return self._pontos("dialogue", quadro=quadro) is not None
 
+    def _afrouxar_o_teto(self, limite: float) -> float:
+        """O teto de agora, esticado pelas falhas seguidas. Ver `TETO_DO_DESESPERO`.
+
+        Devolve `limite` intocado enquanto a coisa está normal -- o afrouxamento
+        só existe para o poço, e no caso comum ele não custa nada.
+        """
+        degraus = self._dialogos_seguidos_sem_abrir // FALHAS_SEGUIDAS_ANTES_DE_AFROUXAR
+        if degraus <= 0:
+            return limite
+        return min(TETO_DO_DESESPERO, limite * FATOR_DE_AFROUXAMENTO ** degraus)
+
     def _esperar_o_dialogo(self, limite: float) -> bool | None:
         """Espera o diálogo APARECER, preservando as três respostas.
 
@@ -1414,6 +1478,16 @@ class UIDoJogo:
                      nunca funciona -- que é o modo normal deste bot.
         """
         ctx = self.ctx
+        # O TETO DE AGORA JÁ VEM ESTICADO PELAS FALHAS SEGUIDAS. Sem isto, o
+        # teto só sabia apertar: ver `TETO_DO_DESESPERO` e as 13.449 tentativas
+        # de 07/09/2026.
+        esticado = self._afrouxar_o_teto(limite)
+        if esticado > limite:
+            ctx.log.info(
+                "Diálogo: %s falhas seguidas — afrouxando o teto de %.0f para "
+                "%.0f ms nesta tentativa.", self._dialogos_seguidos_sem_abrir,
+                limite * 1000, esticado * 1000)
+        limite = esticado
         comeco = time.time()
         limite_em = comeco + limite
         while True:
@@ -1428,6 +1502,8 @@ class UIDoJogo:
                     # tentativa que nunca ia abrir.
                     demora = time.time() - comeco
                     _ABERTURAS_DO_DIALOGO.append(demora)
+                    # ABRIU: a realimentação está viva de novo.
+                    self._dialogos_seguidos_sem_abrir = 0
                     # ctx.log.debug(
                     #     "Diálogo abriu em %.0f ms (teto era %.0f ms; próximo "
                     #     "teto %.0f ms)", demora * 1000, limite * 1000,
@@ -1435,9 +1511,11 @@ class UIDoJogo:
                 return aberto            # True ou None: os dois saem daqui
             restante = limite_em - time.time()
             if restante <= 0:
+                self._dialogos_seguidos_sem_abrir += 1
                 ctx.log.debug(
-                    "Diálogo NÃO abriu em %.0f ms (teto). Tentativa perdida.",
-                    limite * 1000)
+                    "Diálogo NÃO abriu em %.0f ms (teto). Tentativa perdida. "
+                    "(%s seguida(s))", limite * 1000,
+                    self._dialogos_seguidos_sem_abrir)
                 return False
             # Dorme o que falta, não o passo inteiro: passar do teto em até um
             # passo, numa volta que se repete seis vezes por dez segundos, sai do
