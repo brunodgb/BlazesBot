@@ -1253,3 +1253,21 @@ Quando cada conserto é defensável e o resultado piora, o problema não está e
 nenhum deles: está em quantos são. A resposta não é escolher qual remover — é
 recomeçar do laço que cabe na cabeça e devolver as peças **uma de cada vez, com
 medição**, se e quando a falta delas aparecer.
+
+
+## "Cadáver não se cura" precisou de duas leituras — 07/09/2026
+
+A regra de 06/09 (vida zero ⇒ não há o que curar) tinha um risco embutido que o
+council nomeou: **`hp == 0` aparece transitoriamente** em troca de mapa, tela de
+carregamento, respawn e leitura de ponteiro inconsistente.
+
+Pular a cura por causa de UMA amostra ruim é deixar de curar um personagem
+**vivo** — exatamente a morte que esta classe existe para evitar. A assimetria
+decide sozinha:
+
+- **errar curando um morto** custa uma tecla apertada à toa;
+- **errar não curando um vivo** custa a conta.
+
+Então o guarda passou a exigir uma **segunda leitura** de zero, a mesma régua de
+`CicloDaMorte.estou_morto`. `None` na segunda vale NÃO: sem prova de morte, a
+cura acontece.

@@ -257,6 +257,29 @@ class CuraDoApp:
 
     # -- o portão --------------------------------------------------------
 
+    def _zero_confirmado(self) -> bool:
+        """Uma SEGUNDA leitura diz que a vida é zero mesmo? -- 07/09/2026.
+
+        A regra "cadáver não se cura" tem um risco embutido, apontado pelo
+        council: `hp == 0` aparece transitoriamente em troca de mapa, tela de
+        carregamento, respawn e leitura de ponteiro inconsistente. Pular a cura
+        por causa de UMA amostra ruim é deixar de curar um personagem VIVO --
+        que é justamente a morte que esta classe existe para evitar.
+
+        Mesma régua do `CicloDaMorte.estou_morto`, e pelo mesmo motivo: a
+        segunda leitura custa microssegundos, e duas amostras de zero no mesmo
+        instante num personagem vivo já seriam um problema de outra natureza.
+
+        `None` na segunda leitura vale NÃO: sem prova, a cura acontece. Errar
+        curando um morto custa uma tecla; errar não curando um vivo custa a
+        conta.
+        """
+        try:
+            segunda = self._vida_pct()
+        except Exception:
+            return False
+        return segunda is not None and segunda <= 0.0
+
     def cuidar(self) -> bool:
         """Confere a vida e, se preciso, cura. `True` = mexeu em alguma coisa.
 
@@ -276,7 +299,7 @@ class CuraDoApp:
             return False
         self._avisou_sem_leitura = False
 
-        if vida <= 0.0:
+        if vida <= 0.0 and self._zero_confirmado():
             # CADÁVER NÃO SE CURA -- 06/09/2026.
             #
             # Medido em campo: *"APP: terminei de regenerar sentado com a vida

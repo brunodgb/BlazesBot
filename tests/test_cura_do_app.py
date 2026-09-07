@@ -965,3 +965,38 @@ def test_vida_zero_nao_senta_nem_pede_a_fada():
     _cura(jogo, fada=lambda vida: chamados.append(vida) or True).cuidar()
 
     assert chamados == [], "pediu cura à Fada estando morto"
+
+
+def test_UMA_leitura_de_zero_NAO_pula_a_cura():
+    """O risco embutido no "cadáver não se cura", apontado pelo council:
+    `hp == 0` aparece transitoriamente em troca de mapa, carregamento, respawn e
+    leitura de ponteiro inconsistente. Pular a cura por UMA amostra ruim é
+    deixar de curar um personagem VIVO -- a morte que esta classe evita.
+
+    Errar curando um morto custa uma tecla; errar não curando um vivo custa a
+    conta."""
+    jogo = _Jogo(vida=0.0)
+    cura = _cura(jogo)
+    leituras = iter([0.0, 25.0, 25.0, 25.0, 25.0, 25.0, 25.0])
+    cura._vida_pct = lambda: next(leituras, 25.0)
+
+    assert cura.cuidar() is True, "pulou a cura de um personagem vivo"
+
+
+def test_DUAS_leituras_de_zero_pulam_a_cura():
+    jogo = _Jogo(vida=0.0)
+    cura = _cura(jogo)
+    cura._vida_pct = lambda: 0.0
+
+    assert cura.cuidar() is False
+    assert jogo.teclas == []
+
+
+def test_segunda_leitura_ILEGIVEL_manda_curar():
+    """Sem prova de morte, a cura acontece."""
+    jogo = _Jogo(vida=0.0)
+    cura = _cura(jogo)
+    leituras = iter([0.0, None])
+    cura._vida_pct = lambda: next(leituras, 10.0)
+
+    assert cura.cuidar() is True
