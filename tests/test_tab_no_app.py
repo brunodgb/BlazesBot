@@ -19,15 +19,7 @@ A primeira versão perguntava só **"tem id?"** depois do TAB -- e tinha: o
 (medido em 20/08/2026). O bot dava a troca por feita e rodava a macro contra um
 corpo.
 """
-from types import SimpleNamespace
-
-import pytest
-
-from blazesbot.bot.app import executor as mod
-from blazesbot.core import teclado_mudo
-
-
-def _mob(ident, hp=100, nome="Gun Witch"):
+from types import SimpleNamespaceimport pytestfrom blazesbot.bot.app import executor as modfrom blazesbot.core import teclado_mudodef _mob(ident, hp=100, nome="Gun Witch"):
     """Um mob. O padrão é INTEIRO (100/100), que é o único que o bot engaja.
 
     Mob pela metade ou é luta de outro jogador ou é cadáver de daqui a pouco --
@@ -665,9 +657,7 @@ def test_os_respiros_do_TAB_RESPONDEM_ao_Parar():
     durante a aquisição o alvo selecionado é justamente o cadáver que se está
     tentando largar -- ele devolveria "pare" no primeiro décimo de segundo.
     """
-    import ast
-    import inspect
-    import textwrap
+    import ast    import inspect    import textwrap
 
     fonte = textwrap.dedent(
         inspect.getsource(mod.ExecutorDeMacro._garantir_alvo))
@@ -706,9 +696,7 @@ def test_a_ORDEM_da_volta_e_confere_voltar_TAB_macro():
     então gastar tempo com pet e caminhada -- com o mob novo batendo de graça
     nesse meio-tempo. Era o sintoma relatado.
     """
-    import ast
-    import inspect
-    import textwrap
+    import ast    import inspect    import textwrap
 
     fonte = textwrap.dedent(inspect.getsource(mod.ExecutorDeMacro.uma_volta))
 
@@ -775,9 +763,7 @@ def test_o_interruptor_esta_LIGADO():
 def test_a_espera_de_UMA_LINHA_tambem_confere_a_morte():
     """Uma linha de 3000 ms sem isso faria o bot bater num cadáver por até três
     segundos."""
-    import ast
-    import inspect
-    import textwrap
+    import ast    import inspect    import textwrap
 
     fonte = textwrap.dedent(inspect.getsource(mod.ExecutorDeMacro._esperar))
     chamadas = {n.func.attr for n in ast.walk(ast.parse(fonte))
@@ -855,8 +841,7 @@ def test_NAO_guarda_lista_de_inalcancaveis():
 
     Uma lista velha faria o bot pular mob bom.
     """
-    import ast
-    import inspect
+    import ast    import inspect
 
     fonte = ast.parse(inspect.getsource(mod))
     nomes = {no.attr for no in ast.walk(fonte)
@@ -911,9 +896,7 @@ def test_o_largado_NAO_aperta_tecla_nenhuma():
 
 
 def test_a_regua_roda_DEPOIS_de_cada_linha():
-    import ast
-    import inspect
-    import textwrap
+    import ast    import inspect    import textwrap
 
     fonte = textwrap.dedent(inspect.getsource(mod.ExecutorDeMacro.uma_volta))
     chamadas = {n.func.attr for n in ast.walk(ast.parse(fonte))
@@ -1371,9 +1354,7 @@ def test_a_regua_NAO_adquire_alvo_de_dentro_do_laco_das_linhas():
     gastava pet, comida e até 2 s de caminhada antes da linha 1 -- com o mob
     recém-chamado batendo de graça o tempo todo.
     """
-    import ast
-    import inspect
-    import textwrap
+    import ast    import inspect    import textwrap
 
     fonte = textwrap.dedent(inspect.getsource(mod.ExecutorDeMacro.uma_volta))
     chamadas = [n for n in ast.walk(ast.parse(fonte))
@@ -1432,9 +1413,7 @@ def test_o_shuffle_SAI_quando_esta_tudo_parado():
 def test_o_shuffle_deixou_de_ser_espera_CEGA():
     """Eram dois `time.sleep(1.0)` que não olhavam o botão de parar e não
     conferiam nada -- 2 s em que o bot ficava mudo."""
-    import ast
-    import inspect
-    import textwrap
+    import ast    import inspect    import textwrap
 
     fonte = textwrap.dedent(
         inspect.getsource(mod.ExecutorDeMacro._fazer_shuffle_anti_afk))
@@ -1557,9 +1536,7 @@ def test_DESLIGADO_a_caminhada_volta_a_ignorar_a_batalha(monkeypatch):
 def test_a_MESMA_guarda_serve_a_caminhada_e_ao_shuffle():
     """Duas ações que tiram o personagem do lugar, uma pergunta só. Se cada uma
     tivesse a própria régua, uma delas ficaria para trás no conserto seguinte."""
-    import ast
-    import inspect
-    import textwrap
+    import ast    import inspect    import textwrap
 
     for metodo in (mod.ExecutorDeMacro._travar_posicao_se_preciso,
                    mod.ExecutorDeMacro._fazer_shuffle_anti_afk):
@@ -2042,9 +2019,7 @@ def test_a_confirmacao_do_TAB_tem_cadencia_PROPRIA_e_fina():
     # capturado no import.
     assert mod.PASSO_DA_CONFIRMACAO_DO_TAB < PASSO_DA_BASE
 
-    import ast
-    import inspect
-    import textwrap
+    import ast    import inspect    import textwrap
 
     fonte = textwrap.dedent(
         inspect.getsource(mod.ExecutorDeMacro._esperar_o_alvo_trocar))
@@ -2060,9 +2035,7 @@ def test_o_RESPIRO_e_a_ULTIMA_coisa_antes_da_macro():
     A régua e o log ficavam DEPOIS do respiro — entre o fim da espera e a
     primeira tecla. O log escreve em disco.
     """
-    import ast
-    import inspect
-    import textwrap
+    import ast    import inspect    import textwrap
 
     fonte = textwrap.dedent(
         inspect.getsource(mod.ExecutorDeMacro._garantir_alvo))
@@ -2289,9 +2262,7 @@ def test_as_TRES_linhas_sao_o_numero_do_usuario():
 def test_a_espera_CEGA_nao_confere_o_alvo():
     """*"Continua batendo, SEM PERGUNTAR MAIS."* A irmã dela (`_esperar`)
     pergunta a cada 0,1 s; esta não pergunta nada."""
-    import ast
-    import inspect
-    import textwrap
+    import ast    import inspect    import textwrap
 
     fonte = textwrap.dedent(inspect.getsource(mod.ExecutorDeMacro._esperar_cego))
     chamadas = {n.func.attr for n in ast.walk(ast.parse(fonte))
@@ -2304,9 +2275,7 @@ def test_a_espera_CEGA_nao_confere_o_alvo():
 def test_SAIR_de_batalha_corta_o_pedagio_no_meio():
     """*"Se saiu de batalha, é garantido que matou e não tem outro mob
     batendo."* As linhas que sobram não compram mais nada."""
-    import ast
-    import inspect
-    import textwrap
+    import ast    import inspect    import textwrap
 
     fonte = textwrap.dedent(inspect.getsource(mod.ExecutorDeMacro.uma_volta))
     arvore = ast.parse(fonte)

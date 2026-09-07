@@ -103,6 +103,19 @@ idempotente, não cego por timer. O porquê está em
 
 ## PetBug — o que esconde os jogadores
 
+- **O PATCH DE MEMÓRIA É NOSSO AGORA** (`core/patch_do_cliente.py`, 07/09/2026):
+  dois `mov [reg+0x10A8]` NOPados no `client.exe`, com os mesmos bytes do
+  programa de terceiro. Ele RECUSA quando o padrão não aparece exatamente uma
+  vez, confere a releitura depois de escrever, e é idempotente. Roda JUNTO com o
+  `.exe` — o `.exe` ainda é quem manda o F12. Engenharia reversa completa em
+  `docs/decisoes/pet-bug-engenharia-reversa.md`.
+- **SÓ CONTAS DE CAVE (BC e HH) RECEBEM O PATCH.** Decisão do usuário em
+  07/09/2026: *"os APP não precisa aplicar"*. O portão é
+  `if self.account.farms:` (= `bc_farm or hh_farm`) e ele não pode ser alargado.
+- **REAPLICAR NÃO ALTERNA O F12.** O programa manda `WM_KEYDOWN` de VK_F12 SEM
+  `WM_KEYUP`, então a tecla fica logicamente presa e os jogadores ficam
+  escondidos; um segundo KEYDOWN é auto-repetição, não uma borda nova. É o que
+  torna a reaplicação segura.
 - **INSTÂNCIA NOVA A CADA APLICAÇÃO** (07/09/2026). Mata o que estiver aberto e
   abre outro antes de clicar em `Patch`. Não é higiene: a confirmação lê o log
   do programa e aceita o texto que já estava lá, então **janela reusada

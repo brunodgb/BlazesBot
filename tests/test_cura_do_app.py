@@ -7,14 +7,7 @@ usuário decidiu que seria o ponto inicial"*.
 O que este arquivo trava é o que foi COMBINADO, não o que o código faz -- cada
 teste cita a decisão que ele segura.
 """
-from types import SimpleNamespace
-
-import pytest
-
-from blazesbot.bot.app import cura as mod
-
-
-class _Jogo:
+from types import SimpleNamespaceimport pytestfrom blazesbot.bot.app import cura as modclass _Jogo:
     """Um jogo de mentira: vida, batalha, alvo e posição sob controle."""
 
     def __init__(self, vida=100.0, em_batalha=False, alvo=None, distancia=0.0,
@@ -438,8 +431,7 @@ def test_os_numeros_do_APP_nao_vem_do_BC():
 
 def test_o_modulo_de_cura_NAO_importa_do_BC():
     """Ecossistema APP. `bc/` e `app/` nunca se importam."""
-    import ast
-    import inspect
+    import ast    import inspect
 
     fonte = ast.parse(inspect.getsource(mod))
     importados = set()
@@ -458,8 +450,7 @@ def test_nenhuma_espera_cega_no_modulo():
     Todo `sleep` daqui é o PASSO de um laço que confere alguma coisa; nenhum é
     "dorme o intervalo inteiro e torce".
     """
-    import ast
-    import inspect
+    import ast    import inspect
 
     fonte = ast.parse(inspect.getsource(mod))
     for no in ast.walk(fonte):
@@ -489,11 +480,7 @@ def test_a_cura_e_chamada_UMA_VEZ_por_volta_e_antes_do_lixo():
     agora por ser a última coisa da volta, e não por ordem dentro do `rodar`.
     Este teste guarda os dois lados dessa costura.
     """
-    import ast
-    import inspect
-    import textwrap
-
-    from blazesbot.bot.app.executor import ExecutorDeMacro
+    import ast    import inspect    import textwrap    from blazesbot.bot.app.executor import ExecutorDeMacro
 
     def _arvore(metodo):
         return ast.parse(textwrap.dedent(inspect.getsource(metodo)))
@@ -545,9 +532,7 @@ def test_a_cura_e_chamada_UMA_VEZ_por_volta_e_antes_do_lixo():
 def test_a_cura_NAO_conta_como_volta():
     """Volta é rotação de macro. As cadências de limpeza e de shuffle foram
     pensadas em cima de trabalho de macro, não de tempo parado se curando."""
-    import ast
-    import inspect
-    import textwrap
+    import ast    import inspect    import textwrap
 
     fonte = textwrap.dedent(inspect.getsource(mod))
     for no in ast.walk(ast.parse(fonte)):
@@ -558,11 +543,7 @@ def test_a_cura_NAO_conta_como_volta():
 def test_a_volta_a_base_deixou_de_ser_espera_cega():
     """Era `time.sleep(2.0)` cego, e o método dizia ter devolvido o personagem
     sem nunca ter conferido."""
-    import ast
-    import inspect
-    import textwrap
-
-    from blazesbot.bot.app.executor import ExecutorDeMacro
+    import ast    import inspect    import textwrap    from blazesbot.bot.app.executor import ExecutorDeMacro
 
     fonte = textwrap.dedent(
         inspect.getsource(ExecutorDeMacro._voltar_para_base))
@@ -750,9 +731,7 @@ def test_nenhum_caminho_de_CURA_manda_andar():
     """A trava de desenho: `_voltar_ao_ponto` roda UMA vez, antes de `_curar`.
     Um `voltar_para_base` dentro de qualquer rotina de cura é andar depois de
     beber."""
-    import ast
-    import inspect
-    import textwrap
+    import ast    import inspect    import textwrap
 
     for nome in ("_curar", "_curar_com_pocao", "_curar_sentado"):
         fonte = textwrap.dedent(

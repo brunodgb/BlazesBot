@@ -244,7 +244,29 @@ class AccountSupervisor(threading.Thread):
         pronta para farmar não pode ser perdida porque um patcher externo não
         respondeu. Falha vira aviso.
         """
-        from ..core import petbug
+        from ..core import patch_do_cliente, petbug
+
+        # O PATCH NATIVO RODA JUNTO, NÃO NO LUGAR -- 07/09/2026.
+        #
+        # A engenharia reversa do patcher está em
+        # `docs/decisoes/pet-bug-engenharia-reversa.md`: são dois `mov` de seis
+        # bytes NOPados no `client.exe`, mais um F12 preso na janela. O patch de
+        # memória agora existe aqui dentro; o F12 ainda é do programa.
+        #
+        # OS DOIS JUNTOS DE PROPÓSITO, e é a regra da casa para mecanismo novo:
+        # mede-se contra a fonte antiga NO MESMO INSTANTE, e a antiga vira
+        # reserva em vez de sair. Como o patch é idempotente, quem chegar
+        # depois lê "já estava" -- e é essa linha no log que vai dizer, em
+        # produção, se o nativo pode assumir sozinho.
+        try:
+            nativo = patch_do_cliente.aplicar(self.pid, self.log)
+            if nativo.ok:
+                self.log.info("PET BUG (nativo): %s", nativo)
+            else:
+                self.log.warning("PET BUG (nativo): %s", nativo)
+        except Exception as exc:
+            self.log.warning("PET BUG (nativo) falhou (a sessão segue): %s", exc)
+
         try:
             resultado = petbug.aplicar_patch(log=self.log)
         except Exception as exc:

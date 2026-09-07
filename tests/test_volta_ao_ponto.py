@@ -24,11 +24,9 @@ import logging
 import pytest
 
 from blazesbot.bot import fada as mod
-from blazesbot.bot import fada_ociosa
-from blazesbot.bot import mural
+from blazesbot.bot import fada_ociosa, mural
 from blazesbot.bot.app import executor as executor_mod
 from blazesbot.core import volta_ao_ponto
-
 
 # ---------------------------------------------------------------------------
 # A MECÂNICA NO `core/`

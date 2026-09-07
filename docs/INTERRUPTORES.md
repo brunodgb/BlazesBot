@@ -27,7 +27,7 @@ ligar código não testado.
 
 | constante | valor | onde | quem lê | porquê (resumo) |
 |---|---|---|---|---|
-| `ATIVADO` | `True` | [blazesbot/bot/app/deletador.py:74](blazesbot/bot/app/deletador.py#L74) | diagnostico_do_link.py, supervisor.py, esconder_jogadores.py, petbug.py | O caminho continua inteiro com ele em False -- desligado não é apagado. |
+| `ATIVADO` | `True` | [blazesbot/bot/app/deletador.py:74](blazesbot/bot/app/deletador.py#L74) | diagnostico_do_link.py, supervisor.py, esconder_jogadores.py, patch_do_cliente.py, petbug.py | O caminho continua inteiro com ele em False -- desligado não é apagado. |
 | `ANDAR_SO_FORA_DE_BATALHA` | `True` | [blazesbot/bot/app/executor.py:584](blazesbot/bot/app/executor.py#L584) | — | A CAMINHADA DE VOLTA À BASE NÃO ACONTECE EM BATALHA |
 | `EXIGIR_ALVO_INTEIRO` | `False` | [blazesbot/bot/app/executor.py:426](blazesbot/bot/app/executor.py#L426) | — | ALVO INTEIRO (100/100): EXIGÊNCIA REVOGADA PELO USUÁRIO -- 26/08/2026 |
 | `INTERROMPER_A_MACRO_QUANDO_O_ALVO_MORRE` | `True` | [blazesbot/bot/app/executor.py:255](blazesbot/bot/app/executor.py#L255) | — | O MOB MORREU: A MACRO PARA NO MEIO E VAI PARA O PRÓXIMO |
@@ -35,7 +35,7 @@ ligar código não testado.
 | `USAR_A_SAIDA_DE_BATALHA_PARA_CORTAR` | `True` | [blazesbot/bot/app/executor.py:633](blazesbot/bot/app/executor.py#L633) | — | SAIR DE BATALHA CORTA A MACRO NO MEIO |
 | `USAR_A_TELA_COMO_SEGUNDA_PORTA` | `True` | [blazesbot/bot/app/executor.py:655](blazesbot/bot/app/executor.py#L655) | — | A SEGUNDA PORTA: A VIDA PELA TELA -- 26/08/2026 |
 | `USAR_COMBATE_COMO_RESERVA_DE_MORTE` | `True` | [blazesbot/bot/app/executor.py:487](blazesbot/bot/app/executor.py#L487) | supervisor.py | A RESERVA: QUANDO O HP É ILEGÍVEL, QUEM RESPONDE É A FLAG DE COMBATE |
-| `ATIVADO` | `True` | [blazesbot/bot/bc/diagnostico_do_link.py:62](blazesbot/bot/bc/diagnostico_do_link.py#L62) | deletador.py, supervisor.py, esconder_jogadores.py, petbug.py | Interruptor, no padrão do `USAR_TAB_NOS_GUARDAS`: desligar é trocar uma |
+| `ATIVADO` | `True` | [blazesbot/bot/bc/diagnostico_do_link.py:62](blazesbot/bot/bc/diagnostico_do_link.py#L62) | deletador.py, supervisor.py, esconder_jogadores.py, patch_do_cliente.py, petbug.py | Interruptor, no padrão do `USAR_TAB_NOS_GUARDAS`: desligar é trocar uma |
 | `ATACAR_DURANTE_A_CONFIRMACAO_NO_BOSS` | `True` | [blazesbot/bot/combate.py:497](blazesbot/bot/combate.py#L497) | — | SÓ NO BOSS, e a razão é o motivo pelo qual o golpe parava |
 | `DESMONTAR_FORA_DA_CAVE_SO_SEM_PET` | `True` | [blazesbot/bot/combate.py:983](blazesbot/bot/combate.py#L983) | — | FORA DA CAVE, SÓ DESMONTA SE O PET NÃO ESTIVER ATIVO |
 | `DESTRAVAMENTO_BATE_NO_ALVO_PROIBIDO` | `True` | [blazesbot/bot/combate.py:798](blazesbot/bot/combate.py#L798) | — | O DESTRAVAMENTO BATE NO CEMETERY GUARD? Decisao do usuario, 01/09/2026. |
@@ -57,7 +57,7 @@ ligar código não testado.
 | `NAO_LIMPAR_DUAS_VEZES_NA_MESMA_VOLTA` | `True` | [blazesbot/core/cadencia_da_bolsa.py:43](blazesbot/core/cadencia_da_bolsa.py#L43) | — | Interruptor do piso do conserto -- 06/09/2026. |
 | `ATIVADA` | `True` | [blazesbot/core/calibracao.py:82](blazesbot/core/calibracao.py#L82) | routine.py, vendedor.py | INTERRUPTOR |
 | `LIGADO` | `True` | [blazesbot/core/diagnostico_fino.py:28](blazesbot/core/diagnostico_fino.py#L28) | instrumentar_clique.py, supervisor.py, config.py, log_limitado.py, account_dialog.py | — |
-| `ATIVADO` | `False` | [blazesbot/core/esconder_jogadores.py:84](blazesbot/core/esconder_jogadores.py#L84) | deletador.py, diagnostico_do_link.py, supervisor.py, petbug.py | INTERRUPTOR -- DESLIGADO EM 19/08/2026 |
+| `ATIVADO` | `False` | [blazesbot/core/esconder_jogadores.py:84](blazesbot/core/esconder_jogadores.py#L84) | deletador.py, diagnostico_do_link.py, supervisor.py, patch_do_cliente.py, petbug.py | INTERRUPTOR -- DESLIGADO EM 19/08/2026 |
 | `SEGURAR_ATIVADO` | `False` | [blazesbot/core/esconder_jogadores.py:102](blazesbot/core/esconder_jogadores.py#L102) | petbug.py | INTERRUPTOR DO F12 PRESO -- DESLIGADO EM 19/08/2026 |
 | `CONFERIR_A_JANELA_ANTES_DE_ENVIAR` | `True` | [blazesbot/core/inputs.py:293](blazesbot/core/inputs.py#L293) | — | INTERRUPTOR. Desligar volta ao comportamento anterior (mandar sem conferir), e |
 | `MODO_DE_CLIQUE` | `'postmessage_puro'` | [blazesbot/core/inputs.py:131](blazesbot/core/inputs.py#L131) | ui_service.py, instrumentar_clique.py, teste_do_cursor.py | INTERRUPTOR DO MODO DE CLIQUE |
@@ -66,7 +66,8 @@ ligar código não testado.
 | `COMPRIMIR_ARQUIVO_MORTO` | `True` | [blazesbot/core/log_limitado.py:108](blazesbot/core/log_limitado.py#L108) | — | O arquivo morto de DIAS ANTERIORES é comprimido. Medido no arquivo da noite de |
 | `USAR_PAINEL_POR_MEMORIA` | `True` | [blazesbot/core/memory.py:578](blazesbot/core/memory.py#L578) | — | ESTADO DE PAINEL DE UI POR MEMÓRIA -- o que sobreviveu ao campo |
 | `USAR_REGIOES_QUENTES` | `True` | [blazesbot/core/memory.py:433](blazesbot/core/memory.py#L433) | — | REGIÕES QUENTES -- a rota que fecha os 38% que o array de entidades perde |
-| `ATIVADO` | `True` | [blazesbot/core/petbug.py:104](blazesbot/core/petbug.py#L104) | deletador.py, diagnostico_do_link.py, supervisor.py, esconder_jogadores.py | INTERRUPTOR |
+| `ATIVADO` | `True` | [blazesbot/core/patch_do_cliente.py:118](blazesbot/core/patch_do_cliente.py#L118) | deletador.py, diagnostico_do_link.py, supervisor.py, esconder_jogadores.py, petbug.py | INTERRUPTOR |
+| `ATIVADO` | `True` | [blazesbot/core/petbug.py:104](blazesbot/core/petbug.py#L104) | deletador.py, diagnostico_do_link.py, supervisor.py, esconder_jogadores.py, patch_do_cliente.py | INTERRUPTOR |
 | `NOVA_INSTANCIA_SEMPRE` | `True` | [blazesbot/core/petbug.py:197](blazesbot/core/petbug.py#L197) | — | INSTÂNCIA NOVA A CADA APLICAÇÃO -- 07/09/2026 |
 | `USAR_OFFSET_FIXO_DA_BARRA` | `True` | [blazesbot/core/vision/barra.py:259](blazesbot/core/vision/barra.py#L259) | __init__.py | INTERRUPTOR: o offset fixo é a régua; a âncora azul é a reserva |
 
@@ -74,7 +75,7 @@ ligar código não testado.
 
 ## Números medidos -- tolerância, limiar, teto, cadência
 
-585 constantes, agrupadas por arquivo.
+586 constantes, agrupadas por arquivo.
 
 | constante | valor | onde | quem lê | porquê (resumo) |
 |---|---|---|---|---|
@@ -570,6 +571,7 @@ ligar código não testado.
 | `HC_ACTION` | `0` | [blazesbot/core/mouse_shield.py:126](blazesbot/core/mouse_shield.py#L126) | instrumentar_clique.py | — |
 | `VALIDADE_DO_RETANGULO` | `2.0` | [blazesbot/core/mouse_shield.py:130](blazesbot/core/mouse_shield.py#L130) | — | Quanto tempo o retângulo da janela vale antes de ser relido. A janela do jogo |
 | `WH_MOUSE_LL` | `14` | [blazesbot/core/mouse_shield.py:118](blazesbot/core/mouse_shield.py#L118) | instrumentar_clique.py, supervisor.py, inputs.py | Constantes Win32 |
+| `NOME_DO_MODULO` | `'client.exe'` | [blazesbot/core/patch_do_cliente.py:120](blazesbot/core/patch_do_cliente.py#L120) | — | — |
 | `SEGUNDOS_PARA_A_COMIDA_SER_USADA` | `1.5` | [blazesbot/core/pet.py:131](blazesbot/core/pet.py#L131) | executor.py, combate.py | QUANTO TEMPO A COMIDA PRECISA ANTES DA PRÓXIMA AÇÃO |
 | `BM_CLICK` | `245` | [blazesbot/core/petbug.py:163](blazesbot/core/petbug.py#L163) | — | — |
 | `CLASSE_DO_BOTAO` | `'TButton'` | [blazesbot/core/petbug.py:149](blazesbot/core/petbug.py#L149) | — | Como o botão é reconhecido: classe e texto, medidos na janela real. |

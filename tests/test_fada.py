@@ -30,8 +30,7 @@ import pytest
 
 import blazesbot.bot.fada_reviver as mod_reviver
 from blazesbot.bot import fada as mod
-from blazesbot.bot import fada_ociosa
-from blazesbot.bot import mural, mural_da_morte
+from blazesbot.bot import fada_ociosa, mural, mural_da_morte
 
 
 @pytest.fixture(autouse=True)

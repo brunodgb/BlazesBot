@@ -15,13 +15,7 @@ desfazer**:
 
 
 
-import pytest
-
-from blazesbot.bot.app import deletador as d
-from blazesbot.core import teclado_mudo
-
-
-@pytest.fixture(autouse=True)
+import pytestfrom blazesbot.bot.app import deletador as dfrom blazesbot.core import teclado_mudo@pytest.fixture(autouse=True)
 def _fila_limpa():
     d.esquecer_a_fila()
     yield
@@ -337,9 +331,7 @@ class _Templates:
     """
 
     def load(self, nome):
-        from pathlib import Path
-
-        import cv2
+        from pathlib import Path        import cv2
 
         return cv2.imread(str(Path("data") / "templates" / nome),
                           cv2.IMREAD_GRAYSCALE)
@@ -352,9 +344,7 @@ class _CtxComTela(_Ctx):
 
 
 def _print_do_inventario():
-    from pathlib import Path
-
-    import cv2
+    from pathlib import Path    import cv2
 
     caminho = Path("data") / "templates" / "entrada" / "inventario.jpg"
     if not caminho.is_file():
@@ -426,9 +416,7 @@ def test_casar_na_regiao_devolve_coordenada_da_JANELA():
 
 
 def _print(nome):
-    from pathlib import Path
-
-    import cv2
+    from pathlib import Path    import cv2
 
     caminho = Path("data") / "templates" / "entrada" / nome
     if not caminho.is_file():
