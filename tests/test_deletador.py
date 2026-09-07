@@ -634,10 +634,37 @@ def test_a_bolsa_que_NAO_abre_no_teto_nao_aperta_de_novo(monkeypatch):
 
     assert d.limpar_a_bolsa(ctx, "I") == 0
 
-    assert ctx.teclas.count("I") == 1, ("apertou de novo sem saber o estado: "
-                                        f"{ctx.teclas}")
-    assert any("aperto de novo" in t for _n, t in ctx.log.linhas), (
-        ctx.log.linhas)
+    assert ctx.teclas.count("I") == 1, ("apertou de novo numa bolsa que a tela "
+                                        f"diz estar fechada: {ctx.teclas}")
+    assert any("abrir atrasada" in t for _n, t in ctx.log.linhas), ctx.log.linhas
+
+
+def test_a_bolsa_que_abre_DEPOIS_do_teto_ainda_e_fechada(monkeypatch):
+    """Achado do Codex em 07/09/2026: zerar `eu_abri` no teto jogava fora o
+    mecanismo que resolve o caso restante. A tecla SAIU; se a bolsa aparecer
+    atrasada, ela ficaria aberta atrapalhando as voltas seguintes.
+
+    Intenção não fecha bolsa; observação fecha.
+    """
+    ctx = _CtxTecla(aberto_no_inicio=False)
+    monkeypatch.setattr(d, "deletar_lixo", lambda c, teto=None: 0)
+    aberta = {"v": False}
+    monkeypatch.setattr(d, "inventario_esta_aberto", lambda c: aberta["v"])
+
+    def esperar_e_abrir_atrasado(_ctx):
+        """Estourou o teto -- e a bolsa aparece um instante DEPOIS."""
+        aberta["v"] = True
+        return False
+
+    monkeypatch.setattr(d, "_esperar_a_bolsa_abrir", esperar_e_abrir_atrasado)
+
+    d.limpar_a_bolsa(ctx, "I")
+
+    # 1 para abrir + ao menos 1 para fechar. (O dublê nunca diz "fechou", então
+    # `_fechar_a_bolsa` insiste até o limite dele -- e é isso que se quer: a
+    # bolsa aberta atrapalha as voltas seguintes.)
+    assert ctx.teclas.count("I") >= 2, ("abriu 1 e tinha de FECHAR a que abriu "
+                                        f"atrasada: {ctx.teclas}")
 
 
 def test_o_finally_NAO_fecha_o_que_a_tela_diz_estar_fechado(monkeypatch):

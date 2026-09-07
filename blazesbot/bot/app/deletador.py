@@ -576,17 +576,23 @@ def limpar_a_bolsa(ctx: BotContext, tecla_do_inventario: str,
             ctx.press(tecla_do_inventario)
             eu_abri = True
             if not _esperar_a_bolsa_abrir(ctx):
-                # NÃO APERTA DE NOVO. Foi o furo que o council apontou: o
-                # `finally` apertava a tecla incondicionalmente, e como ela é
-                # interruptor, isso fechava bolsa que abriu atrasada e abria
-                # bolsa que estava fechada -- pares de toques se anulando por
-                # horas. Sem o ícone na tela, o que se SABE é que ela não está
-                # aberta; e o que não está aberto não precisa ser fechado.
-                eu_abri = False
+                # DESISTE DA LIMPEZA, MAS NÃO DO FECHAMENTO -- e a diferença é
+                # do Codex, na revisão de 07/09/2026.
+                #
+                # A primeira versão zerava `eu_abri` aqui, "para não apertar a
+                # tecla sem saber o estado". Isso jogava fora exatamente o
+                # mecanismo que resolve o caso restante: se a bolsa abrir DEPOIS
+                # do teto, ela ficaria aberta -- e bolsa aberta atrapalha as
+                # voltas seguintes.
+                #
+                # `eu_abri` continua `True` porque é verdade: a tecla saiu. Quem
+                # decide se aperta de novo é o `finally`, e ele decide OLHANDO
+                # (fecha só o que a tela diz estar aberto). Intenção não fecha
+                # bolsa; observação fecha.
                 ctx.log.warning(
-                    "A bolsa não apareceu em %.1fs depois da tecla %r. NÃO "
-                    "aperto de novo: a tecla é interruptor e eu não sei o "
-                    "estado. Fica para a próxima volta.",
+                    "A bolsa não apareceu em %.1fs depois da tecla %r. Desisto "
+                    "da limpeza desta volta; se ela abrir atrasada, o "
+                    "fechamento a encontra.",
                     TETO_DA_BOLSA_ABRIR, tecla_do_inventario)
                 return 0
         else:

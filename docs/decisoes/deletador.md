@@ -212,3 +212,21 @@ arranjo que o projeto aceita.
 um aviso. Era exatamente o que faltava aqui: o log era a única coisa capaz de
 mostrar o defeito, e nenhum teste podia exigi-lo. Agora ele guarda o que foi
 dito.
+
+
+### Revisão do Codex: intenção não fecha bolsa, observação fecha
+
+A primeira versão deste conserto zerava `eu_abri` ao estourar o teto, "para não
+apertar a tecla sem saber o estado". O Codex apontou o que isso jogava fora:
+**se a bolsa abrir DEPOIS do teto, ela fica aberta** — e bolsa aberta atrapalha
+as voltas seguintes.
+
+`eu_abri` continua `True` porque é verdade: a tecla saiu. Quem decide se aperta
+de novo é o `finally`, e ele decide **olhando** — fecha só o que a tela diz estar
+aberto. Com isso os dois casos ficam cobertos pelo mesmo mecanismo:
+
+| o que aconteceu | o que o `finally` vê | o que ele faz |
+|---|---|---|
+| abriu no prazo | aberta | fecha |
+| abriu depois do teto | aberta | **fecha** |
+| não abriu | fechada | não aperta |
