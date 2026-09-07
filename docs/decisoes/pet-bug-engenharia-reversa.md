@@ -152,10 +152,50 @@ ret 4
 Ou seja: **`+0x10A8` é um vínculo que o cliente grava num lugar e limpa no
 outro**, e o patch faz o cliente parar de mexer nele nos dois.
 
-**O que NÃO está provado:** que objeto é esse e o que o vínculo significa. Isso
-exigiria acompanhar o objeto em memória com o jogo rodando, e não foi feito. O
-que está provado é o que o programa escreve, onde, e que o usuário roda isso há
-meses sem o cliente cair.
+### O que `+0x10A8` É: o campo do SMALL PET no personagem
+
+Três evidências, e as três apontam para o mesmo lugar.
+
+**1. O nome, dado pelo próprio jogo.** No sítio B, logo antes de zerar o campo,
+há um `push 0x105DC20`. Esse endereço é um global de runtime (BSS: não existe no
+arquivo, só com o jogo aberto), e lido em memória viva ele aponta para a string
+**`user_small_pet_changed`**. Está na tabela de eventos do cliente, ao lado de
+`user_small_pet_read`, `s2c_small_pet_changed`, `msg_small_pet_attr` e
+`small_pet.csv` — o vocabulário do jogo para o pet de companhia.
+
+**2. O assembly.** O sítio B está dentro do handler que dispara esse evento e
+termina com `mov [esi+0x10A8], edi` com `edi = 0`: **zera o small pet do
+personagem**. O sítio A está numa rotina que copia campos de um objeto para
+outro e faz `mov [edi+0x10A8], ecx` com `ecx = [esi+8]`: **grava o small pet**.
+Um escreve, o outro limpa — e o patch NOPa os dois.
+
+**3. O que se vê na tela**, descrito pelo usuário:
+
+> *"O petbug faz os pets bugarem pelo mapa, eles travam em posições, pois o pet
+> sempre segue o dono, mas depois de ativar o petbug todos os pets de outros
+> personagens ficam em lugares aleatórios parados, inclusive muitos deles em
+> Stone (...) vários pets parados sem seus donos."*
+
+Com o campo nunca escrito, o cliente não associa o small pet ao personagem: o
+pet fica sem dono a quem seguir e para onde estava. É literalmente o "pet bug"
+do nome do programa.
+
+**A PISTA DO TERCEIRO ENCAIXA.** O usuário ouviu de quem já resolveu isso que a
+causa é *"erro de textura no pet"*. Bate: o estrago original acontece quando o
+cliente carrega o asset de um small pet defeituoso. Não atribuindo o pet ao
+personagem, o cliente **nunca carrega aquele asset** — e o erro não tem como
+acontecer. O programa não conserta a textura; ele impede o cliente de chegar
+nela. É um contorno, e é por isso que o efeito colateral visível são pets
+parados pelo mapa.
+
+**É LOCAL.** A escrita é na memória do NOSSO cliente, então quem vê os pets
+parados é só ele; para os donos, nada mudou.
+
+**E É POR ISSO QUE IMPORTA PARA O BOT.** Além de evitar a queda, ele limpa o
+caminho: o F12 esconde JOGADORES, não os pets deles — e pet parado na frente do
+Skull Herald bloqueia o clique direito igual a um jogador. Sem o patch, os pets
+seguem os donos e se acumulam exatamente onde todo mundo vai. As duas metades do
+programa resolvem estorvos diferentes, e faltar uma já estraga a entrada.
 
 ## A descoberta lateral que vale por si: o F12
 

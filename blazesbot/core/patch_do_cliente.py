@@ -56,14 +56,28 @@ No sítio B, no fim de um método (`ret 4`), com `edi` zerado logo antes
 
     mov [esi+0x10A8], edi        <-- ZERA o campo
 
-Ou seja: `+0x10A8` é um vínculo que o cliente GRAVA num lugar e LIMPA no outro,
-e o patch faz o cliente parar de mexer nele nos dois. O nome "pet bug" é do
-autor do programa; o efeito colateral que interessa aqui é o que o usuário
-relata em campo -- menos disconnect.
+`+0x10A8` É O CAMPO DO SMALL PET no personagem -- e quem deu o nome foi o
+próprio jogo. No sítio B, antes de zerar o campo, há um `push 0x105DC20`; esse
+global aponta (em memória viva) para a string **`user_small_pet_changed`**, que
+está na tabela de eventos do cliente ao lado de `user_small_pet_read`,
+`s2c_small_pet_changed` e `small_pet.csv`.
 
-**O QUE ISTO NÃO É:** não sabemos qual objeto é esse nem o que o vínculo
-significa. Não foi medido, e este cabeçalho não vai fingir que foi. O que está
-provado é o que o programa escreve, onde, e que o usuário roda isso há meses.
+Então: o sítio A GRAVA o small pet do personagem, o sítio B ZERA, e o patch
+NOPa os dois. O cliente deixa de associar o pet ao dono -- e é isso que o
+usuário vê: *"todos os pets de outros personagens ficam em lugares aleatórios
+parados (...) vários pets parados sem seus donos"*.
+
+A PISTA DE QUEM JÁ RESOLVEU ISSO -- *"erro de textura no pet"* -- encaixa: o
+estrago original vem de carregar o asset de um pet defeituoso, e sem a
+associação o cliente nunca chega nele. O programa não conserta a textura;
+impede o cliente de alcançá-la.
+
+**É LOCAL:** a escrita é na memória do NOSSO cliente, então quem vê os pets
+parados é só ele.
+
+**E É POR ISSO QUE IMPORTA AQUI:** além de evitar a queda, limpa o caminho. O
+F12 esconde JOGADORES, não os pets deles -- e pet parado na frente do Skull
+Herald bloqueia o clique direito igual a um jogador.
 
 =========================================================================
 O F12 NÃO ESTÁ AQUI -- e o motivo é uma descoberta à parte
