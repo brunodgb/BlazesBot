@@ -191,6 +191,36 @@ SEGUNDOS_PARA_SENTAR_COM_A_POCAO = 1.0
 # mais que isso.
 PASSO_DA_PERGUNTA = 0.1
 
+# ===========================================================================
+# O SOCORRO EM BATALHA -- 07/09/2026
+# ===========================================================================
+#
+# TRÊS MORTES EM 13 h DE LOG, e as três com a mesma assinatura:
+#
+#     01:07:49  vida em 35% mas ainda em batalha. Rodando mais uma volta.
+#     01:07:52  vida em 29% mas ainda em batalha. Rodando mais uma volta.
+#     01:08:06  MORRI
+#
+# O personagem viu a própria vida cair de 35% a zero e NÃO BEBEU UMA POÇÃO. Não
+# foi falha de leitura nem de tecla: `cuidar()` lia a vida, via que estava
+# abaixo do limiar, chamava `_esperar_sair_de_batalha`, recebia `False` -- e
+# voltava SEM CURAR, porque toda a cura estava atrás dessa porta. Com quatro a
+# oito mobs batendo, a flag de batalha nunca baixa, e a porta nunca abre.
+#
+# O JOGO PERMITE BEBER EM BATALHA -- o BC já faz isso (`PotionConfig.
+# battle_hp_pct`). Era só o APP que não fazia.
+#
+# O LIMIAR É O MESMO `pedir_pct` DO USUÁRIO, e isso é deliberado: não se
+# inventa um número novo quando já existe um medido para a mesma pergunta
+# ("preciso de cura?"). O que muda não é QUANDO curar -- é não deixar de curar
+# por causa de uma flag.
+#
+# UMA POÇÃO POR VEZ, e volta a rodar a macro na hora. Beber em série parado é o
+# oposto do que salva: quem mata quem está batendo é a macro. O laço longo de
+# `_curar_com_pocao` (até 5 poções, esperando o efeito) continua sendo o da cura
+# fora de batalha.
+SEGUNDOS_ENTRE_SOCORROS = SEGUNDOS_ENTRE_POCOES
+
 # Quantas voltas presas em batalha com vida baixa antes de gritar.
 #
 # NÃO É UM TETO -- o bot continua rodando a macro para sempre, que é a decisão
@@ -252,6 +282,10 @@ class CuraDoApp:
         self.curas = 0
         self.pocoes_gastas = 0
         self._voltas_presas = 0
+        # Último socorro em batalha. Ver `SEGUNDOS_ENTRE_SOCORROS`.
+        self._ultimo_socorro_em = 0.0
+        self._avisou_sem_pocao_no_socorro = False
+        self.socorros = 0
         self._avisou_sem_leitura = False
         self._avisou_sem_ponto = False
 
@@ -317,7 +351,9 @@ class CuraDoApp:
             return False
 
         if not self._esperar_sair_de_batalha(vida):
-            return False
+            # PRESO EM BATALHA COM VIDA BAIXA: era aqui que o personagem
+            # morria, voltando sem curar. Ver `SEGUNDOS_ENTRE_SOCORROS`.
+            return self.socorro(vida)
 
         self._voltas_presas = 0
         self._voltar_ao_ponto()
@@ -331,6 +367,55 @@ class CuraDoApp:
         if self._fada is not None and self._esperar_a_fada(vida):
             return True
         return self._curar(vida)
+
+    def socorro(self, vida: float | None = None) -> bool:
+        """Vida baixa EM BATALHA: bebe UMA poção onde estiver. Não espera nada.
+
+        `True` = apertei a tecla. Chamada de dois lugares, e de propósito:
+
+          * `cuidar()`, quando a espera pela saída de batalha falha -- o caminho
+            que matou três personagens em 07/09/2026;
+          * o laço das LINHAS da macro (`executor._uma_volta_simples`), porque
+            `cuidar()` roda uma vez por rotação e uma rotação chega a 23 s. Na
+            terceira morte daquele dia o personagem foi de 100% a zero em 21 s
+            sem UMA leitura de vida no meio.
+
+        NÃO ANDA, NÃO SENTA, NÃO ESPERA O EFEITO. Andar em batalha arrasta mob,
+        sentar é para regenerar (e a poção já sentou o personagem sozinha), e
+        esperar é tempo que a macro deveria estar usando para matar quem bate.
+        Quem confere se a poção fez efeito é a próxima chamada -- pela vida.
+
+        SEM TECLA DE POÇÃO NÃO HÁ SOCORRO. A alternativa (sentar) é a cura de
+        fora de batalha, e ali ela já existe; aqui ela não serve.
+        """
+        if vida is None:
+            vida = self._vida_pct()
+        if vida is None or vida <= 0.0 or vida >= self._pedir_pct():
+            return False
+
+        agora = time.time()
+        if agora - self._ultimo_socorro_em < SEGUNDOS_ENTRE_SOCORROS:
+            return False
+
+        tecla = (self._tecla_de_pocao() or "").strip()
+        if not tecla:
+            if not self._avisou_sem_pocao_no_socorro:
+                self._avisou_sem_pocao_no_socorro = True
+                self.log.warning(
+                    "APP: vida em %.0f%% em batalha e SEM tecla de poção "
+                    "configurada. Não há socorro possível aqui -- configure-a "
+                    "em Editar conta > Teclas.", vida)
+            return False
+
+        self._ultimo_socorro_em = agora
+        self.socorros += 1
+        self.pocoes_gastas += 1
+        self._apertar(tecla)
+        self.log.warning(
+            "APP: SOCORRO -- vida em %.0f%% EM BATALHA; bebi poção (tecla %s) "
+            "sem sair do lugar. Volto a rodar a macro: quem mata quem está "
+            "batendo é ela.", vida, tecla)
+        return True
 
     def _esperar_a_fada(self, vida: float) -> bool:
         """SENTA no ponto inicial e espera a Fada. `False` = não há Fada.

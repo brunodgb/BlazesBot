@@ -1131,6 +1131,17 @@ class ExecutorDeMacro:
             desde_a_conferencia += fatia
             if desde_a_conferencia >= PASSO_DA_CONFERENCIA_DO_ALVO:
                 desde_a_conferencia = 0.0
+                # A VIDA TAMBÉM SE CONFERE AQUI DENTRO -- 07/09/2026.
+                #
+                # Conferir só ENTRE as linhas não é vigilância: uma linha de
+                # 3 s deixa 3 s de cegueira, e foi assim que um personagem foi
+                # de 100% a zero em 21 s sem uma leitura no meio. Apontado pelo
+                # council: *"a verificação só entre linhas não é um watchdog"*.
+                #
+                # O socorro NÃO corta a volta: bebe e deixa a macro seguir --
+                # quem mata quem está batendo é ela. Ver `cura.socorro`.
+                if self.cura is not None:
+                    self.cura.socorro()
                 if self._cortar_a_volta():
                     return False
         return True
@@ -2924,6 +2935,19 @@ class ExecutorDeMacro:
                 if not self.morte.resolver():
                     return False
                 return self._abortar_a_volta(motivo="morri")
+
+            # VIDA CRÍTICA NO MEIO DA MACRO -- 07/09/2026.
+            #
+            # `cura.cuidar()` roda UMA vez por rotação, e uma rotação chega a
+            # 23 s. Em 07/09 um personagem saiu de 100% e morreu em 21 s, com
+            # seis mobs em cima, sem uma única leitura de vida no caminho: a
+            # rotação não tinha terminado.
+            #
+            # A pergunta custa uma leitura de memória (~1 µs), o mesmo preço do
+            # `TARGET_ID` logo abaixo, e só dispara o socorro -- não interrompe
+            # a volta, não anda e não senta. Ver `cura.socorro`.
+            if self.cura is not None:
+                self.cura.socorro()
 
             if self._ler_id_do_alvo() == 0:
                 self.log.info("APP: fiquei sem alvo na linha %d — corto a volta "

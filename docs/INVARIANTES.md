@@ -12,6 +12,21 @@
 ---
 ## O laço do APP — `docs/decisoes/cura-no-app.md`
 
+- **VIDA BAIXA EM BATALHA BEBE ONDE ESTÁ** (07/09/2026). Toda a cura ficava
+  atrás de "saiu de batalha", e com quatro a oito mobs batendo essa flag não
+  baixa: três personagens morreram vendo a vida cair de 35% a zero sem uma
+  poção. O socorro NÃO anda e NÃO senta — andar arrasta mob, e quem mata quem
+  está batendo é a macro. Uma poção por vez, na cadência.
+- **A VIDA SE CONFERE DENTRO DA ESPERA DA LINHA**, não só entre as linhas. Uma
+  rotação de macro chega a 21 s, e foi nesse buraco que um personagem foi de
+  100% a zero.
+- **TECLA SEM EFEITO TEM DESFECHO, NÃO SÓ AVISO** (`core/teclado_mudo.py`). Duas
+  teclas independentes mudas com mob vivo por perto ⇒ ESC uma vez ⇒ relogin.
+  É o SEGUNDO motivo para o bot derrubar a própria sessão, e a justificativa é a
+  da primeira: conta que não recebe tecla produz o mesmo que conta deslogada, e
+  a deslogada tem conserto automático. Uma tecla só NÃO acusa, e spot vazio
+  nunca acusa. Porquê medido em `docs/decisoes/madrugada-07-09-2026.md`.
+
 `bot/app/executor.py` + `cura.py`. **Todos os números moram lá**; a
 especificação em `docs/REGRAS.md`.
 
