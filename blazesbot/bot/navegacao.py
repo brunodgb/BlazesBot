@@ -476,7 +476,14 @@ class Navigator:
         # dentro da cave. O cronômetro de recarga precisa sobreviver entre
         # trajetos, então é criado uma vez por conta.
         self.velocidade = SkillDeVelocidade(ctx)
-        self._dentro_da_cave = False
+        # `self._dentro_da_cave = False` SAIU DAQUI em 06/09/2026, e não é
+        # limpeza de estilo: existe um MÉTODO com este nome, e o atributo da
+        # instância o sombreava. `self._dentro_da_cave()` virava `False()` --
+        # `TypeError: 'bool' object is not callable`, 55 vezes no log, sempre no
+        # ciclo de `CICLOS_ANTES_DE_IR_A_PE`, derrubando `CURAR` e `ATE_O_ALTAR`
+        # para `RECUPERAR`. O atributo era escrito e nunca lido: código morto
+        # que só servia para apagar um método. Travado por
+        # `tests/test_init_nao_sombreia_metodo.py`.
         # Quando a tecla da montaria foi tocada pela última vez. Vive na
         # instância, e não em cada laço, porque QUATRO lugares diferentes tocam
         # nela (portão, laço, parada para poção) e ela é um
