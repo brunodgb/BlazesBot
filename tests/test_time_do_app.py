@@ -146,3 +146,99 @@ def test_o_padrao_e_um_dos_modos():
     """Âncora: renomear um modo e esquecer o padrão deixaria o default fora da
     própria lista, e toda conta nova nasceria com um modo inválido."""
     assert MODO_PADRAO_DO_TIME in MODOS_DO_TIME
+
+
+# ---------------------------------------------------------------------------
+# A LISTA QUE A TELA MOSTRA
+#
+# 4. LISTA QUE SÓ CRESCE. Inelegível ia na lista desabilitada e com o motivo,
+#    para o usuário não procurar uma conta que ele sabe que cadastrou. Com
+#    muitas contas o resultado foi o contrário: o que dá para escolher fica
+#    escondido no meio do que não dá. Pedido do usuário em 07/09/2026 -- e
+#    `docs/INVARIANTES.md` sempre disse que conta farmando a cave "não aparece
+#    na escolha do time"; era o código que divergia.
+#
+# 5. O TIME PERDENDO UM LOGIN AO SALVAR. Quem já está no time aparece SEMPRE, e
+#    habilitado. Esconder o que está gravado faria a tela salvar sem ele, e
+#    `time_logins` perderia o login por causa de um clique em BC que é
+#    reversível ("sair do time por `bc_farm` não apaga o login").
+# ---------------------------------------------------------------------------
+
+def _ponte(cfg: BotConfig):
+    from blazesbot.web_app import _App
+    p = _App.__new__(_App)
+    p.config, p.manager = cfg, None
+    return p
+
+
+def _candidatas(cfg: BotConfig, login: str) -> tuple[dict[str, str], int]:
+    lider = next(c for c in cfg.accounts if c.login == login)
+    d = _ponte(cfg)._candidatas_do_time(lider)
+    return ({c["login"]: c["motivo"] for c in d["contas_do_time"]},
+            d["contas_do_time_ocultas"])
+
+
+def test_conta_livre_aparece_sem_motivo():
+    vis, fora = _candidatas(_cfg(_conta("um"), _conta("dois")), "um")
+    assert vis == {"dois": ""}
+    assert fora == 0
+
+
+def test_conta_INATIVA_nao_aparece():
+    cfg = _cfg(_conta("um"), _conta("dois"))
+    cfg.accounts[1].enabled = False
+    vis, fora = _candidatas(cfg, "um")
+    assert vis == {}
+    assert fora == 1
+
+
+def test_conta_com_OUTRA_FUNCAO_nao_aparece():
+    """Farmar a cave e rodar o APP são excludentes: convocar arrancaria a conta
+    do meio de uma run (teleporte gasto, boss vivo)."""
+    for funcao in ("bc", "hh"):
+        cfg = _cfg(_conta("um"), _conta("dois"))
+        cfg.definir_funcao_da_conta(cfg.accounts[1], funcao)
+        vis, fora = _candidatas(cfg, "um")
+        assert vis == {}, funcao
+        assert fora == 1, funcao
+
+
+def test_conta_em_OUTRO_TIME_nao_aparece():
+    cfg = _cfg(_conta("um"), _conta("dois", segue=["tres"]), _conta("tres"))
+    vis, fora = _candidatas(cfg, "um")
+    assert vis == {"dois": ""}, "quem lidera outro time continua convocável"
+    assert fora == 1, "a seguidora de 'dois' não pode ser puxada por 'um'"
+
+
+def test_o_PROPRIO_time_aparece_marcavel():
+    """Sem dispensar o líder editado, os seguidores dele voltavam como 'já no
+    time de <ele mesmo>' e o usuário abria o time que montou e via vazio."""
+    cfg = _cfg(_conta("um", segue=["dois"]), _conta("dois"))
+    vis, fora = _candidatas(cfg, "um")
+    assert vis == {"dois": ""}
+    assert fora == 0
+
+
+def test_quem_JA_ESTA_no_time_aparece_mesmo_inelegivel():
+    """Com o motivo à vista, e nunca escondido: a tela salva o que está
+    marcado, e esconder apagaria o login de `time_logins`."""
+    cfg = _cfg(_conta("um", segue=["dois", "tres"]), _conta("dois"),
+               _conta("tres"))
+    cfg.definir_funcao_da_conta(cfg.accounts[1], "bc")
+    cfg.accounts[2].enabled = False
+    vis, fora = _candidatas(cfg, "um")
+    assert vis == {"dois": "farmando a cave", "tres": "inativa"}
+    assert fora == 0
+
+
+def test_a_conta_editada_nunca_aparece_na_propria_lista():
+    vis, _ = _candidatas(_cfg(_conta("um"), _conta("dois")), "um")
+    assert "um" not in vis
+
+
+def test_conta_SEM_LOGIN_nao_aparece():
+    """Login vazio no time deixa uma vaga apontando para lugar nenhum."""
+    cfg = _cfg(_conta("um"), Account(login="", enabled=True))
+    vis, fora = _candidatas(cfg, "um")
+    assert vis == {}
+    assert fora == 0, "conta sem login não é 'conta escondida', é linha em branco"

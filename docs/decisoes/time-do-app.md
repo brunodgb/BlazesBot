@@ -288,3 +288,52 @@ produção -- o time simplesmente não sincronizaria, sem erro nenhum:
 
 A ordem não é gosto: **2** precisa dos campos de **1** e **4** precisa do mural
 de **3**. Cada bloco fecha com a suíte inteira e uma revisão do Codex.
+
+## A escolha do time: esconder é melhor que desabilitar (07/09/2026)
+
+A lista de candidatas mostrava **todas** as outras contas cadastradas: as
+inelegíveis iam desabilitadas, em 40% de opacidade, com o motivo escrito ao lado
+("farmando a cave", "já no time de blazestpas"). O raciocínio original está no
+comentário que saiu: *conta que some é o usuário procurando uma conta que ele
+sabe que cadastrou.*
+
+Com sete contas cadastradas isso se inverteu. O usuário: *"não quero que mostre
+as contas inativas e as contas que estão fazendo outra coisa, ou se já tiverem em
+outro time, pois é melhor nem mostrar se já não dá para usar aquelas contas no
+time. Só cria uma lista cada vez maior."* Medido na config real dele: para um
+líder, 4 candidatas visíveis contra 2 ocultas; para outras contas, 2 contra 4 —
+mais da metade da lista era enfeite.
+
+Vale notar que `docs/INVARIANTES.md` **sempre** disse que conta farmando a cave
+"não aparece na escolha do time". Era o código que divergia do invariante escrito.
+
+O que ficou de fora, e a ordem em que o motivo é decidido: **inativa** → **BC** →
+**HH** → **já no time de outro**. Conta com o **APP próprio ligado continua
+aparecendo**, e isso é de propósito: seguidor não precisa de `app.enabled`, quem
+liga é o líder, e o projeto resolve o nó "A lidera B enquanto B lidera A" pela
+regra de que quem aparece na lista de outro é seguidora e o time dela é ignorado.
+Esconder quem tem APP tiraria a possibilidade de puxar para o time uma conta que
+hoje roda a macro sozinha — que é o caso normal de montar um time.
+
+### Duas coisas que este ajuste consertou de quebra
+
+**A regra estava em dois lugares.** A tela remontava o motivo a partir de três
+campos soltos (`farmando_bc`, `farmando_hh`, `lider_de_outro`). Dois lugares
+decidindo a mesma coisa, e no dia em que aparecesse uma quarta função só um deles
+saberia dela. Agora o backend manda o `motivo` pronto.
+
+**O time perdia um login ao salvar.** A tela fazia `cx.checked = false` na conta
+inelegível — e `lerTimeDoApp` salva o que está marcado. Ligar BC numa seguidora e
+depois abrir o editor do líder e salvar **apagava** aquele login de
+`time_logins`, violando a invariante escrita de que "sair do time por `bc_farm`
+não apaga o login". Por isso quem já está no time aparece **sempre e habilitado**,
+com o motivo em âmbar: o conflito fica visível e tirar continua sendo decisão do
+líder. Verificado em tela com duas contas do time em conflito (uma em BC, uma
+inativa): as duas marcadas, nenhuma travada, `time_logins` intacto.
+
+### Dívida de paridade, preexistente
+
+Esta lista **só existe na interface web** — a `account_dialog.py` da PyQt6 nunca
+teve a escolha do time do APP (só menciona `time_logins` num comentário). A regra
+da elegibilidade fica na ponte web hoje; quando a lista chegar à PyQt6, ela
+desce para `BotConfig` e as duas telas passam a chamar a mesma função.

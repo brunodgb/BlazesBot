@@ -178,6 +178,54 @@ class _App:
     def _guardar_log(self, conta: str, linha: str) -> None:
         self._fila_log.append((conta, linha))
 
+    def _candidatas_do_time(self, lider: Account) -> dict[str, object]:
+        """Quem DÁ para convocar para o time do APP desta conta.
+
+        INELEGÍVEL NÃO APARECE (07/09/2026, pedido do usuário). Antes ia na
+        lista desabilitada e com o motivo, para o usuário não procurar uma conta
+        que ele sabe que cadastrou -- e o resultado, com muitas contas, foi uma
+        lista que só cresce e onde o que se pode escolher fica escondido no meio
+        do que não se pode. `docs/INVARIANTES.md` sempre disse que conta
+        farmando a cave "não aparece na escolha do time"; era o código que
+        divergia. A contagem do que ficou de fora vai junto, para a conta que
+        sumiu ter explicação em vez de virar mistério.
+
+        A REGRA MORA AQUI, num lugar só: a tela recebe o motivo pronto em vez de
+        remontá-lo a partir de três campos soltos.
+
+        QUEM JÁ ESTÁ NO TIME APARECE SEMPRE, inelegível ou não -- e HABILITADO.
+        Esconder o que está gravado faria `lerTimeDoApp` salvar sem ele, e
+        `time_logins` perderia o login por causa de um clique em BC que é
+        reversível (`docs/INVARIANTES.md`: "sair do time por `bc_farm` não apaga
+        o login"). Marcada e com o motivo à vista, o conflito é visível e a
+        decisão de tirar continua sendo do líder.
+        """
+        ja_no_time = {str(x) for x in lider.settings.app.time_logins}
+        visiveis: list[dict[str, object]] = []
+        ocultas = 0
+        for o in self.config.accounts:
+            if o is lider or not o.login:
+                continue
+            motivo = ""
+            if not o.enabled:
+                motivo = "inativa"
+            elif o.bc_farm:
+                motivo = "farmando a cave"
+            elif o.hh_farm:
+                motivo = "farmando a HH"
+            else:
+                outro = self.config.lider_do_time_do_app(
+                    o.login, ignorar=lider.login)
+                if outro:
+                    motivo = f"já no time de {outro}"
+            if motivo and o.login not in ja_no_time:
+                ocultas += 1
+                continue
+            visiveis.append({"login": o.login,
+                             "nick": o.last_char_name.strip(),
+                             "motivo": motivo})
+        return {"contas_do_time": visiveis, "contas_do_time_ocultas": ocultas}
+
     def _aplicar(self) -> None:
         try:
             self.config.save()
@@ -317,18 +365,8 @@ class _App:
                  "disponivel": bool(r.last_char_name.strip())}
                 for r in self.config.reset_accounts() if r is not c
             ],
-            # AS CANDIDATAS DO TIME DO APP. Inelegível NÃO some da lista --
-            # vai desabilitada, com o motivo, porque conta que some é o usuário
-            # procurando uma conta que ele sabe que cadastrou.
-            "contas_do_time": [
-                {"login": o.login,
-                 "nick": o.last_char_name.strip(),
-                 "farmando_bc": bool(o.bc_farm),
-                 "farmando_hh": bool(o.hh_farm),
-                 "lider_de_outro": self.config.lider_do_time_do_app(
-                     o.login, ignorar=c.login)}
-                for o in self.config.accounts if o is not c and o.login
-            ],
+            # AS CANDIDATAS DO TIME DO APP -- ver `_candidatas_do_time`.
+            **self._candidatas_do_time(c),
             "usar_catador": st.usar_catador,
             "mount_speed_pct": st.mount_speed_pct,
             "farm": c.bc_farm,

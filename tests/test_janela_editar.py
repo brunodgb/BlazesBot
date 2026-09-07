@@ -277,3 +277,20 @@ def test_a_dica_das_funcoes_diz_a_REGRA():
     for texto in (JS, GUI):
         assert "Marcada junto com BC" not in texto
         assert "Uma função por conta" in texto
+
+
+def test_a_lista_do_time_NAO_remonta_a_regra():
+    """A tela decidia o motivo a partir de três campos soltos (`farmando_bc`,
+    `farmando_hh`, `lider_de_outro`) -- dois lugares decidindo a mesma coisa, e
+    no dia de uma quarta função só um deles saberia dela. O backend manda o
+    motivo pronto e a lista já filtrada."""
+    codigo = _sem_comentarios(JS, "//")
+    for antigo in ("farmando_bc", "farmando_hh", "lider_de_outro"):
+        assert antigo not in codigo, f"{antigo} voltou para a tela"
+    assert "contas_do_time_ocultas" in JS and "contas_do_time_ocultas" in PONTE
+    assert "def _candidatas_do_time" in PONTE
+    # Quem está no time e ficou inelegível NÃO é travado: é assim que dá para
+    # tirar. Travar e desmarcar era o que apagava o login ao salvar.
+    bloco = JS.split("function montarListaDoTime(")[1].split("\nfunction ")[0]
+    assert "cx.disabled = true" not in bloco
+    assert "cx.checked = false" not in bloco

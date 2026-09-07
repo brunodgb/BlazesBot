@@ -947,6 +947,13 @@ body {
   }
 
 
+  /* CONTA DO TIME EM CONFLITO: ela está gravada no time E inelegível agora
+     (ligaram BC nela, por exemplo). Não fica desabilitada de propósito -- é
+     assim que o líder consegue tirá-la. O aviso é a cor, não um texto novo. */
+  .conflito-do-time > span {
+    @apply text-amber-400/90;
+  }
+
   /* "?" ao lado de um campo. A explicação mora aqui, não na tela: texto solto
      espalhado faz o olho pular os campos, que são o que a pessoa veio fazer. */
   .ajuda {

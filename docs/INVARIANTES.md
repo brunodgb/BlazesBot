@@ -191,6 +191,16 @@ seguidores). Pedido do usuário em 27/08/2026.
 - **`bc_farm` E APP NUNCA JUNTOS.** Conta farmando a cave não aparece na escolha
   do time e não é convocada. Convocar arrancaria a conta do meio de uma run
   (teleporte gasto, boss vivo) — run perdida em silêncio.
+- **A ESCOLHA DO TIME MOSTRA SÓ QUEM DÁ PARA CONVOCAR** (07/09/2026). Fica de
+  fora quem está **inativa**, com **outra função** (BC ou HH) ou **já no time de
+  outro líder**. A regra mora num lugar só, `_App._candidatas_do_time`: a tela
+  recebe o motivo pronto, não três campos para remontar. A **contagem** do que
+  ficou de fora vai junto — conta que some sem explicação é o usuário procurando
+  uma conta que ele sabe que cadastrou.
+- **QUEM JÁ ESTÁ NO TIME APARECE SEMPRE, e HABILITADO** — inelegível ou não. A
+  tela grava o que está marcado: esconder o que está gravado apagaria o login de
+  `time_logins`, e travar marcado tiraria do líder a única forma de removê-lo. O
+  motivo fica à vista, em âmbar.
 - **SAIR DO TIME POR `bc_farm` NÃO APAGA O LOGIN** de `time_logins`. O clique é
   reversível; apagar configuração por causa dele, não.
 - **CAMPO NOVO DO `AppConfig` PRECISA ENTRAR NO `_app_from_dict`** — vale para

@@ -1094,7 +1094,8 @@ function preencherEditor(d) {
   explicarModoDoTime();
   // Como a lista do reseter, as candidatas vêm do EDITOR e não do bloco `app`:
   // elas são as OUTRAS contas, e `app` só sabe de si mesmo.
-  montarListaDoTime(d.contas_do_time || [], d.app.time_logins || []);
+  montarListaDoTime(d.contas_do_time || [], d.app.time_logins || [],
+                    d.contas_do_time_ocultas || 0);
 
   preencherTeclas(d.keys);
   preencherApp(d.app.steps, d.app, d.keys);
@@ -1361,13 +1362,21 @@ function atualizarContagemDoTime() {
   // Deixar clicar e recusar depois é pior -- o usuário clica, nada acontece e
   // ele não sabe se o clique falhou ou se a regra existe.
   $$("#ed-app-time-lista input").forEach((el) => {
-    if (el.dataset.bloqueada === "1") return;
     el.disabled = !el.checked && marcadas.length >= MAXIMO_DO_TIME;
     el.closest("label").classList.toggle("opacity-40", el.disabled);
   });
 }
 
-function montarListaDoTime(candidatas, escolhidos) {
+// A LISTA VEM FILTRADA DO BACKEND (`_candidatas_do_time`), e `ocultas` diz
+// quantas contas ficaram de fora. Conta inativa, farmando a cave ou já no time
+// de outro líder não aparece: com muitas contas, a lista só crescia e o que dá
+// para escolher ficava escondido no meio do que não dá.
+//
+// O `motivo` vem PRONTO do backend. A tela remontava a regra a partir de três
+// campos soltos (`farmando_bc`, `farmando_hh`, `lider_de_outro`) -- dois lugares
+// decidindo a mesma coisa, e o dia em que aparecesse uma quarta função só um
+// deles saberia dela.
+function montarListaDoTime(candidatas, escolhidos, ocultas) {
   const caixa = $("#ed-app-time-lista");
   if (!caixa) return;
   caixa.innerHTML = "";
@@ -1376,7 +1385,9 @@ function montarListaDoTime(candidatas, escolhidos) {
   if (!candidatas.length) {
     const p = document.createElement("p");
     p.className = "text-[10.5px] text-dim leading-snug";
-    p.textContent = "Nenhuma outra conta cadastrada.";
+    p.textContent = ocultas
+      ? `Nenhuma conta disponível — ${notaDoQueFicouFora(ocultas)}.`
+      : "Nenhuma outra conta cadastrada.";
     caixa.appendChild(p);
     return;
   }
@@ -1390,19 +1401,14 @@ function montarListaDoTime(candidatas, escolhidos) {
     cx.value = c.login;
     cx.checked = marcados.has(c.login);
 
-    // O motivo de não poder entrar, quando existe. Farmar a cave e rodar o APP
-    // são excludentes: convocar uma conta no meio de uma run da cave perderia
-    // a run (teleporte gasto, boss vivo). Ver docs/INVARIANTES.md, "Time do APP".
-    let motivo = "";
-    if (c.farmando_bc) motivo = "farmando a cave";
-    else if (c.farmando_hh) motivo = "farmando a HH";
-    else if (c.lider_de_outro) motivo = `já no time de ${c.lider_de_outro}`;
-    if (motivo) {
-      cx.checked = false;
-      cx.disabled = true;
-      cx.dataset.bloqueada = "1";
-      rot.classList.add("opacity-40");
-    }
+    // CONTA COM MOTIVO SÓ CHEGA AQUI SE JÁ ESTIVER NO TIME -- e então ela fica
+    // HABILITADA e MARCADA. Desmarcar e travar era o que fazia `time_logins`
+    // perder o login ao salvar, por causa de um clique em BC que é reversível
+    // (`docs/INVARIANTES.md`: "sair do time por `bc_farm` não apaga o login").
+    // Com o motivo à vista, o conflito é visível e tirar continua sendo decisão
+    // do líder.
+    const motivo = c.motivo || "";
+    if (motivo) rot.classList.add("conflito-do-time");
     cx.addEventListener("change", atualizarContagemDoTime);
 
     const txt = document.createElement("span");
@@ -1413,7 +1419,23 @@ function montarListaDoTime(candidatas, escolhidos) {
     rot.appendChild(txt);
     caixa.appendChild(rot);
   });
+
+  // A CONTA QUE SUMIU TEM EXPLICAÇÃO. Sem esta linha, quem cadastrou a conta e
+  // não a encontra na lista não tem como saber se ela sumiu ou nunca existiu.
+  if (ocultas) {
+    const nota = document.createElement("p");
+    nota.className = "text-[10.5px] text-dim leading-snug mt-1";
+    nota.textContent = notaDoQueFicouFora(ocultas);
+    caixa.appendChild(nota);
+  }
   atualizarContagemDoTime();
+}
+
+function notaDoQueFicouFora(n) {
+  return n === 1
+    ? "1 conta não aparece: está inativa, com outra função ou em outro time"
+    : `${n} contas não aparecem: estão inativas, com outra função ou em `
+      + "outro time";
 }
 
 function explicarModoDoTime() {
