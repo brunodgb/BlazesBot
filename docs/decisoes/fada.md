@@ -425,3 +425,52 @@ toques é tudo o que cabe em 10 s de qualquer forma.
 
 Lá o alvo está vivo, o clique seleciona, e o id é o que impede curar o aliado
 errado — o defeito de 26/08 que produziu a regra. Não é o mesmo caso.
+
+
+## Time desfeito no jogo: a contingência da poção — 07/09/2026
+
+> *"Quando todos os personagens do time APP caem, o jogo desfaz a party
+> automaticamente. Sem a party, a fada não consegue aplicar a cura em grupo.
+> Como a recriação automática do time não está implementada, precisamos de uma
+> medida de contingência quando os personagens reconectarem."* — usuário
+
+### O que acontecia
+
+**Nada no bot era avisado.** A configuração continua listando o time, o mural
+continua com a Fada batendo (do lado dela não mudou nada mesmo), e a vítima
+esperava o teto inteiro por uma cura que **não tinha como sair**: sem party não
+há painel de time, e sem painel a Fada não tem retrato para clicar.
+
+O resultado era a pior combinação possível: a conta parada, sentada, esperando —
+com a poção na bolsa e a regra dizendo "não beba, tem Fada".
+
+### A leitura que decide
+
+`Memory.tamanho_do_time()`, o ponteiro rebaseado (`ADDR_TEAM`), que **conta o
+próprio personagem**:
+
+| leitura | significado | o que a vítima faz |
+|---|---|---|
+| ≥ 2 | há party | espera a Fada, como sempre |
+| **1** | só eu | **poção** |
+| **0** | sem time | **poção** |
+| `None` | não deu para ler | espera a Fada (não sei não desliga nada) |
+
+O `None` é a parte que mais importa: tratá-lo como "sem time" tiraria a cura em
+grupo de todo mundo no primeiro soluço de memória. É a mesma regra da
+conferência de janela antes de enviar tecla — **só o ponteiro CONFIRMANDO
+derruba a dependência**.
+
+### Onde o portão fica, e por quê
+
+**Antes de publicar o pedido no mural.** Pedir cura e desistir depois deixaria a
+vítima na fila da Fada por nada, e a Fada gastaria tentativas num aliado que não
+está no painel dela.
+
+### O que isto NÃO faz
+
+**Não recria o time.** É contingência, não conserto: a conta volta a se curar
+sozinha e segue farmando até o time existir de novo. Recriar a party
+automaticamente continua sendo trabalho pendente — e quando existir, este portão
+passa a ser o gatilho natural dele (é o único lugar do código que sabe, com
+prova, que a party caiu).

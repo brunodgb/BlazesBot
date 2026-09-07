@@ -731,6 +731,13 @@ Cada item é o que **não pode ser violado**. O detalhe de cada área mora em
   Teclas na tela continuava sem ele. Travado por
   `test_o_dist_COMPILADO_tem_o_campo` (pula quando não há `dist/`, porque ele é
   gerado e ignorado pelo git).
+- **TIME DESFEITO NO JOGO ⇒ A CONTA VOLTA À POÇÃO** (07/09/2026). O jogo desfaz
+  a party sozinho quando todos morrem, e nada no bot era avisado: a vítima
+  esperava o teto inteiro por uma cura que sem painel não tinha como sair. A
+  prova é `Memory.tamanho_do_time()` (conta o próprio personagem: **≤ 1 é sem
+  party**), conferida **antes de publicar o pedido** no mural. `None` **não**
+  desliga a Fada — só o ponteiro CONFIRMANDO derruba a dependência. Isto é
+  contingência, não conserto: **recriar a party continua pendente**.
 - **NO REVIVER, QUEM MANDA É O SLOT — NÃO O ID** (06/09/2026). O retrato do
   morto continua clicável, mas o clique **não põe o id dele no `TARGET_ID`**;
   exigir que batesse reprovava a única coisa que ia funcionar (medido: a Fada

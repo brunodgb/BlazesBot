@@ -24,6 +24,7 @@ O QUE ESTES TESTES IMPEDEM DE VOLTAR
 from __future__ import annotations
 
 import logging
+from types import SimpleNamespace
 
 import pytest
 
@@ -1287,3 +1288,94 @@ def test_o_pedido_de_PARAR_sobe_de_dentro_do_reviver():
     jogo.ao_reviver = ao_apertar
 
     assert mod_reviver.reviver(f, "aliado") is False
+
+
+# ---------------------------------------------------------------------------
+# TIME DESFEITO NO JOGO -- contingência de 07/09/2026
+# ---------------------------------------------------------------------------
+#
+# *"Quando todos os personagens do time APP caem, o jogo desfaz a party
+# automaticamente. Sem a party, a fada não consegue aplicar a cura em grupo.
+# Como a recriação automática do time não está implementada, precisamos de uma
+# medida de contingência quando os personagens reconectarem."* -- usuário.
+#
+# Nada no bot era avisado: a configuração continuava listando o time, o mural
+# continuava com a Fada batendo, e a vítima esperava o teto inteiro por uma cura
+# que não tinha como sair -- a Fada não teria retrato para clicar.
+
+def _supervisor_falso(quantos):
+    """Um supervisor com só o que `_time_desfeito_no_jogo` precisa."""
+    from blazesbot.bot.supervisor import AccountSupervisor
+
+    sup = AccountSupervisor.__new__(AccountSupervisor)
+    sup._memoria_do_app = SimpleNamespace(tamanho_do_time=lambda: quantos)
+    return sup
+
+
+def test_time_com_gente_NAO_e_desfeito():
+    from blazesbot.bot.supervisor import AccountSupervisor
+
+    sup = _supervisor_falso(3)
+    assert AccountSupervisor._time_desfeito_no_jogo(sup) is False
+
+
+def test_SO_EU_no_time_e_time_desfeito():
+    """`tamanho_do_time` CONTA o próprio personagem: 1 é "só eu"."""
+    from blazesbot.bot.supervisor import AccountSupervisor
+
+    assert AccountSupervisor._time_desfeito_no_jogo(_supervisor_falso(1)) is True
+    assert AccountSupervisor._time_desfeito_no_jogo(_supervisor_falso(0)) is True
+
+
+def test_leitura_que_NAO_RESPONDE_nao_desliga_a_fada():
+    """`None` é "não sei", e tratá-lo como "sem time" tiraria a cura em grupo de
+    todo mundo no primeiro soluço de memória. Só o ponteiro CONFIRMANDO derruba
+    a dependência."""
+    from blazesbot.bot.supervisor import AccountSupervisor
+
+    assert AccountSupervisor._time_desfeito_no_jogo(_supervisor_falso(None)) is False
+
+
+def test_leitura_que_EXPLODE_nao_desliga_a_fada():
+    from blazesbot.bot.supervisor import AccountSupervisor
+
+    sup = AccountSupervisor.__new__(AccountSupervisor)
+
+    def _explode():
+        raise RuntimeError("processo sumiu")
+
+    sup._memoria_do_app = SimpleNamespace(tamanho_do_time=_explode)
+    assert AccountSupervisor._time_desfeito_no_jogo(sup) is False
+
+
+def test_sem_memoria_do_app_nao_desliga_a_fada():
+    from blazesbot.bot.supervisor import AccountSupervisor
+
+    sup = AccountSupervisor.__new__(AccountSupervisor)
+    assert AccountSupervisor._time_desfeito_no_jogo(sup) is False
+
+
+def test_a_vitima_CONSULTA_o_time_antes_de_esperar_a_fada():
+    """Trava estrutural: se o portão sair, a vítima volta a esperar o teto
+    inteiro por uma cura que a party desfeita não permite."""
+    import inspect
+
+    from blazesbot.bot.supervisor import AccountSupervisor
+
+    fonte = inspect.getsource(AccountSupervisor._rodar_modo_app)
+    laco = fonte.split("def chamar_a_fada")[1]
+    assert "_time_desfeito_no_jogo" in laco
+    # E ANTES de publicar o pedido: pedir e depois desistir deixaria a vítima na
+    # fila da Fada por nada.
+    assert laco.index("_time_desfeito_no_jogo") < laco.index("mural.pedir_cura")
+
+
+def test_o_ponteiro_guardado_MORRE_com_o_handle():
+    """Apontar para uma memória fechada faria a leitura devolver lixo -- e lixo
+    aqui desligaria a Fada do time inteiro."""
+    import inspect
+
+    from blazesbot.bot.supervisor import AccountSupervisor
+
+    fonte = inspect.getsource(AccountSupervisor._rodar_modo_app)
+    assert "self._memoria_do_app = None" in fonte

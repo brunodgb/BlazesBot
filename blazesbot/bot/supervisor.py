@@ -1459,6 +1459,32 @@ class AccountSupervisor(threading.Thread):
 
     # -- a Fada ------------------------------------------------------------
 
+    def _time_desfeito_no_jogo(self) -> bool:
+        """O jogo diz que NÃO estou em party? `False` também quando não sei.
+
+        O jogo desfaz a party sozinho quando todos os membros morrem, e nada no
+        bot é avisado: a configuração continua listando o time, o mural continua
+        com a Fada batendo, e a vítima esperaria uma cura em grupo que não tem
+        como sair -- a Fada não teria retrato para clicar.
+
+        A LEITURA É `tamanho_do_time()` (o ponteiro rebaseado, `ADDR_TEAM`), e
+        ela CONTA o próprio personagem: `1` significa "só eu", ou seja, sem
+        party. `0` é o mesmo caso pelo outro lado.
+
+        "NÃO SEI" NÃO DESLIGA A FADA. `None` é leitura que não respondeu, e
+        tratá-la como "sem time" tiraria a cura em grupo de todo mundo no
+        primeiro soluço de memória -- é a mesma regra da conferência de janela
+        antes de enviar tecla. Só o ponteiro CONFIRMANDO derruba a dependência.
+        """
+        memoria = getattr(self, "_memoria_do_app", None)
+        if memoria is None:
+            return False
+        try:
+            quantos = memoria.tamanho_do_time()
+        except Exception:
+            return False
+        return quantos is not None and quantos <= 1
+
     def achar_o_convite_de_reviver(self) -> tuple[int, int] | None:
         """Onde clicar para ACEITAR o reviver da Fada, ou `None` se não há convite.
 
@@ -1824,6 +1850,10 @@ class AccountSupervisor(threading.Thread):
             except Exception:
                 return None
 
+        # A MESMA memória, guardada para quem pergunta de fora do closure --
+        # hoje `_time_desfeito_no_jogo`. Um handle só por conta, como sempre.
+        self._memoria_do_app = memoria_do_pet
+
         def vida_pct() -> float | None:
             return _ler(memoria_do_pet.vida_pct) if memoria_do_pet else None
 
@@ -1908,6 +1938,24 @@ class AccountSupervisor(threading.Thread):
 
             fada_login = self._fada_do_meu_time()
             if not fada_login or not mural.fada_de_pe(fada_login):
+                return False
+
+            # O TIME DESFEITO NO JOGO -- 07/09/2026.
+            #
+            # Quando TODOS caem, o jogo desfaz a party sozinho. O mural continua
+            # dizendo que existe uma Fada configurada e ela continua batendo (do
+            # lado dela nada mudou), mas a cura em grupo depende da party: sem
+            # ela, a Fada não tem retrato para clicar e a vítima esperaria o
+            # teto inteiro por uma cura que não pode acontecer.
+            #
+            # A recriação automática do time não existe ainda; até existir, a
+            # contingência é esta: confirmado o desfazimento, a conta se cura
+            # sozinha com poção.
+            if self._time_desfeito_no_jogo():
+                log.warning(
+                    "O time foi DESFEITO no jogo (o ponteiro diz que não há "
+                    "party). A Fada %s não tem como curar em grupo — vou de "
+                    "poção até o time voltar.", fada_login)
                 return False
 
             # O MÁXIMO VAI JUNTO. A memória do time entrega o HP ATUAL de cada
@@ -2331,6 +2379,10 @@ class AccountSupervisor(threading.Thread):
                     memoria_do_pet.close()
                 except Exception:
                     pass
+            # O PONTEIRO GUARDADO MORRE COM O HANDLE. Deixá-lo apontando para
+            # uma memória fechada faria `_time_desfeito_no_jogo` ler lixo -- e
+            # lixo aqui desligaria a Fada do time inteiro.
+            self._memoria_do_app = None
             # O `TargetHybrid` abre o PRÓPRIO handle (o mesmo arranjo do BC, que
             # tem o `ctx.memory` de um lado e o híbrido do outro). Fechar aqui,
             # no mesmo `finally`, pelo mesmo motivo.
