@@ -14,6 +14,7 @@ desfazer**:
 """
 
 
+
 import pytest
 
 from blazesbot.bot.app import deletador as d
@@ -148,8 +149,21 @@ class _Ctx:
 
 
 class _Log:
-    def __getattr__(self, _nome):
-        return lambda *a, **k: None
+    """Dublê que GUARDA o que foi dito.
+
+    Ele engolia tudo (`lambda: None`), e por isso nenhum teste conseguia
+    cobrar um aviso -- justamente o que faltou nas 268 falhas de bolsa de
+    06/09/2026, em que o log era a única coisa capaz de mostrar o defeito.
+    """
+
+    def __init__(self):
+        self.linhas = []
+
+    def __getattr__(self, nome):
+        if nome.startswith("_"):
+            raise AttributeError(nome)
+        return lambda f, *a, **k: self.linhas.append(
+            (nome, (f % a) if a else f))
 
 
 def test_o_teto_corta_entre_exclusoes_e_nao_no_meio(monkeypatch):
@@ -539,7 +553,13 @@ def test_o_fechamento_e_CONFERIDO_e_insiste(monkeypatch):
     monkeypatch.setattr(d, "deletar_lixo", lambda c, teto=None: 0)
 
     # A primeira tentativa de fechar não pega; a segunda sim.
-    estados = iter([False, True, True, False])
+    #
+    # A SEQUÊNCIA GANHOU DUAS LEITURAS EM 07/09/2026: o abrir passou a
+    # PERGUNTAR pelo ícone em laço (`_esperar_a_bolsa_abrir`) e o `finally` só
+    # fecha o que está observadamente aberto. São: (1) o estado inicial,
+    # (2) a confirmação de que abriu, (3) a conferência do `finally`,
+    # (4) o fechar que não pegou, (5) o fechar que pegou.
+    estados = iter([False, True, True, True, False])
     monkeypatch.setattr(d, "inventario_esta_aberto", lambda c: next(estados))
 
     d.limpar_a_bolsa(ctx, "I")
@@ -577,3 +597,69 @@ def test_falha_ao_apagar_ainda_FECHA_a_bolsa(monkeypatch):
     with pytest.raises(RuntimeError):
         d.limpar_a_bolsa(ctx, "I")
     assert ctx.aberto is False, "deixou a bolsa aberta depois de falhar"
+
+
+# ---------------------------------------------------------------------------
+# A BOLSA QUE NÃO ABRE -- 268 falhas seguidas em campo, 07/09/2026
+# ---------------------------------------------------------------------------
+#
+# A espera era CEGA (0,58 s). Quando a tela demorava mais que isso, o ícone não
+# era achado, a limpeza era descartada e o `finally` apertava a tecla de novo.
+# Como a tecla é interruptor, os toques se anulavam em pares: duas contas
+# passaram horas abrindo e fechando a bolsa sem apagar UM item.
+
+def test_a_bolsa_que_demora_a_pintar_AINDA_e_limpa(monkeypatch):
+    """O conserto em uma linha: pergunta em vez de esperar cego."""
+    ctx = _CtxTecla(aberto_no_inicio=False)
+    apagados = []
+    monkeypatch.setattr(d, "deletar_lixo",
+                        lambda c, teto=None: apagados.append(1) or 3)
+    # Fechada, fechada, fechada... e só na quarta leitura ela aparece.
+    estados = iter([False, False, False, True, True, False])
+    monkeypatch.setattr(d, "inventario_esta_aberto", lambda c: next(estados))
+
+    assert d.limpar_a_bolsa(ctx, "I") == 3
+    assert apagados == [1], "desistiu de uma bolsa que abriu atrasada"
+
+
+def test_a_bolsa_que_NAO_abre_no_teto_nao_aperta_de_novo(monkeypatch):
+    """O furo que o council apontou: o `finally` apertava a tecla
+    incondicionalmente. Sem o ícone na tela, o que se SABE é que ela não está
+    aberta -- e o que não está aberto não precisa ser fechado."""
+    ctx = _CtxTecla(aberto_no_inicio=False)
+    monkeypatch.setattr(d, "deletar_lixo", lambda c, teto=None: 0)
+    monkeypatch.setattr(d, "TETO_DA_BOLSA_ABRIR", 0.05)
+    monkeypatch.setattr(d, "PASSO_DA_BOLSA_ABRIR", 0.0)
+    monkeypatch.setattr(d, "inventario_esta_aberto", lambda c: False)
+
+    assert d.limpar_a_bolsa(ctx, "I") == 0
+
+    assert ctx.teclas.count("I") == 1, ("apertou de novo sem saber o estado: "
+                                        f"{ctx.teclas}")
+    assert any("aperto de novo" in t for _n, t in ctx.log.linhas), (
+        ctx.log.linhas)
+
+
+def test_o_finally_NAO_fecha_o_que_a_tela_diz_estar_fechado(monkeypatch):
+    """`eu_abri` diz o que eu tentei; a tela diz o que É. Entre os dois, manda a
+    tela -- senão o "fechar" vira um "abrir"."""
+    ctx = _CtxTecla(aberto_no_inicio=False)
+    monkeypatch.setattr(d, "deletar_lixo", lambda c, teto=None: 0)
+    # abriu (True na confirmação), mas na hora de fechar já está fechada.
+    estados = iter([False, True, False])
+    monkeypatch.setattr(d, "inventario_esta_aberto", lambda c: next(estados))
+
+    d.limpar_a_bolsa(ctx, "I")
+
+    assert ctx.teclas.count("I") == 1, ("abriu 1 e NÃO devia fechar: "
+                                        f"{ctx.teclas}")
+
+
+def test_a_espera_do_abrir_deixou_de_ser_CEGA():
+    """Trava estrutural: se alguém devolver o `tick` fixo no caminho do abrir,
+    o defeito das 268 falhas volta."""
+    import inspect
+
+    fonte = inspect.getsource(d.limpar_a_bolsa)
+    assert "_esperar_a_bolsa_abrir" in fonte
+    assert "ESPERA_DA_BOLSA_ABRIR" not in fonte

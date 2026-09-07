@@ -720,6 +720,12 @@ Cada item é o que **não pode ser violado**. O detalhe de cada área mora em
   lados desse contrato existem para o feitiço de 5 s não ser desperdiçado.
   Valem as mesmas regras da cura: id que não bate não revive, freio de 3
   tentativas, mana conferida antes do toque, sem tecla avisa uma vez e segue.
+- **A BOLSA: PERGUNTA-SE SE ABRIU, E SÓ SE FECHA O QUE A TELA DIZ ESTAR ABERTO**
+  (07/09/2026). A espera cega de 0,58 s custou **268 limpezas seguidas perdidas**
+  em duas contas, com zero itens apagados; e o `finally` apertava a tecla
+  incondicionalmente — sendo ela um interruptor, os toques se anulavam em pares.
+  Ícone ausente no teto ⇒ **não se aperta de novo**: o que não está aberto não
+  precisa ser fechado.
 - **A MORTE É A PRIMEIRA PERGUNTA DA VOLTA** (07/09/2026), antes de pet, comida,
   trava de posição, bolsa e aquisição — e continua sendo conferida por linha.
   Só dentro das linhas ela era inalcançável: morto não adquire alvo, a volta

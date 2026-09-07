@@ -153,9 +153,28 @@ PASSO_DA_ESPERA = 0.08
 # Assentamento depois do Ok, para o item sumir antes do clique seguinte.
 DEPOIS_DO_OK = 0.18
 
-# A janela do inventário terminar de pintar depois da tecla. A memória confirma
-# antes de a tela estar pronta, e aqui quem lê é a tela.
+# A janela do inventário terminar de pintar depois da tecla.
+#
+# QUEM AINDA USA: o FECHAR (`_fechar_a_bolsa`, que aperta e depois confere) e a
+# aferição. O ABRIR deixou de usar em 07/09/2026 -- lá se pergunta pelo ícone
+# em laço, ver `TETO_DA_BOLSA_ABRIR`.
 ESPERA_DA_BOLSA_ABRIR = 0.58
+
+# Teto da espera pela bolsa APARECER depois da tecla -- 07/09/2026.
+#
+# ERA UMA ESPERA CEGA de 0,58 s, e ela custou 268 limpezas seguidas perdidas em
+# duas contas, por horas, com ZERO itens apagados: quando a tela demorava mais
+# que isso para pintar, `deletar_lixo` não achava o ícone, concluía "a bolsa não
+# está aberta" e desistia -- e o `finally` apertava a tecla de novo.
+#
+# Agora se PERGUNTA (`_esperar_a_bolsa_abrir`), saindo no instante em que o
+# ícone aparece. 2 s é teto, não gasto: no caso comum a bolsa aparece em bem
+# menos, e o que era 0,58 s fixo virou ~0,1 s típico.
+TETO_DA_BOLSA_ABRIR = 2.0
+
+# Passo entre duas perguntas pelo ícone. Cada uma custa uma captura de janela,
+# então não pode ser fino demais; 0,15 s dá ~13 amostras dentro do teto.
+PASSO_DA_BOLSA_ABRIR = 0.15
 
 # Quantas vezes insistir para FECHAR a bolsa. Duas, porque a tecla é síncrona:
 # se a segunda não fechou, o problema não é o toque ter se perdido.
@@ -488,6 +507,26 @@ def esquecer_a_fila() -> None:
     _estado_das_filas.clear()
 
 
+def _esperar_a_bolsa_abrir(ctx: BotContext) -> bool:
+    """Espera o ícone de deletar APARECER. `True` = a bolsa está na tela.
+
+    Substituiu a espera cega de 0,58 s -- ver `TETO_DA_BOLSA_ABRIR` para o que
+    ela custou em campo.
+
+    O QUE ESTA FUNÇÃO DEVOLVE VALE OURO PARA QUEM CHAMA: `False` significa
+    "a bolsa NÃO está na tela", e é isso que autoriza não apertar a tecla de
+    novo. A tecla é interruptor: apertar sem saber o estado é a diferença entre
+    fechar o que abriu e abrir o que estava fechado.
+    """
+    fim = time.perf_counter() + TETO_DA_BOLSA_ABRIR
+    while True:
+        if inventario_esta_aberto(ctx) is True:
+            return True
+        if time.perf_counter() >= fim:
+            return False
+        ctx.tick(PASSO_DA_BOLSA_ABRIR)
+
+
 def inventario_esta_aberto(ctx: BotContext) -> bool | None:
     """A bolsa está na tela? `True`, `False` ou `None` (não dá para saber).
 
@@ -536,12 +575,27 @@ def limpar_a_bolsa(ctx: BotContext, tecla_do_inventario: str,
             # haver conferência nenhuma.
             ctx.press(tecla_do_inventario)
             eu_abri = True
-            ctx.tick(ESPERA_DA_BOLSA_ABRIR)
+            if not _esperar_a_bolsa_abrir(ctx):
+                # NÃO APERTA DE NOVO. Foi o furo que o council apontou: o
+                # `finally` apertava a tecla incondicionalmente, e como ela é
+                # interruptor, isso fechava bolsa que abriu atrasada e abria
+                # bolsa que estava fechada -- pares de toques se anulando por
+                # horas. Sem o ícone na tela, o que se SABE é que ela não está
+                # aberta; e o que não está aberto não precisa ser fechado.
+                eu_abri = False
+                ctx.log.warning(
+                    "A bolsa não apareceu em %.1fs depois da tecla %r. NÃO "
+                    "aperto de novo: a tecla é interruptor e eu não sei o "
+                    "estado. Fica para a próxima volta.",
+                    TETO_DA_BOLSA_ABRIR, tecla_do_inventario)
+                return 0
         else:
             ctx.log.debug("Inventário já estava aberto; não vou mexer na tecla.")
         return deletar_lixo(ctx, teto_segundos)
     finally:
-        if eu_abri:
+        # FECHA SÓ O QUE ESTÁ OBSERVADAMENTE ABERTO. `eu_abri` diz o que eu
+        # tentei; a tela diz o que É. Entre os dois, manda a tela.
+        if eu_abri and inventario_esta_aberto(ctx) is True:
             _fechar_a_bolsa(ctx, tecla_do_inventario)
 
 

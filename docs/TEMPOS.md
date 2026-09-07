@@ -31,7 +31,7 @@ desta lista é ou uma exceção justificada, ou dívida que ninguém converteu a
 mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 
 
-**336 tempos catalogados** — 237 FIXOS (espera cega), 99 entre TETO e PASSO.
+**338 tempos catalogados** — 237 FIXOS (espera cega), 101 entre TETO e PASSO.
 
 
 **6 estão diferentes do original:** `TETO_DA_CAIXA`, `PASSO_DA_ESPERA`, `ESPERA_DA_BOLSA_ABRIR`, `FATIA_DE_ESPERA`, `INTERVALO_ENTRE_INVOCACOES`, `PASSOS_DO_APP`
@@ -157,8 +157,10 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | `TETO_DE_SEGUNDOS` | 10 s | = | TETO | [deletador.py:147](blazesbot/bot/app/deletador.py#L147) | `deletar_lixo, limpar_a_bolsa` | Teto do passo inteiro (verificar + apagar), pedido do usuário. |
 | `TETO_DA_CAIXA` | 1.2 s | **1 s** ⚠ | TETO | [deletador.py:150](blazesbot/bot/app/deletador.py#L150) | `_esperar_a_caixa` | Espera pela caixa de confirmação aparecer, depois do clique no ícone. |
 | `PASSO_DA_ESPERA` | 0.08 s | **0.05 s** ⚠ | PASSO | [deletador.py:151](blazesbot/bot/app/deletador.py#L151) | `_esperar_a_caixa` |  |
-| `ESPERA_DA_BOLSA_ABRIR` | 0.58 s | **0.35 s** ⚠ | FIXO | [deletador.py:158](blazesbot/bot/app/deletador.py#L158) | `limpar_a_bolsa, _fechar_a_bolsa` | A janela do inventário terminar de pintar depois da tecla. A memória confirma |
-| *literal em* `_apagar_um` | 0.05 s | = | FIXO | [deletador.py:390](blazesbot/bot/app/deletador.py#L390) | `_apagar_um` | Uma exclusão completa: item -> ícone -> Ok. |
+| `ESPERA_DA_BOLSA_ABRIR` | 0.58 s | **0.35 s** ⚠ | FIXO | [deletador.py:161](blazesbot/bot/app/deletador.py#L161) | `_fechar_a_bolsa` | A janela do inventário terminar de pintar depois da tecla. |
+| `TETO_DA_BOLSA_ABRIR` | 2 s | *novo* | TETO | [deletador.py:173](blazesbot/bot/app/deletador.py#L173) | `_esperar_a_bolsa_abrir, limpar_a_bolsa` | Teto da espera pela bolsa APARECER depois da tecla -- 07/09/2026. |
+| `PASSO_DA_BOLSA_ABRIR` | 0.15 s | *novo* | PASSO | [deletador.py:177](blazesbot/bot/app/deletador.py#L177) | `_esperar_a_bolsa_abrir` | Passo entre duas perguntas pelo ícone. Cada uma custa uma captura de janela, |
+| *literal em* `_apagar_um` | 0.05 s | = | FIXO | [deletador.py:409](blazesbot/bot/app/deletador.py#L409) | `_apagar_um` | Uma exclusão completa: item -> ícone -> Ok. |
 | `FATIA_DE_ESPERA` | 0.08 s | **0.05 s** ⚠ | PASSO | [executor.py:100](blazesbot/bot/app/executor.py#L100) | `_esperar, _dormir (+1)` | Fatia máxima de espera antes de conferir se é para continuar. 0,05 s dá parada |
 | `INTERVALO_ENTRE_INVOCACOES` | 6 s | **10 s** ⚠ | FIXO | [executor.py:160](blazesbot/bot/app/executor.py#L160) | `garantir_pet` | Intervalo mínimo entre dois toques na tecla do pet. |
 | `ESPERA_DEPOIS_DE_INVOCAR` | 1 s | = | FIXO | [executor.py:165](blazesbot/bot/app/executor.py#L165) | `garantir_pet` | Espera depois de apertar a tecla do pet, antes de seguir para as teclas da |
@@ -178,7 +180,7 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | `ESPERA_ENTRE_TABS` | 0.6 s | *novo* | FIXO | [executor.py:728](blazesbot/bot/app/executor.py#L728) | `_garantir_alvo` | Espaçamento entre um salto da roda do TAB e o seguinte. |
 | `PASSO_DA_ESPERA_DA_BASE` | 0.1 s | = | PASSO | [executor.py:743](blazesbot/bot/app/executor.py#L743) | `_esperar_chegar_na_base` | Cadência da pergunta "já cheguei?". Leitura de posição é de microssegundos; o |
 | `SEGUNDOS_DO_PASSO_DO_SHUFFLE` | 3 s | *novo* | PASSO | [executor.py:779](blazesbot/bot/app/executor.py#L779) | `_fazer_shuffle_anti_afk` | Cada perna do shuffle anti-AFK (ida e volta). Era `time.sleep(1.0)` cego duas |
-| *literal em* `rodar` | 0.25 s | = | FIXO | [executor.py:3140](blazesbot/bot/app/executor.py#L3140) | `rodar` | Laço contínuo: volta após volta, até `continuar()` devolver False. |
+| *literal em* `rodar` | 0.25 s | = | FIXO | [executor.py:3152](blazesbot/bot/app/executor.py#L3152) | `rodar` | Laço contínuo: volta após volta, até `continuar()` devolver False. |
 | `ESPERA_ENTRE_TABS_DO_ALINHAMENTO` | 0.5 s | *novo* | FIXO | [sincronia.py:97](blazesbot/bot/app/sincronia.py#L97) |  | Cadência do TAB durante o alinhamento. |
 | `PASSO_DA_ESPERA_DA_LARGADA` | 0.04 s | *novo* | PASSO | [sincronia.py:100](blazesbot/bot/app/sincronia.py#L100) | `_esperar_os_seguidores, _entrar_na_largada` | De quanto em quanto tempo o seguidor confere se a largada saiu. |
 | `SEGUNDOS_SEM_MUDANCA_PARA_TAB` | 3 s | *novo* | FIXO | [sincronia.py:108](blazesbot/bot/app/sincronia.py#L108) | `conferir_a_parada` | Sem trocar de estado de batalha por este tempo, dá TAB. |

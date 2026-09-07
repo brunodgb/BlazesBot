@@ -166,3 +166,49 @@ longe de vendedor, e deletar é a única saída lá.
   nenhum casa com os 16 itens da pasta `SELL` deles. Antes de ligar `ATIVADO`,
   medir contra uma captura da NOSSA bolsa, como foi feito com o
   `package_courage`.
+
+
+## A bolsa que nunca abria — 268 falhas seguidas, 07/09/2026
+
+No log de 06/09, em duas contas, por horas:
+
+```
+Volta 1885: hora de limpar a bolsa (a cada 5 voltas) [...]
+Não achei o ícone de deletar na tela — o inventário não está aberto. Pulando.
+   ... 268 vezes, com ZERO itens apagados.
+```
+
+### O mecanismo
+
+`limpar_a_bolsa` lia a tela, via "fechada", apertava a tecla e esperava **0,58 s
+CEGOS**. Quando a tela demorava mais que isso para pintar — e com várias contas
+na mesma máquina ela demora —, `deletar_lixo` não achava o ícone, concluía "não
+está aberta" e desistia.
+
+E aí vinha o pior: o `finally` apertava a tecla **incondicionalmente**, para
+"fechar o que abriu". A tecla é interruptor. Então cada tentativa era um par
+abre/fecha em cima de uma bolsa que talvez tivesse acabado de abrir — os toques
+se anulando, por horas.
+
+O council resumiu: *"polling ajuda; o `finally` é o problema"*.
+
+### As duas correções
+
+1. **O abrir PERGUNTA** (`_esperar_a_bolsa_abrir`, passo 0,15 s, teto 2 s),
+   saindo no instante em que o ícone aparece. O que era 0,58 s fixo virou ~0,15 s
+   típico, e a bolsa que abre atrasada passou a ser limpa em vez de descartada.
+2. **O fechar só fecha o que a tela diz estar aberto.** `eu_abri` diz o que se
+   tentou; a tela diz o que É. Entre os dois, manda a tela. E se o ícone nunca
+   apareceu, **não se aperta de novo**: o que se sabe é que a bolsa não está
+   aberta, e o que não está aberto não precisa ser fechado.
+
+`ESPERA_DA_BOLSA_ABRIR` (0,58 s) continua existindo para o **fechar**, que
+aperta e depois confere — lá a espera cega é seguida de verificação, que é o
+arranjo que o projeto aceita.
+
+### De quebra: o dublê de log dos testes engolia tudo
+
+`_Log.__getattr__` devolvia `lambda: None`, então nenhum teste conseguia cobrar
+um aviso. Era exatamente o que faltava aqui: o log era a única coisa capaz de
+mostrar o defeito, e nenhum teste podia exigi-lo. Agora ele guarda o que foi
+dito.

@@ -73,7 +73,7 @@ ligar código não testado.
 
 ## Números medidos -- tolerância, limiar, teto, cadência
 
-570 constantes, agrupadas por arquivo.
+572 constantes, agrupadas por arquivo.
 
 | constante | valor | onde | quem lê | porquê (resumo) |
 |---|---|---|---|---|
@@ -91,15 +91,17 @@ ligar código não testado.
 | `VOLTAS_PRESAS_PARA_AVISAR` | `5` | [blazesbot/bot/app/cura.py:198](blazesbot/bot/app/cura.py#L198) | — | Quantas voltas presas em batalha com vida baixa antes de gritar. |
 | `DEPOIS_DO_OK` | `0.18` | [blazesbot/bot/app/deletador.py:154](blazesbot/bot/app/deletador.py#L154) | — | Assentamento depois do Ok, para o item sumir antes do clique seguinte. |
 | `DISTANCIA_QUE_E_O_MESMO_ITEM` | `12` | [blazesbot/bot/app/deletador.py:129](blazesbot/bot/app/deletador.py#L129) | — | Dois casamentos a menos de tanto um do outro são o MESMO item, contado duas |
-| `ESPERA_DA_BOLSA_ABRIR` | `0.58` | [blazesbot/bot/app/deletador.py:158](blazesbot/bot/app/deletador.py#L158) | afericao.py | A janela do inventário terminar de pintar depois da tecla. A memória confirma |
-| `LIMIAR_DA_CAIXA` | `0.8` | [blazesbot/bot/app/deletador.py:165](blazesbot/bot/app/deletador.py#L165) | — | — |
-| `LIMIAR_DA_REGIAO` | `0.8` | [blazesbot/bot/app/deletador.py:233](blazesbot/bot/app/deletador.py#L233) | — | — |
-| `LIMIAR_DO_ICONE` | `0.8` | [blazesbot/bot/app/deletador.py:164](blazesbot/bot/app/deletador.py#L164) | — | — |
+| `ESPERA_DA_BOLSA_ABRIR` | `0.58` | [blazesbot/bot/app/deletador.py:161](blazesbot/bot/app/deletador.py#L161) | afericao.py | A janela do inventário terminar de pintar depois da tecla. |
+| `LIMIAR_DA_CAIXA` | `0.8` | [blazesbot/bot/app/deletador.py:184](blazesbot/bot/app/deletador.py#L184) | — | — |
+| `LIMIAR_DA_REGIAO` | `0.8` | [blazesbot/bot/app/deletador.py:252](blazesbot/bot/app/deletador.py#L252) | — | — |
+| `LIMIAR_DO_ICONE` | `0.8` | [blazesbot/bot/app/deletador.py:183](blazesbot/bot/app/deletador.py#L183) | — | — |
 | `LIMIAR_EM_COR` | `0.92` | [blazesbot/bot/app/deletador.py:121](blazesbot/bot/app/deletador.py#L121) | — | Limiar do casamento EM COR dos itens. Vem do `package_courage`, que mediu o |
 | `MAXIMO_DE_EXCLUSOES` | `20` | [blazesbot/bot/app/deletador.py:124](blazesbot/bot/app/deletador.py#L124) | — | Teto de exclusões por chamada. Um template ruim não pode esvaziar a bolsa. |
+| `PASSO_DA_BOLSA_ABRIR` | `0.15` | [blazesbot/bot/app/deletador.py:177](blazesbot/bot/app/deletador.py#L177) | — | Passo entre duas perguntas pelo ícone. Cada uma custa uma captura de janela, |
 | `PASSO_DA_ESPERA` | `0.08` | [blazesbot/bot/app/deletador.py:151](blazesbot/bot/app/deletador.py#L151) | fada_reviver.py, morte.py | — |
-| `TEMPLATE_DO_ICONE` | `'btn_delete_item.png'` | [blazesbot/bot/app/deletador.py:167](blazesbot/bot/app/deletador.py#L167) | — | — |
-| `TENTATIVAS_DE_FECHAR_A_BOLSA` | `2` | [blazesbot/bot/app/deletador.py:162](blazesbot/bot/app/deletador.py#L162) | — | Quantas vezes insistir para FECHAR a bolsa. Duas, porque a tecla é síncrona: |
+| `TEMPLATE_DO_ICONE` | `'btn_delete_item.png'` | [blazesbot/bot/app/deletador.py:186](blazesbot/bot/app/deletador.py#L186) | — | — |
+| `TENTATIVAS_DE_FECHAR_A_BOLSA` | `2` | [blazesbot/bot/app/deletador.py:181](blazesbot/bot/app/deletador.py#L181) | — | Quantas vezes insistir para FECHAR a bolsa. Duas, porque a tecla é síncrona: |
+| `TETO_DA_BOLSA_ABRIR` | `2.0` | [blazesbot/bot/app/deletador.py:173](blazesbot/bot/app/deletador.py#L173) | — | Teto da espera pela bolsa APARECER depois da tecla -- 07/09/2026. |
 | `TETO_DA_CAIXA` | `1.2` | [blazesbot/bot/app/deletador.py:150](blazesbot/bot/app/deletador.py#L150) | — | Espera pela caixa de confirmação aparecer, depois do clique no ícone. |
 | `TETO_DE_SEGUNDOS` | `10.0` | [blazesbot/bot/app/deletador.py:147](blazesbot/bot/app/deletador.py#L147) | fada.py | Teto do passo inteiro (verificar + apagar), pedido do usuário. |
 | `ESPERA_ANTES_DO_TAB` | `0.4` | [blazesbot/bot/app/executor.py:536](blazesbot/bot/app/executor.py#L536) | — | PAGO UMA VEZ POR AQUISIÇÃO, NÃO UMA VEZ POR TECLA |
