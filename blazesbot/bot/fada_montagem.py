@@ -197,7 +197,7 @@ def rodar_a_fada(sup, so_montar: bool = False):
         vida_do_time=lambda: _seguro(memoria.vida_do_time),
         id_do_alvo=lambda: _seguro(memoria.id_do_alvo),
         clicar_no_retrato=clicar_no_retrato,
-        apertar_cura=lambda: entrada.key(teclas.heal_skill),
+        apertar_cura=lambda: entrada.key(teclas.heal_skill),
         # SEM TECLA, SEM REVIVER: `None` faz a Fada avisar uma vez e seguir
         # curando -- os mortos se reviverm sozinhos no prazo deles.
         apertar_reviver=((lambda: entrada.key(teclas.revive_skill))
