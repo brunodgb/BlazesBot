@@ -1227,3 +1227,94 @@ mesmas: a flag da conta (`hh.deletar_lixo`, que nasce **desligada** porque
 apagar é irreversível) e a pasta só da HH (`deletador.PASTA_DO_LIXO_DA_HH`) --
 a lista global serve o APP e a BC, e o que é lixo numa cave é mercadoria na
 outra.
+
+## 19. A TRAVA DO RESETER NA HH (08/09/2026)
+
+Ver `docs/decisoes/reset-de-time.md`, Decisão 10 — a trava é a mesma do BC,
+promovida para `bot/espera_do_reseter.py`. O que é da HH é **onde** ela fica:
+`_garantir_o_time`, depois do `estado_do_time` e antes do convite.
+
+Também mora ali o porquê de `estado_do_time` e não `in_team`: a diferença é o
+`None`, e "não sei" tem o mesmo desfecho de "não estou" — tentar montar. Montar
+estando em time é barato; entrar sem reset é achar a cave vazia da segunda run
+em diante. E essa linha já derrubou o bot uma vez, com `in_team()` chamado numa
+`@property` (`TypeError: 'bool' object is not callable`, log de 03/09/2026,
+19:02 — a sessão estourava e o bot reiniciava na porta a cada 5 s).
+
+## 20. TODO COMBATE DA HH ABRE COM F1 + TAB (08/09/2026)
+
+### O relato
+
+> *"todo e qualquer combate dentro de HH precisa clicar o F1 e depois o TAB, vi
+> aqui que alguns casos esta ocorrendo de não fazer isso, se precisar para
+> garantir aperta 2x o F1, mas garanta que vai se auto selecionar antes de dar
+> o primeiro TAB"*
+
+### Eram TRÊS entradas de combate, e só UMA tinha a mira
+
+| entrada | quem ataca | tinha mira? |
+|---|---|---|
+| pontos de pacote (bosses 1 e 3) | `_matar_ate_sair_de_batalha` | sim |
+| bosses 2 e 4 | `combate.lutar_contra_um_boss` | **não** |
+| portão da montaria travado | `combate.limpar_o_combate` | **não** |
+
+As duas que faltavam são exatamente os "alguns casos" do relato. A luta de boss
+tem aquisição própria (espera e dá TAB), mas ela **parte de onde a mira está** —
+chegar no ponto do boss com o próprio personagem selecionado é o caso relatado.
+
+O portão da montaria ganhou um gancho próprio da HH
+(`HHRoutine._destravar_o_combate`), que põe a mira na frente e então chama a
+MESMA coreografia do motor. **Compor em vez de alterar** é o que mantém
+`limpar_o_combate` compartilhada com o BC — regra de cave não entra em código
+compartilhado.
+
+Travado por `tests/test_mira_do_primeiro_mob.py`, que varre o AST de `HHRoutine`
+e reprova qualquer método que chame o motor de combate sem passar pela mira.
+
+### O F1 é CONFIRMADO, não apertado às cegas
+
+`TENTATIVAS_DE_AUTO_SELECAO = 2`, e o número é do usuário. A confirmação é
+**memória-primeiro e por NOME**: `alvo_atual()` traz o nome do alvo,
+`char_name()` traz o meu, as duas leituras já existiam e nenhuma captura de tela
+é paga.
+
+**Por que o nome e não o id:** não há leitura do id do próprio personagem neste
+cliente. Comparar "o id mudou" seria pior justamente no caso que importa — a
+mira já presa em mim NÃO muda o id, e o gesto pareceria ter falhado quando já
+estava certo.
+
+**Apertar de novo é seguro porque o gesto é IDEMPOTENTE:** selecionar a si mesmo
+duas vezes dá o mesmo que uma. É o oposto do TAB, que é cíclico. E mais que dois
+não paga: se duas não pegaram, o problema não é a tecla.
+
+**"Não sei" não bloqueia:** nome ilegível de qualquer lado devolve `None`, e o
+TAB sai de qualquer forma — bot mudo é pior que o defeito.
+
+### E o TAB que não sai do cadáver
+
+**MEDIDO nos logs da HH: 23 de 517 TABs de morte (4,4%) não trocaram o alvo** —
+o id continuava o do mob morto. O bot seguia lendo o cadáver a 0% e a luta só
+terminava quando a flag de combate baixava sozinha. No episódio de 11:58:20:
+
+```
++0.00s  ALVO MORREU: Elite Lecher hp=0/100 (0.0%)
++0.53s  Alvo caiu em Dupla: TAB 5 de 2 (34s de luta, 198 golpes)
++0.53s  O TAB nao trocou o alvo em 350 ms (id continua 71584727)
++2.48s  ALVO Elite Lecher 0.0%  +0%
++4.54s  ALVO Elite Lecher 0.0%  +0%
++9.83s  A flag de combate baixou em Dupla (44s de luta, 255 golpes)
+```
+
+Nove segundos batendo em cadáver. O pior caso medido foi **41,8 s** entre a
+morte e o alvo seguinte. Havia também um padrão de ~5,7 s em que o "alvo novo"
+era o MESMO corpo a 0% — o TAB ciclando de volta nele.
+
+**A correção é o F1, e o motivo é a mecânica:** o TAB é cíclico e parte de onde
+a mira está; preso no cadáver, ele pode voltar ao cadáver. O F1 mira o próprio
+personagem — um ponto conhecido — e o TAB dali não tem como cair no mesmo lugar.
+
+**E isto NÃO é uma pergunta no meio da luta**, que é a regra que a §14 protege.
+O laço **já sabia** que o TAB falhou: `trocou` vem da confirmação por id, que
+existia antes. Zero leituras a mais, zero condições novas no caminho normal — é
+reação a uma falha medida, não uma régua nova girando a cada volta. O gancho
+(`ao_falhar_o_tab`) é opt-in, e a BC não passa nenhum.

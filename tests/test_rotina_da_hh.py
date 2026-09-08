@@ -952,7 +952,11 @@ def test_fora_do_ponto_e_em_batalha_MATA_em_vez_de_andar():
     corte = trecho.index("State.ATE_O_BOSS")
     antes_de_voltar_a_andar = trecho[:corte]
     assert "in_battle" in antes_de_voltar_a_andar
-    assert "limpar_o_combate" in antes_de_voltar_a_andar
+    # PELO NOME DA CHAMADA, não pela menção: o comentário deste ramo citava
+    # `limpar_o_combate` para explicar de onde a decisão veio, e a busca no
+    # texto passava por causa da explicação. Hoje quem mata aqui é o laço de
+    # ataque da HH, que é o mesmo dos pontos de luta -- e abre com a mira.
+    assert "_matar_ate_sair_de_batalha" in antes_de_voltar_a_andar
 
 
 def test_flag_ilegivel_NAO_autoriza_sair_batendo():

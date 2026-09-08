@@ -218,7 +218,11 @@ class HHRoutine:
         #
         # A ROTINA É QUEM PODE FAZER A LIGAÇÃO: `combate` já importa
         # `navegacao`, e o contrário faria ciclo.
-        self.nav.destravar_o_combate = self.combat.limpar_o_combate
+        # O DESTRAVAMENTO PASSA PELA MIRA NA HH, e é por isso que o gancho
+        # aponta para um método daqui e não direto para o motor: a coreografia
+        # de `limpar_o_combate` é compartilhada com o BC e não pode ganhar um
+        # F1 que só a HH pediu.
+        self.nav.destravar_o_combate = self._destravar_o_combate
         # E TAMBÉM QUANDO O TRAJETO TRAVA -- isto é decisão DESTA cave.
         #
         # Regra do usuário, 04/09/2026: *"é importante não deixar ficar sem
@@ -1073,32 +1077,17 @@ class HHRoutine:
         # decide então é a flag de combate ligar ou não.
         pos = ctx.memory.position()
         if pos is not None and mapa_hh.distancia(pos, ponto) > TOLERANCIA_DO_PONTO:
-            # ===========================================================
-            # EM BATALHA NÃO SE ANDA -- MATA-SE
-            # ===========================================================
+            # EM BATALHA NÃO SE ANDA -- MATA-SE. Este ramo era um beco sem
+            # saída: `ATE_O_BOSS` começa exigindo montaria, e em batalha o jogo
+            # RECUSA montar -- o bot apertava a tecla contra a recusa para
+            # sempre (medido em 04/09/2026). Não muda de estado: a volta
+            # seguinte relê a posição e decide de novo.
             #
-            # Este ramo era um beco sem saída, e o usuário mediu no jogo em
-            # 04/09/2026: chegou no ponto, o bot desmontou para lutar, o
-            # servidor lagou e devolveu o personagem para outro X/Y. A rotina
-            # concluía "não estou no ponto" e voltava para `ATE_O_BOSS`, que
-            # começa exigindo montaria -- e **em batalha o jogo recusa montar**.
-            # O bot ficava apertando a tecla contra uma recusa, para sempre.
-            #
-            # A resposta do usuário: *"é importante identificar se está em
-            # batalha e sair matando os mobs até sair de batalha, então vai
-            # matando 1 por 1, até a flag de batalha ficar false"*. É
-            # exatamente `limpar_o_combate`.
-            #
-            # E não muda de estado: a volta seguinte relê a posição e decide de
-            # novo -- pode ser que matar já tenha bastado, porque o personagem
-            # persegue o mob e às vezes volta para dentro da tolerância.
-            #
-            # A MONTARIA É ESCUDO AQUI TAMBÉM. Montado, o caminho de volta ao
-            # ponto é ANDAR -- e andar montado funciona mesmo com a flag alta.
-            # Desmontar para matar trocaria uma volta de 6 unidades por uma
-            # luta que ninguém pediu. Ver o bloco do escudo em `navegacao.py`.
+            # A MONTARIA É ESCUDO AQUI TAMBÉM: montado, o caminho de volta é
+            # ANDAR, e andar montado funciona com a flag alta.
             #
             # `is True` e não `not ...`: ilegível NÃO autoriza sair batendo.
+            # Ver `docs/decisoes/hh.md` §13.
             if ctx.memory.in_battle() is True and not ctx.memory.is_mounted():
                 ctx.log.info(
                     "HH: fora do ponto do %s (%s, o ponto é %s), EM BATALHA e "
@@ -1260,31 +1249,33 @@ class HHRoutine:
             # O GOLPE NÃO PARA ENQUANTO A SAÍDA É CONFIRMADA: é o que a regra
             # pede -- ininterrupto até `in_battle == False`.
             atacar_na_confirmacao=True,
+            # TAB QUE NAO SAI DO CADAVER: F1 + TAB. Medido em 4,4% das mortes.
+            ao_falhar_o_tab=self.combat.reancorar_o_alvo,
         )
         ctx.log.info("HH: %s -- %s", motivo, fim.resumo())
         return fim.saiu_de_combate
 
+    def _destravar_o_combate(self, motivo: str) -> bool:
+        """O remédio do portão da montaria, com a mira da HH na frente.
+
+        `limpar_o_combate` é do motor e serve as duas caves; o F1 é regra só
+        desta. Ver `docs/decisoes/hh.md` §20.
+        """
+        self._mirar_o_primeiro_mob(f"destravar em {motivo}")
+        return self.combat.limpar_o_combate(motivo)
+
     def _mirar_o_primeiro_mob(self, motivo: str) -> None:
         """AUTO-SELEÇÃO + TAB para abrir a luta. Sem condição nenhuma.
 
-        Regra do usuário, 08/09/2026: *"sobre começar a atacar eu realmente acho
-        que apertar F1 e depois dar o primeiro TAB vai ser o mais eficiente para
-        atacar os mobs corretos"*.
+        TODA entrada de combate da HH passa por aqui -- pacote, boss e o
+        destravamento do portão da montaria. Chegar num ponto de luta com a mira
+        em qualquer coisa é o normal aqui, e conferir cada caso possível custa
+        leitura e acerta menos que simplesmente reancorar.
 
-        POR QUE NÃO SE PERGUNTA ANTES. Chegar num ponto de luta com a mira em
-        qualquer coisa é o normal na HH -- os mobs ranged atiram durante o
-        trajeto, o jogo auto-seleciona o próprio personagem ou o pet, e a mira
-        pode ter sobrado da luta anterior. Conferir cada um desses casos custa
-        leitura e acerta menos que simplesmente reancorar: o gesto é barato
-        (duas teclas) e o resultado é o mesmo sempre -- o mob mais perto.
+        DENTRO da luta quem troca de alvo é a MORTE do alvo. A única exceção é o
+        TAB que não sai do cadáver, e ela é reação a falha medida, não pergunta.
 
-        E NADA DEPOIS DISSO. Regra do usuário no mesmo dia: *"o F1 + TAB e
-        apenas para evitar problemas no incio da batalha, mas as batalhas devem
-        ser fluidas como exemplifiquei no Boss 2"*. Dentro da luta quem troca de
-        alvo é a MORTE do alvo -- TAB imediato e de volta a bater, sem nenhuma
-        pergunta no meio do caminho.
-
-        Ver `docs/decisoes/hh.md` §14.
+        Ver `docs/decisoes/hh.md` §14 e §20.
         """
         self.combat.reancorar_o_alvo(f"início de {motivo}")
 
@@ -1334,6 +1325,9 @@ class HHRoutine:
             self._falhar(f"não saí de batalha no pacote do {rotulo}")
             return False
 
+        # A MIRA ABRE A LUTA DE BOSS TAMBÉM: a aquisição de
+        # `lutar_contra_um_boss` parte de ONDE A MIRA ESTAVA. §20.
+        self._mirar_o_primeiro_mob(rotulo)
         fim = self.combat.lutar_contra_um_boss(
             rotulo,
             usar_aoe=mapa_hh.usa_aoe(rotulo),

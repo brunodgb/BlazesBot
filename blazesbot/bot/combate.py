@@ -72,6 +72,23 @@ TECLA_AUTO_SELECAO = "F1"
 # dentro de `auto_selecionar`; virou constante quando `reancorar_o_alvo` passou
 # a ser o segundo leitor -- um número lido por dois lados mora num lugar só.
 ESPERA_DA_AUTO_SELECAO = 0.125
+
+# Quantas vezes apertar a auto-seleção antes de dar o TAB, quando a primeira
+# não se confirma.
+#
+# DOIS, e o número é do usuário (08/09/2026): *"se precisar para garantir
+# aperta 2x o F1, mas garanta que vai se auto selecionar antes de dar o
+# primeiro TAB"*.
+#
+# APERTAR DE NOVO É SEGURO porque o gesto é IDEMPOTENTE: selecionar a si mesmo
+# duas vezes dá o mesmo resultado que uma. É o oposto do TAB, que é cíclico --
+# apertar duas vezes lá avança dois alvos.
+#
+# E MAIS QUE DOIS NÃO PAGA: cada tentativa custa uma tecla e uma leitura, e se
+# duas não pegaram o problema não é a tecla (janela sem foco, cliente travado,
+# tecla trocada na configuração). O TAB sai de qualquer forma -- "não sei" não
+# bloqueia, e bot mudo é pior que o defeito.
+TENTATIVAS_DE_AUTO_SELECAO = 2
 #
 # Quatro segundos sentado recuperam vida e mana de graça, e é o único momento da
 # run em que dá: dentro da cave o trem de mobs não deixa, e na frente do boss é a
@@ -2202,6 +2219,9 @@ class CombatEngine:
         # não há mob seguinte para convidar.
         atacar_na_confirmacao: bool = False,
         pos_tab_callback: callable | None = None,
+        # OPT-IN, chamado quando o TAB da morte NAO trocou o alvo. Sem gancho
+        # nada muda -- e e assim que a BC nao muda.
+        ao_falhar_o_tab: callable | None = None,
     ) -> FimDeCombate:
         """Gira a rotação de skills até a flag de combate DESLIGAR.
 
@@ -2504,6 +2524,29 @@ class CombatEngine:
                         o_que, tabs_dados, tabs_ao_morrer, decorrido, golpes,
                         leitura.resumo() if leitura else "sem leitura",
                     )
+                    # ===============================================
+                    # O TAB QUE NAO SAI DO CADAVER
+                    # ===============================================
+                    #
+                    # MEDIDO nos logs da HH: 23 de 517 TABs de morte (4,4%) nao
+                    # trocaram o alvo -- o id continuou o do mob morto. O bot
+                    # seguia lendo o cadaver a 0% e a luta so terminava quando a
+                    # flag de combate baixava sozinha: 9 s no caso de 11:58:20,
+                    # e o pior chegou a 41 s ate o alvo seguinte.
+                    #
+                    # NAO E UMA PERGUNTA NO MEIO DA LUTA. O laco JA sabe que o
+                    # TAB falhou (`trocou` vem da confirmacao por id, que ja
+                    # existia): isto e reagir a uma falha medida, sem uma
+                    # leitura a mais.
+                    #
+                    # E POR QUE O F1 RESOLVE: o TAB e ciclico e parte de onde a
+                    # mira esta -- preso no cadaver, ele pode voltar ao cadaver.
+                    # O F1 mira o proprio personagem, um ponto conhecido, e o
+                    # TAB dali nao tem como cair no mesmo lugar.
+                    if ao_falhar_o_tab is not None and not trocou:
+                        ao_falhar_o_tab(f"o TAB nao saiu do alvo em {o_que}")
+                        proxima_leitura = agora + CADENCIA_DA_LEITURA_DO_ALVO
+
                     # Callback pós-TAB: permite lógica customizada após cada troca de alvo.
                     # Se retornar True, encerra a fase de combate imediatamente.
                     if pos_tab_callback is not None:
@@ -2848,17 +2891,59 @@ class CombatEngine:
         """
         ctx = self.ctx
         tecla = (ctx.settings.keys.self_target or "").strip()
-        if tecla:
-            ctx.log.info(
-                "Reancorando o alvo (%s): %s para mirar em mim, e TAB para o "
-                "mob mais perto.", motivo, tecla)
-            ctx.press(tecla)
-            ctx.tick(ESPERA_DA_AUTO_SELECAO)
-        else:
+        if not tecla:
             ctx.log.info(
                 "Reancorando o alvo (%s) só com TAB -- a tecla de auto-seleção "
                 "não está configurada nesta conta.", motivo)
+            self._trocar_de_alvo()
+            return
+
+        ctx.log.info(
+            "Reancorando o alvo (%s): %s para mirar em mim, e TAB para o "
+            "mob mais perto.", motivo, tecla)
+        for tentativa in range(1, TENTATIVAS_DE_AUTO_SELECAO + 1):
+            ctx.press(tecla)
+            ctx.tick(ESPERA_DA_AUTO_SELECAO)
+            if self._estou_na_minha_propria_mira():
+                if tentativa > 1:
+                    ctx.log.info(
+                        "A auto-seleção pegou na %sª tentativa; agora o TAB "
+                        "sai de um ponto conhecido.", tentativa)
+                break
+        else:
+            # NÃO BLOQUEIA. Duas tentativas sem confirmar significa que o
+            # problema não é a tecla, e um TAB às cegas ainda pode acertar o
+            # mob -- bot mudo é pior que o defeito.
+            ctx.log.warning(
+                "Não confirmei a auto-seleção depois de %s toque(s) em %s. "
+                "Dou o TAB de qualquer forma, mas ele parte de onde a mira "
+                "estava.", TENTATIVAS_DE_AUTO_SELECAO, tecla)
         self._trocar_de_alvo()
+
+    def _estou_na_minha_propria_mira(self) -> bool | None:
+        """O alvo de agora sou EU? `None` quando não deu para comparar.
+
+        PELA MEMÓRIA E PELO NOME. `alvo_atual()` traz o nome do alvo e
+        `char_name()` traz o meu -- as duas leituras já existem, nenhuma
+        captura de tela é paga, e a resposta vale com a janela minimizada.
+
+        POR QUE O NOME, E NÃO O ID: não há leitura do id do próprio personagem
+        neste cliente. Comparar "o id mudou" seria pior justamente no caso que
+        importa -- a mira já presa em mim NÃO muda o id, e o gesto pareceria
+        ter falhado quando já estava certo.
+
+        "NÃO SEI" NÃO É "NÃO": nome ilegível de qualquer um dos dois lados
+        devolve `None`, e quem chama trata isso como falta de confirmação, não
+        como prova de erro.
+        """
+        alvo = self.ctx.memory.alvo_atual()
+        if alvo is None:
+            return False                    # mira vazia: F1 não pegou
+        meu = (self.ctx.memory.char_name() or "").strip().lower()
+        dele = str(alvo.get("nome") or "").strip().lower()
+        if not meu or not dele:
+            return None
+        return meu == dele
 
     def _trocar_de_alvo(self) -> bool:
         """UM TAB, confirmado pela TROCA DO ID. Devolve se a troca foi vista.

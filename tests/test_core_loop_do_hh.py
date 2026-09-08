@@ -96,17 +96,22 @@ def test_nenhuma_luta_da_HH_chama_mais_a_coreografia_com_pausa():
     # comentário explicando por que saiu.
     chamadas = [n for n in ast.walk(arvore) if isinstance(n, ast.Call)
                 and getattr(n.func, "attr", "") == "limpar_o_combate"]
-    assert not chamadas, (
-        f"a HH voltou a CHAMAR a coreografia com pausa "
-        f"(linhas {[n.lineno for n in chamadas]})")
 
-    # E o único uso que sobra é a LIGAÇÃO do portão da montaria -- uma
-    # atribuição, não uma chamada.
-    ligacoes = [n.lineno for n in ast.walk(arvore)
-                if isinstance(n, ast.Attribute)
-                and n.attr == "limpar_o_combate"]
-    assert len(ligacoes) == 1, (
-        f"esperava só a ligação do portão da montaria; achei {ligacoes}")
+    # O ÚNICO USO LEGÍTIMO é dentro de `_destravar_o_combate`, que é o gancho
+    # do portão da montaria. Ele passou a ser um método daqui em 08/09/2026,
+    # para pôr a mira (F1+TAB) na frente sem tocar na coreografia do motor --
+    # que continua compartilhada com o BC. Ver `_destravar_o_combate`.
+    fonte_do_gancho = inspect.getsource(mod.HHRoutine._destravar_o_combate)
+    dentro_do_gancho = [n for n in ast.walk(ast.parse(
+        __import__("textwrap").dedent(fonte_do_gancho)))
+        if isinstance(n, ast.Call)
+        and getattr(n.func, "attr", "") == "limpar_o_combate"]
+    assert len(dentro_do_gancho) == 1, (
+        "o gancho do portão da montaria deixou de chamar a coreografia")
+
+    assert len(chamadas) == 1, (
+        f"a HH voltou a CHAMAR a coreografia com pausa fora do portão da "
+        f"montaria (linhas {[n.lineno for n in chamadas]})")
 
 
 # ===========================================================================
@@ -121,11 +126,21 @@ def test_a_coreografia_com_pausa_continua_INTACTA_no_motor():
 
 
 def test_o_portao_da_montaria_das_DUAS_caves_continua_nela():
+    """A coreografia é do motor e serve as duas -- o que muda é o que vem
+    ANTES dela.
+
+    O BC liga o gancho direto no motor. A HH liga num método próprio, que põe
+    a mira (F1+TAB) na frente e então chama a MESMA coreografia: regra de cave
+    não entra em código compartilhado, e o remédio do portão continua um só.
+    """
     from blazesbot.bot.bc.routine import BossRushRoutine
 
-    for cls in (BossRushRoutine, HHRoutine):
-        assert "self.nav.destravar_o_combate = self.combat.limpar_o_combate" in \
-            inspect.getsource(cls.__init__)
+    assert "self.nav.destravar_o_combate = self.combat.limpar_o_combate" in \
+        inspect.getsource(BossRushRoutine.__init__)
+    assert "self.nav.destravar_o_combate = self._destravar_o_combate" in \
+        inspect.getsource(HHRoutine.__init__)
+    assert "limpar_o_combate" in inspect.getsource(
+        HHRoutine._destravar_o_combate)
 
 
 # ===========================================================================
