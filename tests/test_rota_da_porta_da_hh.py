@@ -49,8 +49,24 @@ def _chamadas(metodo) -> list[str]:
 # ===========================================================================
 
 
-def test_o_ponto_de_abrir_os_arredores_e_o_medido():
-    assert mapa_hh.PONTO_PARA_ABRIR_OS_ARREDORES == (-268, -488)
+def test_o_caminho_ate_os_arredores_e_o_medido():
+    """Dois pontos, NESTA ordem -- medidos pelo usuário em 08/09/2026."""
+    assert mapa_hh.CAMINHO_ATE_OS_ARREDORES == ((-268, -488), (-292, -496))
+
+
+def test_o_caminho_e_um_CAMINHO_porque_um_clique_nao_alcanca():
+    """Um clique de minimapa alcança ~17,6 unidades.
+
+    Do primeiro ponto ao segundo há 25,3 -- mais que um clique --, e trajeto
+    longo em linha reta é onde o personagem encosta na geometria. Cada ponto
+    intermediário é uma virada de direção que o pathing não precisa adivinhar.
+    """
+    import math
+
+    from blazesbot.core.zones import ALCANCE_DO_MINIMAPA
+
+    a, b = mapa_hh.CAMINHO_ATE_OS_ARREDORES
+    assert math.dist(a, b) > ALCANCE_DO_MINIMAPA
 
 
 def test_a_precisao_dele_e_FOLGADA_e_nao_a_da_porta():
@@ -80,8 +96,31 @@ def test_o_primeiro_passo_ESPERA_a_leitura_voltar():
 
 def test_o_primeiro_passo_anda_para_o_ponto_CERTO():
     fonte = inspect.getsource(EntradaDaHH._ir_ao_ponto_de_abrir_os_arredores)
-    assert "mapa_hh.PONTO_PARA_ABRIR_OS_ARREDORES" in fonte
+    assert "mapa_hh.CAMINHO_ATE_OS_ARREDORES" in fonte
     assert "mapa_hh.PRECISAO_PARA_ABRIR_OS_ARREDORES" in fonte
+
+
+def test_os_pontos_sao_andados_UM_POR_VEZ_e_na_ordem():
+    """`encostar_no_ponto` confirma a parada de cada um antes do seguinte.
+
+    É isso que faz o caminho ser um caminho, e não dois cliques na esperança de
+    que o segundo encontre o personagem onde o primeiro devia ter parado.
+    """
+    fonte = inspect.getsource(EntradaDaHH._ir_ao_ponto_de_abrir_os_arredores)
+    assert "for i, ponto in enumerate(mapa_hh.CAMINHO_ATE_OS_ARREDORES" in fonte
+    assert "alvo=ponto," in fonte
+
+
+def test_errar_um_ponto_ABORTA_o_caminho():
+    """A direção do clique é calculada de onde o personagem ESTÁ.
+
+    Errar o primeiro faz o segundo apontar para lugar nenhum -- e abrir o
+    painel dali daria resultado diferente, que é o defeito que o caminho existe
+    para evitar.
+    """
+    fonte = inspect.getsource(EntradaDaHH._ir_ao_ponto_de_abrir_os_arredores)
+    laco = fonte[fonte.index("for i, ponto"):]
+    assert "return False" in laco[:laco.index("return True")]
 
 
 def test_sem_leitura_de_posicao_o_passo_SEGUE():

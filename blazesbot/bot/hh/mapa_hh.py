@@ -640,20 +640,25 @@ TOLERANCIA_DA_CHEGADA = rota.NA_ROTA
 # ali é o NOME do lugar; a coordenada varia porque o teleporte espalha.
 CHEGADA_DA_FAY = (-255, -484)
 
-# DE ONDE SE ABRE O PAINEL DE ARREDORES, depois do teleporte.
+# O CAMINHO ATÉ DE ONDE SE ABRE O PAINEL DE ARREDORES, depois do teleporte.
 #
-# Medido pelo usuário em 08/09/2026. O teleporte da Fay espalha o ponto de
-# chegada em `West Suburb of Stone City` (ver `CHEGADA_DA_FAY`, que é onde ele
-# costuma cair mas não é garantia), e o painel de arredores é um clique
-# POSICIONAL: abrir de onde o teleporte largou dá resultado diferente a cada
-# run.
+# Medido pelo usuário em 08/09/2026, e ele acrescentou o segundo ponto no mesmo
+# dia: *"apos isso voce vai para as coordenadas X: -292, Y: -496, ai sim voce
+# ira usar o Surroundings e filtrar pelo Mutual"*.
 #
-# Andar até um ponto FIXO antes de abrir o painel é o que torna a busca
-# repetível. É o mesmo princípio da coordenada de conversa da porta
-# (`PONTO_DA_ENTRADA`): clique posicional só vale a partir da coordenada.
-PONTO_PARA_ABRIR_OS_ARREDORES = (-268, -488)
+# POR QUE UM CAMINHO, E NÃO UM PONTO: o teleporte ESPALHA a chegada, e o painel
+# de arredores é clique POSICIONAL -- abrir de onde o teleporte largou dá
+# resultado diferente a cada run. E são DOIS porque um clique de minimapa
+# alcança ~17,6 unidades (`zones.ALCANCE_DO_MINIMAPA`) e daqui até (-292,-496)
+# há 25,3: trajeto longo em linha reta é onde o personagem encosta na geometria.
+#
+# LISTA ORDENADA de propósito: um terceiro ponto é uma linha de DADO aqui.
+CAMINHO_ATE_OS_ARREDORES: tuple[tuple[int, int], ...] = (
+    (-268, -488),
+    (-292, -496),
+)
 
-# Com que precisão é preciso estar nele.
+# Com que precisão é preciso estar em cada um deles.
 #
 # FOLGADA de propósito, e diferente da precisão da porta (1,5): aqui o ponto não
 # protege um clique na CENA 3D -- protege a abertura de um PAINEL, que não
@@ -857,6 +862,7 @@ __all__ = [
     "BOSS_4",
     "CAIXA_DA_HH",
     "CAMINHO_ATE_A_SAIDA",
+    "CAMINHO_ATE_OS_ARREDORES",
     "CAMINHO_ATE_O_BOSS_1",
     "CAMINHO_ATE_O_BOSS_2",
     "CAMINHO_ATE_O_BOSS_3",
@@ -882,7 +888,6 @@ __all__ = [
     "PONTO_DA_ENTRADA",
     "PONTO_DEPOIS_DO_BOSS_1",
     "PONTO_FORA_DA_HH",
-    "PONTO_PARA_ABRIR_OS_ARREDORES",
     "POSICAO_DA_FADA_NO_BOSS",
     "POSICAO_DA_MUTUAL",
     "PRECISAO_NO_PONTO_DA_ENTRADA",

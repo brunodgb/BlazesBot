@@ -202,7 +202,8 @@ class EntradaDaHH(UIDoJogo):
         TRÊS PASSOS, E CADA UM EXISTE POR UM MOTIVO DIFERENTE
         =================================================================
 
-        1. MINIMAPA até `PONTO_PARA_ABRIR_OS_ARREDORES` (-268,-488). O teleporte
+        1. MINIMAPA pelo `CAMINHO_ATE_OS_ARREDORES` -- (-268,-488) e depois
+           (-292,-496), nesta ordem. O teleporte
            da Fay espalha o ponto de chegada, e o painel de arredores é clique
            POSICIONAL: abrir de onde o teleporte largou dá resultado diferente a
            cada run. Andar até um ponto fixo torna a busca repetível.
@@ -269,13 +270,28 @@ class EntradaDaHH(UIDoJogo):
                 "Sem leitura de posição depois do teleporte; sigo mesmo assim "
                 "-- o painel de arredores ainda pode funcionar daqui.")
 
-        return self.encostar_no_ponto(
-            alvo=mapa_hh.PONTO_PARA_ABRIR_OS_ARREDORES,
-            precisao=mapa_hh.PRECISAO_PARA_ABRIR_OS_ARREDORES,
-            tentativas=TENTATIVAS_DE_POSICIONAR,
-            segundos_por_tentativa=SEGUNDOS_POR_TENTATIVA_DE_ENCOSTAR,
-            o_que="abrir o painel de arredores",
-        )
+        # UM PONTO POR VEZ, NA ORDEM. `encostar_no_ponto` confirma a parada de
+        # cada um antes de o seguinte ser clicado -- e é isso que faz o caminho
+        # ser um caminho, e não dois cliques na esperança de que o segundo
+        # encontre o personagem onde o primeiro devia ter parado.
+        #
+        # O PRIMEIRO QUE FALHA ABORTA. Não faz sentido clicar no ponto 2 tendo
+        # errado o ponto 1: a direção do clique é calculada a partir de onde o
+        # personagem ESTÁ, então errar o primeiro faz o segundo apontar para
+        # lugar nenhum.
+        total = len(mapa_hh.CAMINHO_ATE_OS_ARREDORES)
+        for i, ponto in enumerate(mapa_hh.CAMINHO_ATE_OS_ARREDORES, 1):
+            if not self.encostar_no_ponto(
+                    alvo=ponto,
+                    precisao=mapa_hh.PRECISAO_PARA_ABRIR_OS_ARREDORES,
+                    tentativas=TENTATIVAS_DE_POSICIONAR,
+                    segundos_por_tentativa=SEGUNDOS_POR_TENTATIVA_DE_ENCOSTAR,
+                    o_que=f"ir ao ponto {i}/{total} dos arredores"):
+                ctx.log.warning(
+                    "Não cheguei no ponto %s/%s do caminho dos arredores (%s); "
+                    "o painel daqui daria resultado diferente.", i, total, ponto)
+                return False
+        return True
 
     def _chegar_perto_da_mutual(self) -> bool:
         """Painel de arredores até a porta, INSISTINDO enquanto não chegar.
