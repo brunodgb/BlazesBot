@@ -258,6 +258,10 @@ def test_sem_o_template_do_link_a_venda_RECUSA_e_diz_o_que_falta():
         def warning(msg, *args):
             avisos.append(msg % args if args else msg)
 
+        # `error` E NAO `warning`: a venda impedida para a economia da run
+        # inteira -- a bolsa enche e nada mais e vendido. Aviso se perde no log.
+        error = warning
+
         @staticmethod
         def debug(*_a, **_k):
             pass
@@ -291,6 +295,8 @@ def test_o_aviso_do_template_sai_UMA_vez():
             @staticmethod
             def warning(msg, *args):
                 avisos.append(msg)
+
+            error = warning
 
             @staticmethod
             def debug(*_a, **_k):

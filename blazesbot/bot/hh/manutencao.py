@@ -170,5 +170,32 @@ class ManutencaoDaHH:
         ctx.log.info("HH: %s slot(s) vendido(s)", vendidos)
         return vendidos
 
+    @property
+    def a_venda_esta_impedida(self) -> bool:
+        """A última venda não pôde nem ser TENTADA.
+
+        =================================================================
+        "VENDEU ZERO" E "NÃO PUDE VENDER" SÃO ESTADOS DIFERENTES
+        =================================================================
+
+        Medido no log de 08/09/2026, depois de o usuário pôr `1 run` para
+        testar:
+
+            HH: indo vender no Roaming Apothecary
+            HH: não tenho o template do link de vender (link_sell_item.png)
+            HH: não abri a janela de venda do Roaming Apothecary
+            HH: 0 slot(s) vendido(s)
+            HH: manutenção feita; próxima run
+
+        A decisão de vender estava CERTA -- ela disparou nas três runs
+        seguintes à mudança. O que faltava era o PNG do link.
+
+        E aí vem o defeito que isto conserta: `anotar_a_venda` era chamada de
+        qualquer forma, então a run passava a contar como "vendeu". Com o
+        padrão de 5 runs, a tentativa seguinte só voltaria 5 runs depois -- e o
+        log daria a impressão de que a venda estava acontecendo.
+        """
+        return bool(getattr(self.vendedor, "faltou_o_template", False))
+
 
 __all__ = ["ManutencaoDaHH"]

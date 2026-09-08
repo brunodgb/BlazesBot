@@ -79,6 +79,14 @@ class VendedorDaHH(JanelaDeVenda):
         # construtor equivalente de `bc/vendor.py`.
         super().__init__(ctx, navigator or Navigator(ctx, mapa_hh))
         self._avisou_sem_template = False
+        # A VENDA ESTÁ IMPEDIDA? (não "deu zero" -- IMPEDIDA de tentar.)
+        #
+        # Sem o template do link, o bot não chega nem a abrir a janela. Quem
+        # decide se a venda conta como FEITA precisa saber a diferença: uma
+        # venda que vendeu zero porque não havia nada vendável cumpriu o seu
+        # papel; uma que não pôde nem tentar, não -- e marcá-la como feita
+        # empurra a próxima tentativa para dentro de mais N runs.
+        self.faltou_o_template = False
 
     # ==================================================================
     # Os três ganchos que a janela de venda pergunta
@@ -117,9 +125,10 @@ class VendedorDaHH(JanelaDeVenda):
         ctx = self.ctx
         tpl = ctx.templates.load(TEMPLATE_DO_LINK_DE_VENDER)
         if tpl is None:
+            self.faltou_o_template = True
             if not self._avisou_sem_template:
                 self._avisou_sem_template = True
-                ctx.log.warning(
+                ctx.log.error(
                     "HH: não tenho o template do link de vender (%s). Recorte o "
                     "texto \"Sell Item\" do diálogo do %s e salve em "
                     "data/templates/ com esse nome. NÃO vou clicar na "
@@ -127,6 +136,12 @@ class VendedorDaHH(JanelaDeVenda):
                     "link, porque a posição depende do texto do NPC.",
                     TEMPLATE_DO_LINK_DE_VENDER, self.NOME_DO_VENDEDOR)
             return None
+
+        # O TEMPLATE APARECEU: a marca cai, e o aviso volta a valer se ele
+        # sumir. O usuário pode recortar o PNG com o bot rodando, e nesse caso a
+        # venda tem que voltar a funcionar sem reiniciar nada.
+        self.faltou_o_template = False
+        self._avisou_sem_template = False
 
         quadro = capture_window(ctx.hwnd)
         if quadro is None:

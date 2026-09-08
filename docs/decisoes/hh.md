@@ -1318,3 +1318,79 @@ O laço **já sabia** que o TAB falhou: `trocou` vem da confirmação por id, qu
 existia antes. Zero leituras a mais, zero condições novas no caminho normal — é
 reação a uma falha medida, não uma régua nova girando a cada volta. O gancho
 (`ao_falhar_o_tab`) é opt-in, e a BC não passa nenhum.
+
+## 21. A VENDA DA HH — O QUE ESTAVA QUEBRADO (08/09/2026)
+
+### O relato
+
+> *"a venda de item de HH nao esta sendo feita, eu fiz um teste aqui, colocando
+> pra vender apos 1 run e não fez e era algo que ja tinha notado que parecia nao
+> estar fazendo"*
+
+### O log responde, e a DECISÃO estava certa
+
+Depois de o usuário pôr `1 run`, a venda disparou nas três runs seguintes:
+
+```
+11:51:51.577 manutencao  HH: indo vender no Roaming Apothecary
+11:51:51.745 manutencao  HH: não tenho o template do link de vender (link_sell_item.png).
+11:51:51.746 manutencao  HH: não abri a janela de venda do Roaming Apothecary
+11:51:51.746 manutencao  HH: 0 slot(s) vendido(s)
+11:51:51.747 manutencao  HH: manutenção feita; próxima run
+```
+
+E o mesmo em 12:05:45 e 12:34:28. Antes disso (11:18, 11:25 e as runs da
+madrugada) não havia tentativa nenhuma — porque `runs_before_selling` ainda era
+**5**, e a conta é `stats.runs - runs_na_ultima_venda >= 5`.
+
+**Conferido também o que NÃO era o problema**, para não mexer no lugar errado:
+
+| suspeita | medição |
+|---|---|
+| `runs_before_selling` não salvou | `data/config.json`: `creubo` tem `runs_before_selling: 1` |
+| `precisa_vender()` errado | rodado com a config real: `runs=1` → `True` |
+| `stats.runs` não incrementa na HH | `_saiu()` chama `end_run(ok=True)` antes do `MANUTENCAO` |
+| a rede da bolsa cheia está morta | `bolsas=3` → capacidade 90, dispara a partir de 85 itens |
+| `MANUTENCAO` não é alcançada | "manutenção feita; próxima run" em toda run |
+
+**A causa é uma só: `data/templates/link_sell_item.png` não existe.** Sem ele, o
+bot não localiza o link "Sell Item" no diálogo do `Roaming Apothecary` e a
+janela de venda nunca abre.
+
+### Por que o bot RECUSA em vez de clicar num palpite
+
+A posição do link depende de **quantas linhas de texto o NPC escreve antes
+dele**, e a coordenada da Bewitcher Cave cai ~35 px abaixo deste. Clicar ali
+fecharia o diálogo e a venda "não funcionaria" sem motivo aparente — pior que
+recusar, porque esconde a causa.
+
+### Os dois defeitos que ISTO expôs, e que foram consertados
+
+**1. Venda que não pôde acontecer contava como venda feita.**
+`_do_manutencao` chamava `anotar_a_venda()` sempre, então a run passava a contar
+como "vendeu". Com o padrão de 5 runs, a tentativa seguinte só voltaria 5 runs
+depois — e o log daria a impressão de que a venda estava em dia.
+
+A distinção que entrou é entre **"vendeu zero"** e **"não pude vender"**:
+
+| desfecho | conta como feita? | por quê |
+|---|---|---|
+| vendeu N slots | sim | óbvio |
+| vendeu zero, janela abriu | sim | não havia nada vendável; o papel foi cumprido |
+| **não abriu a janela** | **não** | nada foi tentado; tenta de novo na próxima run |
+
+`ManutencaoDaHH.a_venda_esta_impedida` responde isso, e `VendedorDaHH` marca
+`faltou_o_template` no ramo em que recusa.
+
+**2. O aviso era `warning` e saía UMA vez por sessão.** O usuário farmou horas
+sem ver nada. Virou `error` — a venda impedida para a economia da run inteira, a
+bolsa enche e nada mais é vendido — e o `MANUTENCAO` agora escreve, a cada
+tentativa frustrada, que **não vai contar como feita**.
+
+**A marca cai sozinha quando o template aparecer:** o PNG pode ser recortado com
+o bot rodando, e a venda volta a funcionar sem reiniciar nada.
+
+### O que ainda falta, e é do usuário
+
+Recortar o texto **"Sell Item"** do diálogo do `Roaming Apothecary` e salvar em
+`data/templates/link_sell_item.png`. É o único item pendente.

@@ -1529,7 +1529,13 @@ class HHRoutine:
 
         if self.manutencao.precisa_vender():
             self.manutencao.vender()
-            self.manutencao.anotar_a_venda()
+            # SÓ CONTA COMO FEITA SE PÔDE ACONTECER. Ver `hh.md` §21.
+            if self.manutencao.a_venda_esta_impedida:
+                ctx.log.error(
+                    "HH: a venda NÃO aconteceu; não conto como feita e tento "
+                    "de novo na próxima run.")
+            else:
+                self.manutencao.anotar_a_venda()
 
         if ctx.settings.hh.modo_do_reset == MODO_FADA_DA_HH:
             self._reciclar_o_time()
