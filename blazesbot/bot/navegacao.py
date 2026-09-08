@@ -1653,14 +1653,17 @@ class Navigator:
                 # personagem não saia do lugar. O teto existe para insistência
                 # inútil, não para luta.
                 #
-                # `is True` e não `not ...`: leitura ilegível não autoriza sair
-                # batendo -- puxaria mob por causa de uma leitura que falhou.
+                # MONTADO CORRE, DESMONTADO LUTA -- a montaria é escudo, e
+                # montado o jogo ignora a tecla de skill. Ver
+                # `docs/decisoes/navegacao.md`. `in_battle() is True`: ilegível
+                # não bate; `is_mounted()` sem `is True`: "não sei" luta.
                 if (self.matar_quando_o_trajeto_trava is not None
-                        and ctx.memory.in_battle() is True):
+                        and ctx.memory.in_battle() is True
+                        and not ctx.memory.is_mounted()):
                     ctx.log.info(
-                        "Sem progresso indo para %s e EM BATALHA: o jogo prende "
-                        "o personagem em combate. Matando até sair, antes de "
-                        "tentar andar de novo.", alvo)
+                        "Sem progresso indo para %s, EM BATALHA e A PÉ: o jogo "
+                        "prende o personagem em combate. Matando até sair, "
+                        "antes de tentar andar de novo.", alvo)
                     self.matar_quando_o_trajeto_trava(f"andar até {alvo}")
                     preso_desde = 0.0
                     ultimo_progresso = time.time()

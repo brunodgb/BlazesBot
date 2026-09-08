@@ -1079,12 +1079,17 @@ class HHRoutine:
             # novo -- pode ser que matar já tenha bastado, porque o personagem
             # persegue o mob e às vezes volta para dentro da tolerância.
             #
+            # A MONTARIA É ESCUDO AQUI TAMBÉM. Montado, o caminho de volta ao
+            # ponto é ANDAR -- e andar montado funciona mesmo com a flag alta.
+            # Desmontar para matar trocaria uma volta de 6 unidades por uma
+            # luta que ninguém pediu. Ver o bloco do escudo em `navegacao.py`.
+            #
             # `is True` e não `not ...`: ilegível NÃO autoriza sair batendo.
-            if ctx.memory.in_battle() is True:
+            if ctx.memory.in_battle() is True and not ctx.memory.is_mounted():
                 ctx.log.info(
-                    "HH: fora do ponto do %s (%s, o ponto é %s) e EM BATALHA. "
-                    "Não dá para andar nem montar assim -- matando até sair de "
-                    "combate.", rotulo, pos, ponto)
+                    "HH: fora do ponto do %s (%s, o ponto é %s), EM BATALHA e "
+                    "A PÉ. Não dá para andar nem montar assim -- matando até "
+                    "sair de combate.", rotulo, pos, ponto)
                 self._matar_ate_sair_de_batalha(
                     f"voltar ao ponto do {rotulo}")
                 return

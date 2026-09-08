@@ -97,3 +97,56 @@ def test_as_DUAS_caves_destravam_o_portao_da_montaria():
     """Este é universal -- não é preferência de cave, é recusa do jogo."""
     for cls in (BossRushRoutine, HHRoutine):
         assert "self.nav.destravar_o_combate" in _init(cls)
+
+
+# ===========================================================================
+# A MONTARIA É ESCUDO -- MONTADO CORRE, DESMONTADO LUTA (08/09/2026)
+# ===========================================================================
+#
+# Regra do usuário: *"se o bot estiver em batalha mas ESTIVER MONTADO, ele NÃO
+# PODE parar para lutar. A montaria atua como um escudo de ignorância: o bot
+# deve continuar correndo pelos waypoints"*.
+#
+# O motivo é mecânico, não preferência: montado o jogo IGNORA a tecla de skill.
+# Parar para "lutar" montado é parar para não fazer nada -- e matar exigiria
+# DESMONTAR, trocando a travessia rápida por uma luta que o trajeto não pediu.
+# Tomar um hit sem cair da montaria é justamente o caso em que correr resolve.
+
+
+def _ramo_da_parada() -> str:
+    fonte = inspect.getsource(nav.Navigator.follow_path)
+    ramo = fonte[fonte.index("SEM_PROGRESSO_SEGUNDOS"):]
+    return ramo[:ramo.index("TETO_PRESO_NO_MESMO_PONTO")]
+
+
+def test_montado_a_parada_do_trajeto_NAO_luta():
+    ramo = _ramo_da_parada()
+    assert "not ctx.memory.is_mounted()" in ramo, (
+        "montado, o bot pararia para lutar -- e montado ele não ataca")
+
+
+def test_a_flag_ILEGIVEL_continua_sem_autorizar_o_golpe():
+    """"Não sei se estou em combate" nunca puxa mob."""
+    assert "in_battle() is True" in _ramo_da_parada()
+
+
+def test_montaria_ILEGIVEL_cai_no_lado_de_LUTAR():
+    """Os dois "não sei" caem para lados OPOSTOS, e é deliberado.
+
+    Combate ilegível não bate (não puxa mob por leitura ruim). Montaria
+    ilegível LUTA -- é o que destrava de verdade quando o personagem está mesmo
+    a pé e preso, e um `is True` aqui deixaria o bot parado para sempre com a
+    leitura de montaria falhando.
+    """
+    ramo = _ramo_da_parada()
+    assert "is_mounted() is True" not in ramo
+
+
+def test_fora_do_ponto_do_boss_a_regra_e_a_MESMA():
+    """Montado, o caminho de volta ao ponto é ANDAR."""
+    from blazesbot.bot.hh.routine import HHRoutine
+
+    fonte = inspect.getsource(HHRoutine._do_boss)
+    trecho = fonte[fonte.index("TOLERANCIA_DO_PONTO"):]
+    trecho = trecho[:trecho.index("State.ATE_O_BOSS")]
+    assert "not ctx.memory.is_mounted()" in trecho
