@@ -937,7 +937,11 @@ class HHRoutine:
         self._limpar_os_mobs_do_caminho(rotulo)
 
         # DESMONTA ANTES DE LUTAR: montado o jogo recusa as skills.
-        self.nav.ensure_dismounted()
+        #
+        # `permitir_em_batalha=True` porque este É um ponto de luta -- e chegar
+        # nele já em combate é o normal na HH. Sem a exceção, `ensure_dismounted`
+        # recusa e só escreve "Em combate: ignorando o pedido para desmontar".
+        self.nav.ensure_dismounted(permitir_em_batalha=True)
         ctx.log.info("HH: no ponto do %s (%s)", rotulo, ponto)
         self._ir_para(State.BOSS)
 
@@ -1232,9 +1236,29 @@ class HHRoutine:
         (`cave.max_fight_seconds`), não a contagem de alvos.
         """
         ctx = self.ctx
-        # MONTADO O PERSONAGEM NÃO ATACA -- o jogo ignora a tecla de skill e não
-        # devolve erro. É a armadilha silenciosa de sempre.
-        self.nav.ensure_dismounted()
+        # ===============================================================
+        # DESMONTAR AQUI EXIGE `permitir_em_batalha` -- E ERA O DEFEITO
+        # ===============================================================
+        #
+        # `ensure_dismounted()` RECUSA descer enquanto a flag de combate estiver
+        # alta ("Em combate: ignorando o pedido para desmontar"), e a recusa é
+        # certa em quase todo lugar: desmontar sob ataque é ficar lento no meio
+        # do trem de mobs. A exceção são os PONTOS DE LUTA, onde descer é o
+        # objetivo -- montado o jogo IGNORA a tecla de skill e não devolve erro.
+        #
+        # Este laço chamava a versão sem exceção, e chegar no ponto já em
+        # combate é o NORMAL na HH (os mobs ranged atiram durante o trajeto).
+        # Resultado medido pelo usuário em 07/09/2026: nos pontos de pacote --
+        # os bosses 1 e 3 -- o personagem lutava MONTADO, com dano zero. Os
+        # bosses 2 e 4 passavam porque `lutar_contra_um_boss` usa
+        # `_descer_para_lutar`, que já passa a exceção.
+        #
+        # A CORREÇÃO É USAR O MESMO GESTO, e não repetir a chamada com a flag:
+        # `_descer_para_lutar` também força a barra de atalhos na página 1, que
+        # num ponto de luta é a diferença entre bater e apertar tecla vazia.
+        # Duas cópias do gesto divergiriam, e a que ficasse para trás lutaria
+        # com a página errada.
+        self.combat._descer_para_lutar(motivo)
         fim = self.combat.atacar_ate_sair_de_combate(
             motivo,
             usar_aoe=usar_aoe,
