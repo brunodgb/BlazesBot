@@ -1086,3 +1086,48 @@ Texto movido do comentário de `HHRoutine._matar_ate_sair_de_batalha`, verbatim:
 > `_descer_para_lutar` também força a barra de atalhos na página 1, que num
 > ponto de luta é a diferença entre bater e apertar tecla vazia. Duas cópias do
 > gesto divergiriam, e a que ficasse para trás lutaria com a página errada.
+
+## 16. O TRECHO RECOMEÇAVA PELO WAYPOINT 1 (08/09/2026)
+
+### O log
+
+08:13:57. A luta do Fa-Yuan terminou em **(325,152)**, longe do ponto do boss
+(272,136). `PontoDoBoss` mandou a run de volta para `ATE_O_BOSS`, e a rotina
+reentrou no trecho 1/4 clicando o waypoint **1/22 — (80,42), a 214 unidades**:
+
+```
+08:13:57.192 boss        HH: não estou no ponto do Fa-Yuan (estou em (325, 152), o ponto é (272, 136))
+08:13:57.254 ate_o_boss  HH: indo para o Fa-Yuan (trecho 1/4, 22 waypoints)
+08:14:45.776 ate_o_boss  sem progresso indo para (80, 42) (waypoint 1/22, distância 214) — relançando (1)
+08:14:45.778 ate_o_boss  Navegação travada em (278, 124). Vizinhos: 22 em (272,136) a 13 -> 21 em (282,139) a 16
+08:14:47.192 ate_o_boss  sem progresso indo para (272, 136) (waypoint 1/1, distância 13) — relançando (1)
+```
+
+### Por que a parede
+
+O clique de minimapa vai em **linha reta** e alcança ~17,6 unidades por vez
+(`zones.ALCANCE_DO_MINIMAPA`), então um destino a 214 unidades é percorrido por
+uma sequência de pontos intermediários **sobre a reta**. A reta de (325,152) até
+(80,42) atravessa a divisa das salas da mansão: o personagem andou até bater na
+parede e parou em **(278,124)**, a 13 unidades do waypoint 22 e **sem caminho
+até ele**. Daí em diante o jogo respondeu `Failed to auto-path` a cada
+tentativa, até o destravamento recuar pelos vizinhos.
+
+Relato do usuário: *"o personagem esta indo para uma direção errada... tem uma
+parede que divide em salas diferentes... na verdade eu estou quase ao lado
+dele, só tem essa parede dividindo"* e *"depois de um tempo ele ate percebe
+isso e volta para a rota correta, porem nao deveria ir ali"*.
+
+### A correção
+
+`mapa_hh.onde_retomar` **já existia e nunca tinha sido ligada** — mais um caso
+de "suíte verde não prova que a peça está LIGADA". `_do_ate_o_boss` passou a
+calcular o waypoint de entrada e a passá-lo em `comecar_em`.
+
+**`comecar_em`, e não fatia da rota.** A fatia leva embora o waypoint ANTERIOR,
+que é candidato do destravamento — foi o que apagou o candidato a 10 unidades
+no log de (205,31) no BC. Ver `Navigator.seguir_rota`.
+
+**O trecho é refeito com frequência**, e quase nunca do começo: boss longe do
+ponto, rollback, personagem arrastado na luta. Recomeçar pelo waypoint 1 era o
+caso comum, não o excepcional.

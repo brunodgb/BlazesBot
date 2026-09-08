@@ -916,8 +916,21 @@ class HHRoutine:
 
         self.nav.garantir_montaria_para_andar(f"trecho do {rotulo}")
 
+        # POR QUAL WAYPOINT COMEÇAR -- e quase nunca é o primeiro. O trecho é
+        # REFEITO sempre que a run volta para cá (boss longe do ponto, rollback,
+        # personagem arrastado na luta), e nesses casos ele está no FIM do
+        # trecho. Clicar o waypoint 1 dali manda o minimapa em LINHA RETA por
+        # cima das paredes da mansão -- medido em 08/09/2026. `comecar_em` em vez
+        # de FATIAR: a rota inteira preserva o waypoint anterior, candidato do
+        # destravamento. Ver `docs/decisoes/hh.md` §16.
+        onde = mapa_hh.onde_retomar(ctx.memory.position(), caminho)
+        if onde.indice > 0:
+            ctx.log.info("HH: retomando o trecho do %s pelo waypoint %s/%s -- %s",
+                         rotulo, onde.indice + 1, len(caminho), onde.motivo)
+
         if not self.nav.seguir_rota(caminho,
                                     max_seconds=MAX_SEGUNDOS_POR_TRECHO,
+                                    comecar_em=onde.indice,
                                     ao_chegar=self._ao_chegar_no_waypoint):
             self._falhar(f"não cheguei no {rotulo}", State.RECUPERAR)
             return
