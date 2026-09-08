@@ -3,7 +3,21 @@
 `diag_dpapi_indisponivel` no `traducoes.json` foi deixado SEM "es" de propósito
 -- é a prova de que o fallback funciona de verdade, não só na intenção.
 """
+from blazesbot.config import BotConfig
 from blazesbot.core import i18n
+
+
+def test_idioma_sobrevive_ida_e_volta(tmp_path):
+    """A escolha de idioma tem que aguentar fechar e reabrir o bot."""
+    caminho = tmp_path / "config.json"
+    cfg = BotConfig()
+    cfg.idioma = "en"
+    cfg.save(caminho)
+    assert BotConfig.load(caminho).idioma == "en"
+
+
+def test_idioma_default_e_pt_br():
+    assert BotConfig().idioma == "pt-br"
 
 
 def test_pt_br_e_a_fonte():

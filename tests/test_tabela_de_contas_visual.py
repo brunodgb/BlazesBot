@@ -21,6 +21,7 @@ Ver `docs/decisoes/interface.md`.
 
 from __future__ import annotations
 
+import json
 import re
 from pathlib import Path
 
@@ -62,7 +63,9 @@ def test_a_ordem_das_colunas_e_a_esperada():
 # -- 2. os três ecossistemas, numa coluna só -------------------------------
 
 def test_os_tres_ecossistemas_estao_declarados_num_lugar_so():
-    assert "const ECOSSISTEMAS = [" in JS
+    # Virou função (não const): os títulos dependem do idioma atual e precisam
+    # ser recalculados a cada render -- ver `ecossistemas()` em web/main.js.
+    assert "function ecossistemas() {" in JS
     for acao in ("bc", "hh", "app"):
         assert f'acao: "{acao}"' in JS, acao
     for campo in ("bc_farm", "hh_farm", "app_enabled"):
@@ -217,7 +220,13 @@ def test_o_ponto_fica_VERMELHO_quando_a_conta_caiu():
     bloco = JS.split("function marcarNoAr(est)")[1].split("\n}")[0]
     assert "const caida = !!c && !c.conectada;" in bloco
     assert 'marca.classList.toggle("caida", caida);' in bloco
-    assert "relogin #" in bloco, "a dica tem de dizer QUE relogin é"
+    # A dica virou chave de i18n (`dica_reconectando`); o que este teste
+    # protege continua o mesmo: a dica tem de dizer QUE relogin é.
+    assert 't("dica_reconectando"' in bloco
+    traducoes = json.loads(
+        (RAIZ / "blazesbot" / "locales" / "traducoes.json").read_text(encoding="utf-8"))
+    assert "relogin #" in traducoes["dica_reconectando"]["pt-br"], \
+        "a dica tem de dizer QUE relogin é"
 
     # Cor NÃO pode ser o único sinal: daltonismo vermelho-verde é o mais comum.
     caida = CSS.split(".conta-ao-vivo.caida::before {")[1].split("}")[0]

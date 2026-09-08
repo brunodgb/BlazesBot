@@ -278,7 +278,9 @@ def test_o_arraste_grava_SEM_debounce_e_com_rollback():
     disco não tem (achados da revisão)."""
     fonte = _ler("web/main.js")
     assert "setTimeout" not in fonte.split("function aoSoltarLinha")[1][:1500]
-    assert "carregarContas();" in fonte.split("Não foi possível salvar a nova ordem")[1][:200]
+    # A mensagem de erro virou chave de i18n (`erro_salvar_ordem`); o que este
+    # teste protege continua o mesmo: falhou -> recarrega do backend.
+    assert "carregarContas();" in fonte.split('t("erro_salvar_ordem")')[1][:200]
 
 
 def test_o_arraste_solta_a_captura_e_respeita_o_pointerId():

@@ -75,9 +75,9 @@
         <option value="en">🇺🇸 EN</option>
         <option value="es">🇪🇸 ES</option>
       </select>
-      <button id="btn-tema" class="h-full w-10 text-sm" title="Alternar tema">🌙</button>
-      <button id="btn-minimizar" class="h-full w-10 text-sm" title="Minimizar">—</button>
-      <button id="btn-fechar" class="h-full w-10 text-sm" title="Fechar">✕</button>
+      <button id="btn-tema" class="h-full w-10 text-sm" data-i18n-title="btn_tema_title" title="Alternar tema">🌙</button>
+      <button id="btn-minimizar" class="h-full w-10 text-sm" data-i18n-title="btn_minimizar_title" title="Minimizar">—</button>
+      <button id="btn-fechar" class="h-full w-10 text-sm" data-i18n-title="btn_fechar_titlebar_title" title="Fechar">✕</button>
     </div>
   </header>
 
@@ -145,7 +145,7 @@
               <tr>
                 <!-- Coluna da alça de arraste. Sem rótulo: o cabeçalho "Ordem"
                      só ocuparia largura para dizer o que o ⠿ já diz. -->
-                <th class="col-alca" aria-label="Ordem"></th>
+                <th class="col-alca" data-i18n-aria="aria_ordem" aria-label="Ordem"></th>
                 <th class="col-ativa" data-i18n="col_ativa">Ativa</th>
                 <th data-i18n="col_login">Login</th>
                 <th class="col-senha" data-i18n="col_senha">Senha</th>
@@ -171,27 +171,27 @@
       <!-- ======================= CLIENTE ======================= -->
       <section id="secao-cliente" class="secao px-4 py-3">
         <div class="mb-3 flex shrink-0 items-center justify-between">
-          <h2 class="text-lg font-semibold tracking-tight text-ink">Cliente</h2>
-          <button id="btn-salvar-config" class="bt bt-primario">Salvar</button>
+          <h2 class="text-lg font-semibold tracking-tight text-ink" data-i18n="cliente_titulo">Cliente</h2>
+          <button id="btn-salvar-config" class="bt bt-primario" data-i18n="btn_salvar">Salvar</button>
         </div>
         <div class="min-h-0 flex-1 overflow-y-auto scroll-thin pr-1">
           <div class="rounded-xl border border-line bg-panel p-4 shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
             <div class="grade-form">
               <label class="campo campo-largo">
-                <span>Caminho do Client.bat</span>
+                <span data-i18n="campo_client_bat">Caminho do Client.bat</span>
                 <div class="linha-campo">
                   <input id="in-client-bat" type="text" spellcheck="false" class="campo-input" />
-                  <button id="btn-procurar-bat" class="bt bt-secundario">Procurar</button>
+                  <button id="btn-procurar-bat" class="bt bt-secundario" data-i18n="btn_procurar">Procurar</button>
                 </div>
               </label>
 
               <label class="campo">
-                <span>Resolução do Jogo</span>
+                <span data-i18n="campo_resolucao">Resolução do Jogo</span>
                 <select id="in-resolucao" class="campo-input"></select>
               </label>
 
               <label class="campo">
-                <span>Delay de lançamento (ms)</span>
+                <span data-i18n="campo_delay_lancamento">Delay de lançamento (ms)</span>
                 <input id="in-delay-lancamento" type="number" min="100" max="30000" step="500" class="campo-input" />
               </label>
             </div>
@@ -199,12 +199,12 @@
             <div class="mt-3 flex flex-col gap-0.5">
               <label class="campo-check">
                 <input id="ck-minimizar" type="checkbox" />
-                <span>Minimizar clientes do jogo automaticamente</span>
+                <span data-i18n="ck_minimizar">Minimizar clientes do jogo automaticamente</span>
               </label>
 
               <label class="campo-check">
                 <input id="ck-reaproveitar" type="checkbox" />
-                <span>Reaproveitar clientes parados na tela de login</span>
+                <span data-i18n="ck_reaproveitar">Reaproveitar clientes parados na tela de login</span>
               </label>
             </div>
           </div>
@@ -214,14 +214,14 @@
       <!-- ======================= ESTATÍSTICAS (Restaurado o visual de cards) ======================= -->
       <section id="secao-estatisticas" class="secao px-6 py-5">
         <div class="mb-5 flex shrink-0 items-center justify-between gap-4">
-          <h2 class="text-xl font-bold tracking-tight text-ink">Estatísticas de BC</h2>
+          <h2 class="text-xl font-bold tracking-tight text-ink" data-i18n="nav_estatisticas">Estatísticas de BC</h2>
           <label class="flex shrink-0 items-center gap-3 text-[13px] font-semibold text-dim">
-            <span>Personagem:</span>
+            <span data-i18n="campo_personagem">Personagem:</span>
             <select id="sel-personagem" class="campo-input w-48"></select>
           </label>
         </div>
         <div class="min-h-0 flex-1 overflow-y-auto scroll-thin pr-2">
-          <div id="aviso-sem-runs" class="aviso-banner aviso-neutro mb-4">
+          <div id="aviso-sem-runs" class="aviso-banner aviso-neutro mb-4" data-i18n="aviso_sem_runs">
             Nenhuma run registrada ainda para mostrar.
           </div>
           <!-- Cronômetro da run EM ANDAMENTO. Fica FORA do grid recriado pelo
@@ -230,11 +230,11 @@
           <div id="cronometro-atual" class="mb-4 grid gap-4 rounded-xl border border-line bg-panel px-4 py-3"
             style="grid-template-columns:repeat(2,minmax(0,1fr))">
             <div class="flex flex-col">
-              <span class="card-rotulo">⏱ Tempo total (run atual)</span>
+              <span class="card-rotulo" data-i18n="stat_tempo_total">⏱ Tempo total (run atual)</span>
               <span id="cronometro-total-valor" class="font-mono text-3xl font-bold leading-tight text-accent">—</span>
             </div>
             <div class="flex flex-col">
-              <span class="card-rotulo">🗺 Tempo até o boss (run atual)</span>
+              <span class="card-rotulo" data-i18n="stat_tempo_boss">🗺 Tempo até o boss (run atual)</span>
               <span id="cronometro-boss-valor" class="font-mono text-3xl font-bold leading-tight text-accent">—</span>
               <span id="cronometro-boss-aviso" class="text-xs text-faint"></span>
             </div>
@@ -243,17 +243,17 @@
           <div id="cards-estatisticas" class="mb-8 grid gap-4"
             style="grid-template-columns:repeat(auto-fill,minmax(200px,1fr))"></div>
 
-          <h3 class="mb-3 text-[13px] font-bold uppercase tracking-wider text-dim">Histórico de Dias Anteriores</h3>
+          <h3 class="mb-3 text-[13px] font-bold uppercase tracking-wider text-dim" data-i18n="titulo_historico_dias">Histórico de Dias Anteriores</h3>
           <div class="tabela-envoltoria">
             <table class="tabela">
               <thead>
                 <tr>
-                  <th>Dia</th>
-                  <th>Runs</th>
-                  <th>Sucesso</th>
-                  <th>Falhas</th>
-                  <th>Tempo até boss</th>
-                  <th>Tempo médio</th>
+                  <th data-i18n="col_dia">Dia</th>
+                  <th data-i18n="col_stat_runs">Runs</th>
+                  <th data-i18n="col_sucesso">Sucesso</th>
+                  <th data-i18n="col_falhas">Falhas</th>
+                  <th data-i18n="col_tempo_boss">Tempo até boss</th>
+                  <th data-i18n="col_tempo_medio">Tempo médio</th>
                 </tr>
               </thead>
               <tbody id="corpo-historico"></tbody>
@@ -265,43 +265,44 @@
       <!-- ==================== HISTÓRICO DE QUEDAS ==================== -->
       <section id="secao-quedas" class="secao px-6 py-5">
         <div class="mb-4 flex shrink-0 items-center justify-between gap-4">
-          <h2 class="text-xl font-bold tracking-tight text-ink">Histórico de Quedas</h2>
+          <h2 class="text-xl font-bold tracking-tight text-ink" data-i18n="nav_quedas">Histórico de Quedas</h2>
           <div class="flex shrink-0 items-center gap-2">
             <label class="flex items-center gap-2 text-[13px] font-semibold text-dim">
-              <span>Conta:</span>
+              <span data-i18n="campo_conta">Conta:</span>
               <select id="sel-conta-quedas" class="campo-input w-48"></select>
             </label>
             <button id="btn-copiar-quedas" class="bt bt-secundario"
+                    data-i18n="btn_copiar_quedas" data-i18n-title="btn_copiar_quedas_title"
                     title="Copia tudo, inclusive os detalhes técnicos, para você enviar ao suporte.">Copiar relatório</button>
-            <button id="btn-abrir-pasta-quedas" class="bt bt-secundario">Abrir a pasta</button>
+            <button id="btn-abrir-pasta-quedas" class="bt bt-secundario" data-i18n="btn_abrir_pasta_quedas">Abrir a pasta</button>
           </div>
         </div>
         <p class="mb-3 shrink-0 text-[12px] text-faint">
-          Toda vez que o jogo cai, o bot religa sozinho e anota aqui o que aconteceu.
-          Guardamos os últimos <span id="quedas-dias">3</span> dias.
+          <span data-i18n="aviso_quedas_p1">Toda vez que o jogo cai, o bot religa sozinho e anota aqui o que aconteceu.
+          Guardamos os últimos</span> <span id="quedas-dias">3</span> <span data-i18n="aviso_quedas_p2">dias.</span>
         </p>
         <div id="lista-quedas" class="min-h-0 flex-1 space-y-3 overflow-y-auto scroll-thin pr-2"></div>
       </section>
 
       <!-- Print em tamanho grande, aberto ao clicar na miniatura. -->
       <div id="lupa-print" class="lupa-print escondida">
-        <img id="lupa-print-img" alt="Print da tela no momento da queda">
+        <img id="lupa-print-img" data-i18n-alt="lupa_print_alt" alt="Print da tela no momento da queda">
       </div>
 
       <!-- ======================= LOG ======================= -->
       <section id="secao-log" class="secao px-4 py-3">
         <div class="mb-3 flex shrink-0 items-center justify-between gap-3">
-          <h2 class="text-lg font-semibold tracking-tight text-ink">Log</h2>
+          <h2 class="text-lg font-semibold tracking-tight text-ink" data-i18n="nav_log">Log</h2>
           <div class="flex shrink-0 items-center gap-2">
             <span id="lbl-log-count" class="text-[11px] text-faint">0 linhas</span>
             <label id="lbl-log-detall" class="hidden flex items-center gap-1 text-[12px] text-faint select-none">
               <input id="ck-log-detall" type="checkbox" class="size-3.5 accent-amber-500">
-              detalhado
+              <span data-i18n="log_detalhado">detalhado</span>
             </label>
             <select id="sel-filtro-conta" class="campo-input" style="width:auto"></select>
-            <button id="btn-limpar-log" class="bt bt-secundario">Limpar</button>
-            <button id="btn-copiar-log" class="bt bt-secundario">Copiar</button>
-            <button id="btn-abrir-pasta-log" class="bt bt-secundario">Abrir Pasta</button>
+            <button id="btn-limpar-log" class="bt bt-secundario" data-i18n="btn_limpar">Limpar</button>
+            <button id="btn-copiar-log" class="bt bt-secundario" data-i18n="btn_copiar">Copiar</button>
+            <button id="btn-abrir-pasta-log" class="bt bt-secundario" data-i18n="btn_abrir_pasta_log">Abrir Pasta</button>
           </div>
         </div>
         <div class="caixa-log min-h-0 flex-1 scroll-thin" id="caixa-log"></div>
@@ -310,51 +311,54 @@
       <!-- ======================= DIAGNÓSTICO ======================= -->
       <section id="secao-diagnostico" class="secao px-4 py-3">
         <div class="mb-3 flex shrink-0 items-center justify-between">
-          <h2 class="text-lg font-semibold tracking-tight text-ink">Diagnóstico</h2>
+          <h2 class="text-lg font-semibold tracking-tight text-ink" data-i18n="nav_diagnostico">Diagnóstico</h2>
           <div class="flex items-center gap-2">
             <!-- TEMPORÁRIO: teste isolado da venda (blazesbot/bot/teste_venda.py) -->
             <button id="btn-testar-venda" class="bt bt-primario"
+                    data-i18n="btn_testar_venda" data-i18n-title="btn_testar_venda_title"
                     title="Só a venda: vai até o vendedor e vende. Exige o bot PARADO e o personagem já em Stone City. Enquanto roda, este botão vira o cancelar.">Testar Venda (Conta Selecionada)</button>
             <!-- TEMPORÁRIO: amostragem de cliques (blazesbot/bot/amostragem_de_cliques.py) -->
             <button id="btn-amostrar-cliques" class="bt bt-primario"
+                    data-i18n="btn_amostrar_cliques" data-i18n-title="btn_amostrar_cliques_title"
                     title="Varre um grid de coordenadas de clique DIREITO em volta do alvo atual e ranqueia por taxa de abertura do diálogo e latência. Exige o bot PARADO e o personagem parado num ponto de clique direito: vendedor ou Transport Fay (Stone City), entrada da cave (Ghost Din Woods) ou saída da cave (dentro do covil). O Altar Stone fica de fora. Enquanto roda, este botão vira o cancelar.">Amostrar Cliques (Ponto Atual)</button>
             <button id="btn-conferir-exclusao" class="bt bt-secundario"
+                    data-i18n="btn_conferir_exclusao" data-i18n-title="btn_conferir_exclusao_title"
                     title="Fotografa a sua bolsa e DESENHA o que os modelos apagariam — sem apagar nada. Use antes de confiar na limpeza automática do modo APP: deletar não tem desfazer.">Conferir Modelos de Exclusão</button>
-            <button id="btn-abrir-pasta-logs" class="bt bt-secundario">Abrir Pasta de Logs</button>
+            <button id="btn-abrir-pasta-logs" class="bt bt-secundario" data-i18n="btn_abrir_pasta_diag">Abrir Pasta de Logs</button>
           </div>
         </div>
         <div class="min-h-0 flex-1 overflow-y-auto scroll-thin pr-1">
           <div class="mb-4 grid grid-cols-3 gap-2.5">
             <div class="flex flex-col gap-1.5 rounded-xl border border-line bg-panel p-3.5">
-              <span class="text-[10px] uppercase tracking-wider text-dim">Criptografia de senha (DPAPI)</span>
+              <span class="text-[10px] uppercase tracking-wider text-dim" data-i18n="diag_dpapi_label">Criptografia de senha (DPAPI)</span>
               <span id="diag-dpapi" class="text-lg font-bold text-accent">—</span>
             </div>
             <div class="flex flex-col gap-1.5 rounded-xl border border-line bg-panel p-3.5">
-              <span class="text-[10px] uppercase tracking-wider text-dim">Resolução validada</span>
+              <span class="text-[10px] uppercase tracking-wider text-dim" data-i18n="diag_resolucao_label">Resolução validada</span>
               <span id="diag-resolucao" class="text-lg font-bold text-accent">—</span>
             </div>
             <div class="flex flex-col gap-1.5 rounded-xl border border-line bg-panel p-3.5">
-              <span class="text-[10px] uppercase tracking-wider text-dim">Status do bot</span>
+              <span class="text-[10px] uppercase tracking-wider text-dim" data-i18n="diag_status_label">Status do bot</span>
               <span id="diag-status" class="text-lg font-bold text-accent">—</span>
             </div>
           </div>
 
           <div class="grid grid-cols-2 gap-3">
             <div class="rounded-xl border border-line bg-panel p-4">
-              <h3 class="mb-2 text-[13px] font-semibold text-ink">🩺 Arquivos de Escrita Contínua</h3>
-              <p class="mb-1.5 text-[12px] leading-relaxed text-dim"><code>logs/localizacao.log</code> — toda mudança e
+              <h3 class="mb-2 text-[13px] font-semibold text-ink" data-i18n="diag_arquivos_titulo">🩺 Arquivos de Escrita Contínua</h3>
+              <p class="mb-1.5 text-[12px] leading-relaxed text-dim" data-i18n-html="diag_arquivos_p1"><code>logs/localizacao.log</code> — toda mudança e
                 toda <b>FALHA</b> de leitura do nome do lugar.</p>
-              <p class="mb-1.5 text-[12px] leading-relaxed text-dim"><code>logs/eventos.log</code> — anomalias de jogo
+              <p class="mb-1.5 text-[12px] leading-relaxed text-dim" data-i18n-html="diag_arquivos_p2"><code>logs/eventos.log</code> — anomalias de jogo
                 (morte, travamento, rollback).</p>
-              <p class="text-[12px] leading-relaxed text-dim"><code>logs/sessao-atual.log</code> — log da execução
+              <p class="text-[12px] leading-relaxed text-dim" data-i18n-html="diag_arquivos_p3"><code>logs/sessao-atual.log</code> — log da execução
                 atual.</p>
             </div>
 
             <div class="rounded-xl border border-line bg-panel p-4">
-              <h3 class="mb-2 text-[13px] font-semibold text-ink">🔎 Ponteiro de Localização</h3>
-              <p class="mb-1.5 text-[12px] leading-relaxed text-dim">O bot decide onde está por duas fontes: nome na
+              <h3 class="mb-2 text-[13px] font-semibold text-ink" data-i18n="diag_ponteiro_titulo">🔎 Ponteiro de Localização</h3>
+              <p class="mb-1.5 text-[12px] leading-relaxed text-dim" data-i18n-html="diag_ponteiro_p1">O bot decide onde está por duas fontes: nome na
                 memória e <b>COORDENADA</b>. Com o ponteiro quebrado, o bot segue farmando via coordenada.</p>
-              <p class="text-[12px] leading-relaxed text-dim">Para depurar, rode <code>8-VIGIAR-LOCALIZACAO.bat</code>.
+              <p class="text-[12px] leading-relaxed text-dim" data-i18n-html="diag_ponteiro_p2">Para depurar, rode <code>8-VIGIAR-LOCALIZACAO.bat</code>.
               </p>
             </div>
           </div>
@@ -368,83 +372,84 @@
     <div
       class="flex h-[90vh] max-h-[90vh] w-[min(900px,96vw)] flex-col overflow-hidden rounded-2xl border border-line bg-surface shadow-2xl">
       <div class="flex shrink-0 items-center justify-between border-b border-line bg-panel px-4 py-3">
-        <h3 id="modal-editor-titulo" class="text-[15px] font-bold text-ink">Editar conta</h3>
+        <h3 id="modal-editor-titulo" class="text-[15px] font-bold text-ink" data-i18n="modal_editar_conta">Editar conta</h3>
         <button
           class="flex h-8 w-8 items-center justify-center rounded-lg bg-panel2 text-dim transition-all hover:bg-err hover:text-white"
-          id="btn-fechar-modal" title="Fechar">✕</button>
+          id="btn-fechar-modal" data-i18n-title="btn_fechar_title" title="Fechar">✕</button>
       </div>
 
       <div class="abas shrink-0">
-        <button class="aba aba-ativa" data-aba="aba-personagem">Personagem</button>
-        <button class="aba" data-aba="aba-teclas">Teclas</button>
-        <button class="aba" data-aba="aba-app">APP</button>
-        <button class="aba" data-aba="aba-bc">Bewitcher Cave</button>
-        <button class="aba" data-aba="aba-hh">HH</button>
+        <button class="aba aba-ativa" data-aba="aba-personagem" data-i18n="aba_personagem">Personagem</button>
+        <button class="aba" data-aba="aba-teclas" data-i18n="aba_teclas">Teclas</button>
+        <button class="aba" data-aba="aba-app" data-i18n="aba_app">APP</button>
+        <button class="aba" data-aba="aba-bc" data-i18n="aba_bc">Bewitcher Cave</button>
+        <button class="aba" data-aba="aba-hh" data-i18n="aba_hh">HH</button>
       </div>
 
       <!-- aba Personagem (Mais respirável) -->
       <div id="aba-personagem" class="painel-aba aba-visivel scroll-thin">
         <div class="grade-form gap-4">
           <div class="campo">
-            <span>Login</span>
-            <input id="ed-login" type="text" spellcheck="false" class="campo-input" placeholder="Novo login..." />
+            <span data-i18n="campo_login">Login</span>
+            <input id="ed-login" type="text" spellcheck="false" class="campo-input" data-i18n-placeholder="ph_novo_login" placeholder="Novo login..." />
           </div>
           <div class="campo">
-            <span>Senha</span>
-            <input id="ed-senha" type="password" spellcheck="false" class="campo-input" placeholder="Branco mantém" />
+            <span data-i18n="campo_senha">Senha</span>
+            <input id="ed-senha" type="password" spellcheck="false" class="campo-input" data-i18n-placeholder="ph_branco_mantem" placeholder="Branco mantém" />
           </div>
           <div class="campo">
-            <span>Nick do Personagem (Janela)</span>
+            <span data-i18n="campo_nick">Nick do Personagem (Janela)</span>
             <input id="ed-nick" type="text" spellcheck="false" class="campo-input" />
           </div>
           <div class="campo">
-            <span>Velocidade da Montaria</span>
+            <span data-i18n="campo_montaria">Velocidade da Montaria</span>
             <select id="ed-montaria" class="campo-input"></select>
           </div>
           <div class="campo">
-            <span class="rotulo">Grupo <span class="ajuda"
+            <span class="rotulo"><span data-i18n="campo_grupo">Grupo</span> <span class="ajuda"
+              data-i18n-ajuda="ajuda_grupo"
               data-ajuda="Rótulo só para VOCÊ organizar a lista de contas. Contas com o mesmo grupo aparecem juntas na tabela, com um cabeçalho.&#10;&#10;NÃO é o time do modo APP nem a party da cave — o bot não muda nada por causa deste campo.&#10;&#10;Deixe vazio para a conta ficar fora de qualquer grupo. Você também pode arrastar a conta pela alça (⠿) para dentro de outro grupo.">?</span></span>
             <input id="ed-grupo" type="text" spellcheck="false" maxlength="40"
-                   class="campo-input" placeholder="sem grupo" />
+                   class="campo-input" data-i18n-placeholder="ph_sem_grupo" placeholder="sem grupo" />
           </div>
         </div>
 
         <label class="campo-check mt-4 w-max">
           <input id="ed-aceitar-time" type="checkbox" />
-          <span>Aceitar convites de time (conta que reseta cave)</span>
+          <span data-i18n="ck_aceitar_time">Aceitar convites de time (conta que reseta cave)</span>
         </label>
 
         <label class="campo-check mt-2 w-max">
           <input id="ed-usar-catador" type="checkbox" />
-          <span>Catar loot do chão <span class="ajuda" data-ajuda="Cata o loot do chão depois de matar o boss, para quem tem pet SEM a skill de auto pick. Com o pet certo, deixe desmarcado — ele já pega sozinho.">?</span></span>
+          <span><span data-i18n="ck_catador">Catar loot do chão</span> <span class="ajuda" data-i18n-ajuda="ajuda_catador" data-ajuda="Cata o loot do chão depois de matar o boss, para quem tem pet SEM a skill de auto pick. Com o pet certo, deixe desmarcado — ele já pega sozinho.">?</span></span>
         </label>
 
         <div class="grupo mt-4">
-          <div class="grupo-titulo">Configurações de Pet</div>
+          <div class="grupo-titulo" data-i18n="grupo_pet">Configurações de Pet</div>
           <div class="flex gap-6">
-            <label class="campo-check"><input id="ed-pet-summon" type="checkbox" /><span>Invocar ao
+            <label class="campo-check"><input id="ed-pet-summon" type="checkbox" /><span data-i18n="ck_pet_summon">Invocar ao
                 entrar</span></label>
-            <label class="campo-check"><input id="ed-pet-feed-start" type="checkbox" /><span>Alimentar ao
+            <label class="campo-check"><input id="ed-pet-feed-start" type="checkbox" /><span data-i18n="ck_pet_feed_start">Alimentar ao
                 iniciar</span></label>
             <label class="campo flex-row items-center gap-3">
-              <span>Alimentar a cada (min):</span>
+              <span data-i18n="campo_pet_feed_min">Alimentar a cada (min):</span>
               <input id="ed-pet-feed-min" type="number" min="40" max="60" step="5" class="campo-input w-20 text-center" />
             </label>
           </div>
         </div>
 
         <div class="grupo mt-4">
-          <div class="grupo-titulo text-red-500">Regras de Poções e HP</div>
+          <div class="grupo-titulo text-red-500" data-i18n="grupo_pocoes">Regras de Poções e HP</div>
           <div class="grade-form gap-6">
-            <label class="campo"><span>HP alvo (%)</span>
+            <label class="campo"><span data-i18n="campo_hp_alvo">HP alvo (%)</span>
               <input id="ed-hp" type="range" min="1" max="99" step="1" data-passo-roda="5" class="accent-red-500" />
               <span class="valor-range text-[12px] text-red-400 font-bold" id="val-hp"></span>
             </label>
-            <label class="campo"><span>HP de batalha (%)</span>
+            <label class="campo"><span data-i18n="campo_hp_batalha">HP de batalha (%)</span>
               <input id="ed-bhp" type="range" min="1" max="99" step="1" data-passo-roda="5" class="accent-red-500" />
               <span class="valor-range text-[12px] text-red-400 font-bold" id="val-bhp"></span>
             </label>
-            <label class="campo"><span>Emergência (%)</span>
+            <label class="campo"><span data-i18n="campo_emergencia">Emergência (%)</span>
               <input id="ed-emergencia" type="range" min="1" max="99" step="1" data-passo-roda="5" class="accent-red-500" />
               <span class="valor-range text-[12px] text-red-400 font-bold" id="val-emergencia"></span>
             </label>
@@ -452,94 +457,94 @@
         </div>
 
         <div class="campo mt-4 w-64">
-          <span>Uso de Bolsas</span>
+          <span data-i18n="campo_uso_bolsas">Uso de Bolsas</span>
           <select id="ed-bolsas" class="campo-input"></select>
         </div>
       </div>
 
       <!-- aba Teclas (Sem scroll, grid ajustado, sem cores erradas e placeholders) -->
       <div id="aba-teclas" class="painel-aba overflow-hidden">
-        <p class="aviso-banner aviso-neutro mb-3 shrink-0">Clique no campo e aperte a tecla. <kbd>ESC</kbd> limpa.</p>
+        <p class="aviso-banner aviso-neutro mb-3 shrink-0"><span data-i18n="aviso_teclas_1">Clique no campo e aperte a tecla.</span> <kbd>ESC</kbd> <span data-i18n="aviso_teclas_2">limpa.</span></p>
 
         <div class="flex flex-col gap-3 min-h-0 flex-1 justify-between">
           <div class="grupo mt-0!">
-            <div class="grupo-titulo">Combate Base</div>
+            <div class="grupo-titulo" data-i18n="grupo_combate_base">Combate Base</div>
             <div class="grade-teclas">
-              <label class="campo"><span class="rotulo">Ataque 1</span> <input class="captura" id="ed-k-atk0" type="text" readonly
-                  placeholder="—" title="Sem tecla: o bot não usa esta ação" /></label>
-              <label class="campo"><span class="rotulo">Ataque 2</span> <input class="captura" id="ed-k-atk1" type="text" readonly
-                  placeholder="—" title="Sem tecla: o bot não usa esta ação" /></label>
-              <label class="campo"><span class="rotulo">Ataque 3</span> <input class="captura" id="ed-k-atk2" type="text" readonly
-                  placeholder="—" title="Sem tecla: o bot não usa esta ação" /></label>
-              <label class="campo"><span class="rotulo">Ataque 4</span> <input class="captura" id="ed-k-atk3" type="text" readonly
-                  placeholder="—" title="Sem tecla: o bot não usa esta ação" /></label>
+              <label class="campo"><span class="rotulo" data-i18n="tecla_atk1">Ataque 1</span> <input class="captura" id="ed-k-atk0" type="text" readonly
+                  placeholder="—" data-i18n-title="dica_sem_tecla" title="Sem tecla: o bot não usa esta ação" /></label>
+              <label class="campo"><span class="rotulo" data-i18n="tecla_atk2">Ataque 2</span> <input class="captura" id="ed-k-atk1" type="text" readonly
+                  placeholder="—" data-i18n-title="dica_sem_tecla" title="Sem tecla: o bot não usa esta ação" /></label>
+              <label class="campo"><span class="rotulo" data-i18n="tecla_atk3">Ataque 3</span> <input class="captura" id="ed-k-atk2" type="text" readonly
+                  placeholder="—" data-i18n-title="dica_sem_tecla" title="Sem tecla: o bot não usa esta ação" /></label>
+              <label class="campo"><span class="rotulo" data-i18n="tecla_atk4">Ataque 4</span> <input class="captura" id="ed-k-atk3" type="text" readonly
+                  placeholder="—" data-i18n-title="dica_sem_tecla" title="Sem tecla: o bot não usa esta ação" /></label>
               <label class="campo"><span class="rotulo">AoE</span> <input class="captura" id="ed-k-aoe" type="text" readonly
-                  placeholder="—" title="Sem tecla: o bot não usa esta ação" /></label>
-              <label class="campo"><span class="rotulo">Break Soul</span> <input class="captura" id="ed-k-break" type="text" readonly
-                  placeholder="—" title="Sem tecla: o bot não usa esta ação" /></label>
+                  placeholder="—" data-i18n-title="dica_sem_tecla" title="Sem tecla: o bot não usa esta ação" /></label>
+              <label class="campo"><span class="rotulo" data-i18n="tecla_break_soul">Break Soul</span> <input class="captura" id="ed-k-break" type="text" readonly
+                  placeholder="—" data-i18n-title="dica_sem_tecla" title="Sem tecla: o bot não usa esta ação" /></label>
             </div>
           </div>
 
           <div class="grupo mt-0!">
-            <div class="grupo-titulo text-blue-400">Magias de Suporte</div>
+            <div class="grupo-titulo text-blue-400" data-i18n="grupo_magias">Magias de Suporte</div>
             <div class="grade-teclas">
-              <label class="campo"><span class="rotulo">Super Skill</span> <input class="captura" id="ed-k-super" type="text" readonly
-                  placeholder="—" title="Sem tecla: o bot não usa esta ação" /></label>
-              <label class="campo text-red-500"><span class="rotulo">Cura</span> <input class="captura border-red-500/30" id="ed-k-heal" type="text"
-                  readonly placeholder="—" title="Sem tecla: o bot não usa esta ação" /></label>
-              <label class="campo"><span class="rotulo">Reviver</span> <input class="captura" id="ed-k-revive" type="text" readonly
-                  placeholder="—" title="Sem tecla: o bot não usa esta ação" /></label>
-              <label class="campo"><span class="rotulo">Buff 1</span> <input class="captura" id="ed-k-buff1" type="text" readonly
-                  placeholder="—" title="Sem tecla: o bot não usa esta ação" /></label>
-              <label class="campo"><span class="rotulo">Buff 2</span> <input class="captura" id="ed-k-buff2" type="text" readonly
-                  placeholder="—" title="Sem tecla: o bot não usa esta ação" /></label>
-              <label class="campo"><span class="rotulo">Buff 3</span> <input class="captura" id="ed-k-buff3" type="text" readonly
-                  placeholder="—" title="Sem tecla: o bot não usa esta ação" /></label>
-              <label class="campo"><span class="rotulo">Buff 4</span> <input class="captura" id="ed-k-buff4" type="text" readonly
-                  placeholder="—" title="Sem tecla: o bot não usa esta ação" /></label>
+              <label class="campo"><span class="rotulo" data-i18n="tecla_super_skill">Super Skill</span> <input class="captura" id="ed-k-super" type="text" readonly
+                  placeholder="—" data-i18n-title="dica_sem_tecla" title="Sem tecla: o bot não usa esta ação" /></label>
+              <label class="campo text-red-500"><span class="rotulo" data-i18n="tecla_cura">Cura</span> <input class="captura border-red-500/30" id="ed-k-heal" type="text"
+                  readonly placeholder="—" data-i18n-title="dica_sem_tecla" title="Sem tecla: o bot não usa esta ação" /></label>
+              <label class="campo"><span class="rotulo" data-i18n="tecla_reviver">Reviver</span> <input class="captura" id="ed-k-revive" type="text" readonly
+                  placeholder="—" data-i18n-title="dica_sem_tecla" title="Sem tecla: o bot não usa esta ação" /></label>
+              <label class="campo"><span class="rotulo" data-i18n="tecla_buff1">Buff 1</span> <input class="captura" id="ed-k-buff1" type="text" readonly
+                  placeholder="—" data-i18n-title="dica_sem_tecla" title="Sem tecla: o bot não usa esta ação" /></label>
+              <label class="campo"><span class="rotulo" data-i18n="tecla_buff2">Buff 2</span> <input class="captura" id="ed-k-buff2" type="text" readonly
+                  placeholder="—" data-i18n-title="dica_sem_tecla" title="Sem tecla: o bot não usa esta ação" /></label>
+              <label class="campo"><span class="rotulo" data-i18n="tecla_buff3">Buff 3</span> <input class="captura" id="ed-k-buff3" type="text" readonly
+                  placeholder="—" data-i18n-title="dica_sem_tecla" title="Sem tecla: o bot não usa esta ação" /></label>
+              <label class="campo"><span class="rotulo" data-i18n="tecla_buff4">Buff 4</span> <input class="captura" id="ed-k-buff4" type="text" readonly
+                  placeholder="—" data-i18n-title="dica_sem_tecla" title="Sem tecla: o bot não usa esta ação" /></label>
             </div>
           </div>
 
           <div class="grupo mt-0!">
-            <div class="grupo-titulo">Consumíveis & Deslocamento</div>
+            <div class="grupo-titulo" data-i18n="grupo_consumiveis">Consumíveis &amp; Deslocamento</div>
             <div class="grade-teclas">
-              <label class="campo text-red-500"><span class="rotulo">Poção HP</span> <input class="captura border-red-500/30" id="ed-k-hp"
-                  type="text" readonly placeholder="—" title="Sem tecla: o bot não usa esta ação" /></label>
-              <label class="campo text-red-500"><span class="rotulo">Poção HP (luta)</span> <input class="captura border-red-500/30"
-                  id="ed-k-bhp" type="text" readonly placeholder="—" title="Sem tecla: o bot não usa esta ação" /></label>
-              <label class="campo"><span class="rotulo">Comida Pet</span> <input class="captura" id="ed-k-petfood" type="text" readonly
-                  placeholder="—" title="Sem tecla: o bot não usa esta ação" /></label>
-              <label class="campo"><span class="rotulo">Retorno</span> <input class="captura" id="ed-k-stone" type="text" readonly
-                  placeholder="—" title="Sem tecla: o bot não usa esta ação" /></label>
-              <label class="campo"><span class="rotulo">Montaria</span> <input class="captura" id="ed-k-mount" type="text" readonly
-                  placeholder="—" title="Sem tecla: o bot não usa esta ação" /></label>
-              <label class="campo"><span class="rotulo">Velocidade</span> <input class="captura" id="ed-k-speed" type="text" readonly
-                  placeholder="—" title="Sem tecla: o bot não usa esta ação" /></label>
+              <label class="campo text-red-500"><span class="rotulo" data-i18n="tecla_pocao_hp">Poção HP</span> <input class="captura border-red-500/30" id="ed-k-hp"
+                  type="text" readonly placeholder="—" data-i18n-title="dica_sem_tecla" title="Sem tecla: o bot não usa esta ação" /></label>
+              <label class="campo text-red-500"><span class="rotulo" data-i18n="tecla_pocao_hp_luta">Poção HP (luta)</span> <input class="captura border-red-500/30"
+                  id="ed-k-bhp" type="text" readonly placeholder="—" data-i18n-title="dica_sem_tecla" title="Sem tecla: o bot não usa esta ação" /></label>
+              <label class="campo"><span class="rotulo" data-i18n="tecla_comida_pet">Comida Pet</span> <input class="captura" id="ed-k-petfood" type="text" readonly
+                  placeholder="—" data-i18n-title="dica_sem_tecla" title="Sem tecla: o bot não usa esta ação" /></label>
+              <label class="campo"><span class="rotulo" data-i18n="tecla_retorno">Retorno</span> <input class="captura" id="ed-k-stone" type="text" readonly
+                  placeholder="—" data-i18n-title="dica_sem_tecla" title="Sem tecla: o bot não usa esta ação" /></label>
+              <label class="campo"><span class="rotulo" data-i18n="tecla_montaria">Montaria</span> <input class="captura" id="ed-k-mount" type="text" readonly
+                  placeholder="—" data-i18n-title="dica_sem_tecla" title="Sem tecla: o bot não usa esta ação" /></label>
+              <label class="campo"><span class="rotulo" data-i18n="tecla_velocidade">Velocidade</span> <input class="captura" id="ed-k-speed" type="text" readonly
+                  placeholder="—" data-i18n-title="dica_sem_tecla" title="Sem tecla: o bot não usa esta ação" /></label>
             </div>
           </div>
 
           <div class="grupo mt-0!">
-            <div class="grupo-titulo">Interface & Sistema</div>
+            <div class="grupo-titulo" data-i18n="grupo_interface_sistema">Interface &amp; Sistema</div>
             <div class="grade-teclas">
-              <label class="campo"><span class="rotulo">Guild Token</span> <input class="captura" id="ed-k-guild" type="text" readonly
-                  placeholder="—" title="Sem tecla: o bot não usa esta ação" /></label>
-              <label class="campo"><span class="rotulo">Pet Invoc</span> <input class="captura" id="ed-k-pet" type="text" readonly
-                  placeholder="—" title="Sem tecla: o bot não usa esta ação" /></label>
-              <label class="campo"><span class="rotulo">Auto-alvo <span class="ajuda" data-ajuda="A tecla que seleciona o PRÓPRIO personagem (F1 no padrão do jogo).&#10;&#10;Para que serve: cada conta aperta essa tecla uma vez ao entrar no time e lê o próprio identificador na memória. É esse número que a Fada compara depois de clicar no retrato, para ter certeza de que selecionou quem pediu cura.&#10;&#10;SEM ELA A CONTA NÃO É CURÁVEL pela Fada: sem o identificador não há como confirmar o clique, e curar sem confirmar cura o aliado errado.">?</span></span><input class="captura" id="ed-k-self" type="text" readonly
-                  placeholder="—" title="Sem tecla: o bot não usa esta ação" /></label>
-              <label class="campo"><span class="rotulo">Seguir <span class="ajuda" data-ajuda="A tecla de SEGUIR o alvo selecionado (o &quot;follow&quot; do jogo).&#10;&#10;Usada SÓ no modo HH + Fada: a curandeira clica no retrato do líder, aperta esta tecla, e o JOGO caminha por ela — seguir não tem como sair da rota, diferente de refazer os waypoints por conta própria.&#10;&#10;SEM ATALHO PADRÃO NO CLIENTE: configure no jogo primeiro e repita aqui. Deixada vazia, a Fada avisa no log e não tenta seguir — chutar uma tecla faria ela apertar algo que faz outra coisa.">?</span></span><input class="captura" id="ed-k-follow" type="text" readonly placeholder="—" title="Sem atalho: o bot não usa esta ação" /></label>
-              <label class="campo"><span class="rotulo">Sentar</span> <input class="captura" id="ed-k-sit" type="text" readonly
-                  placeholder="—" title="Sem tecla: o bot não usa esta ação" /></label>
-              <label class="campo"><span class="rotulo">Prox Alvo</span> <input class="captura" id="ed-k-next" type="text" readonly
-                  placeholder="—" title="Sem tecla: o bot não usa esta ação" /></label>
-              <label class="campo"><span class="rotulo">Inventário</span> <input class="captura" id="ed-k-inv" type="text" readonly
-                  placeholder="—" title="Sem tecla: o bot não usa esta ação" /></label>
-              <label class="campo"><span class="rotulo">Amigos</span> <input class="captura" id="ed-k-fl" type="text" readonly
-                  placeholder="—" title="Sem tecla: o bot não usa esta ação" /></label>
-              <label class="campo"><span class="rotulo">Hotbar 1 <span class="ajuda" data-ajuda="Faz o bot voltar à página 1 da barra de atalhos, que é a usada pelo bot.&#10;&#10;Como configurar no jogo:&#10;1. Aperte ESC&#10;2. Clique em Keys&#10;3. Procure “Main Hotkey Page 1” e escolha uma tecla livre&#10;4. Apague as teclas de Page 2 e Page 3 — sem elas, nada tira a barra da página 1 por acidente&#10;&#10;É opcional: sem tecla configurada o bot continua clicando no botão, como sempre fez.">?</span></span><input class="captura" id="ed-k-hotbar" type="text" readonly
-                  placeholder="—" title="Sem tecla: o bot não usa esta ação" /></label>
-              <label class="campo"><span class="rotulo">Esconder pl. <span class="ajuda" data-ajuda="Esconde os outros jogadores da tela.&#10;&#10;Como configurar no jogo:&#10;1. Aperte ESC&#10;2. Clique em Keys&#10;3. Procure a tecla de esconder personagens (F12 costuma ser o padr&#227;o)&#10;&#10;Para que serve aqui: o catador de loot clica no CH&#195;O, e outro personagem em cima do cad&#225;ver muda o que o clique acerta. O bot usa o truque de segurar esta tecla e abrir o chat, que faz o esconder GRUDAR at&#233; o fim da sess&#227;o &#8212; e refaz isso antes de cada entrada na cave, porque apertar a tecla de novo desfaz.&#10;&#10;&#201; opcional: sem tecla configurada o bot n&#227;o mexe nisso.">?</span></span><input class="captura" id="ed-k-esconder" type="text" readonly
-                  placeholder="—" title="Sem tecla: o bot não usa esta ação" /></label>
+              <label class="campo"><span class="rotulo" data-i18n="tecla_guild_token">Guild Token</span> <input class="captura" id="ed-k-guild" type="text" readonly
+                  placeholder="—" data-i18n-title="dica_sem_tecla" title="Sem tecla: o bot não usa esta ação" /></label>
+              <label class="campo"><span class="rotulo" data-i18n="tecla_pet_invoc">Pet Invoc</span> <input class="captura" id="ed-k-pet" type="text" readonly
+                  placeholder="—" data-i18n-title="dica_sem_tecla" title="Sem tecla: o bot não usa esta ação" /></label>
+              <label class="campo"><span class="rotulo"><span data-i18n="tecla_auto_alvo">Auto-alvo</span> <span class="ajuda" data-i18n-ajuda="ajuda_auto_alvo" data-ajuda="A tecla que seleciona o PRÓPRIO personagem (F1 no padrão do jogo).&#10;&#10;Para que serve: cada conta aperta essa tecla uma vez ao entrar no time e lê o próprio identificador na memória. É esse número que a Fada compara depois de clicar no retrato, para ter certeza de que selecionou quem pediu cura.&#10;&#10;SEM ELA A CONTA NÃO É CURÁVEL pela Fada: sem o identificador não há como confirmar o clique, e curar sem confirmar cura o aliado errado.">?</span></span><input class="captura" id="ed-k-self" type="text" readonly
+                  placeholder="—" data-i18n-title="dica_sem_tecla" title="Sem tecla: o bot não usa esta ação" /></label>
+              <label class="campo"><span class="rotulo"><span data-i18n="tecla_seguir">Seguir</span> <span class="ajuda" data-i18n-ajuda="ajuda_seguir" data-ajuda="A tecla de SEGUIR o alvo selecionado (o &quot;follow&quot; do jogo).&#10;&#10;Usada SÓ no modo HH + Fada: a curandeira clica no retrato do líder, aperta esta tecla, e o JOGO caminha por ela — seguir não tem como sair da rota, diferente de refazer os waypoints por conta própria.&#10;&#10;SEM ATALHO PADRÃO NO CLIENTE: configure no jogo primeiro e repita aqui. Deixada vazia, a Fada avisa no log e não tenta seguir — chutar uma tecla faria ela apertar algo que faz outra coisa.">?</span></span><input class="captura" id="ed-k-follow" type="text" readonly placeholder="—" data-i18n-title="dica_sem_atalho" title="Sem atalho: o bot não usa esta ação" /></label>
+              <label class="campo"><span class="rotulo" data-i18n="tecla_sentar">Sentar</span> <input class="captura" id="ed-k-sit" type="text" readonly
+                  placeholder="—" data-i18n-title="dica_sem_tecla" title="Sem tecla: o bot não usa esta ação" /></label>
+              <label class="campo"><span class="rotulo" data-i18n="tecla_prox_alvo">Prox Alvo</span> <input class="captura" id="ed-k-next" type="text" readonly
+                  placeholder="—" data-i18n-title="dica_sem_tecla" title="Sem tecla: o bot não usa esta ação" /></label>
+              <label class="campo"><span class="rotulo" data-i18n="tecla_inventario">Inventário</span> <input class="captura" id="ed-k-inv" type="text" readonly
+                  placeholder="—" data-i18n-title="dica_sem_tecla" title="Sem tecla: o bot não usa esta ação" /></label>
+              <label class="campo"><span class="rotulo" data-i18n="tecla_amigos">Amigos</span> <input class="captura" id="ed-k-fl" type="text" readonly
+                  placeholder="—" data-i18n-title="dica_sem_tecla" title="Sem tecla: o bot não usa esta ação" /></label>
+              <label class="campo"><span class="rotulo"><span data-i18n="tecla_hotbar1">Hotbar 1</span> <span class="ajuda" data-i18n-ajuda="ajuda_hotbar1" data-ajuda="Faz o bot voltar à página 1 da barra de atalhos, que é a usada pelo bot.&#10;&#10;Como configurar no jogo:&#10;1. Aperte ESC&#10;2. Clique em Keys&#10;3. Procure “Main Hotkey Page 1” e escolha uma tecla livre&#10;4. Apague as teclas de Page 2 e Page 3 — sem elas, nada tira a barra da página 1 por acidente&#10;&#10;É opcional: sem tecla configurada o bot continua clicando no botão, como sempre fez.">?</span></span><input class="captura" id="ed-k-hotbar" type="text" readonly
+                  placeholder="—" data-i18n-title="dica_sem_tecla" title="Sem tecla: o bot não usa esta ação" /></label>
+              <label class="campo"><span class="rotulo"><span data-i18n="tecla_esconder_pl">Esconder pl.</span> <span class="ajuda" data-i18n-ajuda="ajuda_esconder_pl" data-ajuda="Esconde os outros jogadores da tela.&#10;&#10;Como configurar no jogo:&#10;1. Aperte ESC&#10;2. Clique em Keys&#10;3. Procure a tecla de esconder personagens (F12 costuma ser o padr&#227;o)&#10;&#10;Para que serve aqui: o catador de loot clica no CH&#195;O, e outro personagem em cima do cad&#225;ver muda o que o clique acerta. O bot usa o truque de segurar esta tecla e abrir o chat, que faz o esconder GRUDAR at&#233; o fim da sess&#227;o &#8212; e refaz isso antes de cada entrada na cave, porque apertar a tecla de novo desfaz.&#10;&#10;&#201; opcional: sem tecla configurada o bot n&#227;o mexe nisso.">?</span></span><input class="captura" id="ed-k-esconder" type="text" readonly
+                  placeholder="—" data-i18n-title="dica_sem_tecla" title="Sem tecla: o bot não usa esta ação" /></label>
             </div>
           </div>
         </div>
@@ -573,8 +578,8 @@
                 <thead>
                   <tr>
                     <th>#</th>
-                    <th>Tecla</th>
-                    <th>Delay (ms)</th>
+                    <th data-i18n="col_tecla">Tecla</th>
+                    <th data-i18n="col_delay_ms">Delay (ms)</th>
                   </tr>
                 </thead>
                 <!-- Corpo rola internamente mas expande para caber no flex -->
@@ -587,18 +592,19 @@
           <aside class="app-lateral scroll-thin">
 
             <div class="grupo">
-              <div class="grupo-titulo">Modo APP</div>
+              <div class="grupo-titulo" data-i18n="grupo_modo_app">Modo APP</div>
               <label class="campo-check w-full">
                 <input id="ed-app-ligado" type="checkbox" class="chk" />
-                <span>Ativar Modo APP (macro independente)</span>
+                <span data-i18n="ck_app_ligado">Ativar Modo APP (macro independente)</span>
               </label>
             </div>
 
             <div class="grupo">
-              <div class="grupo-titulo">Comportamento</div>
+              <div class="grupo-titulo" data-i18n="grupo_comportamento">Comportamento</div>
               <label class="campo linha-opcao mb-1.5"
+                     data-i18n-title="campo_limpar_bolsa_title"
                      title="A cada tantas voltas da sequência, o bot abre o inventário (tecla da aba Teclas) e apaga os itens que reconhecer como lixo. 0 = nunca fazer isso.">
-                <span>Limpar a bolsa a cada</span>
+                <span data-i18n="campo_limpar_bolsa">Limpar a bolsa a cada</span>
                 <!-- ÚNICO campo numérico que aceita 0, e o 0 é um MODO: "nunca apagar".
                      Apagar item não tem desfazer, então tirar essa saída seria pior
                      que a inconsistência. Ver docs/decisoes/interface.md. -->
@@ -606,35 +612,37 @@
                        class="campo-input campo-num" />
               </label>
               <label class="campo-check w-full"
+                     data-i18n-title="ck_travar_posicao_title"
                      title="Trava o personagem na posição em que o APP foi iniciado. Se ele andar mais de 1 unidade, volta andando (sem montura).">
                 <input id="ed-app-travar" type="checkbox" class="chk" checked />
-                <span>Travar posição ao iniciar o APP</span>
+                <span data-i18n="ck_travar_posicao">Travar posição ao iniciar o APP</span>
               </label>
               <label class="campo linha-opcao mt-1.5"
+                     data-i18n-title="campo_shuffle_title"
                      title="A cada N voltas SEM MOVIMENTO, dá um passo lateral de 6 pixels e volta — anti-AFK leve.">
-                <span>Shuffle a cada (voltas)</span>
+                <span data-i18n="campo_shuffle">Shuffle a cada (voltas)</span>
                 <input id="ed-app-shuffle" type="number" min="1" max="999" step="5"
                        class="campo-input campo-num" value="30" />
               </label>
             </div>
 
             <div class="grupo">
-              <div class="grupo-titulo">Time
-                <span class="ajuda" data-ajuda="Faz outras contas rodarem ESTA macro junto com esta conta.&#10;&#10;Quem monta o time é o LÍDER: as contas escolhidas aqui viram seguidoras e usam a macro desta conta enquanto o time estiver rodando — o config delas não é alterado.&#10;&#10;Só a macro é emprestada. Trava de posição, cura e a tecla de próximo alvo continuam sendo as de cada conta.">?</span>
+              <div class="grupo-titulo"><span data-i18n="grupo_time">Time</span>
+                <span class="ajuda" data-i18n-ajuda="ajuda_time" data-ajuda="Faz outras contas rodarem ESTA macro junto com esta conta.&#10;&#10;Quem monta o time é o LÍDER: as contas escolhidas aqui viram seguidoras e usam a macro desta conta enquanto o time estiver rodando — o config delas não é alterado.&#10;&#10;Só a macro é emprestada. Trava de posição, cura e a tecla de próximo alvo continuam sendo as de cada conta.">?</span>
               </div>
 
               <label class="campo mb-2">
-                <span>Sincronia</span>
+                <span data-i18n="campo_sincronia">Sincronia</span>
                 <select id="ed-app-time-modo" class="campo-input">
-                  <option value="copiar">Só copiar a macro</option>
-                  <option value="largada">Começar cada volta juntos</option>
-                  <option value="mesmo_alvo">Começar juntos e no mesmo alvo</option>
+                  <option value="copiar" data-i18n="opt_sync_copiar">Só copiar a macro</option>
+                  <option value="largada" data-i18n="opt_sync_largada">Começar cada volta juntos</option>
+                  <option value="mesmo_alvo" data-i18n="opt_sync_mesmo_alvo">Começar juntos e no mesmo alvo</option>
                 </select>
               </label>
               <p id="ed-app-time-explica" class="text-[10.5px] text-dim leading-snug mb-2"></p>
 
               <div class="flex items-center justify-between mb-1">
-                <span class="text-dim text-[10.5px] font-medium uppercase tracking-wide">Contas do time</span>
+                <span class="text-dim text-[10.5px] font-medium uppercase tracking-wide" data-i18n="campo_contas_time">Contas do time</span>
                 <span id="ed-app-time-conta" class="text-[10.5px] font-bold text-accent"></span>
               </div>
               <!-- Preenchida por `montarListaDoTime` em main.js: uma linha por
@@ -644,20 +652,23 @@
               <div id="ed-app-time-lista" class="flex flex-col gap-0.5"></div>
 
               <label class="campo-check w-full mt-2"
+                     data-i18n-title="ck_fada_title"
                      title="Esta conta vira a FADA do time: ela não ataca e não roda a macro. Cura os aliados que pedirem, e senta para recuperar mana quando não há ninguém na fila. Fora de um time a marcação não faz nada.">
                 <input id="ed-app-fada" type="checkbox" class="chk" />
-                <span>Esta conta é a Fada do time</span>
+                <span data-i18n="ck_fada">Esta conta é a Fada do time</span>
               </label>
 
               <label class="campo linha-opcao mt-2"
+                     data-i18n-title="campo_cura_pedir_title"
                      title="Abaixo desta vida o personagem para de atacar, volta ao ponto inicial e pede cura à Fada. Sem Fada de pé, bebe poção como sempre. Em time, vale a configuração do LÍDER.">
-                <span>Pedir cura abaixo de (%)</span>
+                <span data-i18n="campo_cura_pedir">Pedir cura abaixo de (%)</span>
                 <input id="ed-app-cura-pedir" type="number" min="1" max="100" step="5"
                        class="campo-input campo-num" />
               </label>
               <label class="campo linha-opcao mt-1.5"
+                     data-i18n-title="campo_cura_parar_title"
                      title="A Fada cura até esta vida e passa para o próximo da fila. Em time, vale a configuração do LÍDER.">
-                <span>Parar de curar em (%)</span>
+                <span data-i18n="campo_cura_parar">Parar de curar em (%)</span>
                 <input id="ed-app-cura-parar" type="number" min="1" max="100" step="5"
                        class="campo-input campo-num" />
               </label>
@@ -670,37 +681,37 @@
       <!-- aba Bewitcher Cave (Mais respirável) -->
       <div id="aba-bc" class="painel-aba scroll-thin">
         <div class="grupo">
-          <div class="grupo-titulo">Configurações do Chefe</div>
+          <div class="grupo-titulo" data-i18n="grupo_config_chefe">Configurações do Chefe</div>
           <div class="grid grid-cols-2 gap-6">
             <div class="campo">
-              <span>Nome do boss</span>
+              <span data-i18n="campo_nome_boss">Nome do boss</span>
               <input id="ed-boss" type="text" spellcheck="false" class="campo-input" />
             </div>
             <div class="campo">
-              <span>Intervalo de ataque (ms)</span>
+              <span data-i18n="campo_intervalo_ataque">Intervalo de ataque (ms)</span>
               <input id="ed-ataque-delay" type="number" min="100" max="5000" step="100" class="campo-input" />
             </div>
-            <label class="campo"><span>AoE até mana (%)</span>
+            <label class="campo"><span data-i18n="campo_aoe_mana">AoE até mana (%)</span>
               <input id="ed-aoe-mana" type="range" min="1" max="100" step="1" data-passo-roda="5" class="accent-blue-500" />
               <span class="valor-range text-[12px] text-blue-400 font-bold" id="val-aoe-mana"></span>
             </label>
             <label class="campo-check mt-5">
               <input id="ed-heal-fase2" type="checkbox" />
-              <span class="text-red-400 font-bold">Curar antes da 2ª fase</span>
+              <span class="text-red-400 font-bold" data-i18n="ck_heal_fase2">Curar antes da 2ª fase</span>
             </label>
           </div>
         </div>
 
         <div class="flex gap-4 mt-4">
           <div class="grupo flex-1">
-            <div class="grupo-titulo text-blue-400">Rota na Cave</div>
-            <label class="campo-check mt-1"><input id="ed-sk-velocidade" type="checkbox" /><span>Usar skill de
+            <div class="grupo-titulo text-blue-400" data-i18n="grupo_rota_cave">Rota na Cave</div>
+            <label class="campo-check mt-1"><input id="ed-sk-velocidade" type="checkbox" /><span data-i18n="ck_sk_velocidade">Usar skill de
                 velocidade da montaria na cave</span></label>
           </div>
           <div class="grupo flex-1">
-            <div class="grupo-titulo">Reset do Time</div>
+            <div class="grupo-titulo" data-i18n="grupo_reset_time">Reset do Time</div>
             <div class="campo">
-              <span>Conta que reseta a cave</span>
+              <span data-i18n="campo_conta_reset">Conta que reseta a cave</span>
               <!-- LISTA FECHADA, não texto livre: o reseter precisa ser uma
                    conta cadastrada aqui, senão o bot não tem como perceber que
                    ela caiu e segurar a entrada. Populada por montarListaDeReset. -->
@@ -710,47 +721,47 @@
         </div>
 
         <div class="grupo mt-4">
-          <div class="grupo-titulo">Regras de Venda Automática (NPC)</div>
+          <div class="grupo-titulo" data-i18n="grupo_venda_npc">Regras de Venda Automática (NPC)</div>
           <div class="flex gap-4 items-end">
-            <label class="campo w-32"><span>Runs antes de ir</span><input id="ed-runs-venda" type="number" min="1" max="999" step="1"
+            <label class="campo w-32"><span data-i18n="campo_runs_antes_ir">Runs antes de ir</span><input id="ed-runs-venda" type="number" min="1" max="999" step="1"
                 class="campo-input text-center" /></label>
-            <label class="campo w-32"><span>Slot inicial</span><input id="ed-slot-venda" type="number" min="1" max="24" step="1"
+            <label class="campo w-32"><span data-i18n="campo_slot_inicial">Slot inicial</span><input id="ed-slot-venda" type="number" min="1" max="24" step="1"
                 class="campo-input text-center" /></label>
-            <label class="campo w-36"><span>Quantidade de Cliques</span><select id="ed-cliques-venda"
+            <label class="campo w-36"><span data-i18n="campo_qtd_cliques">Quantidade de Cliques</span><select id="ed-cliques-venda"
                 class="campo-input"></select></label>
-            <label class="campo-check mb-2 ml-4"><input id="ed-recomprar-charm" type="checkbox" /><span>Recomprar Charm
+            <label class="campo-check mb-2 ml-4"><input id="ed-recomprar-charm" type="checkbox" /><span data-i18n="ck_recomprar_charm">Recomprar Charm
                 de Retorno</span></label>
           </div>
         </div>
       </div>
       <div id="aba-hh" class="painel-aba scroll-thin">
         <div class="grupo">
-          <div class="grupo-titulo">Reset da cave (obrigatório)</div>
-          <p class="text-[12px] text-slate-400 mb-2">
+          <div class="grupo-titulo" data-i18n="grupo_reset_obrigatorio">Reset da cave (obrigatório)</div>
+          <p class="text-[12px] text-slate-400 mb-2" data-i18n-html="aviso_hh_reset">
             <b>A cave NÃO renasce sozinha.</b> Sem desfazer e refazer o time, os
             quatro bosses não voltam e a run seguinte vem vazia — isso é regra do
             jogo, não do bot. Sem conta de reset o bot roda, mas avisa no log.
           </p>
           <div class="grid grid-cols-2 gap-x-6 gap-y-3">
             <div class="campo">
-              <span>Modo</span>
+              <span data-i18n="campo_modo">Modo</span>
               <select id="ed-hh-modo" class="campo-input">
-                <option value="solo">Solo — a conta de reset não entra</option>
-                <option value="fada">Com a Fada — ela entra e cura</option>
+                <option value="solo" data-i18n="opt_hh_solo">Solo — a conta de reset não entra</option>
+                <option value="fada" data-i18n="opt_hh_fada">Com a Fada — ela entra e cura</option>
               </select>
-              <span class="ajuda" data-ajuda="SOLO: a conta de reset aceita o convite, o personagem entra e o time é desfeito na hora. Ela nunca entra na cave — é o mesmo que a Bewitcher Cave já faz.&#10;&#10;COM A FADA: as duas entram juntas. A Fada acompanha o personagem e cura quando precisa; ao sair, o time é desfeito e refeito, e só então dá para entrar de novo.">?</span>
+              <span class="ajuda" data-i18n-ajuda="ajuda_hh_modo" data-ajuda="SOLO: a conta de reset aceita o convite, o personagem entra e o time é desfeito na hora. Ela nunca entra na cave — é o mesmo que a Bewitcher Cave já faz.&#10;&#10;COM A FADA: as duas entram juntas. A Fada acompanha o personagem e cura quando precisa; ao sair, o time é desfeito e refeito, e só então dá para entrar de novo.">?</span>
             </div>
             <div class="campo">
-              <span>Conta de reset</span>
+              <span data-i18n="campo_conta_reset">Conta de reset</span>
               <select id="ed-hh-reset" class="campo-input"></select>
-              <span class="ajuda" data-ajuda="Só contas cadastradas NESTE bot. É isso que permite ao bot saber que ela caiu e segurar a entrada da cave, em vez de entrar sem reset e perder a run.">?</span>
+              <span class="ajuda" data-i18n-ajuda="ajuda_hh_conta_reset" data-ajuda="Só contas cadastradas NESTE bot. É isso que permite ao bot saber que ela caiu e segurar a entrada da cave, em vez de entrar sem reset e perder a run.">?</span>
             </div>
           </div>
         </div>
 
         <div class="grupo">
-          <div class="grupo-titulo">Combate</div>
-          <p class="text-[12px] text-slate-400 mb-2">
+          <div class="grupo-titulo" data-i18n="grupo_combate">Combate</div>
+          <p class="text-[12px] text-slate-400 mb-2" data-i18n-html="aviso_hh_combate">
             São <b>quatro bosses</b> em sequência, um por trecho da cave. O bot
             desmonta antes de cada luta (montado o jogo recusa as skills) e
             remonta para andar. Quem encerra cada luta é a flag de combate do
@@ -758,25 +769,25 @@
           </p>
           <div class="grid grid-cols-2 gap-x-6 gap-y-3">
             <div class="campo">
-              <span>Intervalo de ataque (ms)</span>
+              <span data-i18n="campo_intervalo_ataque">Intervalo de ataque (ms)</span>
               <input id="ed-hh-delay" type="number" min="100" max="5000" step="100" class="campo-input" />
-              <span class="ajuda" data-ajuda="Tempo entre duas teclas da rotação de ataque. O medido no jogo é 500 ms. Não é limite de recarga: skill em recarga não sai e a rotação segue para a próxima.">?</span>
+              <span class="ajuda" data-i18n-ajuda="ajuda_hh_delay" data-ajuda="Tempo entre duas teclas da rotação de ataque. O medido no jogo é 500 ms. Não é limite de recarga: skill em recarga não sai e a rotação segue para a próxima.">?</span>
             </div>
-            <label class="campo"><span>AoE até mana (%)</span>
+            <label class="campo"><span data-i18n="campo_aoe_mana">AoE até mana (%)</span>
               <input id="ed-hh-aoe" type="range" min="1" max="100" step="1" data-passo-roda="5" class="accent-blue-500" />
               <span class="valor-range text-[12px] text-blue-400 font-bold" id="val-hh-aoe"></span>
             </label>
             <div class="campo">
-              <span>Limpar mobs a cada (a pé)</span>
+              <span data-i18n="campo_limpar_mobs">Limpar mobs a cada (a pé)</span>
               <input id="ed-hh-limpar" type="number" min="0" max="20" step="1" class="campo-input" />
-              <span class="ajuda" data-ajuda="A pé, o bot para a cada N waypoints e limpa os mobs do caminho. Montado ele não para — e atravessar montado é a forma normal. 0 desliga a limpeza.">?</span>
+              <span class="ajuda" data-i18n-ajuda="ajuda_hh_limpar" data-ajuda="A pé, o bot para a cada N waypoints e limpa os mobs do caminho. Montado ele não para — e atravessar montado é a forma normal. 0 desliga a limpeza.">?</span>
             </div>
           </div>
         </div>
 
         <div class="grupo">
-          <div class="grupo-titulo">Venda</div>
-          <p class="text-[12px] text-slate-400 mb-2">
+          <div class="grupo-titulo" data-i18n="grupo_venda">Venda</div>
+          <p class="text-[12px] text-slate-400 mb-2" data-i18n-html="aviso_hh_venda">
             O vendedor da HH é o <b>Roaming Apothecary</b>, do lado de FORA da
             cave — a poucos passos da porta. Não gasta pedra de retorno nem token
             de guilda. Quem manda ir vender é a <b>bolsa</b> (aba Personagem); o
@@ -784,12 +795,12 @@
           </p>
           <div class="grid grid-cols-2 gap-x-6 gap-y-3">
             <div class="campo">
-              <span>Vender a partir do slot</span>
+              <span data-i18n="campo_vender_slot">Vender a partir do slot</span>
               <input id="ed-hh-slot" type="number" min="1" max="40" step="1" class="campo-input" />
-              <span class="ajuda" data-ajuda="Os primeiros slots são equipamento e consumível. Vender a partir deles seria vender o que o bot precisa.">?</span>
+              <span class="ajuda" data-i18n-ajuda="ajuda_hh_vender_slot" data-ajuda="Os primeiros slots são equipamento e consumível. Vender a partir deles seria vender o que o bot precisa.">?</span>
             </div>
             <div class="campo">
-              <span>Vender no máximo a cada (runs)</span>
+              <span data-i18n="campo_vender_max_runs">Vender no máximo a cada (runs)</span>
               <input id="ed-hh-runs" type="number" min="1" max="50" step="1" class="campo-input" />
             </div>
           </div>
@@ -798,8 +809,8 @@
 
 
       <div class="flex shrink-0 items-center justify-end gap-3 border-t border-line bg-panel px-4 py-3">
-        <button id="btn-cancelar-modal" class="bt bt-secundario">Cancelar</button>
-        <button id="btn-salvar-conta" class="bt bt-primario">Salvar Alterações</button>
+        <button id="btn-cancelar-modal" class="bt bt-secundario" data-i18n="btn_cancelar">Cancelar</button>
+        <button id="btn-salvar-conta" class="bt bt-primario" data-i18n="btn_salvar_alteracoes">Salvar Alterações</button>
       </div>
     </div>
   </div>
@@ -809,8 +820,8 @@
     <div class="w-[min(400px,90vw)] rounded-2xl border border-line bg-surface p-5 shadow-[0_24px_80px_rgba(0,0,0,0.5)]">
       <div id="lbl-confirmar-msg" class="mb-4 text-[13px] leading-relaxed text-ink"></div>
       <div class="flex justify-end gap-2">
-        <button id="btn-confirmar-nao" class="bt bt-secundario">Cancelar</button>
-        <button id="btn-confirmar-ok" class="bt bt-perigo">Confirmar</button>
+        <button id="btn-confirmar-nao" class="bt bt-secundario" data-i18n="btn_cancelar">Cancelar</button>
+        <button id="btn-confirmar-ok" class="bt bt-perigo" data-i18n="btn_confirmar">Confirmar</button>
       </div>
     </div>
   </div>

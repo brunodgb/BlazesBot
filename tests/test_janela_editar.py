@@ -20,6 +20,7 @@ Ver `docs/decisoes/interface.md`.
 
 from __future__ import annotations
 
+import json
 import re
 from pathlib import Path
 
@@ -273,10 +274,20 @@ def test_clicar_na_funcao_LIGADA_desliga():
 def test_a_dica_das_funcoes_diz_a_REGRA():
     """A dica ensinava "Marcada junto com BC, roda a HH" -- a combinação que
     deixou de existir. Três selos não deixam adivinhar nem que a escolha é
-    exclusiva, nem que clicar na ligada desliga."""
-    for texto in (JS, GUI):
-        assert "Marcada junto com BC" not in texto
-        assert "Uma função por conta" in texto
+    exclusiva, nem que clicar na ligada desliga.
+
+    A Web passou a ler a dica do dicionário de i18n (`dica_troca_funcao_1`);
+    a GUI PyQt6 continua com o texto literal -- ver `docs/SKILLS.md`, seção
+    "i18n", sobre a GUI ainda não ter sido convertida."""
+    assert "Marcada junto com BC" not in GUI
+    assert "Uma função por conta" in GUI
+
+    assert "Marcada junto com BC" not in JS
+    assert 't("dica_troca_funcao_1")' in JS
+    traducoes = json.loads(
+        (RAIZ / "blazesbot" / "locales" / "traducoes.json").read_text(encoding="utf-8"))
+    assert traducoes["dica_troca_funcao_1"]["pt-br"] == \
+        "Uma função por conta: marcar esta desliga a outra."
 
 
 def test_a_lista_do_time_NAO_remonta_a_regra():

@@ -1,39 +1,1556 @@
 {
-  "nav_contas": {"pt-br": "Contas", "en": "Accounts", "es": "Cuentas"},
-  "nav_cliente": {"pt-br": "Cliente", "en": "Client", "es": "Cliente"},
-  "nav_estatisticas": {"pt-br": "Estatísticas de BC", "en": "BC Stats", "es": "Estadísticas de BC"},
-  "nav_quedas": {"pt-br": "Histórico de Quedas", "en": "Disconnect History", "es": "Historial de Caídas"},
-  "nav_log": {"pt-br": "Log", "en": "Log", "es": "Registro"},
-  "nav_diagnostico": {"pt-br": "Diagnóstico", "en": "Diagnostics", "es": "Diagnóstico"},
-
-  "btn_iniciar": {"pt-br": "▶ Iniciar", "en": "▶ Start", "es": "▶ Iniciar"},
-  "btn_parar": {"pt-br": "⏹ Parar", "en": "⏹ Stop", "es": "⏹ Detener"},
-  "btn_pausar": {"pt-br": "⏸ Pausar", "en": "⏸ Pause", "es": "⏸ Pausar"},
-  "btn_retomar": {"pt-br": "▶ Retomar", "en": "▶ Resume", "es": "▶ Reanudar"},
-  "estado_parado": {"pt-br": "● Parado", "en": "● Stopped", "es": "● Detenido"},
-  "estado_rodando": {"pt-br": "● Rodando", "en": "● Running", "es": "● Corriendo"},
-  "estado_pausado": {"pt-br": "⏸ Pausado", "en": "⏸ Paused", "es": "⏸ Pausado"},
-
-  "titulo_contas": {"pt-br": "Contas", "en": "Accounts", "es": "Cuentas"},
-  "btn_adicionar_conta": {"pt-br": "＋ Adicionar conta", "en": "＋ Add account", "es": "＋ Agregar cuenta"},
-  "btn_remover_conta": {"pt-br": "Remover selecionada", "en": "Remove selected", "es": "Quitar seleccionada"},
+  "nav_contas": {
+    "pt-br": "Contas",
+    "en": "Accounts",
+    "es": "Cuentas"
+  },
+  "nav_cliente": {
+    "pt-br": "Cliente",
+    "en": "Client",
+    "es": "Cliente"
+  },
+  "nav_estatisticas": {
+    "pt-br": "Estatísticas de BC",
+    "en": "BC Stats",
+    "es": "Estadísticas de BC"
+  },
+  "nav_quedas": {
+    "pt-br": "Histórico de Quedas",
+    "en": "Disconnect History",
+    "es": "Historial de Caídas"
+  },
+  "nav_log": {
+    "pt-br": "Log",
+    "en": "Log",
+    "es": "Registro"
+  },
+  "nav_diagnostico": {
+    "pt-br": "Diagnóstico",
+    "en": "Diagnostics",
+    "es": "Diagnóstico"
+  },
+  "btn_iniciar": {
+    "pt-br": "▶ Iniciar",
+    "en": "▶ Start",
+    "es": "▶ Iniciar"
+  },
+  "btn_parar": {
+    "pt-br": "⏹ Parar",
+    "en": "⏹ Stop",
+    "es": "⏹ Detener"
+  },
+  "btn_pausar": {
+    "pt-br": "⏸ Pausar",
+    "en": "⏸ Pause",
+    "es": "⏸ Pausar"
+  },
+  "btn_retomar": {
+    "pt-br": "▶ Retomar",
+    "en": "▶ Resume",
+    "es": "▶ Reanudar"
+  },
+  "estado_parado": {
+    "pt-br": "● Parado",
+    "en": "● Stopped",
+    "es": "● Detenido"
+  },
+  "estado_rodando": {
+    "pt-br": "● Rodando",
+    "en": "● Running",
+    "es": "● Corriendo"
+  },
+  "estado_pausado": {
+    "pt-br": "⏸ Pausado",
+    "en": "⏸ Paused",
+    "es": "⏸ Pausado"
+  },
+  "titulo_contas": {
+    "pt-br": "Contas",
+    "en": "Accounts",
+    "es": "Cuentas"
+  },
+  "btn_adicionar_conta": {
+    "pt-br": "＋ Adicionar conta",
+    "en": "＋ Add account",
+    "es": "＋ Agregar cuenta"
+  },
+  "btn_remover_conta": {
+    "pt-br": "Remover selecionada",
+    "en": "Remove selected",
+    "es": "Quitar seleccionada"
+  },
   "aviso_senhas": {
     "pt-br": "Senhas cifradas com o Windows (DPAPI) — nunca saem para esta interface, apenas um indicador.",
     "en": "Passwords encrypted with Windows (DPAPI) — never leave this interface, only an indicator.",
     "es": "Contraseñas cifradas con Windows (DPAPI) — nunca salen de esta interfaz, solo un indicador."
   },
-
-  "col_ativa": {"pt-br": "Ativa", "en": "Active", "es": "Activa"},
-  "col_login": {"pt-br": "Login", "en": "Login", "es": "Usuario"},
-  "col_senha": {"pt-br": "Senha", "en": "Password", "es": "Contraseña"},
-  "col_run": {"pt-br": "Run", "en": "Run", "es": "Run"},
-  "col_servidor": {"pt-br": "Servidor", "en": "Server", "es": "Servidor"},
-  "col_posicao": {"pt-br": "Posição", "en": "Position", "es": "Posición"},
-  "col_funcao": {"pt-br": "Função", "en": "Role", "es": "Función"},
-  "col_editar": {"pt-br": "Editar", "en": "Edit", "es": "Editar"},
-
+  "col_ativa": {
+    "pt-br": "Ativa",
+    "en": "Active",
+    "es": "Activa"
+  },
+  "col_login": {
+    "pt-br": "Login",
+    "en": "Login",
+    "es": "Usuario"
+  },
+  "col_senha": {
+    "pt-br": "Senha",
+    "en": "Password",
+    "es": "Contraseña"
+  },
+  "col_run": {
+    "pt-br": "Run",
+    "en": "Run",
+    "es": "Run"
+  },
+  "col_servidor": {
+    "pt-br": "Servidor",
+    "en": "Server",
+    "es": "Servidor"
+  },
+  "col_posicao": {
+    "pt-br": "Posição",
+    "en": "Position",
+    "es": "Posición"
+  },
+  "col_funcao": {
+    "pt-br": "Função",
+    "en": "Role",
+    "es": "Función"
+  },
+  "col_editar": {
+    "pt-br": "Editar",
+    "en": "Edit",
+    "es": "Editar"
+  },
   "diag_dpapi_indisponivel": {
     "pt-br": "INDISPONÍVEL — senhas não podem ser guardadas",
     "en": "UNAVAILABLE — passwords cannot be stored"
+  },
+  "cliente_titulo": {
+    "pt-br": "Cliente",
+    "en": "Client",
+    "es": "Cliente"
+  },
+  "btn_salvar": {
+    "pt-br": "Salvar",
+    "en": "Save",
+    "es": "Guardar"
+  },
+  "campo_client_bat": {
+    "pt-br": "Caminho do Client.bat",
+    "en": "Client.bat Path",
+    "es": "Ruta del Client.bat"
+  },
+  "btn_procurar": {
+    "pt-br": "Procurar",
+    "en": "Browse",
+    "es": "Buscar"
+  },
+  "campo_resolucao": {
+    "pt-br": "Resolução do Jogo",
+    "en": "Game Resolution",
+    "es": "Resolución del Juego"
+  },
+  "campo_delay_lancamento": {
+    "pt-br": "Delay de lançamento (ms)",
+    "en": "Launch Delay (ms)",
+    "es": "Retraso de lanzamiento (ms)"
+  },
+  "ck_minimizar": {
+    "pt-br": "Minimizar clientes do jogo automaticamente",
+    "en": "Automatically minimize game clients",
+    "es": "Minimizar clientes del juego automáticamente"
+  },
+  "ck_reaproveitar": {
+    "pt-br": "Reaproveitar clientes parados na tela de login",
+    "en": "Reuse clients stopped at the login screen",
+    "es": "Reutilizar clientes detenidos en la pantalla de inicio de sesión"
+  },
+  "opt_detectar_automaticamente": {
+    "pt-br": "detectar automaticamente",
+    "en": "detect automatically",
+    "es": "detectar automáticamente"
+  },
+  "msg_config_cliente_salva": {
+    "pt-br": "Configuração do cliente salva.",
+    "en": "Client configuration saved.",
+    "es": "Configuración del cliente guardada."
+  },
+  "campo_personagem": {
+    "pt-br": "Personagem:",
+    "en": "Character:",
+    "es": "Personaje:"
+  },
+  "aviso_sem_runs": {
+    "pt-br": "Nenhuma run registrada ainda para mostrar.",
+    "en": "No run recorded yet to show.",
+    "es": "Todavía no hay ninguna run registrada para mostrar."
+  },
+  "stat_tempo_total": {
+    "pt-br": "⏱ Tempo total (run atual)",
+    "en": "⏱ Total time (current run)",
+    "es": "⏱ Tiempo total (run actual)"
+  },
+  "stat_tempo_boss": {
+    "pt-br": "🗺 Tempo até o boss (run atual)",
+    "en": "🗺 Time to boss (current run)",
+    "es": "🗺 Tiempo hasta el boss (run actual)"
+  },
+  "titulo_historico_dias": {
+    "pt-br": "Histórico de Dias Anteriores",
+    "en": "History of Previous Days",
+    "es": "Historial de Días Anteriores"
+  },
+  "col_dia": {
+    "pt-br": "Dia",
+    "en": "Day",
+    "es": "Día"
+  },
+  "col_stat_runs": {
+    "pt-br": "Runs",
+    "en": "Runs",
+    "es": "Runs"
+  },
+  "col_sucesso": {
+    "pt-br": "Sucesso",
+    "en": "Success",
+    "es": "Éxito"
+  },
+  "col_falhas": {
+    "pt-br": "Falhas",
+    "en": "Failures",
+    "es": "Fallos"
+  },
+  "col_tempo_boss": {
+    "pt-br": "Tempo até boss",
+    "en": "Time to boss",
+    "es": "Tiempo hasta boss"
+  },
+  "col_tempo_medio": {
+    "pt-br": "Tempo médio",
+    "en": "Average time",
+    "es": "Tiempo promedio"
+  },
+  "aviso_sem_historico": {
+    "pt-br": "Sem histórico de dias anteriores.",
+    "en": "No history of previous days.",
+    "es": "Sin historial de días anteriores."
+  },
+  "opt_personagem_runs": {
+    "pt-br": "{nick}  ({n} runs)",
+    "en": "{nick}  ({n} runs)",
+    "es": "{nick}  ({n} runs)"
+  },
+  "campo_conta": {
+    "pt-br": "Conta:",
+    "en": "Account:",
+    "es": "Cuenta:"
+  },
+  "btn_copiar_quedas": {
+    "pt-br": "Copiar relatório",
+    "en": "Copy report",
+    "es": "Copiar informe"
+  },
+  "btn_copiar_quedas_title": {
+    "pt-br": "Copia tudo, inclusive os detalhes técnicos, para você enviar ao suporte.",
+    "en": "Copies everything, including technical details, for you to send to support.",
+    "es": "Copia todo, incluidos los detalles técnicos, para que lo envíe al soporte."
+  },
+  "btn_abrir_pasta_quedas": {
+    "pt-br": "Abrir a pasta",
+    "en": "Open folder",
+    "es": "Abrir la carpeta"
+  },
+  "aviso_quedas_p1": {
+    "pt-br": "Toda vez que o jogo cai, o bot religa sozinho e anota aqui o que aconteceu.\n          Guardamos os últimos",
+    "en": "Every time the game disconnects, the bot reconnects on its own and notes here what happened.\n          We keep the last",
+    "es": "Cada vez que el juego se desconecta, el bot se reconecta solo y anota aquí lo que pasó.\n          Guardamos los últimos"
+  },
+  "aviso_quedas_p2": {
+    "pt-br": "dias.",
+    "en": "days.",
+    "es": "días."
+  },
+  "lupa_print_alt": {
+    "pt-br": "Print da tela no momento da queda",
+    "en": "Screenshot at the moment of the disconnect",
+    "es": "Captura de pantalla en el momento de la caída"
+  },
+  "opt_todas_as_contas": {
+    "pt-br": "Todas as contas",
+    "en": "All accounts",
+    "es": "Todas las cuentas"
+  },
+  "aviso_sem_quedas": {
+    "pt-br": "Nenhuma queda nos últimos {dias} dias.",
+    "en": "No disconnects in the last {dias} days.",
+    "es": "Ninguna caída en los últimos {dias} días."
+  },
+  "erro_abrir_print": {
+    "pt-br": "Não consegui abrir o print.",
+    "en": "Could not open the screenshot.",
+    "es": "No se pudo abrir la captura."
+  },
+  "erro_nada_para_copiar": {
+    "pt-br": "Nada para copiar.",
+    "en": "Nothing to copy.",
+    "es": "Nada para copiar."
+  },
+  "msg_relatorio_copiado": {
+    "pt-br": "Relatório copiado — pode colar e enviar para o suporte.",
+    "en": "Report copied — you can paste it and send it to support.",
+    "es": "Informe copiado — puede pegarlo y enviarlo al soporte."
+  },
+  "queda_rodando_ha": {
+    "pt-br": "rodando há {tempo}",
+    "en": "running for {tempo}",
+    "es": "corriendo hace {tempo}"
+  },
+  "queda_religou": {
+    "pt-br": "religou sozinho (relogin #{n})",
+    "en": "reconnected on its own (relogin #{n})",
+    "es": "se reconectó solo (relogin #{n})"
+  },
+  "rotulo_conta_minusculo": {
+    "pt-br": "conta",
+    "en": "account",
+    "es": "cuenta"
+  },
+  "log_detalhado": {
+    "pt-br": "detalhado",
+    "en": "detailed",
+    "es": "detallado"
+  },
+  "btn_limpar": {
+    "pt-br": "Limpar",
+    "en": "Clear",
+    "es": "Limpiar"
+  },
+  "btn_copiar": {
+    "pt-br": "Copiar",
+    "en": "Copy",
+    "es": "Copiar"
+  },
+  "btn_abrir_pasta_log": {
+    "pt-br": "Abrir Pasta",
+    "en": "Open Folder",
+    "es": "Abrir Carpeta"
+  },
+  "dica_copiar_linha_log": {
+    "pt-br": "Clique direito para copiar esta linha",
+    "en": "Right-click to copy this line",
+    "es": "Clic derecho para copiar esta línea"
+  },
+  "msg_linha_copiada": {
+    "pt-br": "Linha copiada",
+    "en": "Line copied",
+    "es": "Línea copiada"
+  },
+  "erro_copiar": {
+    "pt-br": "Falha ao copiar",
+    "en": "Failed to copy",
+    "es": "Fallo al copiar"
+  },
+  "log_linhas_exibidas": {
+    "pt-br": "linhas exibidas",
+    "en": "lines shown",
+    "es": "líneas mostradas"
+  },
+  "msg_log_limpo": {
+    "pt-br": "Log limpo.",
+    "en": "Log cleared.",
+    "es": "Registro limpiado."
+  },
+  "msg_nada_para_copiar": {
+    "pt-br": "Nada para copiar ainda.",
+    "en": "Nothing to copy yet.",
+    "es": "Nada para copiar todavía."
+  },
+  "msg_log_copiado": {
+    "pt-br": "Log copiado para a área de transferência.",
+    "en": "Log copied to the clipboard.",
+    "es": "Registro copiado al portapapeles."
+  },
+  "erro_copiar_log": {
+    "pt-br": "Não foi possível copiar o log.",
+    "en": "Could not copy the log.",
+    "es": "No se pudo copiar el registro."
+  },
+  "btn_testar_venda": {
+    "pt-br": "Testar Venda (Conta Selecionada)",
+    "en": "Test Sale (Selected Account)",
+    "es": "Probar Venta (Cuenta Seleccionada)"
+  },
+  "btn_testar_venda_title": {
+    "pt-br": "Só a venda: vai até o vendedor e vende. Exige o bot PARADO e o personagem já em Stone City. Enquanto roda, este botão vira o cancelar.",
+    "en": "Only the sale: goes to the vendor and sells. Requires the bot STOPPED and the character already in Stone City. While it runs, this button becomes the cancel.",
+    "es": "Solo la venta: va hasta el vendedor y vende. Requiere el bot DETENIDO y el personaje ya en Stone City. Mientras corre, este botón se convierte en cancelar."
+  },
+  "btn_amostrar_cliques": {
+    "pt-br": "Amostrar Cliques (Ponto Atual)",
+    "en": "Sample Clicks (Current Point)",
+    "es": "Muestrear Clics (Punto Actual)"
+  },
+  "btn_amostrar_cliques_title": {
+    "pt-br": "Varre um grid de coordenadas de clique DIREITO em volta do alvo atual e ranqueia por taxa de abertura do diálogo e latência. Exige o bot PARADO e o personagem parado num ponto de clique direito: vendedor ou Transport Fay (Stone City), entrada da cave (Ghost Din Woods) ou saída da cave (dentro do covil). O Altar Stone fica de fora. Enquanto roda, este botão vira o cancelar.",
+    "en": "Sweeps a grid of RIGHT-click coordinates around the current target and ranks them by dialog-open rate and latency. Requires the bot STOPPED and the character standing at a right-click point: vendor or Transport Fay (Stone City), cave entrance (Ghost Din Woods) or cave exit (inside the lair). The Altar Stone is left out. While it runs, this button becomes the cancel.",
+    "es": "Recorre una cuadrícula de coordenadas de clic DERECHO alrededor del objetivo actual y las clasifica por tasa de apertura del diálogo y latencia. Requiere el bot DETENIDO y el personaje parado en un punto de clic derecho: vendedor o Transport Fay (Stone City), entrada de la cueva (Ghost Din Woods) o salida de la cueva (dentro de la guarida). El Altar Stone queda fuera. Mientras corre, este botón se convierte en cancelar."
+  },
+  "btn_conferir_exclusao": {
+    "pt-br": "Conferir Modelos de Exclusão",
+    "en": "Check Deletion Models",
+    "es": "Revisar Modelos de Exclusión"
+  },
+  "btn_conferir_exclusao_title": {
+    "pt-br": "Fotografa a sua bolsa e DESENHA o que os modelos apagariam — sem apagar nada. Use antes de confiar na limpeza automática do modo APP: deletar não tem desfazer.",
+    "en": "Photographs your bag and DRAWS what the models would delete — without deleting anything. Use before trusting the APP mode's automatic cleanup: deleting cannot be undone.",
+    "es": "Fotografía su bolsa y DIBUJA lo que los modelos borrarían — sin borrar nada. Úselo antes de confiar en la limpieza automática del modo APP: borrar no tiene deshacer."
+  },
+  "btn_abrir_pasta_diag": {
+    "pt-br": "Abrir Pasta de Logs",
+    "en": "Open Logs Folder",
+    "es": "Abrir Carpeta de Registros"
+  },
+  "diag_dpapi_label": {
+    "pt-br": "Criptografia de senha (DPAPI)",
+    "en": "Password encryption (DPAPI)",
+    "es": "Cifrado de contraseña (DPAPI)"
+  },
+  "diag_resolucao_label": {
+    "pt-br": "Resolução validada",
+    "en": "Validated resolution",
+    "es": "Resolución validada"
+  },
+  "diag_status_label": {
+    "pt-br": "Status do bot",
+    "en": "Bot status",
+    "es": "Estado del bot"
+  },
+  "diag_arquivos_titulo": {
+    "pt-br": "🩺 Arquivos de Escrita Contínua",
+    "en": "🩺 Continuously Written Files",
+    "es": "🩺 Archivos de Escritura Continua"
+  },
+  "diag_arquivos_p1": {
+    "pt-br": "<code>logs/localizacao.log</code> — toda mudança e\n                toda <b>FALHA</b> de leitura do nome do lugar.",
+    "en": "<code>logs/localizacao.log</code> — every change and\n                every <b>FAILURE</b> to read the location name.",
+    "es": "<code>logs/localizacao.log</code> — cada cambio y\n                cada <b>FALLO</b> al leer el nombre del lugar."
+  },
+  "diag_arquivos_p2": {
+    "pt-br": "<code>logs/eventos.log</code> — anomalias de jogo\n                (morte, travamento, rollback).",
+    "en": "<code>logs/eventos.log</code> — game anomalies\n                (death, freeze, rollback).",
+    "es": "<code>logs/eventos.log</code> — anomalías del juego\n                (muerte, congelamiento, rollback)."
+  },
+  "diag_arquivos_p3": {
+    "pt-br": "<code>logs/sessao-atual.log</code> — log da execução\n                atual.",
+    "en": "<code>logs/sessao-atual.log</code> — log of the current\n                run.",
+    "es": "<code>logs/sessao-atual.log</code> — registro de la ejecución\n                actual."
+  },
+  "diag_ponteiro_titulo": {
+    "pt-br": "🔎 Ponteiro de Localização",
+    "en": "🔎 Location Pointer",
+    "es": "🔎 Puntero de Ubicación"
+  },
+  "diag_ponteiro_p1": {
+    "pt-br": "O bot decide onde está por duas fontes: nome na\n                memória e <b>COORDENADA</b>. Com o ponteiro quebrado, o bot segue farmando via coordenada.",
+    "en": "The bot decides where it is from two sources: the name in\n                memory and the <b>COORDINATE</b>. With the pointer broken, the bot keeps farming via coordinate.",
+    "es": "El bot decide dónde está a partir de dos fuentes: el nombre en\n                memoria y la <b>COORDENADA</b>. Con el puntero roto, el bot sigue farmeando por coordenada."
+  },
+  "diag_ponteiro_p2": {
+    "pt-br": "Para depurar, rode <code>8-VIGIAR-LOCALIZACAO.bat</code>.",
+    "en": "To debug, run <code>8-VIGIAR-LOCALIZACAO.bat</code>.",
+    "es": "Para depurar, ejecute <code>8-VIGIAR-LOCALIZACAO.bat</code>."
+  },
+  "diag_pausado": {
+    "pt-br": "Pausado",
+    "en": "Paused",
+    "es": "Pausado"
+  },
+  "diag_rodando": {
+    "pt-br": "Rodando",
+    "en": "Running",
+    "es": "Corriendo"
+  },
+  "diag_parado": {
+    "pt-br": "Parado",
+    "en": "Stopped",
+    "es": "Detenido"
+  },
+  "diag_dpapi_disponivel": {
+    "pt-br": "Disponível (senhas cifradas com o Windows)",
+    "en": "Available (passwords encrypted with Windows)",
+    "es": "Disponible (contraseñas cifradas con Windows)"
+  },
+  "dica_selecione_conta": {
+    "pt-br": "Selecione uma conta na aba Contas",
+    "en": "Select an account in the Accounts tab",
+    "es": "Seleccione una cuenta en la pestaña Cuentas"
+  },
+  "dica_pare_o_bot": {
+    "pt-br": "Pare o bot primeiro",
+    "en": "Stop the bot first",
+    "es": "Detenga el bot primero"
+  },
+  "erro_selecione_conta": {
+    "pt-br": "Selecione a conta na aba Contas primeiro.",
+    "en": "Select the account in the Accounts tab first.",
+    "es": "Seleccione la cuenta en la pestaña Cuentas primero."
+  },
+  "rotulo_cancelando": {
+    "pt-br": "Cancelando…",
+    "en": "Cancelling…",
+    "es": "Cancelando…"
+  },
+  "rotulo_vendendo": {
+    "pt-br": "Vendendo… (clique para parar)",
+    "en": "Selling… (click to stop)",
+    "es": "Vendiendo… (clic para detener)"
+  },
+  "msg_teste_venda_iniciado": {
+    "pt-br": "Teste de venda iniciado — acompanhe pelo log.",
+    "en": "Sale test started — follow it in the log.",
+    "es": "Prueba de venta iniciada — siga por el registro."
+  },
+  "erro_comunicacao": {
+    "pt-br": "Erro de comunicação.",
+    "en": "Communication error.",
+    "es": "Error de comunicación."
+  },
+  "msg_teste_concluido": {
+    "pt-br": "Teste concluído: {n} item(ns) vendido(s).",
+    "en": "Test completed: {n} item(s) sold.",
+    "es": "Prueba completada: {n} artículo(s) vendido(s)."
+  },
+  "erro_teste": {
+    "pt-br": "Falha no teste",
+    "en": "Test failed",
+    "es": "Fallo en la prueba"
+  },
+  "rotulo_amostrando": {
+    "pt-br": "Amostrando… (clique para parar)",
+    "en": "Sampling… (click to stop)",
+    "es": "Muestreando… (clic para detener)"
+  },
+  "msg_amostragem_iniciada": {
+    "pt-br": "Amostragem iniciada — acompanhe pelo log.",
+    "en": "Sampling started — follow it in the log.",
+    "es": "Muestreo iniciado — siga por el registro."
+  },
+  "erro_amostragem": {
+    "pt-br": "Falha na amostragem",
+    "en": "Sampling failed",
+    "es": "Fallo en el muestreo"
+  },
+  "msg_amostragem_concluida": {
+    "pt-br": "Amostragem concluída.",
+    "en": "Sampling completed.",
+    "es": "Muestreo completado."
+  },
+  "msg_conferindo_modelos": {
+    "pt-br": "Conferindo os modelos — abrindo o inventário…",
+    "en": "Checking the models — opening the inventory…",
+    "es": "Revisando los modelos — abriendo el inventario…"
+  },
+  "erro_generico": {
+    "pt-br": "Falha",
+    "en": "Failed",
+    "es": "Fallo"
+  },
+  "msg_conferencia_concluida": {
+    "pt-br": "Conferência concluída.",
+    "en": "Check completed.",
+    "es": "Revisión completada."
+  },
+  "modal_editar_conta": {
+    "pt-br": "Editar conta",
+    "en": "Edit account",
+    "es": "Editar cuenta"
+  },
+  "btn_fechar_title": {
+    "pt-br": "Fechar",
+    "en": "Close",
+    "es": "Cerrar"
+  },
+  "aba_personagem": {
+    "pt-br": "Personagem",
+    "en": "Character",
+    "es": "Personaje"
+  },
+  "aba_teclas": {
+    "pt-br": "Teclas",
+    "en": "Keys",
+    "es": "Teclas"
+  },
+  "aba_app": {
+    "pt-br": "APP",
+    "en": "APP",
+    "es": "APP"
+  },
+  "aba_bc": {
+    "pt-br": "Bewitcher Cave",
+    "en": "Bewitcher Cave",
+    "es": "Bewitcher Cave"
+  },
+  "aba_hh": {
+    "pt-br": "HH",
+    "en": "HH",
+    "es": "HH"
+  },
+  "campo_login": {
+    "pt-br": "Login",
+    "en": "Login",
+    "es": "Usuario"
+  },
+  "ph_novo_login": {
+    "pt-br": "Novo login...",
+    "en": "New login...",
+    "es": "Nuevo usuario..."
+  },
+  "campo_senha": {
+    "pt-br": "Senha",
+    "en": "Password",
+    "es": "Contraseña"
+  },
+  "ph_branco_mantem": {
+    "pt-br": "Branco mantém",
+    "en": "Blank keeps it",
+    "es": "En blanco lo mantiene"
+  },
+  "campo_nick": {
+    "pt-br": "Nick do Personagem (Janela)",
+    "en": "Character Nick (Window)",
+    "es": "Nick del Personaje (Ventana)"
+  },
+  "campo_montaria": {
+    "pt-br": "Velocidade da Montaria",
+    "en": "Mount Speed",
+    "es": "Velocidad de la Montura"
+  },
+  "campo_grupo": {
+    "pt-br": "Grupo",
+    "en": "Group",
+    "es": "Grupo"
+  },
+  "ajuda_grupo": {
+    "pt-br": "Rótulo só para VOCÊ organizar a lista de contas. Contas com o mesmo grupo aparecem juntas na tabela, com um cabeçalho.\n\nNÃO é o time do modo APP nem a party da cave — o bot não muda nada por causa deste campo.\n\nDeixe vazio para a conta ficar fora de qualquer grupo. Você também pode arrastar a conta pela alça (⠿) para dentro de outro grupo.",
+    "en": "A label only for YOU to organize the account list. Accounts with the same group appear together in the table, with a header.\n\nIt is NOT the APP mode team nor the cave party — the bot changes nothing because of this field.\n\nLeave it empty for the account to stay outside any group. You can also drag the account by the handle (⠿) into another group.",
+    "es": "Una etiqueta solo para que USTED organice la lista de cuentas. Las cuentas con el mismo grupo aparecen juntas en la tabla, con un encabezado.\n\nNO es el equipo del modo APP ni la party de la cueva — el bot no cambia nada por este campo.\n\nDéjelo vacío para que la cuenta quede fuera de cualquier grupo. También puede arrastrar la cuenta por el asa (⠿) hacia otro grupo."
+  },
+  "ph_sem_grupo": {
+    "pt-br": "sem grupo",
+    "en": "no group",
+    "es": "sin grupo"
+  },
+  "ck_aceitar_time": {
+    "pt-br": "Aceitar convites de time (conta que reseta cave)",
+    "en": "Accept team invites (account that resets the cave)",
+    "es": "Aceptar invitaciones de equipo (cuenta que reinicia la cueva)"
+  },
+  "ck_catador": {
+    "pt-br": "Catar loot do chão",
+    "en": "Pick up loot from the ground",
+    "es": "Recoger botín del suelo"
+  },
+  "ajuda_catador": {
+    "pt-br": "Cata o loot do chão depois de matar o boss, para quem tem pet SEM a skill de auto pick. Com o pet certo, deixe desmarcado — ele já pega sozinho.",
+    "en": "Picks up loot from the ground after killing the boss, for those whose pet does NOT have the auto-pick skill. With the right pet, leave it unchecked — it already picks it up on its own.",
+    "es": "Recoge el botín del suelo después de matar al boss, para quien tiene una mascota SIN la skill de auto pick. Con la mascota correcta, déjelo desmarcado — ya lo recoge sola."
+  },
+  "grupo_pet": {
+    "pt-br": "Configurações de Pet",
+    "en": "Pet Settings",
+    "es": "Configuración de Mascota"
+  },
+  "ck_pet_summon": {
+    "pt-br": "Invocar ao\n                entrar",
+    "en": "Summon on\n                login",
+    "es": "Invocar al\n                entrar"
+  },
+  "ck_pet_feed_start": {
+    "pt-br": "Alimentar ao\n                iniciar",
+    "en": "Feed on\n                start",
+    "es": "Alimentar al\n                iniciar"
+  },
+  "campo_pet_feed_min": {
+    "pt-br": "Alimentar a cada (min):",
+    "en": "Feed every (min):",
+    "es": "Alimentar cada (min):"
+  },
+  "grupo_pocoes": {
+    "pt-br": "Regras de Poções e HP",
+    "en": "Potion and HP Rules",
+    "es": "Reglas de Pociones y HP"
+  },
+  "campo_hp_alvo": {
+    "pt-br": "HP alvo (%)",
+    "en": "Target HP (%)",
+    "es": "HP objetivo (%)"
+  },
+  "campo_hp_batalha": {
+    "pt-br": "HP de batalha (%)",
+    "en": "Battle HP (%)",
+    "es": "HP de batalla (%)"
+  },
+  "campo_emergencia": {
+    "pt-br": "Emergência (%)",
+    "en": "Emergency (%)",
+    "es": "Emergencia (%)"
+  },
+  "campo_uso_bolsas": {
+    "pt-br": "Uso de Bolsas",
+    "en": "Bag Usage",
+    "es": "Uso de Bolsas"
+  },
+  "aviso_teclas_1": {
+    "pt-br": "Clique no campo e aperte a tecla.",
+    "en": "Click the field and press the key.",
+    "es": "Haga clic en el campo y presione la tecla."
+  },
+  "aviso_teclas_2": {
+    "pt-br": "limpa.",
+    "en": "clears it.",
+    "es": "lo borra."
+  },
+  "grupo_combate_base": {
+    "pt-br": "Combate Base",
+    "en": "Base Combat",
+    "es": "Combate Base"
+  },
+  "tecla_atk1": {
+    "pt-br": "Ataque 1",
+    "en": "Attack 1",
+    "es": "Ataque 1"
+  },
+  "tecla_atk2": {
+    "pt-br": "Ataque 2",
+    "en": "Attack 2",
+    "es": "Ataque 2"
+  },
+  "tecla_atk3": {
+    "pt-br": "Ataque 3",
+    "en": "Attack 3",
+    "es": "Ataque 3"
+  },
+  "tecla_atk4": {
+    "pt-br": "Ataque 4",
+    "en": "Attack 4",
+    "es": "Ataque 4"
+  },
+  "tecla_break_soul": {
+    "pt-br": "Break Soul",
+    "en": "Break Soul",
+    "es": "Break Soul"
+  },
+  "dica_sem_tecla": {
+    "pt-br": "Sem tecla: o bot não usa esta ação",
+    "en": "No key: the bot doesn't use this action",
+    "es": "Sin tecla: el bot no usa esta acción"
+  },
+  "dica_sem_atalho": {
+    "pt-br": "Sem atalho: o bot não usa esta ação",
+    "en": "No shortcut: the bot doesn't use this action",
+    "es": "Sin atajo: el bot no usa esta acción"
+  },
+  "grupo_magias": {
+    "pt-br": "Magias de Suporte",
+    "en": "Support Spells",
+    "es": "Hechizos de Soporte"
+  },
+  "tecla_super_skill": {
+    "pt-br": "Super Skill",
+    "en": "Super Skill",
+    "es": "Super Skill"
+  },
+  "tecla_cura": {
+    "pt-br": "Cura",
+    "en": "Heal",
+    "es": "Curación"
+  },
+  "tecla_reviver": {
+    "pt-br": "Reviver",
+    "en": "Revive",
+    "es": "Revivir"
+  },
+  "tecla_buff1": {
+    "pt-br": "Buff 1",
+    "en": "Buff 1",
+    "es": "Buff 1"
+  },
+  "tecla_buff2": {
+    "pt-br": "Buff 2",
+    "en": "Buff 2",
+    "es": "Buff 2"
+  },
+  "tecla_buff3": {
+    "pt-br": "Buff 3",
+    "en": "Buff 3",
+    "es": "Buff 3"
+  },
+  "tecla_buff4": {
+    "pt-br": "Buff 4",
+    "en": "Buff 4",
+    "es": "Buff 4"
+  },
+  "grupo_consumiveis": {
+    "pt-br": "Consumíveis & Deslocamento",
+    "en": "Consumables & Movement",
+    "es": "Consumibles y Desplazamiento"
+  },
+  "tecla_pocao_hp": {
+    "pt-br": "Poção HP",
+    "en": "HP Potion",
+    "es": "Poción HP"
+  },
+  "tecla_pocao_hp_luta": {
+    "pt-br": "Poção HP (luta)",
+    "en": "HP Potion (battle)",
+    "es": "Poción HP (combate)"
+  },
+  "tecla_comida_pet": {
+    "pt-br": "Comida Pet",
+    "en": "Pet Food",
+    "es": "Comida de Mascota"
+  },
+  "tecla_retorno": {
+    "pt-br": "Retorno",
+    "en": "Return",
+    "es": "Retorno"
+  },
+  "tecla_montaria": {
+    "pt-br": "Montaria",
+    "en": "Mount",
+    "es": "Montura"
+  },
+  "tecla_velocidade": {
+    "pt-br": "Velocidade",
+    "en": "Speed",
+    "es": "Velocidad"
+  },
+  "grupo_interface_sistema": {
+    "pt-br": "Interface & Sistema",
+    "en": "Interface & System",
+    "es": "Interfaz y Sistema"
+  },
+  "tecla_guild_token": {
+    "pt-br": "Guild Token",
+    "en": "Guild Token",
+    "es": "Guild Token"
+  },
+  "tecla_pet_invoc": {
+    "pt-br": "Pet Invoc",
+    "en": "Pet Summon",
+    "es": "Invocar Mascota"
+  },
+  "tecla_auto_alvo": {
+    "pt-br": "Auto-alvo",
+    "en": "Self-target",
+    "es": "Autoobjetivo"
+  },
+  "ajuda_auto_alvo": {
+    "pt-br": "A tecla que seleciona o PRÓPRIO personagem (F1 no padrão do jogo).\n\nPara que serve: cada conta aperta essa tecla uma vez ao entrar no time e lê o próprio identificador na memória. É esse número que a Fada compara depois de clicar no retrato, para ter certeza de que selecionou quem pediu cura.\n\nSEM ELA A CONTA NÃO É CURÁVEL pela Fada: sem o identificador não há como confirmar o clique, e curar sem confirmar cura o aliado errado.",
+    "en": "The key that selects the character's OWN self (F1 by the game's default).\n\nWhat it's for: each account presses this key once when joining the team and reads its own identifier from memory. That's the number the Fairy compares after clicking the portrait, to make sure it selected whoever asked for healing.\n\nWITHOUT IT THE ACCOUNT CANNOT BE HEALED by the Fairy: without the identifier there's no way to confirm the click, and healing without confirming heals the wrong ally.",
+    "es": "La tecla que selecciona al PROPIO personaje (F1 por defecto en el juego).\n\nPara qué sirve: cada cuenta presiona esta tecla una vez al entrar al equipo y lee su propio identificador de la memoria. Ese es el número que la Hada compara después de hacer clic en el retrato, para asegurarse de que seleccionó a quien pidió curación.\n\nSIN ELLA LA CUENTA NO ES CURABLE por la Hada: sin el identificador no hay forma de confirmar el clic, y curar sin confirmar cura al aliado equivocado."
+  },
+  "tecla_seguir": {
+    "pt-br": "Seguir",
+    "en": "Follow",
+    "es": "Seguir"
+  },
+  "ajuda_seguir": {
+    "pt-br": "A tecla de SEGUIR o alvo selecionado (o \"follow\" do jogo).\n\nUsada SÓ no modo HH + Fada: a curandeira clica no retrato do líder, aperta esta tecla, e o JOGO caminha por ela — seguir não tem como sair da rota, diferente de refazer os waypoints por conta própria.\n\nSEM ATALHO PADRÃO NO CLIENTE: configure no jogo primeiro e repita aqui. Deixada vazia, a Fada avisa no log e não tenta seguir — chutar uma tecla faria ela apertar algo que faz outra coisa.",
+    "en": "The key to FOLLOW the selected target (the game's \"follow\").\n\nUsed ONLY in HH + Fairy mode: the healer clicks the leader's portrait, presses this key, and the GAME walks for her — following can't drift off the route, unlike redoing the waypoints on its own.\n\nNO DEFAULT SHORTCUT IN THE CLIENT: set it up in the game first and repeat it here. Left empty, the Fairy warns in the log and doesn't try to follow — guessing a key would make her press something that does something else.",
+    "es": "La tecla para SEGUIR el objetivo seleccionado (el \"follow\" del juego).\n\nUsada SOLO en el modo HH + Hada: la curandera hace clic en el retrato del líder, presiona esta tecla, y el JUEGO camina por ella — seguir no puede salirse de la ruta, a diferencia de rehacer los waypoints por cuenta propia.\n\nSIN ATAJO PREDETERMINADO EN EL CLIENTE: configúrelo en el juego primero y repítalo aquí. Dejada vacía, la Hada avisa en el registro y no intenta seguir — adivinar una tecla haría que presione algo que hace otra cosa."
+  },
+  "tecla_sentar": {
+    "pt-br": "Sentar",
+    "en": "Sit",
+    "es": "Sentarse"
+  },
+  "tecla_prox_alvo": {
+    "pt-br": "Prox Alvo",
+    "en": "Next Target",
+    "es": "Sig. Objetivo"
+  },
+  "tecla_inventario": {
+    "pt-br": "Inventário",
+    "en": "Inventory",
+    "es": "Inventario"
+  },
+  "tecla_amigos": {
+    "pt-br": "Amigos",
+    "en": "Friends",
+    "es": "Amigos"
+  },
+  "tecla_hotbar1": {
+    "pt-br": "Hotbar 1",
+    "en": "Hotbar 1",
+    "es": "Hotbar 1"
+  },
+  "ajuda_hotbar1": {
+    "pt-br": "Faz o bot voltar à página 1 da barra de atalhos, que é a usada pelo bot.\n\nComo configurar no jogo:\n1. Aperte ESC\n2. Clique em Keys\n3. Procure “Main Hotkey Page 1” e escolha uma tecla livre\n4. Apague as teclas de Page 2 e Page 3 — sem elas, nada tira a barra da página 1 por acidente\n\nÉ opcional: sem tecla configurada o bot continua clicando no botão, como sempre fez.",
+    "en": "Makes the bot go back to page 1 of the hotkey bar, the one the bot uses.\n\nHow to set it up in the game:\n1. Press ESC\n2. Click Keys\n3. Find “Main Hotkey Page 1” and pick a free key\n4. Clear the keys for Page 2 and Page 3 — without them, nothing accidentally takes the bar off page 1\n\nIt's optional: with no key configured the bot keeps clicking the button, as it always has.",
+    "es": "Hace que el bot vuelva a la página 1 de la barra de atajos, que es la que usa el bot.\n\nCómo configurarlo en el juego:\n1. Presione ESC\n2. Haga clic en Keys\n3. Busque “Main Hotkey Page 1” y elija una tecla libre\n4. Borre las teclas de Page 2 y Page 3 — sin ellas, nada saca la barra de la página 1 por accidente\n\nEs opcional: sin tecla configurada el bot sigue haciendo clic en el botón, como siempre."
+  },
+  "tecla_esconder_pl": {
+    "pt-br": "Esconder pl.",
+    "en": "Hide players",
+    "es": "Ocultar jug."
+  },
+  "ajuda_esconder_pl": {
+    "pt-br": "Esconde os outros jogadores da tela.\n\nComo configurar no jogo:\n1. Aperte ESC\n2. Clique em Keys\n3. Procure a tecla de esconder personagens (F12 costuma ser o padrão)\n\nPara que serve aqui: o catador de loot clica no CHÃO, e outro personagem em cima do cadáver muda o que o clique acerta. O bot usa o truque de segurar esta tecla e abrir o chat, que faz o esconder GRUDAR até o fim da sessão — e refaz isso antes de cada entrada na cave, porque apertar a tecla de novo desfaz.\n\nÉ opcional: sem tecla configurada o bot não mexe nisso.",
+    "en": "Hides other players from the screen.\n\nHow to set it up in the game:\n1. Press ESC\n2. Click Keys\n3. Find the hide-players key (F12 is usually the default)\n\nWhat it's for here: the loot picker clicks the GROUND, and another character standing on the corpse changes what the click hits. The bot uses the trick of holding this key and opening chat, which makes the hide STICK until the end of the session — and redoes it before every cave entry, because pressing the key again undoes it.\n\nIt's optional: with no key configured the bot doesn't touch this.",
+    "es": "Oculta a los demás jugadores de la pantalla.\n\nCómo configurarlo en el juego:\n1. Presione ESC\n2. Haga clic en Keys\n3. Busque la tecla de ocultar personajes (F12 suele ser la predeterminada)\n\nPara qué sirve aquí: el recolector de botín hace clic en el SUELO, y otro personaje sobre el cadáver cambia lo que el clic golpea. El bot usa el truco de mantener presionada esta tecla y abrir el chat, lo que hace que el ocultar SE MANTENGA hasta el final de la sesión — y lo rehace antes de cada entrada a la cueva, porque presionar la tecla de nuevo lo deshace.\n\nEs opcional: sin tecla configurada el bot no toca esto."
+  },
+  "grupo_modo_app": {
+    "pt-br": "Modo APP",
+    "en": "APP Mode",
+    "es": "Modo APP"
+  },
+  "ck_app_ligado": {
+    "pt-br": "Ativar Modo APP (macro independente)",
+    "en": "Enable APP Mode (independent macro)",
+    "es": "Activar Modo APP (macro independiente)"
+  },
+  "grupo_comportamento": {
+    "pt-br": "Comportamento",
+    "en": "Behavior",
+    "es": "Comportamiento"
+  },
+  "campo_limpar_bolsa": {
+    "pt-br": "Limpar a bolsa a cada",
+    "en": "Clear the bag every",
+    "es": "Limpiar la bolsa cada"
+  },
+  "campo_limpar_bolsa_title": {
+    "pt-br": "A cada tantas voltas da sequência, o bot abre o inventário (tecla da aba Teclas) e apaga os itens que reconhecer como lixo. 0 = nunca fazer isso.",
+    "en": "Every so many laps of the sequence, the bot opens the inventory (key from the Keys tab) and deletes the items it recognizes as junk. 0 = never do this.",
+    "es": "Cada tantas vueltas de la secuencia, el bot abre el inventario (tecla de la pestaña Teclas) y borra los objetos que reconoce como basura. 0 = nunca hacer esto."
+  },
+  "ck_travar_posicao": {
+    "pt-br": "Travar posição ao iniciar o APP",
+    "en": "Lock position when starting APP",
+    "es": "Bloquear posición al iniciar el APP"
+  },
+  "ck_travar_posicao_title": {
+    "pt-br": "Trava o personagem na posição em que o APP foi iniciado. Se ele andar mais de 1 unidade, volta andando (sem montura).",
+    "en": "Locks the character to the position where APP was started. If it walks more than 1 unit, it walks back (without a mount).",
+    "es": "Bloquea al personaje en la posición en la que se inició el APP. Si camina más de 1 unidad, vuelve caminando (sin montura)."
+  },
+  "campo_shuffle": {
+    "pt-br": "Shuffle a cada (voltas)",
+    "en": "Shuffle every (laps)",
+    "es": "Shuffle cada (vueltas)"
+  },
+  "campo_shuffle_title": {
+    "pt-br": "A cada N voltas SEM MOVIMENTO, dá um passo lateral de 6 pixels e volta — anti-AFK leve.",
+    "en": "Every N laps WITHOUT MOVEMENT, it takes a 6-pixel side step and back — a light anti-AFK.",
+    "es": "Cada N vueltas SIN MOVIMIENTO, da un paso lateral de 6 píxeles y vuelve — un anti-AFK leve."
+  },
+  "grupo_time": {
+    "pt-br": "Time",
+    "en": "Team",
+    "es": "Equipo"
+  },
+  "ajuda_time": {
+    "pt-br": "Faz outras contas rodarem ESTA macro junto com esta conta.\n\nQuem monta o time é o LÍDER: as contas escolhidas aqui viram seguidoras e usam a macro desta conta enquanto o time estiver rodando — o config delas não é alterado.\n\nSó a macro é emprestada. Trava de posição, cura e a tecla de próximo alvo continuam sendo as de cada conta.",
+    "en": "Makes other accounts run THIS macro together with this account.\n\nThe LEADER is who assembles the team: the accounts chosen here become followers and use this account's macro while the team is running — their own config is not changed.\n\nOnly the macro is borrowed. Position lock, healing and the next-target key remain each account's own.",
+    "es": "Hace que otras cuentas ejecuten ESTA macro junto con esta cuenta.\n\nQuien arma el equipo es el LÍDER: las cuentas elegidas aquí se convierten en seguidoras y usan la macro de esta cuenta mientras el equipo esté corriendo — su propia configuración no se modifica.\n\nSolo se presta la macro. El bloqueo de posición, la curación y la tecla de siguiente objetivo siguen siendo las de cada cuenta."
+  },
+  "campo_sincronia": {
+    "pt-br": "Sincronia",
+    "en": "Sync",
+    "es": "Sincronía"
+  },
+  "opt_sync_copiar": {
+    "pt-br": "Só copiar a macro",
+    "en": "Just copy the macro",
+    "es": "Solo copiar la macro"
+  },
+  "opt_sync_largada": {
+    "pt-br": "Começar cada volta juntos",
+    "en": "Start each lap together",
+    "es": "Empezar cada vuelta juntos"
+  },
+  "opt_sync_mesmo_alvo": {
+    "pt-br": "Começar juntos e no mesmo alvo",
+    "en": "Start together and on the same target",
+    "es": "Empezar juntos y en el mismo objetivo"
+  },
+  "explica_time_copiar": {
+    "pt-br": "As contas rodam a mesma macro, cada uma no seu ritmo. Ninguém espera ninguém.",
+    "en": "The accounts run the same macro, each at its own pace. No one waits for anyone.",
+    "es": "Las cuentas ejecutan la misma macro, cada una a su ritmo. Nadie espera a nadie."
+  },
+  "explica_time_largada": {
+    "pt-br": "Todas dão o TAB e começam cada volta juntas; cada uma bate no alvo dela. Quem se atrasar continua batendo e entra na largada seguinte.",
+    "en": "They all TAB and start each lap together; each one hits its own target. Whoever falls behind keeps attacking and joins the next start.",
+    "es": "Todas dan TAB y empiezan cada vuelta juntas; cada una golpea su propio objetivo. Quien se atrase sigue golpeando y se une a la siguiente largada."
+  },
+  "explica_time_mesmo_alvo": {
+    "pt-br": "Como a de cima, e ainda dão TAB até ficarem todas no mesmo alvo do líder antes de começar a bater.",
+    "en": "Like the one above, and they also TAB until they're all on the leader's same target before starting to attack.",
+    "es": "Como la de arriba, y además dan TAB hasta quedar todas en el mismo objetivo del líder antes de empezar a golpear."
+  },
+  "campo_contas_time": {
+    "pt-br": "Contas do time",
+    "en": "Team accounts",
+    "es": "Cuentas del equipo"
+  },
+  "rotulo_nenhuma_conta_disp": {
+    "pt-br": "Nenhuma conta disponível",
+    "en": "No account available",
+    "es": "Ninguna cuenta disponible"
+  },
+  "rotulo_nenhuma_outra_conta": {
+    "pt-br": "Nenhuma outra conta cadastrada.",
+    "en": "No other account registered.",
+    "es": "Ninguna otra cuenta registrada."
+  },
+  "nota_1_conta_oculta": {
+    "pt-br": "1 conta não aparece: está inativa, com outra função ou em outro time",
+    "en": "1 account is not shown: it's inactive, has another role, or is on another team",
+    "es": "1 cuenta no aparece: está inactiva, tiene otra función o está en otro equipo"
+  },
+  "nota_n_contas_ocultas": {
+    "pt-br": "{n} contas não aparecem: estão inativas, com outra função ou em outro time",
+    "en": "{n} accounts are not shown: they're inactive, have another role, or are on another team",
+    "es": "{n} cuentas no aparecen: están inactivas, tienen otra función o están en otro equipo"
+  },
+  "ck_fada": {
+    "pt-br": "Esta conta é a Fada do time",
+    "en": "This account is the team's Fairy",
+    "es": "Esta cuenta es el Hada del equipo"
+  },
+  "ck_fada_title": {
+    "pt-br": "Esta conta vira a FADA do time: ela não ataca e não roda a macro. Cura os aliados que pedirem, e senta para recuperar mana quando não há ninguém na fila. Fora de um time a marcação não faz nada.",
+    "en": "This account becomes the team's FAIRY: it doesn't attack and doesn't run the macro. It heals allies who ask, and sits to recover mana when no one is in the queue. Outside a team, the checkbox does nothing.",
+    "es": "Esta cuenta se convierte en el HADA del equipo: no ataca y no ejecuta la macro. Cura a los aliados que lo pidan, y se sienta para recuperar maná cuando no hay nadie en la cola. Fuera de un equipo, la marca no hace nada."
+  },
+  "campo_cura_pedir": {
+    "pt-br": "Pedir cura abaixo de (%)",
+    "en": "Ask for heal below (%)",
+    "es": "Pedir curación por debajo de (%)"
+  },
+  "campo_cura_pedir_title": {
+    "pt-br": "Abaixo desta vida o personagem para de atacar, volta ao ponto inicial e pede cura à Fada. Sem Fada de pé, bebe poção como sempre. Em time, vale a configuração do LÍDER.",
+    "en": "Below this HP the character stops attacking, returns to the starting point, and asks the Fairy for healing. With no Fairy up, it drinks a potion as usual. On a team, the LEADER's setting applies.",
+    "es": "Por debajo de esta vida el personaje deja de atacar, vuelve al punto inicial y pide curación al Hada. Sin Hada en pie, bebe poción como siempre. En equipo, vale la configuración del LÍDER."
+  },
+  "campo_cura_parar": {
+    "pt-br": "Parar de curar em (%)",
+    "en": "Stop healing at (%)",
+    "es": "Dejar de curar en (%)"
+  },
+  "campo_cura_parar_title": {
+    "pt-br": "A Fada cura até esta vida e passa para o próximo da fila. Em time, vale a configuração do LÍDER.",
+    "en": "The Fairy heals up to this HP and moves to the next in the queue. On a team, the LEADER's setting applies.",
+    "es": "El Hada cura hasta esta vida y pasa al siguiente de la cola. En equipo, vale la configuración del LÍDER."
+  },
+  "aviso_app_sem_tecla": {
+    "pt-br": "Nenhuma tecla preenchida — o modo APP não teria o que enviar.",
+    "en": "No key filled in — APP mode would have nothing to send.",
+    "es": "Ninguna tecla completada — el modo APP no tendría nada que enviar."
+  },
+  "previa_app_sequencia": {
+    "pt-br": "Sequência: {exibicao} → recomeça. {n} linha(s), volta completa em {segundos}s.",
+    "en": "Sequence: {exibicao} → restarts. {n} line(s), full lap in {segundos}s.",
+    "es": "Secuencia: {exibicao} → reinicia. {n} línea(s), vuelta completa en {segundos}s."
+  },
+  "dica_espera_tab": {
+    "pt-br": "Quanto esperar entre o TAB e a linha 1. Curto demais, a primeira skill da rotação se perde.",
+    "en": "How long to wait between the TAB and line 1. Too short, and the first skill of the rotation is lost.",
+    "es": "Cuánto esperar entre el TAB y la línea 1. Demasiado corto, se pierde la primera skill de la rotación."
+  },
+  "dica_tab_prox_alvo": {
+    "pt-br": "A tecla de 'Próximo alvo' da aba Teclas. O bot aperta esta tecla sozinho quando o alvo morre — ela não é uma linha da macro e não sai de lugar.",
+    "en": "The 'Next target' key from the Keys tab. The bot presses this key on its own when the target dies — it is not a macro line and doesn't move.",
+    "es": "La tecla de 'Siguiente objetivo' de la pestaña Teclas. El bot presiona esta tecla solo cuando el objetivo muere — no es una línea de la macro y no cambia de lugar."
+  },
+  "grupo_config_chefe": {
+    "pt-br": "Configurações do Chefe",
+    "en": "Boss Settings",
+    "es": "Configuración del Jefe"
+  },
+  "campo_nome_boss": {
+    "pt-br": "Nome do boss",
+    "en": "Boss name",
+    "es": "Nombre del boss"
+  },
+  "campo_intervalo_ataque": {
+    "pt-br": "Intervalo de ataque (ms)",
+    "en": "Attack interval (ms)",
+    "es": "Intervalo de ataque (ms)"
+  },
+  "campo_aoe_mana": {
+    "pt-br": "AoE até mana (%)",
+    "en": "AoE until mana (%)",
+    "es": "AoE hasta maná (%)"
+  },
+  "ck_heal_fase2": {
+    "pt-br": "Curar antes da 2ª fase",
+    "en": "Heal before phase 2",
+    "es": "Curar antes de la 2ª fase"
+  },
+  "grupo_rota_cave": {
+    "pt-br": "Rota na Cave",
+    "en": "Cave Route",
+    "es": "Ruta en la Cueva"
+  },
+  "ck_sk_velocidade": {
+    "pt-br": "Usar skill de\n                velocidade da montaria na cave",
+    "en": "Use the mount's speed\n                skill in the cave",
+    "es": "Usar skill de\n                velocidad de la montura en la cueva"
+  },
+  "grupo_reset_time": {
+    "pt-br": "Reset do Time",
+    "en": "Team Reset",
+    "es": "Reinicio del Equipo"
+  },
+  "campo_conta_reset": {
+    "pt-br": "Conta de reset",
+    "en": "Reset account",
+    "es": "Cuenta de reinicio"
+  },
+  "grupo_venda_npc": {
+    "pt-br": "Regras de Venda Automática (NPC)",
+    "en": "Automatic Sale Rules (NPC)",
+    "es": "Reglas de Venta Automática (NPC)"
+  },
+  "campo_runs_antes_ir": {
+    "pt-br": "Runs antes de ir",
+    "en": "Runs before going",
+    "es": "Runs antes de ir"
+  },
+  "campo_slot_inicial": {
+    "pt-br": "Slot inicial",
+    "en": "Starting slot",
+    "es": "Slot inicial"
+  },
+  "campo_qtd_cliques": {
+    "pt-br": "Quantidade de Cliques",
+    "en": "Number of Clicks",
+    "es": "Cantidad de Clics"
+  },
+  "ck_recomprar_charm": {
+    "pt-br": "Recomprar Charm\n                de Retorno",
+    "en": "Repurchase Return\n                Charm",
+    "es": "Recomprar Charm\n                de Retorno"
+  },
+  "grupo_reset_obrigatorio": {
+    "pt-br": "Reset da cave (obrigatório)",
+    "en": "Cave reset (required)",
+    "es": "Reinicio de la cueva (obligatorio)"
+  },
+  "aviso_hh_reset": {
+    "pt-br": "<b>A cave NÃO renasce sozinha.</b> Sem desfazer e refazer o time, os\n            quatro bosses não voltam e a run seguinte vem vazia — isso é regra do\n            jogo, não do bot. Sem conta de reset o bot roda, mas avisa no log.",
+    "en": "<b>The cave does NOT respawn on its own.</b> Without disbanding and redoing the team, the\n            four bosses don't come back and the next run comes up empty — that's a rule of the\n            game, not the bot. With no reset account the bot still runs, but it warns in the log.",
+    "es": "<b>La cueva NO renace sola.</b> Sin deshacer y rehacer el equipo, los\n            cuatro bosses no vuelven y la siguiente run llega vacía — es una regla del\n            juego, no del bot. Sin cuenta de reinicio el bot igual corre, pero avisa en el registro."
+  },
+  "campo_modo": {
+    "pt-br": "Modo",
+    "en": "Mode",
+    "es": "Modo"
+  },
+  "opt_hh_solo": {
+    "pt-br": "Solo — a conta de reset não entra",
+    "en": "Solo — the reset account doesn't enter",
+    "es": "Solo — la cuenta de reinicio no entra"
+  },
+  "opt_hh_fada": {
+    "pt-br": "Com a Fada — ela entra e cura",
+    "en": "With the Fairy — she enters and heals",
+    "es": "Con el Hada — entra y cura"
+  },
+  "ajuda_hh_modo": {
+    "pt-br": "SOLO: a conta de reset aceita o convite, o personagem entra e o time é desfeito na hora. Ela nunca entra na cave — é o mesmo que a Bewitcher Cave já faz.\n\nCOM A FADA: as duas entram juntas. A Fada acompanha o personagem e cura quando precisa; ao sair, o time é desfeito e refeito, e só então dá para entrar de novo.",
+    "en": "SOLO: the reset account accepts the invite, the character joins and the team is disbanded right away. It never enters the cave — the same as Bewitcher Cave already does.\n\nWITH THE FAIRY: both enter together. The Fairy follows the character and heals when needed; on exit, the team is disbanded and redone, and only then can you enter again.",
+    "es": "SOLO: la cuenta de reinicio acepta la invitación, el personaje entra y el equipo se deshace en el acto. Nunca entra a la cueva — es lo mismo que ya hace Bewitcher Cave.\n\nCON EL HADA: las dos entran juntas. El Hada acompaña al personaje y cura cuando hace falta; al salir, el equipo se deshace y se rehace, y solo entonces se puede entrar de nuevo."
+  },
+  "ajuda_hh_conta_reset": {
+    "pt-br": "Só contas cadastradas NESTE bot. É isso que permite ao bot saber que ela caiu e segurar a entrada da cave, em vez de entrar sem reset e perder a run.",
+    "en": "Only accounts registered in THIS bot. That's what lets the bot know it disconnected and hold the cave entry, instead of entering without a reset and losing the run.",
+    "es": "Solo cuentas registradas en ESTE bot. Eso es lo que permite al bot saber que se cayó y retener la entrada a la cueva, en vez de entrar sin reinicio y perder la run."
+  },
+  "grupo_combate": {
+    "pt-br": "Combate",
+    "en": "Combat",
+    "es": "Combate"
+  },
+  "aviso_hh_combate": {
+    "pt-br": "São <b>quatro bosses</b> em sequência, um por trecho da cave. O bot\n            desmonta antes de cada luta (montado o jogo recusa as skills) e\n            remonta para andar. Quem encerra cada luta é a flag de combate do\n            jogo, não um cronômetro.",
+    "en": "There are <b>four bosses</b> in sequence, one per stretch of the cave. The bot\n            dismounts before each fight (mounted, the game refuses the skills) and\n            remounts to walk. What ends each fight is the game's combat flag,\n            not a timer.",
+    "es": "Son <b>cuatro bosses</b> en secuencia, uno por tramo de la cueva. El bot\n            desmonta antes de cada pelea (montado el juego rechaza las skills) y\n            remonta para caminar. Quien termina cada pelea es la bandera de combate del\n            juego, no un cronómetro."
+  },
+  "ajuda_hh_delay": {
+    "pt-br": "Tempo entre duas teclas da rotação de ataque. O medido no jogo é 500 ms. Não é limite de recarga: skill em recarga não sai e a rotação segue para a próxima.",
+    "en": "Time between two keys of the attack rotation. The measured value in-game is 500 ms. It's not a cooldown limit: a skill on cooldown just doesn't fire and the rotation moves to the next one.",
+    "es": "Tiempo entre dos teclas de la rotación de ataque. Lo medido en el juego es 500 ms. No es un límite de recarga: una skill en recarga no sale y la rotación sigue con la siguiente."
+  },
+  "ajuda_hh_limpar": {
+    "pt-br": "A pé, o bot para a cada N waypoints e limpa os mobs do caminho. Montado ele não para — e atravessar montado é a forma normal. 0 desliga a limpeza.",
+    "en": "On foot, the bot stops every N waypoints and clears the mobs along the way. Mounted, it doesn't stop — and crossing mounted is the normal way. 0 turns the clearing off.",
+    "es": "A pie, el bot se detiene cada N waypoints y limpia los mobs del camino. Montado no se detiene — y cruzar montado es lo normal. 0 desactiva la limpieza."
+  },
+  "grupo_venda": {
+    "pt-br": "Venda",
+    "en": "Sale",
+    "es": "Venta"
+  },
+  "aviso_hh_venda": {
+    "pt-br": "O vendedor da HH é o <b>Roaming Apothecary</b>, do lado de FORA da\n            cave — a poucos passos da porta. Não gasta pedra de retorno nem token\n            de guilda. Quem manda ir vender é a <b>bolsa</b> (aba Personagem); o\n            número de runs abaixo é o teto para quando a leitura da bolsa falhar.",
+    "en": "The HH vendor is the <b>Roaming Apothecary</b>, OUTSIDE the\n            cave — a few steps from the door. It doesn't spend a return stone or a guild\n            token. What sends it to sell is the <b>bag</b> (Character tab); the\n            run count below is the ceiling for when reading the bag fails.",
+    "es": "El vendedor de HH es el <b>Roaming Apothecary</b>, FUERA de la\n            cueva — a pocos pasos de la puerta. No gasta piedra de retorno ni token\n            de guild. Quien manda a vender es la <b>bolsa</b> (pestaña Personaje); el\n            número de runs de abajo es el tope para cuando falla la lectura de la bolsa."
+  },
+  "campo_vender_slot": {
+    "pt-br": "Vender a partir do slot",
+    "en": "Sell starting from slot",
+    "es": "Vender desde el slot"
+  },
+  "ajuda_hh_vender_slot": {
+    "pt-br": "Os primeiros slots são equipamento e consumível. Vender a partir deles seria vender o que o bot precisa.",
+    "en": "The first slots are equipment and consumables. Selling from them would mean selling what the bot needs.",
+    "es": "Los primeros slots son equipo y consumibles. Vender desde ahí sería vender lo que el bot necesita."
+  },
+  "campo_vender_max_runs": {
+    "pt-br": "Vender no máximo a cada (runs)",
+    "en": "Sell at most every (runs)",
+    "es": "Vender como máximo cada (runs)"
+  },
+  "btn_cancelar": {
+    "pt-br": "Cancelar",
+    "en": "Cancel",
+    "es": "Cancelar"
+  },
+  "btn_salvar_alteracoes": {
+    "pt-br": "Salvar Alterações",
+    "en": "Save Changes",
+    "es": "Guardar Cambios"
+  },
+  "btn_confirmar": {
+    "pt-br": "Confirmar",
+    "en": "Confirm",
+    "es": "Confirmar"
+  },
+  "btn_entendi": {
+    "pt-br": "Entendi",
+    "en": "Got it",
+    "es": "Entendido"
+  },
+  "btn_tema_title": {
+    "pt-br": "Alternar tema",
+    "en": "Toggle theme",
+    "es": "Cambiar tema"
+  },
+  "btn_minimizar_title": {
+    "pt-br": "Minimizar",
+    "en": "Minimize",
+    "es": "Minimizar"
+  },
+  "btn_fechar_titlebar_title": {
+    "pt-br": "Fechar",
+    "en": "Close",
+    "es": "Cerrar"
+  },
+  "aria_ordem": {
+    "pt-br": "Ordem",
+    "en": "Order",
+    "es": "Orden"
+  },
+  "dica_troca_funcao_1": {
+    "pt-br": "Uma função por conta: marcar esta desliga a outra.",
+    "en": "One role per account: checking this one turns the other off.",
+    "es": "Una función por cuenta: marcar esta apaga la otra."
+  },
+  "dica_troca_funcao_2": {
+    "pt-br": "Clique na que está ligada para desligar — a conta fica só no login.",
+    "en": "Click the one that's on to turn it off — the account stays login-only.",
+    "es": "Haga clic en la que está activada para apagarla — la cuenta queda solo en el login."
+  },
+  "dica_eco_bc": {
+    "pt-br": "Bewitcher Cave — um boss por run.",
+    "en": "Bewitcher Cave — one boss per run.",
+    "es": "Bewitcher Cave — un boss por run."
+  },
+  "dica_eco_hh_1": {
+    "pt-br": "HH (Black Wind Camp Dungeon) — quatro bosses em sequência.",
+    "en": "HH (Black Wind Camp Dungeon) — four bosses in sequence.",
+    "es": "HH (Black Wind Camp Dungeon) — cuatro bosses en secuencia."
+  },
+  "dica_eco_hh_2": {
+    "pt-br": "A conta de reset fica em Editar conta > HH.",
+    "en": "The reset account is set in Edit account > HH.",
+    "es": "La cuenta de reinicio está en Editar cuenta > HH."
+  },
+  "dica_eco_app": {
+    "pt-br": "Modo APP — macro de teclado, sem cave.",
+    "en": "APP Mode — keyboard macro, no cave.",
+    "es": "Modo APP — macro de teclado, sin cueva."
+  },
+  "rotulo_sem_grupo": {
+    "pt-br": "sem grupo",
+    "en": "no group",
+    "es": "sin grupo"
+  },
+  "rotulo_1_conta": {
+    "pt-br": "1 conta",
+    "en": "1 account",
+    "es": "1 cuenta"
+  },
+  "rotulo_n_contas": {
+    "pt-br": "contas",
+    "en": "accounts",
+    "es": "cuentas"
+  },
+  "dica_arraste_reordenar": {
+    "pt-br": "Arraste para reordenar",
+    "en": "Drag to reorder",
+    "es": "Arrastre para reordenar"
+  },
+  "dica_conta_ativa": {
+    "pt-br": "Conta ativa: entra no ar quando o bot roda.",
+    "en": "Active account: goes live when the bot runs.",
+    "es": "Cuenta activa: entra en línea cuando el bot corre."
+  },
+  "dica_senha_gravada": {
+    "pt-br": "Senha gravada. Digite para trocar; vazio mantém.",
+    "en": "Password saved. Type to change it; blank keeps it.",
+    "es": "Contraseña guardada. Escriba para cambiarla; en blanco la mantiene."
+  },
+  "ph_nova": {
+    "pt-br": "nova",
+    "en": "new",
+    "es": "nueva"
+  },
+  "dica_sem_senha_gravada": {
+    "pt-br": "Nenhuma senha gravada nesta conta.",
+    "en": "No password saved for this account.",
+    "es": "Ninguna contraseña guardada en esta cuenta."
+  },
+  "rotulo_segue": {
+    "pt-br": "segue",
+    "en": "follows",
+    "es": "sigue"
+  },
+  "dica_segue_time": {
+    "pt-br": "Roda a macro do time de \"{lider}\".",
+    "en": "Runs the macro of \"{lider}\"'s team.",
+    "es": "Ejecuta la macro del equipo de \"{lider}\"."
+  },
+  "dica_segue_time_2": {
+    "pt-br": "Quem liga o modo APP é o líder; a caixa desta conta fica desmarcada de propósito.",
+    "en": "It's the leader who turns APP mode on; this account's checkbox is left unchecked on purpose.",
+    "es": "Quien activa el modo APP es el líder; la casilla de esta cuenta queda desmarcada a propósito."
+  },
+  "dica_reconectando": {
+    "pt-br": "Caiu — reconectando (relogin #{n})",
+    "en": "Disconnected — reconnecting (relogin #{n})",
+    "es": "Se desconectó — reconectando (relogin #{n})"
+  },
+  "dica_conectando": {
+    "pt-br": "Conectando…",
+    "en": "Connecting…",
+    "es": "Conectando…"
+  },
+  "dica_no_ar": {
+    "pt-br": "No ar agora",
+    "en": "Online now",
+    "es": "En línea ahora"
+  },
+  "dica_runs_fechadas": {
+    "pt-br": "{n} run(s) fechada(s) nesta sessão",
+    "en": "{n} run(s) completed this session",
+    "es": "{n} run(s) completada(s) en esta sesión"
+  },
+  "btn_editar": {
+    "pt-br": "Editar",
+    "en": "Edit",
+    "es": "Editar"
+  },
+  "erro_salvar_ordem": {
+    "pt-br": "Não foi possível salvar a nova ordem.",
+    "en": "Could not save the new order.",
+    "es": "No se pudo guardar el nuevo orden."
+  },
+  "rotulo_modo_app": {
+    "pt-br": "modo APP",
+    "en": "APP mode",
+    "es": "modo APP"
+  },
+  "erro_trocar_funcao": {
+    "pt-br": "Não foi possível trocar.",
+    "en": "Could not switch.",
+    "es": "No se pudo cambiar."
+  },
+  "msg_funcao_ligada": {
+    "pt-br": "{funcao} ligada — as outras saíram",
+    "en": "{funcao} enabled — the others turned off",
+    "es": "{funcao} activada — las otras se apagaron"
+  },
+  "msg_funcao_desligada": {
+    "pt-br": "Função desligada — a conta fica só no login",
+    "en": "Role disabled — the account stays login-only",
+    "es": "Función desactivada — la cuenta queda solo en el login"
+  },
+  "erro_desativar": {
+    "pt-br": "Não foi possível desativar.",
+    "en": "Could not deactivate.",
+    "es": "No se pudo desactivar."
+  },
+  "msg_bot_em_execucao": {
+    "pt-br": "Bot em execução: contas subidas → {contas}",
+    "en": "Bot running: accounts started → {contas}",
+    "es": "Bot en ejecución: cuentas iniciadas → {contas}"
+  },
+  "rotulo_posicao": {
+    "pt-br": "Posição",
+    "en": "Position",
+    "es": "Posición"
+  },
+  "rotulo_servidor": {
+    "pt-br": "Servidor",
+    "en": "Server",
+    "es": "Servidor"
+  },
+  "msg_login_atualizado": {
+    "pt-br": "Login atualizado.",
+    "en": "Login updated.",
+    "es": "Usuario actualizado."
+  },
+  "msg_senha_gravada": {
+    "pt-br": "Senha gravada (cifrada com o Windows).",
+    "en": "Password saved (encrypted with Windows).",
+    "es": "Contraseña guardada (cifrada con Windows)."
+  },
+  "msg_conta_adicionada": {
+    "pt-br": "Conta adicionada (inativa). Preencha e marque Ativa.",
+    "en": "Account added (inactive). Fill it in and check Active.",
+    "es": "Cuenta agregada (inactiva). Complétela y marque Activa."
+  },
+  "rotulo_esta_conta": {
+    "pt-br": "esta conta",
+    "en": "this account",
+    "es": "esta cuenta"
+  },
+  "confirmar_remover_conta": {
+    "pt-br": "Remover a conta \"{rotulo}\"?",
+    "en": "Remove the account \"{rotulo}\"?",
+    "es": "¿Quitar la cuenta \"{rotulo}\"?"
+  },
+  "erro_remover": {
+    "pt-br": "Não foi possível remover.",
+    "en": "Could not remove.",
+    "es": "No se pudo quitar."
+  },
+  "msg_conta_removida": {
+    "pt-br": "Conta removida.",
+    "en": "Account removed.",
+    "es": "Cuenta eliminada."
+  },
+  "erro_iniciar": {
+    "pt-br": "Não foi possível iniciar.",
+    "en": "Could not start.",
+    "es": "No se pudo iniciar."
+  },
+  "msg_bot_iniciado": {
+    "pt-br": "Bot iniciado.",
+    "en": "Bot started.",
+    "es": "Bot iniciado."
+  },
+  "erro_iniciar_detalhe": {
+    "pt-br": "Não foi possível iniciar",
+    "en": "Could not start",
+    "es": "No se pudo iniciar"
+  },
+  "msg_bot_parado": {
+    "pt-br": "Bot parado.",
+    "en": "Bot stopped.",
+    "es": "Bot detenido."
+  },
+  "msg_pausado": {
+    "pt-br": "Pausado.",
+    "en": "Paused.",
+    "es": "Pausado."
+  },
+  "msg_retomado": {
+    "pt-br": "Retomado.",
+    "en": "Resumed.",
+    "es": "Reanudado."
+  },
+  "rotulo_conta_nova": {
+    "pt-br": "conta nova",
+    "en": "new account",
+    "es": "cuenta nueva"
+  },
+  "ph_senha_existe": {
+    "pt-br": "senha já existe — digite para trocar, deixe vazio para manter",
+    "en": "password already set — type to change it, leave blank to keep it",
+    "es": "la contraseña ya existe — escriba para cambiarla, déjela vacía para mantenerla"
+  },
+  "ph_digite_senha": {
+    "pt-br": "digite a senha (vazio não salva)",
+    "en": "type the password (blank doesn't save)",
+    "es": "escriba la contraseña (en blanco no guarda)"
+  },
+  "erro_salvar": {
+    "pt-br": "Não foi possível salvar.",
+    "en": "Could not save.",
+    "es": "No se pudo guardar."
+  },
+  "msg_conta_salva": {
+    "pt-br": "Conta salva.",
+    "en": "Account saved.",
+    "es": "Cuenta guardada."
+  },
+  "msg_pressione_tecla": {
+    "pt-br": "Pressione uma tecla… (Esc para limpar)",
+    "en": "Press a key… (Esc clears it)",
+    "es": "Presione una tecla… (Esc para borrar)"
+  },
+  "rotulo_outra_funcao": {
+    "pt-br": "outra função",
+    "en": "another role",
+    "es": "otra función"
+  },
+  "msg_tecla_conflito": {
+    "pt-br": "A tecla {tecla} já está em \"{nome}\". O jogo não aceita a mesma tecla em duas funções.",
+    "en": "The key {tecla} is already on \"{nome}\". The game doesn't accept the same key in two roles.",
+    "es": "La tecla {tecla} ya está en \"{nome}\". El juego no acepta la misma tecla en dos funciones."
+  },
+  "resumo_estado": {
+    "pt-br": "{runs} runs · {ok} ok · {falhas} falhas\n{relogins} relogins · {contas} contas",
+    "en": "{runs} runs · {ok} ok · {falhas} failures\n{relogins} relogins · {contas} accounts",
+    "es": "{runs} runs · {ok} ok · {falhas} fallos\n{relogins} relogins · {contas} cuentas"
+  },
+  "opt_reset_nenhuma": {
+    "pt-br": "Nenhuma (sem reset de time)",
+    "en": "None (no team reset)",
+    "es": "Ninguna (sin reinicio de equipo)"
+  },
+  "opt_reset_sem_nick": {
+    "pt-br": "({login}) — ainda não logou, sem nick",
+    "en": "({login}) — hasn't logged in yet, no nick",
+    "es": "({login}) — todavía no inició sesión, sin nick"
+  },
+  "opt_reset_nao_e_deste_bot": {
+    "pt-br": "{gravado} — ⚠ não é conta de reset deste bot",
+    "en": "{gravado} — ⚠ not a reset account of this bot",
+    "es": "{gravado} — ⚠ no es cuenta de reinicio de este bot"
+  },
+  "campo_limpar_mobs": {
+    "pt-br": "Limpar mobs a cada (a pé)",
+    "en": "Clear mobs every (on foot)",
+    "es": "Limpiar mobs cada (a pie)"
+  },
+  "col_delay_ms": {
+    "pt-br": "Delay (ms)",
+    "en": "Delay (ms)",
+    "es": "Retraso (ms)"
+  },
+  "col_tecla": {
+    "pt-br": "Tecla",
+    "en": "Key",
+    "es": "Tecla"
   }
 }

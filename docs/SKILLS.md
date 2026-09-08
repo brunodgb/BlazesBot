@@ -358,20 +358,31 @@ HTML/JS/PyQt6 e passa a vir de um dicionário único por chave.
 
 ## Onde cada interface está (estado em 07/09/2026)
 
-- **Web (`web/`) — mecanismo completo e funcionando de verdade**, verificado
-  ao vivo (Chrome + CDP, `test-web.ps1`, ver `docs/decisoes/interface.md`
-  para a receita): dropdown na titlebar (`#sel-idioma`), bridge
-  `Api.definir_idioma` (mesmo padrão de `definir_senha`/`definir_login` —
-  aplica na hora, grava no `config.json`), `constantes.traducoes` manda os 3
-  idiomas já resolvidos de uma vez (sem round-trip ao trocar), e
-  `aplicarIdioma()` varre todo `[data-i18n]`.
-  **Convertido:** titlebar, menu lateral (6 itens), os 4 botões de controle
-  (Iniciar/Parar/Pausar/Retomar), e a seção Contas inteira (título, botões,
-  aviso de senha, cabeçalho da tabela).
-  **NÃO convertido ainda:** as outras 5 seções (Cliente, Estatísticas,
-  Quedas, Log, Diagnóstico) e todo texto que `main.js` gera dinamicamente
-  fora dessas seções (toasts, linhas de tabela, `#diag-status`). Continuam em
-  PT-BR fixo — não finja que já traduzem.
+- **Web (`web/`) — retrofit completo do que é HTML/JS estático e dinâmico**,
+  verificado ao vivo (Chrome + CDP, `test-web.ps1`, ver
+  `docs/decisoes/interface.md` para a receita — incluindo o editor de conta
+  ABERTO durante a troca de idioma, o caso mais difícil). Dropdown na titlebar
+  (`#sel-idioma`), bridge `Api.definir_idioma` (mesmo padrão de
+  `definir_senha`/`definir_login` — aplica na hora, grava no `config.json`),
+  `constantes.traducoes` manda os 3 idiomas já resolvidos de uma vez (sem
+  round-trip ao trocar). **311 chaves.**
+  **Convertido — todo texto que é PRÓPRIO da interface (não vem do
+  backend):** as 6 seções inteiras (Contas, Cliente, Estatísticas, Quedas,
+  Log, Diagnóstico), o modal de edição de conta com as 5 abas (Personagem,
+  Teclas — 28 rótulos de tecla + os balões de ajuda —, APP, Bewitcher Cave,
+  HH), o modal de confirmação, todo toast, todo tooltip (`title`), todo
+  placeholder, o `alt` da imagem de queda, o `aria-label` da alça de
+  arrastar, e os rótulos que `main.js` monta em tempo de execução (linhas da
+  tabela de Contas, cartões de queda, explicação do modo de sincronia do
+  time, prévia da macro do APP).
+- **A troca de idioma RE-RENDERIZA o que já está dinamicamente construído**,
+  não só varre `data-i18n`: `aplicarIdioma()` chama de novo `renderContas()`,
+  `atualizarFiltroLog()`, `popularSeletores()`, `carregarStats()`,
+  `carregarQuedas()` (se a aba já foi aberta), e — o caso mais delicado —
+  re-busca e repreenche o editor de conta (`obter_conta` +
+  `preencherEditor`) **se ele estiver aberto no momento da troca**. Sem isto,
+  o modal já aberto ficaria com tooltip e rótulo dinâmico no idioma antigo até
+  ser fechado e reaberto.
 - **PyQt6 (`blazesbot/gui/`) — NÃO TOCADO.** A regra permanente "duas
   interfaces convivem" (`CLAUDE.md`) exige que qualquer coisa na Web exista
   também na GUI PyQt6. Isso está PENDENTE: nem o campo de idioma, nem o
@@ -379,14 +390,63 @@ HTML/JS/PyQt6 e passa a vir de um dicionário único por chave.
   isso não for feito, a Web tem uma capacidade que a GUI não tem — o mesmo
   tipo de dívida que o `CLAUDE.md` já rastreia em "Candidatos de promoção".
 
-## Armadilha real encontrada (guarde antes de estender)
+## O que continua em PT-BR fixo, e por quê (pendência real, não esquecimento)
 
-`#estado-roda` (e `#diag-status`) **NÃO leva `data-i18n`**: o texto dele é
-reescrito por `atualizarEstado()` a cada poll de 1,5 s a partir do ESTADO do
-bot (parado/rodando/pausado), não de uma varredura estática. Um `data-i18n`
-ali seria sobrescrito pelo próximo poll meio segundo depois — a troca de
-idioma "pegaria" só até o poll seguinte. A correção certa é o PRÓPRIO ponto
-que escreve o texto chamar `t("estado_rodando")` etc. (é o que
-`atualizarEstado()` já faz). **Qualquer texto dinâmico novo segue esse
-padrão: `t(chave)` no ponto de escrita, nunca `data-i18n` num elemento que
-outro código também escreve.**
+Tudo abaixo é texto **composto no Python**, não na interface — traduzi-lo
+exigiria mudar a fonte, não a tela, e a decisão de arquitetura é maior que
+"adicionar mais uma chave". Cada item foi deixado de propósito, com o texto
+em PT-BR passando direto (`r.erro`, `r.resumo` etc., sem tradução):
+
+- **Conteúdo do Log** (a aba, não o cabeçalho dela). Catalogado sob pedido do
+  usuário antes de mexer: **775 chamadas `log.*()` em 47 arquivos**
+  (`bot/`, `bot/bc/`, `bot/app/`, `bot/hh/`, `core/`), ~90–140 famílias reais
+  de mensagem (não "dezenas", não 775 únicas) — um registro pequeno de
+  chaves cobriria só ~15–20% das ocorrências. Recomendação de quem investigou:
+  chave por call-site **gerada por hash do texto-fonte** (não escrita à mão),
+  mais um helper `log_i18n(logger, texto_fonte, *args)` que faz o lookup pelo
+  próprio texto — nenhuma das 775 chamadas muda de assinatura, e falta de
+  entrada no catálogo cai para o PT-BR original em vez de quebrar. Ainda não
+  iniciado; é projeto à parte, maior que o resto deste i18n, porque mexe na
+  lógica viva de combate/navegação/login, não em UI.
+- **Histórico de Quedas**: `q.rodando_texto`, `q.motivo_texto`,
+  `q.fazendo_texto`, `q.onde_texto`, `q.quando_texto` vêm PRONTOS de
+  `core/quedas.py::amigavel()`. Mesma pendência do Log, em miniatura.
+- **Cards de Estatísticas**: `c.rotulo` de cada card vem de `stats_diarias.py`
+  via `_App.constantes()`/`stats_conta`.
+- **Opções de resolução/montaria/bolsas/cliques de venda**: os RÓTULOS
+  completos (`"90%   (1.0x)"`, `"1 bolsa   (10 espaços)"`) são montados em
+  `_App.constantes()`, não na Web.
+- **Resumo dos testes de Diagnóstico**: `r.resumo_curto` (amostragem de
+  cliques) e `r.resumo` (conferência de exclusão) vêm prontos de
+  `amostragem_de_cliques.py`/`afericao.py`. Só o texto ao REDOR (toasts de
+  início/erro) foi convertido.
+
+## Armadilhas reais encontradas (guarde antes de estender)
+
+- **Elemento reescrito por outro código nunca leva `data-i18n` estático.**
+  `#estado-roda` e `#diag-status` são reescritos a cada poll de 1,5 s a partir
+  do ESTADO do bot — um `data-i18n` ali seria sobrescrito meio segundo depois.
+  A correção certa é o PRÓPRIO ponto que escreve o texto chamar `t(chave)` (é
+  o que `atualizarEstado()` já faz). **Vale para qualquer texto dinâmico
+  novo: `t(chave)` no ponto de escrita, nunca `data-i18n` num elemento que
+  outro código também escreve.**
+- **Variável local chamada `t` derruba a tradução em silêncio.** `t` já era
+  usado como nome de variável comum neste arquivo (ex.: `const t =
+  est.total || {}` dentro de `atualizarEstado`) — isso SOMBREIA a função
+  global `t()` de tradução dentro daquele escopo, e qualquer chamada
+  `t("chave")` ali dentro vira `TypeError`, não erro visível na tela. Achado
+  testando de verdade (nenhum teste automatizado pega isso). Renomeada para
+  `totais`. Ao adicionar uma chamada `t(...)` nova, confira que não há `const
+  t`/`let t`/parâmetro `t` no mesmo escopo.
+- **Elemento com filho (checkbox, ícone) não leva `data-i18n` na própria
+  tag** — isso sobrescreve `textContent` e apaga o filho. O texto precisa
+  estar num `<span>` próprio ao lado (padrão usado em toda a navegação
+  lateral e nos rótulos de tecla com balão de ajuda).
+- **Trecho com HTML embutido (`<code>`, `<b>`) usa `data-i18n-html`**
+  (`innerHTML`), nunca `data-i18n` — os 4 parágrafos do Diagnóstico e os 3 da
+  aba HH são os únicos casos; o HTML vem inteiro da própria tabela de
+  tradução, nunca de entrada do usuário, então não há risco de injeção.
+- **Mensagem com valor embutido no meio da frase usa `t(chave, {parametros})`**
+  — `t()` substitui `{nome}` no texto traduzido pelo valor correspondente.
+  Nunca concatene o valor por fora (`t("x") + valor`): a posição do valor na
+  frase muda de idioma para idioma (`{n} contas` vs `{n} accounts`).

@@ -75,7 +75,7 @@ function avisar(msg) {
   const ok = $("#btn-confirmar-ok");
   const rotulo = ok.textContent;
   nao.classList.add("escondida");
-  ok.textContent = "Entendi";
+  ok.textContent = t("btn_entendi");
   return confirmar(msg).then((r) => {
     nao.classList.remove("escondida");
     ok.textContent = rotulo;
@@ -96,9 +96,18 @@ function avisar(msg) {
    `#estado-roda`, `#diag-status`) -- esses usam `t()` na própria função que já
    escreve o texto (ver `atualizarEstado`), senão o próximo poll (a cada 1,5 s)
    reescreveria por cima com a string errada. */
-function t(chave) {
+// `parametros` substitui `{nome}` no texto traduzido pelo valor correspondente
+// -- só para mensagens com um valor dinâmico embutido no meio da frase (ex.:
+// nome de conta), nunca para montar HTML: os valores viram texto puro.
+function t(chave, parametros) {
   const tabela = (constantes && constantes.traducoes && constantes.traducoes[idiomaAtual]) || {};
-  return tabela[chave] || `[${chave}]`;
+  let texto = tabela[chave] || `[${chave}]`;
+  if (parametros) {
+    for (const nome in parametros) {
+      texto = texto.replaceAll(`{${nome}}`, parametros[nome]);
+    }
+  }
+  return texto;
 }
 
 function aplicarIdioma(idioma) {
@@ -109,8 +118,55 @@ function aplicarIdioma(idioma) {
     const chave = el.getAttribute("data-i18n");
     if (tabela[chave]) el.textContent = tabela[chave];
   });
+  // Conteúdo que PRECISA de marcação embutida (ex.: <code>, <b>) para não virar
+  // texto corrido -- os únicos casos são as 4 explicações do Diagnóstico, e o
+  // HTML vem inteiro da própria tabela de tradução (nunca de entrada do
+  // usuário), então não há risco de injeção.
+  $$("[data-i18n-html]").forEach((el) => {
+    const chave = el.getAttribute("data-i18n-html");
+    if (tabela[chave]) el.innerHTML = tabela[chave];
+  });
+  $$("[data-i18n-title]").forEach((el) => {
+    const chave = el.getAttribute("data-i18n-title");
+    if (tabela[chave]) el.title = tabela[chave];
+  });
+  // `data-ajuda` é lido ao vivo por `mostrarAjuda()` no momento do hover, então
+  // basta trocar o atributo -- nenhuma re-renderização própria é necessária.
+  $$("[data-i18n-ajuda]").forEach((el) => {
+    const chave = el.getAttribute("data-i18n-ajuda");
+    if (tabela[chave]) el.dataset.ajuda = tabela[chave];
+  });
+  $$("[data-i18n-placeholder]").forEach((el) => {
+    const chave = el.getAttribute("data-i18n-placeholder");
+    if (tabela[chave]) el.placeholder = tabela[chave];
+  });
+  $$("[data-i18n-alt]").forEach((el) => {
+    const chave = el.getAttribute("data-i18n-alt");
+    if (tabela[chave]) el.alt = tabela[chave];
+  });
+  $$("[data-i18n-aria]").forEach((el) => {
+    const chave = el.getAttribute("data-i18n-aria");
+    if (tabela[chave]) el.setAttribute("aria-label", tabela[chave]);
+  });
   const sel = $("#sel-idioma");
   if (sel) sel.value = idiomaAtual;
+
+  // A VARREDURA ACIMA só alcança texto que já está no HTML. Tudo que é
+  // CONSTRUÍDO em JS (linhas da tabela de contas, cards de estatísticas,
+  // cartões de queda, lista do time, seletores populados por `constantes`)
+  // tem tooltip e rótulo fixo em PT-BR até ser desenhado de novo -- então a
+  // troca de idioma força um redesenho de cada view que já tem dado carregado.
+  // Cada chamada é local (bridge pywebview, não rede) e já é o mesmo caminho
+  // que o poll normal usa.
+  if (typeof renderContas === "function") renderContas();
+  if (typeof atualizarFiltroLog === "function") atualizarFiltroLog();
+  if (typeof popularSeletores === "function" && constantes) popularSeletores();
+  if (typeof carregarStats === "function") carregarStats();
+  if (typeof quedasCarregadas !== "undefined" && quedasCarregadas
+      && typeof carregarQuedas === "function") carregarQuedas();
+  if (typeof contaUidEditando !== "undefined" && contaUidEditando !== null) {
+    chamar("obter_conta", contaUidEditando).then(preencherEditor);
+  }
 }
 
 /* ---------- estado global ---------- */
@@ -295,17 +351,19 @@ const COLUNAS_DA_TABELA_DE_CONTAS = 9;
 // espremer o resto da tabela.
 // A DICA DIZ A REGRA, porque a regra não é óbvia olhando três selos: uma função
 // por conta, e clicar na que está ligada desliga.
-const TROCA = "\n\nUma função por conta: marcar esta desliga a outra.\n"
-  + "Clique na que está ligada para desligar — a conta fica só no login.";
-const ECOSSISTEMAS = [
-  { acao: "bc", sigla: "BC", campo: "bc_farm",
-    titulo: "Bewitcher Cave — um boss por run." + TROCA },
-  { acao: "hh", sigla: "HH", campo: "hh_farm",
-    titulo: "HH (Black Wind Camp Dungeon) — quatro bosses em sequência.\n"
-      + "A conta de reset fica em Editar conta > HH." + TROCA },
-  { acao: "app", sigla: "APP", campo: "app_enabled",
-    titulo: "Modo APP — macro de teclado, sem cave." + TROCA },
-];
+function trocaFuncao() {
+  return "\n\n" + t("dica_troca_funcao_1") + "\n" + t("dica_troca_funcao_2");
+}
+function ecossistemas() {
+  return [
+    { acao: "bc", sigla: "BC", campo: "bc_farm",
+      titulo: t("dica_eco_bc") + trocaFuncao() },
+    { acao: "hh", sigla: "HH", campo: "hh_farm",
+      titulo: t("dica_eco_hh_1") + "\n" + t("dica_eco_hh_2") + trocaFuncao() },
+    { acao: "app", sigla: "APP", campo: "app_enabled",
+      titulo: t("dica_eco_app") + trocaFuncao() },
+  ];
+}
 
 /* NO AR AGORA — o estado que a tabela não mostrava.
    `estado().contas` só traz conta EM EXECUÇÃO, com `runs` e cronômetro. O dado
@@ -344,9 +402,9 @@ function marcarNoAr(est) {
       const dica = !c ? ""
         : (caida
             ? (c.relogando
-                ? `Caiu — reconectando (relogin #${c.relogins || 1})`
-                : "Conectando…")
-            : "No ar agora");
+                ? t("dica_reconectando", { n: c.relogins || 1 })
+                : t("dica_conectando"))
+            : t("dica_no_ar"));
       marca.title = dica;
       // O MESMO texto como nome acessível: cor e tooltip não chegam a leitor de
       // tela nem a quem navega por teclado. Sem rótulo, o ponto é invisível.
@@ -366,7 +424,7 @@ function marcarNoAr(est) {
       const cave = !!c && (c.farm || c.farm_hh);
       const runs = cave ? (c.runs || 0) : 0;
       cel.textContent = cave ? String(runs) : "";
-      cel.title = cave ? `${runs} run(s) fechada(s) nesta sessão` : "";
+      cel.title = cave ? t("dica_runs_fechadas", { n: runs }) : "";
     }
     if (!c) return;
     // O SELO SEGUE O RESUMO, e não o disco: o backend pode desligar a função
@@ -421,7 +479,7 @@ function renderContas() {
         td.colSpan = COLUNAS_DA_TABELA_DE_CONTAS;
         const rot = document.createElement("span");
         rot.className = "grupo-rotulo";
-        rot.textContent = grupo || "sem grupo";
+        rot.textContent = grupo || t("rotulo_sem_grupo");
         const qtd = document.createElement("span");
         qtd.className = "grupo-contagem";
         // Conta as do MESMO rótulo em toda a lista, não só as deste bloco: o
@@ -429,7 +487,7 @@ function renderContas() {
         // conta para o meio de outro, e o número tem de continuar verdadeiro.
         const n = contasCache.filter(
           (x) => (x.grupo || "").trim() === grupo).length;
-        qtd.textContent = n === 1 ? "1 conta" : `${n} contas`;
+        qtd.textContent = n === 1 ? t("rotulo_1_conta") : `${n} ${t("rotulo_n_contas")}`;
         td.appendChild(rot);
         td.appendChild(qtd);
         trGrupo.appendChild(td);
@@ -467,7 +525,7 @@ function renderContas() {
     alca.className = "alca-arraste";
     alca.dataset.acao = "arrastar";
     alca.textContent = "⠿";
-    alca.title = "Arraste para reordenar";
+    alca.title = t("dica_arraste_reordenar");
     tdAlca.appendChild(alca);
 
     const tdAtiva = document.createElement("td");
@@ -478,7 +536,7 @@ function renderContas() {
     // pixels um do outro. Era o defeito mais objetivo da tela.
     const rotAtiva = document.createElement("label");
     rotAtiva.className = "alvo-caixa";
-    rotAtiva.title = "Conta ativa: entra no ar quando o bot roda.";
+    rotAtiva.title = t("dica_conta_ativa");
     const chkAtiva = document.createElement("input");
     chkAtiva.type = "checkbox"; chkAtiva.className = "chk";
     chkAtiva.dataset.acao = "ativa"; chkAtiva.checked = c.enabled;
@@ -512,7 +570,7 @@ function renderContas() {
     inpLogin.className = "cel-texto";
     inpLogin.dataset.acao = "login";
     inpLogin.value = c.login || "";
-    inpLogin.placeholder = "—";
+    inpLogin.placeholder = "—"; // travessão neutro -- não é texto, não precisa traduzir
     tdLogin.appendChild(inpLogin);
 
 
@@ -527,10 +585,10 @@ function renderContas() {
     if (c.tem_senha) {
       inpSenha.classList.add("tem-senha");
       inpSenha.placeholder = "••••";
-      inpSenha.title = "Senha gravada. Digite para trocar; vazio mantém.";
+      inpSenha.title = t("dica_senha_gravada");
     } else {
-      inpSenha.placeholder = "nova";
-      inpSenha.title = "Nenhuma senha gravada nesta conta.";
+      inpSenha.placeholder = t("ph_nova");
+      inpSenha.title = t("dica_sem_senha_gravada");
     }
     tdSenha.appendChild(inpSenha);
 
@@ -602,7 +660,7 @@ function renderContas() {
     // `name` por CONTA (o uid) para os grupos não se misturarem entre linhas.
     // Clicar no que já está ligado DESLIGA: "nenhuma função" é estado válido
     // (a conta faz login e relogin), e sem isso não haveria como voltar a ele.
-    ECOSSISTEMAS.forEach((eco) => {
+    ecossistemas().forEach((eco) => {
       const ligado = (c.funcao || "") === eco.acao;
       if (ligado) algumLigado = true;
       const selo = document.createElement("label");
@@ -636,10 +694,9 @@ function renderContas() {
     if (!algumLigado && lider) {
       const seguindo = document.createElement("span");
       seguindo.className = "selo-seguindo";
-      seguindo.textContent = `segue ${lider}`;
-      seguindo.title = `Roda a macro do time de "${lider}".\n`
-        + "Quem liga o modo APP é o líder; a caixa desta conta fica "
-        + "desmarcada de propósito.";
+      seguindo.textContent = `${t("rotulo_segue")} ${lider}`;
+      seguindo.title = t("dica_segue_time", { lider })
+        + "\n" + t("dica_segue_time_2");
       selos.appendChild(seguindo);
     } else if (!algumLigado) {
       selos.classList.add("selos-so-login");
@@ -649,7 +706,7 @@ function renderContas() {
     const tdEdit = document.createElement("td");
     tdEdit.className = "ctr cel-editar";
     const btnEdit = document.createElement("button");
-    btnEdit.className = "bt-editar"; btnEdit.textContent = "✏️  Editar";
+    btnEdit.className = "bt-editar"; btnEdit.textContent = `✏️  ${t("btn_editar")}`;
     btnEdit.dataset.acao = "editar";
     tdEdit.appendChild(btnEdit);
 
@@ -868,7 +925,7 @@ function aoSoltarLinha(e) {
     // no cache durante a chamada DESAPARECERIA da tabela, e a chamada pode ter
     // gravado no disco e falhado só na resposta -- e aí a "ordem anterior"
     // seria justamente a que o disco NÃO tem. Quem sabe a verdade é o disco.
-    avisar((r && r.erro) || "Não foi possível salvar a nova ordem.");
+    avisar((r && r.erro) || t("erro_salvar_ordem"));
     carregarContas();
   });
 }
@@ -900,13 +957,15 @@ $("#corpo-contas").addEventListener("click", (e) => {
   $("#btn-remover-conta").disabled = contaUidSelecionado === null;
 });
 
-const ROTULO_DA_FUNCAO = { bc: "BC", hh: "HH", app: "modo APP" };
+function rotuloDaFuncao(qual) {
+  return { bc: "BC", hh: "HH", app: t("rotulo_modo_app") }[qual];
+}
 
 function definirFuncao(uid, qual) {
   chamar("definir_funcao", uid, qual).then((r) => {
-    if (r && r.ok === false) { avisar(r.erro || "Não foi possível trocar."); }
-    else if (qual) toast(`${ROTULO_DA_FUNCAO[qual]} ligada — as outras saíram`);
-    else toast("Função desligada — a conta fica só no login");
+    if (r && r.ok === false) { avisar(r.erro || t("erro_trocar_funcao")); }
+    else if (qual) toast(t("msg_funcao_ligada", { funcao: rotuloDaFuncao(qual) }));
+    else toast(t("msg_funcao_desligada"));
     carregarContas();
   });
 }
@@ -946,12 +1005,12 @@ $("#corpo-contas").addEventListener("change", (e) => {
       // caixa volta ao estado real porque `carregarContas` re-renderiza a linha
       // a partir da configuração, que não mudou.
       if (r && r.ok === false) {
-        avisar(r.erro || "Não foi possível desativar.");
+        avisar(r.erro || t("erro_desativar"));
         carregarContas();
         return;
       }
       if (r && Array.isArray(r.iniciadas) && r.iniciadas.length) {
-        toast("Bot em execução: contas subidas → " + r.iniciadas.join(", "), "ok");
+        toast(t("msg_bot_em_execucao", { contas: r.iniciadas.join(", ") }), "ok");
       }
       carregarContas();
     });
@@ -964,19 +1023,19 @@ $("#corpo-contas").addEventListener("change", (e) => {
     chamar("definir_posicao", uid, valor).then(() => {
       const c = contasCache.find((x) => x.uid === uid);
       if (c) c.position = valor;
-      toast("Posição: " + valor);
+      toast(`${t("rotulo_posicao")}: ${valor}`);
     });
   } else if (acao === "servidor") {
     chamar("definir_servidor", uid, valor).then(() => {
       const c = contasCache.find((x) => x.uid === uid);
       if (c) c.server = valor;
-      toast("Servidor: " + valor);
+      toast(`${t("rotulo_servidor")}: ${valor}`);
     });
   } else if (acao === "login") {
     const novo = e.target.value.trim();
     if (novo && novo !== (contasCache.find((x) => x.uid === uid) || {}).login) {
       chamar("definir_login", uid, novo).then(() => {
-        toast("Login atualizado.");
+        toast(t("msg_login_atualizado"));
         carregarContas();
       });
     }
@@ -985,7 +1044,7 @@ $("#corpo-contas").addEventListener("change", (e) => {
     const senha = e.target.value;
     if (senha) {
       chamar("definir_senha", uid, senha).then(() => {
-        toast("Senha gravada (cifrada com o Windows).");
+        toast(t("msg_senha_gravada"));
         carregarContas();
       });
     } else {
@@ -1021,7 +1080,7 @@ function carregarContas() {
 
 $("#btn-adicionar-conta").addEventListener("click", () => {
   chamar("nova_conta").then(() => {
-    toast("Conta adicionada (inativa). Preencha e marque Ativa.");
+    toast(t("msg_conta_adicionada"));
     carregarContas();
   });
 });
@@ -1030,14 +1089,14 @@ $("#btn-remover-conta").addEventListener("click", () => {
   if (contaUidSelecionado === null) return;
   const sel = contasCache.find((x) => x.uid === contaUidSelecionado);
   const rotulo = (sel && (sel.login || sel.nick)) ||
-    "esta conta";
-  confirmar(`Remover a conta "${rotulo}"?`).then((ok) => {
+    t("rotulo_esta_conta");
+  confirmar(t("confirmar_remover_conta", { rotulo })).then((ok) => {
     if (!ok) return;
     chamar("remover_conta", contaUidSelecionado).then((r) => {
       // RECUSADO porque esta conta é o reset de outra: aviso bloqueante, e a
       // conta continua onde estava. Quem decide é o backend.
-      if (r && r.ok === false) { avisar(r.erro || "Não foi possível remover."); return; }
-      toast("Conta removida.");
+      if (r && r.ok === false) { avisar(r.erro || t("erro_remover")); return; }
+      toast(t("msg_conta_removida"));
       contaUidSelecionado = null;
       $("#btn-remover-conta").disabled = true;
       carregarContas();
@@ -1050,17 +1109,17 @@ $("#btn-iniciar").addEventListener("click", () => {
   $("#btn-iniciar").disabled = true;
   chamar("iniciar").then((r) => {
     $("#btn-iniciar").disabled = false;
-    if (!r) { toast("Não foi possível iniciar."); return; }
+    if (!r) { toast(t("erro_iniciar")); return; }
     if (r.ok) {
-      toast("Bot iniciado.");
+      toast(t("msg_bot_iniciado"));
     } else {
-      toast("Não foi possível iniciar:\n" + (r.erros || []).join("\n"), "erro");
+      toast(t("erro_iniciar_detalhe") + ":\n" + (r.erros || []).join("\n"), "erro");
     }
   });
 });
-$("#btn-parar").addEventListener("click", () => chamar("parar").then(() => toast("Bot parado.")));
-$("#btn-pausar").addEventListener("click", () => chamar("pausar").then(() => toast("Pausado.")));
-$("#btn-retomar").addEventListener("click", () => chamar("retomar").then(() => toast("Retomado.")));
+$("#btn-parar").addEventListener("click", () => chamar("parar").then(() => toast(t("msg_bot_parado"))));
+$("#btn-pausar").addEventListener("click", () => chamar("pausar").then(() => toast(t("msg_pausado"))));
+$("#btn-retomar").addEventListener("click", () => chamar("retomar").then(() => toast(t("msg_retomado"))));
 
 /* ============================================================
    EDITOR DE CONTA
@@ -1090,8 +1149,8 @@ $$(".aba").forEach((b) =>
 function abrirEditor(uid) {
   contaUidEditando = uid;
   const sel = contasCache.find((x) => x.uid === uid);
-  const rotulo = (sel && (sel.login || sel.nick)) || "conta nova";
-  $("#modal-editor-titulo").textContent = "Editar conta — " + rotulo;
+  const rotulo = (sel && (sel.login || sel.nick)) || t("rotulo_conta_nova");
+  $("#modal-editor-titulo").textContent = t("modal_editar_conta") + " — " + rotulo;
   $("#ed-login").value = "";
   $("#ed-senha").value = "";
   trocarAba(ABA_PADRAO);
@@ -1159,8 +1218,8 @@ function preencherEditor(d) {
 
   const senhaForte = $("#ed-senha");
   senhaForte.placeholder = d.tem_senha
-    ? "senha já existe — digite para trocar, deixe vazio para manter"
-    : "digite a senha (vazio não salva)";
+    ? t("ph_senha_existe")
+    : t("ph_digite_senha");
 }
 
 const CAMPO_TECLA = [
@@ -1250,9 +1309,7 @@ function preencherApp(steps, app, keys) {
   inpKT.className = "captura"; inpKT.type = "text";
   inpKT.readOnly = true; inpKT.disabled = true;
   inpKT.value = (keys && keys.next_target) || "TAB";
-  inpKT.title = "A tecla de 'Próximo alvo' da aba Teclas. O bot aperta esta "
-    + "tecla sozinho quando o alvo morre — ela não é uma linha da macro e não "
-    + "sai de lugar.";
+  inpKT.title = t("dica_tab_prox_alvo");
   tdKT.appendChild(inpKT);
   const tdDT = document.createElement("td");
   const inpDT = document.createElement("input");
@@ -1262,8 +1319,7 @@ function preencherApp(steps, app, keys) {
   inpDT.type = "number"; inpDT.min = String(MINIMO_ESPERA_APP);
   inpDT.max = String(MAXIMO_ESPERA_APP); inpDT.step = String(PASSO_ESPERA_APP);
   inpDT.value = (app && app.espera_depois_do_tab_ms) || 1000;
-  inpDT.title = "Quanto esperar entre o TAB e a linha 1. Curto demais, a "
-    + "primeira skill da rotação se perde.";
+  inpDT.title = t("dica_espera_tab");
   tdDT.appendChild(inpDT);
   trTab.appendChild(tdNT); trTab.appendChild(tdKT); trTab.appendChild(tdDT);
   corpo.appendChild(trTab);
@@ -1302,7 +1358,7 @@ function atualizarPreviaApp() {
     return tecla ? { tecla, delay } : null;
   }).filter(Boolean);
   if (!ativas.length) {
-    el.textContent = "Nenhuma tecla preenchida — o modo APP não teria o que enviar.";
+    el.textContent = t("aviso_app_sem_tecla");
     el.title = "";
     return;
   }
@@ -1313,9 +1369,9 @@ function atualizarPreviaApp() {
   if (desenho.length > maxChars) {
     exibicao = desenho.slice(0, maxChars) + " …";
   }
-  el.textContent =
-    `Sequência: ${exibicao} → recomeça. ` +
-    `${ativas.length} linha(s), volta completa em ${(total / 1000).toFixed(1)}s.`;
+  el.textContent = t("previa_app_sequencia", {
+    exibicao, n: ativas.length, segundos: (total / 1000).toFixed(1),
+  });
   el.title = desenho; // tooltip com sequência completa
 }
 $("#corpo-app").addEventListener("input", atualizarPreviaApp);
@@ -1351,20 +1407,20 @@ function montarListaDeReset(candidatas, atual, seletor) {
     sel.appendChild(o);
   };
 
-  opcao("Nenhuma (sem reset de time)", "", true);
+  opcao(t("opt_reset_nenhuma"), "", true);
   const conhecidos = new Set();
   candidatas.forEach((c) => {
     if (c.disponivel && c.nick) {
       opcao(`${c.nick} — (${c.login})`, c.nick, true);
       conhecidos.add(c.nick.toLowerCase());
     } else {
-      opcao(`(${c.login}) — ainda não logou, sem nick`, "", false);
+      opcao(t("opt_reset_sem_nick", { login: c.login }), "", false);
     }
   });
 
   const gravado = (atual || "").trim();
   if (gravado && !conhecidos.has(gravado.toLowerCase())) {
-    opcao(`${gravado} — ⚠ não é conta de reset deste bot`, gravado, true);
+    opcao(t("opt_reset_nao_e_deste_bot", { gravado }), gravado, true);
   }
   sel.value = gravado;
 }
@@ -1382,16 +1438,13 @@ function montarListaDeReset(candidatas, atual, seletor) {
 // Espelha `MAXIMO_DE_SEGUIDORES_DO_TIME` do config.py. O líder não conta.
 const MAXIMO_DO_TIME = 4;
 
-const EXPLICA_MODO_DO_TIME = {
-  copiar:
-    "As contas rodam a mesma macro, cada uma no seu ritmo. Ninguém espera ninguém.",
-  largada:
-    "Todas dão o TAB e começam cada volta juntas; cada uma bate no alvo dela. " +
-    "Quem se atrasar continua batendo e entra na largada seguinte.",
-  mesmo_alvo:
-    "Como a de cima, e ainda dão TAB até ficarem todas no mesmo alvo do líder " +
-    "antes de começar a bater.",
-};
+function textosModoDoTime() {
+  return {
+    copiar: t("explica_time_copiar"),
+    largada: t("explica_time_largada"),
+    mesmo_alvo: t("explica_time_mesmo_alvo"),
+  };
+}
 
 function atualizarContagemDoTime() {
   const marcadas = $$("#ed-app-time-lista input:checked");
@@ -1425,8 +1478,8 @@ function montarListaDoTime(candidatas, escolhidos, ocultas) {
     const p = document.createElement("p");
     p.className = "text-[10.5px] text-dim leading-snug";
     p.textContent = ocultas
-      ? `Nenhuma conta disponível — ${notaDoQueFicouFora(ocultas)}.`
-      : "Nenhuma outra conta cadastrada.";
+      ? `${t("rotulo_nenhuma_conta_disp")} — ${notaDoQueFicouFora(ocultas)}.`
+      : t("rotulo_nenhuma_outra_conta");
     caixa.appendChild(p);
     return;
   }
@@ -1472,15 +1525,14 @@ function montarListaDoTime(candidatas, escolhidos, ocultas) {
 
 function notaDoQueFicouFora(n) {
   return n === 1
-    ? "1 conta não aparece: está inativa, com outra função ou em outro time"
-    : `${n} contas não aparecem: estão inativas, com outra função ou em `
-      + "outro time";
+    ? t("nota_1_conta_oculta")
+    : t("nota_n_contas_ocultas", { n });
 }
 
 function explicarModoDoTime() {
   const sel = $("#ed-app-time-modo");
   const alvo = $("#ed-app-time-explica");
-  if (sel && alvo) alvo.textContent = EXPLICA_MODO_DO_TIME[sel.value] || "";
+  if (sel && alvo) alvo.textContent = textosModoDoTime()[sel.value] || "";
 }
 
 function lerTimeDoApp() {
@@ -1619,8 +1671,8 @@ function salvarEditor() {
     // RECUSADO: desmarcar "aceitar convites de time" numa conta que é o reset
     // de outra é o mesmo estrago que deletar, por outra porta. O editor fica
     // ABERTO, com o que o usuário digitou, para ele desfazer sem perder nada.
-    if (r && r.ok === false) { avisar(r.erro || "Não foi possível salvar."); return; }
-    toast("Conta salva.");
+    if (r && r.ok === false) { avisar(r.erro || t("erro_salvar")); return; }
+    toast(t("msg_conta_salva"));
     fecharEditor();
     carregarContas();
   });
@@ -1718,7 +1770,7 @@ document.addEventListener("focusin", (e) => {
     capturando = e.target;
     e.target.classList.add("capturando");
     // Feedback visual: toast curto informando que está capturando
-    toastCurto("Pressione uma tecla… (Esc para limpar)", "info", 1500);
+    toastCurto(t("msg_pressione_tecla"), "info", 1500);
   }
 });
 document.addEventListener("focusout", (e) => {
@@ -1763,7 +1815,7 @@ document.addEventListener("keydown", (e) => {
     (i) => i !== capturando && i.value && i.value.toUpperCase() === val);
   if (emUso) {
     const onde = emUso.closest("label");
-    const nome = onde ? onde.childNodes[0].textContent.trim() : "outra função";
+    const nome = onde ? onde.childNodes[0].textContent.trim() : t("rotulo_outra_funcao");
 
     // NOVO: scroll para o campo conflitante e highlight temporário
     emUso.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -1778,8 +1830,7 @@ document.addEventListener("keydown", (e) => {
       if (abaBtn && !abaBtn.classList.contains("aba-ativa")) abaBtn.click();
     }
 
-    toast(`A tecla ${val} já está em "${nome}". O jogo não aceita a mesma ` +
-          `tecla em duas funções.`, "err");
+    toast(t("msg_tecla_conflito", { tecla: val, nome }), "err");
     capturando.blur();
     return;
   }
@@ -1816,7 +1867,7 @@ $("#btn-salvar-config").addEventListener("click", () => {
     reuse_login_screen_clients: $("#ck-reaproveitar").checked,
   };
   chamar("salvar_config_geral", dados).then(() =>
-    toast("Configuração do cliente salva.", "ok"));
+    toast(t("msg_config_cliente_salva"), "ok"));
 });
 
 $("#btn-procurar-bat").addEventListener("click", () => {
@@ -1854,7 +1905,7 @@ function atualizarSeletorStats(lista) {
   lista.forEach((p) => {
     const opt = document.createElement("option");
     opt.value = p.login;
-    opt.textContent = `${p.nick}  (${p.total} runs)`;
+    opt.textContent = t("opt_personagem_runs", { nick: p.nick, n: p.total });
     sel.appendChild(opt);
   });
   // mantém a escolha; senão, pega o primeiro (mais runs, como na PyQt6)
@@ -1903,7 +1954,7 @@ function carregarStats() {
     if (!r.historico.length) {
       const tr = document.createElement("tr");
       const td = document.createElement("td");
-      td.colSpan = 6; td.textContent = "Sem histórico de dias anteriores.";
+      td.colSpan = 6; td.textContent = t("aviso_sem_historico");
       td.style.color = "var(--text-faint)";
       tr.appendChild(td); corpo.appendChild(tr);
     }
@@ -1924,7 +1975,7 @@ function atualizarFiltroLog() {
   const atual = sel.value;
   sel.innerHTML = "";
   const tudo = document.createElement("option");
-  tudo.value = ""; tudo.textContent = "Todas as contas";
+  tudo.value = ""; tudo.textContent = t("opt_todas_as_contas");
   sel.appendChild(tudo);
   contasCache.forEach((c) => {
     const opt = document.createElement("option");
@@ -2020,7 +2071,7 @@ function renderLog() {
     const span = document.createElement("span");
     span.className = animar ? "linha-log log-chegando" : "linha-log";
     span.style.cursor = "copy";
-    span.title = "Clique direito para copiar esta linha";
+    span.title = t("dica_copiar_linha_log");
     // TRÊS PEDAÇOS, TRÊS COLUNAS: hora | conta | mensagem. É SÓ APRESENTAÇÃO --
     // o texto copiado (clique direito e botão "Copiar") continua saindo de
     // `l.linha` inteira, com a hora no lugar. Sem esta separação o CSS não tem
@@ -2049,7 +2100,7 @@ function renderLog() {
     // NOVO: clique direito copia a linha individual
     span.addEventListener("contextmenu", (e) => {
       e.preventDefault();
-      copiarTexto(l.linha).then(ok => toastCurto(ok ? "Linha copiada" : "Falha ao copiar", ok ? "ok" : "err"));
+      copiarTexto(l.linha).then(ok => toastCurto(ok ? t("msg_linha_copiada") : t("erro_copiar"), ok ? "ok" : "err"));
     });
     caixa.appendChild(span);
   }
@@ -2058,7 +2109,7 @@ function renderLog() {
   // Segue o fim como o desktop: acompanha a última linha até o usuário rolar
   // para cima; quando ele volta ao fim, volta a acompanhar (ver `aoRolarLog`).
   if (logSeguirFim) seguirOFimDoLog();
-  $("#lbl-log-count").textContent = `${linhas.length} linhas exibidas`;
+  $("#lbl-log-count").textContent = `${linhas.length} ${t("log_linhas_exibidas")}`;
 }
 
 /* ============================================================
@@ -2277,7 +2328,7 @@ $("#btn-limpar-log").addEventListener("click", () => {
     renderizadoAte = 0;
     filtroRenderido = null;
     renderLog();
-    toast("Log limpo.");
+    toast(t("msg_log_limpo"));
   });
 });
 
@@ -2294,10 +2345,10 @@ $("#btn-copiar-log").addEventListener("click", () => {
   const texto = linhas
     .map((l) => (l.conta ? `[${l.conta}] ${l.linha}` : l.linha))
     .join("\n");
-  if (!texto) { toast("Nada para copiar ainda."); return; }
+  if (!texto) { toast(t("msg_nada_para_copiar")); return; }
   copiarTexto(texto).then((ok) => {
-    toast(ok ? "Log copiado para a área de transferência."
-             : "Não foi possível copiar o log.");
+    toast(ok ? t("msg_log_copiado")
+             : t("erro_copiar_log"));
   });
 });
 
@@ -2367,15 +2418,16 @@ function atualizarEstado(est) {
     roda.textContent = t("estado_parado");
     roda.className = "estado-roda estado-parado";
   }
-  const t = est.total || {};
+  const totais = est.total || {};
   // Confirmação visual do estado NA faixa de stats (runs/ok/falhas/relogins/
   // contas): mesmo com 0 runs enquanto as contas ainda logam ou esperam, a
   // primeira linha deixa claro que o bot está iniciado — não só o pontinho.
-  $("#estado-resumo").textContent =
-    `${t.runs || 0} runs · ${t.success || 0} ok · ${t.fail || 0} falhas` +
-    `\n${t.relogins || 0} relogins · ${(est.contas || []).length} contas`;
+  $("#estado-resumo").textContent = t("resumo_estado", {
+    runs: totais.runs || 0, ok: totais.success || 0, falhas: totais.fail || 0,
+    relogins: totais.relogins || 0, contas: (est.contas || []).length,
+  });
   $("#diag-status").textContent =
-    est.rodando ? (est.pausado ? "Pausado" : "Rodando") : "Parado";
+    est.rodando ? (est.pausado ? t("diag_pausado") : t("diag_rodando")) : t("diag_parado");
 
   // Reflete ao vivo o BC farm das contas rodando. O backend pode desligá-lo
   // sozinho (ex.: a conta tentou ir vender sem tecla de retorno configurada) —
@@ -2406,7 +2458,7 @@ function atualizarBotoesTemporarios(est) {
     const bt = document.getElementById(id);
     if (bt) {
       bt.disabled = !habilitado;
-      bt.title = habilitado ? "" : (!temConta ? "Selecione uma conta na aba Contas" : "Pare o bot primeiro");
+      bt.title = habilitado ? "" : (!temConta ? t("dica_selecione_conta") : t("dica_pare_o_bot"));
     }
   });
 }
@@ -2428,7 +2480,6 @@ $("#btn-abrir-pasta-logs").addEventListener("click", abrirLogs);
 // TEMPORÁRIO: testa SÓ a venda (personagem já em Stone City). Ver
 // blazesbot/bot/teste_venda.py — para remover o teste, apague este bloco e o
 // botão no index.html.
-const ROTULO_TESTE_VENDA = "Testar Venda (Conta Selecionada)";
 let testeDeVendaRodando = false;
 
 $("#btn-testar-venda").addEventListener("click", () => {
@@ -2438,30 +2489,30 @@ $("#btn-testar-venda").addEventListener("click", () => {
   // fica desabilitado com o bot parado, e o teste roda justamente assim.
   if (testeDeVendaRodando) {
     bt.disabled = true;
-    bt.textContent = "Cancelando…";
+    bt.textContent = t("rotulo_cancelando");
     chamar("cancelar_teste_venda");
     return;
   }
 
   if (contaUidSelecionado === null) {
-    toast("Selecione a conta na aba Contas primeiro.", "erro");
+    toast(t("erro_selecione_conta"), "erro");
     return;
   }
   testeDeVendaRodando = true;
-  bt.textContent = "Vendendo… (clique para parar)";
-  toast("Teste de venda iniciado — acompanhe pelo log.");
+  bt.textContent = t("rotulo_vendendo");
+  toast(t("msg_teste_venda_iniciado"));
   // A chamada só resolve quando a venda termina (pode levar minutos); o log
   // continua sendo puxado normalmente porque o pywebview atende cada chamada
   // do frontend em uma thread própria.
   chamar("testar_venda", contaUidSelecionado).then((r) => {
     testeDeVendaRodando = false;
     bt.disabled = false;
-    bt.textContent = ROTULO_TESTE_VENDA;
-    if (!r) { toast("Erro de comunicação.", "erro"); return; }
+    bt.textContent = t("btn_testar_venda");
+    if (!r) { toast(t("erro_comunicacao"), "erro"); return; }
     if (r.ok) {
-      toast(`Teste concluído: ${r.vendidos ?? 0} item(ns) vendido(s).`);
+      toast(t("msg_teste_concluido", { n: r.vendidos ?? 0 }));
     } else {
-      toast("Falha no teste: " + (r.erro || ""), "erro");
+      toast(t("erro_teste") + ": " + (r.erro || ""), "erro");
     }
   });
 });
@@ -2469,7 +2520,6 @@ $("#btn-testar-venda").addEventListener("click", () => {
 // TEMPORÁRIO: amostragem de coordenadas de clique direito. Ver
 // blazesbot/bot/amostragem_de_cliques.py — para remover, apague este bloco e o
 // botão no index.html.
-const ROTULO_AMOSTRAGEM = "Amostrar Cliques (Ponto Atual)";
 let amostragemRodando = false;
 
 $("#btn-amostrar-cliques").addEventListener("click", () => {
@@ -2479,27 +2529,27 @@ $("#btn-amostrar-cliques").addEventListener("click", () => {
   // fica desabilitado, então o próprio botão é o cancelar.
   if (amostragemRodando) {
     bt.disabled = true;
-    bt.textContent = "Cancelando…";
+    bt.textContent = t("rotulo_cancelando");
     chamar("cancelar_amostragem");
     return;
   }
 
   if (contaUidSelecionado === null) {
-    toast("Selecione a conta na aba Contas primeiro.", "erro");
+    toast(t("erro_selecione_conta"), "erro");
     return;
   }
   amostragemRodando = true;
-  bt.textContent = "Amostrando… (clique para parar)";
-  toast("Amostragem iniciada — acompanhe pelo log.");
+  bt.textContent = t("rotulo_amostrando");
+  toast(t("msg_amostragem_iniciada"));
   chamar("amostrar_cliques", contaUidSelecionado).then((r) => {
     amostragemRodando = false;
     bt.disabled = false;
-    bt.textContent = ROTULO_AMOSTRAGEM;
-    if (!r) { toast("Erro de comunicação.", "erro"); return; }
-    if (!r.ok) { toast("Falha na amostragem: " + (r.erro || ""), "erro"); return; }
-    // O veredito vem PRONTO do Python (`amostragem_de_cliques.resumir_curto`):
-    // o JS só exibe. O relatório completo já está no log, linha a linha.
-    toast(r.resumo_curto || "Amostragem concluída.");
+    bt.textContent = t("btn_amostrar_cliques");
+    if (!r) { toast(t("erro_comunicacao"), "erro"); return; }
+    if (!r.ok) { toast(t("erro_amostragem") + ": " + (r.erro || ""), "erro"); return; }
+    // O veredito vem PRONTO do Python (`amostragem_de_cliques.resumir_curto`),
+    // em PT-BR -- mesma pendência do catálogo de log (ver docs/SKILLS.md).
+    toast(r.resumo_curto || t("msg_amostragem_concluida"));
   });
 });
 
@@ -2508,17 +2558,18 @@ $("#btn-amostrar-cliques").addEventListener("click", () => {
 $("#btn-conferir-exclusao").addEventListener("click", () => {
   const bt = $("#btn-conferir-exclusao");
   if (contaUidSelecionado === null) {
-    toast("Selecione a conta na aba Contas primeiro.", "erro");
+    toast(t("erro_selecione_conta"), "erro");
     return;
   }
   bt.disabled = true;
-  toast("Conferindo os modelos — abrindo o inventário…");
+  toast(t("msg_conferindo_modelos"));
   chamar("conferir_modelos_de_exclusao", contaUidSelecionado).then((r) => {
     bt.disabled = false;
-    if (!r) { toast("Erro de comunicação.", "erro"); return; }
-    if (!r.ok) { toast("Falha: " + (r.erro || ""), "erro"); return; }
-    // O veredito vem PRONTO do Python (`afericao.resumir`): o JS só exibe.
-    toast(r.resumo || "Conferência concluída.");
+    if (!r) { toast(t("erro_comunicacao"), "erro"); return; }
+    if (!r.ok) { toast(t("erro_generico") + ": " + (r.erro || ""), "erro"); return; }
+    // O veredito vem PRONTO do Python (`afericao.resumir`), em PT-BR -- mesma
+    // pendência do catálogo de log (ver docs/SKILLS.md).
+    toast(r.resumo || t("msg_conferencia_concluida"));
     if (r.arquivo) chamar("abrir_imagem_da_afericao", r.arquivo);
   });
 });
@@ -2537,8 +2588,10 @@ let quedasCarregadas = false;
 function textoTecnico(q) {
   const partes = [];
   if (q.run) partes.push(`run ${q.run}`);
-  if (q.rodando_texto) partes.push(`rodando há ${q.rodando_texto}`);
-  if (q.relogin) partes.push(`religou sozinho (relogin #${q.relogin})`);
+  // `q.rodando_texto` já vem pronto do Python (`core/quedas.py`), em PT-BR --
+  // mesma pendência do catálogo de log (ver docs/SKILLS.md).
+  if (q.rodando_texto) partes.push(t("queda_rodando_ha", { tempo: q.rodando_texto }));
+  if (q.relogin) partes.push(t("queda_religou", { n: q.relogin }));
   return partes.join(" · ");
 }
 
@@ -2548,9 +2601,9 @@ function desenharQuedas(dados) {
   $("#quedas-dias").textContent = (dados && dados.dias) || 3;
 
   if (!lista.length) {
-    caixa.innerHTML =
-      '<div class="aviso-banner aviso-neutro">Nenhuma queda nos últimos ' +
-      ((dados && dados.dias) || 3) + " dias. 👍</div>";
+    caixa.innerHTML = '<div class="aviso-banner aviso-neutro">' +
+      t("aviso_sem_quedas", { dias: (dados && dados.dias) || 3 }) +
+      " 👍</div>";
     return;
   }
 
@@ -2565,7 +2618,7 @@ function desenharQuedas(dados) {
     const topo = document.createElement("div");
     topo.innerHTML =
       `<span class="queda-quando">${q.quando_texto || ""}</span>` +
-      `<span class="queda-conta"> — conta ${q.conta || "?"}` +
+      `<span class="queda-conta"> — ${t("rotulo_conta_minusculo")} ${q.conta || "?"}` +
       (q.personagem ? ` (${q.personagem})` : "") + "</span>";
     corpo.appendChild(topo);
 
@@ -2596,7 +2649,7 @@ function desenharQuedas(dados) {
       const img = document.createElement("img");
       img.className = "queda-print";
       img.src = q.print_mini;
-      img.alt = "Print da tela no momento da queda";
+      img.alt = t("lupa_print_alt");
       img.addEventListener("click", () => abrirPrintGrande(q.print));
       cartao.appendChild(img);
     }
@@ -2606,7 +2659,7 @@ function desenharQuedas(dados) {
 
 function abrirPrintGrande(nome) {
   chamar("print_da_queda", nome).then((r) => {
-    if (!r || !r.imagem) { toast("Não consegui abrir o print.", "erro"); return; }
+    if (!r || !r.imagem) { toast(t("erro_abrir_print"), "erro"); return; }
     $("#lupa-print-img").src = r.imagem;
     $("#lupa-print").classList.remove("escondida");
   });
@@ -2638,7 +2691,7 @@ function atualizarSeletorDeQuedas(contas) {
   // aconteceu essa noite", e ela atravessa contas.
   const todas = document.createElement("option");
   todas.value = "";
-  todas.textContent = "Todas as contas";
+  todas.textContent = t("opt_todas_as_contas");
   sel.appendChild(todas);
   contas.forEach((c) => {
     const opt = document.createElement("option");
@@ -2654,10 +2707,10 @@ $("#sel-conta-quedas").addEventListener("change", carregarQuedas);
 $("#btn-copiar-quedas").addEventListener("click", () => {
   const conta = $("#sel-conta-quedas").value || "";
   chamar("copiar_relatorio_de_quedas", conta).then((r) => {
-    if (!r || !r.texto) { toast("Nada para copiar.", "erro"); return; }
+    if (!r || !r.texto) { toast(t("erro_nada_para_copiar"), "erro"); return; }
     navigator.clipboard.writeText(r.texto).then(
-      () => toast("Relatório copiado — pode colar e enviar para o suporte."),
-      () => toast("Não consegui copiar.", "erro"));
+      () => toast(t("msg_relatorio_copiado")),
+      () => toast(t("erro_copiar"), "erro"));
   });
 });
 
@@ -2676,7 +2729,7 @@ function popularSeletores() {
   selRes.innerHTML = "";
   const auto = document.createElement("option");
   auto.value = "auto";
-  auto.textContent = "detectar automaticamente";
+  auto.textContent = t("opt_detectar_automaticamente");
   selRes.appendChild(auto);
   (c.resolucoes || []).forEach((r) => {
     const opt = document.createElement("option");
@@ -2715,14 +2768,17 @@ function popularSeletores() {
   // diagnóstico
   $("#diag-resolucao").textContent = c.resolucao_validada || "—";
   $("#diag-dpapi").textContent = c.dpapi
-    ? "Disponível (senhas cifradas com o Windows)"
-    : "INDISPONÍVEL — senhas não podem ser guardadas";
+    ? t("diag_dpapi_disponivel")
+    : t("diag_dpapi_indisponivel");
   $("#diag-dpapi").style.color = c.dpapi ? "" : "var(--err)";
 }
 
 function init() {
   if (!window.pywebview ||
       typeof (window.pywebview.api || {}).obter_constantes !== "function") {
+    // Fica em PT-BR de propósito: dispara ANTES de `constantes.traducoes` existir
+    // (é exatamente a falha de não ter carregado o bridge), e só aparece para
+    // quem abriu o arquivo errado -- setup, não uso normal da interface.
     $("#caixa-log").textContent =
       "pywebview não carregado. Abra pela INICIAR-WEB.bat (não pelo navegador direto).";
     return;
