@@ -1,0 +1,195 @@
+"""Quando a HH joga o lixo fora, e quantas vezes.
+
+=========================================================================
+A CADÊNCIA, PEDIDA PELO USUÁRIO EM 08/09/2026
+=========================================================================
+
+> *"sobre jogar o lixo fora de HH, deve ser feito toda vez que termina a run de
+> HH, pois pode ocupar muito espaço, entao assim que sai de HH voce ja faz o
+> ato de deletar, e quando começa o bot, ao chegar na posição de entrar em HH
+> voce faz a primeira limpa, para caso o usuario ja esteja com o inventario
+> cheio"*
+
+São DOIS momentos com naturezas diferentes:
+
+| momento | quantas vezes | por quê |
+|---|---|---|
+| **na porta**, na largada | uma vez por SESSÃO do bot | bolsa cheia ali não é lixo desta run -- é o que estava lá antes, e sem espaço a run inteira não guarda drop |
+| **ao sair**, no `MANUTENCAO` | TODA run | o drop de uma run já ocupa muito espaço |
+
+E o descarte continua atrás das duas travas que já existiam: a flag da conta
+(`hh.deletar_lixo`, que nasce DESLIGADA porque apagar é irreversível) e a pasta
+só da HH.
+
+Ver `docs/decisoes/hh.md` §18.
+"""
+from __future__ import annotations
+
+import ast
+import inspect
+import textwrap
+
+from blazesbot.bot.hh.manutencao import ManutencaoDaHH
+from blazesbot.bot.hh.routine import HHRoutine
+
+
+class _Log:
+    def __init__(self): self.linhas: list[str] = []
+    def info(self, m, *a): self.linhas.append(m % a if a else m)
+    def warning(self, m, *a): self.linhas.append(m % a if a else m)
+    def debug(self, *a, **k): pass
+
+
+class _Ctx:
+    def __init__(self):
+        self.log = _Log()
+        self.stats = type("S", (), {"runs": 0})()
+
+        class _HH:
+            deletar_lixo = True
+
+        class _Teclas:
+            inventory = "i"
+
+        self.settings = type("Cfg", (), {"hh": _HH(), "keys": _Teclas()})()
+
+
+def _manutencao():
+    m = ManutencaoDaHH(_Ctx(), vendedor=None)
+    m.chamadas = 0
+
+    def _apagar():
+        m.chamadas += 1
+        return 3
+
+    m.descartar_o_lixo = _apagar
+    return m
+
+
+# ===========================================================================
+# Na porta: uma vez por sessão
+# ===========================================================================
+
+
+def test_a_primeira_limpa_acontece():
+    m = _manutencao()
+
+    assert m.descartar_o_lixo_ao_comecar() == 3
+    assert m.chamadas == 1
+
+
+def test_a_primeira_limpa_NAO_se_repete():
+    m = _manutencao()
+    m.descartar_o_lixo_ao_comecar()
+
+    for _ in range(5):
+        assert m.descartar_o_lixo_ao_comecar() == 0
+
+    assert m.chamadas == 1, (
+        "Uma vez por SESSÃO, não por run: o descarte de cada run é o do "
+        "`MANUTENCAO`. Repetir na porta abriria a bolsa a cada volta para "
+        "nada.")
+
+
+def test_a_memoria_da_primeira_limpa_e_do_OBJETO():
+    """Nada de arquivo: o usuário pediu 'só enquanto está com o bot aberto'."""
+    primeira, segunda = _manutencao(), _manutencao()
+    primeira.descartar_o_lixo_ao_comecar()
+
+    assert segunda.descartar_o_lixo_ao_comecar() == 3, (
+        "Conta nova (ou bot reaberto) tem direito à primeira limpa dela.")
+
+
+# ===========================================================================
+# Os dois pontos de chamada na rotina
+# ===========================================================================
+
+
+def _chamadas(metodo) -> list[str]:
+    arvore = ast.parse(textwrap.dedent(inspect.getsource(metodo)))
+    return [getattr(n.func, "attr", getattr(n.func, "id", ""))
+            for n in ast.walk(arvore) if isinstance(n, ast.Call)]
+
+
+def test_TODO_caminho_da_porta_para_o_ENTRAR_passa_pela_primeira_limpa():
+    """São dois: já estar na porta, e chegar nela pela viagem.
+
+    O caminho curto ("já estou na porta") é o NORMAL a partir da segunda run --
+    e é justamente o que o bot pega quando abre com o personagem parado ali.
+    """
+    fonte = textwrap.dedent(inspect.getsource(HHRoutine._do_ate_a_porta))
+    arvore = ast.parse(fonte)
+
+    idas = [n for n in ast.walk(arvore)
+            if isinstance(n, ast.Call)
+            and getattr(n.func, "attr", "") == "_ir_para"]
+    limpas = [n.lineno for n in ast.walk(arvore)
+              if isinstance(n, ast.Call)
+              and getattr(n.func, "attr", "") == "descartar_o_lixo_ao_comecar"]
+
+    assert len(idas) == len(limpas) == 2, (
+        f"{len(idas)} saída(s) para o ENTRAR e {len(limpas)} limpa(s). Toda "
+        f"saída tem que ter a sua -- a que ficar de fora é a que roda com a "
+        f"bolsa cheia.")
+    for ida in idas:
+        assert any(linha < ida.lineno for linha in limpas), (
+            "A limpa vem ANTES de entrar: dentro da cave já é tarde.")
+
+
+def test_o_MANUTENCAO_descarta_em_TODA_run():
+    """Sem `if` nenhum antes -- diferente da venda, que tem contagem."""
+    fonte = textwrap.dedent(inspect.getsource(HHRoutine._do_manutencao))
+    arvore = ast.parse(fonte)
+    metodo = arvore.body[0]
+
+    for no in ast.walk(metodo):
+        if (isinstance(no, ast.Call)
+                and getattr(no.func, "attr", "") == "descartar_o_lixo"):
+            break
+    else:
+        raise AssertionError("O `MANUTENCAO` deixou de descartar o lixo.")
+
+    dentro_de_if = [n.lineno for n in ast.walk(metodo)
+                    if isinstance(n, ast.If)
+                    for c in ast.walk(n)
+                    if isinstance(c, ast.Call)
+                    and getattr(c.func, "attr", "") == "descartar_o_lixo"]
+    assert not dentro_de_if, (
+        "O drop de UMA run já ocupa muito espaço; a venda é que espera "
+        "algumas runs, não o descarte.")
+
+
+def test_a_ORDEM_no_MANUTENCAO_e_apagar_e_depois_vender():
+    ordem = _chamadas(HHRoutine._do_manutencao)
+
+    assert ordem.index("descartar_o_lixo") < ordem.index("vender"), (
+        "O lixo da HH não é comprado pelo NPC: levá-lo para a janela de venda "
+        "gasta cliques em item que não sai.")
+
+
+# ===========================================================================
+# As travas continuam de pé
+# ===========================================================================
+
+
+def test_a_primeira_limpa_respeita_a_flag_desligada():
+    from blazesbot.config import HHConfig
+
+    assert HHConfig().deletar_lixo is False, (
+        "Apagar é irreversível; a flag nasce desligada e ligar é ato "
+        "explícito de quem já conferiu a pasta.")
+
+    ctx = _Ctx()
+    ctx.settings.hh.deletar_lixo = False
+    m = ManutencaoDaHH(ctx, vendedor=None)
+
+    assert m.descartar_o_lixo_ao_comecar() == 0, (
+        "A primeira limpa não pode ser uma porta dos fundos para a flag.")
+
+
+def test_a_primeira_limpa_usa_a_pasta_SO_da_HH():
+    fonte = inspect.getsource(ManutencaoDaHH.descartar_o_lixo)
+
+    assert "PASTA_DO_LIXO_DA_HH" in fonte, (
+        "A lista global serve o APP e a BC, e o que é lixo numa cave é "
+        "mercadoria na outra.")

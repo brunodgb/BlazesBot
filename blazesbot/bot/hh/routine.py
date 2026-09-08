@@ -568,21 +568,15 @@ class HHRoutine:
 
         if etapa == mapa_hh.ETAPA_NA_PORTA:
             if self.ui.garantir_coordenada_da_entrada():
+                self.manutencao.descartar_o_lixo_ao_comecar()
                 self._conferir_o_pet_na_porta()
                 self._ir_para(State.ENTRAR, "já estou na porta")
                 return
 
-        # O TELEPORTE DA FAY SÓ SE EU AINDA NÃO PASSEI POR ELE.
-        #
-        # Regra do usuário, 04/09/2026: estando em `West Suburb of Stone City`
-        # (onde a Fay deposita) ou em `Outside Black Wind Camp` (mais perto
-        # ainda), *"você vai usar o surroundings"* e seguir dali -- **mesmo que
-        # o X e Y não estejam certos**, porque o teleporte espalha o ponto de
-        # chegada e quem responde ali é o NOME do lugar.
-        #
-        # Pular a Fay economiza dois painéis e um teleporte. E, mais que o
-        # tempo: refazer o teleporte estando do outro lado dele levaria o
-        # personagem de volta para Stone City, andando para longe da cave.
+        # O TELEPORTE DA FAY SÓ SE EU AINDA NÃO PASSEI POR ELE: estando onde
+        # ela deposita, ou mais perto, quem responde é o NOME do lugar e não o
+        # X e Y. Refazer o teleporte dali levaria o personagem de volta para
+        # Stone City, para LONGE da cave. Ver `docs/decisoes/hh.md` §17.
         if etapa not in (mapa_hh.ETAPA_NA_VIZINHANCA, mapa_hh.ETAPA_NA_PORTA):
             if not self.ui.viajar_para_a_hh():
                 self._falhar("não consegui viajar para a HH", State.RECUPERAR)
@@ -596,6 +590,7 @@ class HHRoutine:
             self._falhar("não cheguei na porta da cave", State.RECUPERAR)
             return
 
+        self.manutencao.descartar_o_lixo_ao_comecar()
         self._conferir_o_pet_na_porta()
         self._ir_para(State.ENTRAR, "na porta da cave")
 

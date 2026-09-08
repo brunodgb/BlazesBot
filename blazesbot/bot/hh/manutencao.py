@@ -38,6 +38,8 @@ class ManutencaoDaHH:
         # Em que número de run foi a última venda. Zero = nunca vendeu nesta
         # sessão, e aí o teto por contagem já vale na primeira volta.
         self.runs_na_ultima_venda = 0
+        # A primeira limpa de bolsa da SESSÃO já aconteceu?
+        self.ja_limpei_ao_comecar = False
 
     # ==================================================================
     # A decisão
@@ -111,6 +113,33 @@ class ManutencaoDaHH:
         ctx.log.info("HH: %s item(ns) de lixo apagado(s) da pasta %s",
                      apagados, deletador.PASTA_DO_LIXO_DA_HH.name)
         return apagados or 0
+
+    def descartar_o_lixo_ao_comecar(self) -> int:
+        """A PRIMEIRA limpa da sessão, na porta da cave. Só uma vez.
+
+        Regra do usuário, 08/09/2026: *"quando começa o bot, ao chegar na
+        posição de entrar em HH voce faz a primeira limpa, para caso o usuario
+        ja esteja com o inventario cheio"*.
+
+        POR QUE NA PORTA E NÃO DENTRO. Bolsa cheia na largada não é lixo desta
+        run -- é o que estava lá antes de o bot abrir, e pode ser o suficiente
+        para a run inteira não ter onde guardar drop. Limpar já dentro da cave
+        seria descobrir o problema depois de ele custar.
+
+        UMA VEZ POR SESSÃO, e não por run: o descarte de cada run acontece na
+        `MANUTENCAO`, logo depois de sair. Repetir aqui abriria a bolsa de novo
+        a cada volta para nada.
+
+        A memória é do objeto, que vive enquanto o bot está aberto -- é a mesma
+        escolha do Histórico de Quedas, e o usuário pediu assim em 04/09/2026:
+        *"não precisa ser persistente, só verificar enquanto esta com o bot
+        aberto"*.
+        """
+        if self.ja_limpei_ao_comecar:
+            return 0
+        self.ja_limpei_ao_comecar = True
+        self.ctx.log.info("HH: primeira limpa da bolsa antes de entrar.")
+        return self.descartar_o_lixo()
 
     # ==================================================================
     # A venda

@@ -1161,3 +1161,55 @@ no log de (205,31) no BC. Ver `Navigator.seguir_rota`.
 **O trecho é refeito com frequência**, e quase nunca do começo: boss longe do
 ponto, rollback, personagem arrastado na luta. Recomeçar pelo waypoint 1 era o
 caso comum, não o excepcional.
+
+## 17. O TELEPORTE DA FAY, E QUANDO SE PULA ELE
+
+Texto movido do comentário de `HHRoutine._do_ate_a_porta`, verbatim:
+
+> O TELEPORTE DA FAY SÓ SE EU AINDA NÃO PASSEI POR ELE.
+>
+> Regra do usuário, 04/09/2026: estando em `West Suburb of Stone City` (onde a
+> Fay deposita) ou em `Outside Black Wind Camp` (mais perto ainda), *"você vai
+> usar o surroundings"* e seguir dali -- **mesmo que o X e Y não estejam
+> certos**, porque o teleporte espalha o ponto de chegada e quem responde ali é
+> o NOME do lugar.
+>
+> Pular a Fay economiza dois painéis e um teleporte. E, mais que o tempo:
+> refazer o teleporte estando do outro lado dele levaria o personagem de volta
+> para Stone City, andando para longe da cave.
+
+## 18. A CADÊNCIA DO DESCARTE DE LIXO (08/09/2026)
+
+### O pedido
+
+> *"sobre jogar o lixo fora de HH, deve ser feito toda vez que termina a run de
+> HH, pois pode ocupar muito espaço, entao assim que sai de HH voce ja faz o
+> ato de deletar, e quando começa o bot, ao chegar na posição de entrar em HH
+> voce faz a primeira limpa, para caso o usuario ja esteja com o inventario
+> cheio"*
+
+### Dois momentos, duas naturezas
+
+| momento | quantas vezes | quem faz | por quê |
+|---|---|---|---|
+| **na porta**, antes de entrar | uma vez por SESSÃO do bot | `ManutencaoDaHH.descartar_o_lixo_ao_comecar` | bolsa cheia ali não é lixo desta run -- é o que estava lá antes de o bot abrir, e sem espaço a run inteira não guarda drop |
+| **ao sair**, no `MANUTENCAO` | TODA run | `ManutencaoDaHH.descartar_o_lixo` | o drop de uma run já ocupa muito espaço |
+
+**Na porta e não dentro:** limpar já dentro da cave seria descobrir o problema
+depois de ele custar — o drop dos primeiros mobs cai no chão por falta de slot.
+
+**Uma vez por sessão e não por run:** o descarte de cada run já acontece na
+`MANUTENCAO`, logo depois de sair. Repetir na porta abriria a bolsa a cada
+volta para nada.
+
+**A memória é do objeto**, que vive enquanto o bot está aberto — mesma escolha
+do Histórico de Quedas, e é o que o usuário pediu em 04/09/2026: *"não precisa
+ser persistente, só verificar enquanto esta com o bot aberto"*.
+
+### O que NÃO mudou
+
+As duas travas do descarte continuam de pé, e a primeira limpa passa pelas
+mesmas: a flag da conta (`hh.deletar_lixo`, que nasce **desligada** porque
+apagar é irreversível) e a pasta só da HH (`deletador.PASTA_DO_LIXO_DA_HH`) --
+a lista global serve o APP e a BC, e o que é lixo numa cave é mercadoria na
+outra.
