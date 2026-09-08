@@ -206,13 +206,26 @@ para de responder — não existe troca por alternativa paga. O que sustenta iss
   quebra:** esses cinco TÊM degrade automático para modelo pago no mapa acima.
   Não adicione chave desses provedores sem antes tratar isso.
 
-## Quando usar (e quando NÃO) — diretiva permanente do usuário (06/09/2026)
+## Quando usar (e quando NÃO) — diretiva permanente do usuário (06/09/2026, gatilho reforçado 07/09/2026)
 
 **Sem limite de uso.** O roster default é zero-custo (seção acima), então não
 há cota a poupar — peça uma segunda opinião sempre que a dúvida for real, sem
-se policiar por frequência. O que resta é critério de **sinal**, não de custo:
+se policiar por frequência. O que resta é critério de **sinal**, não de custo.
+
+**"Dúvida real" não é para sentir, é para reconhecer no momento certo.**
+Confiar em "vou perceber quando for o caso" já falhou pelo menos uma vez
+medido: uma investigação (catálogo de ~775 chamadas de log, 07/09/2026)
+terminou com um fork de arquitetura genuíno — registro pequeno de chaves vs.
+retrofit total vs. catálogo por hash — e a implementação foi decidida sem
+pedir a segunda leitura, porque nenhuma "dúvida" foi sentida no momento; era
+só a hora de decidir. Por isso o gatilho agora é por MOMENTO, não por
+sensação: **toda vez que uma investigação (sua ou de um agente) termina e o
+próximo passo é decidir arquitetura entre 2+ caminhos, pare ali — antes de
+implementar — e pergunte ao council.** Não espere a dúvida aparecer sozinha.
 
 **Usar:**
+- **Investigação que acabou de terminar e virou decisão de arquitetura**
+  (o gatilho mais perdido até agora — ver acima).
 - Decisões de arquitetura com tradeoffs reais (qual lib, qual design pattern).
 - Debugging dead-end (já tentou 2+ vezes, nada bateu).
 - Cross-check de segurança/performance/maintainability em mudança grande.
