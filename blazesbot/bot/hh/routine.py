@@ -73,6 +73,7 @@ from ..navegacao import Navigator, PersonagemMortoNoPortao
 from ..team import TeamService
 from . import bosses, mapa_hh
 from .entrada import EntradaDaHH
+from .manutencao import ManutencaoDaHH
 from .ponto_do_boss import do_trecho
 from .progresso import ProgressoDaCave
 from .vendedor import VendedorDaHH
@@ -231,6 +232,10 @@ class HHRoutine:
             self._matar_ate_sair_de_batalha)
         self.ui = EntradaDaHH(ctx, self.nav)
         self.vendedor = VendedorDaHH(ctx, self.nav)
+        # O QUE ACONTECE FORA DA CAVE, entre uma run e a seguinte: descarte do
+        # lixo e venda. Mora em `hh/manutencao.py` -- são decisões que não
+        # falam com a máquina de estados nem sabem em que trecho a run parou.
+        self.manutencao = ManutencaoDaHH(ctx, self.vendedor)
         self.team = TeamService(
             ctx, nick_do_reset=lambda: ctx.settings.hh.reset_nick)
         self.state = State.SITUAR
@@ -243,7 +248,6 @@ class HHRoutine:
         self.progresso = ProgressoDaCave(len(mapa_hh.TRECHOS_DOS_BOSSES))
         self._voltas_no_estado = 0
         self._ultimo_estado: State | None = None
-        self._runs_na_ultima_venda = 0
         # Se a morte desta vez já foi contada no placar.
         self._contou_a_morte = False
 
@@ -277,7 +281,6 @@ class HHRoutine:
         # cave continua de onde estava, em vez de tentar entrar estando dentro --
         # o que faria o clique cair no chão e tirar o personagem da rota.
         self.state = State.SITUAR
-        self._runs_na_ultima_venda = ctx.stats.runs
 
         # Desligar a HH pela interface precisa cortar a fase atual NO MEIO.
         # `farming` é o sinal para `ctx.raise_if_stopped` detonar `FarmDesligado`.
@@ -536,7 +539,7 @@ class HHRoutine:
         ctx.apply_camera()
 
         # A bolsa manda ir vender ANTES de entrar, não depois de encher.
-        if self._precisa_vender():
+        if self.manutencao.precisa_vender():
             self._ir_para(State.MANUTENCAO, "a bolsa pede venda antes de entrar")
             return
 
@@ -547,21 +550,6 @@ class HHRoutine:
 
         self._ir_para(State.ATE_A_PORTA, "indo para a porta da cave")
 
-    def _precisa_vender(self) -> bool:
-        """A bolsa está cheia, ou já passaram runs demais desde a última venda?
-
-        DUAS FONTES, e a segunda é rede: a leitura de bolsa pode falhar, e um
-        teto por contagem de runs garante que a venda acontece de qualquer jeito.
-        """
-        ctx = self.ctx
-        # `precisa_vender` devolve False quando a contagem não pôde ser lida --
-        # vender sem saber quantos itens existem levaria o bot a viajar sem
-        # motivo e a clicar na grade de uma janela talvez vazia.
-        if ctx.settings.bags.precisa_vender(ctx.memory.bag_count()):
-            return True
-
-        desde = ctx.stats.runs - self._runs_na_ultima_venda
-        return desde >= ctx.settings.hh.vendor.runs_before_selling
 
     # ==================================================================
     # ATE_A_PORTA
@@ -1507,21 +1495,25 @@ class HHRoutine:
         """
         ctx = self.ctx
 
-        if self._precisa_vender():
-            self._vender()
-            self._runs_na_ultima_venda = ctx.stats.runs
+        # A ORDEM É DELETAR E DEPOIS VENDER, e ela importa.
+        #
+        # O lixo da HH não é comprado pelo NPC: levá-lo para a janela de venda
+        # gasta cliques na grade em item que não sai, e ele volta ocupando o
+        # mesmo slot. Apagar primeiro deixa a bolsa com só o que tem preço --
+        # e a venda, que vende a partir de um slot configurado, passa a
+        # encontrar mercadoria onde antes achava lixo.
+        self.manutencao.descartar_o_lixo()
+
+        if self.manutencao.precisa_vender():
+            self.manutencao.vender()
+            self.manutencao.anotar_a_venda()
 
         if ctx.settings.hh.modo_do_reset == MODO_FADA_DA_HH:
             self._reciclar_o_time()
 
         self._ir_para(State.PREPARAR, "manutenção feita; próxima run")
 
-    def _vender(self) -> None:
-        """A venda no `Roaming Apothecary`, do lado de fora da cave."""
-        ctx = self.ctx
-        ctx.log.info("HH: indo vender no %s", self.vendedor.NOME_DO_VENDEDOR)
-        vendidos = self.vendedor.vender()
-        ctx.log.info("HH: %s slot(s) vendido(s)", vendidos)
+
 
     def _publicar_onde_estou(self, *, dentro: bool) -> None:
         """Conta à Fada se o líder está dentro da cave.

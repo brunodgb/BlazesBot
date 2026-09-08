@@ -34,7 +34,7 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 **348 tempos catalogados** — 245 FIXOS (espera cega), 103 entre TETO e PASSO.
 
 
-**6 estão diferentes do original:** `TETO_DA_CAIXA`, `PASSO_DA_ESPERA`, `ESPERA_DA_BOLSA_ABRIR`, `FATIA_DE_ESPERA`, `INTERVALO_ENTRE_INVOCACOES`, `PASSOS_DO_APP`
+**3 estão diferentes do original:** `FATIA_DE_ESPERA`, `INTERVALO_ENTRE_INVOCACOES`, `PASSOS_DO_APP`
 
 
 ## FORA DA CAVE — venda em Stone City
@@ -157,13 +157,6 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | `SEGUNDOS_ESPERANDO_SAIR_DE_BATALHA` | 2 s | = | FIXO | [cura.py:176](blazesbot/bot/app/cura.py#L176) | `_esperar_sair_de_batalha` | Quanto esperar a flag de batalha baixar depois que a macro termina. |
 | `SEGUNDOS_PARA_SENTAR_COM_A_POCAO` | 1 s | *novo* | FIXO | [cura.py:187](blazesbot/bot/app/cura.py#L187) | `_a_pocao_saiu` | Quanto esperar o personagem SENTAR depois de apertar a tecla de poção. |
 | `PASSO_DA_PERGUNTA` | 0.1 s | = | PASSO | [cura.py:192](blazesbot/bot/app/cura.py#L192) | `_esperar_sair_de_batalha, _voltar_ao_ponto (+2)` | Cadência de toda pergunta deste módulo. Leitura de memória é ~1 µs; o custo é |
-| `TETO_DE_SEGUNDOS` | 10 s | = | TETO | [deletador.py:147](blazesbot/bot/app/deletador.py#L147) | `deletar_lixo, limpar_a_bolsa` | Teto do passo inteiro (verificar + apagar), pedido do usuário. |
-| `TETO_DA_CAIXA` | 1.2 s | **1 s** ⚠ | TETO | [deletador.py:150](blazesbot/bot/app/deletador.py#L150) | `_esperar_a_caixa` | Espera pela caixa de confirmação aparecer, depois do clique no ícone. |
-| `PASSO_DA_ESPERA` | 0.08 s | **0.05 s** ⚠ | PASSO | [deletador.py:151](blazesbot/bot/app/deletador.py#L151) | `_esperar_a_caixa` |  |
-| `ESPERA_DA_BOLSA_ABRIR` | 0.58 s | **0.35 s** ⚠ | FIXO | [deletador.py:161](blazesbot/bot/app/deletador.py#L161) | `_fechar_a_bolsa` | A janela do inventário terminar de pintar depois da tecla. |
-| `TETO_DA_BOLSA_ABRIR` | 2 s | *novo* | TETO | [deletador.py:173](blazesbot/bot/app/deletador.py#L173) | `_esperar_a_bolsa_abrir, limpar_a_bolsa` | Teto da espera pela bolsa APARECER depois da tecla -- 07/09/2026. |
-| `PASSO_DA_BOLSA_ABRIR` | 0.15 s | *novo* | PASSO | [deletador.py:177](blazesbot/bot/app/deletador.py#L177) | `_esperar_a_bolsa_abrir` | Passo entre duas perguntas pelo ícone. Cada uma custa uma captura de janela, |
-| *literal em* `_apagar_um` | 0.05 s | = | FIXO | [deletador.py:409](blazesbot/bot/app/deletador.py#L409) | `_apagar_um` | Uma exclusão completa: item -> ícone -> Ok. |
 | `FATIA_DE_ESPERA` | 0.08 s | **0.05 s** ⚠ | PASSO | [executor.py:103](blazesbot/bot/app/executor.py#L103) | `_esperar, _dormir (+1)` | Fatia máxima de espera antes de conferir se é para continuar. 0,05 s dá parada |
 | `INTERVALO_ENTRE_INVOCACOES` | 6 s | **10 s** ⚠ | FIXO | [executor.py:163](blazesbot/bot/app/executor.py#L163) | `garantir_pet` | Intervalo mínimo entre dois toques na tecla do pet. |
 | `ESPERA_DEPOIS_DE_INVOCAR` | 1 s | = | FIXO | [executor.py:168](blazesbot/bot/app/executor.py#L168) | `garantir_pet` | Espera depois de apertar a tecla do pet, antes de seguir para as teclas da |
@@ -276,6 +269,13 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | *literal em* `apply_buffs` | 0.6 s | = | FIXO | [combate.py:3658](blazesbot/bot/combate.py#L3658) | `apply_buffs` | Aplica os buffs configurados, em si mesmo. |
 | `FATIA_DA_ESPERA` | 0.25 s | = | PASSO | [context.py:212](blazesbot/bot/context.py#L212) | `tick` | Fatia máxima de sono dentro de um `tick`. |
 | *literal em* `wait_if_paused` | 0.075 s | = | FIXO | [context.py:514](blazesbot/bot/context.py#L514) | `wait_if_paused` | Bloqueia enquanto a pausa estiver ativa. |
+| `TETO_DE_SEGUNDOS` | 10 s | *novo* | TETO | [deletador.py:159](blazesbot/bot/deletador.py#L159) | `deletar_lixo, limpar_a_bolsa` | Teto do passo inteiro (verificar + apagar), pedido do usuário. |
+| `TETO_DA_CAIXA` | 1.2 s | *novo* | TETO | [deletador.py:162](blazesbot/bot/deletador.py#L162) | `_esperar_a_caixa` | Espera pela caixa de confirmação aparecer, depois do clique no ícone. |
+| `PASSO_DA_ESPERA` | 0.08 s | *novo* | PASSO | [deletador.py:163](blazesbot/bot/deletador.py#L163) | `_esperar_a_caixa` |  |
+| `ESPERA_DA_BOLSA_ABRIR` | 0.58 s | *novo* | FIXO | [deletador.py:173](blazesbot/bot/deletador.py#L173) | `_fechar_a_bolsa` | A janela do inventário terminar de pintar depois da tecla. |
+| `TETO_DA_BOLSA_ABRIR` | 2 s | *novo* | TETO | [deletador.py:185](blazesbot/bot/deletador.py#L185) | `_esperar_a_bolsa_abrir, limpar_a_bolsa` | Teto da espera pela bolsa APARECER depois da tecla -- 07/09/2026. |
+| `PASSO_DA_BOLSA_ABRIR` | 0.15 s | *novo* | PASSO | [deletador.py:189](blazesbot/bot/deletador.py#L189) | `_esperar_a_bolsa_abrir` | Passo entre duas perguntas pelo ícone. Cada uma custa uma captura de janela, |
+| *literal em* `_apagar_um` | 0.05 s | *novo* | FIXO | [deletador.py:432](blazesbot/bot/deletador.py#L432) | `_apagar_um` | Uma exclusão completa: item -> ícone -> Ok. |
 | `PASSO_DA_FADA` | 0.1 s | *novo* | PASSO | [fada.py:80](blazesbot/bot/fada.py#L80) | `rodar` | Cadência do laço da Fada quando não há nada a fazer. |
 | `TETO_PARA_O_ALVO_VIRAR` | 0.4 s | *novo* | TETO | [fada.py:87](blazesbot/bot/fada.py#L87) | `_clique_saiu_errado` | Depois do clique no retrato, quanto esperar a memória mostrar o alvo novo. |
 | `PASSO_DA_CONFERENCIA_DO_ALVO` | 0.02 s | *novo* | PASSO | [fada.py:88](blazesbot/bot/fada.py#L88) | `_clique_saiu_errado` |  |
@@ -299,12 +299,12 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | `PASSO_ESPERANDO_O_LIDER` | 0.5 s | *novo* | PASSO | [fada.py:87](blazesbot/bot/hh/fada.py#L87) | `esperar_o_lider_entrar` |  |
 | *literal em* `seguir_o_lider` | 0.15 s | *novo* | FIXO | [fada.py:160](blazesbot/bot/hh/fada.py#L160) | `seguir_o_lider` | Clica no retrato do líder e aperta a tecla de seguir. |
 | *literal em* `entrar` | 0.25 s | *novo* | FIXO | [fada.py:250](blazesbot/bot/hh/fada.py#L250) | `entrar` | Entra na cave. Mesma porta, mesma máquina, mesmo NPC do líder. |
-| `PASSO_DENTRO_DA_CAVE` | 0.05 s | *novo* | PASSO | [routine.py:118](blazesbot/bot/hh/routine.py#L118) | `run` | Quanto esperar entre estados DENTRO da cave. |
-| `PASSO_FORA_DA_CAVE` | 0.4 s | *novo* | PASSO | [routine.py:119](blazesbot/bot/hh/routine.py#L119) | `run` |  |
-| `SEGUNDOS_PARA_ENGAJAR` | 5 s | *novo* | FIXO | [routine.py:138](blazesbot/bot/hh/routine.py#L138) | `_do_boss` | Quanto esperar, num ponto de batalha, para a flag de combate LIGAR. |
-| `SEGUNDOS_POR_TENTATIVA_DE_VOLTAR` | 1.8 s | *novo* | FIXO | [routine.py:145](blazesbot/bot/hh/routine.py#L145) | `_do_boss` | Quanto esperar, por tentativa, a volta ao ponto depois da luta. |
-| *literal em* `_do_situar` | 1 s | *novo* | FIXO | [routine.py:414](blazesbot/bot/hh/routine.py#L414) | `_do_situar` | Descobre em que ponto do ciclo a conta está, e entra por ali. |
-| *literal em* `_do_recuperar` | 2 s | *novo* | FIXO | [routine.py:1576](blazesbot/bot/hh/routine.py#L1576) | `_do_recuperar` | Algo saiu do roteiro. Volta a se situar, sem inventar. |
+| `PASSO_DENTRO_DA_CAVE` | 0.05 s | *novo* | PASSO | [routine.py:119](blazesbot/bot/hh/routine.py#L119) | `run` | Quanto esperar entre estados DENTRO da cave. |
+| `PASSO_FORA_DA_CAVE` | 0.4 s | *novo* | PASSO | [routine.py:120](blazesbot/bot/hh/routine.py#L120) | `run` |  |
+| `SEGUNDOS_PARA_ENGAJAR` | 5 s | *novo* | FIXO | [routine.py:139](blazesbot/bot/hh/routine.py#L139) | `_do_boss` | Quanto esperar, num ponto de batalha, para a flag de combate LIGAR. |
+| `SEGUNDOS_POR_TENTATIVA_DE_VOLTAR` | 1.8 s | *novo* | FIXO | [routine.py:146](blazesbot/bot/hh/routine.py#L146) | `_do_boss` | Quanto esperar, por tentativa, a volta ao ponto depois da luta. |
+| *literal em* `_do_situar` | 1 s | *novo* | FIXO | [routine.py:417](blazesbot/bot/hh/routine.py#L417) | `_do_situar` | Descobre em que ponto do ciclo a conta está, e entra por ali. |
+| *literal em* `_do_recuperar` | 2 s | *novo* | FIXO | [routine.py:1568](blazesbot/bot/hh/routine.py#L1568) | `_do_recuperar` | Algo saiu do roteiro. Volta a se situar, sem inventar. |
 | `SEGUNDOS_POR_TENTATIVA` | 1.8 s | *novo* | FIXO | [vendedor.py:68](blazesbot/bot/hh/vendedor.py#L68) | `encostar_no_ponto_da_venda` |  |
 | `RECARGA` | 5 s | = | FIXO | [hotbar.py:63](blazesbot/bot/hotbar.py#L63) | `garantir_pagina_1` | Recarga do caminho com `ctx`. Os momentos-chave acontecem em rajada -- o portão |
 | `PASSO_DA_SONDA` | 0.012 s | = | PASSO | [instrumentar_clique.py:110](blazesbot/bot/instrumentar_clique.py#L110) | `_sondar_ate_mudar` | De quanto em quanto tempo a sonda fotografa o minimapa esperando o efeito. |

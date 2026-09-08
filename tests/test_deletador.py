@@ -15,7 +15,13 @@ desfazer**:
 
 
 
-import pytestfrom blazesbot.bot.app import deletador as dfrom blazesbot.core import teclado_mudo@pytest.fixture(autouse=True)
+import pytest
+
+from blazesbot.bot.app import deletador as d
+from blazesbot.core import teclado_mudo
+
+
+@pytest.fixture(autouse=True)
 def _fila_limpa():
     d.esquecer_a_fila()
     yield
@@ -174,7 +180,7 @@ def test_o_teto_corta_entre_exclusoes_e_nao_no_meio(monkeypatch):
         return True
 
     monkeypatch.setattr(d, "_apagar_um", apagar)
-    monkeypatch.setattr(d, "_carregar", lambda ctx: {f"m{i}": object()
+    monkeypatch.setattr(d, "_carregar", lambda ctx, pasta=None: {f"m{i}": object()
                                                     for i in range(5)})
     monkeypatch.setattr(d, "_achar_icone", lambda ctx, q: (500, 700))
     monkeypatch.setattr(d.vision, "capture_window", lambda h: object())
@@ -240,7 +246,8 @@ def test_o_teto_de_exclusoes_segura_um_modelo_ruim(monkeypatch):
     monkeypatch.setattr(d.time, "perf_counter", lambda: relogio[0])
     ctx = _Ctx(relogio)
     monkeypatch.setattr(d, "_apagar_um", lambda *a: True)
-    monkeypatch.setattr(d, "_carregar", lambda ctx: {"ruim": object()})
+    monkeypatch.setattr(d, "_carregar",
+                        lambda ctx, pasta=None: {"ruim": object()})
     monkeypatch.setattr(d, "_achar_icone", lambda ctx, q: (500, 700))
     monkeypatch.setattr(d.vision, "capture_window", lambda h: object())
     monkeypatch.setattr(d.vision, "frame_is_blank", lambda q: False)
@@ -259,7 +266,7 @@ def test_o_mesmo_slot_nao_e_apagado_duas_vezes(monkeypatch):
     ctx = _Ctx(relogio)
     monkeypatch.setattr(d, "_apagar_um", lambda *a: True)
     monkeypatch.setattr(d, "_carregar",
-                        lambda ctx: {"a": object(), "b": object()})
+                        lambda ctx, pasta=None: {"a": object(), "b": object()})
     monkeypatch.setattr(d, "_achar_icone", lambda ctx, q: (500, 700))
     monkeypatch.setattr(d.vision, "capture_window", lambda h: object())
     monkeypatch.setattr(d.vision, "frame_is_blank", lambda q: False)
@@ -331,7 +338,9 @@ class _Templates:
     """
 
     def load(self, nome):
-        from pathlib import Path        import cv2
+        from pathlib import Path
+
+        import cv2
 
         return cv2.imread(str(Path("data") / "templates" / nome),
                           cv2.IMREAD_GRAYSCALE)
@@ -344,7 +353,9 @@ class _CtxComTela(_Ctx):
 
 
 def _print_do_inventario():
-    from pathlib import Path    import cv2
+    from pathlib import Path
+
+    import cv2
 
     caminho = Path("data") / "templates" / "entrada" / "inventario.jpg"
     if not caminho.is_file():
@@ -416,7 +427,9 @@ def test_casar_na_regiao_devolve_coordenada_da_JANELA():
 
 
 def _print(nome):
-    from pathlib import Path    import cv2
+    from pathlib import Path
+
+    import cv2
 
     caminho = Path("data") / "templates" / "entrada" / nome
     if not caminho.is_file():
@@ -510,7 +523,7 @@ class _CtxTecla(_Ctx):
 def _preparar(monkeypatch, ctx):
     """Liga `inventario_esta_aberto` ao estado do dublê e neutraliza o resto."""
     monkeypatch.setattr(d, "inventario_esta_aberto", lambda c: c.aberto)
-    monkeypatch.setattr(d, "deletar_lixo", lambda c, teto=None: 7)
+    monkeypatch.setattr(d, "deletar_lixo", lambda c, teto=None, pasta=None: 7)
 
 
 def test_bolsa_JA_ABERTA_nao_mexe_na_tecla(monkeypatch):
@@ -539,7 +552,7 @@ def test_o_fechamento_e_CONFERIDO_e_insiste(monkeypatch):
     """Um 'fechar' que não pegou custa a noite inteira da macro: com a bolsa
     aberta, toda tecla do APP é engolida."""
     ctx = _CtxTecla(aberto_no_inicio=False)
-    monkeypatch.setattr(d, "deletar_lixo", lambda c, teto=None: 0)
+    monkeypatch.setattr(d, "deletar_lixo", lambda c, teto=None, pasta=None: 0)
 
     # A primeira tentativa de fechar não pega; a segunda sim.
     #
@@ -560,7 +573,7 @@ def test_sem_leitura_da_tela_abre_e_fecha_como_antes(monkeypatch):
     comportamento que existia antes de haver conferência nenhuma."""
     ctx = _CtxTecla(aberto_no_inicio=False)
     monkeypatch.setattr(d, "inventario_esta_aberto", lambda c: None)
-    monkeypatch.setattr(d, "deletar_lixo", lambda c, teto=None: 0)
+    monkeypatch.setattr(d, "deletar_lixo", lambda c, teto=None, pasta=None: 0)
 
     d.limpar_a_bolsa(ctx, "I")
     assert ctx.teclas, "sem leitura, não tentou nem abrir"
@@ -578,7 +591,7 @@ def test_falha_ao_apagar_ainda_FECHA_a_bolsa(monkeypatch):
     ctx = _CtxTecla(aberto_no_inicio=False)
     monkeypatch.setattr(d, "inventario_esta_aberto", lambda c: c.aberto)
 
-    def explode(c, teto=None):
+    def explode(c, teto=None, pasta=None):
         raise RuntimeError("boom")
 
     monkeypatch.setattr(d, "deletar_lixo", explode)
@@ -602,7 +615,8 @@ def test_a_bolsa_que_demora_a_pintar_AINDA_e_limpa(monkeypatch):
     ctx = _CtxTecla(aberto_no_inicio=False)
     apagados = []
     monkeypatch.setattr(d, "deletar_lixo",
-                        lambda c, teto=None: apagados.append(1) or 3)
+                        lambda c, teto=None, pasta=None:
+                        apagados.append(1) or 3)
     # Fechada, fechada, fechada... e só na quarta leitura ela aparece.
     estados = iter([False, False, False, True, True, False])
     monkeypatch.setattr(d, "inventario_esta_aberto", lambda c: next(estados))
@@ -616,7 +630,7 @@ def test_a_bolsa_que_NAO_abre_no_teto_nao_aperta_de_novo(monkeypatch):
     incondicionalmente. Sem o ícone na tela, o que se SABE é que ela não está
     aberta -- e o que não está aberto não precisa ser fechado."""
     ctx = _CtxTecla(aberto_no_inicio=False)
-    monkeypatch.setattr(d, "deletar_lixo", lambda c, teto=None: 0)
+    monkeypatch.setattr(d, "deletar_lixo", lambda c, teto=None, pasta=None: 0)
     monkeypatch.setattr(d, "TETO_DA_BOLSA_ABRIR", 0.05)
     monkeypatch.setattr(d, "PASSO_DA_BOLSA_ABRIR", 0.0)
     monkeypatch.setattr(d, "inventario_esta_aberto", lambda c: False)
@@ -639,7 +653,7 @@ def test_a_bolsa_que_abre_DEPOIS_do_teto_ainda_e_fechada(monkeypatch):
     Intenção não fecha bolsa; observação fecha.
     """
     ctx = _CtxTecla(aberto_no_inicio=False)
-    monkeypatch.setattr(d, "deletar_lixo", lambda c, teto=None: 0)
+    monkeypatch.setattr(d, "deletar_lixo", lambda c, teto=None, pasta=None: 0)
     aberta = {"v": False}
     monkeypatch.setattr(d, "inventario_esta_aberto", lambda c: aberta["v"])
 
@@ -663,7 +677,7 @@ def test_o_finally_NAO_fecha_o_que_a_tela_diz_estar_fechado(monkeypatch):
     """`eu_abri` diz o que eu tentei; a tela diz o que É. Entre os dois, manda a
     tela -- senão o "fechar" vira um "abrir"."""
     ctx = _CtxTecla(aberto_no_inicio=False)
-    monkeypatch.setattr(d, "deletar_lixo", lambda c, teto=None: 0)
+    monkeypatch.setattr(d, "deletar_lixo", lambda c, teto=None, pasta=None: 0)
     # abriu (True na confirmação), mas na hora de fechar já está fechada.
     estados = iter([False, True, False])
     monkeypatch.setattr(d, "inventario_esta_aberto", lambda c: next(estados))

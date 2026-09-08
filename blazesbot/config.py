@@ -989,6 +989,21 @@ class HHConfig:
     # Vazio = sem reset, e aí a cave só rende na primeira run. Não há liga e
     # desliga separado: o campo em branco já diz tudo.
     reset_nick: str = ""
+    # JOGAR O LIXO FORA ANTES DE VENDER? Desligado por padrão.
+    #
+    # A HH dropa item que o NPC NÃO COMPRA, e ele ocupa slot da bolsa até a run
+    # seguinte transbordar. Quem liga isto autoriza o bot a APAGAR da bolsa todo
+    # item com template em `data/templates/deletar_hh/`.
+    #
+    # DESLIGADO POR PADRÃO, e o padrão é a decisão: apagar é IRREVERSÍVEL, e o
+    # usuário disse (08/09/2026) que pode não querer -- *"o usuário pode não
+    # querer jogar os itens fora, apenas vender os itens vendíveis na loja"*.
+    # Ligar é um ato explícito de quem já conferiu o que tem naquela pasta.
+    #
+    # A PASTA É SÓ DA HH. A lista global (`deletar/`) serve o APP e a BC: o que
+    # é lixo numa cave é mercadoria na outra, e uma lista só apagaria em todo
+    # lugar. Ver `bot/deletador.PASTA_DO_LIXO_DA_HH`.
+    deletar_lixo: bool = False
     # Intervalo entre duas teclas da rotação de ataque.
     attack_delay: float = 0.5
     # Rede de segurança contra a flag de combate presa em ligado.

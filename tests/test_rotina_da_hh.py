@@ -194,7 +194,7 @@ def test_o_CAP_e_conferido_ANTES_de_entrar():
     Entrar com a bolsa cheia é fazer a run inteira e deixar o loot no chão.
     """
     fonte = _fonte(HHRoutine._do_preparar)
-    i_bolsa = fonte.index("_precisa_vender")
+    i_bolsa = fonte.index("manutencao.precisa_vender")
     i_porta = fonte.index("State.ATE_A_PORTA")
     assert i_bolsa < i_porta
 
@@ -203,7 +203,12 @@ def test_a_bolsa_ILEGIVEL_nao_manda_vender():
     """`BagConfig.precisa_vender` devolve False quando a contagem não pôde ser
     lida -- vender sem saber quantos itens existem levaria o bot a viajar sem
     motivo e a clicar na grade de uma janela talvez vazia."""
-    assert "precisa_vender" in _fonte(HHRoutine._precisa_vender)
+    from blazesbot.bot.hh.manutencao import ManutencaoDaHH
+
+    # A DECISÃO subiu para `hh/manutencao.py` em 08/09/2026 -- é o que acontece
+    # FORA da cave, entre uma run e a seguinte, e não fala com a máquina de
+    # estados.
+    assert "precisa_vender" in _fonte(ManutencaoDaHH.precisa_vender)
 
 
 def test_desmonta_ANTES_de_lutar():
