@@ -175,8 +175,22 @@ body {
   -webkit-app-region: drag;
 }
 
-.titlebar button {
+.titlebar button,
+.titlebar select {
   -webkit-app-region: no-drag;
+}
+
+.campo-idioma {
+  width: auto;
+  height: 24px;
+  margin-right: 2px;
+  padding: 0 4px;
+  font-size: 11px;
+  border-radius: 4px;
+  border: 1px solid var(--color-line);
+  background: var(--color-deep);
+  color: var(--color-ink);
+  outline: none;
 }
 
 .titlebar button {

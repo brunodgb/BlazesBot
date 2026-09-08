@@ -66,7 +66,12 @@
       </svg>
       <span class="text-[13.5px] font-semibold tracking-[0.3px] text-white">BlazesBot</span>
     </div>
-    <div class="flex h-full">
+    <div class="flex h-full items-center">
+      <select id="sel-idioma" class="campo-idioma" title="Idioma / Language / Idioma">
+        <option value="pt-br">🇧🇷 PT-BR</option>
+        <option value="en">🇺🇸 EN</option>
+        <option value="es">🇪🇸 ES</option>
+      </select>
       <button id="btn-tema" class="h-full w-10 text-sm" title="Alternar tema">🌙</button>
       <button id="btn-minimizar" class="h-full w-10 text-sm" title="Minimizar">—</button>
       <button id="btn-fechar" class="h-full w-10 text-sm" title="Fechar">✕</button>
@@ -79,31 +84,31 @@
     <nav class="flex w-56 shrink-0 flex-col border-r border-line bg-deep">
       <div class="flex flex-1 flex-col gap-2 p-3">
         <button class="nav-item nav-ativo" data-secao="contas">
-          <span class="text-[17px] opacity-80">🎮</span> Contas
+          <span class="text-[17px] opacity-80">🎮</span> <span data-i18n="nav_contas">Contas</span>
         </button>
         <button class="nav-item" data-secao="cliente">
-          <span class="text-[17px] opacity-80">🖥</span> Cliente
+          <span class="text-[17px] opacity-80">🖥</span> <span data-i18n="nav_cliente">Cliente</span>
         </button>
         <button class="nav-item" data-secao="estatisticas">
-          <span class="text-[17px] opacity-80">📊</span> Estatísticas de BC
+          <span class="text-[17px] opacity-80">📊</span> <span data-i18n="nav_estatisticas">Estatísticas de BC</span>
         </button>
         <button class="nav-item" data-secao="quedas">
-          <span class="text-[17px] opacity-80">💥</span> Histórico de Quedas
+          <span class="text-[17px] opacity-80">💥</span> <span data-i18n="nav_quedas">Histórico de Quedas</span>
         </button>
         <button class="nav-item" data-secao="log">
-          <span class="text-[17px] opacity-80">📜</span> Log
+          <span class="text-[17px] opacity-80">📜</span> <span data-i18n="nav_log">Log</span>
         </button>
         <button class="nav-item" data-secao="diagnostico">
-          <span class="text-[17px] opacity-80">🩺</span> Diagnóstico
+          <span class="text-[17px] opacity-80">🩺</span> <span data-i18n="nav_diagnostico">Diagnóstico</span>
         </button>
       </div>
 
       <div class="flex flex-col gap-3 border-t border-line bg-panel p-4">
         <div class="grid grid-cols-2 gap-2">
-          <button id="btn-iniciar" class="bt bt-sucesso bt-destaque">▶ Iniciar</button>
-          <button id="btn-parar" class="bt bt-perigo" disabled>⏹ Parar</button>
-          <button id="btn-pausar" class="bt bt-secundario" disabled>⏸ Pausar</button>
-          <button id="btn-retomar" class="bt bt-primario" disabled>▶ Retomar</button>
+          <button id="btn-iniciar" class="bt bt-sucesso bt-destaque" data-i18n="btn_iniciar">▶ Iniciar</button>
+          <button id="btn-parar" class="bt bt-perigo" disabled data-i18n="btn_parar">⏹ Parar</button>
+          <button id="btn-pausar" class="bt bt-secundario" disabled data-i18n="btn_pausar">⏸ Pausar</button>
+          <button id="btn-retomar" class="bt bt-primario" disabled data-i18n="btn_retomar">▶ Retomar</button>
         </div>
         <div class="flex flex-col gap-1.5 rounded-xl bg-deep p-3 border border-line">
           <div id="estado-roda" class="estado-roda estado-parado">● Parado</div>
@@ -117,16 +122,16 @@
       <!-- ======================= CONTAS ======================= -->
       <section id="secao-contas" class="secao painel-visivel px-4 py-3">
         <div class="mb-3 flex shrink-0 items-center justify-between gap-3">
-          <h2 class="text-lg font-semibold tracking-tight text-ink">Contas</h2>
+          <h2 class="text-lg font-semibold tracking-tight text-ink" data-i18n="titulo_contas">Contas</h2>
           <div class="flex items-center gap-2">
-            <button id="btn-adicionar-conta" class="bt bt-primario">＋ Adicionar conta</button>
-            <button id="btn-remover-conta" class="bt bt-perigo" disabled>Remover selecionada</button>
+            <button id="btn-adicionar-conta" class="bt bt-primario" data-i18n="btn_adicionar_conta">＋ Adicionar conta</button>
+            <button id="btn-remover-conta" class="bt bt-perigo" disabled data-i18n="btn_remover_conta">Remover selecionada</button>
           </div>
         </div>
 
         <div class="aviso-banner mb-3 shrink-0">
           <span class="aviso-icone">🔒</span>
-          <p>Senhas cifradas com o Windows (DPAPI) — nunca saem para esta interface, apenas um indicador.</p>
+          <p data-i18n="aviso_senhas">Senhas cifradas com o Windows (DPAPI) — nunca saem para esta interface, apenas um indicador.</p>
         </div>
 
         <!-- Tabela rola internamente com o cabeçalho fixo (thead sticky) -->
@@ -138,21 +143,21 @@
                 <!-- Coluna da alça de arraste. Sem rótulo: o cabeçalho "Ordem"
                      só ocuparia largura para dizer o que o ⠿ já diz. -->
                 <th class="col-alca" aria-label="Ordem"></th>
-                <th class="col-ativa">Ativa</th>
-                <th>Login</th>
-                <th class="col-senha">Senha</th>
+                <th class="col-ativa" data-i18n="col_ativa">Ativa</th>
+                <th data-i18n="col_login">Login</th>
+                <th class="col-senha" data-i18n="col_senha">Senha</th>
                 <!-- RUN é coluna própria, e só se preenche para quem roda CAVE:
                      o modo APP é macro de teclado, não tem "run" nenhuma, e um
                      número ali seria mentira. Preenchida pelo poll do estado. -->
-                <th class="col-run">Run</th>
-                <th class="col-servidor">Servidor</th>
-                <th class="col-posicao">Posição</th>
+                <th class="col-run" data-i18n="col_run">Run</th>
+                <th class="col-servidor" data-i18n="col_servidor">Servidor</th>
+                <th class="col-posicao" data-i18n="col_posicao">Posição</th>
                 <!-- BC, HH e APP eram três colunas de caixa idêntica, e o que
                      distinguia uma da outra ficava AQUI, fora da linha: para ler
                      um ✓ o olho subia até o cabeçalho e voltava, por linha. Agora
                      o rótulo está dentro do próprio controle. -->
-                <th class="col-funcao">Função</th>
-                <th class="col-editar">Editar</th>
+                <th class="col-funcao" data-i18n="col_funcao">Função</th>
+                <th class="col-editar" data-i18n="col_editar">Editar</th>
               </tr>
             </thead>
             <tbody id="corpo-contas"></tbody>

@@ -1365,6 +1365,8 @@ class BotConfig:
     accounts: list[Account] = field(default_factory=list)
     # Mantido só para reserva: a resolução real vem da janela medida.
     resolution: str = "1024x768"
+    # Idioma da interface (não do jogo). Ver `blazesbot/core/i18n.py`.
+    idioma: str = "pt-br"
 
     def __post_init__(self) -> None:
         # De onde esta configuração foi lida. NÃO é campo do dataclass de
@@ -1951,7 +1953,7 @@ class BotConfig:
         for chave in ("version", "client_bat", "launch_delay",
                       "dc_confirm_seconds", "relogin_backoff_cap",
                       "minimize_clients", "resolution",
-                      "reuse_login_screen_clients"):
+                      "reuse_login_screen_clients", "idioma"):
             if chave in raw:
                 setattr(cfg, chave, raw[chave])
 

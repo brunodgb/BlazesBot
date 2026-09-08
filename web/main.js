@@ -83,8 +83,39 @@ function avisar(msg) {
   });
 }
 
+/* ============================================================
+   i18n — tradução da interface (PT-BR / EN / ES)
+   ============================================================
+   As 3 tabelas já resolvidas (fallback decidido no Python, ver
+   `blazesbot/core/i18n.py`) chegam uma vez em `constantes.traducoes`. Trocar de
+   idioma não faz round-trip: só troca qual tabela local `t()` lê.
+
+   `aplicarIdioma` é o callback exigido pela varredura: percorre todo
+   `[data-i18n]` VISÍVEL NO MOMENTO e reescreve o texto. NÃO cobre elemento cujo
+   texto o próprio JS decide em tempo real a partir do ESTADO do bot (ex.:
+   `#estado-roda`, `#diag-status`) -- esses usam `t()` na própria função que já
+   escreve o texto (ver `atualizarEstado`), senão o próximo poll (a cada 1,5 s)
+   reescreveria por cima com a string errada. */
+function t(chave) {
+  const tabela = (constantes && constantes.traducoes && constantes.traducoes[idiomaAtual]) || {};
+  return tabela[chave] || `[${chave}]`;
+}
+
+function aplicarIdioma(idioma) {
+  idiomaAtual = (constantes && constantes.idiomas_suportados || ["pt-br", "en", "es"])
+    .includes(idioma) ? idioma : "pt-br";
+  const tabela = (constantes && constantes.traducoes && constantes.traducoes[idiomaAtual]) || {};
+  $$("[data-i18n]").forEach((el) => {
+    const chave = el.getAttribute("data-i18n");
+    if (tabela[chave]) el.textContent = tabela[chave];
+  });
+  const sel = $("#sel-idioma");
+  if (sel) sel.value = idiomaAtual;
+}
+
 /* ---------- estado global ---------- */
 let constantes = null;
+let idiomaAtual = "pt-br";
 let contasCache = [];
 // UID da conta selecionada na tabela, ou `null`.
 //
@@ -1759,7 +1790,14 @@ function preencherConfig(cfg) {
   $("#in-delay-lancamento").value = segundosParaMs(cfg.launch_delay);
   $("#ck-minimizar").checked = !!cfg.minimize_clients;
   $("#ck-reaproveitar").checked = !!cfg.reuse_login_screen_clients;
+  aplicarIdioma(cfg.idioma || "pt-br");
 }
+
+$("#sel-idioma").addEventListener("change", (ev) => {
+  const idioma = ev.target.value;
+  aplicarIdioma(idioma);      // feedback visual imediato
+  chamar("definir_idioma", idioma);   // persiste no config.json
+});
 
 $("#btn-salvar-config").addEventListener("click", () => {
   const dados = {
@@ -2312,13 +2350,13 @@ function atualizarEstado(est) {
   atualizarBotoesTemporarios(est);
   const roda = $("#estado-roda");
   if (est.rodando && est.pausado) {
-    roda.textContent = "⏸ Pausado";
+    roda.textContent = t("estado_pausado");
     roda.className = "estado-roda estado-pausado";
   } else if (est.rodando) {
-    roda.textContent = "● Rodando";
+    roda.textContent = t("estado_rodando");
     roda.className = "estado-roda estado-rodando";
   } else {
-    roda.textContent = "● Parado";
+    roda.textContent = t("estado_parado");
     roda.className = "estado-roda estado-parado";
   }
   const t = est.total || {};

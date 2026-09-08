@@ -66,7 +66,7 @@ from .config import (
     normalizar_time_modo,
     pet_feed_na_faixa,
 )
-from .core import logmodo, quedas, secrets, stats_diarias
+from .core import i18n, logmodo, quedas, secrets, stats_diarias
 from .core.coords import (
     SUPPORTED_RESOLUTIONS,
     VALIDATED_RESOLUTION,
@@ -282,6 +282,13 @@ class _App:
             "resolucao_validada": VALIDATED_RESOLUTION,
             "servidores": list(coords.server_rows),
             "dpapi": secrets.dpapi_available(),
+            # Os 3 idiomas já resolvidos (fallback decidido aqui, não no JS) —
+            # a Web troca de idioma sem round-trip ao Python.
+            "traducoes": {
+                idioma: i18n.resolver_idioma(idioma)
+                for idioma in i18n.IDIOMAS_SUPORTADOS
+            },
+            "idiomas_suportados": list(i18n.IDIOMAS_SUPORTADOS),
         }
 
     def config_atual(self) -> dict[str, Any]:
@@ -292,6 +299,7 @@ class _App:
             "launch_delay": c.launch_delay,
             "minimize_clients": c.minimize_clients,
             "reuse_login_screen_clients": c.reuse_login_screen_clients,
+            "idioma": c.idioma,
         }
 
     def contas(self) -> list[dict[str, Any]]:
@@ -474,6 +482,11 @@ class _App:
         cfg.reuse_login_screen_clients = bool(
             dados.get("reuse_login_screen_clients", False))
         self._aplicar()
+
+    def definir_idioma(self, idioma: str) -> None:
+        idioma = idioma if idioma in i18n.IDIOMAS_SUPORTADOS else i18n.IDIOMA_PADRAO
+        self.config.idioma = idioma
+        self.config.save()
 
     def definir_senha(self, uid: str, nova: str) -> None:
         c = self._conta(uid)
@@ -1160,6 +1173,10 @@ class Api:
 
     def salvar_config_geral(self, dados: Any) -> dict[str, Any]:
         self._app.salvar_config(dados)
+        return {"ok": True}
+
+    def definir_idioma(self, idioma: Any) -> dict[str, Any]:
+        self._app.definir_idioma(str(idioma))
         return {"ok": True}
 
     def definir_senha(self, uid: Any, nova: Any) -> dict[str, Any]:

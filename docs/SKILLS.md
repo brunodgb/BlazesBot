@@ -339,3 +339,54 @@ vezes por sessão, e **qualquer falha do revisor libera o Stop** (falha aberta,
   `~/.local/bin/jq.exe`, que está no PATH do usuário.
 - O README do plugin cita flags `--list-default`, `--list-default-models` e
   `--list-available` no `check-status.sh` que NÃO existem na 2026.9.9.
+
+# Skill: i18n (interface em PT-BR / EN / ES)
+
+Mecanismo central de tradução da interface — texto deixa de ser fixo no
+HTML/JS/PyQt6 e passa a vir de um dicionário único por chave.
+
+- **Fonte:** `blazesbot/locales/traducoes.json` — `{"chave": {"pt-br": "...",
+  "en": "...", "es": "..."}}`. PT-BR é obrigatório em toda chave; EN/ES podem
+  faltar sem quebrar nada.
+- **Resolução:** `blazesbot/core/i18n.py` (`core/` porque não sabe que
+  ecossistema existe — GUI e Web usam o mesmo módulo). `traduzir(chave,
+  idioma)` cai para PT-BR se o idioma não existe ou a chave não tem entrada
+  nele; se a própria chave não existe, devolve `[chave]` em vez de lançar —
+  testado em `tests/test_i18n.py`, inclusive o caso real de fallback
+  (`diag_dpapi_indisponivel` não tem `"es"` de propósito).
+- **Config:** `BotConfig.idioma` (`data/config.json`), default `"pt-br"`.
+
+## Onde cada interface está (estado em 07/09/2026)
+
+- **Web (`web/`) — mecanismo completo e funcionando de verdade**, verificado
+  ao vivo (Chrome + CDP, `test-web.ps1`, ver `docs/decisoes/interface.md`
+  para a receita): dropdown na titlebar (`#sel-idioma`), bridge
+  `Api.definir_idioma` (mesmo padrão de `definir_senha`/`definir_login` —
+  aplica na hora, grava no `config.json`), `constantes.traducoes` manda os 3
+  idiomas já resolvidos de uma vez (sem round-trip ao trocar), e
+  `aplicarIdioma()` varre todo `[data-i18n]`.
+  **Convertido:** titlebar, menu lateral (6 itens), os 4 botões de controle
+  (Iniciar/Parar/Pausar/Retomar), e a seção Contas inteira (título, botões,
+  aviso de senha, cabeçalho da tabela).
+  **NÃO convertido ainda:** as outras 5 seções (Cliente, Estatísticas,
+  Quedas, Log, Diagnóstico) e todo texto que `main.js` gera dinamicamente
+  fora dessas seções (toasts, linhas de tabela, `#diag-status`). Continuam em
+  PT-BR fixo — não finja que já traduzem.
+- **PyQt6 (`blazesbot/gui/`) — NÃO TOCADO.** A regra permanente "duas
+  interfaces convivem" (`CLAUDE.md`) exige que qualquer coisa na Web exista
+  também na GUI PyQt6. Isso está PENDENTE: nem o campo de idioma, nem o
+  seletor, nem uma única chave do dicionário foram plugados lá. Enquanto
+  isso não for feito, a Web tem uma capacidade que a GUI não tem — o mesmo
+  tipo de dívida que o `CLAUDE.md` já rastreia em "Candidatos de promoção".
+
+## Armadilha real encontrada (guarde antes de estender)
+
+`#estado-roda` (e `#diag-status`) **NÃO leva `data-i18n`**: o texto dele é
+reescrito por `atualizarEstado()` a cada poll de 1,5 s a partir do ESTADO do
+bot (parado/rodando/pausado), não de uma varredura estática. Um `data-i18n`
+ali seria sobrescrito pelo próximo poll meio segundo depois — a troca de
+idioma "pegaria" só até o poll seguinte. A correção certa é o PRÓPRIO ponto
+que escreve o texto chamar `t("estado_rodando")` etc. (é o que
+`atualizarEstado()` já faz). **Qualquer texto dinâmico novo segue esse
+padrão: `t(chave)` no ponto de escrita, nunca `data-i18n` num elemento que
+outro código também escreve.**

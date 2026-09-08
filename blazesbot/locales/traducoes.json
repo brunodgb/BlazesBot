@@ -1,0 +1,39 @@
+{
+  "nav_contas": {"pt-br": "Contas", "en": "Accounts", "es": "Cuentas"},
+  "nav_cliente": {"pt-br": "Cliente", "en": "Client", "es": "Cliente"},
+  "nav_estatisticas": {"pt-br": "Estatísticas de BC", "en": "BC Stats", "es": "Estadísticas de BC"},
+  "nav_quedas": {"pt-br": "Histórico de Quedas", "en": "Disconnect History", "es": "Historial de Caídas"},
+  "nav_log": {"pt-br": "Log", "en": "Log", "es": "Registro"},
+  "nav_diagnostico": {"pt-br": "Diagnóstico", "en": "Diagnostics", "es": "Diagnóstico"},
+
+  "btn_iniciar": {"pt-br": "▶ Iniciar", "en": "▶ Start", "es": "▶ Iniciar"},
+  "btn_parar": {"pt-br": "⏹ Parar", "en": "⏹ Stop", "es": "⏹ Detener"},
+  "btn_pausar": {"pt-br": "⏸ Pausar", "en": "⏸ Pause", "es": "⏸ Pausar"},
+  "btn_retomar": {"pt-br": "▶ Retomar", "en": "▶ Resume", "es": "▶ Reanudar"},
+  "estado_parado": {"pt-br": "● Parado", "en": "● Stopped", "es": "● Detenido"},
+  "estado_rodando": {"pt-br": "● Rodando", "en": "● Running", "es": "● Corriendo"},
+  "estado_pausado": {"pt-br": "⏸ Pausado", "en": "⏸ Paused", "es": "⏸ Pausado"},
+
+  "titulo_contas": {"pt-br": "Contas", "en": "Accounts", "es": "Cuentas"},
+  "btn_adicionar_conta": {"pt-br": "＋ Adicionar conta", "en": "＋ Add account", "es": "＋ Agregar cuenta"},
+  "btn_remover_conta": {"pt-br": "Remover selecionada", "en": "Remove selected", "es": "Quitar seleccionada"},
+  "aviso_senhas": {
+    "pt-br": "Senhas cifradas com o Windows (DPAPI) — nunca saem para esta interface, apenas um indicador.",
+    "en": "Passwords encrypted with Windows (DPAPI) — never leave this interface, only an indicator.",
+    "es": "Contraseñas cifradas con Windows (DPAPI) — nunca salen de esta interfaz, solo un indicador."
+  },
+
+  "col_ativa": {"pt-br": "Ativa", "en": "Active", "es": "Activa"},
+  "col_login": {"pt-br": "Login", "en": "Login", "es": "Usuario"},
+  "col_senha": {"pt-br": "Senha", "en": "Password", "es": "Contraseña"},
+  "col_run": {"pt-br": "Run", "en": "Run", "es": "Run"},
+  "col_servidor": {"pt-br": "Servidor", "en": "Server", "es": "Servidor"},
+  "col_posicao": {"pt-br": "Posição", "en": "Position", "es": "Posición"},
+  "col_funcao": {"pt-br": "Função", "en": "Role", "es": "Función"},
+  "col_editar": {"pt-br": "Editar", "en": "Edit", "es": "Editar"},
+
+  "diag_dpapi_indisponivel": {
+    "pt-br": "INDISPONÍVEL — senhas não podem ser guardadas",
+    "en": "UNAVAILABLE — passwords cannot be stored"
+  }
+}
