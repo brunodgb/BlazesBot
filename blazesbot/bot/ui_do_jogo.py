@@ -285,6 +285,42 @@ def limite_da_espera_do_dialogo_lenta() -> float:
 ESPERA_DEPOIS_DO_LINK = 0.200
 
 # ===========================================================================
+# CLIQUE ENGOLIDO = JANELA NA FRENTE. E O GUARDA VALE PARA A SAIDA TAMBEM
+# ===========================================================================
+#
+# Relato do usuario em 07/09/2026, com print: *"hoje na entrada de BC e feito
+# uma verificacao se ficou alguma janela aberta, e importante tambem verificar
+# na saida, pois acabei de chegar e ver o bot parado na saida, pois a janela
+# System estava aberta"*.
+#
+# Estava certo, e o log mostra o tamanho: **305 cliques direitos em (616, 326)
+# que nao abriram o dialogo** na fase SAIR, contra 267 saidas concluidas.
+# `desobstruir_a_cena` existia e era chamada em UM lugar so -- a entrada.
+#
+# E A CAUSA TAMBEM ESTA NO LOG. Os 3 episodios de saida travada que o log
+# mostra por inteiro foram TODOS precedidos, ~2,5 min antes, por
+# `_travar_no_alvo_proibido` apertando ESC as cegas no waypoint dos guardas.
+# Sem mira, ESC abre o MENU DO SISTEMA -- e ele atravessa a luta do boss.
+# Aquela causa foi consertada em `combate._travar_no_alvo_proibido`; este bloco
+# e a segunda linha de defesa, porque a proxima janela vai vir de outro lugar.
+#
+# POR QUE NO FUNIL, E NA FALHA: os SEIS pares de clique de NPC do bot passam
+# por `_abrir_dialogo_e_clicar` (link da cave, Altar Stone, saida, Rich, HH).
+# Um guarda aqui cobre todos; um guarda na saida cobriria a saida.
+#
+# E POR QUE NA FALHA, e nao antes do clique: `desobstruir_a_cena` documenta que
+# o guarda e POR EVENTO e nao por clique, porque a disputa da entrada dispara
+# dois cliques por segundo e uma captura por tentativa custaria caro no unico
+# trecho onde o projeto cortou espera para caber. O clique ENGOLIDO e o evento:
+# no caminho feliz nao custa nada, e quando falha a tentativa seguinte encontra
+# a tela limpa.
+#
+# Estrangulado porque janela NAO aparece sozinha: entre duas tentativas
+# separadas por segundos nada mudou, a menos que alguma acao tenha aberto algo.
+# Uma captura (~10 ms) a cada 3 s e 0,3% do trecho, contra uma por tentativa.
+INTERVALO_DO_GUARDA_DE_JANELA = 3.0
+
+# ===========================================================================
 # BUSCA NO PAINEL DE ARREDORES -- rápida porque agora existe conferência
 # ===========================================================================
 #
@@ -639,6 +675,9 @@ class UIDoJogo:
         # contas rodando, uma saudável zeraria a contagem da travada.
         self._dialogos_seguidos_sem_abrir = 0
         self._visao_resetada_em = 0.0
+        # Quando o guarda de janela rodou pela última vez. Estrangulado porque
+        # janela não aparece sozinha -- ver `INTERVALO_DO_GUARDA_DE_JANELA`.
+        self._guarda_de_janela_em = 0.0
         # Buscas seguidas em que a leitura de arredores por memória não respondeu.
         # Chegando no limite, o bot para de esperar por ela -- ver
         # `_esperar_resultado_da_busca`.
@@ -791,6 +830,20 @@ class UIDoJogo:
         elif veredito is None:
             ctx.log.debug("Não sei dizer se há janela na frente antes de %s", motivo)
         return veredito
+
+    def _desobstruir_se_faz_tempo(self, o_que: str) -> bool | None:
+        """Tira janela da frente, no máximo uma vez por
+        `INTERVALO_DO_GUARDA_DE_JANELA`.
+
+        `None` quando o estrangulamento barrou -- não é "não sei se há janela",
+        é "não perguntei". Quem chama não decide nada com isto; o guarda existe
+        para a tentativa SEGUINTE.
+        """
+        agora = time.time()
+        if agora - self._guarda_de_janela_em < INTERVALO_DO_GUARDA_DE_JANELA:
+            return None
+        self._guarda_de_janela_em = agora
+        return self.desobstruir_a_cena(f"a tentativa seguinte de {o_que}")
 
     def comecar_trajeto(self, motivo: str = "") -> None:
         """Zera o orçamento de aberturas do painel. Chamado por quem INICIA um
@@ -1602,6 +1655,10 @@ class UIDoJogo:
                 "no link: esse clique cairia no chão e o personagem sairia "
                 "andando da coordenada certa.", ponto_npc, o_que,
             )
+            # O CLIQUE ENGOLIDO É O EVENTO. Ver o bloco
+            # `INTERVALO_DO_GUARDA_DE_JANELA`: a tentativa seguinte encontra a
+            # tela limpa, e no caminho feliz isto não custa nada.
+            self._desobstruir_se_faz_tempo(o_que)
             return False
         if aberto is None:
             # Sem imagem não há o que conferir. Segue, porque recusar aqui

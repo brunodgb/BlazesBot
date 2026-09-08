@@ -1962,7 +1962,20 @@ class CombatEngine:
             "da rota.", fonte, quem,
         )
         ctx.tick(0.28)
-        ctx.press('esc', 0.16)
+        # PELO `largar_a_mira`, e NAO por um `press('esc')` cru.
+        #
+        # Este ESC saia as cegas, e o preco esta medido: em 07/09/2026, TODOS os
+        # 3 episodios de "saida da cave travada" que o log mostra por inteiro
+        # foram precedidos, ~2,5 min antes, por exatamente esta linha. Sem mira
+        # o ESC deste jogo abre o MENU DO SISTEMA -- a janela atravessa a luta
+        # do boss e engole o clique direito no Skull Herald da saida, 305 vezes
+        # no log.
+        #
+        # `largar_a_mira` ja resolve isso desde 06/09: le o `target_id` e so
+        # aperta com alvo CONFIRMADO na memoria. A trava existia e este chamador
+        # tinha ficado de fora -- e ele e justamente o que aperta ESC no
+        # instante em que o alvo pode ter acabado de sair.
+        self.largar_a_mira(f"largar o {self.NOME_DO_ALVO_PROIBIDO}")
 
     @property
     def _morte(self) -> MorteDoAlvo:

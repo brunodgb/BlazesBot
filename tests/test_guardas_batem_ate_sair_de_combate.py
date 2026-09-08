@@ -67,6 +67,12 @@ class _FakeCtx:
             # O TAB entrega outro alvo -- e e a TROCA DO ID que
             # `_trocar_de_alvo` espera para dar a tecla por confirmada.
             self._id += 1
+        elif key == "esc":
+            # ESC LARGA A MIRA, e o dublê precisa dizer isso desde 07/09/2026:
+            # `_travar_no_alvo_proibido` passou a apertar por `largar_a_mira`,
+            # que LÊ o `target_id` e insiste se ele não zerou. Um dublê onde o
+            # id nunca cai faria a trava parecer que aperta duas vezes.
+            self._id = 0
 
     def snapshot(self):
         return type("E", (), {"dead": False, "hp_pct": 100.0, "max_hp": 100,

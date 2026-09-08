@@ -582,6 +582,29 @@ time a flag não faz nada.
   de cliques não é atômico (180–420 ms de espera do diálogo no meio), e dentro
   da cave o mesmo ângulo é o NPC de SAÍDA — o bot entrava e saía na mesma volta.
   A conferência é ENTRE os dois cliques (`ainda_vale`), não só antes do par.
+- **TODO ESC DO BOT PASSA POR `largar_a_mira`** (07/09/2026). ESC sem mira abre
+  o **MENU DO SISTEMA**, e ele atravessa a run: **os 3 episódios de "saída da
+  cave travada" que o log mostra por inteiro foram TODOS precedidos, ~2,5 min
+  antes, por `_travar_no_alvo_proibido` apertando ESC às cegas** no waypoint dos
+  guardas. A janela sobreviveu à luta do boss e engoliu o clique direito no
+  Skull Herald — **305 cliques que não abriram o diálogo** contra 267 saídas
+  concluídas. A trava existia desde 06/09 e este chamador tinha ficado de fora,
+  e era justamente o que aperta no instante em que o alvo pode ter acabado de
+  sair. Travado por `tests/test_janela_na_saida.py`.
+- **CLIQUE ENGOLIDO É EVENTO DE JANELA, E O GUARDA VALE PARA OS SEIS PARES**
+  (`INTERVALO_DO_GUARDA_DE_JANELA = 3.0`). `desobstruir_a_cena` existia e era
+  chamada em UM lugar só — a entrada. Agora o funil
+  (`_clicar_no_npc_e_no_link`) limpa a cena **quando o diálogo não abre**, então
+  a tentativa seguinte encontra a tela limpa: cobre link da cave, Altar Stone,
+  saída, Rich e a entrada da HH de uma vez.
+  - **NA FALHA, e não antes do clique**: `desobstruir_a_cena` documenta que o
+    guarda é POR EVENTO e não por clique, porque a disputa da entrada dispara
+    dois cliques por segundo. No caminho feliz não custa nada.
+  - **ESTRANGULADO a 3 s**, porque janela não aparece sozinha: entre duas
+    tentativas separadas por segundos nada mudou. Uma captura (~10 ms) a cada
+    3 s é 0,3% do trecho, contra uma por tentativa.
+  - **O guarda da entrada continua onde estava** — antes da rajada. O novo é a
+    segunda linha de defesa.
 - **NÃO SE CHEGA NO WAYPOINT DO BOSS COM A MIRA PRESA** (02/09/2026,
   `combate.largar_a_mira`, chamado no fim de `_do_guardas`). O cadáver do último
   Gun Witch fica selecionável por 7 a 13 s (medido), então `target_id != 0` na
