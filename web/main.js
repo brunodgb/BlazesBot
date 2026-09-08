@@ -981,14 +981,33 @@ function definirFuncao(uid, qual) {
 // dele, DENTRO do mesmo `<label>`. Procurar `.selo-caixa` a partir do alvo não
 // achava nada -- são irmãos, não ancestral -- e desligar era impossível: no
 // rádio já marcado o `change` também não dispara, então nada acontecia.
+// O `mousedown` SÓ ANOTA quem já estava ligado. Desligar ali era uma CORRIDA
+// perdida: `preventDefault()` no mousedown não impede o `<label>` de ativar o
+// rádio no `click` seguinte, e a sequência real medida era
+//   mousedown (desliga) -> click no span -> click no rádio -> change (RELIGA).
+// Só não religava quando `carregarContas()` respondia rápido o bastante para
+// recriar a linha ANTES do click e cortar a cadeia -- e é por isso que o
+// conserto de 06/09 passou no teste e falhou na mão do usuário.
 $("#corpo-contas").addEventListener("mousedown", (e) => {
   const selo = e.target.closest && e.target.closest(".selo");
-  const cx = selo && selo.querySelector(".selo-caixa");
-  if (!cx || !cx.checked) return;
-  const tr = cx.closest("tr[data-uid]");
+  if (!selo) return;
+  const cx = selo.querySelector(".selo-caixa");
+  selo.dataset.jaLigado = cx && cx.checked ? "1" : "";
+});
+
+// QUEM DESLIGA É O `click`, e o `preventDefault()` aqui é o que faltava: no
+// click do label a ativação do controle ainda é cancelável, então o rádio não
+// volta a marcar e nenhum `change` sai atrás.
+$("#corpo-contas").addEventListener("click", (e) => {
+  const selo = e.target.closest && e.target.closest(".selo");
+  if (!selo || selo.dataset.jaLigado !== "1") return;
+  delete selo.dataset.jaLigado;
+  const tr = selo.closest("tr[data-uid]");
   if (!tr) return;
   e.preventDefault();
-  cx.checked = false;
+  e.stopPropagation();
+  const cx = selo.querySelector(".selo-caixa");
+  if (cx) cx.checked = false;
   definirFuncao(tr.dataset.uid, "");
 });
 

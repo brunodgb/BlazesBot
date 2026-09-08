@@ -255,18 +255,43 @@ def test_clicar_na_funcao_LIGADA_desliga():
     `change` também não dispara -- sem tratamento próprio não havia como voltar
     a esse estado pela tabela.
 
+    QUEM DESLIGA É O `click`, NÃO O `mousedown` -- e isto é o conserto de
+    08/09/2026, depois de o defeito VOLTAR na mão do usuário. Desligar no
+    mousedown era uma corrida perdida: `preventDefault()` ali não impede o
+    `<label>` de ativar o rádio no click seguinte. A sequência medida na trilha
+    de eventos era
+
+        mousedown (desliga) -> click no span -> click no rádio -> change (RELIGA)
+
+    e só não religava quando `carregarContas()` respondia rápido o bastante para
+    recriar a linha antes do click. Passou no teste de tela e falhou em uso real
+    -- por isso o teste agora olha O EVENTO, não só a existência do tratamento.
+
     O clique tem de ser resolvido A PARTIR DO SELO: o rádio é escondido
     (`position: absolute; opacity: 0`) e quem recebe o clique é o `<span>` ao
     lado dele, DENTRO do mesmo `<label>` -- procurar `.selo-caixa` a partir do
     alvo não achava nada, porque são IRMÃOS, não ancestral.
     """
-    bloco = JS.split('$("#corpo-contas").addEventListener("mousedown"')[1]
-    bloco = bloco.split("});")[0]
-    assert 'closest(".selo")' in bloco
-    assert 'querySelector(".selo-caixa")' in bloco
-    assert "if (!cx || !cx.checked) return;" in bloco, (
-        "só o selo JÁ marcado desliga; o desmarcado tem de seguir para o change")
-    assert 'definirFuncao(tr.dataset.uid, "")' in bloco
+    # `#corpo-contas` tem MAIS DE UM listener de click (o outro seleciona a
+    # linha), então o bloco se acha pelo que ele faz, não pela ordem.
+    corpo = next(
+        b.split("\n});")[0]
+        for b in JS.split('$("#corpo-contas").addEventListener("click"')[1:]
+        if "jaLigado" in b.split("\n});")[0])
+    assert 'closest(".selo")' in corpo
+    assert "e.preventDefault()" in corpo, (
+        "sem `preventDefault` no CLICK, o label religa o rádio")
+    assert 'definirFuncao(tr.dataset.uid, "")' in corpo
+
+    # O mousedown continua existindo, mas SÓ para anotar: no click o rádio já
+    # pode ter mudado de estado e não daria mais para saber se estava ligado.
+    md = JS.split('$("#corpo-contas").addEventListener("mousedown"')[1]
+    md = md.split("\n});")[0]
+    assert "dataset.jaLigado" in md
+    assert "definirFuncao" not in md, (
+        "desligar no mousedown é a corrida que trouxe o defeito de volta")
+    assert "jaLigado" in corpo, "o click precisa do que o mousedown anotou"
+
     # A GUI tem o mesmo estado: desmarcar a caixa manda `""`.
     assert 'pedida = qual if caixas[qual].isChecked() else ""' in GUI
 

@@ -1398,3 +1398,72 @@ espanhol. Revertido — a tradução não tinha sido pedida e o comportamento pa
 Fica registrado o cheiro, que é de outra área: usar uma chave real de produção
 como fixture significa que ninguém pode traduzi-la sem quebrar a suíte. O teste
 deveria montar o próprio dicionário.
+
+## O desligar da função voltou, e o primeiro conserto nunca tinha ficado de pé (08/09/2026)
+
+Relato: *"se ativo alguma função só consigo trocar entre elas, mas não deixar sem
+função, era algo que já tínhamos resolvido e voltou."*
+
+Ele está certo em tudo, inclusive no "voltou" — mas a verdade é pior: **o
+conserto de 06/09 nunca esteve certo. Ele ganhava uma corrida, e parou de
+ganhar.**
+
+### A trilha de eventos, que é a prova
+
+Espionando `mousedown`, `click` e `change` na linha e clicando de verdade no
+selo já ligado:
+
+```
+mousedown:selo-sigla    <- o handler desliga: cx.checked = false, definir_funcao("")
+click:selo-sigla
+click:selo-caixa        <- o <label> ativa o rádio
+change:bc=true          <- o handler de change RELIGA: definir_funcao("bc")
+```
+
+`preventDefault()` no **mousedown** não impede o `<label>` de ativar o controle
+no `click` seguinte. Desligar era imediatamente desfeito por um religar.
+
+Por que passou no teste de 06/09: `definirFuncao` chama `carregarContas()` na
+volta da ponte, o que **recria a linha inteira**. Quando essa resposta chegava
+antes do `click`, o rádio original já não existia e a cadeia morria ali. Era uma
+corrida — e o stub de teste, sincrônico e leve, ganhava sempre; a ponte real do
+pywebview e um stub com o dicionário de i18n inteiro (73 KB) perdem.
+
+### O conserto
+
+O `mousedown` passa a **só anotar** quem estava ligado (`dataset.jaLigado`) --
+no `click` o rádio já pode ter mudado e não daria mais para saber. Quem desliga
+é o `click`, com `preventDefault()`: ali a ativação do label ainda é cancelável,
+o rádio não volta a marcar e nenhum `change` sai atrás.
+
+Verificado com clique REAL, cinco vezes seguidas: `bc → NENHUMA → hh → NENHUMA →
+app → NENHUMA`, e a troca direta continua trocando (`bc → hh → app → bc`, sempre
+uma só ligada).
+
+### A lição, que é sobre o TESTE e não sobre o código
+
+O teste antigo verificava que o tratamento **existia** (`mousedown`,
+`preventDefault`, `definirFuncao(uid, "")`). Tudo isso continuava lá quando o
+defeito voltou — porque o que estava errado era o **evento**, não a existência.
+
+O teste agora exige o `preventDefault` no **click** e **proíbe** `definirFuncao`
+dentro do `mousedown`, nomeando a corrida. Guarda que confere presença de código
+não protege de defeito de ordem.
+
+### Varredura do resto: nada mais voltou
+
+Como o pedido foi "veja se não aconteceu mais nada nesse sentido", rodei uma
+bateria em tela sobre o pacote, no tamanho real da janela (1200×800): ordem das
+colunas, contagem de runs só na cave, ponto verde/vermelho/oculto, "segue
+blazestpas" em vez de "só login", caixa de estado com as runs, tema claro (barra,
+nome e botões), rolagem das cinco abas do Editar, tooltip dentro da janela, roda
+do mouse nos numéricos e o mínimo dos campos. **Tudo passou** — o único mínimo
+abaixo de 1 são os dois "limpar a bolsa a cada", onde `0` significa "nunca" e é
+invariante.
+
+Dois falsos alarmes meus nessa bateria, que valem registro porque custam tempo:
+o viewport do Chrome de preview voltou em **1184×649** depois de um reinício, e a
+649px de altura *toda* aba rola — a janela real tem 800. E o balão de ajuda é
+`#balao-ajuda`, não `.balao-ajuda`: procurei pela classe errada e li "SEM BALÃO"
+num balão que estava lá. **Medição de tela precisa conferir o tamanho da janela
+antes de acusar layout.**
