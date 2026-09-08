@@ -38,7 +38,8 @@ class ManutencaoDaHH:
         # Em que número de run foi a última venda. Zero = nunca vendeu nesta
         # sessão, e aí o teto por contagem já vale na primeira volta.
         self.runs_na_ultima_venda = 0
-        # A primeira limpa de bolsa da SESSÃO já aconteceu?
+        # A limpa de bolsa DESTA LARGADA já aconteceu? Zerada por
+        # `a_hh_comecou`, a cada vez que o farm da HH é ligado.
         self.ja_limpei_ao_comecar = False
 
     # ==================================================================
@@ -114,26 +115,42 @@ class ManutencaoDaHH:
                      apagados, deletador.PASTA_DO_LIXO_DA_HH.name)
         return apagados or 0
 
+    def a_hh_comecou(self) -> None:
+        """O farm da HH foi LIGADO. A limpa da largada volta a valer.
+
+        POR QUE ISSO PRECISA DE UM GESTO EXPLÍCITO: a rotina da HH é criada uma
+        vez e GUARDADA pelo supervisor (`_rotina_da_hh`), porque o estado dela
+        diz em que trecho a run está. Ela sobrevive a desligar e ligar o farm --
+        e com ela sobrevivia a memória de que a limpa já tinha acontecido.
+
+        Medido pelo usuário em 08/09/2026: *"estou testando desativar HH e
+        ativar de volta para ver se esta limpando corretamente o inventario com
+        o delete, mas nao esta executando sempre"*. A primeira largada limpava;
+        as seguintes, não.
+        """
+        self.ja_limpei_ao_comecar = False
+
     def descartar_o_lixo_ao_comecar(self) -> int:
-        """A PRIMEIRA limpa da sessão, na porta da cave. Só uma vez.
+        """A limpa da LARGADA, na porta da cave. Uma vez por largada.
 
         Regra do usuário, 08/09/2026: *"quando começa o bot, ao chegar na
         posição de entrar em HH voce faz a primeira limpa, para caso o usuario
-        ja esteja com o inventario cheio"*.
+        ja esteja com o inventario cheio"*, e no mesmo dia: *"ajusta para
+        sempre que eu der inicio ao bot HH ele abrir o inventario e tentar
+        fazer a limpa"*.
 
         POR QUE NA PORTA E NÃO DENTRO. Bolsa cheia na largada não é lixo desta
         run -- é o que estava lá antes de o bot abrir, e pode ser o suficiente
         para a run inteira não ter onde guardar drop. Limpar já dentro da cave
         seria descobrir o problema depois de ele custar.
 
-        UMA VEZ POR SESSÃO, e não por run: o descarte de cada run acontece na
+        UMA VEZ POR LARGADA, e não por run: o descarte de cada run acontece na
         `MANUTENCAO`, logo depois de sair. Repetir aqui abriria a bolsa de novo
         a cada volta para nada.
 
-        A memória é do objeto, que vive enquanto o bot está aberto -- é a mesma
-        escolha do Histórico de Quedas, e o usuário pediu assim em 04/09/2026:
-        *"não precisa ser persistente, só verificar enquanto esta com o bot
-        aberto"*.
+        A memória é do objeto e morre com o bot -- o usuário pediu assim em
+        04/09/2026: *"não precisa ser persistente, só verificar enquanto esta
+        com o bot aberto"*. Quem a zera a cada largada é `a_hh_comecou`.
         """
         if self.ja_limpei_ao_comecar:
             return 0

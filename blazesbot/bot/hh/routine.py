@@ -281,6 +281,10 @@ class HHRoutine:
         # cave continua de onde estava, em vez de tentar entrar estando dentro --
         # o que faria o clique cair no chão e tirar o personagem da rota.
         self.state = State.SITUAR
+        # LIGAR A HH ZERA A LIMPA DA LARGADA. A rotina é guardada pelo
+        # supervisor e sobrevive a desligar/ligar o farm; sem isto, só a
+        # primeira largada da sessão limpava a bolsa.
+        self.manutencao.a_hh_comecou()
 
         # Desligar a HH pela interface precisa cortar a fase atual NO MEIO.
         # `farming` é o sinal para `ctx.raise_if_stopped` detonar `FarmDesligado`.

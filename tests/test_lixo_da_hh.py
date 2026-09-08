@@ -14,7 +14,7 @@ São DOIS momentos com naturezas diferentes:
 
 | momento | quantas vezes | por quê |
 |---|---|---|
-| **na porta**, na largada | uma vez por SESSÃO do bot | bolsa cheia ali não é lixo desta run -- é o que estava lá antes, e sem espaço a run inteira não guarda drop |
+| **na porta**, na largada | uma vez por LARGADA da HH | bolsa cheia ali não é lixo desta run -- é o que estava lá antes, e sem espaço a run inteira não guarda drop |
 | **ao sair**, no `MANUTENCAO` | TODA run | o drop de uma run já ocupa muito espaço |
 
 E o descarte continua atrás das duas travas que já existiam: a flag da conta
@@ -91,13 +91,45 @@ def test_a_primeira_limpa_NAO_se_repete():
         "nada.")
 
 
-def test_a_memoria_da_primeira_limpa_e_do_OBJETO():
+def test_LIGAR_a_HH_de_novo_devolve_o_direito_a_limpa():
+    """O defeito medido em 08/09/2026, e o motivo dele.
+
+    A rotina da HH é criada uma vez e GUARDADA pelo supervisor
+    (`_rotina_da_hh`), porque o estado dela diz em que trecho a run está. Ela
+    sobrevive a desligar e ligar o farm -- e com ela sobrevivia a memória de
+    que a limpa já tinha acontecido:
+
+    > *"estou testando desativar HH e ativar de volta para ver se esta limpando
+    > corretamente o inventario com o delete, mas nao esta executando sempre"*
+    """
+    m = _manutencao()
+    m.descartar_o_lixo_ao_comecar()
+    assert m.descartar_o_lixo_ao_comecar() == 0
+
+    m.a_hh_comecou()
+
+    assert m.descartar_o_lixo_ao_comecar() == 3, (
+        "Ligar a HH de novo é uma largada nova, e toda largada tem direito à "
+        "sua limpa.")
+    assert m.chamadas == 2
+
+
+def test_a_memoria_da_limpa_e_do_OBJETO():
     """Nada de arquivo: o usuário pediu 'só enquanto está com o bot aberto'."""
     primeira, segunda = _manutencao(), _manutencao()
     primeira.descartar_o_lixo_ao_comecar()
 
     assert segunda.descartar_o_lixo_ao_comecar() == 3, (
-        "Conta nova (ou bot reaberto) tem direito à primeira limpa dela.")
+        "Conta nova (ou bot reaberto) tem direito à limpa dela.")
+
+
+def test_o_INICIO_da_rotina_zera_a_limpa():
+    """E é no `run`, não num estado: desligar/ligar não passa pelos estados."""
+    fonte = inspect.getsource(HHRoutine.run)
+
+    assert "self.manutencao.a_hh_comecou()" in fonte, (
+        "Sem isto, só a PRIMEIRA largada da sessão limpa a bolsa -- que é o "
+        "defeito medido.")
 
 
 # ===========================================================================

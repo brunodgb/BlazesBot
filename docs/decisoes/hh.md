@@ -1192,15 +1192,29 @@ Texto movido do comentário de `HHRoutine._do_ate_a_porta`, verbatim:
 
 | momento | quantas vezes | quem faz | por quê |
 |---|---|---|---|
-| **na porta**, antes de entrar | uma vez por SESSÃO do bot | `ManutencaoDaHH.descartar_o_lixo_ao_comecar` | bolsa cheia ali não é lixo desta run -- é o que estava lá antes de o bot abrir, e sem espaço a run inteira não guarda drop |
+| **na porta**, antes de entrar | uma vez por LARGADA da HH | `ManutencaoDaHH.descartar_o_lixo_ao_comecar` | bolsa cheia ali não é lixo desta run -- é o que estava lá antes de o bot abrir, e sem espaço a run inteira não guarda drop |
 | **ao sair**, no `MANUTENCAO` | TODA run | `ManutencaoDaHH.descartar_o_lixo` | o drop de uma run já ocupa muito espaço |
 
 **Na porta e não dentro:** limpar já dentro da cave seria descobrir o problema
 depois de ele custar — o drop dos primeiros mobs cai no chão por falta de slot.
 
-**Uma vez por sessão e não por run:** o descarte de cada run já acontece na
+**Uma vez por largada e não por run:** o descarte de cada run já acontece na
 `MANUTENCAO`, logo depois de sair. Repetir na porta abriria a bolsa a cada
 volta para nada.
+
+**E "largada" foi corrigido no mesmo dia.** A primeira versão dizia "uma vez
+por sessão do bot", e isso deu defeito na hora do teste:
+
+> *"eu estou testando desativar HH e ativar de volta para ver se esta limpando
+> corretamente o inventario com o delete, mas nao esta executando sempre"*
+
+O motivo: a rotina da HH é criada uma vez e **guardada** pelo supervisor
+(`_rotina_da_hh`), porque o estado dela diz em que trecho a run está — ela
+sobrevive a desligar e ligar o farm, e com ela sobrevivia a memória de que a
+limpa já tinha acontecido. Agora `HHRoutine.run` chama
+`ManutencaoDaHH.a_hh_comecou()` na entrada, e cada largada tem direito à sua
+limpa. O reset é no `run` e não num estado porque desligar/ligar o farm não
+passa pela máquina de estados.
 
 **A memória é do objeto**, que vive enquanto o bot está aberto — mesma escolha
 do Histórico de Quedas, e é o que o usuário pediu em 04/09/2026: *"não precisa
