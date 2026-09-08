@@ -1259,9 +1259,6 @@ class HHRoutine:
             # O GOLPE NÃO PARA ENQUANTO A SAÍDA É CONFIRMADA: é o que a regra
             # pede -- ininterrupto até `in_battle == False`.
             atacar_na_confirmacao=True,
-            # MIRA PRESA NO MEIO DA LUTA: se o alvo não apanha, F1 + TAB de
-            # novo. É a metade que `_mirar_o_primeiro_mob` não cobre.
-            reancorar_alvo_travado=self.combat.reancorar_o_alvo,
         )
         ctx.log.info("HH: %s -- %s", motivo, fim.resumo())
         return fim.saiu_de_combate
@@ -1280,9 +1277,11 @@ class HHRoutine:
         leitura e acerta menos que simplesmente reancorar: o gesto é barato
         (duas teclas) e o resultado é o mesmo sempre -- o mob mais perto.
 
-        MEIO DA LUTA É OUTRA PERGUNTA, e tem outra resposta: ali quem reancora é
-        o detector de HP parado (`combate`, `reancorar_alvo_travado`), porque
-        trocar de alvo de graça no meio da luta jogaria fora um alvo legítimo.
+        E NADA DEPOIS DISSO. Regra do usuário no mesmo dia: *"o F1 + TAB e
+        apenas para evitar problemas no incio da batalha, mas as batalhas devem
+        ser fluidas como exemplifiquei no Boss 2"*. Dentro da luta quem troca de
+        alvo é a MORTE do alvo -- TAB imediato e de volta a bater, sem nenhuma
+        pergunta no meio do caminho.
 
         Ver `docs/decisoes/hh.md` §14.
         """

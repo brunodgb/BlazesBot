@@ -1038,11 +1038,41 @@ funcionando — pior, mas funcionando.
 | momento | quem resolve | por quê |
 |---|---|---|
 | **abertura** de toda luta | `HHRoutine._mirar_o_primeiro_mob` — F1+TAB **sem condição** | o gesto custa duas teclas e acerta sempre; conferir cada caso possível custa leitura e acerta menos |
-| **meio** da luta | `combate`, gancho `reancorar_alvo_travado` — HP do alvo parado por `LEITURAS_SEM_DANO_ANTES_DE_REANCORAR` leituras | trocar de alvo de graça no meio da luta jogaria fora um alvo legítimo |
+| **meio** da luta | a MORTE do alvo, e mais nada — TAB imediato e de volta a bater | *"as batalhas devem ser fluidas como exemplifiquei no Boss 2"* |
 
 O usuário fechou a primeira linha no mesmo dia: *"sobre começar a atacar eu
 realmente acho que apertar F1 e depois dar o primeiro TAB vai ser o mais
 eficiente para atacar os mobs corretos"*.
+
+### O detector de meio de luta foi construído e SAIU
+
+Primeira versão tinha uma segunda régua: contar leituras com o HP do alvo
+parado e reancorar depois de 20 delas (3 s). Ela nunca chegou a rodar em
+produção porque o usuário cortou o desenho no mesmo dia:
+
+> *"o F1 + TAB e apenas para evitar problemas no incio da batalha, mas as
+> batalhas devem ser fluidas como exemplifiquei no Boss 2"*
+
+E o argumento é o certo: a régua lia o HP a cada volta do laço para decidir se
+trocava de alvo, e isso é **uma pergunta no meio do caminho** — exatamente o que
+a regra global de combate da HH tirou de lá quando substituiu
+`limpar_o_combate`. Um caso raro (pet de nível baixo na mira) não paga uma
+condição dentro do laço mais quente do bot.
+
+### A exceção à regra "F1 NUNCA SAI EM BATALHA"
+
+`combate.py` tem essa regra no alto do arquivo, e o motivo é medido: **F1 larga
+o alvo**, e quem larga o alvo no meio da luta bate no vazio. Foi por ela que a
+cura por skill saiu de dentro da batalha.
+
+A abertura da luta na HH **viola a regra de propósito** — ali largar o alvo é o
+objetivo, e o TAB da linha seguinte é o que fecha o gesto. A diferença entre as
+duas situações é uma linha de código: "F1 e pronto" (a bomba que a regra
+desarmou) contra "F1 e TAB" (o que o usuário pediu).
+
+Se o TAB falhar, o pior caso é a mira ficar no próprio personagem até a próxima
+abertura de luta — e é por isso que a exceção vale só aqui, e só uma vez por
+luta.
 
 ### O portão por NÍVEL foi construído e REPROVADO
 

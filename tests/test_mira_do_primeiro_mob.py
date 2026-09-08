@@ -139,12 +139,37 @@ def test_a_abertura_NAO_TEM_CONDICAO():
         "usuário substituiu.")
 
 
-def test_a_HH_liga_o_detector_de_MEIO_de_luta():
-    fonte = inspect.getsource(HHRoutine._matar_ate_sair_de_batalha)
+def test_a_luta_NAO_TEM_PERGUNTA_NENHUMA_no_meio():
+    """O F1+TAB é SÓ a abertura. Depois dela a luta é fluida.
 
-    assert "reancorar_alvo_travado=self.combat.reancorar_o_alvo" in fonte, (
-        "A outra metade do sintoma é o alvo que não apanha no MEIO da luta -- "
-        "o pet de nível baixo passa pela abertura e só o HP parado o pega.")
+    Regra do usuário, 08/09/2026: *"o F1 + TAB e apenas para evitar problemas no
+    incio da batalha, mas as batalhas devem ser fluidas como exemplifiquei no
+    Boss 2"*.
+
+    Um detector de "alvo que não apanha" foi construído e SAIU por isto: ele
+    lia o HP a cada volta para decidir se reancorava, e essa é uma pergunta no
+    meio do caminho. O modelo é a luta do boss 2 -- morreu, TAB, continua
+    batendo.
+    """
+    assinatura = inspect.signature(motor.CombatEngine.atacar_ate_sair_de_combate)
+
+    assert "reancorar_alvo_travado" not in assinatura.parameters, (
+        "O laço de ataque voltou a ter uma pergunta no meio.")
+
+    fonte = inspect.getsource(HHRoutine._matar_ate_sair_de_batalha)
+    assert "reancorar" not in fonte.split('"""')[-1], (
+        "A HH voltou a reancorar dentro da luta.")
+
+
+def test_quem_troca_de_alvo_no_MEIO_e_a_MORTE_do_alvo():
+    """E o TAB é imediato -- sem espera entre a morte e a troca."""
+    fonte = inspect.getsource(motor.CombatEngine.atacar_ate_sair_de_combate)
+
+    assert "ESPERA_APOS_A_MORTE_ANTES_DO_TAB" not in fonte, (
+        "Os 3s de pausa depois da morte são a coreografia da BC "
+        "(`limpar_o_combate`). Na HH os mobs do ponto PRECISAM morrer: puxar o "
+        "seguinte é o objetivo.")
+    assert "_trocar_de_alvo" in fonte
 
 
 # ===========================================================================
@@ -152,30 +177,37 @@ def test_a_HH_liga_o_detector_de_MEIO_de_luta():
 # ===========================================================================
 
 
-def test_o_detector_do_motor_e_OPT_IN():
-    assinatura = inspect.signature(motor.CombatEngine.atacar_ate_sair_de_combate)
-    parametro = assinatura.parameters["reancorar_alvo_travado"]
-
-    assert parametro.default is None, (
-        "Padrão `None` é o que garante que a BC não muda: ela não passa "
-        "gancho nenhum, e sem gancho o detector nem roda.")
-
-
 def test_a_BC_nao_reancora_alvo():
     from blazesbot.bot.bc.routine import BossRushRoutine
 
     fonte = inspect.getsource(BossRushRoutine)
-    assert "reancorar_alvo_travado" not in fonte, (
+    assert "reancorar_o_alvo" not in fonte, (
         "Decisão de cave não mora em código compartilhado, e esta é da HH: "
-        "no BC o alvo travado tem outra causa e outro remédio.")
+        "no BC quem abre a luta é o clique no boss, não o TAB.")
 
 
-def test_o_numero_de_leituras_sem_dano_e_generoso():
-    """Apertar isso reancoraria no meio de uma luta legítima."""
-    ciclos = (motor.LEITURAS_SEM_DANO_ANTES_DE_REANCORAR
-              * motor.CADENCIA_DA_LEITURA_DO_ALVO)
+# ===========================================================================
+# A regra "F1 nunca sai em batalha" e esta exceção
+# ===========================================================================
 
-    assert ciclos >= 2.0, (
-        f"{ciclos:.1f}s de HP parado é pouco: um mob com muito HP e um golpe "
-        f"que erra dariam leituras iguais, e trocar de alvo ali jogaria a luta "
-        f"fora.")
+
+def test_a_excecao_a_regra_do_F1_esta_ESCRITA_onde_ela_acontece():
+    """`combate.py` tem a regra no alto: F1 LARGA o alvo, então nunca em luta.
+
+    A abertura da luta a viola de propósito -- ali largar o alvo é o objetivo,
+    e o TAB seguinte é o que fecha o gesto. Quem lê `reancorar_o_alvo` depois
+    de ler a regra tem que encontrar o porquê no lugar, e não deduzir.
+    """
+    fonte = inspect.getsource(motor.CombatEngine.reancorar_o_alvo)
+
+    assert "EXCEÇÃO" in fonte.upper(), (
+        "Sem isto escrito, a próxima leitura da regra vai concluir que este "
+        "F1 é o defeito que a regra proíbe.")
+
+
+def test_o_F1_da_CURA_continua_proibido_em_batalha():
+    """A exceção é só da abertura de luta. A cura não ganhou nada."""
+    from blazesbot.bot.combate import CombatEngine
+
+    fonte = inspect.getsource(CombatEngine.maintain)
+    assert "reancorar_o_alvo" not in fonte

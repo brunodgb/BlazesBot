@@ -67,6 +67,11 @@ from .navegacao import Navigator
 # Tecla que seleciona o PRÓPRIO personagem. É padrão do cliente e não é
 # configurável de propósito: não é preferência, é como o jogo funciona.
 TECLA_AUTO_SELECAO = "F1"
+
+# Espera depois da auto-seleção, para a seleção chegar da rede. Era literal
+# dentro de `auto_selecionar`; virou constante quando `reancorar_o_alvo` passou
+# a ser o segundo leitor -- um número lido por dois lados mora num lugar só.
+ESPERA_DA_AUTO_SELECAO = 0.125
 #
 # Quatro segundos sentado recuperam vida e mana de graça, e é o único momento da
 # run em que dá: dentro da cave o trem de mobs não deixa, e na frente do boss é a
@@ -922,18 +927,6 @@ SEGUNDOS_ANTES_DO_TAB_NO_BOSS = 4.0
 # vez de gastar a run batendo no ar.
 LIMITE_PARA_A_LUTA_COMECAR = 10.0
 
-# Quantas leituras seguidas com o HP do alvo PARADO antes de concluir que a
-# mira esta presa em algo que nao apanha.
-#
-# NAO E NUMERO NOVO -- e a divisao de dois que ja existem. A leitura sai a cada
-# `CADENCIA_DA_LEITURA_DO_ALVO` (0,15 s) e o golpe a cada `attack_delay`
-# (0,5 s), ou seja um golpe a cada ~3,3 leituras. Vinte leituras sao 3 segundos
-# e ~6 ciclos de ataque: HP parado por seis golpes nao e mob levando dano.
-#
-# GENEROSO DE PROPOSITO. Apertar isso reancoraria no meio de uma luta legitima
-# -- um mob com muito HP e um golpe que erra dariam duas ou tres leituras
-# iguais, e trocar de alvo ali jogaria a luta fora.
-LEITURAS_SEM_DANO_ANTES_DE_REANCORAR = 20
 
 
 @dataclass(frozen=True)
@@ -1170,7 +1163,7 @@ class CombatEngine:
     def auto_selecionar(self) -> None:
         """Seleciona o próprio personagem (F1), para skill em si mesmo."""
         self.ctx.press(TECLA_AUTO_SELECAO)
-        self.ctx.tick(0.125)
+        self.ctx.tick(ESPERA_DA_AUTO_SELECAO)
 
     # ==================================================================
     # Alvo
@@ -2209,8 +2202,6 @@ class CombatEngine:
         # não há mob seguinte para convidar.
         atacar_na_confirmacao: bool = False,
         pos_tab_callback: callable | None = None,
-        # OPT-IN. Sem gancho, nada muda -- e e assim que a BC nao muda.
-        reancorar_alvo_travado: callable | None = None,
     ) -> FimDeCombate:
         """Gira a rotação de skills até a flag de combate DESLIGAR.
 
@@ -2228,10 +2219,6 @@ class CombatEngine:
         ctx = self.ctx
         inicio = time.time()
         proximo_ataque = 0.0
-        # Detector de MIRA PRESA: HP do alvo parado enquanto se bate nele.
-        # Ver `LEITURAS_SEM_DANO_ANTES_DE_REANCORAR`.
-        pct_anterior_do_alvo: float | None = None
-        leituras_sem_dano = 0
         proxima_manutencao = 0.0
         falso_desde = 0.0
         ilegivel_desde = 0.0
@@ -2465,40 +2452,6 @@ class CombatEngine:
                 morreu = self._alvo_morreu()
                 leitura = self._ultima_leitura_do_alvo
 
-                # ===============================================
-                # MIRA PRESA EM ALGO QUE NAO APANHA
-                # ===============================================
-                #
-                # Sintoma relatado em 08/09/2026: o jogo as vezes auto-seleciona
-                # o PROPRIO personagem ou o PET, e nesse estado o bot bate em
-                # nada -- a rotacao gira, a flag de combate segue alta porque os
-                # mobs continuam atacando, e o alvo na mira nao perde HP nunca.
-                # A luta so terminava pelo teto.
-                #
-                # O HP PARADO E O SINAL, e ele nao depende de faixa de nivel:
-                # pega o personagem, o pet (que pode ter o mesmo nivel dos mobs)
-                # e qualquer coisa inatingivel. `hp_pct` vem da leitura que
-                # acabou de sair, sem custo de uma segunda.
-                #
-                # SEM GANCHO, NADA ACONTECE -- a BC nao passa nenhum.
-                if reancorar_alvo_travado is not None and not morreu:
-                    pct = self._morte.hp_pct
-                    if pct is not None and pct == pct_anterior_do_alvo:
-                        leituras_sem_dano += 1
-                        if (leituras_sem_dano
-                                >= LEITURAS_SEM_DANO_ANTES_DE_REANCORAR):
-                            ctx.log.warning(
-                                "O alvo de %s esta com %.0f%% de vida ha %s "
-                                "leituras e nao apanha. A mira deve estar presa "
-                                "em mim ou no pet -- reancorando.",
-                                o_que, pct * 100.0, leituras_sem_dano)
-                            reancorar_alvo_travado(o_que)
-                            leituras_sem_dano = 0
-                            pct_anterior_do_alvo = None
-                            proxima_leitura = agora + CARENCIA_APOS_O_TAB
-                    else:
-                        leituras_sem_dano = 0
-                        pct_anterior_do_alvo = pct
 
                 # `mudou` detecta troca de alvo — usado pelo aviso "TAB segurado"
                 # abaixo. O log ALVO foi removido; o ponteiro segue relatado via
@@ -2875,6 +2828,23 @@ class CombatEngine:
 
         SEM A TECLA, SÓ O TAB. Conta sem `self_target` configurada continua
         funcionando -- pior, mas funcionando: um TAB ainda pode acertar.
+
+        =================================================================
+        ISTO É A EXCEÇÃO À REGRA "F1 NUNCA SAI EM BATALHA"
+        =================================================================
+
+        A regra está no alto deste arquivo e o motivo dela é real: **F1 LARGA o
+        alvo**, e quem larga o alvo no meio da luta bate no vazio. Foi por isso
+        que a cura por skill saiu de dentro da batalha.
+
+        AQUI LARGAR O ALVO É O OBJETIVO, e o TAB da linha seguinte é o que
+        fecha o gesto -- é a diferença entre "F1 e pronto" (a bomba que a regra
+        desarmou) e "F1 e TAB" (o que o usuário pediu em 08/09/2026).
+
+        E SÓ NA ABERTURA. Regra do usuário, 08/09/2026: *"o F1 + TAB e apenas
+        para evitar problemas no incio da batalha, mas as batalhas devem ser
+        fluidas"*. Dentro da luta quem troca de alvo é a morte do alvo -- TAB
+        imediato, sem F1 e sem pergunta nenhuma no meio do caminho.
         """
         ctx = self.ctx
         tecla = (ctx.settings.keys.self_target or "").strip()
@@ -2883,7 +2853,7 @@ class CombatEngine:
                 "Reancorando o alvo (%s): %s para mirar em mim, e TAB para o "
                 "mob mais perto.", motivo, tecla)
             ctx.press(tecla)
-            ctx.tick(ESPERA_DEPOIS_DO_TAB)
+            ctx.tick(ESPERA_DA_AUTO_SELECAO)
         else:
             ctx.log.info(
                 "Reancorando o alvo (%s) só com TAB -- a tecla de auto-seleção "
