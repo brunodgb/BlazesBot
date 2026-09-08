@@ -125,9 +125,31 @@ class _LogHandler(logging.Handler):
         try:
             partes = record.name.split(".", 1)
             conta = partes[1] if len(partes) > 1 else ""
-            self.fila.append((conta, self.format(record)))
+            self.fila.append((conta, self._formatar(record)))
         except Exception:
             pass
+
+    def _formatar(self, record: logging.LogRecord) -> str:
+        """Como `self.format(record)`, mas troca o TEMPLATE da mensagem pela
+        tradução quando existe uma para `i18n.idioma_atual_do_log()`.
+
+        NUNCA mexe no `record`: outro handler no mesmo logger (o log de dev,
+        por exemplo) recebe o MESMO objeto e tem que continuar vendo o PT-BR
+        original -- por isso a tradução é uma string calculada aqui, não uma
+        mutação em `record.msg`. Sem entrada no catálogo, ou em PT-BR, o
+        caminho é idêntico ao de antes desta função existir.
+        """
+        if i18n.idioma_atual_do_log() == i18n.IDIOMA_PADRAO:
+            return self.format(record)
+        template = i18n.traduzir_mensagem_de_log(str(record.msg))
+        if template == str(record.msg):
+            return self.format(record)
+        try:
+            mensagem = template % record.args if record.args else template
+        except Exception:
+            return self.format(record)
+        hora = self.formatter.formatTime(record, self.formatter.datefmt)
+        return f"{hora}  {mensagem}"
 
 
 class _App:
@@ -143,6 +165,9 @@ class _App:
             maxlen=MAX_LINHAS_GUARDADAS)
         self._contagem_por_conta: dict[str, int] = {}
         self._total = 0
+        # Log NOVO (a partir de agora) já sai no idioma salvo -- não só o texto
+        # da UI. Ver `i18n.traduzir_mensagem_de_log`.
+        i18n.definir_idioma_do_log(self.config.idioma)
 
     # ------------------------------------------------------------------
     # helpers internos
@@ -487,6 +512,9 @@ class _App:
         idioma = idioma if idioma in i18n.IDIOMAS_SUPORTADOS else i18n.IDIOMA_PADRAO
         self.config.idioma = idioma
         self.config.save()
+        # Log GERADO A PARTIR DAQUI sai traduzido; o que já foi escrito não
+        # muda -- ver `i18n.traduzir_mensagem_de_log`.
+        i18n.definir_idioma_do_log(idioma)
 
     def definir_senha(self, uid: str, nova: str) -> None:
         c = self._conta(uid)

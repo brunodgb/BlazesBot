@@ -397,17 +397,10 @@ exigiria mudar a fonte, não a tela, e a decisão de arquitetura é maior que
 "adicionar mais uma chave". Cada item foi deixado de propósito, com o texto
 em PT-BR passando direto (`r.erro`, `r.resumo` etc., sem tradução):
 
-- **Conteúdo do Log** (a aba, não o cabeçalho dela). Catalogado sob pedido do
-  usuário antes de mexer: **775 chamadas `log.*()` em 47 arquivos**
-  (`bot/`, `bot/bc/`, `bot/app/`, `bot/hh/`, `core/`), ~90–140 famílias reais
-  de mensagem (não "dezenas", não 775 únicas) — um registro pequeno de
-  chaves cobriria só ~15–20% das ocorrências. Recomendação de quem investigou:
-  chave por call-site **gerada por hash do texto-fonte** (não escrita à mão),
-  mais um helper `log_i18n(logger, texto_fonte, *args)` que faz o lookup pelo
-  próprio texto — nenhuma das 775 chamadas muda de assinatura, e falta de
-  entrada no catálogo cai para o PT-BR original em vez de quebrar. Ainda não
-  iniciado; é projeto à parte, maior que o resto deste i18n, porque mexe na
-  lógica viva de combate/navegação/login, não em UI.
+- **Conteúdo do Log — mecanismo IMPLEMENTADO, catálogo PARCIAL** (diretiva do
+  usuário, 07/09/2026: "só o que é visto pelo usuário, e só a partir da
+  troca — log já gravado fica como está"). Ver "Log: só o que é gerado a
+  partir da troca" logo abaixo para como funciona e como estender.
 - **Histórico de Quedas**: `q.rodando_texto`, `q.motivo_texto`,
   `q.fazendo_texto`, `q.onde_texto`, `q.quando_texto` vêm PRONTOS de
   `core/quedas.py::amigavel()`. Mesma pendência do Log, em miniatura.
@@ -420,6 +413,59 @@ em PT-BR passando direto (`r.erro`, `r.resumo` etc., sem tradução):
   cliques) e `r.resumo` (conferência de exclusão) vêm prontos de
   `amostragem_de_cliques.py`/`afericao.py`. Só o texto ao REDOR (toasts de
   início/erro) foi convertido.
+
+## Log: só o que é gerado a partir da troca (implementado em 07/09/2026)
+
+Diretiva do usuário, mais estreita do que "traduzir todo o log": **linha já
+escrita fica exatamente como foi gravada; só o log GERADO depois da troca de
+idioma sai no idioma novo.** Não existe (e não faz sentido existir)
+retradução do que já está na tela ou no arquivo — histórico é histórico.
+
+- **Sem tocar nenhuma das ~775 chamadas** `log.info/warning/error(...)`
+  espalhadas por `bot/`, `bot/bc/`, `bot/app/`, `bot/hh/`, `core/`. O
+  TEXTO-FONTE de cada chamada (ex.: `"Revivendo"`, `"Não consegui salvar a
+  configuração: %s"`) já É a chave — não existe um nome de chave separado
+  para inventar por call site.
+- **Fonte:** `blazesbot/locales/logs.json` — `{"template pt-br exato":
+  {"en": "...", "es": "..."}}`. Diferente de `traducoes.json`, aqui **não há
+  PT-BR dentro do valor**: a própria chave já é o PT-BR.
+- **Resolução:** `blazesbot/core/i18n.py` —
+  `definir_idioma_do_log(idioma)` / `idioma_atual_do_log()` guardam o idioma
+  do log como **estado do processo** (não da UI — os call sites de log rodam
+  nas threads dos supervisores, sem acesso a `BotConfig`).
+  `traduzir_mensagem_de_log(template)` faz o lookup pelo texto-fonte; sem
+  entrada no catálogo, ou catálogo sem aquele idioma, devolve o `template`
+  **inalterado** — é assim que as chamadas ainda não catalogadas continuam
+  saindo em PT-BR sem quebrar nada.
+- **Ligação:** `blazesbot/web_app.py::_LogHandler._formatar()`. Troca o
+  TEMPLATE da mensagem pela tradução e refaz o `%`-substituição com os
+  MESMOS args — nunca muta `record.msg`/`record.args`, porque outro handler
+  no mesmo logger (o log de dev, se algum dia existir um) recebe o MESMO
+  objeto `record` e tem que continuar vendo o PT-BR original. Testado em
+  `tests/test_log_traduzido.py`, inclusive a garantia de não-mutação.
+  `_App.__init__` acerta o idioma do log a partir do `config.json` salvo
+  (log já sai certo desde a primeira linha, sem esperar o usuário reabrir o
+  seletor); `_App.definir_idioma()` atualiza a cada troca.
+- **Cobertura real do catálogo agora: 98 templates**, verbatim grepados do
+  código-fonte (não parafraseados) — cobrindo os 3 casos de duplicata exata
+  confirmados pela investigação (`"Não consegui salvar a configuração: %s"`
+  × 6, `"Não abri o diálogo do %s"` × 4, `"PetBug: %s"` × 3) mais uma boa
+  fatia de mensagens sem argumento de `combate.py`, `morte.py`, `login.py`,
+  `team.py`, `bc/routine.py`, `bc/ui_service.py`, `supervisor.py`,
+  `hh/fada.py`, `hh/routine.py`. **Isto está longe de cobrir as ~90–140
+  famílias reais** que a investigação completa mediu — é um catálogo vivo,
+  cresce por adição, não por reescrita.
+- **Para catalogar uma mensagem nova:** copie o texto-fonte EXATO (grep no
+  `.py`, nunca de memória — um espaço ou acento diferente não bate a chave e
+  a mensagem some do catálogo em silêncio, sem erro), adicione a entrada em
+  `logs.json` com `en`/`es`, e pronto — nenhum código muda. Mensagens com
+  `%s`/`%.0f%%` no meio da frase: mantenha os placeholders na MESMA posição
+  em toda tradução (reordenar argumento por idioma não é suportado; é
+  `%`-formatting posicional, não nomeado).
+- **NÃO cataloga:** `log.debug(...)` (em produção o logger fica travado em
+  `INFO+` — `web_app.definir_nivel_log` —, então debug já não chega à tela
+  do usuário final) nem mensagens que carregam payload estruturado em vez de
+  prosa (ex.: `core/cronometro.py` loga um `json.dumps(...)` inteiro).
 
 ## Armadilhas reais encontradas (guarde antes de estender)
 

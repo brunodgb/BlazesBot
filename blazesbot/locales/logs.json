@@ -1,0 +1,406 @@
+{
+  "Não consegui salvar a configuração: %s": {
+    "en": "Could not save the configuration: %s",
+    "es": "No se pudo guardar la configuración: %s"
+  },
+  "Não abri o diálogo do %s": {
+    "en": "Did not open the %s dialog",
+    "es": "No se abrió el diálogo de %s"
+  },
+  "PetBug: %s": {
+    "en": "PetBug: %s",
+    "es": "PetBug: %s"
+  },
+
+  "FADA: saí da batalha — volto para a fila de cura.": {
+    "en": "FAIRY: left the battle — going back to the healing queue.",
+    "es": "HADA: salí de la batalla — vuelvo a la cola de curación."
+  },
+  "FADA: não consigo ler o time pela memória.": {
+    "en": "FAIRY: can't read the team from memory.",
+    "es": "HADA: no puedo leer el equipo desde la memoria."
+  },
+  "FADA: pet sumiu — invocando.": {
+    "en": "FAIRY: pet disappeared — summoning it.",
+    "es": "HADA: la mascota desapareció — invocándola."
+  },
+
+  "Usando a Super Skill de cura": {
+    "en": "Using the healing Super Skill",
+    "es": "Usando la Super Skill de curación"
+  },
+  "Usando a skill de cura": {
+    "en": "Using the heal skill",
+    "es": "Usando la skill de curación"
+  },
+  "A cura por skill não bastou; indo à poção.": {
+    "en": "Skill healing wasn't enough; going for a potion.",
+    "es": "La curación por skill no fue suficiente; yendo a la poción."
+  },
+  "Tentando a skill de cura antes da poção": {
+    "en": "Trying the heal skill before the potion",
+    "es": "Probando la skill de curación antes de la poción"
+  },
+  "Tempo de recuperação esgotado": {
+    "en": "Recovery time ran out",
+    "es": "Se agotó el tiempo de recuperación"
+  },
+  "Invocando pet": {
+    "en": "Summoning pet",
+    "es": "Invocando mascota"
+  },
+  "Pet ativo": {
+    "en": "Pet active",
+    "es": "Mascota activa"
+  },
+  "Pet não ficou ativo": {
+    "en": "Pet did not become active",
+    "es": "La mascota no quedó activa"
+  },
+
+  "=== RANKING DAS COORDENADAS (taxa primeiro, depois latência) ===": {
+    "en": "=== COORDINATE RANKING (rate first, then latency) ===",
+    "es": "=== RANKING DE COORDENADAS (tasa primero, luego latencia) ==="
+  },
+  "=== AMOSTRAGEM DE CLIQUES — procurando a janela do jogo ===": {
+    "en": "=== CLICK SAMPLING — looking for the game window ===",
+    "es": "=== MUESTREO DE CLICS — buscando la ventana del juego ==="
+  },
+  "Amostragem interrompida pelo usuário.": {
+    "en": "Sampling interrupted by the user.",
+    "es": "Muestreo interrumpido por el usuario."
+  },
+  "=== CONFERINDO OS MODELOS DE EXCLUSÃO ===": {
+    "en": "=== CHECKING THE DELETION MODELS ===",
+    "es": "=== REVISANDO LOS MODELOS DE EXCLUSIÓN ==="
+  },
+  "=== TESTE DE VENDA (isolado) — procurando a janela do jogo ===": {
+    "en": "=== SALE TEST (isolated) — looking for the game window ===",
+    "es": "=== PRUEBA DE VENTA (aislada) — buscando la ventana del juego ==="
+  },
+  "Teste de venda interrompido pelo usuário.": {
+    "en": "Sale test interrupted by the user.",
+    "es": "Prueba de venta interrumpida por el usuario."
+  },
+  "=== TESTE DO CURSOR ===": {
+    "en": "=== CURSOR TEST ===",
+    "es": "=== PRUEBA DEL CURSOR ==="
+  },
+  "captura falhou; pulando este clique": {
+    "en": "capture failed; skipping this click",
+    "es": "falló la captura; omitiendo este clic"
+  },
+  "=== RECORTANDO O TEMPLATE DO PAINEL DE TIME ===": {
+    "en": "=== CROPPING THE TEAM PANEL TEMPLATE ===",
+    "es": "=== RECORTANDO LA PLANTILLA DEL PANEL DE EQUIPO ==="
+  },
+
+  "Não desmontei; o item de retorno seria ignorado": {
+    "en": "Did not dismount; the return item would be ignored",
+    "es": "No desmonté; el objeto de retorno sería ignorado"
+  },
+  "Não desmontei; a poção não faria efeito": {
+    "en": "Did not dismount; the potion would have no effect",
+    "es": "No desmonté; la poción no haría efecto"
+  },
+  "Em combate: ignorando o pedido para desmontar.": {
+    "en": "In combat: ignoring the request to dismount.",
+    "es": "En combate: ignorando la solicitud de desmontar."
+  },
+  "Nenhum clique no mapa produziu movimento": {
+    "en": "No click on the map produced movement",
+    "es": "Ningún clic en el mapa produjo movimiento"
+  },
+
+  "APP: sentando no ponto inicial para esperar a Fada.": {
+    "en": "APP: sitting at the starting point to wait for the Fairy.",
+    "es": "APP: sentándose en el punto inicial para esperar al Hada."
+  },
+  "APP: cheguei no ponto inicial; vou me curar.": {
+    "en": "APP: reached the starting point; going to heal.",
+    "es": "APP: llegué al punto inicial; voy a curarme."
+  },
+  "Modo APP pausado": {
+    "en": "APP mode paused",
+    "es": "Modo APP pausado"
+  },
+  "Modo APP retomado": {
+    "en": "APP mode resumed",
+    "es": "Modo APP reanudado"
+  },
+  "Time: sem tecla de alvo configurada, impossível alinhar.": {
+    "en": "Team: no target key configured, cannot align.",
+    "es": "Equipo: sin tecla de objetivo configurada, imposible alinear."
+  },
+  "Time: sem leitura de TARGET_ID -- volta sem alinhar": {
+    "en": "Team: no TARGET_ID reading -- lap without aligning",
+    "es": "Equipo: sin lectura de TARGET_ID -- vuelta sin alinear"
+  },
+  "Sem captura da tela; não dá para deletar por imagem.": {
+    "en": "No screen capture; can't delete by image.",
+    "es": "Sin captura de pantalla; no se puede borrar por imagen."
+  },
+
+  "Procurando o NPC da entrada da cave": {
+    "en": "Looking for the cave entrance NPC",
+    "es": "Buscando el NPC de entrada de la cueva"
+  },
+  "Usando o Altar Stone para entrar no covil": {
+    "en": "Using the Altar Stone to enter the lair",
+    "es": "Usando el Altar Stone para entrar a la guarida"
+  },
+  "Saindo da cave pelo Skull Herald": {
+    "en": "Leaving the cave through the Skull Herald",
+    "es": "Saliendo de la cueva por el Skull Herald"
+  },
+  "Personagem morto detectado": {
+    "en": "Dead character detected",
+    "es": "Personaje muerto detectado"
+  },
+  "Estou no NPC de saída e o boss já caiu; saindo": {
+    "en": "At the exit NPC and the boss is already down; leaving",
+    "es": "Estoy en el NPC de salida y el boss ya cayó; saliendo"
+  },
+  "Estou na posição do boss; retomando a luta": {
+    "en": "At the boss position; resuming the fight",
+    "es": "Estoy en la posición del boss; retomando la pelea"
+  },
+  "Estou na posição dos guardas": {
+    "en": "At the guards' position",
+    "es": "Estoy en la posición de los guardias"
+  },
+  "Estou no covil, ainda no caminho até os guardas": {
+    "en": "Inside the lair, still on the way to the guards",
+    "es": "Estoy en la guarida, todavía camino a los guardias"
+  },
+  "Preparando personagem": {
+    "en": "Preparing character",
+    "es": "Preparando personaje"
+  },
+  "Pet inativo: desmontando para invocar antes de sair": {
+    "en": "Pet inactive: dismounting to summon before leaving",
+    "es": "Mascota inactiva: desmontando para invocar antes de salir"
+  },
+  "Montaria ativa e o pet está de pé; mantendo montado": {
+    "en": "Mount active and the pet is up; staying mounted",
+    "es": "Montura activa y la mascota está en pie; manteniéndose montado"
+  },
+  "Já estou na coordenada da entrada; pulando o trajeto": {
+    "en": "Already at the entrance coordinate; skipping the route",
+    "es": "Ya estoy en la coordenada de entrada; saltando el trayecto"
+  },
+  "Entrando na cave": {
+    "en": "Entering the cave",
+    "es": "Entrando a la cueva"
+  },
+  "Matar guardas está desligado; seguindo para o boss": {
+    "en": "Killing guards is off; heading to the boss",
+    "es": "Matar guardias está desactivado; yendo hacia el boss"
+  },
+  "Inventário já está aberto; usando package_courage sem reabrir": {
+    "en": "Inventory already open; using package_courage without reopening",
+    "es": "El inventario ya está abierto; usando package_courage sin reabrir"
+  },
+  "Abrindo o inventário para usar o(s) package_courage": {
+    "en": "Opening the inventory to use the package_courage",
+    "es": "Abriendo el inventario para usar el/los package_courage"
+  },
+  "A saída pelo NPC não confirmou; tentando de novo": {
+    "en": "The NPC exit did not confirm; trying again",
+    "es": "La salida por el NPC no confirmó; intentando de nuevo"
+  },
+  "Manutenção: cidade, venda e recompra": {
+    "en": "Maintenance: town, sale and repurchase",
+    "es": "Mantenimiento: ciudad, venta y recompra"
+  },
+  "Revivendo": {
+    "en": "Reviving",
+    "es": "Reviviendo"
+  },
+  "Farm desligado; devolvendo o controle": {
+    "en": "Farm turned off; handing back control",
+    "es": "Farm desactivado; devolviendo el control"
+  },
+  "BC desligado; devolvendo o controle": {
+    "en": "BC turned off; handing back control",
+    "es": "BC desactivado; devolviendo el control"
+  },
+
+  "MORRI. A macro para aqui — avisando o time.": {
+    "en": "I DIED. The macro stops here — notifying the team.",
+    "es": "MORÍ. La macro se detiene aquí — avisando al equipo."
+  },
+  "De pé e de volta ao ponto — a macro recomeça.": {
+    "en": "Back up and at the point — the macro restarts.",
+    "es": "De pie y de vuelta en el punto — la macro reinicia."
+  },
+  "Sem Fada no time — revivo na hora.": {
+    "en": "No Fairy on the team — reviving right away.",
+    "es": "Sin Hada en el equipo — revivo al instante."
+  },
+  "Voltei à vida sem clicar — a Fada resolveu.": {
+    "en": "Came back to life without clicking — the Fairy handled it.",
+    "es": "Volví a la vida sin hacer clic — el Hada lo resolvió."
+  },
+  "Convite da Fada na tela — aceito.": {
+    "en": "Fairy's invite on screen — accepted.",
+    "es": "Invitación del Hada en pantalla — aceptada."
+  },
+  "Clicando no Ok da morte — revivo onde estou.": {
+    "en": "Clicking the death Ok — reviving where I am.",
+    "es": "Haciendo clic en el Ok de muerte — revivo donde estoy."
+  },
+  "De pé.": {
+    "en": "Up.",
+    "es": "De pie."
+  },
+  "Tem mob em cima — ando assim mesmo.": {
+    "en": "There's a mob on top — walking anyway.",
+    "es": "Hay un mob encima — camino de todos modos."
+  },
+  "Entrei em batalha regenerando — paro por aqui.": {
+    "en": "Entered battle while regenerating — stopping here.",
+    "es": "Entré en combate regenerando — me detengo aquí."
+  },
+
+  "Sem tecla de lista de amigos configurada": {
+    "en": "No friend list key configured",
+    "es": "Sin tecla de lista de amigos configurada"
+  },
+  "Não localizei a aba Block da lista de amigos": {
+    "en": "Could not find the Block tab in the friend list",
+    "es": "No localicé la pestaña Block de la lista de amigos"
+  },
+  "A janela de amigos não confirmou fechamento": {
+    "en": "The friends window did not confirm closing",
+    "es": "La ventana de amigos no confirmó el cierre"
+  },
+  "Limpando a Block list": {
+    "en": "Clearing the Block list",
+    "es": "Limpiando la Block list"
+  },
+  "A caixa de digitar o nick não apareceu": {
+    "en": "The nick input box did not appear",
+    "es": "El cuadro para escribir el nick no apareció"
+  },
+  "Block list está vazia": {
+    "en": "Block list is empty",
+    "es": "La Block list está vacía"
+  },
+
+  "Não confirmei a abertura da janela de venda": {
+    "en": "Could not confirm the sale window opened",
+    "es": "No confirmé la apertura de la ventana de venta"
+  },
+
+  "Nenhuma linha realçada; clicando de novo": {
+    "en": "No line highlighted; clicking again",
+    "es": "Ninguna línea resaltada; haciendo clic de nuevo"
+  },
+  "Conexão interrompida; fechando o aviso": {
+    "en": "Connection interrupted; closing the warning",
+    "es": "Conexión interrumpida; cerrando el aviso"
+  },
+  "Cliente sobreviveu; recomeçando o login": {
+    "en": "Client survived; restarting login",
+    "es": "El cliente sobrevivió; reiniciando el inicio de sesión"
+  },
+  "Servidor de login ocupado; fechando o aviso e repetindo": {
+    "en": "Login server busy; closing the warning and retrying",
+    "es": "Servidor de inicio de sesión ocupado; cerrando el aviso y reintentando"
+  },
+  "Falha de conexão; fechando o aviso e repetindo": {
+    "en": "Connection failure; closing the warning and retrying",
+    "es": "Fallo de conexión; cerrando el aviso y reintentando"
+  },
+  "Na fila de login. Aguardando, sem clicar em nada.": {
+    "en": "In the login queue. Waiting, not clicking anything.",
+    "es": "En la cola de inicio de sesión. Esperando, sin hacer clic en nada."
+  },
+  "Voltou para antes do servidor; refazendo o login": {
+    "en": "Went back to before the server; redoing the login",
+    "es": "Volvió a antes del servidor; rehaciendo el inicio de sesión"
+  },
+  "Voltou para a tela de login; refazendo credenciais": {
+    "en": "Went back to the login screen; redoing credentials",
+    "es": "Volvió a la pantalla de inicio de sesión; rehaciendo credenciales"
+  },
+
+  "A auto-seleção não trouxe id nenhum.": {
+    "en": "Auto-selection did not bring back any id.",
+    "es": "La autoselección no trajo ningún id."
+  },
+  "Trava de posição: base ainda não salva no config (primeira execução)": {
+    "en": "Position lock: base not saved to config yet (first run)",
+    "es": "Bloqueo de posición: base aún no guardada en el config (primera ejecución)"
+  },
+  "Trava de posição: desligada por configuração.": {
+    "en": "Position lock: turned off by configuration.",
+    "es": "Bloqueo de posición: desactivado por configuración."
+  },
+  "Trava de posição: não consegui obter coordenadas da janela": {
+    "en": "Position lock: could not get the window's coordinates",
+    "es": "Bloqueo de posición: no se pudieron obtener las coordenadas de la ventana"
+  },
+  "Trava de posição: base inicial salva no config %s": {
+    "en": "Position lock: starting base saved to config %s",
+    "es": "Bloqueo de posición: base inicial guardada en el config %s"
+  },
+  "Configuração validada sem problemas": {
+    "en": "Configuration validated with no issues",
+    "es": "Configuración validada sin problemas"
+  },
+  "sincronizando: parada já solicitada, nada a fazer": {
+    "en": "syncing: stop already requested, nothing to do",
+    "es": "sincronizando: parada ya solicitada, nada que hacer"
+  },
+
+  "HH+Fada: não consegui viajar até a HH": {
+    "en": "HH+Fairy: could not travel to HH",
+    "es": "HH+Hada: no pude viajar hasta HH"
+  },
+  "HH+Fada: o líder entrou; vou atrás": {
+    "en": "HH+Fairy: the leader entered; following",
+    "es": "HH+Hada: el líder entró; voy detrás"
+  },
+  "HH+Fada: dentro da cave": {
+    "en": "HH+Fairy: inside the cave",
+    "es": "HH+Hada: dentro de la cueva"
+  },
+  "HH+Fada: não consegui entrar na cave": {
+    "en": "HH+Fairy: could not enter the cave",
+    "es": "HH+Hada: no pude entrar a la cueva"
+  },
+  "HH+Fada: saí da cave; encerrando o acompanhamento": {
+    "en": "HH+Fairy: left the cave; ending the follow-along",
+    "es": "HH+Hada: salí de la cueva; terminando el acompañamiento"
+  },
+  "HH+Fada: o laço de cura pediu para parar": {
+    "en": "HH+Fairy: the healing loop asked to stop",
+    "es": "HH+Hada: el bucle de curación pidió detenerse"
+  },
+  "HH+Fada: já estou dentro; acompanhando": {
+    "en": "HH+Fairy: already inside; following along",
+    "es": "HH+Hada: ya estoy dentro; acompañando"
+  },
+  "HH desligada; devolvendo o controle": {
+    "en": "HH turned off; handing back control",
+    "es": "HH desactivada; devolviendo el control"
+  },
+  "HH: sem leitura de posição; aguardando para me situar": {
+    "en": "HH: no position reading; waiting to get my bearings",
+    "es": "HH: sin lectura de posición; esperando para ubicarme"
+  },
+  "HH+Fada: mantendo o time; ela entra junto e acompanha": {
+    "en": "HH+Fairy: keeping the team; she enters together and follows along",
+    "es": "HH+Hada: manteniendo el equipo; ella entra junto y acompaña"
+  },
+  "HH+Fada: desfazendo o time para os bosses renascerem": {
+    "en": "HH+Fairy: disbanding the team for the bosses to respawn",
+    "es": "HH+Hada: deshaciendo el equipo para que los bosses renazcan"
+  },
+  "HH: personagem morto; aguardando o revive": {
+    "en": "HH: character dead; waiting for the revive",
+    "es": "HH: personaje muerto; esperando el revive"
+  }
+}
