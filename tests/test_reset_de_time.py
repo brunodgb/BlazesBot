@@ -309,10 +309,54 @@ def test_migracao_nao_inventa_quando_o_nick_nao_bate_com_ninguem():
 # O PORTÃO NA ROTINA
 # ---------------------------------------------------------------------------
 
-def test_o_portao_vem_ANTES_do_convite():
-    """Ordem invertida = convite enviado para quem não está lá."""
-    fonte = inspect.getsource(mod_routine.BossRushRoutine._do_entrar)
-    assert fonte.index("_esperar_o_reseter()") < fonte.index("montar_time()")
+def test_o_portao_vem_ANTES_do_convite_NAS_DUAS_CAVES():
+    """Ordem invertida = convite enviado para quem não está lá.
+
+    O portão existe para não gastar a entrada da cave sem reset; depois do
+    `montar_time()` ele já teria falhado.
+
+    AS DUAS CAVES desde 08/09/2026: a trava subiu para
+    `bot/espera_do_reseter.py` e a HH chama no `_garantir_o_time`, que é o
+    ponto imediatamente anterior ao convite dela.
+    """
+    from blazesbot.bot.hh.routine import HHRoutine
+
+    for metodo in (mod_routine.BossRushRoutine._do_entrar,
+                   HHRoutine._garantir_o_time):
+        fonte = inspect.getsource(metodo)
+        i_portao = fonte.index("esperar_o_reseter(")
+        i_convite = fonte.index("montar_time()")
+        assert i_portao < i_convite, (
+            f"em {metodo.__qualname__} o portão foi parar depois do convite")
+
+
+def test_A_TRAVA_E_A_MESMA_NAS_DUAS_CAVES():
+    """Uma cópia por cave divergiria, e a que ficasse para trás perderia runs.
+
+    A distinção entre "o reseter caiu" (espera, ele volta) e "o reseter não
+    existe mais" (desliga o farm e avisa) é caríssima de acertar duas vezes --
+    é a razão de a trava ter subido para `bot/` em vez de ser clonada.
+    """
+    import ast
+    import textwrap
+
+    from blazesbot.bot import espera_do_reseter
+    from blazesbot.bot.hh.routine import HHRoutine
+
+    for metodo in (mod_routine.BossRushRoutine._do_entrar,
+                   HHRoutine._garantir_o_time):
+        arvore = ast.parse(textwrap.dedent(inspect.getsource(metodo)))
+        chamadas = {ast.unparse(n.func) for n in ast.walk(arvore)
+                    if isinstance(n, ast.Call)}
+        assert "esperar_o_reseter" in chamadas, metodo.__qualname__
+
+    # E NENHUMA das duas tem laço de espera próprio.
+    for modulo, nome in ((mod_routine, "bc"), (HHRoutine, "hh")):
+        fonte = inspect.getsource(modulo)
+        assert "reseter_online" not in fonte, (
+            f"{nome} voltou a ter a própria régua de reseter online")
+
+    assert callable(espera_do_reseter.esperar_o_reseter)
 
 
 def test_a_espera_usa_ctx_tick_e_nunca_time_sleep():
@@ -323,7 +367,8 @@ def test_a_espera_usa_ctx_tick_e_nunca_time_sleep():
     espera nunca toca a thread da interface. O `tick` também dá as três saídas
     de graça: Parar, desmarcar o farm da cave (`FarmDesligado`) e ligar o APP.
     """
-    fonte = inspect.getsource(mod_routine.BossRushRoutine._esperar_o_reseter)
+    from blazesbot.bot.espera_do_reseter import esperar_o_reseter
+    fonte = inspect.getsource(esperar_o_reseter)
     arvore = ast.parse(textwrap.dedent(fonte))
 
     # PELO AST, não por texto: a própria docstring do método explica que ele NÃO
@@ -345,20 +390,23 @@ def test_a_espera_reavalia_a_configuracao_a_cada_volta():
     reavaliar, a conta esperaria para sempre por alguém que o próprio bot já
     aposentou.
     """
-    fonte = inspect.getsource(mod_routine.BossRushRoutine._esperar_o_reseter)
+    from blazesbot.bot.espera_do_reseter import esperar_o_reseter
+    fonte = inspect.getsource(esperar_o_reseter)
     arvore = ast.parse(textwrap.dedent(fonte)).body[0]
     lacos = [n for n in ast.walk(arvore) if isinstance(n, ast.While)]
     assert lacos, "a espera deixou de ser um laço"
     dentro = ast.dump(lacos[0])
     assert "problema_do_reset" in dentro, (
         "a conferência de configuração saiu de dentro do laço")
-    assert "bc_farm" in dentro, (
+    assert "desligar_o_farm_desta_cave" in dentro, (
         "o desfecho de 'não existe mais' saiu de dentro do laço")
 
 
 def test_conta_sem_reset_nick_nao_espera_nada(monkeypatch):
     """Quem não usa reset de time não pode pagar nem um `tick` por isto."""
     chamadas = []
+
+    from blazesbot.bot.espera_do_reseter import esperar_o_reseter
 
     class _Ctx:
         def __init__(self):
@@ -370,9 +418,7 @@ def test_conta_sem_reset_nick_nao_espera_nada(monkeypatch):
         def raise_if_stopped(self):
             chamadas.append("check")
 
-    rotina = object.__new__(mod_routine.BossRushRoutine)
-    rotina.ctx = _Ctx()
-    mod_routine.BossRushRoutine._esperar_o_reseter(rotina)
+    esperar_o_reseter(_Ctx(), onde="em teste")
     assert chamadas == []
 
 

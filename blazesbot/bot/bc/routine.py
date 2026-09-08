@@ -80,11 +80,10 @@ from ...core import (
 )
 from ...core.cronometro import cronometro
 from ...core.lugares import LUGAR_FORA_DA_CAVE
-from ...core.quedas import frase_do_tempo
 from ...core.vision import capture_window, find_template, frame_is_blank
 from .. import hotbar
 from ..context import BotContext, Disconnected, FarmDesligado, StopRequested
-from ..mural import reseter_online, silencio_do_reseter
+from ..espera_do_reseter import esperar_o_reseter
 from ..navegacao import Navigator, PersonagemMortoNoPortao
 from ..team import TeamService
 from ..watchdog import DcReason, Watchdog
@@ -136,12 +135,6 @@ ESPERA_ENTRE_TENTATIVAS = 0.025
 # sempre pior que insistir. O que interrompe de verdade é parar o bot, cair a
 # conexão ou o personagem sair do lugar.
 MAX_SEGUNDOS_ENTRADA = 1 * 60 * 60.0
-
-# Cadência da espera pela conta de reset (ver `_esperar_o_reseter`).
-PASSO_DA_ESPERA_DO_RESETER = 1.0
-
-# De quanto em quanto tempo repetir o aviso enquanto a trava dura.
-INTERVALO_DO_AVISO_DO_RESETER = 300.0
 
 # A cada quantas tentativas o log conta como vai a disputa. Uma linha por
 # tentativa a cada segundo afogaria o resto do log.
@@ -862,42 +855,6 @@ class BossRushRoutine:
             # exigidos. Um passo de sobra é pouco por volta e muito em seis.
             self.ctx.tick(min(PASSO_DO_RECONHECIMENTO, restante))
 
-    def _esperar_o_reseter(self) -> None:
-        """Segura a entrada na cave enquanto a conta de reset não está no ar."""
-        ctx = self.ctx
-        nick = ctx.settings.reset_nick.strip()
-        if not nick:
-            return
-        import time as _t
-        comecou = _t.time()
-        proximo_aviso = 0.0
-        while True:
-            ctx.raise_if_stopped()
-            problema = ctx.config.problema_do_reset(ctx.account)
-            if problema is not None:
-                ctx.account.bc_farm = False
-                try:
-                    ctx.config.save()
-                except Exception as exc:
-                    ctx.log.warning("Não consegui salvar a configuração: %s", exc)
-                ctx.log.error("BC farm DESLIGADO nesta conta: %s.", problema)
-                ctx.raise_if_stopped()
-                return
-            if reseter_online(nick):
-                if proximo_aviso:
-                    ctx.log.info("A conta de reset '%s' voltou. Parado %s.",
-                                 nick, frase_do_tempo(_t.time() - comecou))
-                return
-            agora = _t.time()
-            if agora >= proximo_aviso:
-                proximo_aviso = agora + INTERVALO_DO_AVISO_DO_RESETER
-                silencio = silencio_do_reseter(nick)
-                ctx.log.warning(
-                    "Parado na porta da cave: a conta de reset '%s' não está no "
-                    "ar (%s). Volto sozinho quando ela reconectar.", nick,
-                    "nunca subiu" if silencio is None else f"há {silencio:.0f}s")
-            ctx.tick(PASSO_DA_ESPERA_DO_RESETER)
-
     def _do_entrar(self) -> None:
         """Entra na cave, insistindo a cada ~1 segundo.
 
@@ -928,8 +885,14 @@ class BossRushRoutine:
         # que está dentro. O begin_run foi movido para logo depois do laço,
         # junto com o sair_do_time -- ver abaixo.
 
-        # O PORTÃO DO RESETER vem ANTES do convite.
-        self._esperar_o_reseter()
+        # O PORTÃO DO RESETER vem ANTES do convite, e é o único ponto do BC
+        # que segura a entrada -- a run em curso termina inteira e o personagem
+        # estaciona no ponto de entrada que ele já conquistou. Travar mais cedo
+        # perderia a run atual por causa de um problema que só afeta a PRÓXIMA.
+        #
+        # A trava mora em `bot/espera_do_reseter.py` desde 08/09/2026, porque a
+        # HH precisa da mesma. QUANDO perguntar continua sendo decisão de cave.
+        esperar_o_reseter(ctx, onde="na porta da cave")
 
         # Chegamos na coordenada: é AQUI que o time de reset é montado, e não
         # antes. Mais cedo, o convite podia expirar durante o teleporte.

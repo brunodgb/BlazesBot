@@ -69,6 +69,7 @@ from ..context import (
     FarmDesligado,
     StopRequested,
 )
+from ..espera_do_reseter import esperar_o_reseter
 from ..navegacao import Navigator, PersonagemMortoNoPortao
 from ..team import TeamService
 from . import bosses, mapa_hh
@@ -874,6 +875,14 @@ class HHRoutine:
         # Ver `docs/decisoes/hh.md` §19.
         if self.team.estado_do_time is True:
             return True
+
+        # O PORTÃO DO RESETER -- único ponto de trava da HH, e AQUI porque este
+        # é o instante em que o reseter é NECESSÁRIO: travar mais cedo pararia
+        # a conta por um problema que só afeta a entrada, perdendo até a
+        # travessia já feita. E depois do `estado_do_time`, porque quem já está
+        # em time não precisa de convite. A trava é a MESMA do BC
+        # (`bot/espera_do_reseter.py`). Ver `docs/decisoes/hh.md` §19.
+        esperar_o_reseter(ctx, onde="no portão do time da HH")
 
         if self.team.montar_time():
             return True

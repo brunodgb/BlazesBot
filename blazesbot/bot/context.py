@@ -498,6 +498,32 @@ class BotContext:
             return bool(self.account.bc_farm)
         return bool(self.account.farms)
 
+    def desligar_o_farm_desta_cave(self) -> str:
+        """Desmarca o interruptor da cave que está rodando. Devolve qual foi.
+
+        O ESPELHO de `_a_cave_continua_ligada`, e mora ao lado dela de
+        propósito: são a mesma tabela de-cave-para-interruptor lida nos dois
+        sentidos, e duas cópias dela divergiriam em silêncio -- a que ficasse
+        para trás desligaria a cave errada.
+
+        Sem saber qual cave é (ninguém disse), desliga AS DUAS. É a direção
+        segura: quem chega aqui já concluiu que o farm não pode continuar, e
+        deixar um interruptor ligado por falta de informação faria a conta
+        voltar a farmar exatamente o que acabou de ser vetado.
+
+        NÃO SALVA o arquivo. Quem decide gravar é quem chamou -- ver
+        `espera_do_reseter.esperar_o_reseter`.
+        """
+        cave = self.cave_em_farm
+        if cave == CAVE_HH:
+            self.account.hh_farm = False
+        elif cave == CAVE_BC:
+            self.account.bc_farm = False
+        else:
+            self.account.bc_farm = False
+            self.account.hh_farm = False
+        return cave
+
     def wait_if_paused(self) -> None:
         """Bloqueia enquanto a pausa estiver ativa.
 
