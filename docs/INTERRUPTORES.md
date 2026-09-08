@@ -78,7 +78,7 @@ ligar código não testado.
 
 ## Números medidos -- tolerância, limiar, teto, cadência
 
-591 constantes, agrupadas por arquivo.
+594 constantes, agrupadas por arquivo.
 
 | constante | valor | onde | quem lê | porquê (resumo) |
 |---|---|---|---|---|
@@ -261,16 +261,18 @@ ligar código não testado.
 | `MAXIMO_DE_TOQUES` | `3` | [blazesbot/bot/fada_reviver.py:89](blazesbot/bot/fada_reviver.py#L89) | — | Teto de TOQUES na janela, independente do relógio. |
 | `PASSO_DA_ESPERA` | `0.2` | [blazesbot/bot/fada_reviver.py:80](blazesbot/bot/fada_reviver.py#L80) | deletador.py, morte.py | Passo entre duas perguntas enquanto o feitiço prepara. |
 | `TETO_DO_FEITICO` | `8.0` | [blazesbot/bot/fada_reviver.py:77](blazesbot/bot/fada_reviver.py#L77) | — | Quanto se espera o feitiço pegar depois de apertar a tecla. |
+| `ENTRE_TENTATIVAS_DA_MUTUAL` | `1.0` | [blazesbot/bot/hh/entrada.py:87](blazesbot/bot/hh/entrada.py#L87) | — | Entre uma tentativa do painel e a seguinte. Curto: o custo da volta é o |
 | `LINK_ENTRAR_HH` | `'link_enter_hh.png'` | [blazesbot/bot/hh/entrada.py:65](blazesbot/bot/hh/entrada.py#L65) | — | — |
 | `LINK_SAIR_HH` | `'link_leave_hh.png'` | [blazesbot/bot/hh/entrada.py:67](blazesbot/bot/hh/entrada.py#L67) | — | O link do diálogo do `Servant Child`, DENTRO da cave. |
 | `LINK_WEST_SUBURB` | `'link_west_suburb.png'` | [blazesbot/bot/hh/entrada.py:64](blazesbot/bot/hh/entrada.py#L64) | — | Links dentro dos diálogos, localizados por imagem. |
-| `PASSO_DA_ESPERA_DA_ENTRADA` | `0.04` | [blazesbot/bot/hh/entrada.py:96](blazesbot/bot/hh/entrada.py#L96) | — | — |
-| `PASSO_DA_ESPERA_DO_TELEPORTE` | `0.08` | [blazesbot/bot/hh/entrada.py:109](blazesbot/bot/hh/entrada.py#L109) | ui_service.py, vendedor.py | — |
-| `SEGUNDOS_POR_TENTATIVA_DE_ENCOSTAR` | `1.8` | [blazesbot/bot/hh/entrada.py:75](blazesbot/bot/hh/entrada.py#L75) | routine.py | Quanto tempo dar a cada tentativa de encostar no ponto exato. |
+| `PASSO_DA_ESPERA_DA_ENTRADA` | `0.04` | [blazesbot/bot/hh/entrada.py:111](blazesbot/bot/hh/entrada.py#L111) | — | — |
+| `PASSO_DA_ESPERA_DO_TELEPORTE` | `0.08` | [blazesbot/bot/hh/entrada.py:124](blazesbot/bot/hh/entrada.py#L124) | ui_service.py, vendedor.py | — |
+| `SEGUNDOS_POR_TENTATIVA_DE_ENCOSTAR` | `1.8` | [blazesbot/bot/hh/entrada.py:90](blazesbot/bot/hh/entrada.py#L90) | routine.py | Quanto tempo dar a cada tentativa de encostar no ponto exato. |
+| `TENTATIVAS_DE_CHEGAR_PELA_MUTUAL` | `3` | [blazesbot/bot/hh/entrada.py:83](blazesbot/bot/hh/entrada.py#L83) | — | Quantas vezes reabrir o painel de arredores e reclicar no NPC da porta. |
 | `TENTATIVAS_DE_POSICIONAR` | `3` | [blazesbot/bot/hh/entrada.py:72](blazesbot/bot/hh/entrada.py#L72) | — | Quantas vezes refazer a caminhada pelo painel de arredores antes de desistir |
-| `TETO_DA_ENTRADA` | `0.25` | [blazesbot/bot/hh/entrada.py:95](blazesbot/bot/hh/entrada.py#L95) | routine.py | Teto da espera pela troca de mapa depois de clicar no link de entrar. |
-| `TETO_DA_SAIDA` | `3.0` | [blazesbot/bot/hh/entrada.py:105](blazesbot/bot/hh/entrada.py#L105) | — | A CONFIRMAÇÃO DA SAÍDA é mais generosa que a da entrada, e de propósito. |
-| `TETO_DO_TELEPORTE` | `2.0` | [blazesbot/bot/hh/entrada.py:108](blazesbot/bot/hh/entrada.py#L108) | — | Teto da espera pelo teleporte do Fay. |
+| `TETO_DA_ENTRADA` | `0.25` | [blazesbot/bot/hh/entrada.py:110](blazesbot/bot/hh/entrada.py#L110) | routine.py | Teto da espera pela troca de mapa depois de clicar no link de entrar. |
+| `TETO_DA_SAIDA` | `3.0` | [blazesbot/bot/hh/entrada.py:120](blazesbot/bot/hh/entrada.py#L120) | — | A CONFIRMAÇÃO DA SAÍDA é mais generosa que a da entrada, e de propósito. |
+| `TETO_DO_TELEPORTE` | `2.0` | [blazesbot/bot/hh/entrada.py:123](blazesbot/bot/hh/entrada.py#L123) | — | Teto da espera pelo teleporte do Fay. |
 | `INTERVALO_DE_REAFIRMAR_O_FOLLOW` | `4.0` | [blazesbot/bot/hh/fada.py:80](blazesbot/bot/hh/fada.py#L80) | — | De quanto em quanto tempo reafirmar a tecla de seguir. |
 | `PASSO_DO_ACOMPANHAMENTO` | `0.3` | [blazesbot/bot/hh/fada.py:73](blazesbot/bot/hh/fada.py#L73) | — | Quanto esperar entre duas leituras enquanto acompanha o líder. |
 | `PASSO_ESPERANDO_O_LIDER` | `0.5` | [blazesbot/bot/hh/fada.py:87](blazesbot/bot/hh/fada.py#L87) | — | — |
@@ -281,10 +283,10 @@ ligar código não testado.
 | `BOSS_3` | `'Green Robmaster'` | [blazesbot/bot/hh/mapa_hh.py:217](blazesbot/bot/hh/mapa_hh.py#L217) | bosses.py | — |
 | `BOSS_4` | `'Purple'` | [blazesbot/bot/hh/mapa_hh.py:218](blazesbot/bot/hh/mapa_hh.py#L218) | bosses.py | — |
 | `DESTINO_DO_TRANSPORTE` | `'West Suburb of Stone City'` | [blazesbot/bot/hh/mapa_hh.py:147](blazesbot/bot/hh/mapa_hh.py#L147) | — | O destino no diálogo do Fay. **SÓ APARECE ROLANDO A LISTA ATÉ O FIM.** |
-| `ETAPA_DENTRO` | `'dentro da cave'` | [blazesbot/bot/hh/mapa_hh.py:669](blazesbot/bot/hh/mapa_hh.py#L669) | routine.py | EM QUE ETAPA DA VIAGEM O PERSONAGEM ESTÁ |
-| `ETAPA_LONGE` | `'longe, viagem completa'` | [blazesbot/bot/hh/mapa_hh.py:672](blazesbot/bot/hh/mapa_hh.py#L672) | — | — |
-| `ETAPA_NA_PORTA` | `'na porta da cave'` | [blazesbot/bot/hh/mapa_hh.py:670](blazesbot/bot/hh/mapa_hh.py#L670) | routine.py | — |
-| `ETAPA_NA_VIZINHANCA` | `'já passei do teleporte'` | [blazesbot/bot/hh/mapa_hh.py:671](blazesbot/bot/hh/mapa_hh.py#L671) | routine.py | — |
+| `ETAPA_DENTRO` | `'dentro da cave'` | [blazesbot/bot/hh/mapa_hh.py:690](blazesbot/bot/hh/mapa_hh.py#L690) | routine.py | EM QUE ETAPA DA VIAGEM O PERSONAGEM ESTÁ |
+| `ETAPA_LONGE` | `'longe, viagem completa'` | [blazesbot/bot/hh/mapa_hh.py:693](blazesbot/bot/hh/mapa_hh.py#L693) | — | — |
+| `ETAPA_NA_PORTA` | `'na porta da cave'` | [blazesbot/bot/hh/mapa_hh.py:691](blazesbot/bot/hh/mapa_hh.py#L691) | routine.py | — |
+| `ETAPA_NA_VIZINHANCA` | `'já passei do teleporte'` | [blazesbot/bot/hh/mapa_hh.py:692](blazesbot/bot/hh/mapa_hh.py#L692) | routine.py | — |
 | `FOLGA_DA_CAIXA` | `25` | [blazesbot/bot/hh/mapa_hh.py:601](blazesbot/bot/hh/mapa_hh.py#L601) | mapa_bc.py | A caixa que envolve o interior da cave |
 | `GRUPO_DOS_ARREDORES` | `'Outside Black Wind Camp'` | [blazesbot/bot/hh/mapa_hh.py:81](blazesbot/bot/hh/mapa_hh.py#L81) | — | O grupo do painel de arredores naquele lugar. Serve para conferir que o painel |
 | `LUGAR_FORA_DA_HH` | `'Black Wind Camp Dungeon'` | [blazesbot/bot/hh/mapa_hh.py:77](blazesbot/bot/hh/mapa_hh.py#L77) | — | A zona de FORA da cave, lida da tela em 01/09/2026 (o rótulo do canto superior |
@@ -292,7 +294,8 @@ ligar código não testado.
 | `NPC_DA_ENTRADA` | `'Elite Axe Monk Soldier'` | [blazesbot/bot/hh/mapa_hh.py:187](blazesbot/bot/hh/mapa_hh.py#L187) | entrada.py | O NPC com quem se fala para entrar na cave. |
 | `NPC_DA_SAIDA` | `'Servant Child'` | [blazesbot/bot/hh/mapa_hh.py:479](blazesbot/bot/hh/mapa_hh.py#L479) | entrada.py, routine.py | Do boss 4 até o ponto de onde se sai da cave pelo NPC. |
 | `PRECISAO_NO_PONTO_DA_ENTRADA` | `1.5` | [blazesbot/bot/hh/mapa_hh.py:184](blazesbot/bot/hh/mapa_hh.py#L184) | entrada.py, routine.py | Folga aceita para considerar que já se está no ponto de conversa. |
-| `RAIO_DA_PORTA` | `30` | [blazesbot/bot/hh/mapa_hh.py:692](blazesbot/bot/hh/mapa_hh.py#L692) | — | Quão perto da porta ainda conta como "estou nela". |
+| `PRECISAO_PARA_ABRIR_OS_ARREDORES` | `12` | [blazesbot/bot/hh/mapa_hh.py:662](blazesbot/bot/hh/mapa_hh.py#L662) | entrada.py | Com que precisão é preciso estar nele. |
+| `RAIO_DA_PORTA` | `30` | [blazesbot/bot/hh/mapa_hh.py:713](blazesbot/bot/hh/mapa_hh.py#L713) | entrada.py | Quão perto da porta ainda conta como "estou nela". |
 | `ROTULO_DE_TELA_DA_CHEGADA` | `'Happiness Hall Dungeon'` | [blazesbot/bot/hh/mapa_hh.py:120](blazesbot/bot/hh/mapa_hh.py#L120) | — | NÃO COMPARE ESTES NOMES COM `Memory.location()` |
 | `TABS_ENTRE_OS_ALVOS_DO_PONTO` | `2` | [blazesbot/bot/hh/mapa_hh.py:301](blazesbot/bot/hh/mapa_hh.py#L301) | — | Quantos TABs dar depois de cada morte, num ponto com mais de um alvo. |
 | `ENTRE_TENTATIVAS_DE_ENTRAR` | `0.025` | [blazesbot/bot/hh/routine.py:101](blazesbot/bot/hh/routine.py#L101) | — | Entre uma tentativa de entrada e a seguinte. É o RESTO do orçamento da |
@@ -667,9 +670,9 @@ ligar código não testado.
 | `COR_MP_BORDA` | `'#4A7BC4'` | [blazesbot/gui/widgets.py:28](blazesbot/gui/widgets.py#L28) | — | — |
 | `CHUNK` | `1048576` | [blazesbot/tools/find_base.py:57](blazesbot/tools/find_base.py#L57) | — | — |
 | `MUDOU` | `0.0005` | [blazesbot/tools/ler_camera.py:57](blazesbot/tools/ler_camera.py#L57) | afericao_do_aliado.py, executor.py, localizacao.py, routine.py, combate.py, context.py, fada.py, config.py, calibracao.py, memory.py, target_hybrid.py | O que conta como "mudou". Menor que isto é ruído de interpolação -- andando, o |
-| `PASSO` | `0.25` | [blazesbot/tools/ler_camera.py:50](blazesbot/tools/ler_camera.py#L50) | routine.py, mapa_hh.py, supervisor.py, ui_do_jogo.py, indice_de_tempos.py, relatorio_de_latencia.py, vigiar_combate.py | Cadência da leitura. Barata: são 8 leituras de 4 bytes por volta. |
+| `PASSO` | `0.25` | [blazesbot/tools/ler_camera.py:50](blazesbot/tools/ler_camera.py#L50) | routine.py, entrada.py, mapa_hh.py, supervisor.py, ui_do_jogo.py, indice_de_tempos.py, relatorio_de_latencia.py, vigiar_combate.py | Cadência da leitura. Barata: são 8 leituras de 4 bytes por volta. |
 | `SEGUNDOS_PADRAO` | `300.0` | [blazesbot/tools/ler_camera.py:53](blazesbot/tools/ler_camera.py#L53) | vigiar_combate.py | Teto padrão, para a ferramenta fechar sozinha se você esquecer dela aberta. |
-| `PASSO` | `0.1` | [blazesbot/tools/vigiar_combate.py:48](blazesbot/tools/vigiar_combate.py#L48) | routine.py, mapa_hh.py, supervisor.py, ui_do_jogo.py, indice_de_tempos.py, relatorio_de_latencia.py, ler_camera.py | Cadência da leitura. É memória pura -- algumas leituras de 4 bytes por volta, |
+| `PASSO` | `0.1` | [blazesbot/tools/vigiar_combate.py:48](blazesbot/tools/vigiar_combate.py#L48) | routine.py, entrada.py, mapa_hh.py, supervisor.py, ui_do_jogo.py, indice_de_tempos.py, relatorio_de_latencia.py, ler_camera.py | Cadência da leitura. É memória pura -- algumas leituras de 4 bytes por volta, |
 | `SEGUNDOS_ENTRE_ECOS` | `5.0` | [blazesbot/tools/vigiar_combate.py:58](blazesbot/tools/vigiar_combate.py#L58) | — | De quanto em quanto tempo repetir uma linha que NÃO mudou. |
 | `SEGUNDOS_PADRAO` | `900.0` | [blazesbot/tools/vigiar_combate.py:51](blazesbot/tools/vigiar_combate.py#L51) | ler_camera.py | Teto padrão, para a ferramenta fechar sozinha se você esquecer dela aberta. |
 | `MAX_LINHAS_GUARDADAS` | `12000` | [blazesbot/web_app.py:84](blazesbot/web_app.py#L84) | main_window.py | Linhas guardadas em memória para permitir refiltrar por conta, espelho do |

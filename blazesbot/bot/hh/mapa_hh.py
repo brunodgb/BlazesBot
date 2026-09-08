@@ -640,6 +640,27 @@ TOLERANCIA_DA_CHEGADA = rota.NA_ROTA
 # ali é o NOME do lugar; a coordenada varia porque o teleporte espalha.
 CHEGADA_DA_FAY = (-255, -484)
 
+# DE ONDE SE ABRE O PAINEL DE ARREDORES, depois do teleporte.
+#
+# Medido pelo usuário em 08/09/2026. O teleporte da Fay espalha o ponto de
+# chegada em `West Suburb of Stone City` (ver `CHEGADA_DA_FAY`, que é onde ele
+# costuma cair mas não é garantia), e o painel de arredores é um clique
+# POSICIONAL: abrir de onde o teleporte largou dá resultado diferente a cada
+# run.
+#
+# Andar até um ponto FIXO antes de abrir o painel é o que torna a busca
+# repetível. É o mesmo princípio da coordenada de conversa da porta
+# (`PONTO_DA_ENTRADA`): clique posicional só vale a partir da coordenada.
+PONTO_PARA_ABRIR_OS_ARREDORES = (-268, -488)
+
+# Com que precisão é preciso estar nele.
+#
+# FOLGADA de propósito, e diferente da precisão da porta (1,5): aqui o ponto não
+# protege um clique na CENA 3D -- protege a abertura de um PAINEL, que não
+# depende de onde exatamente o personagem está, só de ele estar na região certa
+# do mapa. Apertar aqui custaria tentativas de reposicionamento por nada.
+PRECISAO_PARA_ABRIR_OS_ARREDORES = 12
+
 
 # ===========================================================================
 # EM QUE ETAPA DA VIAGEM O PERSONAGEM ESTÁ
@@ -861,9 +882,11 @@ __all__ = [
     "PONTO_DA_ENTRADA",
     "PONTO_DEPOIS_DO_BOSS_1",
     "PONTO_FORA_DA_HH",
+    "PONTO_PARA_ABRIR_OS_ARREDORES",
     "POSICAO_DA_FADA_NO_BOSS",
     "POSICAO_DA_MUTUAL",
     "PRECISAO_NO_PONTO_DA_ENTRADA",
+    "PRECISAO_PARA_ABRIR_OS_ARREDORES",
     "RAIO_DA_PORTA",
     "ROTULO_DE_TELA_DA_CHEGADA",
     "TODOS_OS_WAYPOINTS",

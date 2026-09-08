@@ -71,6 +71,21 @@ LINK_SAIR_HH = "link_leave_hh.png"
 # e insistir sem limite prenderia a run na porta.
 TENTATIVAS_DE_POSICIONAR = 3
 
+# Quantas vezes reabrir o painel de arredores e reclicar no NPC da porta.
+#
+# Regra do usuário, 08/09/2026: o painel pode desviar, parar no meio ou não
+# chegar, e a resposta é refazer -- não falhar o estado inteiro e recomeçar a
+# viagem desde Stone City.
+#
+# TRÊS, e não "para sempre": painel que não leva a lugar nenhum não se resolve
+# insistindo. Três voltas cobrem o caso normal (uma trava de pathfinding) e
+# ainda devolvem o controle para a rotina em tempo de ela tentar outra coisa.
+TENTATIVAS_DE_CHEGAR_PELA_MUTUAL = 3
+
+# Entre uma tentativa do painel e a seguinte. Curto: o custo da volta é o
+# trajeto que o jogo faz, não esta espera.
+ENTRE_TENTATIVAS_DA_MUTUAL = 1.0
+
 # Quanto tempo dar a cada tentativa de encostar no ponto exato.
 SEGUNDOS_POR_TENTATIVA_DE_ENCOSTAR = 1.8
 
@@ -181,33 +196,52 @@ class EntradaDaHH(UIDoJogo):
     # ==================================================================
 
     def ir_ate_o_npc_da_hh(self) -> bool:
-        """Caminha até (-342,-288), de frente para o Elite Axe Monk Soldier.
+        """Do teleporte até (-342,-288), de frente para o Elite Axe Monk Soldier.
 
-        DOIS PASSOS, e a ordem importa. Primeiro o painel de arredores leva até
-        PERTO da `Mutual Quest Woman` -- é o pathfinding do próprio jogo, que
-        atravessa a geometria que um clique de minimapa não atravessa. Depois o
-        último trecho é andado com `encostar_no_ponto`, porque o painel aceita
-        folga por construção e clicar de onde ele largar é o defeito medido na
-        BC em 25/08/2026.
+        =================================================================
+        TRÊS PASSOS, E CADA UM EXISTE POR UM MOTIVO DIFERENTE
+        =================================================================
+
+        1. MINIMAPA até `PONTO_PARA_ABRIR_OS_ARREDORES` (-268,-488). O teleporte
+           da Fay espalha o ponto de chegada, e o painel de arredores é clique
+           POSICIONAL: abrir de onde o teleporte largou dá resultado diferente a
+           cada run. Andar até um ponto fixo torna a busca repetível.
+
+        2. PAINEL DE ARREDORES até PERTO da `Mutual Quest Woman` -- é o
+           pathfinding do próprio jogo, que atravessa a geometria que um clique
+           de minimapa não atravessa.
+
+        3. MINIMAPA no último trecho (`garantir_coordenada_da_entrada`), porque
+           o painel aceita folga por construção e clicar de onde ele largar é o
+           defeito medido na BC em 25/08/2026.
+
+        =================================================================
+        O PASSO 2 NÃO É UMA TENTATIVA SÓ
+        =================================================================
+
+        Regra do usuário, 08/09/2026: *"se o bot desviar, parar no meio do
+        caminho ou não chegar na porta de HH, o sistema deve abortar a espera,
+        reabrir o Surroundings, clicar em Mutual novamente"*.
+
+        Antes disto `ir_para_resultado` devolvia `False` e a rotina falhava o
+        estado inteiro -- ou seja, voltava para `RECUPERAR`, se situava e refazia
+        a viagem desde Stone City. O laço abaixo refaz só o que falhou.
+
+        A CADA VOLTA O PAINEL É FECHADO ANTES DE REABRIR. Painel aberto por cima
+        engole o clique seguinte, e o sintoma é uma busca que "não encontra" o
+        NPC que está na lista.
 
         Separado de `tentar_entrar_na_hh` de propósito, igual à BC: o time de
         reset é montado SÓ ao chegar aqui, e repetir a tentativa de entrada não
         deve refazer a caminhada inteira.
         """
         ctx = self.ctx
-        busca, confirma = mapa_hh.NPC_PARA_BUSCAR
-        busca = ctx.settings.hh.route.npc_search_text or busca
 
-        ctx.log.info("Procurando a %s (porta da HH)", confirma)
-        with self.trajeto_pelo_painel("NPC da porta da HH"):
-            info = self.buscar_npc(busca, confirmar=confirma)
-            if info is None:
-                return False
-            destino = info.get("coords") or mapa_hh.POSICAO_DA_MUTUAL
-            if not self.ir_para_resultado(
-                    confirma, coords=destino,
-                    max_seconds=180.0 * ctx.settings.time_factor):
-                return False
+        if not self._ir_ao_ponto_de_abrir_os_arredores():
+            return False
+
+        if not self._chegar_perto_da_mutual():
+            return False
 
         if not self.garantir_coordenada_da_entrada():
             return False
@@ -215,6 +249,87 @@ class EntradaDaHH(UIDoJogo):
         ctx.log.info("Na porta da HH, posição %s | montado: %s",
                      ctx.memory.position(), ctx.memory.is_mounted())
         return True
+
+    def _ir_ao_ponto_de_abrir_os_arredores(self) -> bool:
+        """Anda pelo minimapa até o ponto fixo de onde o painel é aberto.
+
+        ESPERA A TROCA DE MAPA ANTES DE CLICAR. O teleporte tem tela de
+        carregamento, e clique no minimapa durante ela é clique perdido -- o
+        `viajar_para_a_hh` já confirma a saída de Stone County por coordenada,
+        mas a confirmação é da POSIÇÃO, não do fim do desenho. Reconfirmar aqui
+        que a leitura responde é o que separa "cheguei" de "posso clicar".
+        """
+        ctx = self.ctx
+        if not self.esperar_a_chegada(
+                chegou=lambda: ctx.memory.position() is not None,
+                teto=TETO_DO_TELEPORTE,
+                passo=PASSO_DA_ESPERA_DO_TELEPORTE,
+                o_que="leitura de posição depois do teleporte"):
+            ctx.log.warning(
+                "Sem leitura de posição depois do teleporte; sigo mesmo assim "
+                "-- o painel de arredores ainda pode funcionar daqui.")
+
+        return self.encostar_no_ponto(
+            alvo=mapa_hh.PONTO_PARA_ABRIR_OS_ARREDORES,
+            precisao=mapa_hh.PRECISAO_PARA_ABRIR_OS_ARREDORES,
+            tentativas=TENTATIVAS_DE_POSICIONAR,
+            segundos_por_tentativa=SEGUNDOS_POR_TENTATIVA_DE_ENCOSTAR,
+            o_que="abrir o painel de arredores",
+        )
+
+    def _chegar_perto_da_mutual(self) -> bool:
+        """Painel de arredores até a porta, INSISTINDO enquanto não chegar.
+
+        Devolve `False` só quando as tentativas acabam -- e aí a rotina falha o
+        estado, que é o certo: painel que não leva a lugar nenhum não se resolve
+        insistindo para sempre.
+        """
+        ctx = self.ctx
+        busca, confirma = mapa_hh.NPC_PARA_BUSCAR
+        busca = ctx.settings.hh.route.npc_search_text or busca
+
+        for tentativa in range(1, TENTATIVAS_DE_CHEGAR_PELA_MUTUAL + 1):
+            self._guardar()
+            ctx.log.info("Procurando a %s (porta da HH) -- tentativa %s de %s",
+                         confirma, tentativa, TENTATIVAS_DE_CHEGAR_PELA_MUTUAL)
+
+            # PAINEL LIMPO ANTES DE ABRIR. Da segunda volta em diante pode
+            # haver painel meio aberto da volta anterior, e ele engole o clique.
+            if tentativa > 1:
+                self.fechar_dialogo()
+
+            with self.trajeto_pelo_painel("NPC da porta da HH"):
+                info = self.buscar_npc(busca, confirmar=confirma)
+                if info is not None:
+                    destino = info.get("coords") or mapa_hh.POSICAO_DA_MUTUAL
+                    self.ir_para_resultado(
+                        confirma, coords=destino,
+                        max_seconds=180.0 * ctx.settings.time_factor)
+
+            # QUEM DECIDE É A DISTÂNCIA, não o que o painel devolveu. O painel
+            # pode dizer que levou e largar o personagem no meio do caminho --
+            # é o "desviar ou parar no meio" do relato.
+            pos = ctx.memory.position()
+            if pos is not None and mapa_hh.distancia(
+                    pos, mapa_hh.PONTO_DA_ENTRADA) <= mapa_hh.RAIO_DA_PORTA:
+                ctx.log.info("Cheguei na região da porta (%s)", pos)
+                return True
+
+            ctx.log.warning(
+                "O painel não me levou à porta (estou em %s, a porta é %s). "
+                "Fechando os painéis e tentando de novo.",
+                pos, mapa_hh.PONTO_DA_ENTRADA)
+            ctx.tick(ENTRE_TENTATIVAS_DA_MUTUAL)
+
+        ctx.log.error(
+            "Não cheguei na porta da HH pelo painel de arredores em %s "
+            "tentativas.", TENTATIVAS_DE_CHEGAR_PELA_MUTUAL)
+        return False
+
+    def _guardar(self) -> None:
+        """Parada e queda respondem ENTRE as tentativas do painel."""
+        self.ctx.raise_if_stopped()
+        self.ctx.check_watchdog()
 
     def garantir_coordenada_da_entrada(self) -> bool:
         """Põe o personagem em (-342,-288) ANTES de qualquer clique no NPC.
