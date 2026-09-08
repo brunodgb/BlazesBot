@@ -30,7 +30,7 @@ from types import SimpleNamespace
 import pytest
 
 from blazesbot.bot.app import executor as mod
-from blazesbot.core import teclado_mudo
+from blazesbot.core import teclado_mudo, vigia_da_vida
 from blazesbot.core.target_hybrid import MorteDoAlvo
 
 
@@ -79,6 +79,13 @@ def _executor(em_batalha=None, passos=3, tecla="TAB"):
     e._mobs_por_perto = None
     # SEM CICLO DA MORTE: o dublê não morre, e a pergunta nem é feita.
     e.morte = None
+    # O VIGIA DE VIDA -- ver `executor._vigiar_a_vida`. Sem leitura de
+    # vida ele não acusa nada, que é o dublê certo para estes testes:
+    # eles são sobre o laço, e o reflexo tem os seus em
+    # tests/test_reflexo_de_sobrevivencia.py.
+    e._vida_pct = None
+    e._vigia = vigia_da_vida.VigiaDaVida()
+    e._ultimo_tab_do_reflexo = 0.0
     # SEM CURA: quem tem testes de vida é tests/test_cura_do_app.py. Aqui o
     # socorro em batalha não deve nem ser consultado.
     e.cura = None

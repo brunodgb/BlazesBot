@@ -12,6 +12,19 @@
 ---
 ## O laço do APP — `docs/decisoes/cura-no-app.md`
 
+- **EM BATALHA SEM ALVO E LEVANDO DANO, O BOT TABA NA HORA** (07/09/2026). O
+  TAB só existia no ramo FORA de batalha: morto o mob, com outro batendo, a
+  volta abortava na primeira linha e o personagem ficava apanhando parado. O
+  reflexo pula pet, comida, caminhada e bolsa — com dano entrando, cada um
+  desses é tempo apanhando.
+- **QUEM ACUSA A AGRESSÃO É A VIDA CAINDO**, não a flag de combate
+  (`core/vigia_da_vida.py`). A flag é um ESTADO e fica alta por motivos que não
+  são dano; a vida caindo é um EVENTO. Só QUEDA conta (regeneração e cura
+  sobem), a régua anda para os dois lados, e "não sei" não acusa nada.
+- **TRÊS TRAVAS CONTRA O TAB INFINITO:** só se entra no reflexo SEM alvo vivo;
+  o alvo adquirido CONSOME a marca; e há cadência (`ESPERA_SEM_ALVO`) entre
+  dois TABs do reflexo — sem ela, um golpe por segundo viraria um TAB por
+  segundo.
 - **VIDA BAIXA EM BATALHA BEBE ONDE ESTÁ** (07/09/2026). Toda a cura ficava
   atrás de "saiu de batalha", e com quatro a oito mobs batendo essa flag não
   baixa: três personagens morreram vendo a vida cair de 35% a zero sem uma

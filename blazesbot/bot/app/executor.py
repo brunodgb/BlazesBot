@@ -90,6 +90,7 @@ from ...core import (
     diagnostico_fino,
     target_hybrid,
     teclado_mudo,
+    vigia_da_vida,
     vizinhanca,
     volta_ao_ponto,
 )
@@ -1002,6 +1003,12 @@ class ExecutorDeMacro:
         # `_abortar_a_volta` e `core/cadencia_da_bolsa.py`.
         self._ultimo_corte = "início"
         self._declarar_queda = declarar_queda
+        # A RÉGUA DA VIDA mora no `core/` -- ela é contabilidade pura e é sobre
+        # o JOGO ("levei dano"), não sobre o APP. Ver `core/vigia_da_vida.py`.
+        self._vigia = vigia_da_vida.VigiaDaVida()
+        # Quando o reflexo apertou TAB pela última vez. Ver
+        # `_reflexo_de_sobrevivencia`: é o que impede um TAB por golpe levado.
+        self._ultimo_tab_do_reflexo = 0.0
         # A CONTABILIDADE DO TECLADO MUDO -- ver `core/teclado_mudo.py`.
         self._teclado_mudo = teclado_mudo.TecladoMudo()
         self._cadencia_da_bolsa = cadencia_da_bolsa.CadenciaDaBolsa(self.log)
@@ -2754,8 +2761,19 @@ class ExecutorDeMacro:
         =================================================================
 
             FORA de batalha  -> pet, comida, voltar ao ponto, TAB, roda a macro
-            EM batalha       -> roda a macro de novo, sem TAB e sem conferência
+            EM batalha, com alvo vivo   -> roda a macro de novo, sem TAB
+            EM batalha, SEM alvo vivo
+                     e levando dano     -> TAB imediato e macro (REFLEXO)
             saiu de batalha  -> corta a macro no meio, volta ao topo
+
+        =================================================================
+        O RAMO DO REFLEXO -- 07/09/2026
+        =================================================================
+
+        "EM batalha roda a macro de novo" era verdade só quando havia alvo.
+        Sem alvo vivo (o mob morreu e outro está batendo), a volta abortava na
+        primeira linha e o personagem ficava apanhando parado. Ver
+        `_vigiar_a_vida` e `_reflexo_de_sobrevivencia`.
         """
         lutava_antes = self._estava_em_batalha
         # MORRI? A PERGUNTA VEM ANTES DE TUDO -- 07/09/2026.
@@ -2771,8 +2789,17 @@ class ExecutorDeMacro:
             return self._abortar_a_volta(motivo="morri (prelúdio)")
 
         lutando = self._ler_em_batalha() is True
+        # EIXO 1: a régua da vida anda em TODA volta, dentro e fora de batalha.
+        # Fora dela a marca cai; dentro, uma queda a levanta.
+        sob_ataque = self._vigiar_a_vida(lutando)
 
-        if not lutando:
+        if lutando and sob_ataque and not self._tenho_alvo_vivo():
+            # EIXO 2 e 3: o desvio. Nada de pet, comida, caminhada ou bolsa --
+            # tem dano entrando e não há alvo para revidar.
+            if not self._reflexo_de_sobrevivencia():
+                return False
+
+        elif not lutando:
             self.garantir_pet()
             self.feed_pet()
             self._travar_posicao_se_preciso()
@@ -3034,6 +3061,83 @@ class ExecutorDeMacro:
         self.urgencias += 1
         self._urgencia = True
         self.log.info("%s", mensagem)
+        return True
+
+    def _vigiar_a_vida(self, lutando: bool) -> bool:
+        """EIXO 1 -- passa a vida da volta para a régua. `True` = sob ataque.
+
+        A REGRA MORA NO `core/` (`vigia_da_vida.VigiaDaVida`): só QUEDA conta,
+        a régua anda para os dois lados, e "não sei" não acusa nada. Aqui só se
+        lê a vida e se diz o que mudou.
+        """
+        antes = self._vigia.sob_ataque
+        caiu_de = self._vigia.caiu_de()
+        sob_ataque = self._vigia.anotar(self._ler_vida(), lutando)
+        if sob_ataque and not antes:
+            self.log.info(
+                "APP: SOB ATAQUE — a vida caiu de %s%% para %s%% em batalha.",
+                "?" if caiu_de is None else f"{caiu_de:.0f}",
+                "?" if self._vigia.ultima is None else f"{self._vigia.ultima:.0f}")
+        return sob_ataque
+
+    def _reflexo_de_sobrevivencia(self) -> bool:
+        """EIXO 2 -- TAB rápido e macro, sem o ciclo calmo. `False` = corte.
+
+        Chamado SÓ no ramo EM BATALHA, e só quando não há alvo vivo: com alvo
+        vivo o bot já está fazendo a coisa certa, que é bater nele até cair.
+
+        =================================================================
+        POR QUE ELE PULA A MANUTENÇÃO
+        =================================================================
+
+        Pet, comida, caminhada de volta ao ponto e limpeza da bolsa custam
+        segundos e abrem janela (a bolsa chega a 10 s de teto). Com dano
+        entrando, cada um deles é tempo apanhando parado. A prioridade aqui é
+        uma só: achar quem está batendo e revidar.
+
+        =================================================================
+        O QUE IMPEDE O TAB INFINITO
+        =================================================================
+
+        Três coisas, e as três são necessárias:
+
+        1. **A PORTA:** só se chega aqui SEM alvo vivo. Adquirido um alvo, a
+           volta seguinte encontra `_tenho_alvo_vivo()` verdadeiro e nem entra
+           -- o bot passa a rodar a macro até o mob cair.
+        2. **A MARCA É CONSUMIDA** no aceite. Sem isso, um alvo adquirido com
+           a vida ainda caindo (o mob bate enquanto morre) reentraria aqui.
+        3. **A CADÊNCIA:** um golpe por segundo é uma queda de vida por
+           segundo, e sem freio seria um TAB por golpe. `ESPERA_SEM_ALVO` é a
+           mesma pausa que o ramo calmo paga quando a aquisição não traz nada
+           -- não é número novo, é o mesmo.
+
+        O TAB É `urgente`: sem o respiro de entrada e sem a pausa da roda. Ver
+        `_garantir_alvo`.
+        """
+        agora = time.time()
+        if agora - self._ultimo_tab_do_reflexo < ESPERA_SEM_ALVO:
+            return self._abortar_a_volta(motivo="reflexo: aguardando cadência")
+        self._ultimo_tab_do_reflexo = agora
+        self.urgencias += 1
+        self.log.info("APP: REFLEXO — em batalha, sem alvo vivo e levando "
+                      "dano. TAB imediato, pulando a manutenção.")
+
+        if self._alvo_atual is None or self._id_do_alvo is None:
+            # APP CEGO: sem as leituras de alvo não há como confirmar nada, e o
+            # TAB cego é o que sempre houve. `False` dele significa PARAR.
+            if not self._tab_simples():
+                return False
+            self._vigia.consumir()
+            return True
+
+        if not self._garantir_alvo(forcar=True, urgente=True):
+            # NÃO ACHOU MOB VIVO. A marca FICA de pé: o próximo golpe volta
+            # aqui depois da cadência, que é o comportamento certo -- alguém
+            # está batendo e ainda não foi encontrado.
+            return self._abortar_a_volta(motivo="reflexo: TAB sem mob vivo")
+
+        # ACEITE: a marca é consumida e a macro roda contra o novo alvo.
+        self._vigia.consumir()
         return True
 
     def _ler_vida(self) -> float | None:

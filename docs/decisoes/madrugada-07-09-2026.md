@@ -132,6 +132,66 @@ quem não tem tecla de poção, que é quando não há socorro possível.
 
 ---
 
+## TRAVA 2b — a ociosidade sob ataque (o irmão da TRAVA 2)
+
+A TRAVA 2 consertou *"não bebeu poção"*. Sobrou a outra metade do mesmo
+momento: **o bot também não ATACAVA**.
+
+O laço tinha dois ramos, e o TAB só existia num deles:
+
+```
+FORA de batalha  -> pet, comida, caminhada, bolsa, TAB, macro
+EM batalha       -> roda a macro de novo               <- e se não há alvo?
+```
+
+Morto o mob com outro batendo, a flag de combate continua alta: o laço entra no
+ramo EM BATALHA, roda a macro contra um alvo que já não existe, e a volta aborta
+na primeira linha (`alvo zerado`). Repete. **O personagem fica apanhando parado
+até morrer** — foi assim que a vida caiu de 35% a zero em 17 s.
+
+### O que acusa a agressão
+
+A flag de combate NÃO serve: ela é um estado e fica alta por motivos que não são
+dano entrando. Quem serve é a **vida caindo** — um evento. É a mesma distinção
+que o usuário já tinha feito para a observação depois da morte: *"dá para
+conferir pela vida atual do personagem, que vai estar descendo também"*.
+
+`core/vigia_da_vida.py` guarda a régua, e três regras a tornam confiável:
+
+| regra | o erro que ela fecha |
+|---|---|
+| só QUEDA conta (`<` estrito) | regeneração e cura SOBEM a vida — nunca disparam |
+| a régua anda para os dois lados | sem isso, uma poção deixa a régua velha e o golpe seguinte parece maior |
+| "não sei" não acusa nada | leitura falha faria o bot TABar no escuro |
+
+Queda de um décimo já conta, e é de propósito: o falso positivo custa UM TAB, e
+só quando não há alvo vivo. Exigir limiar custaria vida no caso em que o dano
+entra devagar — que é justamente o caso em que ninguém percebe.
+
+### O reflexo, e o que impede o TAB infinito
+
+Em batalha + sem alvo vivo + vida caindo ⇒ **TAB urgente e macro**, pulando pet,
+comida, caminhada e bolsa (a bolsa sozinha tem teto de 10 s).
+
+Três travas, e as três são necessárias:
+
+1. **A porta:** só se entra SEM alvo vivo. Adquirido o alvo, a volta seguinte
+   nem entra — o bot passa a rodar a macro até o mob cair.
+2. **A marca é consumida** no aceite. Sem isso, um alvo adquirido com a vida
+   ainda caindo (o mob bate enquanto morre) reentraria.
+3. **A cadência:** um golpe por segundo seria um TAB por segundo. O freio é
+   `ESPERA_SEM_ALVO`, o mesmo que o ramo calmo já paga — não é número novo.
+
+### Um mecanismo que existia e estava desligado
+
+`_observar_depois_da_morte` + `_urgir` já faziam quase isto: detectavam "matei o
+mob e a vida caiu, tem outro batendo" e marcavam urgência. Só que a chamada é
+`if morreu and not LACO_SIMPLES:` — e `LACO_SIMPLES` é `True` desde 26/08/2026.
+**O mecanismo nunca rodou em produção.** O reflexo é a mesma ideia, no laço que
+roda de verdade.
+
+---
+
 ## TRAVA 3 — as teclas pararam de chegar e o bot insistiu 9 h 30 min
 
 ```

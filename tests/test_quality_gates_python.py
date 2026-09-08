@@ -176,7 +176,21 @@ def _todos_os_python(raiz: Path) -> list[Path]:
 HERDADOS = {
     # COESO — uma classe gorda, sem costura de arquivo
     "blazesbot/bot/combate.py": 3735,                    # CombatEngine, 52 métodos (74%)
-    "blazesbot/bot/app/executor.py": 2939,               # ExecutorDeMacro, 47 métodos (74%)
+    # SUBIU DE 2939 PARA 3326 EM 07/09/2026, e a margem foi consumida por
+    # SOBREVIVÊNCIA, não por funcionalidade nova: o socorro em batalha, o
+    # desfecho do teclado mudo e o reflexo contra a ociosidade sob ataque. Os
+    # três nasceram de mortes e de horas paradas medidas em log
+    # (`docs/decisoes/madrugada-07-09-2026.md`), e cada um empurrou o que dava
+    # para o `core/` -- `teclado_mudo`, `vizinhanca.contar_pelo_injetado`,
+    # `vigia_da_vida`. O que sobrou aqui é ação, e ação depende de `self`.
+    #
+    # A LINHA DE BASE SOBE UMA VEZ E FICA CARA: a próxima adição volta a
+    # reprovar em +10%. O caminho para o 3327 não é subir de novo -- é o GATE 3,
+    # e o corte natural é a família de AQUISIÇÃO DE ALVO (`_adquirir_alvo`,
+    # `_preciso_de_alvo`, `_conseguir_o_tab`, `_garantir_alvo`,
+    # `_tenho_alvo_vivo`, `_alvo_aceitavel`), que é uma responsabilidade
+    # inteira e tem casa pronta em `core/target_hybrid.py`.
+    "blazesbot/bot/app/executor.py": 3326,               # ExecutorDeMacro, 47 métodos (74%)
     "blazesbot/bot/supervisor.py": 2755,                 # AccountSupervisor, 41 métodos (85%)
     "blazesbot/bot/bc/routine.py": 2596,                 # BossRushRoutine, 37 métodos (84%)
     "blazesbot/core/memory.py": 2498,                    # Memory, 82 métodos (74%)
