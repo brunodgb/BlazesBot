@@ -194,7 +194,7 @@ def test_o_CAP_e_conferido_ANTES_de_entrar():
     Entrar com a bolsa cheia é fazer a run inteira e deixar o loot no chão.
     """
     fonte = _fonte(HHRoutine._do_preparar)
-    i_bolsa = fonte.index("manutencao.precisa_vender")
+    i_bolsa = fonte.index("manutencao.consumir_a_ida_ao_vendedor")
     i_porta = fonte.index("State.ATE_A_PORTA")
     assert i_bolsa < i_porta
 

@@ -1394,3 +1394,79 @@ o bot rodando, e a venda volta a funcionar sem reiniciar nada.
 
 Recortar o texto **"Sell Item"** do diálogo do `Roaming Apothecary` e salvar em
 `data/templates/link_sell_item.png`. É o único item pendente.
+
+## 22. O LAÇO ENTRE `PREPARAR` E `MANUTENCAO` (08/09/2026)
+
+### O relato, e ele está exato
+
+> *"esta tentando varias vezes deletar os itens, mas o deletar não deve ficar
+> tentando varias vezes, apenas 1 vez, e caso precise vender é pelo 'Roaming
+> Apothecary' são coisas diferentes deletar e vender, da para ver que apareceu
+> a mensagem 'HH: a bolsa pede venda antes de entrar' mas ele nao foi vender,
+> apenas ficou tentando deletar item em loop"*
+
+### O log, às 13:36 — um giro a cada ~2 s até a HH ser desligada
+
+```
+manutencao  Limpeza da bolsa: 0 item(ns) deletado(s) | 13 de 13 modelos em 0.2 s
+manutencao  HH: não abri a janela de venda do Roaming Apothecary
+manutencao  HH: a venda NÃO aconteceu; não conto como feita
+manutencao  HH: manutenção feita; próxima run
+preparar    HH: a bolsa pede venda antes de entrar
+manutencao  Limpeza da bolsa: 0 item(ns) deletado(s) | 13 de 13 modelos em 0.1 s
+...                                            (repetiu por ~10 s, 5 voltas)
+```
+
+### A mecânica, e de quem é a culpa
+
+`_do_preparar` manda ir vender quando a bolsa pede. A `MANUTENCAO` apaga o lixo,
+tenta vender, não consegue — e volta para `PREPARAR`, que faz a mesma pergunta e
+recebe a mesma resposta. **A bolsa continua cheia, então a condição nunca muda.**
+
+O laço foi **introduzido no mesmo dia**, pela §21: antes, `anotar_a_venda()` era
+chamada mesmo quando a venda falhava, e era ela que fazia a condição virar falsa
+na volta seguinte. Corrigir aquele defeito — certo em si — descobriu este, que
+já estava armado.
+
+### As duas travas, e a mesma disciplina
+
+| gesto | quantas vezes | chave |
+|---|---|---|
+| apagar o lixo | uma por run | `precisa_descartar` / `anotar_o_descarte` |
+| ir ao vendedor antes de entrar | uma por run | `consumir_a_ida_ao_vendedor` |
+
+**A chave é `stats.runs`**, que sobe uma vez por run (`_saiu` chama `end_run`).
+Não é contador novo — é o mesmo que a venda por contagem de runs já usava.
+
+**`consumir_` no nome é deliberado:** a função muda estado ao responder. Um
+predicado puro devolveria `True` para sempre enquanto a bolsa estivesse cheia, e
+é exatamente aí que o laço nasce.
+
+### Por que girar é pior que entrar com a bolsa cheia
+
+Girando, a conta não farma **nada** — e o sintoma é silencioso, porque cada
+linha do log parece razoável isolada. Entrando com a bolsa cheia, a run rende os
+bosses e o excedente do loot cai no chão. O prejuízo é limitado e visível.
+
+E isto **não afrouxa** a conferência que o bot em Lua não tinha: a bolsa continua
+sendo consultada antes de entrar, e a ida ao vendedor continua acontecendo. O que
+mudou é que ela acontece **uma vez**, e não em laço.
+
+### Deletar e vender são coisas diferentes
+
+Dito pelo usuário e agora escrito no código (`precisa_descartar`): o descarte
+apaga o que o NPC **não compra**; a venda troca por ouro o que ele compra. Um não
+substitui o outro, **e um não deve ser repetido porque o outro falhou** — que era
+literalmente o que acontecia.
+
+### E o link de vender chegou
+
+`data/templates/link_sell_item.png`, 08/09/2026. Medido contra os recortes de
+link que já funcionam: **67×28, desvio 41,7, bordas 21,9%** — dentro da faixa
+deles (desvio 37–43, bordas 24–31%), e o carregador do bot o devolve em cinza,
+que é como `find_template` o usa.
+
+A única ressalva é a **altura**: 28 px contra 17–22 dos outros, com o conteúdo
+nas linhas 7..23 — ou seja, 11 das 28 linhas são margem de fundo. Não impede o
+casamento (o fundo do diálogo é constante), mas é folga em troca de nada; um
+recorte mais justo teria mais tinta por pixel.

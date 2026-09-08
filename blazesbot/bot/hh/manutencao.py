@@ -38,6 +38,37 @@ class ManutencaoDaHH:
         # Em que número de run foi a última venda. Zero = nunca vendeu nesta
         # sessão, e aí o teto por contagem já vale na primeira volta.
         self.runs_na_ultima_venda = 0
+        # ===================================================================
+        # DUAS TRAVAS "UMA VEZ POR RUN", E ELAS EXISTEM POR CAUSA DE UM LAÇO
+        # ===================================================================
+        #
+        # MEDIDO no log de 08/09/2026, 13:36: o bot ficou girando entre
+        # `PREPARAR` e `MANUTENCAO` a cada ~2 s, apagando lixo e tentando
+        # vender, sem sair do lugar, até o usuário desligar a HH:
+        #
+        #     manutencao  Limpeza da bolsa: 0 item(ns) deletado(s)
+        #     manutencao  HH: não abri a janela de venda do Roaming Apothecary
+        #     manutencao  HH: manutenção feita; próxima run
+        #     preparar    HH: a bolsa pede venda antes de entrar
+        #     manutencao  Limpeza da bolsa: 0 item(ns) deletado(s)
+        #     ...
+        #
+        # A MECÂNICA DO LAÇO: `_do_preparar` manda ir vender quando a bolsa
+        # pede; a `MANUTENCAO` tenta, não consegue (faltava o template do link),
+        # e volta para `PREPARAR` -- que pergunta a mesma coisa e recebe a mesma
+        # resposta. A bolsa continua cheia, então a condição nunca muda.
+        #
+        # Regra do usuário: *"o deletar não deve ficar tentando varias vezes,
+        # apenas 1 vez"*. E a mesma disciplina vale para a ida ao vendedor: uma
+        # tentativa por run. Se ela não resolveu, insistir no mesmo instante não
+        # vai resolver -- e girar é pior que entrar com a bolsa cheia, porque
+        # girando a conta não farma nada.
+        #
+        # A CHAVE É `stats.runs`, que sobe uma vez por run (`_saiu` chama
+        # `end_run`). Não é contador novo: é o mesmo que a venda por contagem
+        # de runs já usava. `-1` para a primeira passada de cada sessão valer.
+        self.runs_na_ultima_limpeza = -1
+        self.runs_na_ultima_ida_ao_vendedor = -1
         # A limpa de bolsa DESTA LARGADA já aconteceu? Zerada por
         # `a_hh_comecou`, a cada vez que o farm da HH é ligado.
         self.ja_limpei_ao_comecar = False
@@ -61,6 +92,34 @@ class ManutencaoDaHH:
 
         desde = ctx.stats.runs - self.runs_na_ultima_venda
         return desde >= ctx.settings.hh.vendor.runs_before_selling
+
+    def precisa_descartar(self) -> bool:
+        """Ainda não apaguei lixo nesta run?
+
+        DELETAR E VENDER SÃO COISAS DIFERENTES, e o usuário foi explícito:
+        *"são coisas diferentes deletar e vender"*. O descarte apaga o que o
+        NPC não compra; a venda troca por ouro o que ele compra. Um não
+        substitui o outro, e um não deve ser repetido porque o outro falhou.
+        """
+        return self.ctx.stats.runs != self.runs_na_ultima_limpeza
+
+    def anotar_o_descarte(self) -> None:
+        """Marca que o lixo desta run já foi apagado."""
+        self.runs_na_ultima_limpeza = self.ctx.stats.runs
+
+    def consumir_a_ida_ao_vendedor(self) -> bool:
+        """A bolsa pede venda ANTES de entrar, e ainda há chance nesta run?
+
+        CONSOME a chance -- o nome diz isso de propósito, porque a resposta
+        muda o estado. Sem consumir, `_do_preparar` recebe `True` para sempre
+        enquanto a bolsa estiver cheia, e é exatamente aí que nasce o laço.
+        """
+        if self.ctx.stats.runs == self.runs_na_ultima_ida_ao_vendedor:
+            return False
+        if not self.precisa_vender():
+            return False
+        self.runs_na_ultima_ida_ao_vendedor = self.ctx.stats.runs
+        return True
 
     def anotar_a_venda(self) -> None:
         """Marca que a venda aconteceu nesta run."""

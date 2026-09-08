@@ -168,8 +168,16 @@ def test_TODO_caminho_da_porta_para_o_ENTRAR_passa_pela_primeira_limpa():
             "A limpa vem ANTES de entrar: dentro da cave já é tarde.")
 
 
-def test_o_MANUTENCAO_descarta_em_TODA_run():
-    """Sem `if` nenhum antes -- diferente da venda, que tem contagem."""
+def test_o_MANUTENCAO_descarta_UMA_VEZ_POR_RUN():
+    """Uma vez, e o `if` é a trava -- não um filtro de configuração.
+
+    ERA SEM `if` NENHUM, e isso custou um laço: em 08/09/2026 o bot girou entre
+    `PREPARAR` e `MANUTENCAO` a cada ~2 s, apagando lixo e tentando vender sem
+    sair do lugar, porque a bolsa cheia mantinha a condição verdadeira.
+
+    Regra do usuário: *"o deletar não deve ficar tentando varias vezes, apenas
+    1 vez"*. A chave é `stats.runs`, que sobe uma vez por run.
+    """
     fonte = textwrap.dedent(inspect.getsource(HHRoutine._do_manutencao))
     arvore = ast.parse(fonte)
     metodo = arvore.body[0]
@@ -181,14 +189,19 @@ def test_o_MANUTENCAO_descarta_em_TODA_run():
     else:
         raise AssertionError("O `MANUTENCAO` deixou de descartar o lixo.")
 
-    dentro_de_if = [n.lineno for n in ast.walk(metodo)
-                    if isinstance(n, ast.If)
-                    for c in ast.walk(n)
-                    if isinstance(c, ast.Call)
-                    and getattr(c.func, "attr", "") == "descartar_o_lixo"]
-    assert not dentro_de_if, (
-        "O drop de UMA run já ocupa muito espaço; a venda é que espera "
-        "algumas runs, não o descarte.")
+    # A TRAVA É POR RUN, e não por configuração: o drop de UMA run já ocupa
+    # muito espaço, então o descarte não espera N runs como a venda.
+    fonte = textwrap.dedent(inspect.getsource(HHRoutine._do_manutencao))
+    assert "precisa_descartar()" in fonte, (
+        "o descarte voltou a rodar em toda passada da MANUTENCAO, e a "
+        "MANUTENCAO pode ser visitada várias vezes na mesma run")
+    assert "anotar_o_descarte()" in fonte, (
+        "sem anotar, a trava não fecha e o laço volta")
+
+    from blazesbot.bot.hh.manutencao import ManutencaoDaHH
+    trava = inspect.getsource(ManutencaoDaHH.precisa_descartar)
+    assert "stats.runs" in trava, (
+        "a trava do descarte deixou de ser POR RUN")
 
 
 def test_a_ORDEM_no_MANUTENCAO_e_apagar_e_depois_vender():

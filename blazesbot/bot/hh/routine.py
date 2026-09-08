@@ -547,8 +547,10 @@ class HHRoutine:
         # cegas sobre um ponteiro resolvido no início do script.
         ctx.apply_camera()
 
-        # A bolsa manda ir vender ANTES de entrar, não depois de encher.
-        if self.manutencao.precisa_vender():
+        # A bolsa manda ir vender ANTES de entrar, não depois de encher -- e
+        # UMA VEZ por run. Insistir no mesmo instante girava entre PREPARAR e
+        # MANUTENCAO sem farmar nada. Ver `docs/decisoes/hh.md` §22.
+        if self.manutencao.consumir_a_ida_ao_vendedor():
             self._ir_para(State.MANUTENCAO, "a bolsa pede venda antes de entrar")
             return
 
@@ -1188,48 +1190,20 @@ class HHRoutine:
                                    usar_aoe: bool = False) -> bool:
         """O CORE LOOP de combate da HH: bate e troca de alvo até sair.
 
-        =================================================================
-        SEM PAUSA ENTRE UMA MORTE E O TAB SEGUINTE
-        =================================================================
+        SEM PAUSA ENTRE A MORTE E O TAB SEGUINTE, que é a regra global de
+        combate da HH: `atacar_ate_sair_de_combate` com `tabs_ao_morrer > 0` lê
+        o HP a cada `CADENCIA_DA_LEITURA_DO_ALVO` e, na leitura em que o alvo
+        cai, troca NA HORA -- dentro do mesmo laço que gira a rotação. É a
+        mecânica da luta do segundo boss, que o usuário apontou como ideal.
 
-        Regra do usuário, 06/09/2026: *"o bot deve atacar e alternar alvos (TAB)
-        ininterruptamente até que o estado global confirme a saída da batalha
-        (`in_battle == False`)"*.
+        Isto substituiu `combate.limpar_o_combate` na HH; ela continua sendo do
+        BC e não foi tocada.
 
-        O que isto SUBSTITUIU na HH foi `combate.limpar_o_combate`, cuja
-        coreografia é: mata um, **PARA três segundos sem bater** olhando a flag,
-        e só então TAB. Aqueles três segundos são `ESPERA_APOS_A_MORTE_ANTES_DO_TAB`
-        e existem por medição -- **do BC**: lá o TAB imediato depois da morte
-        mira o mob seguinte, o golpe o puxa, e o bot troca um travamento por
-        outro. Na HH os mobs do ponto PRECISAM morrer, então puxar o seguinte é
-        o objetivo, não o acidente.
+        ALVO SUMIDO COM A FLAG ALTA NÃO ENCERRA A LUTA: apanhar de algo que o
+        TAB não pegou continua sendo luta. Quem protege disso virar eternidade é
+        o teto (`cave.max_fight_seconds`), não a contagem de alvos.
 
-        `limpar_o_combate` continua existindo e continua sendo do BC. Ela não
-        foi tocada -- ver `docs/INVARIANTES.md`, "Decisão de cave NÃO mora em
-        código compartilhado".
-
-        =================================================================
-        QUEM DÁ O TAB É O PRÓPRIO LAÇO DE ATAQUE
-        =================================================================
-
-        `atacar_ate_sair_de_combate` com `tabs_ao_morrer > 0` lê o HP do alvo a
-        cada `CADENCIA_DA_LEITURA_DO_ALVO` e, na leitura em que o alvo cai,
-        dispara `_trocar_de_alvo()` NA HORA -- dentro do mesmo laço que segue
-        girando a rotação de skills. Não há espera; a única carência é
-        `CARENCIA_APOS_O_TAB`, que existe para não ler a barra do alvo antigo.
-
-        É a mesma mecânica da luta do segundo boss, que é o padrão que o usuário
-        apontou como ideal.
-
-        =================================================================
-        ALVO SUMIDO COM A FLAG ALTA NÃO ENCERRA A LUTA
-        =================================================================
-
-        `TAB_ATE_SAIR_DE_COMBATE_NOS_GUARDAS` mantém a troca liberada enquanto a
-        flag estiver alta, mesmo depois de o orçamento de TAB acabar. Apanhar de
-        algo que o TAB não pegou continua sendo luta, e o laço continua tentando
-        adquirir. Quem protege disso virar eternidade é o teto
-        (`cave.max_fight_seconds`), não a contagem de alvos.
+        Ver `docs/decisoes/hh.md` §14 e §20.
         """
         ctx = self.ctx
         self._mirar_o_primeiro_mob(motivo)
@@ -1525,7 +1499,10 @@ class HHRoutine:
         # mesmo slot. Apagar primeiro deixa a bolsa com só o que tem preço --
         # e a venda, que vende a partir de um slot configurado, passa a
         # encontrar mercadoria onde antes achava lixo.
-        self.manutencao.descartar_o_lixo()
+        # UMA LIMPA POR RUN. §22.
+        if self.manutencao.precisa_descartar():
+            self.manutencao.descartar_o_lixo()
+            self.manutencao.anotar_o_descarte()
 
         if self.manutencao.precisa_vender():
             self.manutencao.vender()

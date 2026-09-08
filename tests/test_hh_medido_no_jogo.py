@@ -39,6 +39,14 @@ RECORTES = [
     (entrada.LINK_ENTRAR_HH, "o link Enter Happiness Hall", 300, 40),
     (entrada.LINK_SAIR_HH, "o link Leave Happiness Hall", 300, 40),
     ("dialogo_seta_baixo.png", "a seta de rolagem do diálogo", 40, 40),
+    # CHEGOU EM 08/09/2026, e com ele a venda da HH deixou de ser impossível.
+    # Medido contra os outros recortes de link: 67x28, desvio 41,7 e 21,9% de
+    # bordas -- dentro da faixa dos que funcionam (37-43 e 24-31%). O que ele
+    # tem de diferente é ALTURA: 28 px contra 17-22 dos outros, e o conteúdo
+    # ocupa as linhas 7..23, ou seja 11 das 28 linhas são margem de fundo.
+    # Não impede o casamento (o fundo do diálogo é constante), mas é folga a
+    # mais em troca de nada.
+    (vendedor.TEMPLATE_DO_LINK_DE_VENDER, "o link Sell Item", 300, 40),
 ]
 
 
@@ -82,17 +90,43 @@ def test_a_evidencia_de_cada_recorte_esta_guardada():
         assert img.shape[1] > 900, "a evidência tem que ser a tela inteira"
 
 
-def test_o_link_de_vender_AINDA_falta_e_o_bot_sabe_disso():
-    """ESTE TESTE VAI FALHAR DE PROPÓSITO quando o recorte chegar.
+def test_o_recorte_do_link_de_vender_tem_TEXTO_e_nao_so_fundo():
+    """Um recorte quase todo fundo casa em qualquer lugar do diálogo.
 
-    Quando isso acontecer, apague este teste e acrescente `link_sell_item.png`
-    à lista `RECORTES` acima. O marcador existe para a ausência ser visível --
-    sem ele, "a HH não vende" é um mistério.
+    A régua é o desvio-padrão em cinza, comparado com os recortes de link que
+    já funcionam: eles ficam entre 37 e 43. Abaixo disso o modelo tem pouca
+    tinta para correlacionar, e o casamento passa a depender do fundo -- que é
+    igual em toda a caixa de diálogo.
     """
-    existe = (TEMPLATES / vendedor.TEMPLATE_DO_LINK_DE_VENDER).exists()
-    assert not existe, (
-        f"{vendedor.TEMPLATE_DO_LINK_DE_VENDER} apareceu: mova-o para a lista "
-        f"RECORTES e apague este teste")
+    caminho = TEMPLATES / vendedor.TEMPLATE_DO_LINK_DE_VENDER
+    cinza = cv2.imread(str(caminho), cv2.IMREAD_GRAYSCALE)
+    assert cinza is not None, f"{caminho.name} não abre como imagem"
+
+    assert cinza.std() > 25, (
+        f"{caminho.name} tem desvio {cinza.std():.1f}: é quase todo fundo, e "
+        f"vai casar em qualquer canto do diálogo")
+
+    # E TEM QUE TER LINHA COM CONTEÚDO -- um recorte só de fundo passaria pelo
+    # desvio se pegasse uma borda da caixa.
+    por_linha = cinza.std(axis=1)
+    vivas = [i for i, v in enumerate(por_linha) if v > 8]
+    assert len(vivas) >= 8, (
+        f"só {len(vivas)} linha(s) do recorte têm conteúdo; o texto do link "
+        f"ocupa mais que isso")
+
+
+def test_o_bot_CARREGA_o_link_de_vender_pelo_caminho_real():
+    """`TemplateLibrary.load` devolve em CINZA, e é assim que ele é usado.
+
+    `_onde_clicar_no_link_de_vender` chama `find_template`, que converte o
+    quadro para cinza -- template colorido ali levantaria. O teste passa pelo
+    carregador de verdade em vez de abrir o arquivo na mão.
+    """
+    from blazesbot.core.vision import TemplateLibrary
+
+    tpl = TemplateLibrary(TEMPLATES).load(vendedor.TEMPLATE_DO_LINK_DE_VENDER)
+    assert tpl is not None, "o carregador do bot não achou o link de vender"
+    assert tpl.ndim == 2, f"o link veio com {tpl.ndim} dimensões, não em cinza"
 
 
 # ===========================================================================
