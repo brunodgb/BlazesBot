@@ -111,6 +111,13 @@ invocar: `docs/SKILLS.md`, seção "claude-council".
    Nunca junte "de passagem" o conserto de outra coisa.
 1. **Toda alteração no código ⇒ atualizar o graphify:** `graphify update .`
    (reextrai AST-only e regenera `graph.json` + `GRAPH_REPORT.md`).
+1b. **Toda alteração em `web/` ⇒ `npm run build`, no mesmo passo.** O app abre
+   `dist/`, e o `3-INICIAR-WEB.bat` **não** faz build; o backend, ao contrário, é
+   lido do código-fonte em toda execução. Sem o build, o usuário roda Python de
+   agora com tela de horas atrás — combinação que não existe no repositório, que
+   ninguém testou e que aparece como "funcionalidade que funcionava parou".
+   Aconteceu em 07/09/2026, com 40 minutos de atraso no pacote. Travado por
+   `tests/test_dist_atualizado.py`.
 2. **Toda alteração que mude conhecimento/convenção ⇒ atualizar o documento do
    destino certo** (ver a tabela na Governança) **no mesmo passo**. Regra de área
    vai para `docs/INVARIANTES.md`, especificação para `docs/REGRAS.md`, porquê

@@ -1052,6 +1052,12 @@ Pedidos entre 28/08 e 06/09/2026.
   clássico** (o `System.Drawing.Icon` do WinForms é o consumidor mais restrito) e
   **sem 256** — nada na barra passa de 48.
 - **O TOPO MOSTRA SÓ "BlazesBot".** O bot roda BC, HH e APP.
+- **O APP ABRE `dist/`, NÃO `web/`** — e o `3-INICIAR-WEB.bat` não faz build,
+  enquanto o backend é lido do código-fonte em toda execução. Alteração em
+  `web/` sem `npm run build` põe o usuário rodando Python de agora com tela de
+  horas atrás, e o defeito aparece como "funcionalidade que funcionava parou",
+  sem nada errado no código. Travado por `tests/test_dist_atualizado.py`, que
+  compara CONTEÚDO (as chaves de i18n do HTML), nunca data de arquivo.
 - **TODO TOKEN DE FUNDO TEM VERSÃO CLARA.** Fundo sem versão clara é área da tela
   no tema errado, e o defeito é silencioso. Faltava `--color-cab`: a barra de
   título ficava escura no tema claro e os botões dela, que usam `--color-ink`,

@@ -1322,3 +1322,79 @@ vigia (a classe é de tempo de execução, nunca do markup, e todo `add` tem
 
 A PyQt6 **não tem tema claro** — `blazesbot/gui/theme.py` é uma paleta escura só.
 Nada a espelhar aqui.
+
+## "Funcionava e parou": era o pacote, não o código (08/09/2026)
+
+Relato: *"tiveram vários bugs e mudanças visuais (...) várias funcionalidades
+visuais que funcionavam parecem ter parado, como o ponto verde piscando, a caixa
+do 'parado' onde mostra as runs, entre outras coisas."*
+
+**No código-fonte não havia defeito nenhum nesses dois itens.** Verificado no
+artefato empacotado, servido por HTTP e com a ponte real espelhada (constantes,
+config e contas vindas do `config.json` de verdade): estado `● Rodando`, resumo
+`15 runs · 14 ok · 1 falhas / 1 relogins`, sete linhas na tabela, pontos verde /
+vermelho / oculto conforme `conectada` e `relogando`, zero erro de JS.
+
+### A causa: o app abre `dist/`, e nada obriga o `dist/` a existir em dia
+
+O `3-INICIAR-WEB.bat` chama `python -m blazesbot.web_app`, que abre
+`dist/index.html`. Ele **não** faz build. O **backend**, ao contrário, é lido do
+código-fonte em toda execução.
+
+Medido: `dist/index.html` estava com data de 21:55 enquanto `web/index.html` era
+de 22:16 e `web/main.js` de 22:32. **Duas sessões seguidas mexeram em `web/`
+(o i18n cobrindo a Web inteira) e nenhuma rodou `npm run build`.** O usuário
+rodava, ao mesmo tempo, Python de agora e tela de 40 minutos antes — uma
+combinação que não existe em lugar nenhum do repositório: ninguém a testou,
+ninguém a revisou, e nenhum teste da suíte a alcançava.
+
+É o pior formato de defeito para caçar: quem procura no código não encontra nada,
+porque o código está certo.
+
+#### A prova
+
+Pondo de volta o `dist/index.html` de 21:55 e rodando os testes novos, os dois
+primeiros reprovam na hora; com o pacote atual, passam. O diagnóstico não é
+inferência — é reprodução.
+
+#### A trava
+
+`tests/test_dist_atualizado.py`, e a comparação é por **conteúdo, não por data**:
+`mtime` não sobrevive a um clone e daria reprovação aleatória. O critério são as
+chaves de i18n do HTML — cada texto novo da tela cria uma, então o conjunto
+cresce a cada alteração e o pacote atrasado sempre tem menos. Dois testes
+irmãos cobrem o build interrompido no meio: `vite build` limpa o `outDir` antes
+de escrever, então um `index.html` órfão aponta para assets que não estão lá e a
+tela sobe **sem CSS e sem JS, sem erro na janela**.
+
+`dist/` é ignorado pelo git, então em clone novo os três se pulam sozinhos.
+
+E a regra subiu para o `CLAUDE.md` (item 1b das Regras de manutenção): alteração
+em `web/` exige `npm run build` no mesmo passo, ao lado do `graphify update .`.
+
+### O defeito de verdade que a varredura achou
+
+Varrendo a tela por textos no formato `[chave]` (o placeholder que `t()` devolve
+quando a chave não resolve), sobrou **um**: `0 [log_linhas_exibidas]`, no rótulo
+do Log.
+
+`init()` chama `renderLog()` **fora** do `.then(obter_constantes)` — o log é
+desenhado antes de o dicionário chegar. Isso por si só se corrigiria, e é o que
+acontece com a caixa de estado: `pollEstado` repete a cada 1,5 s. Mas `renderLog`
+só roda de novo quando **chega log novo**: com o bot parado, o rótulo ficava
+preso no placeholder para sempre.
+
+O contador virou função própria (`atualizarContadorDoLog`), chamada também por
+`aplicarIdioma` — que já redesenha contas, filtro do log, stats e quedas, e a que
+faltava era só esta.
+
+### Uma coisa que NÃO se traduziu, de propósito
+
+`diag_dpapi_indisponivel` não tem `es`, e eu traduzi antes de olhar: dois testes
+de `test_i18n.py` usam justamente essa chave como **fixture do fallback** para
+espanhol. Revertido — a tradução não tinha sido pedida e o comportamento para
+`es` já é o correto (cai para PT-BR).
+
+Fica registrado o cheiro, que é de outra área: usar uma chave real de produção
+como fixture significa que ninguém pode traduzi-la sem quebrar a suíte. O teste
+deveria montar o próprio dicionário.
