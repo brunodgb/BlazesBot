@@ -64,7 +64,10 @@
                 fill="url(#bb-ouro)" fill-rule="evenodd" />
         </g>
       </svg>
-      <span class="text-[13.5px] font-semibold tracking-[0.3px] text-white">BlazesBot</span>
+      <!-- `text-ink`, NUNCA `text-white`: o nome era branco fixo e sumia no
+           tema claro. O ÍCONE ao lado não muda -- ele é a identidade, e
+           tem contraste próprio nos dois temas. -->
+      <span class="text-[13.5px] font-semibold tracking-[0.3px] text-ink">BlazesBot</span>
     </div>
     <div class="flex h-full items-center">
       <select id="sel-idioma" class="campo-idioma" title="Idioma / Language / Idioma">

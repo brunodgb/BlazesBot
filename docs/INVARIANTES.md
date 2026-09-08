@@ -1052,6 +1052,16 @@ Pedidos entre 28/08 e 06/09/2026.
   clássico** (o `System.Drawing.Icon` do WinForms é o consumidor mais restrito) e
   **sem 256** — nada na barra passa de 48.
 - **O TOPO MOSTRA SÓ "BlazesBot".** O bot roda BC, HH e APP.
+- **TODO TOKEN DE FUNDO TEM VERSÃO CLARA.** Fundo sem versão clara é área da tela
+  no tema errado, e o defeito é silencioso. Faltava `--color-cab`: a barra de
+  título ficava escura no tema claro e os botões dela, que usam `--color-ink`,
+  desapareciam. O **nome** usa `text-ink`, nunca `text-white`; o **ícone** não
+  muda — ele é a identidade e tem contraste próprio nos dois temas.
+- **A TROCA DE TEMA DESLIGA AS TRANSIÇÕES POR UM QUADRO** (`.trocando-tema`, e o
+  handler a tira depois de DOIS `requestAnimationFrame`). Cor que vem de custom
+  property e está numa lista de transições **fica presa no valor do tema
+  anterior** — o Blink não reavalia. Medido: 200+ elementos. Nunca consertar isso
+  tirando `color` de cada regra: a próxima regra nova nasceria com o defeito.
 - Travado por `tests/test_ordem_e_grupo_das_contas.py` (30) e
   `tests/test_tabela_de_contas_visual.py` (25).
 

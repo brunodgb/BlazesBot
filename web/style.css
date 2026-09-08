@@ -50,6 +50,13 @@
   --color-panel: #ffffff;
   --color-panel2: #f5efed;
   --color-deep: #f5efed;
+  /* A BARRA DE TÍTULO ACOMPANHA O TEMA. Faltava `--color-cab` aqui, então ela
+     ficava no #150807 do tema escuro -- e os botões dela usam `--color-ink`,
+     que no claro é ESCURO: minimizar e fechar viravam texto escuro sobre fundo
+     escuro e desapareciam. Visto na tela pelo usuário.
+     Um passo mais escura que `surface` de propósito: é o que dá ao hover
+     (`--color-panel`, branco) um contraste que se vê. */
+  --color-cab: #efe7e5;
   --color-line: rgba(0, 0, 0, 0.12);
   --color-linesoft: rgba(0, 0, 0, 0.06);
   --color-ink: #2b1a18;
@@ -169,6 +176,22 @@ body {
 @utility scroll-thin {
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+/* A TROCA DE TEMA DESLIGA AS TRANSIÇÕES POR UM QUADRO. Não é enfeite: quando a
+   cor de um elemento vem de `var(--color-ink)` e essa variável troca no
+   `:root`, o Blink NÃO reavalia uma propriedade que está na lista de
+   transições -- a transição não dispara e a cor ANTIGA fica. Medido na troca
+   para o tema claro: ✕ e — da barra presos em #f7f5f5 (o tom do tema escuro)
+   sobre a barra clara, e mais 200 elementos na mesma situação (nav-item, bt,
+   cel-texto, cel-opt...). Com `transition: none` no mesmo elemento o valor
+   certo aparecia na hora, o que é a assinatura do defeito.
+   Um lugar só, no PONTO DA TROCA, em vez de tirar `color` de cada regra --
+   e de graça a troca de tema deixa de fazer a onda de animação. */
+:root.trocando-tema *,
+:root.trocando-tema *::before,
+:root.trocando-tema *::after {
+  transition: none !important;
 }
 
 .titlebar {

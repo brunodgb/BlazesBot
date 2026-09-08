@@ -250,8 +250,16 @@ $("#btn-minimizar").addEventListener("click", () => chamar("minimizar_janela"));
 $("#btn-tema").addEventListener("click", () => {
   const raiz = document.documentElement;
   const escuro = raiz.dataset.tema !== "claro";
+  // AS TRANSIÇÕES SAEM POR UM QUADRO -- ver `.trocando-tema` no CSS. Sem isto,
+  // toda cor que vem de uma custom property e está numa lista de transições
+  // fica PRESA no valor do tema anterior, e o botão de fechar desaparecia na
+  // barra clara. Dois `requestAnimationFrame` porque o primeiro ainda é o
+  // quadro em que o tema mudou.
+  raiz.classList.add("trocando-tema");
   raiz.dataset.tema = escuro ? "claro" : "escuro";
   $("#btn-tema").textContent = escuro ? "☀️" : "🌙";
+  requestAnimationFrame(() => requestAnimationFrame(
+    () => raiz.classList.remove("trocando-tema")));
   try { localStorage.setItem("tema", raiz.dataset.tema); } catch (_) {}
 });
 (function temaInicial() {

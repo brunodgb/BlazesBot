@@ -1249,3 +1249,76 @@ Verificado em tela: BC ligado → clique no selo → nenhum rádio marcado, o ba
 grava `""`, e o poll de 1,5 s não reacende. As dicas das três funções passaram a
 dizer a regra — a antiga ainda ensinava "Marcada junto com BC, roda a HH", a
 combinação que deixou de existir.
+
+## O tema claro: a barra de título e a cor que fica presa (07/09/2026)
+
+Relato do usuário, olhando a tela: *"a barra de cima na versão dia não muda de
+cor, só o minimizar e o fechar que mudam de cor, mas daí ficam na mesma cor da
+barra e com isso acabam sumindo (...) e o próprio nome 'BlazesBot' também precisa
+alterar de cor, só o ícone que é padrão e não deve alterar."*
+
+Três defeitos independentes no mesmo canto da tela.
+
+### 1. Um token de fundo sem versão clara
+
+`:root[data-tema="claro"]` redefinia `surface`, `panel`, `panel2`, `deep`, as
+linhas e os textos — **e não `--color-cab`**, o fundo da barra de título. Ela
+ficava no `#150807` do tema escuro. Como os botões dela usam `--color-ink`, que
+no claro é escuro, minimizar e fechar viravam texto escuro sobre fundo escuro.
+O relato descreve exatamente isso.
+
+`--color-cab: #efe7e5` no claro, um passo mais escuro que `surface` de propósito:
+é o que dá ao hover (`--color-panel`, branco) um contraste que se vê.
+
+O teste que trava isso não confere só `cab`: exige versão clara para **todos** os
+tokens de fundo. Fundo sem versão clara é uma área da tela no tema errado, e o
+defeito é silencioso — nada avisa, só se vê.
+
+### 2. Cor fixa no nome
+
+`text-white` no "BlazesBot". Virou `text-ink`. O **ícone ao lado não muda**, como
+o usuário pediu: ele é a identidade, e tem contraste próprio nos dois temas.
+
+### 3. A COR QUE FICA PRESA NO TEMA ANTERIOR — o defeito de verdade
+
+Depois dos dois primeiros consertos, medi de novo pelo caminho do usuário (clique
+no botão de tema) e ✕ e — **continuavam em `#f7f5f5`**, agora brancos sobre a
+barra clara. O mesmo sintoma, espelhado.
+
+A causa não é o token: `getPropertyValue("--color-ink")` no próprio botão
+devolvia `#2b1a18`, o valor certo. Um `<div>` novo no mesmo lugar, com
+`color: var(--color-ink)` inline, pintava certo. **No botão existente, nem o
+inline funcionava.** O que revelou a causa foi `transition: none` nele: o
+computed virava `#2b1a18` no mesmo instante.
+
+**Quando a cor vem de uma custom property que troca no `:root`, o Blink não
+reavalia uma propriedade que está na lista de transições:** a transição não
+dispara e o valor antigo persiste. Não é um caso de borda — varrendo a tela
+depois da troca, **282 elementos** tinham transição que inclui `color` (ou
+`transition-all`) e mais de 200 estavam pintados com a cor do tema anterior:
+`nav-item`, `bt`, `cel-texto`, `cel-opt`, `alca-arraste`. A "versão dia meio
+errada" era isto.
+
+#### O conserto é UM, no ponto da troca
+
+`:root.trocando-tema *` com `transition: none !important`; o handler põe a classe
+**antes** de mudar `data-tema` e a tira depois de **dois**
+`requestAnimationFrame` — o primeiro ainda é o quadro em que o tema mudou.
+
+Medido depois: **zero** elementos presos, nos dois sentidos, ida e volta.
+
+Tirar `color` de cada regra também consertaria, e foi a primeira versão (só na
+titlebar). Foi revertida: seria o mesmo conserto repetido em dezenas de lugares,
+e **a próxima regra nova nasceria com o defeito** — ninguém lembra de uma regra
+que não existe ainda. De graça, a troca de tema deixou de fazer a onda de
+animação que atravessava a tela.
+
+O risco desta solução é a classe ficar grudada no `<html>`: aí toda transição da
+interface morre, sem erro nenhum — a tela só fica seca. É o que o último teste
+vigia (a classe é de tempo de execução, nunca do markup, e todo `add` tem
+`remove`).
+
+### Paridade
+
+A PyQt6 **não tem tema claro** — `blazesbot/gui/theme.py` é uma paleta escura só.
+Nada a espelhar aqui.
