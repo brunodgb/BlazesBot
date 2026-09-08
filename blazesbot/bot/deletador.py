@@ -482,6 +482,13 @@ def deletar_lixo(ctx: BotContext,
         return 0
 
     regioes = regioes_visiveis(ctx, quadro)
+    # QUAIS regiões, e não só quantas. Uma bolsa extra FECHADA não tem etiqueta
+    # na tela, então ela simplesmente não entra nesta lista -- e o item que
+    # estiver dentro dela é invisível para a varredura, sem nenhum aviso. Era
+    # exatamente esse estado que não aparecia em log nenhum.
+    if regioes:
+        ctx.log.info("Bolsas visíveis para a limpeza: %s.",
+                     ", ".join(r for r, _ in regioes))
     if not regioes:
         ctx.log.info(
             "Não achei a grade da bolsa na tela (a linha de abas "
@@ -527,7 +534,68 @@ def deletar_lixo(ctx: BotContext,
         "Limpeza da bolsa: %s item(ns) deletado(s) | %s de %s modelos "
         "verificados em %.1f s%s", apagados, verificados, len(templates),
         gasto, " (teto atingido)" if gasto >= teto_segundos else "")
+
+    if apagados == 0:
+        _explicar_o_zero(ctx, quadro, templates, regioes, nomes[:verificados])
     return apagados
+
+
+def _explicar_o_zero(ctx: BotContext, quadro, templates: dict,
+                     regioes: list, verificados: list[str]) -> None:
+    """Diz POR QUE a limpeza não apagou nada. Só roda quando apagou zero.
+
+    =======================================================================
+    POR QUE ISTO EXISTE
+    =======================================================================
+
+    "0 item(ns) apagado(s)" tem TRÊS causas com correções opostas, e nenhuma
+    delas aparecia no log:
+
+      1. não havia lixo na bolsa -- e aí zero é a resposta certa;
+      2. o item estava lá, mas em região não varrida (bolsa extra FECHADA,
+         painel arrastado). Geometria: mexer no limiar não muda nada;
+      3. o item estava numa região varrida e o casamento ficou ABAIXO do
+         limiar. Aí o número diz se falta pouco (refazer o PNG, ou medir um
+         limiar novo) ou muito (o modelo não é daquele item).
+
+    O usuário relatou o caso 2 ou 3 em 08/09/2026: *"mesmo eu limpando o
+    inventario, não deletou o item, sendo que eu fiz o template a partir desse
+    item do inventario"* -- e o `Trap-Meshwork` já havia sido apagado 3 vezes
+    antes, ou seja, o modelo funciona. Sem esta linha não havia como separar as
+    duas hipóteses sem adivinhar.
+
+    CUSTO: um `matchTemplate` por modelo já verificado, e SÓ no caso de zero.
+    Medido antes em 2,86 ms por modelo por região -- uns 90 ms no pior caso, e
+    só quando a limpeza já não tinha nada a fazer.
+
+    NUNCA LEVANTA: é diagnóstico. Falhar aqui não pode custar a run.
+    """
+    try:
+        placar: list[tuple[float, str, str]] = []
+        for nome in verificados:
+            tpl = templates.get(nome)
+            if tpl is None:
+                continue
+            for rotulo, (x, y, larg, alt) in regioes:
+                recorte = vision.crop(quadro, (x, y, larg, alt))
+                valor = vision.melhor_casamento(recorte, tpl, colorido=True)
+                if valor is not None:
+                    placar.append((valor, nome, rotulo))
+        if not placar:
+            ctx.log.info(
+                "Nada apagado e nenhum modelo pôde ser medido nas regiões "
+                "visíveis -- o recorte é menor que o modelo, ou não há bolsa.")
+            return
+        placar.sort(reverse=True)
+        melhores = ", ".join(f"{nome} {valor:.2f} ({rotulo})"
+                             for valor, nome, rotulo in placar[:5])
+        ctx.log.info(
+            "Nada apagado. Melhores casamentos (limiar %.2f): %s. Abaixo do "
+            "limiar em TODAS as bolsas visíveis significa uma de duas coisas: "
+            "o item não está nelas, ou o modelo não bate com o ícone de hoje.",
+            LIMIAR_EM_COR, melhores)
+    except Exception as exc:                       # diagnóstico não derruba run
+        ctx.log.debug("Não consegui explicar o zero da limpeza: %s", exc)
 
 
 def esquecer_a_fila() -> None:

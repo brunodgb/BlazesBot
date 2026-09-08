@@ -425,3 +425,39 @@ def template_present(
     if frame is None:
         return False
     return find_template(frame, template, threshold, region) is not None
+
+
+def melhor_casamento(quadro, template, *, colorido: bool = False) -> float | None:
+    """O MAIOR valor de correlação do template no quadro. `None` = não deu.
+
+    =======================================================================
+    ISTO SÓ MEDE. NÃO DECIDE NADA.
+    =======================================================================
+
+    Existe para o caso mais frustrante da busca por imagem: o modelo está na
+    pasta, o item está na bolsa, e o bot apaga zero. Sem o número, esse estado
+    é indistinguível de "não tem lixo na bolsa" -- e as três causas possíveis
+    pedem correções OPOSTAS:
+
+      * **0,85 com limiar 0,92** -> o modelo É daquele item, mas a captura
+        difere um pouco (fundo do slot, badge de quantidade, item selecionado).
+        Ou se afrouxa o limiar, COM medição, ou se refaz o PNG;
+      * **0,40** -> não é aquele item. O limiar está certo e o modelo, errado;
+      * **nenhuma medida** -> o item não está em NENHUMA região varrida, e o
+        problema é de GEOMETRIA: bolsa extra fechada, painel arrastado, aba
+        errada. Afrouxar o limiar aqui não muda nada.
+
+    Ninguém chama isto para decidir se apaga -- quem apaga é
+    `find_all_templates`, com o limiar. Este é o instrumento, e instrumento não
+    vota.
+    """
+    if quadro is None or template is None:
+        return None
+    cena = quadro if colorido else cv2.cvtColor(quadro, cv2.COLOR_BGR2GRAY)
+    if (cena.shape[0] < template.shape[0]
+            or cena.shape[1] < template.shape[1]):
+        return None
+    if colorido and cena.ndim != template.ndim:
+        return None
+    resultado = cv2.matchTemplate(cena, template, cv2.TM_CCOEFF_NORMED)
+    return float(resultado.max())

@@ -82,27 +82,24 @@ from blazesbot.core.vision.templates import (
     find_highlighted_row,
     find_template,
     highlight_ratio,
+    melhor_casamento,
     region_is_uniform,
     template_present,
 )
 
 __all__ = [
     "ALTURA_DA_BARRA",
-    # barra
     "BARRA_DO_ALVO_X0",
     "BARRA_DO_ALVO_X1",
     "BARRA_DO_ALVO_Y0",
     "BARRA_DO_ALVO_Y1",
-    # templates
     "DEFAULT_THRESHOLD",
     "HIGHLIGHT_BGR",
-    # marcadores
     "LARGURA_MINIMA_DA_BARRA",
     "LIMIAR_DA_FASE_2_DO_BOSS",
     "LIMIAR_DO_MARCADOR_DE_MORTE",
     "LINHAS_ENTRE_HP_E_MP",
     "MINIMO_RECONHECIDO_NA_FAIXA",
-    # captura
     "PASSO_DA_AMOSTRAGEM_DO_QUADRO",
     "PW_RENDERFULLCONTENT",
     "USAR_OFFSET_FIXO_DA_BARRA",
@@ -125,6 +122,7 @@ __all__ = [
     "ler_barra_do_alvo",
     "marcador_de_morte",
     "marcador_de_morte_em_cor",
+    "melhor_casamento",
     "region_is_uniform",
     "release_pool",
     "template_present",
