@@ -433,6 +433,7 @@ CAMINHO_ATE_O_BOSS_2: tuple[Waypoint, ...] = _wp([
 
 # Do boss 2 até o boss 3 (Green Robmaster).
 CAMINHO_ATE_O_BOSS_3: tuple[Waypoint, ...] = _wp([
+    (420, 136, _A, (929, 113)),
     (426, 138, _A, (935, 114)),
     (429, 152, _A, (921, 100)),
     (456, 152, _A, (955, 115)),
