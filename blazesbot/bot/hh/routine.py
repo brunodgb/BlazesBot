@@ -1229,28 +1229,14 @@ class HHRoutine:
         (`cave.max_fight_seconds`), não a contagem de alvos.
         """
         ctx = self.ctx
-        # ===============================================================
-        # DESMONTAR AQUI EXIGE `permitir_em_batalha` -- E ERA O DEFEITO
-        # ===============================================================
+        self._mirar_o_primeiro_mob(motivo)
+        # DESMONTAR AQUI EXIGE `permitir_em_batalha`: `ensure_dismounted()`
+        # recusa descer com a flag de combate alta, e chegar no ponto já em
+        # combate é o NORMAL na HH. Sem a exceção, os pontos de pacote lutavam
+        # MONTADOS, com dano zero (medido em 07/09/2026).
         #
-        # `ensure_dismounted()` RECUSA descer enquanto a flag de combate estiver
-        # alta ("Em combate: ignorando o pedido para desmontar"), e a recusa é
-        # certa em quase todo lugar: desmontar sob ataque é ficar lento no meio
-        # do trem de mobs. A exceção são os PONTOS DE LUTA, onde descer é o
-        # objetivo -- montado o jogo IGNORA a tecla de skill e não devolve erro.
-        #
-        # Este laço chamava a versão sem exceção, e chegar no ponto já em
-        # combate é o NORMAL na HH (os mobs ranged atiram durante o trajeto).
-        # Resultado medido pelo usuário em 07/09/2026: nos pontos de pacote --
-        # os bosses 1 e 3 -- o personagem lutava MONTADO, com dano zero. Os
-        # bosses 2 e 4 passavam porque `lutar_contra_um_boss` usa
-        # `_descer_para_lutar`, que já passa a exceção.
-        #
-        # A CORREÇÃO É USAR O MESMO GESTO, e não repetir a chamada com a flag:
-        # `_descer_para_lutar` também força a barra de atalhos na página 1, que
-        # num ponto de luta é a diferença entre bater e apertar tecla vazia.
-        # Duas cópias do gesto divergiriam, e a que ficasse para trás lutaria
-        # com a página errada.
+        # E O GESTO É `_descer_para_lutar`, não a chamada com a flag: ele também
+        # força a barra de atalhos na página 1. Ver `docs/decisoes/hh.md` §15.
         self.combat._descer_para_lutar(motivo)
         fim = self.combat.atacar_ate_sair_de_combate(
             motivo,
@@ -1260,9 +1246,34 @@ class HHRoutine:
             # O GOLPE NÃO PARA ENQUANTO A SAÍDA É CONFIRMADA: é o que a regra
             # pede -- ininterrupto até `in_battle == False`.
             atacar_na_confirmacao=True,
+            # MIRA PRESA NO MEIO DA LUTA: se o alvo não apanha, F1 + TAB de
+            # novo. É a metade que `_mirar_o_primeiro_mob` não cobre.
+            reancorar_alvo_travado=self.combat.reancorar_o_alvo,
         )
         ctx.log.info("HH: %s -- %s", motivo, fim.resumo())
         return fim.saiu_de_combate
+
+    def _mirar_o_primeiro_mob(self, motivo: str) -> None:
+        """AUTO-SELEÇÃO + TAB para abrir a luta. Sem condição nenhuma.
+
+        Regra do usuário, 08/09/2026: *"sobre começar a atacar eu realmente acho
+        que apertar F1 e depois dar o primeiro TAB vai ser o mais eficiente para
+        atacar os mobs corretos"*.
+
+        POR QUE NÃO SE PERGUNTA ANTES. Chegar num ponto de luta com a mira em
+        qualquer coisa é o normal na HH -- os mobs ranged atiram durante o
+        trajeto, o jogo auto-seleciona o próprio personagem ou o pet, e a mira
+        pode ter sobrado da luta anterior. Conferir cada um desses casos custa
+        leitura e acerta menos que simplesmente reancorar: o gesto é barato
+        (duas teclas) e o resultado é o mesmo sempre -- o mob mais perto.
+
+        MEIO DA LUTA É OUTRA PERGUNTA, e tem outra resposta: ali quem reancora é
+        o detector de HP parado (`combate`, `reancorar_alvo_travado`), porque
+        trocar de alvo de graça no meio da luta jogaria fora um alvo legítimo.
+
+        Ver `docs/decisoes/hh.md` §14.
+        """
+        self.combat.reancorar_o_alvo(f"início de {motivo}")
 
     def _montar_ao_sair_do_combate(self, motivo: str) -> None:
         """Montaria no instante em que a luta acaba, e não no trecho seguinte.

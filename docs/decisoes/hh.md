@@ -1005,3 +1005,84 @@ até ele, saindo do único ponto de onde o `Servant Child` é alcançável.
 Agora vale a mesma régua da porta da cave: chega no ponto primeiro, e
 `tentar_sair_da_hh` recusa clicar de fora dele.
 
+
+## 14. A MIRA DA HH — F1 + TAB (08/09/2026)
+
+### O sintoma, relatado pelo usuário
+
+> *"dentro de HH tem vezes que o personagem acaba se auto selecionando ou
+> seleciona o pet e quando isso acontece, ele nao seleciona automaticamente
+> outro mob automaticamente, entao e importante identificar isso e dar um TAB
+> nesses casos, ou faz o seguinte, pressionar F1 que é a tecla de auto seleçao
+> e depois dar TAB, assim garante que vai selecionar o mob mais perto"*
+
+E o bot ficava batendo em nada: a rotação girava, a flag de combate continuava
+alta porque os mobs seguiam atacando, e o alvo na mira não perdia HP nunca. A
+luta só terminava pelo teto.
+
+### Por que DOIS toques, e não só o TAB
+
+O TAB é **cíclico**: ele avança a partir de onde a mira está. Presa no próprio
+personagem ou no pet, um TAB sozinho avança para "o seguinte naquele ciclo",
+que pode ser o pet de novo.
+
+`keys.self_target` (F1) mira o PRÓPRIO personagem — um estado conhecido e
+sempre o mesmo. O TAB dali avança de um ponto fixo, e é isso que torna a
+aquisição repetível em vez de depender de onde a mira estava.
+
+**Sem a tecla, só o TAB.** Conta sem `self_target` configurada continua
+funcionando — pior, mas funcionando.
+
+### Duas perguntas diferentes, duas respostas
+
+| momento | quem resolve | por quê |
+|---|---|---|
+| **abertura** de toda luta | `HHRoutine._mirar_o_primeiro_mob` — F1+TAB **sem condição** | o gesto custa duas teclas e acerta sempre; conferir cada caso possível custa leitura e acerta menos |
+| **meio** da luta | `combate`, gancho `reancorar_alvo_travado` — HP do alvo parado por `LEITURAS_SEM_DANO_ANTES_DE_REANCORAR` leituras | trocar de alvo de graça no meio da luta jogaria fora um alvo legítimo |
+
+O usuário fechou a primeira linha no mesmo dia: *"sobre começar a atacar eu
+realmente acho que apertar F1 e depois dar o primeiro TAB vai ser o mais
+eficiente para atacar os mobs corretos"*.
+
+### O portão por NÍVEL foi construído e REPROVADO
+
+Primeira tentativa: reconhecer o alvo errado pela faixa de nível. Está medido —
+**391 leituras de alvo dentro da HH, todas entre nv26 e nv30**: `Elite Mace
+Fatso` nv26, `Elite Play Boy` nv26, `Elite Blackshirt Bandit` nv27, `Elite
+Lecher` nv27, `Fa-Yuan` nv27, `Callet Head Young` nv27, `Elite Callet` nv28,
+`Elite Black Leopard` nv28, `Zaton` nv28, `Elite Fatal Centipede` nv29, `Green
+Robe Master` nv29, `Elite Monk Ranger` nv29, `Elite Axe Monk Soldier` nv30.
+
+**O que reprovou o portão foram duas coisas.** A primeira: o usuário informou
+que *"o pet pode ser level 35 ou menos, vai depender do pet do usuario, mas
+atualmente o level maximo de um pet é 35"* — a faixa do pet (≤35) **sobrepõe**
+a dos mobs (26–30), então o portão pegaria o personagem (nv88, sempre) e só o
+pet de nv31 a 35. A segunda, decisiva: com a abertura incondicional o portão
+fica **sem pergunta para responder** — não há o que conferir antes de um gesto
+que acontece sempre.
+
+O dado dos nv26–30 fica registrado aqui porque é medição, e medição não se
+joga fora; o código dele saiu por não ter chamador.
+
+## 15. LUTAR MONTADO NOS PONTOS DE PACOTE (07/09/2026)
+
+Texto movido do comentário de `HHRoutine._matar_ate_sair_de_batalha`, verbatim:
+
+> DESMONTAR AQUI EXIGE `permitir_em_batalha` -- E ERA O DEFEITO
+>
+> `ensure_dismounted()` RECUSA descer enquanto a flag de combate estiver alta
+> ("Em combate: ignorando o pedido para desmontar"), e a recusa é certa em
+> quase todo lugar: desmontar sob ataque é ficar lento no meio do trem de
+> mobs. A exceção são os PONTOS DE LUTA, onde descer é o objetivo -- montado o
+> jogo IGNORA a tecla de skill e não devolve erro.
+>
+> Este laço chamava a versão sem exceção, e chegar no ponto já em combate é o
+> NORMAL na HH (os mobs ranged atiram durante o trajeto). Resultado medido pelo
+> usuário em 07/09/2026: nos pontos de pacote -- os bosses 1 e 3 -- o
+> personagem lutava MONTADO, com dano zero. Os bosses 2 e 4 passavam porque
+> `lutar_contra_um_boss` usa `_descer_para_lutar`, que já passa a exceção.
+>
+> A CORREÇÃO É USAR O MESMO GESTO, e não repetir a chamada com a flag:
+> `_descer_para_lutar` também força a barra de atalhos na página 1, que num
+> ponto de luta é a diferença entre bater e apertar tecla vazia. Duas cópias do
+> gesto divergiriam, e a que ficasse para trás lutaria com a página errada.

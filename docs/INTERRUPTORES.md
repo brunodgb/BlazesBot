@@ -36,7 +36,7 @@ ligar código não testado.
 | `USAR_COMBATE_COMO_RESERVA_DE_MORTE` | `True` | [blazesbot/bot/app/executor.py:487](blazesbot/bot/app/executor.py#L487) | supervisor.py | A RESERVA: QUANDO O HP É ILEGÍVEL, QUEM RESPONDE É A FLAG DE COMBATE |
 | `ATIVADO` | `True` | [blazesbot/bot/bc/diagnostico_do_link.py:62](blazesbot/bot/bc/diagnostico_do_link.py#L62) | deletador.py, supervisor.py, esconder_jogadores.py, patch_do_cliente.py, petbug.py | Interruptor, no padrão do `USAR_TAB_NOS_GUARDAS`: desligar é trocar uma |
 | `ATACAR_DURANTE_A_CONFIRMACAO_NO_BOSS` | `True` | [blazesbot/bot/combate.py:497](blazesbot/bot/combate.py#L497) | — | SÓ NO BOSS, e a razão é o motivo pelo qual o golpe parava |
-| `DESMONTAR_FORA_DA_CAVE_SO_SEM_PET` | `True` | [blazesbot/bot/combate.py:983](blazesbot/bot/combate.py#L983) | — | FORA DA CAVE, SÓ DESMONTA SE O PET NÃO ESTIVER ATIVO |
+| `DESMONTAR_FORA_DA_CAVE_SO_SEM_PET` | `True` | [blazesbot/bot/combate.py:996](blazesbot/bot/combate.py#L996) | — | FORA DA CAVE, SÓ DESMONTA SE O PET NÃO ESTIVER ATIVO |
 | `DESTRAVAMENTO_BATE_NO_ALVO_PROIBIDO` | `True` | [blazesbot/bot/combate.py:798](blazesbot/bot/combate.py#L798) | — | O DESTRAVAMENTO BATE NO CEMETERY GUARD? Decisao do usuario, 01/09/2026. |
 | `EXIGIR_SAIR_DE_COMBATE_NOS_GUARDAS` | `True` | [blazesbot/bot/combate.py:556](blazesbot/bot/combate.py#L556) | — | O CUSTO, DITO INTEIRO |
 | `MODO_DE_CURA` | `'skill_em_laco'` | [blazesbot/bot/combate.py:233](blazesbot/bot/combate.py#L233) | — | O TETO É POR TENTATIVA SEM EFEITO, NÃO POR RELÓGIO |
@@ -78,7 +78,7 @@ ligar código não testado.
 
 ## Números medidos -- tolerância, limiar, teto, cadência
 
-594 constantes, agrupadas por arquivo.
+595 constantes, agrupadas por arquivo.
 
 | constante | valor | onde | quem lê | porquê (resumo) |
 |---|---|---|---|---|
@@ -204,6 +204,7 @@ ligar código não testado.
 | `ESPERA_PARA_ENTRAR_EM_COMBATE` | `5.0` | [blazesbot/bot/combate.py:410](blazesbot/bot/combate.py#L410) | — | Quanto esperar a flag LIGAR depois de chegar no waypoint. |
 | `FATIA_DA_ESPERA_DA_POCAO` | `0.5` | [blazesbot/bot/combate.py:146](blazesbot/bot/combate.py#L146) | — | Fatia da espera da poção. O TOTAL é medido por relógio (ver acima), então esta |
 | `INTERVALO_DE_CONFERENCIA` | `0.1` | [blazesbot/bot/combate.py:242](blazesbot/bot/combate.py#L242) | — | De quanto em quanto tempo perguntar se a vida subiu. É leitura de memória -- |
+| `LEITURAS_SEM_DANO_ANTES_DE_REANCORAR` | `20` | [blazesbot/bot/combate.py:936](blazesbot/bot/combate.py#L936) | — | Quantas leituras seguidas com o HP do alvo PARADO antes de concluir que a |
 | `LIMIAR_CEMETERY_GUARD` | `0.85` | [blazesbot/bot/combate.py:713](blazesbot/bot/combate.py#L713) | combat.py | Limiar para detecção do Cemetery Guard (guarda do cemitério) na tela. |
 | `LIMINAR_TOPUP_ANTES_DO_BOSS` | `50.0` | [blazesbot/bot/combate.py:111](blazesbot/bot/combate.py#L111) | routine.py | TOP-UP PRÉ-BOSS ESTÁ FORA DE COMBATE, NÃO NA ESPERA DO BOSS |
 | `LIMITE_DA_FASE_DOS_GUARDAS` | `40.0` | [blazesbot/bot/combate.py:634](blazesbot/bot/combate.py#L634) | combat.py | Prazo total de cada fase. Contrapeso da ressalva (c): flag presa em ligado. |
