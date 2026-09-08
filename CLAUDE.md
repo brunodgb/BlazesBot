@@ -335,6 +335,16 @@ Em tarefa de vários passos, declare um plano curto:
 Critério forte deixa você fechar o laço sozinho; critério fraco ("fazer
 funcionar") obriga a esclarecer a cada passo.
 
+### 5. Idioma da resposta (diretriz permanente — 07/09/2026)
+
+**Documentação, comentário de código gerado, mensagem de commit e a resposta
+narrativa são sempre em Português do Brasil — independentemente do idioma do
+prompt.** Prompt em inglês, fragmento de código em inglês, nome de variável em
+inglês: nada disso muda o idioma da resposta. Não vale para **identificador de
+código** (nome de função/variável segue o idioma já usado no arquivo) nem para
+**string traduzível de interface** (`docs/SKILLS.md`, seção "i18n" — ali PT-BR
+é só a chave-fonte, não o único idioma válido).
+
 ## Skills e Agent skills
 
 As definições completas de skill (pywebview + Web Frontend, GUI e Interatividade,
