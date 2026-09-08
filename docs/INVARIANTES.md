@@ -933,9 +933,10 @@ Cada item é o que **não pode ser violado**. O detalhe de cada área mora em
   `INTERVALO_DE_DESPEJO = 30 s`. Cem mil medições viram **uma** linha — e a
   linha diz mais que as cem mil (n, mínimo, média, máximo). O motivo é medido:
   em 06/09 uma única mensagem gerou 531.411 linhas e 290 MB em 48 minutos.
-- **DESLIGADO CUSTA ZERO, não "quase zero"**: com `TELEMETRIA_LIGADA = False`,
-  `@cronometrar` devolve a **função original**, sem embrulho. Um `if` dentro do
-  wrapper custaria a chamada extra que a medição acima cobra.
+- **DESLIGADO CUSTA ZERO, não "quase zero"**: baixado o interruptor
+  `TELEMETRIA_LIGADA`, `@cronometrar` devolve a **função original**, sem
+  embrulho. Um `if` dentro do wrapper custaria a chamada extra que a medição
+  acima cobra.
 - **O ACUMULADOR É POR THREAD.** `ac.n += 1` não é atômico entre threads e um
   `Lock` no caminho quente pagaria mais que a medição. Por thread resolve os
   dois — e o despejo já sai separado por conta.
@@ -945,7 +946,27 @@ Cada item é o que **não pode ser violado**. O detalhe de cada área mora em
   são REUSADOS de `core/log_limitado.py`, não reescritos.
 - **TELEMETRIA QUE DERRUBA O BOT É PIOR QUE TELEMETRIA NENHUMA**: o laço do
   despejo engole exceção, e exceção no bloco medido é **medida e sobe**.
-- Travado por `tests/test_cronometro.py`.
+- **O PACOTE INTEIRO É MEDIDO, mas o embrulho SE APOSENTA**
+  (`core/instrumentacao.py`, 07/09/2026). Pedido do usuário: *"em todos os
+  módulos, funções e laços, para que mesmo o que já esteja testado e
+  documentado seja retestado"*. São **1.631 funções**; embrulhar todas de forma
+  permanente deixaria o bot mais lento para descobrir que ele está lento. Então
+  cada embrulho mede `AMOSTRAS_PARA_DECIDIR = 20` chamadas e, se a média ficou
+  abaixo do piso, **devolve a função original no lugar dela**. O CENSO FICA: a
+  aposentada continua no relatório com o seu n, mínimo, média e máximo. Medido:
+  **1.292 funções instrumentadas em 0,3 s**.
+- **A INSTRUMENTAÇÃO TOTAL NUNCA ACONTECE NO IMPORT.** **56 arquivos de teste**
+  leem `inspect.getsource` de métodos reais; um wrapper no lugar do método
+  quebraria os 56 de uma vez. Quem chama é o supervisor, com o bot subindo —
+  único ponto por onde todo ecossistema passa. Ficam de fora: o próprio
+  cronômetro (recursão), geradores (mediria a criação, não a execução), dunder,
+  `tools/` e `gui/`.
+- **O RELATÓRIO ORDENA POR TOTAL, NÃO POR MÉDIA**
+  (`python -m blazesbot.core.relatorio_de_latencia`). Uma função de 400 ms
+  chamada 3× custa 1,2 s; uma de 0,4 ms chamada 20.000× custa 8 s — a média
+  premia a primeira e é a segunda que decide a duração da run.
+- Travado por `tests/test_cronometro.py` e
+  `tests/test_instrumentacao_total.py`.
 
 ## O log de dev — `docs/decisoes/sistema.md`
 

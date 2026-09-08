@@ -29,7 +29,7 @@ import win32process
 
 from ..config import CAVE_BC, CAVE_HH, MODO_FADA_DA_HH, Account, BotConfig
 from ..core import cronometro as cronometro_mod
-from ..core import logmodo, quedas, vizinhanca
+from ..core import instrumentacao, logmodo, quedas, vizinhanca
 from ..core.coords import coords_for_window
 from ..core.memory import Memory
 from ..core.target_hybrid import TargetHybrid
@@ -2488,6 +2488,12 @@ class AccountSupervisor(threading.Thread):
         # sai certo sem ninguem precisar passar o login adiante.
         cronometro_mod.ligar()
         cronometro_mod.marcar_a_conta(self.account.login)
+        # E O PACOTE INTEIRO, uma vez por processo. Aqui e nao no import porque
+        # 56 arquivos de teste leem `inspect.getsource` de metodos reais -- um
+        # wrapper no lugar do metodo quebraria os 56 de uma vez. Ver
+        # `core/instrumentacao.py`. Idempotente: o segundo supervisor a subir
+        # nao embrulha nada de novo.
+        instrumentacao.instrumentar_tudo()
         self.tentativas_de_login = 0
         stopped = False
         try:

@@ -56,7 +56,7 @@ ligar código não testado.
 | `MODO_SOLO_DA_HH` | `'solo'` | [blazesbot/config.py:913](blazesbot/config.py#L913) | account_dialog.py | Os dois modos de reset da HH. A cave não renasce sozinha -- regra do jogo. |
 | `NAO_LIMPAR_DUAS_VEZES_NA_MESMA_VOLTA` | `True` | [blazesbot/core/cadencia_da_bolsa.py:43](blazesbot/core/cadencia_da_bolsa.py#L43) | — | Interruptor do piso do conserto -- 06/09/2026. |
 | `ATIVADA` | `True` | [blazesbot/core/calibracao.py:82](blazesbot/core/calibracao.py#L82) | routine.py, vendedor.py | INTERRUPTOR |
-| `TELEMETRIA_LIGADA` | `True` | [blazesbot/core/cronometro.py:85](blazesbot/core/cronometro.py#L85) | — | O INTERRUPTOR |
+| `TELEMETRIA_LIGADA` | `True` | [blazesbot/core/cronometro.py:85](blazesbot/core/cronometro.py#L85) | instrumentacao.py | O INTERRUPTOR |
 | `LIGADO` | `True` | [blazesbot/core/diagnostico_fino.py:28](blazesbot/core/diagnostico_fino.py#L28) | instrumentar_clique.py, supervisor.py, config.py, log_limitado.py, account_dialog.py | — |
 | `ATIVADO` | `False` | [blazesbot/core/esconder_jogadores.py:102](blazesbot/core/esconder_jogadores.py#L102) | deletador.py, diagnostico_do_link.py, supervisor.py, patch_do_cliente.py, petbug.py | INTERRUPTOR -- DESLIGADO EM 19/08/2026 |
 | `PRENDER_A_TECLA` | `True` | [blazesbot/core/esconder_jogadores.py:75](blazesbot/core/esconder_jogadores.py#L75) | — | A TECLA PRESA PARA SEMPRE -- o caminho do patcher, trazido em 07/09/2026 |
@@ -65,6 +65,7 @@ ligar código não testado.
 | `MODO_DE_CLIQUE` | `'postmessage_puro'` | [blazesbot/core/inputs.py:133](blazesbot/core/inputs.py#L133) | ui_service.py, instrumentar_clique.py, teste_do_cursor.py | INTERRUPTOR DO MODO DE CLIQUE |
 | `MODO_DE_TECLA` | `'postmessage'` | [blazesbot/core/inputs.py:177](blazesbot/core/inputs.py#L177) | — | INTERRUPTOR DO TECLADO -- "sendmessage" \| "postmessage" |
 | `USAR_MOUSE_SHIELD` | `False` | [blazesbot/core/inputs.py:65](blazesbot/core/inputs.py#L65) | instrumentar_clique.py, teste_do_cursor.py | INTERRUPTOR DO MOUSE SHIELD |
+| `INSTRUMENTAR_O_PACOTE_INTEIRO` | `True` | [blazesbot/core/instrumentacao.py:77](blazesbot/core/instrumentacao.py#L77) | — | O INTERRUPTOR |
 | `COMPRIMIR_ARQUIVO_MORTO` | `True` | [blazesbot/core/log_limitado.py:108](blazesbot/core/log_limitado.py#L108) | — | O arquivo morto de DIAS ANTERIORES é comprimido. Medido no arquivo da noite de |
 | `USAR_PAINEL_POR_MEMORIA` | `True` | [blazesbot/core/memory.py:579](blazesbot/core/memory.py#L579) | — | ESTADO DE PAINEL DE UI POR MEMÓRIA -- o que sobreviveu ao campo |
 | `USAR_REGIOES_QUENTES` | `True` | [blazesbot/core/memory.py:434](blazesbot/core/memory.py#L434) | — | REGIÕES QUENTES -- a rota que fecha os 38% que o array de entidades perde |
@@ -77,7 +78,7 @@ ligar código não testado.
 
 ## Números medidos -- tolerância, limiar, teto, cadência
 
-589 constantes, agrupadas por arquivo.
+591 constantes, agrupadas por arquivo.
 
 | constante | valor | onde | quem lê | porquê (resumo) |
 |---|---|---|---|---|
@@ -523,7 +524,7 @@ ligar código não testado.
 | `VALIDATED_RESOLUTION` | `'1024x768'` | [blazesbot/core/coords.py:43](blazesbot/core/coords.py#L43) | main_window.py, web_app.py | — |
 | `INTERVALO_DE_DESPEJO` | `30.0` | [blazesbot/core/cronometro.py:98](blazesbot/core/cronometro.py#L98) | — | De quanto em quanto tempo a thread despeja o que foi acumulado. |
 | `LINHAS_NO_ARQUIVO_QUENTE` | `3000` | [blazesbot/core/cronometro.py:110](blazesbot/core/cronometro.py#L110) | — | Quantas linhas o arquivo quente guarda. O `ArquivoDeLogLimitado` cuida do |
-| `PISO_PARA_CRONOMETRAR` | `1e-05` | [blazesbot/core/cronometro.py:89](blazesbot/core/cronometro.py#L89) | — | Abaixo disto, NÃO se cronometra. Ver o bloco "O PISO DE 10 µs" acima: a 1 µs o |
+| `PISO_PARA_CRONOMETRAR` | `1e-05` | [blazesbot/core/cronometro.py:89](blazesbot/core/cronometro.py#L89) | instrumentacao.py | Abaixo disto, NÃO se cronometra. Ver o bloco "O PISO DE 10 µs" acima: a 1 µs o |
 | `LINHAS_MAXIMAS_DO_DIARIO` | `20000` | [blazesbot/core/diario.py:39](blazesbot/core/diario.py#L39) | — | Teto de linhas por diário. Generoso de propósito -- o diário existe para ser |
 | `HP_MAXIMO_PLAUSIVEL` | `5000000` | [blazesbot/core/entidades.py:40](blazesbot/core/entidades.py#L40) | — | Teto de HP que ainda é HP. Cinco milhões é folgado de sobra para qualquer |
 | `NIVEL_MAXIMO_PLAUSIVEL` | `200` | [blazesbot/core/entidades.py:43](blazesbot/core/entidades.py#L43) | — | Faixa de nível. 200 é folga: o jogo vai a 8x, e o boss da cave é nv51. |
@@ -534,6 +535,7 @@ ligar código não testado.
 | `ASSENTAR_A_PAGINA` | `0.08` | [blazesbot/core/hotbar.py:94](blazesbot/core/hotbar.py#L94) | combate.py, hotbar.py | DEPOIS DE CHEGAR NA PÁGINA 1, ANTES DE DEVOLVER |
 | `CLIQUES_PARA_VOLTAR_A_PAGINA_1` | `2` | [blazesbot/core/hotbar.py:62](blazesbot/core/hotbar.py#L62) | hotbar.py | Três páginas: do pior caso (página 3) até a 1 são dois cliques para cima. |
 | `ENTRE_CLIQUES` | `0.025` | [blazesbot/core/hotbar.py:66](blazesbot/core/hotbar.py#L66) | hotbar.py, instrumentar_clique.py | Entre um clique e o outro. Curto porque o clique deste bot é SÍNCRONO |
+| `IDIOMA_PADRAO` | `'pt-br'` | [blazesbot/core/i18n.py:16](blazesbot/core/i18n.py#L16) | web_app.py | — |
 | `CABECALHO` | `'# TEMPOS — tudo que o bot ESPERA\n\n> **GERADO. Não edite à mão.**\n> `./.venv/Scripts/python.exe -m blazesbot.core.indice_de_tempos`\n> Travado por `tests/test_indice_de_tempos.py`: mexeu num tempo e não regerou,\n> a suíte reprova.\n\n## REGRA PERMANENTE\n\n**Todo tempo novo — constante OU literal no meio de uma função — entra aqui.**\nNão por disciplina: a extração acha sozinha, e o teste reprova se o arquivo\nestiver velho. Basta regerar.\n\nO que NÃO se faz sozinho é o **ponto de restauração**. Ver a seção\n"Se você mudou um tempo e deu errado", no fim.\n\n## Como ler a coluna NATUREZA\n\n| natureza | o que é | mexer nele significa |\n|---|---|---|\n| **TETO** | prazo máximo; quem responde antes não paga | encurtar arrisca **o caso lento**, não o comum |\n| **PASSO** | cadência de uma pergunta em laço | encurtar gasta **CPU**, não relógio |\n| **FIXO** | espera **CEGA**: paga sempre, inteira | é **aqui** que há tempo a ganhar |\n\nA regra do projeto é *"onde havia espera cega, agora se PERGUNTA"*. Cada **FIXO**\ndesta lista é ou uma exceção justificada, ou dívida que ninguém converteu ainda.\n\n## A coluna ORIGINAL\n\n`=` significa que o valor está como o de referência. **`⚠` significa que alguém\nmudou** — e a coluna mostra de quanto era. É o ponto de restauração.\n\n'` | [blazesbot/core/indice_de_tempos.py:311](blazesbot/core/indice_de_tempos.py#L311) | — | — |
 | `RODAPE` | `'\n---\n\n## Se você mudou um tempo e deu errado\n\n1. Ache a linha aqui pelo nome (ou pelo arquivo).\n2. A coluna **ORIGINAL** com `⚠` traz o valor de referência.\n3. Volte para ele no arquivo apontado pela coluna ONDE.\n\nO ponto de restauração vive em `docs/tempos-originais.json`.\n\n**Ele NÃO é atualizado sozinho, e isso é de propósito**: se toda geração\nrefotografasse os valores, o "original" seria sempre o de agora e o arquivo não\nserviria para nada. Refotografar é ato deliberado:\n\n```python\nfrom blazesbot.core.indice_de_tempos import extrair, gravar_originais\ngravar_originais(extrair())\n```\n\nFaça isso **só** quando um valor novo já estiver provado em produção e você\nquiser que ele passe a ser a referência.\n\n## O que este catálogo NÃO cobre\n\n* **Tempo que vem da configuração** (`attack_delay`, `max_fight_seconds`,\n  `launch_delay`, `time_factor`, os `delay_ms` da macro do APP): muda por conta,\n  na interface, e não tem "valor original" único. Está em `blazesbot/config.py`.\n* **Tempo que o JOGO impõe** (animação de montar, teleporte, efeito de poção):\n  não é nosso, e o bot só pode medir.\n* **Esperas calculadas** (`tick(resto)`, `tick(segundos * fator)`): o valor não\n  é literal, então não há número para catalogar. Elas aparecem indiretamente,\n  pelas constantes que as alimentam.\n'` | [blazesbot/core/indice_de_tempos.py:345](blazesbot/core/indice_de_tempos.py#L345) | — | — |
 | `CLIQUES_DIREITOS_POR_TENTATIVA` | `10` | [blazesbot/core/inputs.py:211](blazesbot/core/inputs.py#L211) | — | QUANTOS CLIQUES DIREITOS POR TENTATIVA |
@@ -541,6 +543,7 @@ ligar código não testado.
 | `NOME_DO_PROCESSO_DO_JOGO` | `'client.exe'` | [blazesbot/core/inputs.py:285](blazesbot/core/inputs.py#L285) | — | NENHUMA MENSAGEM SAI PARA UMA JANELA QUE NÃO É O JOGO |
 | `SEGUNDOS_ENTRE_CONFERENCIAS_DO_PROCESSO` | `2.0` | [blazesbot/core/inputs.py:302](blazesbot/core/inputs.py#L302) | — | De quanto em quanto tempo o NOME do processo é reconferido. |
 | `TETO_DO_BLOQUEIO_MS` | `80.0` | [blazesbot/core/inputs.py:76](blazesbot/core/inputs.py#L76) | — | TETO do bloqueio do mouse físico, em milissegundos -- e TETO, não gasto: o |
+| `AMOSTRAS_PARA_DECIDIR` | `20` | [blazesbot/core/instrumentacao.py:84](blazesbot/core/instrumentacao.py#L84) | — | Quantas chamadas medir antes de decidir se o embrulho fica. |
 | `SEM_JANELA` | `'(sem janela)'` | [blazesbot/core/janelas.py:36](blazesbot/core/janelas.py#L36) | — | O TÍTULO DE QUEM NÃO TEM JANELA. Texto, e não `None`, porque todo chamador |
 | `LIMIAR_DA_MOLDURA` | `0.65` | [blazesbot/core/janelas_abertas.py:107](blazesbot/core/janelas_abertas.py#L107) | — | Limiar da moldura, e ele NÃO é o 0.80 do projeto -- de propósito. |
 | `LIMIAR_DO_X` | `0.8` | [blazesbot/core/janelas_abertas.py:95](blazesbot/core/janelas_abertas.py#L95) | — | Limiar do X. É o 0.80 que o projeto inteiro já usa (`INVITE_THRESHOLD`, |
@@ -664,9 +667,9 @@ ligar código não testado.
 | `COR_MP_BORDA` | `'#4A7BC4'` | [blazesbot/gui/widgets.py:28](blazesbot/gui/widgets.py#L28) | — | — |
 | `CHUNK` | `1048576` | [blazesbot/tools/find_base.py:57](blazesbot/tools/find_base.py#L57) | — | — |
 | `MUDOU` | `0.0005` | [blazesbot/tools/ler_camera.py:57](blazesbot/tools/ler_camera.py#L57) | afericao_do_aliado.py, executor.py, localizacao.py, routine.py, combate.py, context.py, fada.py, config.py, calibracao.py, memory.py, target_hybrid.py | O que conta como "mudou". Menor que isto é ruído de interpolação -- andando, o |
-| `PASSO` | `0.25` | [blazesbot/tools/ler_camera.py:50](blazesbot/tools/ler_camera.py#L50) | routine.py, mapa_hh.py, supervisor.py, ui_do_jogo.py, indice_de_tempos.py, vigiar_combate.py | Cadência da leitura. Barata: são 8 leituras de 4 bytes por volta. |
+| `PASSO` | `0.25` | [blazesbot/tools/ler_camera.py:50](blazesbot/tools/ler_camera.py#L50) | routine.py, mapa_hh.py, supervisor.py, ui_do_jogo.py, indice_de_tempos.py, relatorio_de_latencia.py, vigiar_combate.py | Cadência da leitura. Barata: são 8 leituras de 4 bytes por volta. |
 | `SEGUNDOS_PADRAO` | `300.0` | [blazesbot/tools/ler_camera.py:53](blazesbot/tools/ler_camera.py#L53) | vigiar_combate.py | Teto padrão, para a ferramenta fechar sozinha se você esquecer dela aberta. |
-| `PASSO` | `0.1` | [blazesbot/tools/vigiar_combate.py:48](blazesbot/tools/vigiar_combate.py#L48) | routine.py, mapa_hh.py, supervisor.py, ui_do_jogo.py, indice_de_tempos.py, ler_camera.py | Cadência da leitura. É memória pura -- algumas leituras de 4 bytes por volta, |
+| `PASSO` | `0.1` | [blazesbot/tools/vigiar_combate.py:48](blazesbot/tools/vigiar_combate.py#L48) | routine.py, mapa_hh.py, supervisor.py, ui_do_jogo.py, indice_de_tempos.py, relatorio_de_latencia.py, ler_camera.py | Cadência da leitura. É memória pura -- algumas leituras de 4 bytes por volta, |
 | `SEGUNDOS_ENTRE_ECOS` | `5.0` | [blazesbot/tools/vigiar_combate.py:58](blazesbot/tools/vigiar_combate.py#L58) | — | De quanto em quanto tempo repetir uma linha que NÃO mudou. |
 | `SEGUNDOS_PADRAO` | `900.0` | [blazesbot/tools/vigiar_combate.py:51](blazesbot/tools/vigiar_combate.py#L51) | ler_camera.py | Teto padrão, para a ferramenta fechar sozinha se você esquecer dela aberta. |
 | `MAX_LINHAS_GUARDADAS` | `12000` | [blazesbot/web_app.py:84](blazesbot/web_app.py#L84) | main_window.py | Linhas guardadas em memória para permitir refiltrar por conta, espelho do |
