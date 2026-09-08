@@ -1552,5 +1552,15 @@
     "pt-br": "Tecla",
     "en": "Key",
     "es": "Tecla"
+  },
+  "campo_hh_deletar": {
+    "pt-br": "Jogar o lixo da HH fora antes de vender",
+    "en": "Discard HH trash before selling",
+    "es": "Tirar la basura de HH antes de vender"
+  },
+  "ajuda_hh_deletar": {
+    "pt-br": "APAGA da bolsa todo item com imagem em data/templates/deletar_hh/ — o lixo que o Roaming Apothecary não compra. Apagar é IRREVERSÍVEL, e a lista é só da HH: a global serve o APP e a Bewitcher Cave. Ligue só depois de conferir o que há naquela pasta.",
+    "en": "DELETES from the bag every item with an image in data/templates/deletar_hh/ — the trash the Roaming Apothecary will not buy. Deleting is IRREVERSIBLE, and the list is HH-only: the global one serves APP and Bewitcher Cave. Only turn this on after checking what you put in that folder.",
+    "es": "BORRA de la bolsa todo ítem con imagen en data/templates/deletar_hh/ — la basura que el Roaming Apothecary no compra. Borrar es IRREVERSIBLE, y la lista es solo de HH: la global sirve al APP y a Bewitcher Cave. Actívalo solo después de revisar lo que pusiste en esa carpeta."
   }
 }

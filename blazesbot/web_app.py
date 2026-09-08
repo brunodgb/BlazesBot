@@ -487,6 +487,7 @@ class _App:
                 "attack_delay": st.hh.attack_delay,
                 "aoe_until_mana_pct": st.hh.aoe_until_mana_pct,
                 "limpar_mobs_a_cada": st.hh.limpar_mobs_a_cada,
+                "deletar_lixo": st.hh.deletar_lixo,
                 "vendor": {
                     "sell_start_slot": st.hh.vendor.sell_start_slot,
                     "runs_before_selling": st.hh.vendor.runs_before_selling,
@@ -801,6 +802,8 @@ class _App:
         st.hh.attack_delay = float(hh.get("attack_delay", 0.5) or 0.5)
         st.hh.aoe_until_mana_pct = int(hh.get("aoe_until_mana_pct", 30))
         st.hh.limpar_mobs_a_cada = int(hh.get("limpar_mobs_a_cada", 3))
+        # PADRÃO FALSE, e o padrão é a decisão: apagar é irreversível.
+        st.hh.deletar_lixo = bool(hh.get("deletar_lixo", False))
         VH = hh.get("vendor", {})
         st.hh.vendor.sell_start_slot = int(VH.get("sell_start_slot", 3))
         st.hh.vendor.runs_before_selling = int(

@@ -160,6 +160,7 @@ function aplicarIdioma(idioma) {
   // que o poll normal usa.
   if (typeof renderContas === "function") renderContas();
   if (typeof atualizarFiltroLog === "function") atualizarFiltroLog();
+  if (typeof atualizarContadorDoLog === "function") atualizarContadorDoLog();
   if (typeof popularSeletores === "function" && constantes) popularSeletores();
   if (typeof carregarStats === "function") carregarStats();
   if (typeof quedasCarregadas !== "undefined" && quedasCarregadas
@@ -1210,6 +1211,7 @@ function preencherEditor(d) {
   $("#ed-hh-delay").value = Math.round((hh.attack_delay || 0.5) * 1000);
   $("#ed-hh-aoe").value = hh.aoe_until_mana_pct ?? 30;
   $("#ed-hh-limpar").value = hh.limpar_mobs_a_cada ?? 3;
+  $("#ed-hh-deletar").checked = !!hh.deletar_lixo;
   $("#ed-hh-slot").value = (hh.vendor && hh.vendor.sell_start_slot) ?? 3;
   $("#ed-hh-runs").value = (hh.vendor && hh.vendor.runs_before_selling) ?? 5;
   montarListaDeReset(d.contas_de_reset || [], hh.reset_nick || "",
@@ -1654,6 +1656,7 @@ function salvarEditor() {
       attack_delay: Number($("#ed-hh-delay").value || 500) / 1000,
       aoe_until_mana_pct: Number($("#ed-hh-aoe").value || 30),
       limpar_mobs_a_cada: Number($("#ed-hh-limpar").value || 0),
+      deletar_lixo: $("#ed-hh-deletar").checked,
       vendor: {
         sell_start_slot: Number($("#ed-hh-slot").value || 3),
         runs_before_selling: Number($("#ed-hh-runs").value || 5),
@@ -2109,7 +2112,20 @@ function renderLog() {
   // Segue o fim como o desktop: acompanha a última linha até o usuário rolar
   // para cima; quando ele volta ao fim, volta a acompanhar (ver `aoRolarLog`).
   if (logSeguirFim) seguirOFimDoLog();
-  $("#lbl-log-count").textContent = `${linhas.length} ${t("log_linhas_exibidas")}`;
+  atualizarContadorDoLog(linhas.length);
+}
+
+// O CONTADOR DO LOG EM FUNÇÃO PRÓPRIA, e não é organização: `init()` chama
+// `renderLog()` FORA do `.then(obter_constantes)` -- o log é desenhado antes de
+// o dicionário chegar, e `t()` devolve `[log_linhas_exibidas]`. `renderLog` só
+// roda de novo quando CHEGA log novo, então com o bot parado o rótulo ficava
+// preso no placeholder para sempre. `aplicarIdioma` chama esta função junto com
+// as outras views que ele redesenha.
+function atualizarContadorDoLog(quantas) {
+  const lbl = $("#lbl-log-count");
+  if (!lbl) return;
+  const n = quantas === undefined ? renderizadoAte : quantas;
+  lbl.textContent = `${n} ${t("log_linhas_exibidas")}`;
 }
 
 /* ============================================================

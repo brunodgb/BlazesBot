@@ -1125,6 +1125,16 @@ class AccountDialog(QDialog):
             "0 desliga a limpeza."
         )
         f.addRow("Limpar mobs a cada (a pé):", self.sp_hh_limpar)
+
+        self.ck_hh_deletar = QCheckBox("Jogar o lixo da HH fora antes de vender")
+        self.ck_hh_deletar.setToolTip(
+            "APAGA da bolsa todo item com imagem em data/templates/deletar_hh/.\n"
+            "Serve para o lixo que o Roaming Apothecary NÃO compra e que fica\n"
+            "ocupando slot até a bolsa transbordar.\n\n"
+            "APAGAR É IRREVERSÍVEL, e a lista é SÓ da HH -- a global\n"
+            "(deletar/) serve o APP e a Bewitcher Cave. Ligue só depois de\n"
+            "conferir o que você colocou naquela pasta.")
+        f.addRow("", self.ck_hh_deletar)
         outer.addWidget(box)
 
         # -- Venda ------------------------------------------------------
@@ -1289,6 +1299,7 @@ class AccountDialog(QDialog):
         self.sp_hh_delay.setValue(int(round(hh.attack_delay * 1000)))
         self.bar_hh_aoe.setValue(hh.aoe_until_mana_pct)
         self.sp_hh_limpar.setValue(hh.limpar_mobs_a_cada)
+        self.ck_hh_deletar.setChecked(hh.deletar_lixo)
         self.sp_hh_slot.setValue(hh.vendor.sell_start_slot)
         self.sp_hh_runs.setValue(hh.vendor.runs_before_selling)
 
@@ -1408,6 +1419,7 @@ class AccountDialog(QDialog):
         hh.attack_delay = self.sp_hh_delay.value() / 1000.0
         hh.aoe_until_mana_pct = self.bar_hh_aoe.value()
         hh.limpar_mobs_a_cada = self.sp_hh_limpar.value()
+        hh.deletar_lixo = self.ck_hh_deletar.isChecked()
         hh.vendor.sell_start_slot = self.sp_hh_slot.value()
         hh.vendor.runs_before_selling = self.sp_hh_runs.value()
         bc.vendor.runs_before_selling = self.sp_runs.value()
