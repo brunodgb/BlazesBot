@@ -355,10 +355,6 @@ def tabs_ao_morrer(rotulo: str) -> int:
 # onde o boss ESTÁ, e o waypoint é de onde se bate nele. Usar a anotação como
 # destino mandaria o bot tentar entrar dentro do boss, que é o tipo de clique
 # que não produz movimento e acorda o detector de travamento sem haver trava.
-POSICAO_DO_BOSS_1 = (271, 137)
-POSICAO_DO_BOSS_2 = (408, 136)
-POSICAO_DO_BOSS_3 = (551, 192)
-POSICAO_DO_BOSS_4 = (527, 108)
 
 # A anotação do bot Lua, guardada porque é a única pista de onde o boss está de
 # verdade -- útil no dia em que a leitura de entidades por perto entrar na HH.
@@ -412,7 +408,7 @@ CAMINHO_ATE_O_BOSS_1: tuple[Waypoint, ...] = _wp([
     (315, 140, _A, (913, 139)),
     (301, 142, _A, (906, 113)),
     (282, 139, _A, (901, 118)),
-    (271, 137, _A, (908, 117)),
+    (272, 136, _A, (908, 117)),
 ])
 
 # Do boss 1 até o boss 2 (a dupla). Cliques calibrados manualmente.
@@ -432,12 +428,12 @@ CAMINHO_ATE_O_BOSS_2: tuple[Waypoint, ...] = _wp([
     (392, 164, _A, (918, 134)),
     (394, 150, _A, (921, 128)),
     (409, 150, _A, (933, 115)),
-    (408, 136, _A, (918, 129)),
+    (408, 131, _A, (918, 129)),
 ])
 
 # Do boss 2 até o boss 3 (Green Robmaster).
 CAMINHO_ATE_O_BOSS_3: tuple[Waypoint, ...] = _wp([
-    (427, 136, _A, (935, 114)),
+    (426, 138, _A, (935, 114)),
     (429, 152, _A, (921, 100)),
     (456, 152, _A, (955, 115)),
     (463, 170, _A, (915, 98)),
@@ -463,12 +459,11 @@ CAMINHO_ATE_O_BOSS_4: tuple[Waypoint, ...] = _wp([
     (467, 152, _A, (919, 133)),
     (448, 146, _A, (901, 121)),
     (448, 131, _A, (919, 129)),
-    (459, 109, _A, (930, 136)),
-    (477, 106, _A, (936, 118)),
-    (507, 107, _A, (948, 114)),
-    (510, 126, _A, (922, 97)),
-    (509, 93, _A, (918, 147)),
-    (527, 108, _A, (936, 101)),
+    (460, 108, _A, (930, 136)),
+    (470, 108, _A, (930, 136)),
+    (478, 108, _A, (936, 118)),
+    (508, 108, _A, (948, 114)),
+    (526, 108, _A, (936, 101)),
 ])
 
 # Do boss 4 até o ponto de onde se sai da cave pelo NPC.
@@ -517,11 +512,39 @@ CAMINHO_ATE_A_SAIDA: tuple[Waypoint, ...] = _wp([
 # fecha cada um. É esta tupla que a rotina percorre -- e é ela que garante que
 # adicionar um quinto boss é uma linha aqui, não um `if` novo na máquina de
 # estados.
+# O PONTO DE LUTA DE CADA TRECHO É O ÚLTIMO WAYPOINT DELE, e agora isso é
+# DERIVADO em vez de declarado duas vezes.
+#
+# POR QUE DERIVADO, E NÃO DECLARADO (04 e 07/09/2026)
+#
+# Havia `POSICAO_DO_BOSS_1..4` escritos à mão, separados dos caminhos. Eles
+# divergiram DUAS vezes quando o usuário ajustou waypoints no jogo:
+#
+#   04/09  um waypoint comentado deixou o ponto do trecho 1 apontando para uma
+#          coordenada que já não existia na rota;
+#   07/09  os ajustes de (271,137)->(272,136), (408,136)->(408,131) e
+#          (527,108)->(526,108) deixaram três pontos 1,4 / 5,0 / 1,0 unidades
+#          atrás do fim do caminho.
+#
+# NENHUMA DAS DUAS APARECEU COMO ERRO -- as diferenças cabiam na tolerância de
+# chegada, então o sintoma era comportamento estranho no jogo, não exceção.
+#
+# Um número lido por dois lados mora num lugar só. O lugar é o CAMINHO: ele é o
+# que o usuário edita quando remede a rota no jogo.
+def _fim_do_caminho(caminho: tuple[Waypoint, ...]) -> tuple[int, int]:
+    """O ponto de luta de um trecho: o último waypoint dele."""
+    return caminho[-1].pos
+
+
 TRECHOS_DOS_BOSSES: tuple[tuple[str, tuple[Waypoint, ...], tuple[int, int]], ...] = (
-    (BOSS_1, CAMINHO_ATE_O_BOSS_1, POSICAO_DO_BOSS_1),
-    (BOSS_2, CAMINHO_ATE_O_BOSS_2, POSICAO_DO_BOSS_2),
-    (BOSS_3, CAMINHO_ATE_O_BOSS_3, POSICAO_DO_BOSS_3),
-    (BOSS_4, CAMINHO_ATE_O_BOSS_4, POSICAO_DO_BOSS_4),
+    (BOSS_1, CAMINHO_ATE_O_BOSS_1,
+     _fim_do_caminho(CAMINHO_ATE_O_BOSS_1)),
+    (BOSS_2, CAMINHO_ATE_O_BOSS_2,
+     _fim_do_caminho(CAMINHO_ATE_O_BOSS_2)),
+    (BOSS_3, CAMINHO_ATE_O_BOSS_3,
+     _fim_do_caminho(CAMINHO_ATE_O_BOSS_3)),
+    (BOSS_4, CAMINHO_ATE_O_BOSS_4,
+     _fim_do_caminho(CAMINHO_ATE_O_BOSS_4)),
 )
 
 
@@ -840,10 +863,6 @@ __all__ = [
     "PONTO_FORA_DA_HH",
     "POSICAO_DA_FADA_NO_BOSS",
     "POSICAO_DA_MUTUAL",
-    "POSICAO_DO_BOSS_1",
-    "POSICAO_DO_BOSS_2",
-    "POSICAO_DO_BOSS_3",
-    "POSICAO_DO_BOSS_4",
     "PRECISAO_NO_PONTO_DA_ENTRADA",
     "RAIO_DA_PORTA",
     "ROTULO_DE_TELA_DA_CHEGADA",

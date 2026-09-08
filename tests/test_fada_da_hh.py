@@ -434,7 +434,7 @@ def test_a_cura_vem_ANTES_do_follow_na_volta():
 
 def test_a_cura_pedindo_para_parar_ENCERRA_o_acompanhamento():
     """Se ela não pode mais curar, seguir o líder não serve para nada."""
-    fada = _fada(follow="P", pos=mapa_hh.POSICAO_DO_BOSS_1,
+    fada = _fada(follow="P", pos=mapa_hh.TRECHOS_DOS_BOSSES[0][2],
                  selecionar=lambda: True)
     voltas = {"n": 0}
 
@@ -449,7 +449,7 @@ def test_a_cura_pedindo_para_parar_ENCERRA_o_acompanhamento():
 def test_sem_a_cura_injetada_ela_AVISA_e_ainda_acompanha():
     """Estar perto é útil por si (o líder pode estar de poção), mas faltar a
     cura é bug de ligação -- e bug de ligação vai para o log."""
-    fada = _fada(follow="P", pos=mapa_hh.POSICAO_DO_BOSS_1,
+    fada = _fada(follow="P", pos=mapa_hh.TRECHOS_DOS_BOSSES[0][2],
                  selecionar=lambda: True)
     voltas = {"n": 0}
 

@@ -25,28 +25,38 @@ from blazesbot.core.rota import (
 # Os waypoints vindos do Lua
 # ===========================================================================
 
-# Contagem por trecho, conforme `hh.lua`: position_1, position_boss_2,
-# position_boss_3, position_boss_4 e position_exit.
-CONTAGEM_DO_LUA = {
+# Contagem por trecho da ROTA OFICIAL, remedida no jogo pelo usuário em
+# 07/09/2026. Antes vinha do `hh.lua` (22/16/12/15/1); o que mudou foi o trecho
+# 4, e o usuário disse: *"agora esses vão ser os waypoints oficiais"*.
+#
+# O QUE ELE MUDOU NO TRECHO 4, e por que importa saber: saiu a ESPORA -- o par
+# (510,126)/(509,93), que descia 19 unidades para depois subir 33 --, e entrou
+# uma aproximação final mais fina até o boss. A espora era a geometria que
+# produzia o loop infinito de 04/09 (ver `test_rollback_DE_VERDADE...`); com ela
+# fora, o mapa deixou de ter o caso, mas a régua que o conserta continua
+# travada por rota sintética.
+CONTAGEM_OFICIAL = {
     "CAMINHO_ATE_O_BOSS_1": 22,
     "CAMINHO_ATE_O_BOSS_2": 16,
     "CAMINHO_ATE_O_BOSS_3": 12,
-    "CAMINHO_ATE_O_BOSS_4": 15,
+    "CAMINHO_ATE_O_BOSS_4": 14,
     "CAMINHO_ATE_A_SAIDA": 1,
 }
 
 
-@pytest.mark.parametrize("nome,esperado", sorted(CONTAGEM_DO_LUA.items()))
+@pytest.mark.parametrize("nome,esperado", sorted(CONTAGEM_OFICIAL.items()))
 def test_cada_trecho_tem_a_contagem_medida(nome, esperado):
     """Waypoint que desaparece não dá erro: o bot só passa a bater na parede."""
     assert len(getattr(m, nome)) == esperado
 
 
-def test_o_total_e_66():
-    """65 nos quatro trechos dos bosses, 1 no de saída."""
-    assert len(m.TODOS_OS_WAYPOINTS) == sum(CONTAGEM_DO_LUA.values()) == 66
-    assert sum(CONTAGEM_DO_LUA[k] for k in CONTAGEM_DO_LUA
-               if k != "CAMINHO_ATE_A_SAIDA") == 65
+def test_o_total_da_rota_oficial():
+    """65 na rota oficial de 07/09/2026 -- eram 66 com a espora do trecho 4.
+
+    O número existe para uma coisa só: waypoint que desaparece por acidente não
+    dá erro em lugar nenhum, o bot apenas passa a bater na parede.
+    """
+    assert len(m.TODOS_OS_WAYPOINTS) == sum(CONTAGEM_OFICIAL.values()) == 65
 
 
 def test_todo_waypoint_tem_o_clique_calibrado():
@@ -105,11 +115,17 @@ def test_a_anotacao_do_lua_fica_perto_do_ponto_de_luta():
     para dentro do boss -- clique que não produz movimento, e que acorda o
     detector de travamento sem haver trava.
 
-    O teto de 3 é o que separa "de onde se bate" de "outro lugar da cave".
+    O teto separa "de onde se bate" de "outro lugar da cave".
+
+    SEIS, e não três: o usuário remediu os pontos de luta no jogo em 07/09/2026
+    e a anotação do Lua ficou um pouco mais longe -- a "Dupla" passou de 2,2
+    para 4,5. A pergunta continua a mesma (*"o ponto de luta está na MESMA SALA
+    que o Lua anotou?"*), e seis unidades ainda são muito menos que a distância
+    entre duas salas: os trechos vizinhos estão a 20+ unidades.
     """
     for rotulo, _, posicao in m.TRECHOS_DOS_BOSSES:
         anotada = m.COORDENADA_ANOTADA_NO_LUA[rotulo]
-        assert m.distancia(posicao, anotada) <= 3, (
+        assert m.distancia(posicao, anotada) <= 6, (
             f"{rotulo}: ponto de luta {posicao} vs anotacao {anotada}")
 
 
@@ -236,8 +252,8 @@ def test_a_entrada_esta_fora_da_caixa():
 
 @pytest.mark.parametrize("pos,dentro", [
     (m.CHEGADA_NA_HH, True),
-    (m.POSICAO_DO_BOSS_1, True),
-    (m.POSICAO_DO_BOSS_4, True),
+    (m.TRECHOS_DOS_BOSSES[0][2], True),
+    (m.TRECHOS_DOS_BOSSES[3][2], True),
     (m.PONTO_DA_ENTRADA, False),
     (m.POSICAO_DA_MUTUAL, False),
     ((-344, -297), False),      # o ponto do vendedor no bot Lua
@@ -426,10 +442,10 @@ def _indice_do(caminho, ponto):
     # sendo o 10, com o índice já no 12.
     (0, (207, 186), (232, 188), (211, 184),
      "wp10 e wp11 cabem no mesmo raio de tolerância"),
-    # Trecho 4: wp13 é uma ESPORA -- desce 19 para subir 33. Voltando por cima
-    # do corredor, o wp12 vira o mais próximo.
-    (3, (510, 126), (509, 93), (509, 115),
-     "a rota volta pelo mesmo corredor da espora do wp13"),
+    # A SEGUNDA GEOMETRIA -- a ESPORA do trecho 4 -- SAIU DO MAPA em 07/09/2026,
+    # quando o usuário remediu a rota. Ela continua travada em
+    # `test_a_espora_que_saiu_do_mapa_continua_coberta`, com rota sintética: o
+    # dado sumiu, a régua que o consertava não pode sumir com ele.
 ])
 def test_andar_no_rumo_certo_NAO_e_rollback(trecho, anterior, alvo, posicao,
                                             por_que):
@@ -447,6 +463,32 @@ def test_andar_no_rumo_certo_NAO_e_rollback(trecho, anterior, alvo, posicao,
         f"{posicao} deveria estar EM CIMA do trecho {anterior}->{alvo}")
     assert houve_rollback(i_alvo, posicao, caminho) is None, (
         f"loop infinito de volta: {por_que}")
+
+
+def test_a_espora_que_saiu_do_mapa_continua_coberta():
+    """A geometria do loop de 04/09, agora em rota SINTÉTICA.
+
+    O trecho 4 tinha uma ESPORA: (510,126) descia 19 unidades para depois subir
+    33 até (509,93). Andando de um para o outro, o personagem passava de novo
+    pela altura de (507,107) -- que virava o waypoint mais próximo, com o índice
+    já adiante. `houve_rollback` concluía "voltei", a navegação relançava, o
+    destravamento escolhia o vizinho de trás, e o ciclo recomeçava.
+
+    O usuário tirou a espora da rota em 07/09/2026. O DADO SUMIU, A RÉGUA NÃO
+    PODE SUMIR COM ELE: qualquer rota futura com uma espora traz o loop de
+    volta, e é isso que este teste guarda.
+    """
+    espora = montar([
+        (459, 109, "sintetica", (0, 0)),
+        (477, 106, "sintetica", (0, 0)),
+        (507, 107, "sintetica", (0, 0)),
+        (510, 126, "sintetica", (0, 0)),
+        (509, 93, "sintetica", (0, 0)),
+        (527, 108, "sintetica", (0, 0)),
+    ])
+    # indo do wp13 (510,126) para o wp14 (509,93), lido em (509,115)
+    assert distancia_ao_trecho((509, 115), (510, 126), (509, 93)) <= 12.0
+    assert houve_rollback(4, (509, 115), espora) is None
 
 
 def test_rollback_DE_VERDADE_continua_sendo_pego():
