@@ -66,13 +66,41 @@ class _FakeWatchdog:
         return self._reason
 
 
-def _ctx_sem_init(watchdog=None):
-    """Cria um BotContext sem `__init__` real — só os atributos que tick() toca."""
+def _ctx_sem_init(watchdog=None, login="conta-de-teste"):
+    """Cria um BotContext sem `__init__` real — só os atributos que tick() toca.
+
+    O `account.login` entrou em 08/09/2026: `check_watchdog` passou a consultar
+    o VIGIA GLOBAL (`bot/sentinela.py`) antes do watchdog inline, e a conta é a
+    chave do posto dele. Não é atributo de conveniência do dublê -- é o que
+    permite a conta SEM watchdog perceber queda, que era o buraco.
+    """
     ctx = object.__new__(BotContext)
     ctx._watchdog = watchdog
     ctx.stop_event = _FakeEvent()
     ctx.pause_event = _FakeEvent()
+    ctx.account = type("_Conta", (), {"login": login})()
+    ctx.ultima_queda = None
     return ctx
+
+
+def test_conta_SEM_watchdog_ainda_assim_ve_a_queda_do_vigia_global():
+    """O buraco que o vigia global fecha, no comportamento e não no texto.
+
+    Antes, `check_watchdog` saía por `return` na primeira linha quando não havia
+    `Watchdog` -- ou seja, toda conta que não é BC ficava cega por este caminho.
+    """
+    from blazesbot.bot import sentinela
+
+    ctx = _ctx_sem_init(watchdog=None, login="sem-watchdog")
+    posto = sentinela.SENTINELA.vigiar("sem-watchdog", fonte=lambda: (None, None))
+    try:
+        posto.queda = ("travou", None, "janela do cliente travada")
+        with pytest.raises(Disconnected):
+            ctx.check_watchdog()
+        # E O CARTÃO SAI COM A CAUSA, não com o efeito do kill.
+        assert ctx.ultima_queda == ("travou", None)
+    finally:
+        sentinela.SENTINELA.esquecer("sem-watchdog")
 
 
 # ===========================================================================

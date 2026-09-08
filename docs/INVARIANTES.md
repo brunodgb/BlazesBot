@@ -10,6 +10,57 @@
 > em `docs/decisoes/<area>.md` — e é lá que mora a alternativa que já reprovou.
 
 ---
+## Login e relogin — `docs/decisoes/login-e-relogin.md`
+
+> É o ecossistema BASE: **todo** ecossistema, presente e futuro, obedece.
+
+- **A QUEDA É PERCEBIDA POR UMA THREAD QUE NÃO É A DO BOT.** O vigia global
+  (`bot/sentinela.py`) acorda a cada `CADENCIA_DO_VIGIA` (6 s) e pergunta pelas
+  contas todas. Vigia dentro do laço do bot **não funciona**: `SendMessageW`
+  síncrono contra janela travada bloqueia a thread que enviou, para sempre — e a
+  conferência estava sempre na linha seguinte.
+- **O TETO É 20 SEGUNDOS**, da queda até o `TerminateProcess`, em qualquer
+  ecossistema (BC, HH, APP) e **também com a conta ociosa ou no backoff**.
+  `confirmações × cadência ≤ 20 s` é conta, não estimativa: travamento 3×6 s =
+  18 s; janela sumida 2×6 s; processo e aviso na tela matam na primeira volta.
+  Travado por `tests/test_vigia_global.py`.
+- **QUATRO SINAIS, E O QUARTO É NOVO.** Processo sumido, janela sumida e aviso na
+  tela continuam em `watchdog.avaliar_saude` — a UMA definição de queda, sem
+  estado, que todo mundo chama. O **travamento** mora no vigia porque exige
+  memória entre ciclos (`STRIKES_PARA_JANELA_TRAVADA`), e `avaliar_saude` não tem
+  nem pode ter estado. Não são duas definições concorrentes: é um sinal a mais.
+- **A SONDA DE TRAVAMENTO VEM ANTES DA CAPTURA.** `PrintWindow` manda `WM_PRINT`
+  síncrono: fotografar janela travada penduraria a thread do vigia como pendura
+  a do bot. Só se fotografa janela que acabou de responder a `WM_NULL`.
+- **O VIGIA NÃO ENCOSTA NO QUE É DA THREAD DO BOT.** Nada de `ctx.memory` (o
+  handle é fechado pelo dono), nada de `capture_window` (o pool de GDI é
+  dicionário sem cadeado e `_release` o destrói) — use
+  `core.vision.capture_window_isolado`. `TemplateLibrary` própria. O único estado
+  que cruza a fronteira é o anúncio, sob cadeado.
+- **ANUNCIAR ANTES DE MATAR, e a ordem não é trocável.** O kill desbloqueia a
+  thread do bot na mesma hora; sem o anúncio já publicado, ela veria só "processo
+  sumiu" e o Histórico de Quedas registraria o efeito no lugar da causa.
+- **MATAR É PELA RAIZ.** `kill_client` é `TerminateProcess` direto, com
+  `taskkill /F /T` de reserva. **Nada de `terminate()`, `ALT+F4` ou clique no X**:
+  quem chega nessa função já não está ouvindo, e a cortesia custava 5 s de um
+  orçamento de 20.
+- **QUEM RELIGA CONTINUA SENDO O SUPERVISOR.** O vigia não sabe o que é login. A
+  thread do bot lê o anúncio (`BotContext.check_watchdog`), levanta
+  `Disconnected`, e o `run()` faz `_encerrar_caido` → backoff → nova sessão.
+- **O ANÚNCIO SE APAGA QUANDO O RELOGIN ENGATA** (`sentinela.limpar`) e também
+  sozinho, quando a conta volta noutro PID. Anúncio esquecido de pé derruba a
+  sessão NOVA no primeiro `tick` — relogin em laço, o defeito com o sinal
+  invertido.
+- **SAIR DA VIGILÂNCIA AO ENCERRAR** (`sentinela.esquecer`, no `finally` do
+  `run`). Sem isso o vigia mata o cliente que o usuário acabou de assumir na mão.
+- **A CONTA ENTRA NO VIGIA UMA VEZ POR EXECUÇÃO, não por sessão.** O tempo ruim é
+  passado FORA de uma sessão: backoff, espera de login, conta ociosa.
+- **O REPOUSO CUSTA 0% DE CPU** — `Event.wait`, nunca `time.sleep`. É a única
+  thread que roda o tempo todo, com o bot ocioso ou não.
+- Interruptor: `sentinela.MATAR_JANELA_TRAVADA` (o único critério que mata janela
+  que o Windows ainda considera viva).
+
+---
 ## O laço do APP — `docs/decisoes/cura-no-app.md`
 
 - **EM BATALHA SEM ALVO E LEVANDO DANO, O BOT TABA NA HORA** (07/09/2026). O

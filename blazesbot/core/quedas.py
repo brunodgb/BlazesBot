@@ -88,6 +88,10 @@ MOTIVOS: dict[str, str] = {
     "processo": "O jogo fechou sozinho",
     "janela": "A janela do jogo desapareceu",
     "conexao": "O jogo perdeu a conexão com o servidor",
+    # O QUARTO MOTIVO, desde 08/09/2026. Só o vigia global o produz: processo
+    # vivo, janela existindo, nenhuma caixa na tela -- e o laço de mensagens do
+    # cliente parado por 18 s seguidos. Ver `bot/sentinela.py`.
+    "travou": "O jogo congelou e parou de responder",
 }
 MOTIVO_DESCONHECIDO = "O jogo parou de responder"
 

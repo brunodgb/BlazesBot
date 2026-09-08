@@ -447,11 +447,44 @@ class BotContext:
     def check_watchdog(self) -> None:
         """Verifica saúde da sessão; levanta `Disconnected` se cair.
 
-        Sem watchdog configurado (contas que não rodam BC), não faz nada.
+        =================================================================
+        DUAS FONTES, E A PRIMEIRA VALE PARA TODA CONTA
+        =================================================================
+
+        1. O VIGIA GLOBAL (`bot/sentinela.py`), que roda numa thread própria e
+           já pode ter matado o cliente enquanto ESTA thread estava bloqueada.
+           É consultado ANTES por dois motivos: ele é o único que enxerga o
+           travamento, e ele responde sem custo nenhum (uma leitura de
+           dicionário) mesmo quando a conta não tem `Watchdog` configurado --
+           que é o caso de tudo que não é BC.
+
+           Este braço é o que fecha o buraco que sobrava: até aqui, conta sem
+           `Watchdog` saía por `return` na primeira linha e NUNCA percebia
+           queda por este caminho.
+
+        2. O `Watchdog` inline, que continua exatamente como estava. Ele não
+           virou redundância: é ele que responde DENTRO da fatia, sem esperar a
+           volta do vigia, e é a reserva se a thread do vigia não estiver de pé.
+
+        Sem watchdog configurado E sem anúncio do vigia, não faz nada.
         """
+        from . import sentinela
+        from .watchdog import DcReason
+
+        # 1. O VIGIA GLOBAL.
+        anuncio = sentinela.cobrar_a_queda(self.account.login)
+        if anuncio is not None:
+            chave, quadro, frase = anuncio
+            # O HISTÓRICO SAI COM O MOTIVO VERDADEIRO. Sem esta linha o cartão
+            # diria "processo" (o efeito do kill do vigia) em vez de "travou"
+            # (a causa) -- e o Histórico de Quedas existe justamente para dizer
+            # o que aconteceu.
+            self.ultima_queda = (chave, quadro)
+            raise Disconnected(frase)
+
+        # 2. O WATCHDOG INLINE.
         if self._watchdog is None:
             return
-        from .watchdog import DcReason
         reason = self._watchdog.check(None)
         if reason is not DcReason.NONE:
             raise Disconnected(reason.value)

@@ -34,7 +34,7 @@ from ..core.coords import coords_for_window
 from ..core.memory import Memory
 from ..core.target_hybrid import TargetHybrid
 from ..core.vision import TemplateLibrary
-from . import mural
+from . import mural, sentinela
 from .app import ExecutorDeMacro
 from .app.sincronia import SincroniaDoTime
 from .bc.routine import BossRushRoutine
@@ -325,10 +325,19 @@ class AccountSupervisor(threading.Thread):
                 pass
 
     def _sleep_interruptible(self, seconds: float) -> None:
+        """Espera conferindo a parada E a queda anunciada pelo vigia global.
+
+        Esta é a espera do BACKOFF entre relogins, que chega a 300 s
+        (`relogin_backoff_cap`), e era uma das JANELAS CEGAS do vigia antigo --
+        nenhum `tick()` roda aqui. Ver `bot/sentinela.py`.
+        """
         deadline = time.time() + seconds
         while time.time() < deadline:
             if self.stop_event.is_set():
                 raise StopRequested()
+            anuncio = sentinela.cobrar_a_queda(self.account.login)
+            if anuncio is not None:
+                raise Disconnected(anuncio[2])
             time.sleep(0.125)
 
     # -- identidade da janela ----------------------------------------------
@@ -1200,13 +1209,24 @@ class AccountSupervisor(threading.Thread):
             chave, quadro = queda
             rodando = (time.time() - ctx.stats.started_at
                        if ctx.stats.started_at else None)
+
+            # LER A MEMÓRIA DE UM PROCESSO QUE PODE JÁ TER MORRIDO: o vigia
+            # global mata de OUTRA thread, então o cliente pode não estar mais
+            # aí. Posição e local são complemento do cartão; uma exceção aqui
+            # perderia o cartão inteiro, justo na queda que mais importa.
+            def _da_memoria(leitura):
+                try:
+                    return leitura()
+                except Exception:
+                    return None
+
             quedas.registrar(
                 conta=self.account.login,
                 personagem=ctx.char_name or self.account.char_name,
                 motivo=chave,
                 fase=logmodo.contexto_atual().get("fase"),
-                posicao=ctx.memory.position(),
-                local=ctx.memory.location(),
+                posicao=_da_memoria(ctx.memory.position),
+                local=_da_memoria(ctx.memory.location),
                 run=ctx.stats.runs,
                 segundos_rodando=rodando,
                 relogin=self.relogin_count + 1,
@@ -2193,6 +2213,16 @@ class AccountSupervisor(threading.Thread):
                 self.account.settings.pet, "proxima_comida_em", 0.0) or None
 
         def conferir_saude() -> None:
+            # O VIGIA GLOBAL PRIMEIRO: morto o cliente travado, esta
+            # conferência só veria "processo sumiu" -- o efeito, não a causa.
+            anuncio = sentinela.cobrar_a_queda(self.account.login)
+            if anuncio is not None:
+                chave_do_vigia, quadro_do_vigia, frase = anuncio
+                ctx_do_vigia = getattr(self, "_ctx_atual", None)
+                if ctx_do_vigia is not None:
+                    ctx_do_vigia.ultima_queda = (chave_do_vigia, quadro_do_vigia)
+                raise Disconnected(frase)
+
             agora = time.time()
             na_hora = agora - ultima_olhada[0] >= VISUAL_CHECK_SECONDS
             if na_hora:
@@ -2494,6 +2524,17 @@ class AccountSupervisor(threading.Thread):
         # `core/instrumentacao.py`. Idempotente: o segundo supervisor a subir
         # nao embrulha nada de novo.
         instrumentacao.instrumentar_tudo()
+
+        # PÕE A CONTA SOB O VIGIA GLOBAL (`bot/sentinela.py`), uma vez, para a
+        # EXECUÇÃO inteira -- aqui e não em `_run_session`, porque a conta passa
+        # o tempo ruim FORA de uma sessão: backoff, espera de login, ociosa.
+        # A fonte é FUNÇÃO porque pid e hwnd trocam a cada relogin.
+        sentinela.vigiar(
+            self.account.login,
+            fonte=lambda: (self.pid, self.hwnd),
+            avisar=lambda frase: self._status(frase),
+        )
+
         self.tentativas_de_login = 0
         stopped = False
         try:
@@ -2562,6 +2603,9 @@ class AccountSupervisor(threading.Thread):
                     # e ainda atrapalha -- o supervisor a reconheceria como "sua"
                     # na volta seguinte e ficaria preso nela. Ver `_encerrar_caido`.
                     self._encerrar_caido("Sessão caída")
+                    # O ANÚNCIO DO VIGIA JÁ CUMPRIU O PAPEL: de pé, ele
+                    # derrubaria a sessão NOVA no primeiro `tick`.
+                    sentinela.limpar(self.account.login)
                     delay = backoff_delay(self.tentativas_de_login,
                                           self.config.relogin_backoff_cap)
                     self._status(f"Aguardando {delay:.0f}s antes de religar")
@@ -2616,6 +2660,12 @@ class AccountSupervisor(threading.Thread):
             except Exception:
                 pass
         finally:
+            # SAI DA VIGILÂNCIA: sem isto o vigia mataria o cliente que o
+            # usuário acabou de assumir na mão.
+            try:
+                sentinela.esquecer(self.account.login)
+            except Exception:
+                pass
             # CADA PASSO DE ENCERRAMENTO NO SEU PRÓPRIO `try`. Antes, uma falha
             # aqui -- `_teardown` numa janela que já morreu, por exemplo --
             # substituía o encerramento inteiro e a última linha nunca era

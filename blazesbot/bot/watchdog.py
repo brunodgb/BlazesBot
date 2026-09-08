@@ -22,6 +22,7 @@ legítimas e gerava falso positivo.
 """
 from __future__ import annotations
 
+import subprocess
 import time
 from enum import Enum
 
@@ -81,6 +82,29 @@ class DcReason(str, Enum):
     PROCESS_GONE = "processo do cliente encerrado"
     WINDOW_GONE = "janela do cliente desapareceu"
     RECONNECT_DIALOG = "aviso de conexão interrompida na tela"
+    # O QUARTO SINAL, e ele NÃO nasce em `avaliar_saude` -- ver o comentário
+    # "QUEDA INSTANTÂNEA x QUEDA POR CONFIRMAÇÃO" logo abaixo.
+    WINDOW_HUNG = "janela do cliente travada (parou de responder)"
+
+
+# ===========================================================================
+# QUEDA INSTANTÂNEA x QUEDA POR CONFIRMAÇÃO -- por que são DUAS portas
+# ===========================================================================
+#
+# `avaliar_saude` responde os três sinais que dispensam segunda opinião: o
+# processo não existe, a janela não existe, o aviso está na tela com nota acima
+# de 0.92 na caixa. Nenhum deles tem falso positivo possível -- por isso ela é
+# SEM ESTADO, e por isso qualquer um pode chamá-la de qualquer lugar.
+#
+# O TRAVAMENTO é de outra natureza. "A janela não respondeu AGORA" é ruído: um
+# pico de disco, uma troca de mapa, o Windows suspendendo a janela minimizada.
+# Só vira queda quando se repete -- e "se repete" exige MEMÓRIA ENTRE CICLOS,
+# que é precisamente o que `avaliar_saude` não tem e não pode ter.
+#
+# Então o travamento mora em quem tem ciclo: `bot/sentinela.py`. Isso NÃO é uma
+# segunda definição de queda concorrendo com esta -- o vigia chama `avaliar_saude`
+# para os três sinais e só ACRESCENTA o quarto, com a sonda de `core/janelas.py`
+# e o contador de reincidência. Continua existindo uma definição por sinal.
 
 
 def avaliar_saude(
@@ -135,8 +159,14 @@ def avaliar_saude(
     return DcReason.RECONNECT_DIALOG, frame
 
 
-def quadro_com_aviso_de_conexao(hwnd: int, templates):
+def quadro_com_aviso_de_conexao(hwnd: int, templates, captura=None):
     """O quadro com "Connection interrupted" na CAIXA, ou `None`.
+
+    `captura` existe para o VIGIA GLOBAL, que fotografa esta janela de outra
+    thread e por isso não pode usar o pool de GDI (ver
+    `core.vision.capture_window_isolado`). É injeção e não um segundo módulo de
+    propósito: o template, o limiar medido e a região são os MESMOS: só muda
+    quem segura o bitmap.
 
     UMA função e não duas: `avaliar_saude` (a definição de queda, para todo
     ecossistema) e `Watchdog._quadro_com_aviso_de_conexao` (a cadência do BC)
@@ -155,7 +185,7 @@ def quadro_com_aviso_de_conexao(hwnd: int, templates):
     template = templates.load(RECONNECT_TEMPLATE) if templates else None
     if template is None:
         return None
-    frame = capture_window(hwnd)
+    frame = (captura or capture_window)(hwnd)
     if frame is None:
         return None
     if find_template(frame, template, threshold=RECONNECT_THRESHOLD,
@@ -259,24 +289,89 @@ class Watchdog:
         self._last_visual_check = 0.0
 
 
-def kill_client(pid: int, timeout: float = 10.0) -> bool:
-    """Encerra o client.exe de forma limpa, com fallback para kill."""
+# Quanto tempo esperar o Windows realmente derrubar o processo depois do
+# `TerminateProcess`. NÃO é espera por educação -- o pedido já foi dado e é
+# irrecusável; isto é só o tempo de o núcleo desmontar o processo, que é
+# submilissegundo no caso normal. O teto existe para o caso patológico (driver
+# gráfico segurando um handle) e para a resposta ser um SIM ou NÃO honesto.
+ESPERA_PELA_MORTE = 2.0
+
+# Passo entre as conferências de "já morreu?". Fatia curta porque a resposta
+# quase sempre chega na primeira.
+PASSO_DA_CONFIRMACAO_DA_MORTE = 0.05
+
+
+def kill_client(pid: int, timeout: float = ESPERA_PELA_MORTE) -> bool:
+    """MATA o client.exe pela raiz. Sem pedir, sem esperar, sem negociar.
+
+    =====================================================================
+    POR QUE NÃO EXISTE MAIS O PEDIDO EDUCADO
+    =====================================================================
+
+    A versão anterior chamava `proc.terminate()` (que no Windows é
+    `TerminateProcess` para processo sem console, mas o `psutil` tenta o caminho
+    gentil primeiro) e ESPERAVA metade do timeout -- cinco segundos -- antes de
+    partir para o `kill()`. Isso está errado nas duas pontas:
+
+      * QUEM chamamos já está morto. Esta função só roda quando a queda foi
+        confirmada: ou o processo não responde, ou a sessão dele acabou. Pedir
+        educadamente para um cliente TRAVADO fechar é pedir para quem não está
+        ouvindo -- os cinco segundos são gastos por inteiro, sempre.
+      * O TEMPO É O RECURSO. O orçamento inteiro de detecção-até-relogin é de
+        20 s. Cinco deles em cerimônia com um processo morto é um quarto do
+        orçamento.
+
+    E há um efeito que não é secundário: **o kill é o que DESBLOQUEIA a thread
+    do bot.** Se ela estiver parada dentro de um `SendMessageW` síncrono contra
+    a janela travada -- que é o modo típico de a conta ficar presa para sempre
+    --, a chamada só retorna quando a janela deixa de existir. Matar o processo
+    é, literalmente, a operação que devolve a thread para o laço de sessão.
+
+    Devolve se o processo REALMENTE morreu; nunca levanta.
+    """
+    if not pid:
+        return True
+    if not psutil.pid_exists(pid):
+        return True
+
+    # PRIMEIRO CAMINHO: `psutil.Process.kill()` é `TerminateProcess` no Windows.
     try:
-        proc = psutil.Process(pid)
+        psutil.Process(pid).kill()
     except psutil.NoSuchProcess:
         return True
-    try:
-        proc.terminate()
-        proc.wait(timeout=timeout / 2)
-    except psutil.TimeoutExpired:
-        try:
-            proc.kill()
-            proc.wait(timeout=timeout / 2)
-        except Exception:
-            return False
     except Exception:
-        return False
-    return not psutil.pid_exists(pid)
+        # AccessDenied acontece quando o bot não está como administrador, ou
+        # quando o processo está em estado de encerramento. O `taskkill` abaixo
+        # é a segunda tentativa, e ele fala com o SCM em vez do handle.
+        pass
+
+    if _morreu(pid, timeout):
+        return True
+
+    # SEGUNDO CAMINHO: `taskkill /F /T`, que também derruba filhos. Sem console,
+    # sem janela, sem herdar as pipes do bot.
+    try:
+        subprocess.run(
+            ["taskkill", "/F", "/T", "/PID", str(int(pid))],
+            capture_output=True,
+            timeout=timeout,
+            creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+            check=False,
+        )
+    except Exception:
+        pass
+    return _morreu(pid, timeout)
+
+
+def _morreu(pid: int, teto: float) -> bool:
+    """Espera o processo sumir da tabela, até `teto`. Devolve se sumiu."""
+    fim = time.monotonic() + max(0.0, teto)
+    while True:
+        if not psutil.pid_exists(pid):
+            return True
+        if time.monotonic() >= fim:
+            return False
+        time.sleep(PASSO_DA_CONFIRMACAO_DA_MORTE)
 
 
 def client_pids() -> set[int]:

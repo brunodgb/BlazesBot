@@ -605,10 +605,10 @@ ligar código não testado.
 | `SEGUNDOS_PARA_O_PROGRAMA_MORRER` | `3.0` | [blazesbot/core/petbug.py:233](blazesbot/core/petbug.py#L233) | — | Espera o processo antigo MORRER antes de abrir o novo. Curto: é um formulário |
 | `TEXTO_DO_BOTAO` | `'Patch'` | [blazesbot/core/petbug.py:171](blazesbot/core/petbug.py#L171) | — | — |
 | `DIAS_GUARDADOS` | `3` | [blazesbot/core/quedas.py:57](blazesbot/core/quedas.py#L57) | main_window.py, web_app.py | Por TEMPO, e não por contagem: a pergunta é "o que aconteceu essa noite", e |
-| `FASE_DESCONHECIDA` | `'Estava começando a rodar'` | [blazesbot/core/quedas.py:119](blazesbot/core/quedas.py#L119) | — | — |
+| `FASE_DESCONHECIDA` | `'Estava começando a rodar'` | [blazesbot/core/quedas.py:123](blazesbot/core/quedas.py#L123) | — | — |
 | `LARGURA_DA_MINIATURA` | `320` | [blazesbot/core/quedas.py:79](blazesbot/core/quedas.py#L79) | — | Largura da MINIATURA, gravada ao lado do print inteiro. |
 | `LINHAS_DE_LOG_GUARDADAS` | `20` | [blazesbot/core/quedas.py:64](blazesbot/core/quedas.py#L64) | — | Linhas de log guardadas por conta. NÃO aparecem na tela (ver `FASES`); vão |
-| `MOTIVO_DESCONHECIDO` | `'O jogo parou de responder'` | [blazesbot/core/quedas.py:92](blazesbot/core/quedas.py#L92) | — | — |
+| `MOTIVO_DESCONHECIDO` | `'O jogo parou de responder'` | [blazesbot/core/quedas.py:96](blazesbot/core/quedas.py#L96) | — | — |
 | `QUALIDADE_DO_JPEG` | `85` | [blazesbot/core/quedas.py:70](blazesbot/core/quedas.py#L70) | — | Qualidade do JPEG. O print aqui é para OLHO HUMANO ler um aviso, não para |
 | `DESLOCAMENTO_6139_PARA_6400` | `96` | [blazesbot/core/rebase.py:91](blazesbot/core/rebase.py#L91) | — | Deslocamento MEDIDO entre a versão 6139 e a 6400 do cliente, em dois |
 | `EMPATE_ENTRE_VIZINHOS` | `8.0` | [blazesbot/core/rota.py:141](blazesbot/core/rota.py#L141) | — | Diferença de distância abaixo da qual dois waypoints VIZINHOS contam como |

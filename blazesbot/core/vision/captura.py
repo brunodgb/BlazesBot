@@ -443,6 +443,41 @@ def capture_window(hwnd: int) -> np.ndarray | None:
     return None
 
 
+def capture_window_isolado(hwnd: int) -> np.ndarray | None:
+    """A MESMA captura, sem tocar no pool de GDI. Para quem NÃO é a thread do bot.
+
+    =====================================================================
+    POR QUE ELA EXISTE -- CONDIÇÃO DE CORRIDA, NÃO PREFERÊNCIA
+    =====================================================================
+
+    `capture_window` reaproveita um DC e um bitmap POR JANELA, guardados em
+    `_pools`, que é um dicionário de módulo sem cadeado. Isso é ótimo enquanto
+    existe uma thread por janela -- e é o arranjo do bot: uma conta, uma thread.
+
+    O vigia global (`bot/sentinela.py`) quebra essa premissa: ele fotografa a
+    MESMA janela de OUTRA thread. Dois BitBlt no mesmo bitmap devolvem quadro
+    rasgado (metade de agora, metade de antes), e pior -- `AccountSupervisor.
+    _release` chama `release_pool(hwnd)` e DESTRÓI o DC no exato instante em que
+    a outra thread desenha nele. Isso não dá exceção em Python: dá handle GDI
+    inválido, quadro em branco e, sob carga, corrupção do pool da conta.
+
+    Então quem não é dono da janela aloca o seu e devolve: mais caro por quadro,
+    e o preço é irrelevante -- o vigia fotografa uma vez a cada ciclo, não a cada
+    tick de combate.
+
+    Mesma cascata de `capture_window` (PrintWindow, depois BitBlt) porque a
+    resposta tem que ser a MESMA imagem: é o mesmo template, com o mesmo limiar
+    medido, decidindo a mesma queda.
+    """
+    frame = _raw_capture(hwnd, use_printwindow=True)
+    if not frame_is_blank(frame):
+        return frame
+    frame = _raw_capture(hwnd, use_printwindow=False)
+    if not frame_is_blank(frame):
+        return frame
+    return None
+
+
 def capture_available(hwnd: int) -> bool:
     """Diz se dá para capturar a janela com conteúdo real."""
     return capture_window(hwnd) is not None

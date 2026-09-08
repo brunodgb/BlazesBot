@@ -54,6 +54,7 @@ from blazesbot.core.vision.captura import (
     _raw_capture,  # noqa: F401  re-export: tests testam o fallback
     capture_available,
     capture_window,
+    capture_window_isolado,
     client_offset,
     frame_is_blank,
     get_pool,
@@ -111,6 +112,7 @@ __all__ = [
     "boss_na_segunda_fase",
     "capture_available",
     "capture_window",
+    "capture_window_isolado",
     "client_offset",
     "crop",
     "find_all_templates",

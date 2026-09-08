@@ -413,3 +413,140 @@ contar as evidências antes de fechar. O log já tinha o número que separava as
 duas hipóteses.
 
 Log completo e contagens: `Teste-Ponteiros/RESULTADOS.md` seção 16.
+
+## 08/09/2026 — o vigia era COOPERATIVO, e por isso não podia funcionar
+
+Relato do usuário: contas que caem ou **travam** ficam presas para sempre. O
+requisito passou a ser explícito: **detectar em no máximo 20 s, em qualquer
+ecossistema, mesmo com o bot ocioso, e matar o `client.exe` pela raiz.**
+
+### A causa: vigia e vigiado eram a MESMA thread
+
+`Watchdog.check()` só rodava quando alguém da thread do bot o chamava —
+`ctx.tick()`, `_guard()`, o `conferir_saude` entre linhas da macro. Isso supõe
+que a thread do bot continua andando, e a queda destrói justamente essa
+premissa.
+
+O bot fala com o jogo por **`SendMessageW` síncrono** (é a regra permanente: a
+mensagem confere a janela e sai síncrona, com a coordenada no `lParam`).
+`SendMessageW` contra uma janela **travada não tem timeout** — ele bloqueia a
+thread que enviou, indefinidamente. A thread do bot parava dentro de uma tecla,
+e a conferência que perceberia a queda estava na linha seguinte, que nunca era
+alcançada. Não era o vigia que não via: era o vigia que estava parado no mesmo
+buraco do vigiado.
+
+### Três buracos, e o terceiro é o que prendia a conta
+
+1. **Travamento não era sinal de queda.** `avaliar_saude` responde por processo
+   morto, janela sumida e o aviso na tela. Um cliente **congelado** tem processo
+   vivo, janela viva e nenhuma caixa para fotografar: os três sinais dizem
+   "saudável". Este era o caso do "preso para sempre".
+2. **Janelas cegas.** Ninguém chamava `check()` durante o backoff entre relogins
+   (até 300 s), com a conta ONLINE e ociosa, nem durante o login.
+3. **Politesse cara.** `kill_client` chamava `terminate()` e esperava **5 s**
+   antes do `kill()` — cinco segundos pedindo educadamente a um processo que,
+   por definição de quem chama essa função, já não está ouvindo. Um quarto do
+   orçamento inteiro.
+
+### A saída: uma thread só, fora do bot — `bot/sentinela.py`
+
+Um `Vigia` para o processo inteiro, acordando a cada **6 s** com
+`Event.wait` (bloqueio no núcleo: **0% de CPU em repouso**, e o `desligar()`
+continua instantâneo — `time.sleep` daria uma das duas coisas, nunca as duas).
+
+A escada de sinais, do mais barato ao mais caro, e **a ordem é a economia**:
+
+| # | sinal | como | confirmações | pior caso |
+|---|---|---|---|---|
+| 1 | processo sumiu | `psutil.pid_exists` | 1 | 6 s |
+| 2 | janela sumiu | `IsWindow` | 2 | 12 s |
+| 3 | **janela travada** | `SendMessageTimeout(WM_NULL)` | 3 | **18 s** |
+| 4 | aviso na tela | captura + template 0.92 | 1 | 6 s |
+
+**Por que a sonda vem ANTES da captura, e não é detalhe:** `PrintWindow` (o
+primeiro caminho de `capture_window`) manda `WM_PRINT` **síncrono**. Fotografar
+uma janela travada penduraria a thread do vigia exatamente como pendura a do bot
+— o vigia morreria da doença que veio diagnosticar. Só se fotografa janela que
+acabou de provar que responde.
+
+### Os números, e por que não são arredondamento
+
+* **6 s de cadência** sai da conta `confirmações × cadência ≤ 20 s`. Com 3
+  confirmações no sinal mais ruidoso, o teto é 18 s, e sobram 2 s de folga.
+* **3 confirmações para o travamento** = 18 s de laço de mensagens
+  **completamente parado**, contra uma sonda que uma janela viva responde em
+  microssegundos mesmo carregando cenário. `WM_NULL` não faz nada: o único custo
+  é a viagem até a fila do cliente e a volta. **Lag de servidor não conta como
+  falso positivo** — lag de rede não para o laço de mensagens do Windows; o
+  cliente continua repintando e respondendo, só não recebe pacote.
+* **1 confirmação para processo sumido e para o aviso na tela.** Processo não
+  ressuscita, e o aviso já passa por região presa à caixa mais limiar 0.92, com
+  margem medida de **+0.559** sobre o pior falso (ver `RECONNECT_THRESHOLD`).
+  Confirmar seria só atrasar o relogin.
+* **2 confirmações para janela sumida** fecham uma fresta de arquitetura, não do
+  jogo: o `hwnd` que o vigia lê vem do supervisor em outra thread, e existe uma
+  volta entre o supervisor trocar de janela e o vigia enxergar a nova.
+
+### O isolamento — o que o vigia NÃO pode tocar
+
+É a parte que erra calada, então virou regra e teste
+(`tests/test_vigia_global.py`):
+
+* **Nada de `ctx.memory`.** O handle é aberto e **fechado** pela thread do bot.
+  Todo sinal do vigia é sistema operacional, não jogo.
+* **Nada de `capture_window`.** O pool de GDI (`vision._pools`) é um dicionário
+  de módulo **sem cadeado**, com um DC e um bitmap por janela, e
+  `AccountSupervisor._release` chama `release_pool`. Duas threads no mesmo
+  bitmap dão quadro rasgado; destruir o DC durante o BitBlt da outra dá handle
+  inválido **em silêncio**. Por isso nasceu `core.vision.capture_window_isolado`,
+  que aloca o seu e devolve.
+* **`TemplateLibrary` própria**, tocada só pela thread do vigia.
+* O único estado que atravessa a fronteira é o **anúncio** (`Posto.queda`),
+  escrito e lido com o cadeado segurado.
+
+### O desfecho: matar é o que DEVOLVE a conta
+
+Confirmada a queda, o vigia **anuncia e depois mata** — e a ordem não é trocável.
+
+Matar o processo **desbloqueia a thread do bot na mesma hora**: um
+`SendMessageW` contra uma janela que deixou de existir retorna imediatamente. Se
+o anúncio saísse depois do kill, a thread acordaria, veria só "processo sumiu" e
+o Histórico de Quedas registraria **o efeito no lugar da causa**.
+
+O relogin **não mudou**: a thread do bot acorda, lê o anúncio em
+`BotContext.check_watchdog`, levanta `Disconnected`, e o `run()` faz
+`_encerrar_caido` → backoff → nova sessão → login. O vigia não sabe o que é
+login e não precisa saber.
+
+### O que mudou em volta
+
+* `kill_client` virou **`TerminateProcess` direto** (`psutil.Process.kill()`),
+  com `taskkill /F /T` de reserva e confirmação por `pid_exists`. Sem
+  `terminate()`, sem espera de cortesia.
+* `check_watchdog` consulta o vigia **antes** do watchdog inline — e antes do
+  `return` das contas sem `Watchdog`. Era por ali que **tudo que não é BC**
+  ficava cego neste caminho.
+* `_sleep_interruptible` (o backoff) e o `conferir_saude` do APP consultam o
+  mesmo anúncio.
+* `_registrar_queda` passou a ler posição e local **defensivamente**: a queda
+  agora pode ser decretada de outra thread, que matou o processo antes desta
+  linha, e uma exceção ali perderia o cartão inteiro justamente na queda que
+  mais importa.
+* Novo motivo no Histórico de Quedas: **`travou`** — *"O jogo congelou e parou de
+  responder"*.
+
+### O interruptor
+
+`sentinela.MATAR_JANELA_TRAVADA = True`. É o único critério de morte que mata uma
+janela que o Windows ainda considera viva — se um dia derrubar conta boa, a volta
+atrás é uma linha, e não uma edição no meio do laço. Travado por teste.
+
+### O que NÃO subiu, e por quê
+
+A **memória** ainda não é fonte de queda, apesar da regra MEMÓRIA PRIMEIRO. Um
+ponteiro de conexão que zera seria o sinal mais rápido e mais barato de todos,
+mas ele **não está medido** — e a regra do projeto é que número novo precisa de
+medição, com ferramenta que só loga e sabe reprovar, comparando com a fonte
+antiga no MESMO instante. Enquanto isso não existir, o vigia decide por sinais
+do sistema operacional, que são fatos do Windows e não limiares chutados. É o
+próximo passo natural deste módulo.
