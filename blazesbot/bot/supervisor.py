@@ -1085,7 +1085,7 @@ class AccountSupervisor(threading.Thread):
             hh = conta.settings.hh
             if not conta.hh_farm or hh.modo_do_reset != MODO_FADA_DA_HH:
                 continue
-            if (hh.reset_nick or "").strip().lower() == meu_nick:
+            if (conta.settings.reset_nick or "").strip().lower() == meu_nick:
                 return conta
         return None
 

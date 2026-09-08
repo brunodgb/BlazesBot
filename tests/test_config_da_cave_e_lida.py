@@ -14,8 +14,8 @@ Quatro campos do `HHConfig` estavam nesse estado: `attack_delay`,
 pela GUI E pela web, lidos por ninguém.
 
 E o pior deles não era um número: **`reset_nick`**. `TeamService.montar_time()`
-lia `settings.bc.reset_nick`. O usuário configurou `hh.reset_nick`, o
-`bc.reset_nick` estava vazio, e a função devolvia `False` na primeira linha --
+lia `settings.bc.reset_nick`. O usuário configurou o campo da HH, o do BC
+estava vazio, e a função devolvia `False` na primeira linha --
 então a rotina caía em RECUPERAR e voltava a tentar, em laço, para sempre. A HH
 nunca montava time, e sem time os bosses não renascem.
 
@@ -201,49 +201,78 @@ def test_o_TeamService_NAO_le_o_reset_do_BC_direto_no_convite():
     assert "nick_do_reset()" in fonte
 
 
-def test_cada_rotina_INJETA_o_nick_da_cave_dela():
+def test_A_CONTA_DE_RESET_NAO_E_MAIS_UM_CAMPO_DE_CAVE():
+    """A classe do defeito acima foi FECHADA em 08/09/2026, não remendada.
+
+    Enquanto existiam dois campos, "qual deles vale" era uma pergunta em aberto
+    em todo código compartilhado -- e cada resposta errada custava uma cave sem
+    time. Um campo só (`AccountSettings.reset_nick`) não tem essa pergunta.
+
+    Este teste é a trava estrutural: reintroduzir `reset_nick` numa das caves
+    reabriria os três estados impossíveis (preencher um e esquecer o outro,
+    preencher os dois diferentes, e o código compartilhado sem saber qual ler).
+    """
+    from blazesbot.config import BCConfig, HHConfig
+
+    assert "reset_nick" in AccountSettings.__dataclass_fields__, (
+        "A conta de reset é do PERSONAGEM: uma por conta logada.")
+    for classe in (BCConfig, HHConfig):
+        assert "reset_nick" not in classe.__dataclass_fields__, (
+            f"{classe.__name__} voltou a ter conta de reset própria.")
+
+    # O MODO da HH continua sendo da HH: "solo ou fada" é decisão de cave.
+    assert "modo_do_reset" in HHConfig.__dataclass_fields__
+
+
+def test_cada_rotina_INJETA_o_nick_do_personagem():
+    """A injeção CONTINUA existindo, e não é redundância.
+
+    Ela é o que permite a uma cave futura ter reseter próprio sem mexer no
+    `TeamService` -- e é o que impede o serviço de voltar a ler config direto,
+    que foi a causa do defeito de 03/09/2026.
+    """
     from blazesbot.bot.bc.routine import BossRushRoutine
     from blazesbot.bot.hh.routine import HHRoutine
 
-    for rotina, esperado in ((BossRushRoutine, "settings.bc.reset_nick"),
-                             (HHRoutine, "settings.hh.reset_nick")):
+    for rotina in (BossRushRoutine, HHRoutine):
         fonte = _fonte(rotina.__init__)
         assert "nick_do_reset=" in fonte, rotina.__name__
-        assert esperado in fonte, f"{rotina.__name__} injeta o nick errado"
+        assert "settings.reset_nick" in fonte, (
+            f"{rotina.__name__} não injeta o campo do personagem")
+        for antigo in ("settings.bc.reset_nick", "settings.hh.reset_nick"):
+            assert antigo not in fonte, f"{rotina.__name__} lê {antigo}"
 
 
-def test_sem_injecao_o_TeamService_usa_o_BC():
-    """Comportamento de sempre para quem não passa nada -- ferramentas e testes
-    que constroem o serviço sem dizer a cave."""
+def test_sem_injecao_o_TeamService_usa_o_campo_do_personagem():
+    """Comportamento para quem não passa nada -- ferramentas e testes."""
     from blazesbot.bot.team import TeamService
 
     servico = object.__new__(TeamService)
     servico._nick_do_reset = None
-    servico.ctx = type("C", (), {
-        "settings": AccountSettings(),
-    })()
-    servico.ctx.settings.bc.reset_nick = "ResetDoBC"
-    servico.ctx.settings.hh.reset_nick = "ResetDaHH"
-    assert servico.nick_do_reset() == "ResetDoBC"
+    servico.ctx = type("C", (), {"settings": AccountSettings()})()
+    servico.ctx.settings.reset_nick = "ResetDaConta"
+    assert servico.nick_do_reset() == "ResetDaConta"
 
 
-def test_com_injecao_o_TeamService_usa_a_cave_injetada():
+def test_com_injecao_o_TeamService_usa_o_que_foi_injetado():
     from blazesbot.bot.team import TeamService
 
     servico = object.__new__(TeamService)
     st = AccountSettings()
-    st.hh.reset_nick = "ResetDaHH"
-    servico._nick_do_reset = lambda: st.hh.reset_nick
+    st.reset_nick = "ResetDaConta"
+    servico._nick_do_reset = lambda: "OutroQualquer"
     servico.ctx = type("C", (), {"settings": st})()
-    assert servico.nick_do_reset() == "ResetDaHH"
+    assert servico.nick_do_reset() == "OutroQualquer"
 
 
-def test_o_aceitador_de_convite_enxerga_as_DUAS_caves():
-    """Olhar só `bc.reset_nick` deixava o reseter da HH invisível: o modo
-    estrito não ligava por causa dele, e um convite da HH chegava sem ninguém
-    reconhecer quem convidou."""
+def test_o_aceitador_de_convite_le_o_campo_do_personagem():
+    """Antes ele tinha que olhar as DUAS caves para não perder o reseter da HH.
+
+    Com um campo só, a varredura é uma -- e não há como esquecer uma cave nova.
+    """
     from blazesbot.bot.team import InviteAcceptor
 
     fonte = _fonte(InviteAcceptor._modo_estrito)
-    assert "settings.bc.reset_nick" in fonte
-    assert "settings.hh.reset_nick" in fonte
+    assert "settings.reset_nick" in fonte
+    assert "settings.bc.reset_nick" not in fonte
+    assert "settings.hh.reset_nick" not in fonte

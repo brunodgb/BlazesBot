@@ -890,12 +890,8 @@ class BCConfig:
     # boss com quatro mobs somando dano por trás. O campo continua aqui para o
     # caso de alguma ferramenta precisar pular a fase em um teste.
     matar_guardas: bool = True
-    # Nick da conta que fica parada só para resetar a cave.
-    #
-    # Vazio = não usa reset de time. Preenchido = o bot convida esse nick antes
-    # de cada entrada. Não há liga/desliga separado: o campo em branco já diz
-    # tudo, e um interruptor a mais seria só uma forma de errar.
-    reset_nick: str = ""
+    # A CONTA DE RESET NÃO MORA AQUI -- ela é do PERSONAGEM
+    # (`AccountSettings.reset_nick`). Ver a nota lá.
     route: BCRoute = field(default_factory=BCRoute)
     vendor: BCVendor = field(default_factory=BCVendor)
 
@@ -984,11 +980,9 @@ class HHConfig:
     #   "fada"  -- as DUAS entram, a Fada acompanha e cura, e o desfaz-refaz
     #              acontece FORA, depois de sair.
     modo_do_reset: str = MODO_SOLO_DA_HH
-    # Nick da conta que reseta (ou da Fada, no modo "fada").
-    #
-    # Vazio = sem reset, e aí a cave só rende na primeira run. Não há liga e
-    # desliga separado: o campo em branco já diz tudo.
-    reset_nick: str = ""
+    # O MODO fica aqui; O NICK NÃO. "Solo ou fada" é decisão DESTA cave -- a BC
+    # não tem modo nenhum. Já QUEM reseta é a mesma conta para as duas
+    # (`AccountSettings.reset_nick`), e no modo fada é ela que entra junto.
     # JOGAR O LIXO FORA ANTES DE VENDER? Desligado por padrão.
     #
     # A HH dropa item que o NPC NÃO COMPRA, e ele ocupa slot da bolsa até a run
@@ -1045,6 +1039,30 @@ class AccountSettings:
     hh: HHConfig = field(default_factory=HHConfig)
     # Marque na conta que fica parada só para as outras resetarem a cave.
     accept_team_invites: bool = False
+    # ===================================================================
+    # A CONTA DE RESET É DO PERSONAGEM, E NÃO DA CAVE
+    # ===================================================================
+    #
+    # Nick da conta que fica parada só para resetar a cave desta conta (e que,
+    # no modo fada da HH, entra junto para curar).
+    #
+    # ERA UM CAMPO POR CAVE (`bc.reset_nick` e `hh.reset_nick`) e isso estava
+    # errado por desenho, não por acaso: o reseter é UM por conta logada. Dois
+    # campos criavam três estados impossíveis -- preencher um e esquecer o
+    # outro (medido em 03/09/2026: o usuário configurou o da HH, o do BC ficou
+    # vazio, e `montar_time` devolvia False para sempre), preencher os dois com
+    # nicks diferentes, e a pergunta sem resposta de qual deles vale para o
+    # código compartilhado (`TeamService`, `problema_do_reset`, o modo estrito
+    # do aceitador).
+    #
+    # Vazio = não usa reset de time. Preenchido = o bot convida esse nick antes
+    # de cada entrada, nas duas caves. Não há liga/desliga separado: o campo em
+    # branco já diz tudo, e um interruptor a mais seria só uma forma de errar.
+    #
+    # LISTA FECHADA nas duas interfaces: o reseter precisa ser uma conta
+    # cadastrada aqui, porque é isso que permite ao bot perceber que ela caiu e
+    # SEGURAR a entrada em vez de perder a run.
+    reset_nick: str = ""
     # Catar o loot do chão na mão, para a conta cujo pet NÃO tem a skill de
     # auto pick.
     #
@@ -1661,7 +1679,7 @@ class BotConfig:
             return []
         return [c for c in self.enabled_accounts()
                 if c is not reseter
-                and c.settings.bc.reset_nick.strip().lower() == nick]
+                and c.settings.reset_nick.strip().lower() == nick]
 
     def problema_do_reset(self, conta: Account) -> str | None:
         """Por que o reset de time desta conta NÃO pode funcionar. `None` = ok.
@@ -1691,7 +1709,7 @@ class BotConfig:
         função a segunda pergunta não teria resposta e o bot esperaria para
         sempre por alguém que ele mesmo aposentou.
         """
-        nick = conta.settings.bc.reset_nick.strip()
+        nick = conta.settings.reset_nick.strip()
         if not nick:
             return None                     # campo vazio = não usa reset
 
@@ -1712,7 +1730,7 @@ class BotConfig:
             return (f"a conta '{nick}' não está marcada para aceitar convites "
                     "de time, então ela não vai aceitar o convite desta conta")
         if reseter.farms:
-            return (f"a conta de reset '{nick}' está com o BC farm ligado. "
+            return (f"a conta de reset '{nick}' está com farm de cave ligado. "
                     "Reseter fica parado esperando o convite; farmando, ele "
                     "não está na porta da cave na hora")
         if reseter.settings.app.enabled:
@@ -1855,6 +1873,25 @@ class BotConfig:
             st.mount_speed_pct = int(dados["mount_speed_pct"])
         if "accept_team_invites" in dados:
             st.accept_team_invites = bool(dados["accept_team_invites"])
+        # A CONTA DE RESET, com a migração das duas chaves de cave.
+        #
+        # LÊ DO BRUTO, e isso é obrigatório: os blocos `bc` e `hh` passam por
+        # `_filtra`, que descarta chave que não é campo -- ou seja, depois de
+        # `reset_nick` sair de `BCConfig`/`HHConfig` o valor antigo seria jogado
+        # fora em silêncio e o usuário veria a conta de reset em branco.
+        #
+        # O BC GANHA quando as duas estão preenchidas com nicks diferentes: era
+        # dele que `problema_do_reset` lia, então é o valor que o bot de fato
+        # usava para vetar o farm e para travar a entrada.
+        if "reset_nick" in dados:
+            st.reset_nick = str(dados["reset_nick"] or "").strip()
+        else:
+            for bloco in ("bc", "hh"):
+                antigo = str((dados.get(bloco) or {}).get("reset_nick")
+                             or "").strip()
+                if antigo:
+                    st.reset_nick = antigo
+                    break
         # SEM ESTA LINHA O CAMPO VOLTA AO PADRÃO A CADA ABERTURA DO BOT. É a
         # mesma armadilha que o `apagar_lixo_a_cada` já pagou: a leitura
         # reconstrói campo a campo, então gravar certo não basta -- o que não é
@@ -1956,8 +1993,11 @@ class BotConfig:
             bc.vendor = BCVendor(**v)
 
         antigo_time = dados.get("team_reset", {})
-        if antigo_time.get("reset_nick"):
-            bc.reset_nick = antigo_time["reset_nick"]
+        if antigo_time.get("reset_nick") and not st.reset_nick:
+            # v1/v2 tinham o nick solto em `team_reset`. Ele vai para o escopo
+            # do personagem, que é onde o campo mora agora -- e só se nada mais
+            # recente tiver preenchido, para não sobrescrever config de hoje.
+            st.reset_nick = str(antigo_time["reset_nick"]).strip()
 
         st.bc = bc
         return st
@@ -2047,7 +2087,7 @@ class BotConfig:
         de outro jeito. Não há palpite envolvido.
 
         MEXER NUMA CONTA QUE FARMA INVENTARIA. Se o nick aponta para uma conta
-        com `bc_farm` ou modo APP ligado, ligar a flag seria eu decidindo que
+        com farm de cave ou modo APP ligado, ligar a flag seria eu decidindo
         ela deve parar de farmar -- e essa decisão não é minha. Nesse caso a
         migração não toca em nada e o caso cai em `problema_do_reset`, que veta
         o BC daquela conta com a mensagem exata e deixa a escolha com quem
@@ -2057,7 +2097,7 @@ class BotConfig:
         outra máquina, ou nick digitado errado): não há o que ligar.
         """
         for conta in cfg.accounts:
-            nick = conta.settings.bc.reset_nick.strip()
+            nick = conta.settings.reset_nick.strip()
             if not nick:
                 continue
             reseter = cfg.account_by_nick(nick)

@@ -1103,15 +1103,15 @@
     "en": "Use the mount's speed\n                skill in the cave",
     "es": "Usar skill de\n                velocidad de la montura en la cueva"
   },
-  "grupo_reset_time": {
-    "pt-br": "Reset do Time",
-    "en": "Team Reset",
-    "es": "Reinicio del Equipo"
-  },
   "campo_conta_reset": {
     "pt-br": "Conta de reset",
     "en": "Reset account",
     "es": "Cuenta de reinicio"
+  },
+  "ajuda_conta_reset": {
+    "pt-br": "UMA conta de reset por conta logada, e ela vale para TODAS as caves. Sem trocar de time o boss não renasce, então o bot espera na porta se ela cair.",
+    "en": "ONE reset account per logged account, valid for ALL caves. Without switching teams the boss does not respawn, so the bot waits at the door if it goes offline.",
+    "es": "UNA cuenta de reinicio por cuenta conectada, y vale para TODAS las cuevas. Sin cambiar de equipo el boss no reaparece, así que el bot espera en la puerta si se cae."
   },
   "grupo_venda_npc": {
     "pt-br": "Regras de Venda Automática (NPC)",
@@ -1167,11 +1167,6 @@
     "pt-br": "SOLO: a conta de reset aceita o convite, o personagem entra e o time é desfeito na hora. Ela nunca entra na cave — é o mesmo que a Bewitcher Cave já faz.\n\nCOM A FADA: as duas entram juntas. A Fada acompanha o personagem e cura quando precisa; ao sair, o time é desfeito e refeito, e só então dá para entrar de novo.",
     "en": "SOLO: the reset account accepts the invite, the character joins and the team is disbanded right away. It never enters the cave — the same as Bewitcher Cave already does.\n\nWITH THE FAIRY: both enter together. The Fairy follows the character and heals when needed; on exit, the team is disbanded and redone, and only then can you enter again.",
     "es": "SOLO: la cuenta de reinicio acepta la invitación, el personaje entra y el equipo se deshace en el acto. Nunca entra a la cueva — es lo mismo que ya hace Bewitcher Cave.\n\nCON EL HADA: las dos entran juntas. El Hada acompaña al personaje y cura cuando hace falta; al salir, el equipo se deshace y se rehace, y solo entonces se puede entrar de nuevo."
-  },
-  "ajuda_hh_conta_reset": {
-    "pt-br": "Só contas cadastradas NESTE bot. É isso que permite ao bot saber que ela caiu e segurar a entrada da cave, em vez de entrar sem reset e perder a run.",
-    "en": "Only accounts registered in THIS bot. That's what lets the bot know it disconnected and hold the cave entry, instead of entering without a reset and losing the run.",
-    "es": "Solo cuentas registradas en ESTE bot. Eso es lo que permite al bot saber que se cayó y retener la entrada a la cueva, en vez de entrar sin reinicio y perder la run."
   },
   "grupo_combate": {
     "pt-br": "Combate",

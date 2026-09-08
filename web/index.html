@@ -406,6 +406,16 @@
             <select id="ed-montaria" class="campo-input"></select>
           </div>
           <div class="campo">
+            <!-- A CONTA DE RESET, UMA para todas as caves. Era um campo por
+                 cave (BC e HH) e isso criava estados impossíveis: preencher um
+                 e esquecer o outro deixava a cave sem time. LISTA FECHADA,
+                 populada por montarListaDeReset. -->
+            <span class="rotulo"><span data-i18n="campo_conta_reset">Conta de reset</span> <span class="ajuda"
+              data-i18n-ajuda="ajuda_conta_reset"
+              data-ajuda="UMA conta de reset por conta logada, e ela vale para TODAS as caves.&#10;&#10;Sem trocar de time o boss não renasce: a instância continua com ele morto e a run é perdida. Entrar num time novo reseta a cave.&#10;&#10;Deixe uma conta parada, cadastrada aqui no bot só para login, e marque nela 'aceitar convites de time' — é isso que faz ela aparecer nesta lista.&#10;&#10;Vazio = não usa reset de time.&#10;&#10;Na HH, no modo 'com a Fada', é esta mesma conta que entra junto e cura. O modo fica na aba da HH; o nick fica aqui.&#10;&#10;SE ESSA CONTA CAIR o bot NÃO entra na cave: espera na porta e volta sozinho quando ela reconectar.">?</span></span>
+            <select id="ed-reset-nick" class="campo-input"></select>
+          </div>
+          <div class="campo">
             <span class="rotulo"><span data-i18n="campo_grupo">Grupo</span> <span class="ajuda"
               data-i18n-ajuda="ajuda_grupo"
               data-ajuda="Rótulo só para VOCÊ organizar a lista de contas. Contas com o mesmo grupo aparecem juntas na tabela, com um cabeçalho.&#10;&#10;NÃO é o time do modo APP nem a party da cave — o bot não muda nada por causa deste campo.&#10;&#10;Deixe vazio para a conta ficar fora de qualquer grupo. Você também pode arrastar a conta pela alça (⠿) para dentro de outro grupo.">?</span></span>
@@ -702,22 +712,12 @@
           </div>
         </div>
 
-        <div class="flex gap-4 mt-4">
-          <div class="grupo flex-1">
-            <div class="grupo-titulo text-blue-400" data-i18n="grupo_rota_cave">Rota na Cave</div>
-            <label class="campo-check mt-1"><input id="ed-sk-velocidade" type="checkbox" /><span data-i18n="ck_sk_velocidade">Usar skill de
-                velocidade da montaria na cave</span></label>
-          </div>
-          <div class="grupo flex-1">
-            <div class="grupo-titulo" data-i18n="grupo_reset_time">Reset do Time</div>
-            <div class="campo">
-              <span data-i18n="campo_conta_reset">Conta que reseta a cave</span>
-              <!-- LISTA FECHADA, não texto livre: o reseter precisa ser uma
-                   conta cadastrada aqui, senão o bot não tem como perceber que
-                   ela caiu e segurar a entrada. Populada por montarListaDeReset. -->
-              <select id="ed-reset-nick" class="campo-input"></select>
-            </div>
-          </div>
+        <!-- A CONTA DE RESET saiu daqui em 08/09/2026: é uma por conta
+             logada, não uma por cave, e mora na aba Personagem. -->
+        <div class="grupo mt-4">
+          <div class="grupo-titulo text-blue-400" data-i18n="grupo_rota_cave">Rota na Cave</div>
+          <label class="campo-check mt-1"><input id="ed-sk-velocidade" type="checkbox" /><span data-i18n="ck_sk_velocidade">Usar skill de
+              velocidade da montaria na cave</span></label>
         </div>
 
         <div class="grupo mt-4">
@@ -751,11 +751,8 @@
               </select>
               <span class="ajuda" data-i18n-ajuda="ajuda_hh_modo" data-ajuda="SOLO: a conta de reset aceita o convite, o personagem entra e o time é desfeito na hora. Ela nunca entra na cave — é o mesmo que a Bewitcher Cave já faz.&#10;&#10;COM A FADA: as duas entram juntas. A Fada acompanha o personagem e cura quando precisa; ao sair, o time é desfeito e refeito, e só então dá para entrar de novo.">?</span>
             </div>
-            <div class="campo">
-              <span data-i18n="campo_conta_reset">Conta de reset</span>
-              <select id="ed-hh-reset" class="campo-input"></select>
-              <span class="ajuda" data-i18n-ajuda="ajuda_hh_conta_reset" data-ajuda="Só contas cadastradas NESTE bot. É isso que permite ao bot saber que ela caiu e segurar a entrada da cave, em vez de entrar sem reset e perder a run.">?</span>
-            </div>
+            <!-- A conta de reset é a MESMA do BC e mora na aba Personagem.
+                 Aqui fica só o MODO, que é decisão desta cave. -->
           </div>
         </div>
 

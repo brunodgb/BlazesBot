@@ -138,18 +138,9 @@ ESPERA_ENTRE_TENTATIVAS = 0.025
 MAX_SEGUNDOS_ENTRADA = 1 * 60 * 60.0
 
 # Cadência da espera pela conta de reset (ver `_esperar_o_reseter`).
-#
-# NÚMERO DERIVADO, não medido: quem responde é uma leitura de dicionário em
-# memória, então o custo de perguntar é zero e o passo poderia ser bem menor. Um
-# segundo é o suficiente porque a trava dura minutos (um relogin inteiro), não
-# milissegundos -- e é `ctx.tick`, então o Parar continua sendo instantâneo.
 PASSO_DA_ESPERA_DO_RESETER = 1.0
 
 # De quanto em quanto tempo repetir o aviso enquanto a trava dura.
-#
-# NÚMERO COSMÉTICO, sem medição atrás. Existe porque uma linha escrita quarenta
-# minutos atrás não avisa ninguém: quem olha a tela no meio da trava precisa ver
-# por que a conta está parada sem ter que rolar o log para trás.
 INTERVALO_DO_AVISO_DO_RESETER = 300.0
 
 # A cada quantas tentativas o log conta como vai a disputa. Uma linha por
@@ -427,7 +418,7 @@ class BossRushRoutine:
         # O nick do BC é o padrão do `TeamService`; passar explícito
         # deixa as duas caves simétricas e o leitor sem dúvida.
         self.team = TeamService(
-            ctx, nick_do_reset=lambda: ctx.settings.bc.reset_nick)
+            ctx, nick_do_reset=lambda: ctx.settings.reset_nick)
         # Um navegador só por conta, compartilhado. Ele guarda o cronômetro da
         # tecla da montaria e a recarga da skill de velocidade; duplicá-lo faria
         # dois donos do mesmo interruptor.
@@ -872,67 +863,16 @@ class BossRushRoutine:
             self.ctx.tick(min(PASSO_DO_RECONHECIMENTO, restante))
 
     def _esperar_o_reseter(self) -> None:
-        """Segura a entrada na cave enquanto a conta de reset não está no ar.
-
-        =================================================================
-        POR QUE ESPERAR É MELHOR QUE ENTRAR
-        =================================================================
-
-        Sem trocar de time o boss NÃO RENASCE: a instância continua com ele
-        morto e a run inteira é perdida -- depois de já ter gasto o teleporte, a
-        travessia e a disputa da entrada. Entrar sem reseter não é "entrar mais
-        devagar", é jogar fora tudo que veio antes. Esperar, por pior que
-        pareça, é sempre mais barato.
-
-        Quem preencheu o `reset_nick` já declarou isso. Por isso não existe um
-        interruptor separado para a trava: o campo em branco continua sendo o
-        jeito de dizer "não uso reset de time".
-
-        =================================================================
-        ONDE ELA FICA, E POR QUE SÓ AQUI
-        =================================================================
-
-        Este é o ÚNICO ponto de trava, imediatamente antes do convite. A run em
-        curso termina inteira -- boss, venda, viagem de volta -- e o personagem
-        estaciona no ponto de entrada que ele já conquistou. Travar mais cedo
-        (no meio do covil, por exemplo) perderia a run atual por causa de um
-        problema que só afeta a PRÓXIMA, e o reseter só é necessário no instante
-        da entrada.
-
-        =================================================================
-        "CAIU" E "NÃO EXISTE MAIS" SÃO ESTADOS DIFERENTES
-        =================================================================
-
-        Caiu é temporário por natureza: relogin é o comportamento padrão de toda
-        conta, então ela volta sozinha e a espera tem fim. Já um reseter
-        removido, desativado, desmarcado, posto para farmar ou aposentado por
-        senha errada NÃO VOLTA -- esperar por ele seria uma conta parada a noite
-        inteira sem nada acontecendo.
-
-        Por isso a condição é reavaliada a cada volta e não só na entrada:
-        `problema_do_reset` lê a configuração VIVA, e a configuração pode mudar
-        com o bot rodando. Quando ela responde, o desfecho é o mesmo da venda
-        sem tecla de retorno -- desliga o `bc_farm` desta conta e salva, o
-        checkbox desmarca nas duas interfaces, e isso É o aviso.
-
-        A espera é `ctx.tick`, nunca `time.sleep`: é o `tick` que mantém o
-        watchdog DESTA conta vivo enquanto ela está parada (uma conta de BC
-        também cai, e parada por horas ela ficaria cega para a própria queda) e
-        é ele que dá as três saídas de graça -- Parar, desmarcar o BC farm
-        (`FarmDesligado`) e ligar o modo APP.
-        """
+        """Segura a entrada na cave enquanto a conta de reset não está no ar."""
         ctx = self.ctx
-        nick = ctx.settings.bc.reset_nick.strip()
+        nick = ctx.settings.reset_nick.strip()
         if not nick:
-            return                              # esta conta não usa reset
-
-        comecou = time.time()
+            return
+        import time as _t
+        comecou = _t.time()
         proximo_aviso = 0.0
         while True:
             ctx.raise_if_stopped()
-
-            # Config VIVA: o reseter pode ter sido desmarcado, desativado ou
-            # posto para farmar depois que a trava começou.
             problema = ctx.config.problema_do_reset(ctx.account)
             if problema is not None:
                 ctx.account.bc_farm = False
@@ -940,37 +880,22 @@ class BossRushRoutine:
                     ctx.config.save()
                 except Exception as exc:
                     ctx.log.warning("Não consegui salvar a configuração: %s", exc)
-                ctx.log.error(
-                    "BC farm DESLIGADO nesta conta: %s. A conta continua "
-                    "online e relogando; remarque o BC farm depois de "
-                    "corrigir o reset de time.", problema,
-                )
-                # `bc_farm` acabou de virar False: o próprio `raise_if_stopped`
-                # levanta `FarmDesligado` e devolve a conta ao estado "online".
+                ctx.log.error("BC farm DESLIGADO nesta conta: %s.", problema)
                 ctx.raise_if_stopped()
                 return
-
             if reseter_online(nick):
-                if proximo_aviso:               # só loga se chegou a travar
-                    ctx.log.info(
-                        "A conta de reset '%s' voltou. Parado %s esperando "
-                        "por ela.", nick, frase_do_tempo(time.time() - comecou),
-                    )
+                if proximo_aviso:
+                    ctx.log.info("A conta de reset '%s' voltou. Parado %s.",
+                                 nick, frase_do_tempo(_t.time() - comecou))
                 return
-
-            agora = time.time()
+            agora = _t.time()
             if agora >= proximo_aviso:
                 proximo_aviso = agora + INTERVALO_DO_AVISO_DO_RESETER
                 silencio = silencio_do_reseter(nick)
                 ctx.log.warning(
                     "Parado na porta da cave: a conta de reset '%s' não está no "
-                    "ar (%s). Sem ela o boss não renasce, então não entro. "
-                    "Volto sozinho quando ela reconectar — parado há %s.",
-                    nick,
-                    "nunca subiu nesta execução" if silencio is None
-                    else f"sem responder há {silencio:.0f}s",
-                    frase_do_tempo(agora - comecou),
-                )
+                    "ar (%s). Volto sozinho quando ela reconectar.", nick,
+                    "nunca subiu" if silencio is None else f"há {silencio:.0f}s")
             ctx.tick(PASSO_DA_ESPERA_DO_RESETER)
 
     def _do_entrar(self) -> None:
@@ -1003,8 +928,7 @@ class BossRushRoutine:
         # que está dentro. O begin_run foi movido para logo depois do laço,
         # junto com o sair_do_time -- ver abaixo.
 
-        # O PORTÃO DO RESETER vem ANTES do convite, e é o único ponto do bot
-        # que segura a entrada. Ver `_esperar_o_reseter`.
+        # O PORTÃO DO RESETER vem ANTES do convite.
         self._esperar_o_reseter()
 
         # Chegamos na coordenada: é AQUI que o time de reset é montado, e não

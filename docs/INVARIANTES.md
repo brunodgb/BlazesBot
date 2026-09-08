@@ -475,6 +475,14 @@ time a flag não faz nada.
   bosses não renascem. Dois modos: **HH solo** (igual à BC — reset aceita, o farm
   entra, o time é desfeito) e **HH + Fada** (as duas entram, a Fada acompanha e
   cura, e o desfaz-refaz acontece FORA, depois de sair).
+- **A CONTA de reset é UMA por conta logada, e não uma por cave**
+  (`AccountSettings.reset_nick`, 08/09/2026). O que é da HH é o MODO (solo ou
+  fada). Dois campos criavam três estados impossíveis, e um deles custou uma HH
+  rodando sem time em laço — ver `docs/decisoes/reset-de-time.md`, Decisão 8.
+- **A HH NÃO ENTRA com o reseter offline**: trava no `_garantir_o_time`, depois
+  de conferir o time e antes do convite. É a MESMA trava do BC
+  (`bot/espera_do_reseter.py`) — o que é de cada cave é ONDE ela fica. Entrar
+  sem reset joga fora o teleporte, a travessia e a run inteira.
 - **A Fada é uma peça só, em `bot/fada.py`.** Ela cura de onde está e não sabe
   andar. Quem viaja, entra na cave e segue o líder é `bot/hh/fada.py`, que a
   COMPÕE: um giro do laço de cura (`_uma_volta`) é chamado de dentro do laço de

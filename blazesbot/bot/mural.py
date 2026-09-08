@@ -30,7 +30,7 @@ injeção do supervisor. `core/` não compraria nada.
 
 **O QUE NÃO SUBIU, E POR QUÊ:** `TeamService` e `InviteAcceptor` ficaram em
 `bot/team.py` porque precisam de `BotContext` (visão, clique, templates) e
-carregam política do BC -- os dois leem `settings.bc.reset_nick`. O mural aqui
+carregam política do BC -- os dois leem `settings.reset_nick`. O mural aqui
 não sabe o que é cave, boss nem reset: só guarda quem anunciou o quê e quando.
 
 **OS TRÊS QUADROS COMPARTILHAM UM LOCK, E ISSO É DE PROPÓSITO.** `_ACEITES` usa

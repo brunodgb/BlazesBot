@@ -237,7 +237,7 @@ class HHRoutine:
         # falam com a máquina de estados nem sabem em que trecho a run parou.
         self.manutencao = ManutencaoDaHH(ctx, self.vendedor)
         self.team = TeamService(
-            ctx, nick_do_reset=lambda: ctx.settings.hh.reset_nick)
+            ctx, nick_do_reset=lambda: ctx.settings.reset_nick)
         self.state = State.SITUAR
         # O PROGRESSO DOS TRECHOS TEM DONO, e é `hh/progresso.py`.
         #
@@ -273,7 +273,7 @@ class HHRoutine:
             "Iniciando HH (Black Wind Camp Dungeon) | reset: %s (%s) | "
             "montaria %s%% | venda a partir do slot %s",
             ctx.settings.hh.modo_do_reset,
-            ctx.settings.hh.reset_nick or "sem conta de reset",
+            ctx.settings.reset_nick or "sem conta de reset",
             ctx.settings.mount_speed_pct,
             ctx.settings.hh.vendor.sell_start_slot,
         )
@@ -745,7 +745,7 @@ class HHRoutine:
             # SOLO: a conta de reset já cumpriu o papel dela. Desfazer agora é o
             # que faz os bosses renascerem para a PRÓXIMA run -- e é o mesmo
             # desenho da BC.
-            if ctx.settings.hh.reset_nick:
+            if ctx.settings.reset_nick:
                 self.team.sair_do_time()
         else:
             ctx.log.info("HH+Fada: mantendo o time; ela entra junto e acompanha")
@@ -865,20 +865,13 @@ class HHRoutine:
                     "diante a cave vem vazia.")
             return True
 
-        # `estado_do_time` E NÃO `in_team`, e a diferença é o `None`.
+        # `estado_do_time` E NÃO `in_team`, e a diferença é o `None`: aqui o
+        # desfecho de "não sei" é o mesmo de "não estou" -- tentar montar.
+        # Montar estando em time é barato; entrar sem reset é achar a cave
+        # vazia da segunda run em diante.
         #
-        # `in_team` achata "não estou em time" e "não consegui ler o time" no
-        # mesmo `False` -- o próprio `bot/team.py` documenta que essa confusão já
-        # custou caro uma vez, quando `sair_do_time` saía sem clicar porque a
-        # leitura tinha falhado. Aqui o desfecho de "não sei" é o mesmo de "não
-        # estou": tentar montar. Montar estando em time é barato; entrar sem
-        # reset é achar a cave vazia da segunda run em diante.
-        #
-        # E ESTA LINHA JÁ DERRUBOU O BOT: era `self.team.in_team()`, com
-        # parênteses, e `in_team` é `@property`. `TypeError: 'bool' object is
-        # not callable` estourava a sessão inteira, o supervisor soltava o
-        # controle e recomeçava -- o bot ficava reiniciando na porta da cave a
-        # cada 5 s, para sempre. Medido no log de 03/09/2026, 19:02.
+        # E ESTA LINHA JÁ DERRUBOU O BOT, com `in_team()` numa `@property`.
+        # Ver `docs/decisoes/hh.md` §19.
         if self.team.estado_do_time is True:
             return True
 
@@ -1564,7 +1557,7 @@ class HHRoutine:
         REGRA DO JOGO, não do bot -- e por isso não é opcional no modo fada.
         """
         ctx = self.ctx
-        if not ctx.settings.hh.reset_nick.strip():
+        if not ctx.settings.reset_nick.strip():
             return
         ctx.log.info("HH+Fada: desfazendo o time para os bosses renascerem")
         self.team.sair_do_time()

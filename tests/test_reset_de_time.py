@@ -50,7 +50,7 @@ def _conta(login: str, nick: str, **kw) -> Account:
     c.bc_farm = kw.pop("bc_farm", False)
     c.settings.accept_team_invites = kw.pop("aceita", False)
     c.settings.app.enabled = kw.pop("app", False)
-    c.settings.bc.reset_nick = kw.pop("reset_nick", "")
+    c.settings.reset_nick = kw.pop("reset_nick", "")
     # A tecla da lista de amigos é pré-requisito do convite; sem ela todo
     # `problema_do_reset` responderia isso e os outros ramos nunca seriam
     # exercitados.
@@ -192,7 +192,7 @@ def test_reseter_que_farma_e_problema():
     a = _conta("a", "Farmer", reset_nick="Reseter")
     r = _conta("r", "Reseter", aceita=True, bc_farm=True)
     problema = _cfg(a, r).problema_do_reset(a)
-    assert problema and "BC farm" in problema
+    assert problema and "farm de cave" in problema
 
 
 def test_reseter_em_modo_APP_e_problema():
@@ -310,24 +310,18 @@ def test_migracao_nao_inventa_quando_o_nick_nao_bate_com_ninguem():
 # ---------------------------------------------------------------------------
 
 def test_o_portao_vem_ANTES_do_convite():
-    """Ordem invertida = convite enviado para quem não está lá.
-
-    O portão existe para não gastar a entrada da cave sem reset; depois do
-    `montar_time()` ele já teria falhado.
-    """
+    """Ordem invertida = convite enviado para quem não está lá."""
     fonte = inspect.getsource(mod_routine.BossRushRoutine._do_entrar)
-    i_portao = fonte.index("_esperar_o_reseter()")
-    i_convite = fonte.index("montar_time()")
-    assert i_portao < i_convite, (
-        "o portão do reseter foi parar depois do convite")
+    assert fonte.index("_esperar_o_reseter()") < fonte.index("montar_time()")
 
 
 def test_a_espera_usa_ctx_tick_e_nunca_time_sleep():
     """É o `tick` que mantém o watchdog DESTA conta vivo enquanto ela espera.
 
-    Uma conta de BC também cai, e parada por horas num `time.sleep` ela ficaria
-    cega para a própria queda. O `tick` também dá as três saídas de graça:
-    Parar, desmarcar o BC farm (`FarmDesligado`) e ligar o modo APP.
+    Uma conta de cave também cai, e parada por horas num `time.sleep` ela
+    ficaria cega para a própria queda. E como cada conta roda na thread dela, a
+    espera nunca toca a thread da interface. O `tick` também dá as três saídas
+    de graça: Parar, desmarcar o farm da cave (`FarmDesligado`) e ligar o APP.
     """
     fonte = inspect.getsource(mod_routine.BossRushRoutine._esperar_o_reseter)
     arvore = ast.parse(textwrap.dedent(fonte))
@@ -368,8 +362,7 @@ def test_conta_sem_reset_nick_nao_espera_nada(monkeypatch):
 
     class _Ctx:
         def __init__(self):
-            self.settings = type("S", (), {"bc": type("B", (), {
-                "reset_nick": "  "})()})()
+            self.settings = type("S", (), {"reset_nick": "  "})()
 
         def tick(self, s):
             chamadas.append(s)
@@ -392,6 +385,9 @@ def test_a_GUI_oferece_LISTA_e_nao_texto_livre():
     assert "self.in_reset = QComboBox()" in fonte, (
         "o seletor de reseter voltou a ser texto livre na GUI PyQt")
     assert "self.in_reset = QLineEdit()" not in fonte
+    # UM SELETOR SÓ desde 08/09/2026: a conta de reset é do personagem.
+    assert "self.in_hh_reset" not in fonte, (
+        "a aba da HH voltou a ter seletor de reseter próprio")
 
 
 def test_a_WEB_oferece_LISTA_e_nao_texto_livre():

@@ -167,12 +167,16 @@ class TeamService:
         # QUEM CONVIDAR, injetado por quem construiu.
         #
         # ERA `ctx.settings.bc.reset_nick` LIDO AQUI DENTRO, e isso deixou a HH
-        # sem time: o usuário configurou `hh.reset_nick` e o `bc.reset_nick`
-        # estava vazio, então `montar_time` devolvia False na primeira linha e a
-        # rotina caía em RECUPERAR -- em laço, para sempre. Medido em
-        # 03/09/2026.
+        # sem time: o usuário configurou o campo da HH, o do BC estava vazio, e
+        # `montar_time` devolvia False na primeira linha -- a rotina caía em
+        # RECUPERAR, em laço, para sempre. Medido em 03/09/2026.
         #
-        # `None` = a do BC, que é o comportamento de sempre.
+        # OS DOIS CAMPOS VIRARAM UM (`settings.reset_nick`, escopo do
+        # personagem) em 08/09/2026, e a injeção continua aqui de propósito:
+        # ela é o que permite a uma cave futura ter reseter próprio sem mexer
+        # neste arquivo.
+        #
+        # `None` = o do personagem, que agora é o único que existe.
         self._nick_do_reset = nick_do_reset
         self.aprendidos = LearnedCrops(ctx.templates.folder / "aprendidos")
 
@@ -180,7 +184,7 @@ class TeamService:
         """O nick da conta que reseta a cave que está rodando."""
         if self._nick_do_reset is not None:
             return str(self._nick_do_reset() or "").strip()
-        return self.ctx.settings.bc.reset_nick.strip()
+        return self.ctx.settings.reset_nick.strip()
 
     # -- utilidades --------------------------------------------------------
 
@@ -795,14 +799,13 @@ class InviteAcceptor:
         meu = self._meu_nick.lower()
         if not meu:
             return False
-        # AS DUAS CAVES. Olhar só `bc.reset_nick` deixava o reseter da HH
-        # invisível: o modo estrito não ligava por causa dele, e um convite da
-        # HH chegava sem ninguém reconhecer quem convidou.
+        # UM CAMPO SÓ desde 08/09/2026 (`settings.reset_nick`). Antes eram
+        # dois, e olhar só o do BC deixava o reseter da HH invisível: o modo
+        # estrito não ligava por causa dele, e um convite da HH chegava sem
+        # ninguém reconhecer quem convidou.
         return any(
-            nick.strip().lower() == meu
+            conta.settings.reset_nick.strip().lower() == meu
             for conta in self.ctx.config.farming_accounts()
-            for nick in (conta.settings.bc.reset_nick,
-                         conta.settings.hh.reset_nick)
         )
 
     def _achar_caixa(self, quadro) -> tuple[int, int] | None:

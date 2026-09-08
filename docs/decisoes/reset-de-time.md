@@ -156,9 +156,11 @@ devolveria exatamente a run perdida que a trava existe para evitar.
 
 ---
 
-## Decisão 4 — o portão fica num lugar só: antes do `montar_time()`
+## Decisão 4 — o portão fica num lugar só POR CAVE: antes do `montar_time()`
 
-`BossRushRoutine._esperar_o_reseter()`, chamado imediatamente antes do convite.
+`BossRushRoutine._do_entrar`, imediatamente antes do convite. A HH ganhou o
+portão dela em 08/09/2026, no `_garantir_o_time` — mesmo princípio, outro
+ponto; ver a **Decisão 10**.
 
 ### Por que não travar no meio da run
 
@@ -255,6 +257,163 @@ aviso é modal, nunca toast — o toast some em 2,6 s.
 desativada não roda, então ela não fica órfã de nada hoje; barrar a exclusão por
 causa dela criaria trabalho por um problema que não existe. Se for reativada
 depois, `problema_do_reset` a pega com a mensagem certa.
+
+---
+
+## Decisão 8 — o campo POR CAVE virou UM, no escopo do personagem
+
+### O pedido
+
+> *"Hoje a configuração da 'Conta Reset' está sendo definida separadamente em
+> cada aba de Cave (BC, HH). Isso é um erro de design. A conta reset é 1 única
+> por conta logada."*
+
+### O histórico dá razão a ele
+
+Enquanto existiram `bc.reset_nick` e `hh.reset_nick`, havia **três estados
+impossíveis** — e o bot pagou por dois deles:
+
+| estado | o que aconteceu |
+|---|---|
+| preencher um e esquecer o outro | **Medido em 03/09/2026.** O usuário configurou o campo da HH; o do BC ficou vazio. `TeamService.montar_time` lia o do BC, devolvia `False` na primeira linha, a HH rodava sem time, os bosses não renasciam e a rotina caía em `RECUPERAR` — em laço, para sempre. |
+| preencher os dois com nicks diferentes | Não existe resposta certa. Duas caves, dois reseters, e o aceitador de convites reconhecendo só um. |
+| código compartilhado sem saber qual ler | `problema_do_reset`, `accounts_reset_by` e o modo estrito do aceitador liam o do BC. O aceitador teve que passar a olhar **os dois** para não perder o reseter da HH — remendo que só existia por causa do desenho. |
+
+Um campo só não tem nenhuma dessas perguntas. E o remendo do aceitador saiu.
+
+### A hierarquia nova
+
+```
+account.settings.reset_nick          ← ENTRA (escopo do personagem)
+account.settings.bc.reset_nick       ← SAI
+account.settings.hh.reset_nick       ← SAI
+account.settings.hh.modo_do_reset    ← FICA na HH
+```
+
+**O modo continua na HH** porque "solo ou fada" é decisão *daquela cave* — a BC
+não tem modo nenhum. Já **quem** reseta é a mesma conta para as duas, e no modo
+fada é ela que entra junto e cura.
+
+### A migração — o ponto de maior risco
+
+Quem já tinha o reseter configurado não pode abrir o bot e encontrar o campo em
+branco. A regra:
+
+1. `reset_nick` no nível da conta, se existir;
+2. senão `bc.reset_nick`;
+3. senão `hh.reset_nick`;
+4. senão `team_reset.reset_nick` (v1/v2), e só se nada mais recente preencheu.
+
+**O BC ganha quando as duas estão preenchidas** com nicks diferentes: era dele
+que o bot de fato lia para vetar o farm e travar a entrada, então é o valor que
+já estava em uso.
+
+**E a migração LÊ DO BRUTO, antes do `_filtra`.** Isso não é detalhe: os blocos
+`bc` e `hh` passam por `_filtra`, que descarta toda chave que não é campo da
+dataclass. Com `reset_nick` fora de `BCConfig`/`HHConfig`, ler pelo objeto
+jogaria o valor antigo fora **em silêncio** — nenhum erro, nenhum aviso, e o
+usuário veria a conta de reset vazia. Travado por
+`tests/test_conta_de_reset_unica.py`.
+
+---
+
+## Decisão 9 — o seletor mora na aba PERSONAGEM, nas duas interfaces
+
+Nas **duas interfaces** (regra permanente do projeto):
+
+* **PyQt6** — grupo *"Conta de reset (vale para TODAS as caves)"* na aba
+  Personagem, logo depois de "Função desta conta". Saiu da aba BC (o grupo
+  "Reset do boss" inteiro) e da aba HH (onde sobrou só o Modo).
+* **Web** — sexta célula da grade da aba Personagem, ao lado de "Grupo". Duas
+  linhas cheias de três campos, sem crescer a altura da aba e sem scroll novo.
+  A aba BC perdeu o grupo "Reset do Time" e a "Rota na Cave" passou a ocupar a
+  linha inteira.
+
+**Continua LISTA FECHADA**, nas duas. O reseter precisa ser uma conta cadastrada
+neste bot — é isso que permite ao bot perceber que ela caiu e segurar a entrada.
+Nick de outra máquina é invisível daqui.
+
+**A ponte também mudou:** `web_app.py` expõe e grava `reset_nick` no nível da
+conta, ao lado de `accept_team_invites`. Removê-lo dos blocos de cave sem
+adicionar aqui foi um erro que os testes pegaram — o editor mostraria a lista
+sempre em "Nenhuma".
+
+---
+
+## Decisão 10 — o portão SUBIU para `bot/` e serve as duas caves
+
+### O pedido
+
+> *"O ecossistema HH precisa da mesma trava já existente no BC. Antes de rodar
+> a cave, o HH deve checar se a Conta Reset global configurada está
+> online/conectada. Se estiver offline, o bot HH DEVE pausar a rota, entrar em
+> modo de espera e aguardar a reconexão."*
+
+O pedido dizia *"clonando a lógica validada do BC"*. Ela foi **promovida** para
+`bot/espera_do_reseter.py`, que é mais forte e é o que o `CLAUDE.md` exige
+("REUSO PRIMÁRIO. Duplicação é inaceitável").
+
+**E aqui não é preciosismo.** A parte difícil da trava não é esperar — é
+distinguir:
+
+| estado | desfecho | por quê |
+|---|---|---|
+| **o reseter caiu** | espera, ele volta | relogin é o comportamento padrão de toda conta, então a espera tem fim |
+| **o reseter não existe mais** | desliga o farm da cave, salva, avisa | removido, desativado, desmarcado, posto para farmar ou aposentado por senha errada NÃO volta — esperar seria uma conta parada a noite inteira |
+
+Uma cópia que errasse essa distinção perderia runs ou travaria para sempre, e o
+sintoma apareceria horas depois sem apontar para a causa. É por isso que a
+condição é reavaliada **a cada volta**, e não só na entrada: `problema_do_reset`
+lê a configuração VIVA.
+
+### O que NÃO subiu, e por quê
+
+**Onde cada cave trava.** Cada uma tem um ponto de não-retorno diferente:
+
+* **BC** — no `_do_entrar`, depois de conquistar a coordenada de entrada e antes
+  do convite. A run em curso termina inteira e o personagem estaciona no ponto
+  que já conquistou.
+* **HH** — no `_garantir_o_time`, depois do `estado_do_time` e antes do convite.
+  Quem já está em time não precisa de convite, então não faz sentido esperar por
+  quem convidar. E travar mais cedo (no `SITUAR`, no `ATE_A_PORTA`) pararia a
+  conta por um problema que só afeta a entrada, jogando fora a travessia já
+  feita.
+
+Ver `docs/INVARIANTES.md`, "Decisão de cave NÃO mora em código compartilhado".
+
+### O interruptor certo é desligado
+
+O BC fazia `ctx.account.bc_farm = False` direto. Compartilhado, isso viraria
+"desliga o BC mesmo quando é a HH que está travada". Entrou
+`BotContext.desligar_o_farm_desta_cave()`, **espelho de
+`_a_cave_continua_ligada`** e ao lado dela de propósito: são a mesma tabela
+de-cave-para-interruptor lida nos dois sentidos, e duas cópias divergiriam em
+silêncio.
+
+Sem saber qual cave é, desliga **as duas** — direção segura: quem chega ali já
+concluiu que o farm não pode continuar.
+
+### A espera não congela nada
+
+* cada conta roda **na thread dela** (`AccountSupervisor`), então nenhuma espera
+  aqui toca a thread da interface — nem a PyQt6 nem a webview;
+* é `ctx.tick`, **nunca** `time.sleep`: é o `tick` que mantém o watchdog desta
+  conta vivo enquanto ela está parada (uma conta de cave também cai, e parada
+  por horas num `sleep` ela ficaria cega para a própria queda);
+* é ele que dá as três saídas de graça — Parar, desmarcar o farm da cave
+  (`FarmDesligado`) e ligar o modo APP.
+
+### Os números da espera
+
+| constante | valor | natureza |
+|---|---|---|
+| `PASSO_DA_ESPERA_DO_RESETER` | 1,0 s | **derivado**: quem responde é uma leitura de dicionário em memória, e a trava dura minutos (um relogin inteiro), não milissegundos |
+| `INTERVALO_DO_AVISO_DO_RESETER` | 300 s | **cosmético**: uma linha escrita quarenta minutos atrás não avisa ninguém |
+
+A prova de que o reseter está no ar é o **batimento** (`mural.reseter_online`,
+`SILENCIO_MAXIMO = 5 s`), e não uma checagem de processo/janela/memória — uma
+conta em modo APP passa em todas essas provas e nunca aceita convite nenhum. Ver
+o cabeçalho de `bot/mural.py`.
 
 ---
 

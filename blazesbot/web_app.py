@@ -391,6 +391,9 @@ class _App:
             "nick": c.last_char_name,
             "grupo": c.grupo,
             "accept_team_invites": st.accept_team_invites,
+            # A CONTA DE RESET, no nível da CONTA -- uma para todas as caves.
+            # Estava em `bc` e `hh`; ver `AccountSettings.reset_nick`.
+            "reset_nick": st.reset_nick,
             # AS CANDIDATAS A RESETER. O campo "conta que reseta a cave" deixou
             # de ser texto livre: o reseter precisa ser uma conta cadastrada
             # AQUI, porque é isso que permite ao bot perceber que ela caiu e
@@ -398,7 +401,7 @@ class _App:
             #
             # `disponivel=False` é a conta marcada que ainda NÃO LOGOU: sem nick
             # (ele é lido da memória no primeiro login) selecioná-la gravaria
-            # string vazia, que em `BCConfig.reset_nick` significa exatamente
+            # string vazia, que em `AccountSettings.reset_nick` significa
             # "não usar reset de time" -- um jeito silencioso de desligar a
             # função achando que ligou.
             "contas_de_reset": [
@@ -470,7 +473,6 @@ class _App:
                 "heal_before_second_phase": st.bc.heal_before_second_phase,
                 "aoe_until_mana_pct": st.bc.aoe_until_mana_pct,
                 "usar_skill_de_velocidade": st.bc.usar_skill_de_velocidade,
-                "reset_nick": st.bc.reset_nick,
                 "vendor": {
                     "runs_before_selling": st.bc.vendor.runs_before_selling,
                     "sell_start_slot": st.bc.vendor.sell_start_slot,
@@ -483,7 +485,6 @@ class _App:
             # "modo" da Bewitcher Cave -- e ela não é.
             "hh": {
                 "modo_do_reset": st.hh.modo_do_reset,
-                "reset_nick": st.hh.reset_nick,
                 "attack_delay": st.hh.attack_delay,
                 "aoe_until_mana_pct": st.hh.aoe_until_mana_pct,
                 "limpar_mobs_a_cada": st.hh.limpar_mobs_a_cada,
@@ -697,6 +698,7 @@ class _App:
         # Rótulo de organização. Não representa time nenhum -- ver `Account.grupo`.
         c.grupo = str(dados.get("grupo", "") or "").strip()[:LIMITE_DO_NOME_DO_GRUPO]
         st.accept_team_invites = bool(dados.get("accept_team_invites", False))
+        st.reset_nick = str(dados.get("reset_nick", "") or "").strip()
         st.usar_catador = bool(dados.get("usar_catador", False))
         st.mount_speed_pct = int(dados.get("mount_speed_pct") or MOUNT_SPEEDS[0])
 
@@ -790,7 +792,6 @@ class _App:
         st.bc.aoe_until_mana_pct = int(bc.get("aoe_until_mana_pct", 30))
         st.bc.usar_skill_de_velocidade = bool(
             bc.get("usar_skill_de_velocidade", True))
-        st.bc.reset_nick = str(bc.get("reset_nick", "")).strip()
 
         # --- HH -----------------------------------------------------------
         # Sem esta leitura os campos voltam ao padrão a cada abertura do editor
@@ -798,7 +799,6 @@ class _App:
         # pagaram. Travado por `test_config_ida_e_volta.py`.
         hh = dados.get("hh", {})
         st.hh.modo_do_reset = normalizar_modo_do_reset(hh.get("modo_do_reset"))
-        st.hh.reset_nick = str(hh.get("reset_nick", "")).strip()
         st.hh.attack_delay = float(hh.get("attack_delay", 0.5) or 0.5)
         st.hh.aoe_until_mana_pct = int(hh.get("aoe_until_mana_pct", 30))
         st.hh.limpar_mobs_a_cada = int(hh.get("limpar_mobs_a_cada", 3))

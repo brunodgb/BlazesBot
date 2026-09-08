@@ -1217,14 +1217,12 @@ function preencherEditor(d) {
 
   preencherTeclas(d.keys);
   preencherApp(d.app.steps, d.app, d.keys);
-  // A LISTA DO RESETER VEM DO EDITOR, não do bloco `bc`: ela é montada a
-  // partir das OUTRAS contas, e `bc` só sabe de si mesmo. Tem que vir ANTES
-  // de `preencherBC`, que é quem seleciona o valor gravado.
-  montarListaDeReset(d.contas_de_reset || [], (d.bc && d.bc.reset_nick) || "");
+  // A LISTA DO RESETER VEM DO EDITOR, e não de um bloco de cave: ela é montada
+  // a partir das OUTRAS contas. O valor gravado é do PERSONAGEM -- uma conta de
+  // reset por conta logada, para todas as caves.
+  montarListaDeReset(d.contas_de_reset || [], d.reset_nick || "");
 
   // --- HH ---------------------------------------------------------------
-  // `reset_nick` da HH usa a MESMA lista de contas de reset da BC: a regra de
-  // quem pode resetar é a mesma (conta cadastrada neste bot).
   const hh = d.hh || {};
   $("#ed-hh-modo").value = hh.modo_do_reset || "solo";
   $("#ed-hh-delay").value = Math.round((hh.attack_delay || 0.5) * 1000);
@@ -1233,8 +1231,6 @@ function preencherEditor(d) {
   $("#ed-hh-deletar").checked = !!hh.deletar_lixo;
   $("#ed-hh-slot").value = (hh.vendor && hh.vendor.sell_start_slot) ?? 3;
   $("#ed-hh-runs").value = (hh.vendor && hh.vendor.runs_before_selling) ?? 5;
-  montarListaDeReset(d.contas_de_reset || [], hh.reset_nick || "",
-                     "#ed-hh-reset");
   preencherBC(d.bc);
 
   const senhaForte = $("#ed-senha");
@@ -1413,12 +1409,11 @@ $("#corpo-app").addEventListener("input", atualizarPreviaApp);
  *      como problema, e continua SELECIONADO. Sumir com ele seria apagar a
  *      configuração de alguém sem avisar.
  */
-function montarListaDeReset(candidatas, atual, seletor) {
-  // `seletor` diz EM QUAL select montar. A BC e a HH usam a mesma lista de
-  // candidatas -- a regra de quem pode resetar é a mesma nas duas (conta
-  // cadastrada neste bot, para o bot saber que ela caiu) -- então a função é
-  // uma e o destino é parâmetro. O padrão é o campo da BC, que já existia.
-  const sel = $(seletor || "#ed-reset-nick");
+function montarListaDeReset(candidatas, atual) {
+  // UM SELETOR SÓ desde 08/09/2026. Havia um por cave e o `seletor` era
+  // parâmetro; a conta de reset passou a ser do PERSONAGEM, então não há mais
+  // destino para escolher.
+  const sel = $("#ed-reset-nick");
   sel.innerHTML = "";
   const opcao = (texto, valor, ativa) => {
     const o = document.createElement("option");
@@ -1573,9 +1568,8 @@ function preencherBC(bc) {
   $("#ed-aoe-mana").value = bc.aoe_until_mana_pct;
   $("#val-aoe-mana").textContent = bc.aoe_until_mana_pct + "%";
   $("#ed-sk-velocidade").checked = !!bc.usar_skill_de_velocidade;
-  // `reset_nick` NÃO é lido aqui: quem seleciona é `montarListaDeReset`, que
-  // roda antes e é a única dona da lista. Dois lugares escrevendo o mesmo campo
-  // divergiriam em silêncio no dia em que um deles mudasse.
+  // `reset_nick` NÃO é lido aqui, e nem é campo da BC: quem seleciona é
+  // `montarListaDeReset`, que roda antes e é a única dona da lista.
   $("#ed-runs-venda").value = bc.vendor.runs_before_selling;
   $("#ed-slot-venda").value = bc.vendor.sell_start_slot;
   $("#ed-cliques-venda").value = String(bc.vendor.sell_clicks);
@@ -1626,6 +1620,8 @@ function salvarEditor() {
     grupo: $("#ed-grupo").value.trim(),
     accept_team_invites: $("#ed-aceitar-time").checked,
     usar_catador: $("#ed-usar-catador").checked,
+    // A CONTA DE RESET é da CONTA, e não de uma cave. Uma por conta logada.
+    reset_nick: $("#ed-reset-nick").value.trim(),
     mount_speed_pct: Number($("#ed-montaria").value),
     pet: {
       summon_on_login: $("#ed-pet-summon").checked,
@@ -1660,7 +1656,6 @@ function salvarEditor() {
       heal_before_second_phase: $("#ed-heal-fase2").checked,
       aoe_until_mana_pct: Number($("#ed-aoe-mana").value),
       usar_skill_de_velocidade: $("#ed-sk-velocidade").checked,
-      reset_nick: $("#ed-reset-nick").value.trim(),
       vendor: {
         runs_before_selling: Number($("#ed-runs-venda").value),
         sell_start_slot: Number($("#ed-slot-venda").value),
@@ -1671,7 +1666,6 @@ function salvarEditor() {
     // A HH é um ecossistema próprio: bloco próprio, e não campos dentro do `bc`.
     hh: {
       modo_do_reset: $("#ed-hh-modo").value,
-      reset_nick: ($("#ed-hh-reset").value || "").trim(),
       attack_delay: Number($("#ed-hh-delay").value || 500) / 1000,
       aoe_until_mana_pct: Number($("#ed-hh-aoe").value || 30),
       limpar_mobs_a_cada: Number($("#ed-hh-limpar").value || 0),

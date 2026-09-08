@@ -39,7 +39,14 @@ from pathlib import Path
 
 import pytest
 
-from blazesbot.config import CAVE_BC, CAVE_HH, Account, AccountSettings
+from blazesbot.config import (
+    CAVE_BC,
+    CAVE_HH,
+    Account,
+    AccountSettings,
+    BCConfig,
+    HHConfig,
+)
 
 RAIZ = Path(__file__).resolve().parent.parent
 
@@ -62,11 +69,11 @@ def test_estragar_a_config_da_HH_nao_muda_a_da_BC():
     st = AccountSettings()
     st.hh.attack_delay = 0.01
     st.hh.aoe_until_mana_pct = 1
-    st.hh.reset_nick = "SoDaHH"
+    st.hh.modo_do_reset = "fada"
 
     assert st.bc.attack_delay == 0.5, "a HH vazou para a BC"
     assert st.bc.aoe_until_mana_pct == 30
-    assert st.bc.reset_nick == ""
+    assert st.bc.attack_delay == BCConfig().attack_delay
     assert st.cave(CAVE_HH).attack_delay == 0.01
     assert st.cave(CAVE_BC).attack_delay == 0.5
 
@@ -74,10 +81,10 @@ def test_estragar_a_config_da_HH_nao_muda_a_da_BC():
 def test_estragar_a_config_da_BC_nao_muda_a_da_HH():
     st = AccountSettings()
     st.bc.attack_delay = 9.9
-    st.bc.reset_nick = "SoDoBC"
+    st.bc.matar_guardas = False
 
     assert st.hh.attack_delay == 0.5
-    assert st.hh.reset_nick == ""
+    assert st.hh.modo_do_reset == HHConfig().modo_do_reset
 
 
 def test_a_config_da_HH_e_um_OBJETO_proprio_e_nao_um_alias():
@@ -98,9 +105,9 @@ def test_duas_contas_nao_compartilham_configuracao():
     """
     a, b = Account(), Account()
     a.settings.hh.attack_delay = 0.01
-    a.settings.hh.reset_nick = "Fulano"
+    a.settings.reset_nick = "Fulano"
     assert b.settings.hh.attack_delay == 0.5
-    assert b.settings.hh.reset_nick == ""
+    assert b.settings.reset_nick == ""
 
 
 # ===========================================================================
@@ -248,9 +255,11 @@ def test_o_padrao_dos_motores_continua_sendo_o_da_BC():
 
     servico = object.__new__(TeamService)
     servico._nick_do_reset = None
-    st.bc.reset_nick = "PadraoDoBC"
+    st.reset_nick = "ResetDaConta"
     servico.ctx = type("C", (), {"settings": st})()
-    assert servico.nick_do_reset() == "PadraoDoBC"
+    assert servico.nick_do_reset() == "ResetDaConta", (
+        "Sem injeção o serviço lê o campo do PERSONAGEM -- não existe mais "
+        "campo de cave para ele cair.")
 
 
 def test_a_config_da_BC_nao_ganhou_campo_novo_obrigatorio():

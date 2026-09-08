@@ -272,6 +272,48 @@ class AccountDialog(QDialog):
         f.addRow(self.ck_catador)
         outer.addWidget(box)
 
+        # -- Conta de reset (UMA, para qualquer cave) -------------------
+        #
+        # AQUI E NÃO NAS ABAS DAS CAVES. Era um campo por cave, e o reseter é
+        # UM por conta logada: dois campos criavam estados impossíveis --
+        # preencher um e esquecer o outro (foi o defeito de 03/09/2026, a HH sem
+        # time), ou preencher os dois com nicks diferentes e não haver resposta
+        # para "qual vale". Ver `AccountSettings.reset_nick`.
+        box, f = self._grupo("Conta de reset (vale para TODAS as caves)", (
+            "Fazendo a cave duas vezes seguidas sem mudar de time, o boss\n"
+            "NÃO renasce — a instância continua com ele morto e a run é\n"
+            "perdida. Entrar num time novo reseta a cave.\n"
+            "\n"
+            "Deixe uma conta parada, cadastrada aqui no bot só para\n"
+            "login, e marque nela “aceitar convites de time”. Escolha o\n"
+            "nick dela neste campo.\n"
+            "\n"
+            "Campo vazio = não usa reset de time.\n"
+            "\n"
+            "É UMA CONTA PARA AS DUAS CAVES. Na HH, no modo “com a Fada”,\n"
+            "é esta mesma conta que entra junto e cura — o modo fica na\n"
+            "aba da HH, o nick fica aqui.\n"
+            "\n"
+            "Como o convite é enviado: o bot abre a lista de amigos,\n"
+            "vai na aba Block, deixa ali só o nick do reseter e envia o\n"
+            "time. É o único jeito de mirar alguém que está longe.\n"
+            "\n"
+            "SE ESSA CONTA CAIR, o bot NÃO entra na cave: ele espera na\n"
+            "porta e volta sozinho quando ela reconectar. Entrar sem reset\n"
+            "jogaria fora o teleporte, a travessia e a run inteira."
+        ))
+        # LISTA FECHADA, não texto livre. O reseter precisa ser uma conta
+        # cadastrada AQUI: é isso que permite ao bot perceber que ela caiu e
+        # segurar a entrada em vez de perder a run. Nick digitado à mão podia
+        # apontar para qualquer coisa -- inclusive para nada.
+        self.in_reset = QComboBox()
+        self.in_reset.setToolTip(
+            "Só aparecem contas marcadas como “aceitar convites de "
+            "time”. Marque a flag na conta de reset para ela aparecer aqui."
+        )
+        f.addRow("Conta de reset:", self.in_reset)
+        outer.addWidget(box)
+
         # -- Montaria ---------------------------------------------------
         box, f = self._grupo("Montaria", (
             "OBRIGATÓRIA. O personagem precisa TER a montaria e andar\n"
@@ -919,36 +961,6 @@ class AccountDialog(QDialog):
         ))
         outer.addWidget(box)
 
-        # -- Reset de time ----------------------------------------------
-        box, f = self._grupo("Reset do boss", (
-            "Fazendo a cave duas vezes seguidas sem mudar de time, o boss\n"
-            "NÃO renasce — a instância continua com ele morto e a run é\n"
-            "perdida. Entrar num time novo reseta a cave.\n"
-            "\n"
-            "Deixe uma conta parada, cadastrada aqui no bot só para\n"
-            "login, e marque nela “aceitar convites de time”. Informe o\n"
-            "nick dela neste campo.\n"
-            "\n"
-            "Campo vazio = não usa reset de time.\n"
-            "\n"
-            "Como o convite é enviado: o bot abre a lista de amigos,\n"
-            "vai na aba Block, deixa ali só o nick do reseter e envia o\n"
-            "time. É o único jeito de mirar alguém que está longe.\n"
-            "Sair do time depois de entrar é automático — é pré-requisito\n"
-            "do boss-rush solo, não uma preferência."
-        ))
-        # LISTA FECHADA, não texto livre. O reseter precisa ser uma conta
-        # cadastrada AQUI: é isso que permite ao bot perceber que ela caiu e
-        # segurar a entrada em vez de perder a run. Nick digitado à mão podia
-        # apontar para qualquer coisa -- inclusive para nada.
-        self.in_reset = QComboBox()
-        self.in_reset.setToolTip(
-            "Só aparecem contas marcadas como “aceitar convites de "
-            "time”. Marque a flag na conta de reset para ela aparecer aqui."
-        )
-        f.addRow("Conta de reset:", self.in_reset)
-        outer.addWidget(box)
-
         # -- Venda ------------------------------------------------------
         box, f = self._grupo("Venda e retorno", (
             "A grade da janela do NPC tem 6 colunas por 4 linhas. Ao\n"
@@ -1087,13 +1099,8 @@ class AccountDialog(QDialog):
         self.cb_hh_modo.addItem("Com a Fada — ela entra e cura",
                                 MODO_FADA_DA_HH)
         f.addRow("Modo:", self.cb_hh_modo)
-        self.in_hh_reset = QComboBox()
-        self.in_hh_reset.setToolTip(
-            "Só contas cadastradas NESTE bot. É isso que permite ao bot saber "
-            "que ela caiu e segurar a entrada, em vez de entrar sem reset e "
-            "perder a run."
-        )
-        f.addRow("Conta de reset:", self.in_hh_reset)
+        # A CONTA DE RESET NÃO FICA AQUI. Ela é uma por conta logada e mora na
+        # aba Personagem; o que é da HH é o MODO -- solo ou fada.
         outer.addWidget(box)
 
         # -- Combate ----------------------------------------------------
@@ -1161,7 +1168,7 @@ class AccountDialog(QDialog):
         outer.addStretch(1)
         return page
 
-    def _montar_lista_de_reset(self, atual: str, combo=None) -> None:
+    def _montar_lista_de_reset(self, atual: str) -> None:
         """Preenche o seletor de reseter e seleciona o que já está gravado.
 
         =================================================================
@@ -1181,7 +1188,7 @@ class AccountDialog(QDialog):
         1. CONTA MARCADA E JÁ LOGADA -> entra na lista, selecionável.
         2. CONTA MARCADA QUE NUNCA LOGOU -> entra DESABILITADA. O nick é lido
            da memória no primeiro login, então ela ainda não tem um. Deixar
-           selecionar gravaria string vazia -- que no `BCConfig.reset_nick`
+           selecionar gravaria string vazia -- que no `AccountSettings.reset_nick`
            significa exatamente "não usar reset de time", ou seja, seria um
            jeito silencioso de DESLIGAR a função achando que ligou.
         3. O QUE ESTÁ GRAVADO E NÃO É NENHUMA DAS DUAS -> entra assim mesmo, no
@@ -1189,7 +1196,7 @@ class AccountDialog(QDialog):
            seria eu apagando a configuração de alguém sem avisar; mostrando, o
            usuário vê o que está errado e troca num clique.
         """
-        combo = combo if combo is not None else self.in_reset
+        combo = self.in_reset
         combo.clear()
         combo.addItem("Nenhuma (sem reset de time)", "")
 
@@ -1289,13 +1296,12 @@ class AccountDialog(QDialog):
         self.bar_aoe_mana.setValue(bc.aoe_until_mana_pct)
 
         self.ck_speed.setChecked(bc.usar_skill_de_velocidade)
-        self._montar_lista_de_reset(bc.reset_nick)
+        self._montar_lista_de_reset(st.reset_nick)
 
         # --- HH -----------------------------------------------------------
         hh = st.hh
         i = self.cb_hh_modo.findData(hh.modo_do_reset)
         self.cb_hh_modo.setCurrentIndex(i if i >= 0 else 0)
-        self._montar_lista_de_reset(hh.reset_nick, self.in_hh_reset)
         self.sp_hh_delay.setValue(int(round(hh.attack_delay * 1000)))
         self.bar_hh_aoe.setValue(hh.aoe_until_mana_pct)
         self.sp_hh_limpar.setValue(hh.limpar_mobs_a_cada)
@@ -1410,12 +1416,11 @@ class AccountDialog(QDialog):
         bc.heal_before_second_phase = self.ck_heal2.isChecked()
         bc.aoe_until_mana_pct = self.bar_aoe_mana.value()
         bc.usar_skill_de_velocidade = self.ck_speed.isChecked()
-        bc.reset_nick = (self.in_reset.currentData() or "").strip()
+        st.reset_nick = (self.in_reset.currentData() or "").strip()
 
         # --- HH -----------------------------------------------------------
         hh = st.hh
         hh.modo_do_reset = normalizar_modo_do_reset(self.cb_hh_modo.currentData())
-        hh.reset_nick = (self.in_hh_reset.currentData() or "").strip()
         hh.attack_delay = self.sp_hh_delay.value() / 1000.0
         hh.aoe_until_mana_pct = self.bar_hh_aoe.value()
         hh.limpar_mobs_a_cada = self.sp_hh_limpar.value()
