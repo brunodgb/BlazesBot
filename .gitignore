@@ -37,3 +37,10 @@ multi-agentes/
 # claude-council: chaves de provedor externo (nunca versionar)
 .claude/council.env
 .claude/council-cache/
+
+# ruflo/claude-flow: estado do daemon e banco de memoria SAO GERADOS -- nunca
+# versionar (mesmo risco do incidente de 03/09/2026 em multi-agentes/, so que
+# aqui e estado local, nao segredo). data/memory/ ja cai na regra "data/" acima.
+# O config estatico (claude-flow.config.json) continua versionado.
+.claude-flow/
+.claude/memory.db
