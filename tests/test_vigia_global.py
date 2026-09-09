@@ -496,3 +496,100 @@ def test_o_laco_de_vida_SOBREVIVE_a_queda_tratada_pelo_login(monkeypatch):
         f"`except`. Falas: {falas}")
     assert len(sessoes) == 2, (
         "o laço não chegou à segunda sessão: a conta ficaria fora do ar")
+
+
+# ===========================================================================
+# DURANTE O LOGIN O VIGIA SÓ RECONHECE FATO DO SISTEMA -- 09/09/2026
+# ===========================================================================
+#
+# Laço de relogin a cada 19 s na conta `blazesgamer`: dois segundos depois de
+# "Servidor confirmado como selecionado", o vigia decretava "aviso de conexão
+# interrompida na tela" e matava o cliente que estava ENTRANDO NA FILA.
+#
+# O template do vigia é UM só, `state_conn_prefix.png`, que casa com a palavra
+# "Connection" -- e nas telas de login existe uma família de caixas que começam
+# com ela, desenhadas no MESMO centro. Medido em 18/08/2026 e registrado em
+# `login_states.py`: "Connection failed" = 0.835, "Connecting to the server" =
+# 0.787. O `LoginDetector` convive com isso porque tem ESCADA ORDENADA e deixa o
+# genérico opinar por último. O vigia usa o genérico sozinho.
+
+
+def test_o_aviso_na_tela_NAO_mata_enquanto_o_login_esta_no_comando(
+        vigia, monkeypatch):
+    mundo = _Mundo(aviso="quadro-com-a-caixa")
+    mundo.instalar(monkeypatch)
+    posto = _por(vigia, mundo)
+    posto.em_sessao = lambda: False
+
+    for _ in range(10):
+        vigia._uma_volta()
+    assert mundo.mortos == [], (
+        "o vigia matou o cliente durante o login — é o laço de relogin de "
+        "09/09/2026 de volta")
+    assert vigia.queda_anunciada("conta1") is None
+
+
+def test_o_travamento_NAO_mata_durante_o_login(vigia, monkeypatch):
+    """A FILA DE LOGIN passa de três horas, e não há medição de como o cliente
+    bombeia mensagens enquanto espera nela. Matar cliente na fila é o dano mais
+    caro que este bot sabe causar."""
+    mundo = _Mundo(responde=False)
+    mundo.instalar(monkeypatch)
+    posto = _por(vigia, mundo)
+    posto.em_sessao = lambda: False
+
+    for _ in range(mod.STRIKES_PARA_JANELA_TRAVADA + 5):
+        vigia._uma_volta()
+    assert mundo.mortos == []
+
+
+def test_mas_FATO_DO_SISTEMA_continua_valendo_no_login(vigia, monkeypatch):
+    """Processo sumido não é leitura de tela: é fato, e não admite interpretação."""
+    mundo = _Mundo()
+    mundo.instalar(monkeypatch)
+    monkeypatch.setattr(mod, "avaliar_saude",
+                        lambda *a, **k: (DcReason.PROCESS_GONE, None))
+    posto = _por(vigia, mundo)
+    posto.em_sessao = lambda: False
+
+    vigia._uma_volta()
+    assert mundo.mortos == [4242], (
+        "a suspensão do login engoliu até o fato do sistema — a conta ficaria "
+        "presa num processo morto")
+
+
+def test_o_juizo_volta_QUANDO_o_login_conclui(vigia, monkeypatch):
+    """E volta no ponto honesto: o mesmo em que o backoff zera."""
+    mundo = _Mundo(aviso="quadro-com-a-caixa")
+    mundo.instalar(monkeypatch)
+    posto = _por(vigia, mundo)
+    logando = [True]
+    posto.em_sessao = lambda: not logando[0]
+
+    vigia._uma_volta()
+    assert mundo.mortos == []
+    logando[0] = False
+    vigia._uma_volta()
+    assert mundo.mortos == [4242]
+    assert vigia.queda_anunciada("conta1")[0] == "conexao"
+
+
+def test_o_supervisor_diz_ao_vigia_quando_esta_logando():
+    """A trava é do supervisor: só ele sabe se `login.run()` está no comando."""
+    from blazesbot.bot import supervisor as mod_sup
+
+    assert "em_sessao=" in inspect.getsource(mod_sup.AccountSupervisor.run)
+    sessao = inspect.getsource(mod_sup.AccountSupervisor._run_session)
+    assert "self._login_em_curso = True" in sessao, (
+        "a sessão não marca mais que está logando — o vigia volta a opinar "
+        "sobre a tela de login")
+    assert "self._login_em_curso = False" in sessao, (
+        "o vigia nunca mais voltaria a olhar a tela: a queda em jogo ficaria "
+        "sem o sinal principal")
+    # O ponto de virada é o MESMO do backoff -- o único sinal honesto de que o
+    # login concluiu, e ele serve aos dois caminhos (janela adotada e login
+    # inteiro).
+    assert (sessao.index("self.tentativas_de_login = 0")
+            < sessao.index("self._login_em_curso = False")
+            < sessao.index("Logado como")), (
+        "a virada saiu do ponto em que o login CONCLUI")

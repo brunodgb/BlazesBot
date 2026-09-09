@@ -165,6 +165,50 @@ STRIKES_PARA_JANELA_TRAVADA = 3
 # e não uma edição no meio do laço.
 MATAR_JANELA_TRAVADA = True
 
+# ===========================================================================
+# DURANTE O LOGIN, O VIGIA SÓ RECONHECE FATO DO SISTEMA OPERACIONAL
+# ===========================================================================
+#
+# Processo sumido e janela sumida continuam valendo: são fatos, não leitura.
+# O AVISO NA TELA e o TRAVAMENTO ficam suspensos enquanto `login.run()` está no
+# comando. Isto NÃO é cautela genérica -- é conserto de um defeito medido em
+# 09/09/2026, com a conta `blazesgamer` em laço de relogin a cada 19 s.
+#
+# O QUE ACONTECEU. Dois segundos depois de "Servidor confirmado como
+# selecionado", o vigia decretava "aviso de conexão interrompida na tela" e
+# matava o cliente. O login, que estava entrando na fila, reportava "a janela do
+# cliente desapareceu durante o login" -- a causa verdadeira se perdia, e o
+# ciclo recomeçava: abrir cliente, logar, morrer, backoff, abrir cliente.
+#
+# POR QUE O VIGIA ERRA NESSAS TELAS, e o `LoginDetector` não. O template do
+# vigia é UM só, `state_conn_prefix.png`, que casa com a palavra "Connection".
+# Nas telas de login existe uma FAMÍLIA de caixas que começam com ela, e todas
+# são desenhadas no MESMO lugar que o aviso de queda -- o centro. Medido em
+# 18/08/2026 e registrado em `login_states.py`:
+#
+#     "Connection failed"           state_conn_prefix = 0.835
+#     "Connecting to the server"    state_conn_prefix = 0.787
+#
+# O `LoginDetector` convive com isso porque tem ESCADA ORDENADA: pergunta pelos
+# templates específicos primeiro (`state_conn_failed`, `state_connecting`) e só
+# deixa o genérico opinar POR ÚLTIMO. O vigia não tem escada -- ele usa o
+# genérico sozinho, e ainda travado na região onde essas caixas aparecem.
+#
+# E o limiar de 0.92 não protege: ele foi medido contra população EM JOGO (o
+# aviso real de um lado, linhas de chat do outro). As telas de login nunca
+# estiveram em nenhuma das duas populações. Usar limiar fora da população onde
+# foi medido é exatamente o que o projeto proíbe.
+#
+# O TRAVAMENTO cai junto pelo mesmo princípio, com um agravante próprio: a FILA
+# DE LOGIN passa de três horas, e não há medição nenhuma de como o cliente
+# bombeia mensagens enquanto espera nela. Matar cliente na fila é o dano mais
+# caro que este bot sabe causar.
+#
+# Quem lê a tela durante o login é o `LoginDetector`, que já tem o tratamento
+# certo para cada uma dessas caixas (`login._handle_conn_interrupted` e
+# vizinhos). Duas leituras da mesma tela divergem na primeira manutenção -- e
+# esta divergiu antes mesmo da primeira.
+
 # Pasta dos templates. A MESMA de todo mundo -- o quadro de queda é o mesmo
 # arquivo, com o mesmo limiar. O que é só do vigia é a INSTÂNCIA da biblioteca.
 PASTA_DOS_TEMPLATES = Path("data") / "templates"
@@ -194,6 +238,9 @@ class Posto:
     login: str
     fonte: Callable[[], tuple[int | None, int | None]]
     avisar: Callable[[str], None] | None = None
+    # A CONTA JÁ ESTÁ EM SESSÃO? `None` = sim, sempre (é o padrão dos testes).
+    # Ver `SO_FATO_DO_SISTEMA_DURANTE_O_LOGIN`.
+    em_sessao: Callable[[], bool] | None = None
 
     faltas_de_janela: int = 0
     faltas_de_resposta: int = 0
@@ -227,14 +274,15 @@ class Vigia:
 
     # -- registro ----------------------------------------------------------
 
-    def vigiar(self, login: str, fonte, avisar=None) -> Posto:
+    def vigiar(self, login: str, fonte, avisar=None, em_sessao=None) -> Posto:
         """Põe a conta sob vigilância e garante a thread de pé.
 
         Idempotente: registrar de novo a mesma conta substitui a fonte (o
         supervisor pode ser recriado) e NÃO reinicia a thread.
         """
         with self._cadeado:
-            posto = Posto(login=login, fonte=fonte, avisar=avisar)
+            posto = Posto(login=login, fonte=fonte, avisar=avisar,
+                          em_sessao=em_sessao)
             self._postos[login] = posto
         self.ligar()
         return posto
@@ -370,6 +418,17 @@ class Vigia:
                 self._decretar(posto, pid, DcReason.WINDOW_GONE, None)
             return
         posto.faltas_de_janela = 0
+
+        # ==================================================================
+        # DAQUI PARA BAIXO É JUÍZO, E DURANTE O LOGIN O JUÍZO NÃO É DO VIGIA
+        # ==================================================================
+        #
+        # Ver `SO_FATO_DO_SISTEMA_DURANTE_O_LOGIN`. Zera a contagem de
+        # travamento junto: o silêncio de uma tela de login não pode ser somado
+        # ao de uma sessão que começou depois.
+        if posto.em_sessao is not None and not posto.em_sessao():
+            posto.faltas_de_resposta = 0
+            return
 
         # DEGRAU 4 -- A SONDA DE TRAVAMENTO.
         #

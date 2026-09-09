@@ -205,6 +205,10 @@ class AccountSupervisor(threading.Thread):
         self._tpl_convite = None
         self.pid: int | None = None
         self.hwnd: int | None = None
+        # A CONTA AINDA NÃO ESTÁ EM SESSÃO. Enquanto isto for `True`, o vigia
+        # global só reconhece fato do sistema operacional -- ver
+        # `sentinela.SO_FATO_DO_SISTEMA_DURANTE_O_LOGIN`.
+        self._login_em_curso = True
         self.relogin_count = 0
         # TENTATIVAS DE LOGIN SEGUIDAS QUE FALHARAM. Alimenta o backoff, e o
         # importante é QUANDO ele volta a zero: no login CONCLUÍDO, dentro de
@@ -327,34 +331,12 @@ class AccountSupervisor(threading.Thread):
     def _sleep_interruptible(self, seconds: float) -> None:
         """Espera até `seconds`, acordando se o usuário mandar parar.
 
-        =================================================================
-        ESTA ESPERA NÃO CONSULTA O VIGIA GLOBAL, E NÃO É ESQUECIMENTO
-        =================================================================
-
-        A versão de 08/09/2026 consultava, e isso DERRUBOU O SUPERVISOR em
-        campo, na madrugada seguinte:
-
-            ClientClosed: o cliente foi encerrado pelo aviso de conexão
-            interrompida
-            During handling of the above exception, another exception
-            occurred:  Disconnected: aviso de conexão interrompida na tela
-            PARANDO por falha inesperada
-
-        As QUATRO chamadas de backoff do `run()` estão DENTRO de blocos
-        `except`. Uma exceção levantada ali não é pega pelos `except` do mesmo
-        `try` -- ela sobe direto para a rede de baixo (`except BaseException`),
-        que ENCERRA a thread da conta. Ou seja: o mecanismo que existia para
-        recuperar a conta mais rápido era o que a matava de vez.
-
-        E não havia o que ganhar. Durante o backoff a conta NÃO TEM CLIENTE: o
-        `_release` já rodou, `pid` e `hwnd` são `None`, e o vigia pula postos
-        sem janela. O único anúncio possível aqui é o VELHO, da sessão que
-        acabou -- e cortar o backoff por causa dele é errado duas vezes, porque
-        o backoff existe justamente para não martelar o servidor de login.
-
-        A cobertura não se perdeu: a espera da conta ONLINE E OCIOSA é
-        `ctx.tick()` (que consulta o vigia em `check_watchdog`), e a do farm
-        também. Ver `docs/INVARIANTES.md`, seção "Login e relogin".
+        NÃO CONSULTA O VIGIA GLOBAL, e não é esquecimento: as QUATRO chamadas
+        de backoff do `run()` estão dentro de blocos `except`, e exceção
+        levantada ali sobe para a rede de baixo e ENCERRA a thread da conta --
+        aconteceu em 09/09/2026. Também não haveria o que ganhar: no backoff a
+        conta não tem cliente (`_release` zerou pid e hwnd). A conta ONLINE E
+        OCIOSA é coberta por `ctx.tick()`. Ver `docs/decisoes/login-e-relogin.md`.
         """
         deadline = time.time() + seconds
         while time.time() < deadline:
@@ -946,6 +928,10 @@ class AccountSupervisor(threading.Thread):
 
     def _run_session(self) -> None:
         """Uma sessão: obter uma janela, logar se preciso, e operar."""
+        # ABRIR JANELA E LOGAR SÃO TELAS DO LOGIN, e nelas quem lê a tela é o
+        # `LoginDetector`, não o vigia global. Ver
+        # `sentinela.SO_FATO_DO_SISTEMA_DURANTE_O_LOGIN`.
+        self._login_em_curso = True
         self._status("procurando uma janela do jogo para esta conta")
         ja_logado = False
         personagem_adotado: str | None = None
@@ -1009,6 +995,10 @@ class AccountSupervisor(threading.Thread):
         # honesto de que o backoff cumpriu o papel dele, então é aqui que ele
         # volta a zero. Ver `self.tentativas_de_login` no `__init__`.
         self.tentativas_de_login = 0
+        # E é o mesmo sinal honesto para o VIGIA GLOBAL voltar a opinar sobre a
+        # tela: daqui em diante a janela mostra o JOGO, que é a população contra
+        # a qual o limiar do aviso de queda foi medido.
+        self._login_em_curso = False
 
         farm = {
             CAVE_HH: "com a HH ligada",
@@ -2569,6 +2559,7 @@ class AccountSupervisor(threading.Thread):
             self.account.login,
             fonte=lambda: (self.pid, self.hwnd),
             avisar=lambda frase: self._status(frase),
+            em_sessao=lambda: not self._login_em_curso,
         )
 
         self.tentativas_de_login = 0

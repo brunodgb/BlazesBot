@@ -24,6 +24,19 @@
   `confirmações × cadência ≤ 20 s` é conta, não estimativa: travamento 3×6 s =
   18 s; janela sumida 2×6 s; processo e aviso na tela matam na primeira volta.
   Travado por `tests/test_vigia_global.py`.
+- **DURANTE O LOGIN O VIGIA SÓ RECONHECE FATO DO SISTEMA OPERACIONAL** —
+  processo sumido e janela sumida. **Aviso na tela e travamento ficam
+  suspensos** enquanto `login.run()` está no comando (`_login_em_curso`, virado
+  no mesmo ponto em que o backoff zera). Motivo medido: o template do vigia é UM
+  só, `state_conn_prefix.png`, que casa com a palavra "Connection" — e as telas
+  de login têm uma FAMÍLIA de caixas que começam com ela, desenhadas no MESMO
+  centro (`"Connection failed"` = 0.835, `"Connecting to the server"` = 0.787,
+  medidos em `login_states.py`). O `LoginDetector` convive com isso porque tem
+  **escada ordenada** e deixa o genérico opinar por último; o vigia usa o
+  genérico sozinho. O limiar 0.92 foi medido contra população **em jogo** —
+  usá-lo fora dela é o que o projeto proíbe. Custou um laço de relogin a cada
+  19 s em 09/09/2026. Agravante do travamento: a **fila de login** passa de três
+  horas e não há medição de como o cliente bombeia mensagens nela.
 - **QUATRO SINAIS, E O QUARTO É NOVO.** Processo sumido, janela sumida e aviso na
   tela continuam em `watchdog.avaliar_saude` — a UMA definição de queda, sem
   estado, que todo mundo chama. O **travamento** mora no vigia porque exige

@@ -612,3 +612,103 @@ Travado por `tests/test_vigia_global.py`, com o teste dirigindo o `run()` de
 verdade: sessão que morre por `ClientClosed` com anúncio vivo, e o desfecho
 exigido é chegar à sessão seguinte. Verificado que ele REPROVA sem a correção —
 com o mesmo traceback do campo.
+
+## 09/09/2026, 01:08 — o vigia derrubava a conta ENTRANDO NA FILA
+
+Laço de relogin a cada 19 s, sempre igual, na conta `blazesgamer`:
+
+```
+01:07:59  Servidor 'Light in the Darkness' confirmado como selecionado
+01:08:01  VIGIA: aviso de conexão interrompida na tela — matando o cliente (PID 35908)
+01:08:01  Fase do login: aguardando entrar (fila ou personagem)
+01:08:01  a janela do cliente desapareceu durante o login. Relogin #2
+01:08:01  Reabrindo em 2s
+```
+
+Dois segundos depois de confirmar o servidor, no instante em que o login entra
+na fila, o vigia decretava queda e matava o cliente. O login, sem a janela,
+reportava "a janela do cliente desapareceu" — **a causa verdadeira se perdia** —
+e o ciclo recomeçava.
+
+### O que foi descartado antes de achar a causa
+
+**Região uniforme degenerando `TM_CCOEFF_NORMED`.** Hipótese plausível (divisão
+pelo desvio-padrão zero numa tela de carregamento preta), e **refutada por
+medição**:
+
+| quadro | nota do `state_conn_prefix` |
+|---|---|
+| preto puro / cinza uniforme / branco puro | **0.000** |
+| ruído aleatório | 0.071 |
+| gradiente sutil | 0.060 |
+
+Nenhum chega perto de 0.92. Não é isso.
+
+### A causa, e ela já estava medida no próprio projeto
+
+O template do vigia é **um só**: `state_conn_prefix.png`. Ele casa com a palavra
+**"Connection"** — foi recortado assim de propósito, para pegar as duas variantes
+de "Connection interrupted". Mas nas telas de login existe uma **família** de
+caixas que começam com essa palavra, e todas são desenhadas no **mesmo centro**
+onde o aviso de queda aparece. Medido em 18/08/2026 e registrado em
+`login_states.py`:
+
+```
+"Connection failed"          state_conn_prefix = 0.835
+"Connecting to the server"   state_conn_prefix = 0.787
+```
+
+O `LoginDetector` convive com isso porque tem **escada ordenada**: pergunta pelos
+templates específicos primeiro (`state_conn_failed`, `state_connecting`) e só
+deixa o genérico opinar **por último**. É comentário explícito lá:
+
+> *"O GENÉRICO POR ÚLTIMO entre os modais. (…) por casar só no prefixo ele
+> PRECISA ser o último a opinar."*
+
+**O vigia não tem escada.** Ele usa o genérico sozinho, e ainda travado na região
+onde essas caixas aparecem — a defesa por região, que funciona contra o chat (que
+fica no rodapé), não protege contra caixa centralizada.
+
+E o limiar de **0.92 não cobre isso**: ele foi medido contra população **em
+jogo** — o aviso real (0.980-0.983) de um lado, linhas de chat (0.421 na região)
+do outro. **As telas de login nunca estiveram em nenhuma das duas populações.**
+O vigia foi a primeira coisa na história do projeto a rodar esse template contra
+elas. Usar limiar fora da população onde foi medido é exatamente o que o
+`CLAUDE.md` proíbe.
+
+### A correção
+
+Durante `login.run()`, o vigia **só reconhece fato do sistema operacional**:
+processo sumido e janela sumida. Aviso na tela e travamento ficam suspensos.
+
+* Fato não admite interpretação: processo que sumiu não voltou, e a conta presa
+  num processo morto continua sendo resgatada em 6 s.
+* Juízo sobre a tela de login é do `LoginDetector`, que já tem o tratamento certo
+  para cada uma daquelas caixas. **Duas leituras da mesma tela divergem na
+  primeira manutenção** — e esta divergiu antes da primeira.
+* O **travamento** cai junto, com agravante próprio: a **fila de login passa de
+  três horas** e não existe medição nenhuma de como o cliente bombeia mensagens
+  enquanto espera nela. Matar cliente na fila é o dano mais caro que este bot
+  sabe causar.
+
+A trava é `AccountSupervisor._login_em_curso`, entregue ao vigia como
+`em_sessao=lambda: not self._login_em_curso`. Ela vira `False` no **mesmo ponto**
+em que `tentativas_de_login` zera — o único sinal honesto de que o login
+concluiu, e ele serve aos dois caminhos (janela adotada já logada e sequência de
+login inteira).
+
+### O que isso NÃO resolve, e é do usuário saber
+
+Se o servidor estiver recusando de verdade logo depois da escolha do servidor, o
+laço continua — mas agora ele é o laço **projetado**: quem detecta é o login,
+quem trata é `_handle_conn_interrupted`, e o backoff cresce 1, 2, 4, 8 … até 300
+s. A diferença é que a causa aparece certa no log, o cliente na fila não é morto
+por engano, e a caixa é clicada em vez de a janela ser arrancada.
+
+### Dívida deixada aberta, de propósito
+
+Não existe medição do `state_conn_prefix` contra as telas de login **com a
+região travada no centro** — só contra a tela inteira (0.835 / 0.787). Sem essa
+medição não dá para dizer qual limiar separaria as populações, e por isso a
+saída foi **suspender**, não **subir o limiar**: número novo precisa de medição,
+e arredondar para cima é como se erra calado.
