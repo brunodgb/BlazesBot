@@ -166,6 +166,41 @@ STRIKES_PARA_JANELA_TRAVADA = 3
 MATAR_JANELA_TRAVADA = True
 
 # ===========================================================================
+# O VIGIA NÃO LÊ A TELA. INTERRUPTOR DESLIGADO, com o número que o desligou.
+# ===========================================================================
+#
+# O aviso "Connection interrupted" na tela É o sinal principal de queda -- mas
+# quem o lê é o WATCHDOG INLINE (a cada 10 s, na thread da conta) e o
+# `LoginDetector` (durante o login). Os dois já faziam isso, e faziam bem: o
+# relato do usuário sobre o comportamento anterior é explícito -- *"o relogin
+# estava funcionando bem; só o ato de fechar uma conta que já caiu não
+# acontecia em 100% das vezes"*.
+#
+# O vigia foi o TERCEIRO leitor da mesma tela, e o saldo dele, medido na
+# primeira noite em campo (09/09/2026, `logs/dev/blazes-dev.jsonl`):
+#
+#     48 decretos       TODOS por "aviso de conexão interrompida na tela"
+#     1 conta atingida  blazesgamer, sempre na tela de login
+#     0 decretos        nas outras quatro contas, a noite inteira
+#     0 quedas          que os leitores que já existiam não teriam pego
+#
+# Quarenta e oito mortes, nenhuma delas uma queda. Um terceiro leitor da mesma
+# tela não somou cobertura: somou uma chance de errar sozinho, num contexto
+# (as telas de login) onde o limiar dele nunca foi medido.
+#
+# E O QUE FALTAVA -- a conta que cai e fica em LIMBO -- não é falta de leitura
+# de tela: é a thread da conta parada dentro de um `SendMessageW` síncrono, sem
+# poder perguntar nada. Isso quem responde são os três sinais que SOBRAM aqui:
+# processo sumido, janela sumida e a sonda de travamento. Nenhum deles precisa
+# ver a tela, e nenhum deles depende de limiar.
+#
+# PARA RELIGAR é uma linha -- mas só depois de medir `state_conn_prefix` contra
+# as telas de login COM A REGIÃO TRAVADA no centro, que é a medição que não
+# existe. Sem ela não dá para dizer qual limiar separa as populações, e subir o
+# 0.92 no chute é como se erra calado.
+OLHAR_A_TELA = False
+
+# ===========================================================================
 # DURANTE O LOGIN, O VIGIA SÓ RECONHECE FATO DO SISTEMA OPERACIONAL
 # ===========================================================================
 #
@@ -453,6 +488,11 @@ class Vigia:
         # DEGRAU 5 -- O AVISO NA TELA. O único caro (captura + template), e o
         # único que produz PRINT para o Histórico de Quedas. Só chega aqui janela
         # que acabou de provar que responde, então a captura não trava.
+        #
+        # DESLIGADO: ver `OLHAR_A_TELA`. Quem lê esta tela é o watchdog inline e
+        # o `LoginDetector` -- e eles já liam bem.
+        if not OLHAR_A_TELA:
+            return
         quadro = quadro_com_aviso_de_conexao(
             hwnd, self._biblioteca(), captura=capture_window_isolado)
         if quadro is not None:

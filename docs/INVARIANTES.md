@@ -37,6 +37,16 @@
   usá-lo fora dela é o que o projeto proíbe. Custou um laço de relogin a cada
   19 s em 09/09/2026. Agravante do travamento: a **fila de login** passa de três
   horas e não há medição de como o cliente bombeia mensagens nela.
+- **O VIGIA NÃO LÊ A TELA** (`sentinela.OLHAR_A_TELA = False`). Quem lê o aviso
+  "Connection interrupted" é o **watchdog inline** (thread da conta, a cada 10 s)
+  e o **`LoginDetector`** — os dois já faziam isso bem. O vigia foi o terceiro
+  leitor da mesma tela, e o saldo da primeira noite em campo foi **48 decretos,
+  todos por leitura de tela, todos numa conta só, nenhum deles uma queda**.
+  Terceiro leitor não somou cobertura: somou uma chance de errar sozinho. E o
+  que faltava — a conta em LIMBO — não é falta de leitura de tela: é a thread
+  parada dentro de um `SendMessageW` síncrono, que os outros três sinais
+  respondem sem ver nada. **Religar exige a medição que não existe**:
+  `state_conn_prefix` contra as telas de login, com a região travada no centro.
 - **QUATRO SINAIS, E O QUARTO É NOVO.** Processo sumido, janela sumida e aviso na
   tela continuam em `watchdog.avaliar_saude` — a UMA definição de queda, sem
   estado, que todo mundo chama. O **travamento** mora no vigia porque exige

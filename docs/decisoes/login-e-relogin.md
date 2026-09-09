@@ -712,3 +712,55 @@ região travada no centro** — só contra a tela inteira (0.835 / 0.787). Sem e
 medição não dá para dizer qual limiar separaria as populações, e por isso a
 saída foi **suspender**, não **subir o limiar**: número novo precisa de medição,
 e arredondar para cima é como se erra calado.
+
+## 09/09/2026 — o vigia deixou de ler a tela: 48 decretos, nenhuma queda
+
+O usuário corrigiu o escopo, e a correção importa:
+
+> *"antes da mudança o relogin estava funcionando bem (pelo menos parecia
+> estar), só o ato de fechar uma conta que já caiu que não estava acontecendo em
+> 100% das vezes — então tinha contas que caíam, mas elas não eram identificadas
+> e ficavam em um 'limbo'."*
+
+Ou seja: **os leitores de tela já funcionavam**. O que faltava era a conta que
+cai e ninguém fecha.
+
+### O saldo da primeira noite, contado no log
+
+`logs/dev/blazes-dev.jsonl`, 09/09/2026:
+
+| | |
+|---|---|
+| decretos do vigia | **48** |
+| por "aviso de conexão interrompida na tela" | **48 (100%)** |
+| contas atingidas | **1** (`blazesgamer`, sempre na tela de login) |
+| decretos nas outras 4 contas, a noite inteira | **0** |
+| decretos pela sonda de travamento | **0** |
+| quedas que os leitores antigos não teriam pego | **0** |
+
+Quarenta e oito mortes, nenhuma delas uma queda.
+
+### A conclusão, e ela é sobre desenho, não sobre limiar
+
+O aviso na tela já tinha **dois** leitores: o watchdog inline (na thread da
+conta, a cada 10 s) e o `LoginDetector` (durante o login). O vigia virou o
+**terceiro leitor da mesma tela** — e um terceiro leitor não soma cobertura:
+soma uma chance de errar sozinho, ainda por cima num contexto onde o limiar dele
+nunca foi medido.
+
+E o caso que motivou tudo — a conta em **limbo** — não é falta de leitura de
+tela. É a thread da conta parada dentro de um `SendMessageW` síncrono, sem poder
+perguntar nada a ninguém. Quem responde isso são os três sinais que **sobram**:
+processo sumido, janela sumida e a sonda de travamento. Nenhum deles vê a tela,
+nenhum depende de limiar, e nenhum pode ser bloqueado pela janela que está
+diagnosticando.
+
+`sentinela.OLHAR_A_TELA = False`. Não foi apagado — é interruptor, com teste
+forçando-o ligado para a lógica continuar exercitada.
+
+### O que é preciso para religar
+
+Medir `state_conn_prefix` contra as telas de login **com a região travada no
+centro** — a medição que não existe. Só ela diria qual limiar separa a queda
+real (0.980-0.983 em jogo) da família "Connection failed" / "Connecting to the
+server". Subir o 0.92 no chute é como se erra calado.

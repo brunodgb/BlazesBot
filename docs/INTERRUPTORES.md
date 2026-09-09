@@ -50,6 +50,7 @@ ligar código não testado.
 | `ATIVADO` | `True` | [blazesbot/bot/deletador.py:74](blazesbot/bot/deletador.py#L74) | diagnostico_do_link.py, supervisor.py, esconder_jogadores.py, patch_do_cliente.py, petbug.py | O caminho continua inteiro com ele em False -- desligado não é apagado. |
 | `CIRCULO_POR_RAIO` | `True` | [blazesbot/bot/navegacao.py:265](blazesbot/bot/navegacao.py#L265) | — | True = raio por raio (1,2,3,5; em cada raio os 8 pontos); False = bússola por |
 | `MATAR_JANELA_TRAVADA` | `True` | [blazesbot/bot/sentinela.py:166](blazesbot/bot/sentinela.py#L166) | — | INTERRUPTOR (a convenção do projeto: caminho fora de uso não vira comentário) |
+| `OLHAR_A_TELA` | `False` | [blazesbot/bot/sentinela.py:201](blazesbot/bot/sentinela.py#L201) | — | O VIGIA NÃO LÊ A TELA. INTERRUPTOR DESLIGADO, com o número que o desligou. |
 | `CONFIRMAR_CHEGADA_POR_COORDENADA` | `False` | [blazesbot/bot/ui_do_jogo.py:515](blazesbot/bot/ui_do_jogo.py#L515) | — | INTERRUPTOR: a coordenada do painel CONFIRMA a chegada? |
 | `CONFERIR_SLOT_VAZIO` | `False` | [blazesbot/bot/vendedor.py:236](blazesbot/bot/vendedor.py#L236) | — | INTERRUPTOR -- A CONFERÊNCIA DE SLOT VAZIO ESTÁ DESLIGADA (decisão do usuário, |
 | `MODO_FADA_DA_HH` | `'fada'` | [blazesbot/config.py:910](blazesbot/config.py#L910) | routine.py, supervisor.py, account_dialog.py | — |

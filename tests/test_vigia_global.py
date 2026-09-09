@@ -34,7 +34,6 @@ import pytest
 from blazesbot.bot import sentinela as mod
 from blazesbot.bot.watchdog import DcReason
 
-
 # ===========================================================================
 # O ORÇAMENTO DE TEMPO -- é o requisito, então é teste e não comentário
 # ===========================================================================
@@ -139,6 +138,9 @@ class _Mundo:
         self.mortos: list[int] = []
 
     def instalar(self, monkeypatch):
+        # FORÇA O INTERRUPTOR LIGADO -- é a convenção do projeto para caminho
+        # fora de uso: ele não some, e o teste continua exercitando a lógica.
+        monkeypatch.setattr(mod, "OLHAR_A_TELA", True)
         monkeypatch.setattr(mod, "janela_responde",
                             lambda hwnd, *a, **k: self.responde)
         monkeypatch.setattr(mod, "quadro_com_aviso_de_conexao",
@@ -593,3 +595,41 @@ def test_o_supervisor_diz_ao_vigia_quando_esta_logando():
             < sessao.index("self._login_em_curso = False")
             < sessao.index("Logado como")), (
         "a virada saiu do ponto em que o login CONCLUI")
+
+
+def test_o_vigia_vem_DE_FABRICA_sem_ler_a_tela():
+    """48 decretos na primeira noite, todos por leitura de tela, todos errados.
+
+    O aviso "Connection interrupted" tem DOIS leitores que já funcionavam: o
+    watchdog inline (na thread da conta, a cada 10 s) e o `LoginDetector`. O
+    vigia foi o terceiro, e não somou cobertura -- somou uma chance de errar
+    sozinho, num contexto onde o limiar dele nunca foi medido.
+
+    O que faltava (a conta em LIMBO) é thread parada dentro de um `SendMessageW`
+    síncrono, e isso os outros três sinais respondem sem ver a tela.
+    """
+    assert mod.OLHAR_A_TELA is False, (
+        "o vigia voltou a ler a tela por padrão — sem antes medir o "
+        "`state_conn_prefix` contra as telas de login com a região travada")
+
+
+def test_desligado_ele_nao_MATA_nem_CAPTURA(monkeypatch):
+    """Não basta não matar: com o interruptor desligado ele nem fotografa.
+
+    A captura é o degrau caro e o único que disputa GDI com a thread da conta.
+    """
+    v = mod.Vigia(cadencia=999.0)
+    try:
+        mundo = _Mundo(aviso="quadro-com-a-caixa")
+        mundo.instalar(monkeypatch)
+        monkeypatch.setattr(mod, "OLHAR_A_TELA", False)
+        fotos = []
+        monkeypatch.setattr(mod, "quadro_com_aviso_de_conexao",
+                            lambda *a, **k: fotos.append(1) or mundo.aviso)
+        _por(v, mundo)
+        for _ in range(5):
+            v._uma_volta()
+        assert mundo.mortos == []
+        assert fotos == [], "capturou mesmo com o interruptor desligado"
+    finally:
+        v.desligar()
