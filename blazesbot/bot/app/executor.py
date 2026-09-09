@@ -168,6 +168,42 @@ INTERVALO_ENTRE_INVOCACOES = 6.0
 # não para esperar o pet aparecer -- quem confere isso é a volta seguinte.
 ESPERA_DEPOIS_DE_INVOCAR = 1
 
+# ===========================================================================
+# O PERÍMETRO -- a tecla de limpeza e as travas contra o laço de recolhimento
+# ===========================================================================
+#
+# A REGRA e o raio moram em `core/coleira_do_ponto.py`, junto das cicatrizes
+# das três versões anteriores. Aqui ficam só as peças de AÇÃO.
+
+# A tecla que o usuário definiu para limpar o estado ao chegar no ponto:
+# *"ao chegar, aperta a tecla F1 (limpeza/reset de estado)"* -- 09/09/2026.
+#
+# LITERAL E NÃO CONFIGURÁVEL, por enquanto: foi assim que ele pediu, e um campo
+# de configuração para uma tecla que ninguém pediu para trocar é peso morto.
+# Virar `KeyBinds` é uma linha, no dia em que uma conta precisar de outra.
+TECLA_DE_LIMPEZA_DO_PERIMETRO = "F1"
+
+# Quanto esperar o jogo processar o F1 antes de TABar.
+#
+# *"Espere um breve delay (ex: 200ms a 500ms para o jogo processar)"* -- o
+# usuário deu a faixa; 0,3 s é o meio dela. É espera CEGA, e é curta o
+# bastante para não pagar a pena de perguntar.
+ESPERA_DEPOIS_DA_LIMPEZA = 0.3
+
+# Recolhimentos seguidos que FALHAM em chegar antes de o bot desistir.
+#
+# ISTO NÃO É AFINAÇÃO -- é a saída de emergência que faltou na 1ª versão da
+# coleira, a que travou o bot parado apanhando até morrer. Personagem preso em
+# parede, ou com o caminho bloqueado, não chega nunca: sem esta contagem, o
+# perímetro cortaria toda volta para sempre e o bot nunca mais lutaria.
+RECOLHIMENTOS_SEGUIDOS_PARA_DESISTIR = 3
+
+# Quanto tempo o perímetro fica só MEDINDO depois de desistir.
+#
+# Um minuto: tempo de matar o que está em cima e de o mob soltar. Passado ele,
+# tenta de novo -- desistir para sempre seria trocar um defeito por outro.
+SEGUNDOS_DE_DESISTENCIA_DO_PERIMETRO = 60.0
+
 # Constantes mantidas para compatibilidade com testes e configuração.
 # O executor NÃO usa mais estas constantes para movimento (ecossistema cego).
 #
@@ -1003,6 +1039,10 @@ class ExecutorDeMacro:
         # `_abortar_a_volta` e `core/cadencia_da_bolsa.py`.
         self._ultimo_corte = "início"
         self._declarar_queda = declarar_queda
+        # O PERÍMETRO: quantos recolhimentos seguidos falharam e até quando a
+        # desistência vale. Ver `_recolher_ao_ponto`.
+        self._recolhimentos_falhos = 0
+        self._perimetro_desistido_ate = 0.0
         # A RÉGUA DA VIDA mora no `core/` -- ela é contabilidade pura e é sobre
         # o JOGO ("levei dano"), não sobre o APP. Ver `core/vigia_da_vida.py`.
         self._vigia = vigia_da_vida.VigiaDaVida()
@@ -1149,6 +1189,11 @@ class ExecutorDeMacro:
                 # quem mata quem está batendo é ela. Ver `cura.socorro`.
                 if self.cura is not None:
                     self.cura.socorro()
+                # "ABORTA IMEDIATAMENTE QUALQUER ATAQUE, MACRO OU ESPERA" --
+                # e a espera é aqui. Sem isto, uma linha de 3 s continuaria
+                # correndo com o personagem já fora do perímetro.
+                if self._estourei_o_perimetro() is not None:
+                    return False
                 if self._cortar_a_volta():
                     return False
         return True
@@ -2788,6 +2833,15 @@ class ExecutorDeMacro:
                 return False
             return self._abortar_a_volta(motivo="morri (prelúdio)")
 
+        # O PERÍMETRO VEM ANTES DE TUDO, depois da morte: não adianta escolher
+        # alvo, cuidar de pet ou rodar macro a vinte unidades do ponto. Ver
+        # `core/coleira_do_ponto.py`.
+        fora = self._estourei_o_perimetro()
+        if fora is not None:
+            if not self._recolher_ao_ponto(fora):
+                return False
+            return self._abortar_a_volta(motivo="perímetro estourado")
+
         lutando = self._ler_em_batalha() is True
         # EIXO 1: a régua da vida anda em TODA volta, dentro e fora de batalha.
         # Fora dela a marca cai; dentro, uma queda a levanta.
@@ -2933,6 +2987,12 @@ class ExecutorDeMacro:
             if self.cura is not None:
                 self.cura.socorro()
 
+            # PERÍMETRO NO MEIO DA MACRO. Só CORTA aqui -- quem anda de volta é
+            # o topo da volta seguinte, e ter um único lugar que age é o que
+            # impede duas caminhadas concorrentes.
+            if self._estourei_o_perimetro() is not None:
+                return self._abortar_a_volta(motivo="perímetro estourado")
+
             if self._ler_id_do_alvo() == 0:
                 self.log.info("APP: fiquei sem alvo na linha %d — corto a volta "
                               "e pego outro.", i + 1)
@@ -3061,6 +3121,89 @@ class ExecutorDeMacro:
         self.urgencias += 1
         self._urgencia = True
         self.log.info("%s", mensagem)
+        return True
+
+    def _estourei_o_perimetro(self) -> float | None:
+        """EIXO 1 -- a distância da base, se ela passou do raio. `None` = não.
+
+        UMA LEITURA DE MEMÓRIA (`distancia_da_base` lê a posição, quatro bytes)
+        e uma subtração. É barata o bastante para caber a cada linha da macro e
+        dentro da espera fatiada -- que é onde ela precisa estar para o corte
+        ser IMEDIATO, e não "no fim da volta".
+
+        DESLIGADA ENQUANTO A DESISTÊNCIA VALE: ver
+        `SEGUNDOS_DE_DESISTENCIA_DO_PERIMETRO`. Continua MEDINDO no log, mas
+        não manda cortar nada.
+        """
+        if not self._travar_posicao or self._base_pos is None:
+            return None
+        distancia = self.distancia_da_base()
+        if distancia is None or distancia <= coleira_do_ponto.RAIO_DO_PERIMETRO:
+            return None
+        if time.time() < self._perimetro_desistido_ate:
+            return None
+        return distancia
+
+    def _recolher_ao_ponto(self, distancia: float) -> bool:
+        """EIXO 2 e 3 -- anda de volta, limpa o estado e TABa. `False` = parar.
+
+        =================================================================
+        QUEM CORTA, ANDA -- e é isso que separa esta versão da que matou
+        =================================================================
+
+        A 1ª coleira media a mesma coisa, cortava a volta e DELEGAVA a
+        caminhada à trava de posição. A trava se recusa a andar em batalha
+        (`ANDAR_SO_FORA_DE_BATALHA`), então o personagem ficava parado
+        apanhando, para sempre. Ver o topo de `core/coleira_do_ponto.py`.
+
+        Aqui a caminhada é parte do corte, e ela ANDA EM BATALHA -- exceção
+        deliberada: arrastar um mob de volta ao ponto é ruim, ficar a vinte
+        unidades brigando com o trem que veio junto é pior.
+
+        =================================================================
+        E ELA SABE DESISTIR
+        =================================================================
+
+        Personagem preso em parede não chega nunca. Três recolhimentos seguidos
+        sem chegar e o perímetro se cala por um minuto, deixando o bot lutar
+        onde está. É a saída de emergência que faltou na 1ª versão -- sem ela,
+        o corte a cada volta é o mesmo travamento permanente com outro nome.
+        """
+        self.log.warning(
+            "APP: PERÍMETRO — estou a %.0f unidades do ponto (limite %d). "
+            "Abortando tudo e voltando.", distancia,
+            coleira_do_ponto.RAIO_DO_PERIMETRO)
+
+        if not self.mandar_voltar_para_base():
+            self.log.warning("APP: PERÍMETRO — não havia como mandar andar "
+                             "(sem base ou sem centro do minimapa).")
+            return True
+
+        if not self._esperar_chegar_na_base(volta_ao_ponto.SEGUNDOS_PARA_CHEGAR):
+            self._recolhimentos_falhos += 1
+            if self._recolhimentos_falhos >= RECOLHIMENTOS_SEGUIDOS_PARA_DESISTIR:
+                self._perimetro_desistido_ate = (
+                    time.time() + SEGUNDOS_DE_DESISTENCIA_DO_PERIMETRO)
+                self._recolhimentos_falhos = 0
+                self.log.error(
+                    "APP: PERÍMETRO — %d recolhimentos seguidos sem chegar ao "
+                    "ponto. Pode haver parede no caminho. Volto a lutar onde "
+                    "estou e só meço por %.0fs — parar de lutar aqui seria "
+                    "ficar apanhando parado.",
+                    RECOLHIMENTOS_SEGUIDOS_PARA_DESISTIR,
+                    SEGUNDOS_DE_DESISTENCIA_DO_PERIMETRO)
+            return True
+
+        self._recolhimentos_falhos = 0
+        # EIXO 3: chegou. Limpa o estado e engata um alvo novo -- o antigo é
+        # justamente o que arrastou o personagem para fora.
+        self.input.key(TECLA_DE_LIMPEZA_DO_PERIMETRO)
+        self.log.info("APP: PERÍMETRO — de volta ao ponto. %r para limpar o "
+                      "estado, e TAB para pegar alvo perto.",
+                      TECLA_DE_LIMPEZA_DO_PERIMETRO)
+        if not self._dormir(ESPERA_DEPOIS_DA_LIMPEZA):
+            return False
+        self._conseguir_o_tab()
         return True
 
     def _vigiar_a_vida(self, lutando: bool) -> bool:

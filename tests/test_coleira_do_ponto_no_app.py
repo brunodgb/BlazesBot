@@ -105,21 +105,46 @@ def test_sem_posicao_do_personagem_nao_ha_o_que_medir(executor, caplog):
 
 # ------------------------------------------------- o laço vivo não corta
 
-def test_o_laco_vivo_NAO_corta_a_volta_por_distancia():
-    """A 1ª versão, que matava por travamento: cortar a volta a cada linha longe
-    do ponto, com a trava de posição impedida de andar por estar em batalha."""
+def test_quem_corta_por_distancia_TEM_de_andar_de_volta():
+    """A regra virou o contrário em 09/09/2026, e a cicatriz continua valendo.
+
+    ANTES: o laço vivo não podia cortar por distância, ponto. O motivo era a 1ª
+    versão da coleira, que cortava a volta a cada linha longe do ponto e
+    DELEGAVA a caminhada à trava de posição -- que se recusa a andar em
+    batalha. Resultado: personagem parado apanhando, para sempre.
+
+    AGORA o usuário pediu o perímetro de volta, e com a peça que faltava:
+    *"aborta imediatamente qualquer ataque, macro ou espera; FORÇA A CAMINHADA
+    de volta para o Ponto Inicial exato"*.
+
+    Então o que este teste guarda não é mais "não corte" -- é **quem corta,
+    anda**, e **sabe desistir**. Sem as três coisas juntas, o travamento de
+    2026-09-04 volta com outro nome.
+    """
     import inspect
 
-    fonte = inspect.getsource(ExecutorDeMacro._uma_volta_simples)
-    assert "MAXIMO_DE_PIXELS_DO_PONTO" not in fonte
-    assert "coleira" not in fonte
+    fonte = inspect.getsource(ExecutorDeMacro._recolher_ao_ponto)
+    assert "mandar_voltar_para_base" in fonte, "corta e não anda"
+    assert "_esperar_chegar_na_base" in fonte, "anda e não confere a chegada"
+    assert "RECOLHIMENTOS_SEGUIDOS_PARA_DESISTIR" in fonte, "não sabe desistir"
+
+    # E a recusa de ALVO continua fora: foi ela que matou a 2ª e a 3ª versão.
+    laco = inspect.getsource(ExecutorDeMacro._uma_volta_simples)
+    assert "MAXIMO_DE_PIXELS_DO_PONTO" not in laco
+    assert "RECUSAS_ANTES_DE_ACEITAR" not in laco
     # O corte por alvo ZERADO fica -- aquele tem quem o resolva (o TAB).
-    assert "_ler_id_do_alvo() == 0" in fonte
+    assert "_ler_id_do_alvo() == 0" in laco
 
 
 def test_a_macro_roda_inteira_longe_do_ponto_se_ja_esta_lutando():
     """*"Em batalha o personagem precisa estar atacando e para isso a macro tem
-    que rodar"* (usuário, 04/09/2026)."""
+    que rodar"* (usuário, 04/09/2026).
+
+    DENTRO DO PERÍMETRO, e é essa a fronteira desde 09/09/2026: "longe do
+    ponto" a até 12 unidades continua sendo lugar de lutar. Passou disso, quem
+    manda é `_recolher_ao_ponto` -- e ele anda de volta em vez de deixar o
+    personagem parado.
+    """
     from types import SimpleNamespace
 
     import tests.test_laco_simples_do_app as base

@@ -85,6 +85,13 @@ def _executor(em_batalha=None, passos=3, tecla="TAB"):
     # tests/test_reflexo_de_sobrevivencia.py.
     e._vida_pct = None
     e._vigia = vigia_da_vida.VigiaDaVida()
+    # O PERÍMETRO -- ver `executor._estourei_o_perimetro`. Desligado no dublê:
+    # estes testes são sobre outra coisa, e o perímetro tem os seus em
+    # tests/test_perimetro_do_app.py.
+    e._travar_posicao = False
+    e._base_pos = None
+    e._recolhimentos_falhos = 0
+    e._perimetro_desistido_ate = 0.0
     e._ultimo_tab_do_reflexo = 0.0
     # SEM CURA: quem tem testes de vida é tests/test_cura_do_app.py. Aqui o
     # socorro em batalha não deve nem ser consultado.

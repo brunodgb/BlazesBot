@@ -31,6 +31,18 @@ from .zones import coord_para_pixel_do_minimapa, distancia_linear
 # com tolerância zero a trava mandaria clique a cada leitura.
 TOLERANCIA = 1
 
+# Teto da caminhada de volta ao ponto.
+#
+# *"Em no máximo 5 segundos é para chegar no ponto inicial, mas vai
+# verificando: se chegar antes, pode começar a se curar antes"* -- usuário,
+# sobre a cura. É a MESMA pergunta física do recolhimento do perímetro
+# (quanto tempo leva para voltar andando), então é o MESMO número -- e número
+# lido por dois lados mora num lugar só.
+#
+# TETO, NÃO GASTO: quem espera PERGUNTA a posição e sai no instante em que
+# chega.
+SEGUNDOS_PARA_CHEGAR = 5.0
+
 
 def cheguei(pos_atual: tuple[int, int] | None,
             destino: tuple[int, int] | None,

@@ -47,6 +47,57 @@ import logging
 from . import diagnostico_fino
 from .zones import distancia_linear
 
+# ===========================================================================
+# O PERÍMETRO -- a QUARTA versão da coleira, e a primeira que anda de volta
+# ===========================================================================
+#
+# *"Se a diferença de distância para as coordenadas do Ponto Inicial for MAIOR
+# QUE 12 unidades, um alarme de perímetro é acionado (...) aborta
+# IMEDIATAMENTE qualquer ataque, macro ou espera, força a caminhada de volta
+# para o Ponto Inicial exato"* -- usuário, 09/09/2026.
+#
+# LEIA O TOPO DESTE ARQUIVO ANTES DE MEXER AQUI. A 1ª versão media exatamente
+# isto -- o PERSONAGEM contra a base, no meio da macro -- e matou personagens.
+# O defeito NÃO era a medição: era o CORTE SEM RETORNO. Ela cortava a volta e
+# delegava a caminhada à trava de posição, que se recusa a andar em batalha --
+# então o personagem ficava parado apanhando, para sempre.
+#
+# O QUE MUDA NESTA VERSÃO, e é tudo:
+#
+#   1. QUEM CORTA, ANDA. O recolhimento é a mesma rotina: corta, caminha,
+#      confirma a chegada, limpa o estado e TABa. Não delega para ninguém.
+#   2. ANDA EM BATALHA. É a exceção deliberada a `ANDAR_SO_FORA_DE_BATALHA`:
+#      arrastar um mob de volta ao ponto é ruim, ficar a 20 unidades brigando
+#      com o trem que veio junto é pior.
+#   3. TEM TETO E TEM DESISTÊNCIA. Não chegou no teto, tenta de novo; não
+#      chegou três vezes, PARA de tentar por um tempo e volta a lutar onde
+#      está. É o que impede o travamento permanente da 1ª versão de voltar.
+#
+# E ELA NÃO RECUSA ALVO -- nada aqui gasta TAB para escolher mob. Foi a recusa
+# que matou a 2ª e a 3ª versão.
+#
+# DOZE, e o número é do usuário. Não é arredondamento de medição: é o raio de
+# farm que ele considera seguro no spot dele. Abaixo disso o dono é a trava de
+# posição, com tolerância 1.
+RAIO_DO_PERIMETRO = 12
+
+
+def estourou_o_perimetro(
+        pos_atual: tuple[int, int] | None,
+        base: tuple[int, int] | None,
+        raio: float = RAIO_DO_PERIMETRO) -> float | None:
+    """A distância, se ela passou do raio. `None` = dentro, ou não sei.
+
+    `None` PARA "NÃO SEI" é o lado seguro: sem leitura de posição não se
+    interrompe macro nem se manda ninguém andar. Inventar deslocamento a partir
+    de leitura falha faria o bot recolher-se para um ponto que talvez nem seja o
+    lugar onde ele está.
+    """
+    if pos_atual is None or base is None:
+        return None
+    distancia = distancia_linear(pos_atual, base)
+    return distancia if distancia > raio else None
+
 # NÃO HÁ MAIS TETO, E ISSO É O CONSERTO.
 #
 # Os números que existiam aqui (`MAXIMO_DE_PASSOS_ATE_O_MOB`,

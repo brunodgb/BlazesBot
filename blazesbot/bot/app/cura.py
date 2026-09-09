@@ -99,6 +99,8 @@ from __future__ import annotations
 import time
 from collections.abc import Callable
 
+from ...core import volta_ao_ponto
+
 # ===========================================================================
 # OS NÚMEROS
 # ===========================================================================
@@ -155,7 +157,11 @@ MAXIMO_DE_POCOES = 5
 # *"Em no máximo 5 segundos é para chegar no ponto inicial, mas vai verificando,
 # se chegar antes pode começar a se curar antes."* Estourado, cura onde estiver:
 # melhor curar no lugar errado do que morrer esperando chegar no certo.
-SEGUNDOS_PARA_VOLTAR_AO_PONTO = 5.0
+#
+# O NÚMERO MORA NO `core/` desde 09/09/2026: o recolhimento do perímetro faz a
+# MESMA pergunta física (quanto tempo leva para voltar andando), e número lido
+# por dois lados mora num lugar só.
+SEGUNDOS_PARA_VOLTAR_AO_PONTO = volta_ao_ponto.SEGUNDOS_PARA_CHEGAR
 
 # Teto sentado, para quem não tem tecla de poção configurada.
 #

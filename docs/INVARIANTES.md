@@ -96,6 +96,22 @@
 ---
 ## O laço do APP — `docs/decisoes/cura-no-app.md`
 
+- **PERÍMETRO DE 12: PASSOU, RECOLHE** (09/09/2026). Personagem a mais de
+  `coleira_do_ponto.RAIO_DO_PERIMETRO` do ponto ⇒ aborta ataque, macro e
+  espera, ANDA de volta, aperta a tecla de limpeza e TABa. É a QUARTA versão da
+  coleira; leia o topo de `core/coleira_do_ponto.py` antes de mexer.
+- **QUEM CORTA, ANDA.** A 1ª versão media a mesma coisa e DELEGAVA a caminhada
+  à trava de posição, que se recusa a andar em batalha — personagem parado
+  apanhando, para sempre. O recolhimento anda EM BATALHA: é a exceção
+  deliberada a `ANDAR_SO_FORA_DE_BATALHA`.
+- **E SABE DESISTIR.** Três recolhimentos seguidos sem chegar (parede no
+  caminho) e o perímetro só MEDE por um minuto, deixando o bot lutar onde está.
+  Sem isso, o corte a cada volta é o travamento permanente com outro nome.
+- **O PERÍMETRO NÃO RECUSA ALVO.** Foi a recusa que matou a 2ª e a 3ª versões:
+  cada recusa custa um TAB, e cada TAB afasta a seleção.
+- **TRÊS PONTOS DETECTAM, UM AGE:** topo da volta, meio da macro e dentro da
+  espera fatiada cortam; só o topo da volta caminha. Dois lugares andando
+  seriam duas caminhadas concorrentes para o mesmo ponto.
 - **EM BATALHA SEM ALVO E LEVANDO DANO, O BOT TABA NA HORA** (07/09/2026). O
   TAB só existia no ramo FORA de batalha: morto o mob, com outro batendo, a
   volta abortava na primeira linha e o personagem ficava apanhando parado. O

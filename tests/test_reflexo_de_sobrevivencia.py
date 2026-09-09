@@ -112,6 +112,13 @@ class _Executor:
             warning=lambda f, *a: self.linhas.append(("WARN", f % a if a else f)),
             debug=lambda *a, **k: None)
         e._vigia = vigia_da_vida.VigiaDaVida()
+        # O PERÍMETRO -- ver `executor._estourei_o_perimetro`. Desligado no dublê:
+        # estes testes são sobre outra coisa, e o perímetro tem os seus em
+        # tests/test_perimetro_do_app.py.
+        e._travar_posicao = False
+        e._base_pos = None
+        e._recolhimentos_falhos = 0
+        e._perimetro_desistido_ate = 0.0
         e._ultimo_tab_do_reflexo = 0.0
         e.urgencias = 0
         e.voltas = 0
