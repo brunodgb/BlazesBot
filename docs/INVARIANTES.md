@@ -47,10 +47,20 @@
 - **QUEM RELIGA CONTINUA SENDO O SUPERVISOR.** O vigia não sabe o que é login. A
   thread do bot lê o anúncio (`BotContext.check_watchdog`), levanta
   `Disconnected`, e o `run()` faz `_encerrar_caido` → backoff → nova sessão.
-- **O ANÚNCIO SE APAGA QUANDO O RELOGIN ENGATA** (`sentinela.limpar`) e também
-  sozinho, quando a conta volta noutro PID. Anúncio esquecido de pé derruba a
-  sessão NOVA no primeiro `tick` — relogin em laço, o defeito com o sinal
-  invertido.
+- **O ANÚNCIO MORRE JUNTO COM O CONTROLE DA JANELA**, em `_release()` — o ponto
+  por onde os CINCO caminhos de morte de sessão passam, e não em cada um deles.
+  Apaga-se também sozinho quando a conta volta noutro PID. Anúncio esquecido de
+  pé derruba a sessão NOVA no primeiro `tick` — relogin em laço, o defeito com o
+  sinal invertido. **Foi por faltar isso que a queda tratada pelo LOGIN
+  (`ClientClosed`) deixava o anúncio vivo.**
+- **NENHUMA CONFERÊNCIA DE QUEDA DENTRO DE `_sleep_interruptible`.** As quatro
+  chamadas de backoff do `run()` estão dentro de blocos `except`, e exceção
+  levantada ali não é pega pelos `except` do mesmo `try`: sobe para o
+  `except BaseException` de baixo e **ENCERRA a thread da conta**. Aconteceu em
+  09/09/2026, 00:56. E não há o que ganhar ali: durante o backoff a conta não
+  tem cliente (`_release` zerou pid e hwnd), então o único anúncio possível é o
+  velho — e cortar o backoff é errado, ele existe para não martelar o servidor
+  de login. A espera da conta ociosa é `ctx.tick()`, que consulta.
 - **SAIR DA VIGILÂNCIA AO ENCERRAR** (`sentinela.esquecer`, no `finally` do
   `run`). Sem isso o vigia mata o cliente que o usuário acabou de assumir na mão.
 - **A CONTA ENTRA NO VIGIA UMA VEZ POR EXECUÇÃO, não por sessão.** O tempo ruim é

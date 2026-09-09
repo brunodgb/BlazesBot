@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import ast
 import inspect
+import logging
 import textwrap
 import threading
 import time
@@ -317,12 +318,64 @@ def test_a_thread_do_bot_levanta_Disconnected_ao_ler_o_anuncio():
         "elas voltam a ficar cegas")
 
 
-def test_a_espera_do_backoff_tambem_enxerga_a_queda():
-    """Era uma das janelas cegas: 300 s sem ninguém perguntando nada."""
+def test_a_espera_do_BACKOFF_NAO_levanta_Disconnected():
+    """O defeito de 09/09/2026, e ele matava a thread da conta.
+
+    As quatro chamadas de backoff do `run()` estão DENTRO de blocos `except`.
+    Exceção levantada ali não é pega pelos `except` do mesmo `try`: sobe para o
+    `except BaseException` de baixo, que ENCERRA o supervisor. Em campo:
+
+        ClientClosed: o cliente foi encerrado pelo aviso de conexão interrompida
+        During handling of the above exception, another exception occurred:
+        Disconnected: aviso de conexão interrompida na tela
+        PARANDO por falha inesperada
+
+    Nada se perdeu com a remoção: durante o backoff a conta não tem cliente
+    (`_release` zerou pid e hwnd), então o único anúncio possível ali é o velho.
+    """
     from blazesbot.bot import supervisor as mod_sup
 
-    fonte = inspect.getsource(mod_sup.AccountSupervisor._sleep_interruptible)
-    assert "cobrar_a_queda" in fonte
+    corpo = inspect.getsource(mod_sup.AccountSupervisor._sleep_interruptible)
+    arvore = ast.parse(textwrap.dedent(corpo))
+    levantados = {ast.unparse(no.exc.func) if isinstance(no.exc, ast.Call)
+                  else ast.unparse(no.exc)
+                  for no in ast.walk(arvore)
+                  if isinstance(no, ast.Raise) and no.exc is not None}
+    assert "Disconnected" not in levantados, (
+        "a espera do backoff voltou a levantar Disconnected de dentro de um "
+        "`except` — isso mata a thread da conta")
+    assert "StopRequested" in levantados, "a parada do usuário continua valendo"
+
+
+def test_o_anuncio_morre_junto_com_o_controle_da_janela():
+    """`_release` é o ponto por onde os CINCO caminhos de morte passam.
+
+    Foi por faltar isto que a queda tratada pelo LOGIN (`ClientClosed`) deixava
+    o anúncio de pé -- e um anúncio vivo derruba a sessão SEGUINTE no primeiro
+    `tick`, antes mesmo de ela ter janela.
+    """
+    from blazesbot.bot import supervisor as mod_sup
+
+    fonte = inspect.getsource(mod_sup.AccountSupervisor._release)
+    assert "sentinela.limpar(" in fonte, (
+        "soltar o controle não apaga mais o anúncio — relogin em laço")
+
+
+def test_soltar_o_controle_apaga_o_anuncio_de_verdade():
+    """O mesmo, no comportamento: dublê mínimo, `_release` real."""
+    from blazesbot.bot import supervisor as mod_sup
+
+    sup = object.__new__(mod_sup.AccountSupervisor)
+    sup.pid, sup.hwnd = None, None
+    sup.account = type("_Conta", (), {"login": "conta-que-caiu"})()
+
+    posto = mod.SENTINELA.vigiar("conta-que-caiu", fonte=lambda: (None, None))
+    try:
+        posto.queda = ("conexao", None, "aviso de conexão interrompida na tela")
+        mod_sup.AccountSupervisor._release(sup)
+        assert mod.SENTINELA.queda_anunciada("conta-que-caiu") is None
+    finally:
+        mod.SENTINELA.esquecer("conta-que-caiu")
 
 
 def test_o_supervisor_registra_a_conta_para_a_EXECUCAO_e_nao_para_a_sessao():
@@ -370,3 +423,76 @@ def test_a_thread_e_daemon_e_uma_so():
         assert vivas[0].daemon
     finally:
         v.desligar(esperar=1.0)
+
+
+def test_o_laco_de_vida_SOBREVIVE_a_queda_tratada_pelo_login(monkeypatch):
+    """O defeito de campo, ponta a ponta -- 09/09/2026, 00:56.
+
+    O login viu o aviso de conexão interrompida, encerrou o cliente e levantou
+    `ClientClosed`. O vigia tinha visto o MESMO aviso e deixado o anúncio de pé.
+    O `except ClientClosed` chamou o backoff, o backoff levantou `Disconnected`
+    de dentro do `except`, e a thread da conta morreu com "PARANDO por falha
+    inesperada" -- a conta ficou fora do ar até alguém olhar.
+
+    O teste dirige o `run()` DE VERDADE: uma sessão que morre por `ClientClosed`
+    com anúncio vivo, e depois uma parada limpa. Sobreviver é chegar na parada.
+    """
+    from blazesbot.bot import supervisor as mod_sup
+    from blazesbot.bot.login import ClientClosed
+
+    monkeypatch.setattr(mod_sup.instrumentacao, "instrumentar_tudo", lambda: None)
+    monkeypatch.setattr(mod_sup.cronometro_mod, "ligar", lambda: None)
+    monkeypatch.setattr(mod_sup.cronometro_mod, "marcar_a_conta", lambda _: None)
+
+    sup = object.__new__(mod_sup.AccountSupervisor)
+    sup.account = type("_Conta", (), {"login": "conta-de-campo"})()
+    sup.config = type("_Cfg", (), {"relogin_backoff_cap": 300})()
+    sup.log = logging.getLogger("teste.vigia")
+    sup.on_status = None
+    sup.stop_event = threading.Event()
+    sup.pid, sup.hwnd = 4242, 99
+    sup.tentativas_de_login = 0
+    sup.relogin_count = 0
+    sup.total_runs = 0
+    sup.max_runs = None
+
+    falas: list[str] = []
+    monkeypatch.setattr(type(sup), "_status",
+                        lambda self, msg: falas.append(msg))
+    monkeypatch.setattr(type(sup), "_teardown", lambda self: None)
+    monkeypatch.setattr(type(sup), "_sleep_interruptible",
+                        mod_sup.AccountSupervisor._sleep_interruptible)
+
+    sessoes = []
+
+    def _sessao(self):
+        sessoes.append(1)
+        if len(sessoes) == 1:
+            # O VIGIA VIU O MESMO AVISO e anunciou -- é a peça que envenenava o
+            # backoff. Anunciado AQUI e não antes do `run()`: o próprio `run()`
+            # registra o posto, e um anúncio posto antes seria varrido por esse
+            # registro (foi o que fez a primeira versão deste teste passar
+            # mesmo com o defeito de pé).
+            mod.SENTINELA._postos["conta-de-campo"].queda = (
+                "conexao", None, "aviso de conexão interrompida na tela")
+            raise ClientClosed(
+                "o cliente foi encerrado pelo aviso de conexão interrompida")
+        self.stop_event.set()
+        raise mod_sup.StopRequested()
+
+    monkeypatch.setattr(type(sup), "_run_session", _sessao)
+    # Backoff curto, e NÃO zero: com zero o `while` de `_sleep_interruptible`
+    # não dá uma volta sequer, e o teste passaria mesmo com o defeito de pé --
+    # foi o que aconteceu na primeira versão dele.
+    monkeypatch.setattr(mod_sup, "backoff_delay", lambda *a, **k: 0.3)
+
+    try:
+        sup.run()
+    finally:
+        mod.SENTINELA.esquecer("conta-de-campo")
+
+    assert not any("falha inesperada" in f for f in falas), (
+        "a thread da conta morreu de novo — exceção levantada de dentro de um "
+        f"`except`. Falas: {falas}")
+    assert len(sessoes) == 2, (
+        "o laço não chegou à segunda sessão: a conta ficaria fora do ar")

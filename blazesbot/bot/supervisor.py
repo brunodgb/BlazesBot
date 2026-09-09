@@ -325,19 +325,41 @@ class AccountSupervisor(threading.Thread):
                 pass
 
     def _sleep_interruptible(self, seconds: float) -> None:
-        """Espera conferindo a parada E a queda anunciada pelo vigia global.
+        """Espera até `seconds`, acordando se o usuário mandar parar.
 
-        Esta é a espera do BACKOFF entre relogins, que chega a 300 s
-        (`relogin_backoff_cap`), e era uma das JANELAS CEGAS do vigia antigo --
-        nenhum `tick()` roda aqui. Ver `bot/sentinela.py`.
+        =================================================================
+        ESTA ESPERA NÃO CONSULTA O VIGIA GLOBAL, E NÃO É ESQUECIMENTO
+        =================================================================
+
+        A versão de 08/09/2026 consultava, e isso DERRUBOU O SUPERVISOR em
+        campo, na madrugada seguinte:
+
+            ClientClosed: o cliente foi encerrado pelo aviso de conexão
+            interrompida
+            During handling of the above exception, another exception
+            occurred:  Disconnected: aviso de conexão interrompida na tela
+            PARANDO por falha inesperada
+
+        As QUATRO chamadas de backoff do `run()` estão DENTRO de blocos
+        `except`. Uma exceção levantada ali não é pega pelos `except` do mesmo
+        `try` -- ela sobe direto para a rede de baixo (`except BaseException`),
+        que ENCERRA a thread da conta. Ou seja: o mecanismo que existia para
+        recuperar a conta mais rápido era o que a matava de vez.
+
+        E não havia o que ganhar. Durante o backoff a conta NÃO TEM CLIENTE: o
+        `_release` já rodou, `pid` e `hwnd` são `None`, e o vigia pula postos
+        sem janela. O único anúncio possível aqui é o VELHO, da sessão que
+        acabou -- e cortar o backoff por causa dele é errado duas vezes, porque
+        o backoff existe justamente para não martelar o servidor de login.
+
+        A cobertura não se perdeu: a espera da conta ONLINE E OCIOSA é
+        `ctx.tick()` (que consulta o vigia em `check_watchdog`), e a do farm
+        também. Ver `docs/INVARIANTES.md`, seção "Login e relogin".
         """
         deadline = time.time() + seconds
         while time.time() < deadline:
             if self.stop_event.is_set():
                 raise StopRequested()
-            anuncio = sentinela.cobrar_a_queda(self.account.login)
-            if anuncio is not None:
-                raise Disconnected(anuncio[2])
             time.sleep(0.125)
 
     # -- identidade da janela ----------------------------------------------
@@ -531,6 +553,20 @@ class AccountSupervisor(threading.Thread):
         # `mural.esquecer_id`: id velho faz a Fada recusar a vítima certa.
         try:
             mural.esquecer_id(self.account.login)
+        except Exception:
+            pass
+        # O ANÚNCIO DO VIGIA MORRE JUNTO COM O CONTROLE DA JANELA.
+        #
+        # AQUI e não em cada caminho de recuperação, porque `_release` é o ponto
+        # por onde TODOS eles passam (são cinco). Um anúncio que sobrevive é
+        # veneno: ele derruba a sessão SEGUINTE no primeiro `tick`, antes mesmo
+        # de ela ter janela -- relogin em laço, o defeito com o sinal invertido.
+        #
+        # Foi por faltar isto que a queda tratada pelo LOGIN (`ClientClosed`,
+        # que o `login._handle_conn_interrupted` levanta) deixava o anúncio de
+        # pé: o caminho do `ClientClosed` não passava por `sentinela.limpar`.
+        try:
+            sentinela.limpar(self.account.login)
         except Exception:
             pass
         self.pid = None
@@ -2602,10 +2638,9 @@ class AccountSupervisor(threading.Thread):
                     # janela não está logada nem na fila, então ela não vale nada
                     # e ainda atrapalha -- o supervisor a reconheceria como "sua"
                     # na volta seguinte e ficaria preso nela. Ver `_encerrar_caido`.
+                    # `_encerrar_caido` -> `_release` é quem apaga o anúncio do
+                    # vigia. Um só lugar, para os cinco caminhos de morte.
                     self._encerrar_caido("Sessão caída")
-                    # O ANÚNCIO DO VIGIA JÁ CUMPRIU O PAPEL: de pé, ele
-                    # derrubaria a sessão NOVA no primeiro `tick`.
-                    sentinela.limpar(self.account.login)
                     delay = backoff_delay(self.tentativas_de_login,
                                           self.config.relogin_backoff_cap)
                     self._status(f"Aguardando {delay:.0f}s antes de religar")

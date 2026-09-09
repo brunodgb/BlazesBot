@@ -526,8 +526,7 @@ login e não precisa saber.
 * `check_watchdog` consulta o vigia **antes** do watchdog inline — e antes do
   `return` das contas sem `Watchdog`. Era por ali que **tudo que não é BC**
   ficava cego neste caminho.
-* `_sleep_interruptible` (o backoff) e o `conferir_saude` do APP consultam o
-  mesmo anúncio.
+* O `conferir_saude` do APP consulta o mesmo anúncio.
 * `_registrar_queda` passou a ler posição e local **defensivamente**: a queda
   agora pode ser decretada de outra thread, que matou o processo antes desta
   linha, e uma exceção ali perderia o cartão inteiro justamente na queda que
@@ -550,3 +549,66 @@ medição, com ferramenta que só loga e sabe reprovar, comparando com a fonte
 antiga no MESMO instante. Enquanto isso não existir, o vigia decide por sinais
 do sistema operacional, que são fatos do Windows e não limiares chutados. É o
 próximo passo natural deste módulo.
+
+## 09/09/2026, 00:56 — o vigia matou o supervisor que ele deveria salvar
+
+Primeira noite com o vigia global em campo. Traceback:
+
+```
+ClientClosed: o cliente foi encerrado pelo aviso de conexão interrompida
+During handling of the above exception, another exception occurred:
+  File "supervisor.py", line 2594, in run
+    self._sleep_interruptible(delay)
+  File "supervisor.py", line 340, in _sleep_interruptible
+    raise Disconnected(anuncio[2])
+Disconnected: aviso de conexão interrompida na tela
+PARANDO por falha inesperada: aviso de conexão interrompida na tela
+```
+
+### A sequência
+
+1. O aviso "Connection interrupted" apareceu **durante o login**. Quem tratou foi
+   o próprio `login._handle_conn_interrupted`: encerrou o cliente e levantou
+   `ClientClosed`. Comportamento correto e anterior ao vigia.
+2. O vigia tinha visto **o mesmo aviso** e deixado o anúncio publicado.
+3. O `except ClientClosed` do `run()` fez `_release()` e chamou o backoff.
+4. `_sleep_interruptible` leu o anúncio e levantou `Disconnected` — **de dentro
+   de um bloco `except`**.
+5. Exceção levantada dentro de um `except` **não é pega pelos `except` do mesmo
+   `try`**. Ela subiu direto para a rede de baixo (`except BaseException`), que
+   registra "PARANDO por falha inesperada" e **encerra a thread da conta**.
+
+Resultado: o mecanismo escrito para devolver a conta ao ar em 20 s tirou a conta
+do ar até alguém olhar. Pior que o defeito original.
+
+### As duas causas, e as duas correções
+
+**(a) Consulta em lugar estruturalmente errado.** O `run()` já avisava disso no
+próprio comentário da rede de baixo: *"há dois caminhos que passavam por fora
+[do laço]: uma exceção levantada DENTRO de um `except`..."*. As quatro chamadas
+de backoff estão todas em handlers.
+
+A consulta **saiu** de `_sleep_interruptible`, e não havia o que perder: durante
+o backoff a conta **não tem cliente** — `_release` já zerou `pid` e `hwnd`, e o
+vigia pula postos sem janela. O único anúncio possível ali é o velho. E cortar o
+backoff por causa dele é errado duas vezes: o backoff existe para não martelar o
+servidor de login. A cobertura da conta ONLINE E OCIOSA nunca dependeu dessa
+espera — ela é `ctx.tick()` no laço de `_operate`, que consulta o vigia por
+`check_watchdog`.
+
+**(b) Anúncio que sobrevivia à sessão.** A limpeza só existia no braço
+`except Disconnected`. A queda tratada pelo **login** sai por `ClientClosed`, que
+não passava por ali. A limpeza mudou para **`_release()`** — o ponto por onde os
+cinco caminhos de morte de sessão passam. Um lugar, não cinco.
+
+### A lição, e ela é geral
+
+**Nada que rode dentro de um `except` do laço de vida pode levantar exceção
+nova.** Não é regra do vigia: é regra do `run()`. A rede de baixo existe para
+não perder o log, não para ser o caminho normal — quando ela dispara, a conta
+morre.
+
+Travado por `tests/test_vigia_global.py`, com o teste dirigindo o `run()` de
+verdade: sessão que morre por `ClientClosed` com anúncio vivo, e o desfecho
+exigido é chegar à sessão seguinte. Verificado que ele REPROVA sem a correção —
+com o mesmo traceback do campo.
