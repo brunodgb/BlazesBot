@@ -99,6 +99,11 @@ from .navegacao import Navigator
 
 ANCHOR_THRESHOLD = 0.80
 
+# O ponto do link do diálogo: coordenada fixa, ou uma função que a descobre
+# com o diálogo JÁ ABERTO -- ver `_abrir_dialogo_e_clicar`.
+PontoDoLink = tuple[int, int] | Callable[[], tuple[int, int] | None]
+
+
 # Falhas seguidas na tentativa rápida antes de redescobrir tudo por imagem.
 FALHAS_ANTES_DE_REDESCOBRIR = 5
 
@@ -1578,7 +1583,7 @@ class UIDoJogo:
     def _abrir_dialogo_e_clicar(
         self,
         ponto_npc: tuple[int, int],
-        ponto_link: tuple[int, int],
+        ponto_link: PontoDoLink,
         o_que: str,
         esperar_depois: float = ESPERA_DEPOIS_DO_LINK,
         ainda_vale: Callable[[], bool] | None = None,
@@ -1613,6 +1618,27 @@ class UIDoJogo:
         link. Devolvendo False, o diálogo é fechado e nada mais é clicado.
         Sem o gancho o comportamento é o de antes -- por isso a BC não muda.
 
+        =================================================================
+        `ponto_link` PODE SER UMA FUNÇÃO, E ISSO CONSERTA A VENDA DA HH
+        =================================================================
+
+        Coordenada fixa serve para quem sabe onde o link fica antes de abrir o
+        diálogo -- é o caso da BC (`coords.vendor_sell_tab`). Mas quem acha o
+        link POR IMAGEM não pode: o texto do link só existe na tela DEPOIS do
+        clique direito, e procurá-lo antes é procurar o que não foi desenhado.
+
+        Foi exatamente esse o defeito da venda da HH, medido em 09/09/2026: a
+        tentativa morria em ~200 ms, sem clique nenhum, porque
+        `_onde_clicar_no_link_de_vender` era chamada antes do diálogo e devolvia
+        `None` para sempre. O log dizia "não abri a janela de venda" e mais
+        nada.
+
+        Passando uma FUNÇÃO, ela é chamada com o diálogo já aberto. Devolvendo
+        `None`, o diálogo é fechado e nada é clicado -- o mesmo desfecho de
+        `ainda_vale` recusando, e pelo mesmo motivo: clique de link sem link cai
+        na cena 3D e o personagem sai andando da coordenada onde a venda
+        funciona.
+
         Devolve se o clique no link saiu.
         """
         ctx = self.ctx
@@ -1638,7 +1664,7 @@ class UIDoJogo:
     def _clicar_no_npc_e_no_link(
         self,
         ponto_npc: tuple[int, int],
-        ponto_link: tuple[int, int],
+        ponto_link: PontoDoLink,
         o_que: str,
         esperar_depois: float,
         ainda_vale: Callable[[], bool] | None = None,
@@ -1677,8 +1703,20 @@ class UIDoJogo:
             self.fechar_dialogo()
             return False
 
-        #ctx.log.info("Clique ESQUERDO no link %s (%s)", ponto_link, o_que)
-        ctx.click(ponto_link)
+        # O LINK, RESOLVIDO AGORA -- com o diálogo na tela. Ver a docstring de
+        # `_abrir_dialogo_e_clicar`: quem acha o link por imagem só consegue
+        # aqui, e coordenada fixa passa direto sem mudar nada.
+        alvo = ponto_link() if callable(ponto_link) else ponto_link
+        if alvo is None:
+            ctx.log.warning(
+                "O diálogo de %s abriu, mas não achei o link na tela. NÃO vou "
+                "clicar no escuro -- o clique cairia na cena 3D e o personagem "
+                "sairia andando da coordenada certa.", o_que)
+            self.fechar_dialogo()
+            return False
+
+        #ctx.log.info("Clique ESQUERDO no link %s (%s)", alvo, o_que)
+        ctx.click(alvo)
         if esperar_depois > 0:
             ctx.tick(esperar_depois)
         return True

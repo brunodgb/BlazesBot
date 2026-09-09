@@ -1568,3 +1568,89 @@ travamento indefinido, mas em HH já aconteceu mais de 2 vezes"*.
 insistência). Grava quanto tempo ficou parado, se estava montado e qual cutucada
 foi — é o que, em alguns dias, responde se 15 s é o número certo e se a montaria
 é de fato o remédio. Confundir os dois eventos apagaria essa medida.
+
+## 24. POR QUE A VENDA DA HH NUNCA ABRIU A JANELA (09/09/2026)
+
+### O sintoma
+
+O usuário configurou vender a cada 1 run e a venda não acontecia. O log mostra
+que a **decisão estava certa** -- ela dispara em toda run:
+
+```
+01:50:05.482 sair        HH: run concluída
+01:50:08.388 manutencao  HH: 3 item(ns) de lixo apagado(s) da pasta deletar_hh
+01:50:08.389 manutencao  HH: indo vender no Roaming Apothecary
+01:50:08.592 manutencao  HH: não abri a janela de venda do Roaming Apothecary
+01:50:08.593 manutencao  HH: 0 slot(s) vendido(s)
+```
+
+**203 milissegundos** entre "indo vender" e "não abri". Não dá tempo de andar
+até o NPC, clicar com o direito, esperar o diálogo e clicar no link — ou seja,
+a venda morria antes de qualquer clique.
+
+### A causa: o link era procurado ANTES de o diálogo existir
+
+`JanelaDeVenda._tentar_abrir_a_venda` fazia, nesta ordem:
+
+1. `_onde_clicar_no_link_de_vender()` — descobre onde clicar;
+2. `_abrir_dialogo_e_clicar(ponto_do_npc, ponto_do_link, ...)` — clica com o
+   direito no NPC, confere o diálogo, clica no link.
+
+Para a **BC** isso funciona: o passo 1 devolve `coords.vendor_sell_tab`, uma
+coordenada fixa que não depende de nada estar na tela.
+
+Para a **HH** não pode funcionar: o passo 1 procura o texto **"Sell Item" por
+imagem**, e esse texto só é desenhado **depois** do clique direito do passo 2.
+Procurar antes é procurar o que ainda não existe. `find_template` devolvia
+`None`, a função devolvia `None`, e `_tentar_abrir_a_venda` abortava **em
+silêncio** — o `return False` daquele ramo não tinha log, e o aviso do template
+faltante já havia saído uma vez por sessão.
+
+Ou seja: a busca por imagem, que existia justamente porque *"a posição do link
+depende de quantas linhas o NPC escreve"*, estava sendo feita no único instante
+em que era impossível.
+
+### A correção: `ponto_link` pode ser uma FUNÇÃO
+
+`_abrir_dialogo_e_clicar` passou a aceitar coordenada **ou** função. A função é
+chamada **depois** de o diálogo abrir e depois do `ainda_vale` — com a tela já
+mostrando o link. Devolvendo `None`, o diálogo é **fechado** e nada é clicado,
+que é o mesmo desfecho do `ainda_vale` recusando e pelo mesmo motivo: clique de
+link sem link cai na cena 3D e o personagem sai andando da coordenada onde a
+venda funciona.
+
+**A BC não muda:** coordenada fixa continua passando direto, e há teste para
+isso.
+
+## 25. VENDER ANTES DE DELETAR (09/09/2026) — e o risco que isso carrega
+
+### A decisão
+
+> *"ele deveria vender logo antes de deletar os itens, pois assim já limpa um
+> pouco do inventario e facilita na hora de deletar os itens"*
+
+A ordem foi invertida. Era deletar → vender.
+
+### O motivo da ordem ANTIGA continua verdadeiro
+
+O lixo da HH **não é comprado** pelo NPC. E a venda é a da BC: clica **sempre na
+mesma posição** da grade, a partir do slot configurado (4, na conta `creubo`),
+contando que os itens **subam** para preencher o buraco de quem saiu.
+
+Um item que o NPC recusa **não sobe**. Ele fica no slot, e os cliques seguintes
+da passada batem nele — até 24 por passada, até 4 passadas. A venda inteira
+morre num item que não sai, e o que vinha atrás dele nunca é vendido.
+
+### O risco foi comunicado, a decisão é do usuário
+
+Registrado aqui para o dia em que o sintoma aparecer, porque ele é silencioso:
+o log vai dizer `0 slot(s) vendido(s)` sem explicar que um item travou a fila.
+
+**O que observar no log:** `Slot 4 com item (contraste ...)` repetido durante a
+passada inteira, com `0 slot(s) vendido(s)` no fim. Isso é lixo entalado, não
+bolsa vazia.
+
+**Se acontecer, há duas saídas** — e nenhuma delas é voltar a ordem sem falar:
+mover o `slot inicial` para depois do lixo, ou fazer a venda detectar "o mesmo
+item continua aqui depois de N cliques" e desistir da passada. A segunda é a
+correção de verdade, e ela precisa de medição em venda real.

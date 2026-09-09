@@ -464,13 +464,18 @@ class JanelaDeVenda:
                     "Saí do ponto do vendedor (estou em %s); não clico daqui",
                     ctx.memory.position())
                 return False
-            ponto_do_link = self._onde_clicar_no_link_de_vender()
-            if ponto_do_link is None:
-                # Sem saber onde é o link, NÃO se clica. Ver o gancho para o
-                # porquê -- e quem devolve None já disse no log o que falta.
-                return False
+            # O LINK VAI COMO FUNÇÃO, e não resolvido aqui.
+            #
+            # ERA RESOLVIDO ANTES DO CLIQUE DIREITO, e isso matava a venda de
+            # quem acha o link POR IMAGEM: o texto "Sell Item" só aparece na
+            # tela DEPOIS de o diálogo abrir. Medido na HH em 09/09/2026 -- a
+            # tentativa morria em ~200 ms sem clicar em nada.
+            #
+            # Coordenada fixa (o caso da BC) passa por aqui sem mudar nada:
+            # `_abrir_dialogo_e_clicar` aceita as duas formas.
             if ui._abrir_dialogo_e_clicar(
-                    self._onde_clicar_no_vendedor(), ponto_do_link,
+                    self._onde_clicar_no_vendedor(),
+                    self._onde_clicar_no_link_de_vender,
                     f"abrir a venda do {self.NOME_DO_VENDEDOR}"):
                 ctx.tick(0.3)
                 if self._sell_anchor() is not None:

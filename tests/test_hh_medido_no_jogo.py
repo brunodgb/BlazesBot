@@ -356,8 +356,18 @@ def test_a_BC_continua_usando_a_coordenada_dela():
     assert "vendor_sell_tab" in fonte
 
 
-def test_o_link_None_impede_o_clique():
-    """`_tentar_abrir_a_venda` tem que RECUSAR, e não clicar em `None`."""
+def test_o_link_e_perguntado_DEPOIS_de_o_dialogo_abrir():
+    """O texto "Sell Item" só existe na tela DEPOIS do clique direito.
+
+    ERA PERGUNTADO ANTES, e isso matava a venda da HH: medido em 09/09/2026, a
+    tentativa morria em ~200 ms sem clicar em nada, porque
+    `_onde_clicar_no_link_de_vender` procurava por imagem um link que ainda não
+    tinha sido desenhado. O log dizia "não abri a janela de venda" e mais nada.
+
+    A garantia de "não clicar em `None`" não desapareceu -- ela mudou de casa,
+    para dentro de `_abrir_dialogo_e_clicar`, que é quem agora resolve o ponto.
+    Ver `test_link_que_nao_aparece_FECHA_o_dialogo`.
+    """
     import inspect
     import textwrap
 
@@ -365,11 +375,51 @@ def test_o_link_None_impede_o_clique():
 
     fonte = textwrap.dedent(inspect.getsource(
         JanelaDeVenda._tentar_abrir_a_venda))
-    assert "_onde_clicar_no_link_de_vender()" in fonte
-    i_pergunta = fonte.index("_onde_clicar_no_link_de_vender()")
-    i_clique = fonte.index("_abrir_dialogo_e_clicar")
-    assert i_pergunta < i_clique, "clicou antes de saber onde é o link"
-    assert "is None" in fonte
+    assert "_onde_clicar_no_link_de_vender," in fonte, (
+        "o link voltou a ser resolvido ANTES do clique direito")
+    assert "_onde_clicar_no_link_de_vender()" not in fonte
+
+
+def test_link_que_nao_aparece_FECHA_o_dialogo():
+    """Clique de link sem link cai na cena 3D e o personagem sai andando."""
+    import ast
+    import inspect
+    import textwrap
+
+    from blazesbot.bot.ui_do_jogo import UIDoJogo
+
+    fonte = textwrap.dedent(inspect.getsource(
+        UIDoJogo._clicar_no_npc_e_no_link))
+    arvore = ast.parse(fonte)
+
+    # O ramo do `None` fecha o diálogo e devolve False -- pelo AST, porque a
+    # docstring da função vizinha explica o caso e uma busca textual acharia a
+    # explicação.
+    ramos = [n for n in ast.walk(arvore) if isinstance(n, ast.If)]
+    do_none = [n for n in ramos if "alvo is None" in ast.unparse(n.test)]
+    assert do_none, "o ponto do link deixou de ser conferido"
+    corpo = ast.unparse(do_none[0])
+    assert "fechar_dialogo()" in corpo, (
+        "o diálogo ficou aberto depois de o link não ser encontrado")
+    assert "return False" in corpo
+
+
+def test_coordenada_FIXA_continua_funcionando():
+    """É o caso da BC (`coords.vendor_sell_tab`), e ele não pode ter mudado."""
+    import inspect
+
+    from blazesbot.bot.vendedor import JanelaDeVenda
+
+    fonte = inspect.getsource(JanelaDeVenda._onde_clicar_no_link_de_vender)
+    assert "vendor_sell_tab" in fonte, (
+        "a BC deixou de ter coordenada fixa para o link de vender")
+
+    from blazesbot.bot.ui_do_jogo import UIDoJogo
+
+    corpo = inspect.getsource(UIDoJogo._clicar_no_npc_e_no_link)
+    assert "callable(ponto_link)" in corpo, (
+        "coordenada fixa e função deixaram de conviver -- e a BC passa uma "
+        "coordenada")
 
 
 def test_a_venda_da_HH_nao_gasta_item_de_retorno():

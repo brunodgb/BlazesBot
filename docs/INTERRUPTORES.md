@@ -51,7 +51,7 @@ ligar código não testado.
 | `CIRCULO_POR_RAIO` | `True` | [blazesbot/bot/navegacao.py:265](blazesbot/bot/navegacao.py#L265) | — | True = raio por raio (1,2,3,5; em cada raio os 8 pontos); False = bússola por |
 | `MATAR_JANELA_TRAVADA` | `True` | [blazesbot/bot/sentinela.py:166](blazesbot/bot/sentinela.py#L166) | — | INTERRUPTOR (a convenção do projeto: caminho fora de uso não vira comentário) |
 | `OLHAR_A_TELA` | `False` | [blazesbot/bot/sentinela.py:201](blazesbot/bot/sentinela.py#L201) | — | O VIGIA NÃO LÊ A TELA. INTERRUPTOR DESLIGADO, com o número que o desligou. |
-| `CONFIRMAR_CHEGADA_POR_COORDENADA` | `False` | [blazesbot/bot/ui_do_jogo.py:515](blazesbot/bot/ui_do_jogo.py#L515) | — | INTERRUPTOR: a coordenada do painel CONFIRMA a chegada? |
+| `CONFIRMAR_CHEGADA_POR_COORDENADA` | `False` | [blazesbot/bot/ui_do_jogo.py:520](blazesbot/bot/ui_do_jogo.py#L520) | — | INTERRUPTOR: a coordenada do painel CONFIRMA a chegada? |
 | `CONFERIR_SLOT_VAZIO` | `False` | [blazesbot/bot/vendedor.py:236](blazesbot/bot/vendedor.py#L236) | — | INTERRUPTOR -- A CONFERÊNCIA DE SLOT VAZIO ESTÁ DESLIGADA (decisão do usuário, |
 | `MODO_FADA_DA_HH` | `'fada'` | [blazesbot/config.py:910](blazesbot/config.py#L910) | routine.py, supervisor.py, account_dialog.py | — |
 | `MODO_PADRAO_DO_TIME` | `'largada'` | [blazesbot/config.py:602](blazesbot/config.py#L602) | — | — |
@@ -421,50 +421,50 @@ ligar código não testado.
 | `DIFERENCA_QUE_E_EFEITO` | `3.0` | [blazesbot/bot/teste_do_cursor.py:95](blazesbot/bot/teste_do_cursor.py#L95) | instrumentar_clique.py | Quanto o minimapa precisa mudar para o clique contar como surtido efeito. O |
 | `DISTANCIA_MINIMA_DO_ALVO` | `120` | [blazesbot/bot/teste_do_cursor.py:98](blazesbot/bot/teste_do_cursor.py#L98) | instrumentar_clique.py | Distância mínima entre o cursor físico e o alvo, em pixels do cliente. |
 | `ESPERA_DEPOIS_DO_CLIQUE` | `0.35` | [blazesbot/bot/teste_do_cursor.py:100](blazesbot/bot/teste_do_cursor.py#L100) | — | — |
-| `ABERTURAS_POR_TRAJETO` | `4` | [blazesbot/bot/ui_do_jogo.py:559](blazesbot/bot/ui_do_jogo.py#L559) | — | Teto de aberturas do painel por TRAJETO. |
+| `ABERTURAS_POR_TRAJETO` | `4` | [blazesbot/bot/ui_do_jogo.py:564](blazesbot/bot/ui_do_jogo.py#L564) | — | Teto de aberturas do painel por TRAJETO. |
 | `ANCHOR_THRESHOLD` | `0.8` | [blazesbot/bot/ui_do_jogo.py:100](blazesbot/bot/ui_do_jogo.py#L100) | vendedor.py, team.py, janelas_abertas.py | — |
-| `BUSCAS_ANTES_DE_DESISTIR_DA_LEITURA` | `3` | [blazesbot/bot/ui_do_jogo.py:419](blazesbot/bot/ui_do_jogo.py#L419) | — | Quantas buscas seguidas sem a memória responder antes de desistir dela. Duas, e |
-| `CLIQUES_ATE_O_BATENTE` | `5` | [blazesbot/bot/ui_do_jogo.py:151](blazesbot/bot/ui_do_jogo.py#L151) | — | ZOOM DO MINIMAPA -- cinco níveis, o padrão no meio. |
-| `CLIQUES_DO_BATENTE_ATE_O_PADRAO` | `2` | [blazesbot/bot/ui_do_jogo.py:152](blazesbot/bot/ui_do_jogo.py#L152) | — | — |
-| `DIGITACAO_POR_CARACTERE` | `0.01` | [blazesbot/bot/ui_do_jogo.py:383](blazesbot/bot/ui_do_jogo.py#L383) | — | Intervalo entre caracteres. 40 ms davam meio segundo só para digitar |
-| `ENTRE_CLIQUES_DE_ZOOM` | `0.025` | [blazesbot/bot/ui_do_jogo.py:153](blazesbot/bot/ui_do_jogo.py#L153) | — | — |
-| `ESPERA_ANTES_DE_CONFERIR` | `0.15` | [blazesbot/bot/ui_do_jogo.py:587](blazesbot/bot/ui_do_jogo.py#L587) | ui_service.py | — |
-| `ESPERA_CEGA_DO_RESULTADO` | `0.3` | [blazesbot/bot/ui_do_jogo.py:414](blazesbot/bot/ui_do_jogo.py#L414) | — | Quando a leitura de arredores por memória não funciona neste cliente, a lista |
-| `ESPERA_DA_ROLAGEM` | `0.08` | [blazesbot/bot/ui_do_jogo.py:618](blazesbot/bot/ui_do_jogo.py#L618) | — | A lista redesenhar depois do clique na seta. Uma volta de laço do cliente, não |
-| `ESPERA_DA_TROCA_DE_ABA` | `0.05` | [blazesbot/bot/ui_do_jogo.py:369](blazesbot/bot/ui_do_jogo.py#L369) | — | Assentar depois de clicar na aba NPC. Não é "esperar a aba renderizar": é só dar |
-| `ESPERA_DEPOIS_DE_CLICAR_NO_RESULTADO` | `0.15` | [blazesbot/bot/ui_do_jogo.py:459](blazesbot/bot/ui_do_jogo.py#L459) | — | — |
-| `ESPERA_DEPOIS_DE_FECHAR` | `0.2` | [blazesbot/bot/ui_do_jogo.py:585](blazesbot/bot/ui_do_jogo.py#L585) | — | — |
-| `ESPERA_DEPOIS_DO_LINK` | `0.2` | [blazesbot/bot/ui_do_jogo.py:285](blazesbot/bot/ui_do_jogo.py#L285) | — | Servidor processar o pedido de entrada. Zero na disputa: quem confirma a entrada |
-| `FALHAS_ANTES_DE_REDESCOBRIR` | `5` | [blazesbot/bot/ui_do_jogo.py:103](blazesbot/bot/ui_do_jogo.py#L103) | ui_service.py | Falhas seguidas na tentativa rápida antes de redescobrir tudo por imagem. |
-| `FALHAS_SEGUIDAS_ANTES_DE_AFROUXAR` | `5` | [blazesbot/bot/ui_do_jogo.py:235](blazesbot/bot/ui_do_jogo.py#L235) | — | O TETO TAMBÉM APRENDE COM A FALHA -- 07/09/2026 |
-| `FATOR_DE_AFROUXAMENTO` | `2.0` | [blazesbot/bot/ui_do_jogo.py:238](blazesbot/bot/ui_do_jogo.py#L238) | — | Quanto o teto dobra a cada degrau de falhas. |
-| `FOLGA_DA_REDESCOBERTA` | `1.5` | [blazesbot/bot/ui_do_jogo.py:272](blazesbot/bot/ui_do_jogo.py#L272) | — | Folga da REDESCOBERTA sobre o teto normal. Ali o clique pode ter errado o NPC |
-| `FOLGA_SOBRE_O_PIOR_DIALOGO` | `2.0` | [blazesbot/bot/ui_do_jogo.py:193](blazesbot/bot/ui_do_jogo.py#L193) | — | Folga sobre a pior abertura observada. 1,6 dá espaço para uma variação sem |
-| `INTERVALO_DO_GUARDA_DE_JANELA` | `3.0` | [blazesbot/bot/ui_do_jogo.py:321](blazesbot/bot/ui_do_jogo.py#L321) | — | CLIQUE ENGOLIDO = JANELA NA FRENTE. E O GUARDA VALE PARA A SAIDA TAMBEM |
-| `INTERVALO_ENTRE_USOS_DO_PAINEL` | `2.0` | [blazesbot/bot/ui_do_jogo.py:541](blazesbot/bot/ui_do_jogo.py#L541) | — | CADÊNCIA MÍNIMA ENTRE UM USO DO PAINEL DE ARREDORES E O SEGUINTE |
-| `LEITURAS_ANTES_DE_DESISTIR_DE_VER` | `3` | [blazesbot/bot/ui_do_jogo.py:581](blazesbot/bot/ui_do_jogo.py#L581) | — | Fechar o painel. Era 0,6 s. |
-| `LEITURAS_PARA_CONSIDERAR_PARADO` | `3` | [blazesbot/bot/ui_do_jogo.py:490](blazesbot/bot/ui_do_jogo.py#L490) | — | Quantas leituras iguais seguidas contam como PARADO. |
-| `LIMITE_DA_ESPERA_DO_ANDAR` | `0.4` | [blazesbot/bot/ui_do_jogo.py:458](blazesbot/bot/ui_do_jogo.py#L458) | — | — |
-| `LIMITE_DA_ESPERA_DO_DIALOGO_LENTA` | `0.65` | [blazesbot/bot/ui_do_jogo.py:263](blazesbot/bot/ui_do_jogo.py#L263) | — | Diálogo aparecer na REDESCOBERTA, depois de cada clique direito. Era `tick(1.3)` |
-| `LIMITE_DA_ESPERA_DO_FECHAMENTO` | `0.4` | [blazesbot/bot/ui_do_jogo.py:584](blazesbot/bot/ui_do_jogo.py#L584) | — | — |
-| `LIMITE_DA_ESPERA_DO_PAINEL` | `0.8` | [blazesbot/bot/ui_do_jogo.py:365](blazesbot/bot/ui_do_jogo.py#L365) | — | O teto é EXATAMENTE a espera fixa que havia antes (1,2 s), e isso é de propósito: |
-| `LIMITE_DA_ESPERA_DO_RESULTADO` | `0.8` | [blazesbot/bot/ui_do_jogo.py:388](blazesbot/bot/ui_do_jogo.py#L388) | — | — |
-| `LIMITE_INICIAL_DA_ESPERA_DO_DIALOGO` | `0.65` | [blazesbot/bot/ui_do_jogo.py:181](blazesbot/bot/ui_do_jogo.py#L181) | — | TETO DA ESPERA DO DIÁLOGO -- ajustado pelo que foi MEDIDO, não chutado |
-| `LIMITE_MAXIMO_DA_ESPERA_DO_DIALOGO` | `0.6` | [blazesbot/bot/ui_do_jogo.py:189](blazesbot/bot/ui_do_jogo.py#L189) | combate.py | Teto do teto. Passado disto, o diálogo não vai abrir mesmo, e insistir só |
-| `LIMITE_MINIMO_DA_ESPERA_DO_DIALOGO` | `0.18` | [blazesbot/bot/ui_do_jogo.py:185](blazesbot/bot/ui_do_jogo.py#L185) | — | Piso: o valor que valia antes. Abaixo disto não se aperta nem com evidência -- |
-| `LIMPEZA_DO_CAMPO` | `8` | [blazesbot/bot/ui_do_jogo.py:379](blazesbot/bot/ui_do_jogo.py#L379) | — | Quantos BACKSPACE para limpar o campo. O texto buscado é curto ("Fay", "Skull", |
-| `MEMORIA_DE_ABERTURAS_DO_DIALOGO` | `12` | [blazesbot/bot/ui_do_jogo.py:198](blazesbot/bot/ui_do_jogo.py#L198) | — | Quantas aberturas guardar. Poucas de propósito: o que interessa é a condição |
-| `PASSOS_DE_ROLAGEM` | `12` | [blazesbot/bot/ui_do_jogo.py:613](blazesbot/bot/ui_do_jogo.py#L613) | — | Quantas rolagens no máximo antes de aceitar que o link não está na lista. |
-| `PASSO_DA_ESPERA_DA_CHEGADA` | `0.25` | [blazesbot/bot/ui_do_jogo.py:565](blazesbot/bot/ui_do_jogo.py#L565) | — | Passo da leitura de posição enquanto se espera a chegada. Ler memória custa |
-| `PASSO_DA_ESPERA_DO_ANDAR` | `0.04` | [blazesbot/bot/ui_do_jogo.py:457](blazesbot/bot/ui_do_jogo.py#L457) | — | Depois de clicar no resultado o personagem já saiu andando -- o pathfinding do |
-| `PASSO_DA_ESPERA_DO_DIALOGO` | `0.08` | [blazesbot/bot/ui_do_jogo.py:142](blazesbot/bot/ui_do_jogo.py#L142) | — | Diálogo do NPC aparecer. Era 0,30 s fixos, gastos inteiros mesmo quando o |
-| `PASSO_DA_ESPERA_DO_FECHAMENTO` | `0.04` | [blazesbot/bot/ui_do_jogo.py:583](blazesbot/bot/ui_do_jogo.py#L583) | — | — |
-| `PASSO_DA_ESPERA_DO_PAINEL` | `0.08` | [blazesbot/bot/ui_do_jogo.py:359](blazesbot/bot/ui_do_jogo.py#L359) | — | Passo e teto da espera pelo painel aparecer. Cada volta custa uma captura de |
-| `PASSO_DA_ESPERA_DO_RESULTADO` | `0.08` | [blazesbot/bot/ui_do_jogo.py:387](blazesbot/bot/ui_do_jogo.py#L387) | — | De quanto em quanto tempo perguntar à memória se o resultado apareceu, e por |
-| `PROXIMIDADE_DO_DESTINO` | `8` | [blazesbot/bot/ui_do_jogo.py:483](blazesbot/bot/ui_do_jogo.py#L483) | — | O AUTO-PATH DO SURROUNDINGS É CONFIRMADO POR COORDENADA |
-| `TEMPLATE_DA_SETA_DE_ROLAGEM` | `'dialogo_seta_baixo.png'` | [blazesbot/bot/ui_do_jogo.py:605](blazesbot/bot/ui_do_jogo.py#L605) | — | A seta de rolagem PARA BAIXO do diálogo, achada por template como os links. |
-| `TETO_DO_DESESPERO` | `1.2` | [blazesbot/bot/ui_do_jogo.py:248](blazesbot/bot/ui_do_jogo.py#L248) | — | O teto do desespero. Passado daqui não é mais latência: é NPC errado, cliente |
-| `TOLERANCIA_DA_POSICAO` | `4` | [blazesbot/bot/ui_do_jogo.py:641](blazesbot/bot/ui_do_jogo.py#L641) | — | NUNCA CLICAR NO LINK SEM O DIÁLOGO ABERTO |
+| `BUSCAS_ANTES_DE_DESISTIR_DA_LEITURA` | `3` | [blazesbot/bot/ui_do_jogo.py:424](blazesbot/bot/ui_do_jogo.py#L424) | — | Quantas buscas seguidas sem a memória responder antes de desistir dela. Duas, e |
+| `CLIQUES_ATE_O_BATENTE` | `5` | [blazesbot/bot/ui_do_jogo.py:156](blazesbot/bot/ui_do_jogo.py#L156) | — | ZOOM DO MINIMAPA -- cinco níveis, o padrão no meio. |
+| `CLIQUES_DO_BATENTE_ATE_O_PADRAO` | `2` | [blazesbot/bot/ui_do_jogo.py:157](blazesbot/bot/ui_do_jogo.py#L157) | — | — |
+| `DIGITACAO_POR_CARACTERE` | `0.01` | [blazesbot/bot/ui_do_jogo.py:388](blazesbot/bot/ui_do_jogo.py#L388) | — | Intervalo entre caracteres. 40 ms davam meio segundo só para digitar |
+| `ENTRE_CLIQUES_DE_ZOOM` | `0.025` | [blazesbot/bot/ui_do_jogo.py:158](blazesbot/bot/ui_do_jogo.py#L158) | — | — |
+| `ESPERA_ANTES_DE_CONFERIR` | `0.15` | [blazesbot/bot/ui_do_jogo.py:592](blazesbot/bot/ui_do_jogo.py#L592) | ui_service.py | — |
+| `ESPERA_CEGA_DO_RESULTADO` | `0.3` | [blazesbot/bot/ui_do_jogo.py:419](blazesbot/bot/ui_do_jogo.py#L419) | — | Quando a leitura de arredores por memória não funciona neste cliente, a lista |
+| `ESPERA_DA_ROLAGEM` | `0.08` | [blazesbot/bot/ui_do_jogo.py:623](blazesbot/bot/ui_do_jogo.py#L623) | — | A lista redesenhar depois do clique na seta. Uma volta de laço do cliente, não |
+| `ESPERA_DA_TROCA_DE_ABA` | `0.05` | [blazesbot/bot/ui_do_jogo.py:374](blazesbot/bot/ui_do_jogo.py#L374) | — | Assentar depois de clicar na aba NPC. Não é "esperar a aba renderizar": é só dar |
+| `ESPERA_DEPOIS_DE_CLICAR_NO_RESULTADO` | `0.15` | [blazesbot/bot/ui_do_jogo.py:464](blazesbot/bot/ui_do_jogo.py#L464) | — | — |
+| `ESPERA_DEPOIS_DE_FECHAR` | `0.2` | [blazesbot/bot/ui_do_jogo.py:590](blazesbot/bot/ui_do_jogo.py#L590) | — | — |
+| `ESPERA_DEPOIS_DO_LINK` | `0.2` | [blazesbot/bot/ui_do_jogo.py:290](blazesbot/bot/ui_do_jogo.py#L290) | — | Servidor processar o pedido de entrada. Zero na disputa: quem confirma a entrada |
+| `FALHAS_ANTES_DE_REDESCOBRIR` | `5` | [blazesbot/bot/ui_do_jogo.py:108](blazesbot/bot/ui_do_jogo.py#L108) | ui_service.py | Falhas seguidas na tentativa rápida antes de redescobrir tudo por imagem. |
+| `FALHAS_SEGUIDAS_ANTES_DE_AFROUXAR` | `5` | [blazesbot/bot/ui_do_jogo.py:240](blazesbot/bot/ui_do_jogo.py#L240) | — | O TETO TAMBÉM APRENDE COM A FALHA -- 07/09/2026 |
+| `FATOR_DE_AFROUXAMENTO` | `2.0` | [blazesbot/bot/ui_do_jogo.py:243](blazesbot/bot/ui_do_jogo.py#L243) | — | Quanto o teto dobra a cada degrau de falhas. |
+| `FOLGA_DA_REDESCOBERTA` | `1.5` | [blazesbot/bot/ui_do_jogo.py:277](blazesbot/bot/ui_do_jogo.py#L277) | — | Folga da REDESCOBERTA sobre o teto normal. Ali o clique pode ter errado o NPC |
+| `FOLGA_SOBRE_O_PIOR_DIALOGO` | `2.0` | [blazesbot/bot/ui_do_jogo.py:198](blazesbot/bot/ui_do_jogo.py#L198) | — | Folga sobre a pior abertura observada. 1,6 dá espaço para uma variação sem |
+| `INTERVALO_DO_GUARDA_DE_JANELA` | `3.0` | [blazesbot/bot/ui_do_jogo.py:326](blazesbot/bot/ui_do_jogo.py#L326) | — | CLIQUE ENGOLIDO = JANELA NA FRENTE. E O GUARDA VALE PARA A SAIDA TAMBEM |
+| `INTERVALO_ENTRE_USOS_DO_PAINEL` | `2.0` | [blazesbot/bot/ui_do_jogo.py:546](blazesbot/bot/ui_do_jogo.py#L546) | — | CADÊNCIA MÍNIMA ENTRE UM USO DO PAINEL DE ARREDORES E O SEGUINTE |
+| `LEITURAS_ANTES_DE_DESISTIR_DE_VER` | `3` | [blazesbot/bot/ui_do_jogo.py:586](blazesbot/bot/ui_do_jogo.py#L586) | — | Fechar o painel. Era 0,6 s. |
+| `LEITURAS_PARA_CONSIDERAR_PARADO` | `3` | [blazesbot/bot/ui_do_jogo.py:495](blazesbot/bot/ui_do_jogo.py#L495) | — | Quantas leituras iguais seguidas contam como PARADO. |
+| `LIMITE_DA_ESPERA_DO_ANDAR` | `0.4` | [blazesbot/bot/ui_do_jogo.py:463](blazesbot/bot/ui_do_jogo.py#L463) | — | — |
+| `LIMITE_DA_ESPERA_DO_DIALOGO_LENTA` | `0.65` | [blazesbot/bot/ui_do_jogo.py:268](blazesbot/bot/ui_do_jogo.py#L268) | — | Diálogo aparecer na REDESCOBERTA, depois de cada clique direito. Era `tick(1.3)` |
+| `LIMITE_DA_ESPERA_DO_FECHAMENTO` | `0.4` | [blazesbot/bot/ui_do_jogo.py:589](blazesbot/bot/ui_do_jogo.py#L589) | — | — |
+| `LIMITE_DA_ESPERA_DO_PAINEL` | `0.8` | [blazesbot/bot/ui_do_jogo.py:370](blazesbot/bot/ui_do_jogo.py#L370) | — | O teto é EXATAMENTE a espera fixa que havia antes (1,2 s), e isso é de propósito: |
+| `LIMITE_DA_ESPERA_DO_RESULTADO` | `0.8` | [blazesbot/bot/ui_do_jogo.py:393](blazesbot/bot/ui_do_jogo.py#L393) | — | — |
+| `LIMITE_INICIAL_DA_ESPERA_DO_DIALOGO` | `0.65` | [blazesbot/bot/ui_do_jogo.py:186](blazesbot/bot/ui_do_jogo.py#L186) | — | TETO DA ESPERA DO DIÁLOGO -- ajustado pelo que foi MEDIDO, não chutado |
+| `LIMITE_MAXIMO_DA_ESPERA_DO_DIALOGO` | `0.6` | [blazesbot/bot/ui_do_jogo.py:194](blazesbot/bot/ui_do_jogo.py#L194) | combate.py | Teto do teto. Passado disto, o diálogo não vai abrir mesmo, e insistir só |
+| `LIMITE_MINIMO_DA_ESPERA_DO_DIALOGO` | `0.18` | [blazesbot/bot/ui_do_jogo.py:190](blazesbot/bot/ui_do_jogo.py#L190) | — | Piso: o valor que valia antes. Abaixo disto não se aperta nem com evidência -- |
+| `LIMPEZA_DO_CAMPO` | `8` | [blazesbot/bot/ui_do_jogo.py:384](blazesbot/bot/ui_do_jogo.py#L384) | — | Quantos BACKSPACE para limpar o campo. O texto buscado é curto ("Fay", "Skull", |
+| `MEMORIA_DE_ABERTURAS_DO_DIALOGO` | `12` | [blazesbot/bot/ui_do_jogo.py:203](blazesbot/bot/ui_do_jogo.py#L203) | — | Quantas aberturas guardar. Poucas de propósito: o que interessa é a condição |
+| `PASSOS_DE_ROLAGEM` | `12` | [blazesbot/bot/ui_do_jogo.py:618](blazesbot/bot/ui_do_jogo.py#L618) | — | Quantas rolagens no máximo antes de aceitar que o link não está na lista. |
+| `PASSO_DA_ESPERA_DA_CHEGADA` | `0.25` | [blazesbot/bot/ui_do_jogo.py:570](blazesbot/bot/ui_do_jogo.py#L570) | — | Passo da leitura de posição enquanto se espera a chegada. Ler memória custa |
+| `PASSO_DA_ESPERA_DO_ANDAR` | `0.04` | [blazesbot/bot/ui_do_jogo.py:462](blazesbot/bot/ui_do_jogo.py#L462) | — | Depois de clicar no resultado o personagem já saiu andando -- o pathfinding do |
+| `PASSO_DA_ESPERA_DO_DIALOGO` | `0.08` | [blazesbot/bot/ui_do_jogo.py:147](blazesbot/bot/ui_do_jogo.py#L147) | — | Diálogo do NPC aparecer. Era 0,30 s fixos, gastos inteiros mesmo quando o |
+| `PASSO_DA_ESPERA_DO_FECHAMENTO` | `0.04` | [blazesbot/bot/ui_do_jogo.py:588](blazesbot/bot/ui_do_jogo.py#L588) | — | — |
+| `PASSO_DA_ESPERA_DO_PAINEL` | `0.08` | [blazesbot/bot/ui_do_jogo.py:364](blazesbot/bot/ui_do_jogo.py#L364) | — | Passo e teto da espera pelo painel aparecer. Cada volta custa uma captura de |
+| `PASSO_DA_ESPERA_DO_RESULTADO` | `0.08` | [blazesbot/bot/ui_do_jogo.py:392](blazesbot/bot/ui_do_jogo.py#L392) | — | De quanto em quanto tempo perguntar à memória se o resultado apareceu, e por |
+| `PROXIMIDADE_DO_DESTINO` | `8` | [blazesbot/bot/ui_do_jogo.py:488](blazesbot/bot/ui_do_jogo.py#L488) | — | O AUTO-PATH DO SURROUNDINGS É CONFIRMADO POR COORDENADA |
+| `TEMPLATE_DA_SETA_DE_ROLAGEM` | `'dialogo_seta_baixo.png'` | [blazesbot/bot/ui_do_jogo.py:610](blazesbot/bot/ui_do_jogo.py#L610) | — | A seta de rolagem PARA BAIXO do diálogo, achada por template como os links. |
+| `TETO_DO_DESESPERO` | `1.2` | [blazesbot/bot/ui_do_jogo.py:253](blazesbot/bot/ui_do_jogo.py#L253) | — | O teto do desespero. Passado daqui não é mais latência: é NPC errado, cliente |
+| `TOLERANCIA_DA_POSICAO` | `4` | [blazesbot/bot/ui_do_jogo.py:646](blazesbot/bot/ui_do_jogo.py#L646) | — | NUNCA CLICAR NO LINK SEM O DIÁLOGO ABERTO |
 | `SEGUNDOS_ANDANDO_ANTES` | `0.5` | [blazesbot/bot/velocidade.py:45](blazesbot/bot/velocidade.py#L45) | — | Quanto o personagem precisa ter andado antes de valer a pena acionar. |
 | `CICLOS_DE_VENDA` | `10` | [blazesbot/bot/vendedor.py:157](blazesbot/bot/vendedor.py#L157) | vendor.py | Quantos CICLOS COMPLETOS de venda (reposicionar -> abrir diálogo -> vender) |
 | `CONTRASTE_QUE_E_SLOT_VAZIO` | `25.0` | [blazesbot/bot/vendedor.py:271](blazesbot/bot/vendedor.py#L271) | — | Abaixo disto o slot está vazio. Fica a 2,5x do pior vazio (9.76) e a menos da |
