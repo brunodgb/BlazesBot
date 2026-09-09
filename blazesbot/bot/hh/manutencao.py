@@ -69,6 +69,8 @@ class ManutencaoDaHH:
         # de runs já usava. `-1` para a primeira passada de cada sessão valer.
         self.runs_na_ultima_limpeza = -1
         self.runs_na_ultima_ida_ao_vendedor = -1
+        # A IDA AO VENDEDOR DA LARGADA já aconteceu? Zerada por `a_hh_comecou`.
+        self.ja_vendi_ao_comecar = False
         # A limpa de bolsa DESTA LARGADA já aconteceu? Zerada por
         # `a_hh_comecou`, a cada vez que o farm da HH é ligado.
         self.ja_limpei_ao_comecar = False
@@ -113,7 +115,36 @@ class ManutencaoDaHH:
         CONSOME a chance -- o nome diz isso de propósito, porque a resposta
         muda o estado. Sem consumir, `_do_preparar` recebe `True` para sempre
         enquanto a bolsa estiver cheia, e é exatamente aí que nasce o laço.
+
+        =================================================================
+        A LARGADA TEM UMA IDA GARANTIDA, SEM PERGUNTAR
+        =================================================================
+
+        Regra do usuário, 09/09/2026: *"você também colocou para vender antes da
+        primeira run?? o inventário do personagem pode estar cheio, então é bom
+        fazer isso"*.
+
+        E o portão normal NÃO cobriria esse caso. Medido com a configuração dele
+        (3 bolsas = 90 slots, folga mínima 6): na primeira run a conta por runs
+        dá `0 - 0 = 0`, que não alcança nem `1`, e a conta pela bolsa só dispara
+        com **85 itens**. Com 70 itens na bolsa o bot entrava sem vender -- e é
+        justamente o inventário que já estava cheio antes de o bot abrir.
+
+        É a MESMA disciplina da primeira limpa de bolsa
+        (`descartar_o_lixo_ao_comecar`), e por isso a ida da largada também
+        estampa o contador da run: uma ida, não duas.
+
+        A ORDEM SAI CERTA DE GRAÇA: esta pergunta é feita no `PREPARAR`, que
+        vem ANTES do `ATE_A_PORTA` onde mora a primeira limpa -- vender e depois
+        deletar, que é a ordem que o usuário pediu.
         """
+        if not self.ja_vendi_ao_comecar:
+            self.ja_vendi_ao_comecar = True
+            self.runs_na_ultima_ida_ao_vendedor = self.ctx.stats.runs
+            self.ctx.log.info(
+                "HH: primeira ida ao vendedor da largada -- a bolsa pode estar "
+                "cheia de antes de o bot abrir.")
+            return True
         if self.ctx.stats.runs == self.runs_na_ultima_ida_ao_vendedor:
             return False
         if not self.precisa_vender():
@@ -188,6 +219,7 @@ class ManutencaoDaHH:
         as seguintes, não.
         """
         self.ja_limpei_ao_comecar = False
+        self.ja_vendi_ao_comecar = False
 
     def descartar_o_lixo_ao_comecar(self) -> int:
         """A limpa da LARGADA, na porta da cave. Uma vez por largada.

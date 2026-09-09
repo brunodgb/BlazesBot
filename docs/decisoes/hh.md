@@ -1654,3 +1654,33 @@ bolsa vazia.
 mover o `slot inicial` para depois do lixo, ou fazer a venda detectar "o mesmo
 item continua aqui depois de N cliques" e desistir da passada. A segunda é a
 correção de verdade, e ela precisa de medição em venda real.
+
+## 26. A LARGADA TAMBÉM VENDE (09/09/2026)
+
+> *"você também colocou para vender antes da primeira run?? o inventário do
+> personagem pode estar cheio, então é bom fazer isso"*
+
+Não, não estava — só o descarte tinha ida garantida na largada. E o portão
+normal **não cobre** esse caso. Medido com a configuração da conta `creubo`
+(3 bolsas = 90 slots, folga mínima 6):
+
+| itens na bolsa | livre | vende na 1ª run? |
+|---|---|---|
+| 0 | 90 | não |
+| 40 | 50 | não |
+| 70 | 20 | **não** |
+| 84 | 6 | não |
+| 85 | 5 | sim |
+
+A conta por runs dá `stats.runs − runs_na_ultima_venda = 0 − 0 = 0`, que não
+alcança nem `1`; e a conta pela bolsa só dispara com **85 itens**. Com 70 na
+bolsa o bot entrava sem vender — e é justamente o inventário que já estava cheio
+antes de o bot abrir.
+
+Agora a largada tem **uma** ida garantida ao vendedor, exatamente como tem uma
+limpa de bolsa garantida (§18). Ela estampa o contador da run, então é uma ida e
+não duas — a mesma disciplina que matou o laço de §22.
+
+**E a ordem sai certa de graça:** a pergunta é feita no `PREPARAR`, que vem
+ANTES do `ATE_A_PORTA` onde mora a primeira limpa. Vender e depois deletar, que
+é a ordem de §25.

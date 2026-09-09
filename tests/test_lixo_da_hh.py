@@ -224,6 +224,62 @@ def test_a_ORDEM_no_MANUTENCAO_e_VENDER_e_depois_apagar():
         "a ordem voltou a ser apagar-e-depois-vender")
 
 
+def test_a_LARGADA_tem_uma_ida_ao_vendedor_garantida():
+    """O portão normal não cobre a bolsa que já estava cheia.
+
+    Medido com a configuração do usuário (3 bolsas = 90 slots, folga 6): na
+    primeira run a conta por runs dá `0 - 0 = 0`, que não alcança nem 1, e a
+    conta pela bolsa só dispara com 85 itens. Com 70 na bolsa o bot entrava sem
+    vender -- e é justamente o inventário de antes de o bot abrir.
+
+    Regra do usuário, 09/09/2026: *"você também colocou para vender antes da
+    primeira run?? o inventário do personagem pode estar cheio"*.
+    """
+    m = _manutencao()
+    m.ctx.stats = type("S", (), {"runs": 0})()
+    m.ctx.memory = type("M", (), {"bag_count": lambda self: 70})()
+
+    assert m.consumir_a_ida_ao_vendedor() is True, (
+        "a largada não ganhou a ida garantida ao vendedor")
+
+
+def test_a_ida_da_largada_NAO_se_repete_na_mesma_run():
+    """Uma ida, não duas -- a mesma disciplina que matou o laço de ontem."""
+    m = _manutencao()
+    m.ctx.stats = type("S", (), {"runs": 0})()
+    m.ctx.memory = type("M", (), {"bag_count": lambda self: 70})()
+
+    assert m.consumir_a_ida_ao_vendedor() is True
+    for _ in range(5):
+        assert m.consumir_a_ida_ao_vendedor() is False
+
+
+def test_LIGAR_a_HH_de_novo_devolve_a_ida_da_largada():
+    """A rotina é guardada pelo supervisor e sobrevive a desligar/ligar."""
+    m = _manutencao()
+    m.ctx.stats = type("S", (), {"runs": 0})()
+    m.ctx.memory = type("M", (), {"bag_count": lambda self: 70})()
+    m.consumir_a_ida_ao_vendedor()
+    assert m.consumir_a_ida_ao_vendedor() is False
+
+    m.a_hh_comecou()
+
+    assert m.consumir_a_ida_ao_vendedor() is True
+
+
+def test_a_ordem_da_LARGADA_e_vender_e_depois_deletar():
+    """Sai de graça da máquina de estados: `PREPARAR` pergunta pela venda e vem
+    ANTES do `ATE_A_PORTA`, onde mora a primeira limpa de bolsa."""
+    estados = textwrap.dedent(inspect.getsource(HHRoutine._do_preparar))
+    assert "consumir_a_ida_ao_vendedor" in estados
+    assert "State.ATE_A_PORTA" in estados
+    assert estados.index("consumir_a_ida_ao_vendedor") < estados.index(
+        "State.ATE_A_PORTA"), "a largada passou a deletar antes de vender"
+
+    porta = textwrap.dedent(inspect.getsource(HHRoutine._do_ate_a_porta))
+    assert "descartar_o_lixo_ao_comecar" in porta
+
+
 def test_as_duas_travas_por_run_continuam_valendo():
     """Inverter a ordem não pode ter afrouxado as travas do laço de ontem."""
     fonte = textwrap.dedent(inspect.getsource(HHRoutine._do_manutencao))
