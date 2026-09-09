@@ -517,3 +517,26 @@ interface web já dizia "Quantidade de Cliques", que estava certo.
 
 Ao lado do **uso de bolsas**, na aba Personagem — que é o mesmo assunto: quantos
 slots existem para esvaziar, e quantos cliques isso custa.
+
+## Os dois gatilhos da venda (09/09/2026)
+
+A leitura de itens da bolsa **não dispara mais venda em cave nenhuma**. Regra do
+usuário: *"esse valor é instável e gera falhas"* — e o BC já havia removido esse
+gatilho antes de a HH existir, pelo mesmo motivo. A HH o tinha reintroduzido.
+
+Sobraram dois, e só dois:
+
+1. **cota de runs** — `stats.runs − runs_na_ultima_venda >= runs_before_selling`;
+2. **largada da rotina** — uma vez por largada, incondicional, na porta da cave.
+
+**Medir continua; decidir não.** A contagem de itens aparece nos logs (bolsa
+antes e depois da venda) e no painel de diagnóstico. `BagConfig.capacidade`
+continua alimentando os logs das duas caves.
+
+**Ficou órfão:** `BagConfig.precisa_vender` e `BagConfig.espaco_livre` não têm
+mais nenhum chamador de decisão, e `folga_minima` só é validado. Não foram
+removidos porque `BagConfig` é configuração compartilhada e a remoção mexeria em
+validação e interface — está registrado aqui para quem for limpar.
+
+O detalhe de POR QUE a largada vende na porta e não antes está em
+`docs/decisoes/hh.md` §27.

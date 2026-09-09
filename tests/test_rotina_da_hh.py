@@ -185,18 +185,21 @@ def test_a_contagem_da_run_comeca_no_preparo_de_DENTRO():
     assert "begin_run" not in _chamadas(HHRoutine._retomar_dentro_da_cave)
 
 
-def test_o_CAP_e_conferido_ANTES_de_entrar():
-    """A capacidade que o bot em Lua NÃO tem.
+def test_a_VENDA_acontece_antes_de_entrar():
+    """Entrar com a bolsa cheia é fazer a run inteira e deixar o loot no chão.
 
-    Ele vende toda run com 30 cliques cegos e transborda sem avisar -- e
-    `getBagItems` está implementado no `pointers.lua` e nunca é chamado.
+    A GARANTIA MUDOU DE FORMA em 09/09/2026, e ficou mais forte. Antes era uma
+    pergunta à bolsa no `PREPARAR` -- e a leitura da bolsa é instável, então na
+    prática ela só disparava com 85 de 90 slots ocupados. Agora a venda da
+    largada é INCONDICIONAL, na porta, antes da rajada de entrada.
 
-    Entrar com a bolsa cheia é fazer a run inteira e deixar o loot no chão.
+    O bot em Lua não tinha nem uma nem outra: vendia toda run com 30 cliques
+    cegos e transbordava sem avisar.
     """
-    fonte = _fonte(HHRoutine._do_preparar)
-    i_bolsa = fonte.index("manutencao.consumir_a_ida_ao_vendedor")
-    i_porta = fonte.index("State.ATE_A_PORTA")
-    assert i_bolsa < i_porta
+    porta = _fonte(HHRoutine._do_ate_a_porta)
+    assert "_vender_e_limpar_na_largada" in porta
+    assert porta.index("_vender_e_limpar_na_largada") < porta.index(
+        "State.ENTRAR")
 
 
 def test_a_bolsa_ILEGIVEL_nao_manda_vender():

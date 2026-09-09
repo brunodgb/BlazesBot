@@ -68,7 +68,6 @@ class ManutencaoDaHH:
         # `end_run`). Não é contador novo: é o mesmo que a venda por contagem
         # de runs já usava. `-1` para a primeira passada de cada sessão valer.
         self.runs_na_ultima_limpeza = -1
-        self.runs_na_ultima_ida_ao_vendedor = -1
         # A IDA AO VENDEDOR DA LARGADA já aconteceu? Zerada por `a_hh_comecou`.
         self.ja_vendi_ao_comecar = False
         # A limpa de bolsa DESTA LARGADA já aconteceu? Zerada por
@@ -80,18 +79,29 @@ class ManutencaoDaHH:
     # ==================================================================
 
     def precisa_vender(self) -> bool:
-        """A bolsa está cheia, ou já passaram runs demais desde a última venda?
+        """Já passaram runs demais desde a última venda?
 
-        DUAS FONTES, e a segunda é rede: a leitura de bolsa pode falhar, e um
-        teto por contagem de runs garante que a venda acontece de qualquer jeito.
+        =================================================================
+        UMA FONTE SÓ, E A BOLSA NÃO É ELA
+        =================================================================
+
+        Regra do usuário, 09/09/2026: *"ignore a leitura de quantidade de itens
+        no inventário, pois esse valor é instável e gera falhas"*.
+
+        E O BC JÁ TINHA CHEGADO NESSA CONCLUSÃO -- `BCVendor` diz, desde antes
+        da HH existir: *"o antigo gatilho por espaço livre da bolsa (folga) foi
+        REMOVIDO: a leitura de itens da bolsa mostrou ser imprecisa e o bot
+        nunca acionava a venda por esse caminho"*. A HH tinha reintroduzido o
+        gatilho, e com ele o problema.
+
+        A CONTAGEM DE ITENS CONTINUA SENDO LIDA -- para o LOG (`vendedor.py`
+        mostra a bolsa antes e depois da venda) e para o painel de diagnóstico.
+        O que ela deixou de fazer é DECIDIR. Medir e decidir são coisas
+        diferentes, e é a segunda que uma leitura instável não pode fazer.
+
+        Ver `docs/decisoes/venda.md`, "Os dois gatilhos da venda".
         """
         ctx = self.ctx
-        # `precisa_vender` devolve False quando a contagem não pôde ser lida --
-        # vender sem saber quantos itens existem levaria o bot a viajar sem
-        # motivo e a clicar na grade de uma janela talvez vazia.
-        if ctx.settings.bags.precisa_vender(ctx.memory.bag_count()):
-            return True
-
         desde = ctx.stats.runs - self.runs_na_ultima_venda
         return desde >= ctx.settings.hh.vendor.runs_before_selling
 
@@ -109,48 +119,41 @@ class ManutencaoDaHH:
         """Marca que o lixo desta run já foi apagado."""
         self.runs_na_ultima_limpeza = self.ctx.stats.runs
 
-    def consumir_a_ida_ao_vendedor(self) -> bool:
-        """A bolsa pede venda ANTES de entrar, e ainda há chance nesta run?
-
-        CONSOME a chance -- o nome diz isso de propósito, porque a resposta
-        muda o estado. Sem consumir, `_do_preparar` recebe `True` para sempre
-        enquanto a bolsa estiver cheia, e é exatamente aí que nasce o laço.
+    def vender_ao_comecar(self) -> int:
+        """A venda da LARGADA, na porta da cave. Uma vez por largada.
 
         =================================================================
-        A LARGADA TEM UMA IDA GARANTIDA, SEM PERGUNTAR
+        AQUI, E NÃO NO `PREPARAR`
         =================================================================
 
-        Regra do usuário, 09/09/2026: *"você também colocou para vender antes da
-        primeira run?? o inventário do personagem pode estar cheio, então é bom
-        fazer isso"*.
+        Regra do usuário, 09/09/2026: *"ao iniciar a rotina de HH, o bot deve se
+        deslocar até a coordenada próxima estipulada e executar a venda. Isso
+        deve ocorrer obrigatoriamente antes de iniciar o loop de tentativas de
+        entrada na instância"*.
 
-        E o portão normal NÃO cobriria esse caso. Medido com a configuração dele
-        (3 bolsas = 90 slots, folga mínima 6): na primeira run a conta por runs
-        dá `0 - 0 = 0`, que não alcança nem `1`, e a conta pela bolsa só dispara
-        com **85 itens**. Com 70 itens na bolsa o bot entrava sem vender -- e é
-        justamente o inventário que já estava cheio antes de o bot abrir.
+        E É O ÚNICO LUGAR EM QUE ELA FUNCIONA: `PONTO_DA_VENDA` **é** o
+        `PONTO_DA_ENTRADA` -- a mesma coordenada (-342,-288), com o vendedor
+        logo abaixo do personagem e o NPC da cave acima, na escada. A venda
+        precisa que o personagem esteja ALI, e quem o leva até lá é o
+        `ATE_A_PORTA`. Chamada no `PREPARAR`, como estava em 08/09/2026, ela
+        tentava encostar num ponto a centenas de unidades de distância.
 
-        É a MESMA disciplina da primeira limpa de bolsa
-        (`descartar_o_lixo_ao_comecar`), e por isso a ida da largada também
-        estampa o contador da run: uma ida, não duas.
-
-        A ORDEM SAI CERTA DE GRAÇA: esta pergunta é feita no `PREPARAR`, que
-        vem ANTES do `ATE_A_PORTA` onde mora a primeira limpa -- vender e depois
-        deletar, que é a ordem que o usuário pediu.
+        DIRETA, e não pelo estado `MANUTENCAO`: mandar o estado para lá e voltar
+        criaria o vai-e-volta que já custou um laço (ver §22). Aqui o gesto é
+        chamado e pronto -- o personagem já está no lugar certo.
         """
-        if not self.ja_vendi_ao_comecar:
-            self.ja_vendi_ao_comecar = True
-            self.runs_na_ultima_ida_ao_vendedor = self.ctx.stats.runs
-            self.ctx.log.info(
-                "HH: primeira ida ao vendedor da largada -- a bolsa pode estar "
-                "cheia de antes de o bot abrir.")
-            return True
-        if self.ctx.stats.runs == self.runs_na_ultima_ida_ao_vendedor:
-            return False
-        if not self.precisa_vender():
-            return False
-        self.runs_na_ultima_ida_ao_vendedor = self.ctx.stats.runs
-        return True
+        if self.ja_vendi_ao_comecar:
+            return 0
+        self.ja_vendi_ao_comecar = True
+        self.ctx.log.info(
+            "HH: venda da largada, antes de tentar entrar -- a bolsa pode "
+            "estar cheia de antes de o bot abrir.")
+        vendidos = self.vender()
+        # A COTA DE RUNS RECOMEÇA DAQUI quando a venda pôde acontecer. Impedida,
+        # não conta -- ver `a_venda_esta_impedida`.
+        if not self.a_venda_esta_impedida:
+            self.anotar_a_venda()
+        return vendidos
 
     def anotar_a_venda(self) -> None:
         """Marca que a venda aconteceu nesta run."""

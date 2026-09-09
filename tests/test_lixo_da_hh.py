@@ -47,6 +47,8 @@ class _Ctx:
 
         class _HH:
             deletar_lixo = True
+            # A COTA DE RUNS é o gatilho que sobrou -- a bolsa saiu de cena.
+            vendor = type("V", (), {"runs_before_selling": 1})()
 
         class _Teclas:
             inventory = "i"
@@ -155,9 +157,12 @@ def test_TODO_caminho_da_porta_para_o_ENTRAR_passa_pela_primeira_limpa():
     idas = [n for n in ast.walk(arvore)
             if isinstance(n, ast.Call)
             and getattr(n.func, "attr", "") == "_ir_para"]
+    # A LIMPA MORA DENTRO de `_vender_e_limpar_na_largada` desde 09/09/2026:
+    # na porta se vende E se limpa, nessa ordem. O que este teste cobra é que
+    # TODA saída para o ENTRAR passe por esse gesto.
     limpas = [n.lineno for n in ast.walk(arvore)
               if isinstance(n, ast.Call)
-              and getattr(n.func, "attr", "") == "descartar_o_lixo_ao_comecar"]
+              and getattr(n.func, "attr", "") == "_vender_e_limpar_na_largada"]
 
     assert len(idas) == len(limpas) == 2, (
         f"{len(idas)} saída(s) para o ENTRAR e {len(limpas)} limpa(s). Toda "
@@ -224,60 +229,99 @@ def test_a_ORDEM_no_MANUTENCAO_e_VENDER_e_depois_apagar():
         "a ordem voltou a ser apagar-e-depois-vender")
 
 
-def test_a_LARGADA_tem_uma_ida_ao_vendedor_garantida():
-    """O portão normal não cobre a bolsa que já estava cheia.
+def test_a_LARGADA_vende_UMA_vez():
+    """A venda da largada acontece na porta, e uma vez só.
 
-    Medido com a configuração do usuário (3 bolsas = 90 slots, folga 6): na
-    primeira run a conta por runs dá `0 - 0 = 0`, que não alcança nem 1, e a
-    conta pela bolsa só dispara com 85 itens. Com 70 na bolsa o bot entrava sem
-    vender -- e é justamente o inventário de antes de o bot abrir.
-
-    Regra do usuário, 09/09/2026: *"você também colocou para vender antes da
-    primeira run?? o inventário do personagem pode estar cheio"*.
+    Regra do usuário, 09/09/2026: *"ao iniciar a rotina de HH, o bot deve se
+    deslocar até a coordenada próxima estipulada e executar a venda"*.
     """
     m = _manutencao()
-    m.ctx.stats = type("S", (), {"runs": 0})()
-    m.ctx.memory = type("M", (), {"bag_count": lambda self: 70})()
+    vendas = []
+    m.vender = lambda: vendas.append(1) or 3
 
-    assert m.consumir_a_ida_ao_vendedor() is True, (
-        "a largada não ganhou a ida garantida ao vendedor")
-
-
-def test_a_ida_da_largada_NAO_se_repete_na_mesma_run():
-    """Uma ida, não duas -- a mesma disciplina que matou o laço de ontem."""
-    m = _manutencao()
-    m.ctx.stats = type("S", (), {"runs": 0})()
-    m.ctx.memory = type("M", (), {"bag_count": lambda self: 70})()
-
-    assert m.consumir_a_ida_ao_vendedor() is True
+    assert m.vender_ao_comecar() == 3
     for _ in range(5):
-        assert m.consumir_a_ida_ao_vendedor() is False
+        assert m.vender_ao_comecar() == 0
+    assert len(vendas) == 1, "a venda da largada se repetiu"
 
 
-def test_LIGAR_a_HH_de_novo_devolve_a_ida_da_largada():
+def test_LIGAR_a_HH_de_novo_devolve_a_venda_da_largada():
     """A rotina é guardada pelo supervisor e sobrevive a desligar/ligar."""
     m = _manutencao()
-    m.ctx.stats = type("S", (), {"runs": 0})()
-    m.ctx.memory = type("M", (), {"bag_count": lambda self: 70})()
-    m.consumir_a_ida_ao_vendedor()
-    assert m.consumir_a_ida_ao_vendedor() is False
+    m.vender = lambda: 3
+    m.vender_ao_comecar()
+    assert m.vender_ao_comecar() == 0
 
     m.a_hh_comecou()
 
-    assert m.consumir_a_ida_ao_vendedor() is True
+    assert m.vender_ao_comecar() == 3
 
 
-def test_a_ordem_da_LARGADA_e_vender_e_depois_deletar():
-    """Sai de graça da máquina de estados: `PREPARAR` pergunta pela venda e vem
-    ANTES do `ATE_A_PORTA`, onde mora a primeira limpa de bolsa."""
-    estados = textwrap.dedent(inspect.getsource(HHRoutine._do_preparar))
-    assert "consumir_a_ida_ao_vendedor" in estados
-    assert "State.ATE_A_PORTA" in estados
-    assert estados.index("consumir_a_ida_ao_vendedor") < estados.index(
-        "State.ATE_A_PORTA"), "a largada passou a deletar antes de vender"
+def test_a_venda_da_largada_REINICIA_a_cota_de_runs():
+    m = _manutencao()
+    m.vender = lambda: 3
+    m.ctx.stats = type("S", (), {"runs": 0})()
+
+    m.vender_ao_comecar()
+
+    assert m.runs_na_ultima_venda == 0
+    m.ctx.stats.runs = 1
+    assert m.precisa_vender() is True, (
+        "com cota de 1 run, a run seguinte tem que vender")
+
+
+def test_venda_da_largada_IMPEDIDA_nao_reinicia_a_cota():
+    """Não pôde vender não é ter vendido. Ver §21."""
+    m = _manutencao()
+    m.vender = lambda: 0
+    m.runs_na_ultima_venda = 7
+    m.vendedor = type("V", (), {"faltou_o_template": True})()
+
+    m.vender_ao_comecar()
+
+    assert m.runs_na_ultima_venda == 7, (
+        "uma venda impedida na largada contou como venda feita")
+
+
+def test_a_venda_da_largada_acontece_ANTES_da_rajada_de_entrada():
+    """`PONTO_DA_VENDA` **é** `PONTO_DA_ENTRADA`, então este é o único momento
+    possível: o personagem já está no lugar e ainda não disputa vaga."""
+    from blazesbot.bot.hh import mapa_hh
+
+    assert mapa_hh.PONTO_DA_VENDA == mapa_hh.PONTO_DA_ENTRADA, (
+        "o ponto de venda deixou de ser o da entrada; o momento da venda da "
+        "largada precisa ser remedido")
 
     porta = textwrap.dedent(inspect.getsource(HHRoutine._do_ate_a_porta))
-    assert "descartar_o_lixo_ao_comecar" in porta
+    assert "_vender_e_limpar_na_largada" in porta
+    assert porta.index("_vender_e_limpar_na_largada") < porta.index(
+        "State.ENTRAR"), "a largada passou a entrar antes de vender"
+
+    largada = textwrap.dedent(
+        inspect.getsource(HHRoutine._vender_e_limpar_na_largada))
+    assert largada.index("vender_ao_comecar") < largada.index(
+        "descartar_o_lixo_ao_comecar"), (
+        "a largada passou a deletar antes de vender")
+
+
+def test_o_PREPARAR_nao_decide_mais_sobre_venda():
+    """São DOIS gatilhos, e nenhum deles é o `PREPARAR`.
+
+    Ele perguntava pela bolsa, e a bolsa saiu de cena. Manter a pergunta ali
+    reabriria o vai-e-volta entre `PREPARAR` e `MANUTENCAO` (§22) sempre que
+    uma venda falhasse.
+    """
+    preparar = textwrap.dedent(inspect.getsource(HHRoutine._do_preparar))
+
+    # PELAS CHAMADAS, e não pelo texto: a docstring do método explica que a
+    # venda saiu dali, e uma busca textual acharia a explicação.
+    arvore = ast.parse(preparar)
+    chamadas = {getattr(n.func, "attr", getattr(n.func, "id", ""))
+                for n in ast.walk(arvore) if isinstance(n, ast.Call)}
+
+    assert not {c for c in chamadas if "vend" in c}, (
+        f"o PREPARAR voltou a decidir sobre venda: {sorted(chamadas)}")
+    assert "State.MANUTENCAO" not in preparar
 
 
 def test_as_duas_travas_por_run_continuam_valendo():

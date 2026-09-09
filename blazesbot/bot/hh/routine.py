@@ -534,7 +534,8 @@ class HHRoutine:
             intervalo o personagem regenera de graça: curar antes é gastar
             poção que a espera ia devolver.
 
-        FICA AQUI: a câmera, a montaria para viajar, e a decisão de vender.
+        FICA AQUI: a câmera e a montaria para viajar. A VENDA SAIU daqui em
+        09/09/2026 -- ela tem dois gatilhos, e nenhum é este. Ver §27.
         O PET fica em `_do_ate_a_porta` -- é a única verificação que acontece
         fora, e só ao CHEGAR na porta (regra do usuário na mesma data).
         """
@@ -550,13 +551,6 @@ class HHRoutine:
         # e conferida (`Memory.camera_na_pose_certa`), em vez de escrita às
         # cegas sobre um ponteiro resolvido no início do script.
         ctx.apply_camera()
-
-        # A bolsa manda ir vender ANTES de entrar, não depois de encher -- e
-        # UMA VEZ por run. Insistir no mesmo instante girava entre PREPARAR e
-        # MANUTENCAO sem farmar nada. Ver `docs/decisoes/hh.md` §22.
-        if self.manutencao.consumir_a_ida_ao_vendedor():
-            self._ir_para(State.MANUTENCAO, "a bolsa pede venda antes de entrar")
-            return
 
         # MONTARIA PARA VIAJAR. A regra do usuário é curta: *"a montaria você
         # irá sempre que precisar, dentro e fora da cave"* -- e só desce para
@@ -583,7 +577,7 @@ class HHRoutine:
 
         if etapa == mapa_hh.ETAPA_NA_PORTA:
             if self.ui.garantir_coordenada_da_entrada():
-                self.manutencao.descartar_o_lixo_ao_comecar()
+                self._vender_e_limpar_na_largada()
                 self._conferir_o_pet_na_porta()
                 self._ir_para(State.ENTRAR, "já estou na porta")
                 return
@@ -605,9 +599,20 @@ class HHRoutine:
             self._falhar("não cheguei na porta da cave", State.RECUPERAR)
             return
 
-        self.manutencao.descartar_o_lixo_ao_comecar()
+        self._vender_e_limpar_na_largada()
         self._conferir_o_pet_na_porta()
         self._ir_para(State.ENTRAR, "na porta da cave")
+
+    def _vender_e_limpar_na_largada(self) -> None:
+        """Na porta, ANTES da rajada de entrada: vende e depois apaga o lixo.
+
+        A ORDEM É A DE §25 (vender e depois deletar) e o MOMENTO é o de §27: o
+        ponto de venda é o ponto da entrada, então este é o único instante em
+        que o personagem está onde a venda funciona e ainda não começou a
+        disputar vaga na instância.
+        """
+        self.manutencao.vender_ao_comecar()
+        self.manutencao.descartar_o_lixo_ao_comecar()
 
     def _conferir_o_pet_na_porta(self) -> None:
         """A ÚNICA verificação que acontece fora da cave, e é aqui.

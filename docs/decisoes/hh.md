@@ -1684,3 +1684,72 @@ não duas — a mesma disciplina que matou o laço de §22.
 **E a ordem sai certa de graça:** a pergunta é feita no `PREPARAR`, que vem
 ANTES do `ATE_A_PORTA` onde mora a primeira limpa. Vender e depois deletar, que
 é a ordem de §25.
+
+## 27. A VENDA TEM DOIS GATILHOS, E A BOLSA NÃO É UM DELES (09/09/2026)
+
+### A regra
+
+> *"Ignore a leitura de quantidade de itens no inventário, pois esse valor é
+> instável e gera falhas. A rotina de venda em NPC deve ser disparada
+> exclusivamente por dois eventos: por cota de runs — forçar a venda sempre que
+> o bot completar a quantidade de runs predefinida nas configurações; por início
+> de rotina HH — ao iniciar a rotina de HH, o bot deve se deslocar até a
+> coordenada próxima estipulada e executar a venda. Isso deve ocorrer
+> obrigatoriamente antes de iniciar o loop de tentativas de entrada."*
+
+### O BC já havia chegado nessa conclusão
+
+`BCVendor` diz, desde antes de a HH existir:
+
+> *"O antigo gatilho por espaço livre da bolsa (folga) foi REMOVIDO: a leitura
+> de itens da bolsa mostrou ser imprecisa e o bot nunca acionava a venda por
+> esse caminho."*
+
+A HH **reintroduziu** esse gatilho, e com ele o problema. Agora as duas caves
+voltam a concordar.
+
+E os números confirmam: com a configuração da conta `creubo` (3 bolsas = 90
+slots, folga 6), o gatilho da bolsa só dispara com **85 itens** — na prática,
+quase nunca, e imprevisivelmente.
+
+### Medir e decidir são coisas diferentes
+
+A contagem de itens **continua sendo lida**: `vendedor.py` mostra a bolsa antes
+e depois da venda, e o painel de diagnóstico a exibe. O que ela deixou de fazer
+é **decidir**. Uma leitura instável pode informar; não pode comandar.
+
+`BagConfig.capacidade` também continua em uso, nos logs das duas caves.
+
+### Os dois gatilhos, e onde cada um mora
+
+| gatilho | onde | quando |
+|---|---|---|
+| **cota de runs** | `MANUTENCAO`, depois de sair da cave | `stats.runs − runs_na_ultima_venda >= runs_before_selling` |
+| **largada da HH** | `ATE_A_PORTA`, na porta, antes da rajada de entrada | uma vez por largada, **incondicional** |
+
+### Por que a largada é na PORTA, e não no `PREPARAR`
+
+**`PONTO_DA_VENDA` é o `PONTO_DA_ENTRADA`** — a mesma coordenada (−342,−288),
+com o vendedor logo abaixo do personagem e o NPC da cave acima, na escada.
+
+A venda exige que o personagem esteja **ali**, e quem o leva até lá é o
+`ATE_A_PORTA`. A colocação de 08/09/2026, no `PREPARAR`, estava errada: naquele
+instante o personagem pode estar em Stone City, e `encostar_no_ponto` (4
+tentativas de 1,8 s de clique local) jamais alcançaria um ponto a centenas de
+unidades.
+
+E ela é **direta**, não pelo estado `MANUTENCAO`: mandar o estado para lá e
+voltar recriaria o vai-e-volta que custou o laço de §22.
+
+### O `PREPARAR` deixou de decidir sobre venda
+
+Ele perguntava pela bolsa, e a bolsa saiu de cena. Manter a pergunta ali
+reabriria o vai-e-volta `PREPARAR` ↔ `MANUTENCAO` toda vez que uma venda
+falhasse — que é exatamente §22. A garantia que ele dava ("não entrar com a
+bolsa cheia") ficou **mais forte**: era condicional a uma leitura instável, e
+agora a venda da largada é incondicional.
+
+### A ordem na porta
+
+Vender e **depois** apagar o lixo (§25), no mesmo gesto
+(`_vender_e_limpar_na_largada`).
