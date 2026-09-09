@@ -15,13 +15,24 @@ Nenhuma delas fala com a máquina de estados, e nenhuma precisa saber em que
 trecho a run parou. Ficavam soltas em `HHRoutine` porque foram nascendo lá.
 
 =========================================================================
-A ORDEM É DELETAR E DEPOIS VENDER
+A ORDEM É VENDER E DEPOIS DELETAR
 =========================================================================
 
-O lixo da HH não é comprado pelo NPC: levá-lo para a janela de venda gasta
-cliques na grade em item que não sai, e ele volta ocupando o mesmo slot. Apagar
-primeiro deixa a bolsa com só o que tem preço -- e a venda, que começa de um
-slot configurado, passa a encontrar mercadoria onde antes achava lixo.
+INVERTIDA EM 09/09/2026, por regra do usuário: *"ele deveria vender logo antes
+de deletar os itens, pois assim já limpa um pouco do inventario e facilita na
+hora de deletar"*. A venda tira o VOLUME MAIOR num gesto só -- o NPC compra a
+maior parte do drop --, e a deleção, que é item a item por template, passa a
+varrer uma bolsa curta.
+
+ERA O CONTRÁRIO, e o argumento de então está registrado em
+`docs/decisoes/hh.md` §24: lixo que o NPC não compra, parado no slot
+configurado, trava a passada da venda, que clica sempre na mesma posição
+contando que os itens SUBAM. Isso continua verdade, e é o preço aceito -- a
+venda tem teto de passadas e não gira para sempre, e a limpa da run seguinte
+tira o lixo antes que ele custe de novo.
+
+Quem executa a ordem é `HHRoutine._do_manutencao` (entre runs) e
+`HHRoutine._vender_e_limpar_na_largada` (na porta, antes de entrar).
 """
 from __future__ import annotations
 
