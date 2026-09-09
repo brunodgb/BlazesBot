@@ -204,12 +204,34 @@ def test_o_MANUTENCAO_descarta_UMA_VEZ_POR_RUN():
         "a trava do descarte deixou de ser POR RUN")
 
 
-def test_a_ORDEM_no_MANUTENCAO_e_apagar_e_depois_vender():
+def test_a_ORDEM_no_MANUTENCAO_e_VENDER_e_depois_apagar():
+    """Invertida em 09/09/2026, por decisão do usuário.
+
+    > *"ele deveria vender logo antes de deletar os itens, pois assim já limpa
+    > um pouco do inventario e facilita na hora de deletar os itens"*
+
+    ERA O CONTRÁRIO, e o motivo antigo continua verdadeiro: o lixo da HH não é
+    comprado pelo NPC, e a venda clica sempre na MESMA posição da grade
+    contando que os itens SUBAM para preencher o buraco. Lixo parado no slot
+    configurado não sobe, e a passada inteira bate nele.
+
+    O risco foi comunicado e a decisão é do usuário -- ver
+    `docs/decisoes/hh.md` §24, que registra o trade e o que observar no log.
+    """
     ordem = _chamadas(HHRoutine._do_manutencao)
 
-    assert ordem.index("descartar_o_lixo") < ordem.index("vender"), (
-        "O lixo da HH não é comprado pelo NPC: levá-lo para a janela de venda "
-        "gasta cliques em item que não sai.")
+    assert ordem.index("vender") < ordem.index("descartar_o_lixo"), (
+        "a ordem voltou a ser apagar-e-depois-vender")
+
+
+def test_as_duas_travas_por_run_continuam_valendo():
+    """Inverter a ordem não pode ter afrouxado as travas do laço de ontem."""
+    fonte = textwrap.dedent(inspect.getsource(HHRoutine._do_manutencao))
+
+    assert "precisa_descartar()" in fonte
+    assert "anotar_o_descarte()" in fonte
+    assert "a_venda_esta_impedida" in fonte, (
+        "venda impedida voltou a contar como venda feita")
 
 
 # ===========================================================================

@@ -1496,18 +1496,14 @@ class HHRoutine:
         """
         ctx = self.ctx
 
-        # A ORDEM É DELETAR E DEPOIS VENDER, e ela importa.
+        # A ORDEM É VENDER E DEPOIS DELETAR -- regra do usuário, 09/09/2026:
+        # *"ele deveria vender logo antes de deletar os itens, pois assim já
+        # limpa um pouco do inventario e facilita na hora de deletar"*.
         #
-        # O lixo da HH não é comprado pelo NPC: levá-lo para a janela de venda
-        # gasta cliques na grade em item que não sai, e ele volta ocupando o
-        # mesmo slot. Apagar primeiro deixa a bolsa com só o que tem preço --
-        # e a venda, que vende a partir de um slot configurado, passa a
-        # encontrar mercadoria onde antes achava lixo.
-        # UMA LIMPA POR RUN. §22.
-        if self.manutencao.precisa_descartar():
-            self.manutencao.descartar_o_lixo()
-            self.manutencao.anotar_o_descarte()
-
+        # ERA O CONTRÁRIO, e o risco da inversão está escrito em
+        # `docs/decisoes/hh.md` §24: lixo que o NPC não compra parado no slot
+        # configurado trava a passada da venda, porque ela clica sempre na mesma
+        # posição contando que os itens SUBAM.
         if self.manutencao.precisa_vender():
             self.manutencao.vender()
             # SÓ CONTA COMO FEITA SE PÔDE ACONTECER. Ver `hh.md` §21.
@@ -1517,6 +1513,11 @@ class HHRoutine:
                     "de novo na próxima run.")
             else:
                 self.manutencao.anotar_a_venda()
+
+        # UMA LIMPA POR RUN. §22.
+        if self.manutencao.precisa_descartar():
+            self.manutencao.descartar_o_lixo()
+            self.manutencao.anotar_o_descarte()
 
         if ctx.settings.hh.modo_do_reset == MODO_FADA_DA_HH:
             self._reciclar_o_time()
