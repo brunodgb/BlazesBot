@@ -106,6 +106,23 @@ Contrato completo, assentos ativos e quando NÃO vale a pena invocar:
 - **`find-docs`** (Context7) — documentação atual de biblioteca externa.
 - **`task-observer`** — meta-skill auto-invocada: observa a sessão e propõe
   skills/melhorias. Custo aceito: 24 KB de SKILL.md por sessão de trabalho.
+- **`find-skills`** (vercel-labs) — acha e instala skill nova quando falta
+  capacidade real. Invocar sozinho ao notar a lacuna, não só se pedirem.
+
+## Agentes especializados do ECC: proativo, não sob pedido (diretriz permanente — 09/09/2026)
+
+O plugin `ecc@ecc` traz agentes de revisão auto-descobertos (não é preciso o
+usuário pedir): `code-reviewer`, `security-reviewer`, `python-reviewer`,
+`tdd-guide`, `build-error-resolver`, `refactor-cleaner`, `architect`,
+`planner`. **Invoque-os sozinho, no momento certo:** `python-reviewer`
+depois de editar `.py`, `security-reviewer` em código que toca senha/entrada
+externa/rede, `tdd-guide` ao escrever teste novo, `code-reviewer` depois de
+qualquer edição não trivial. Onde o `mattpocock-skills` (plugin global,
+todos os projetos do usuário) oferece o mesmo papel (`tdd`, `code-review`,
+`research`), o ECC vence NESTE projeto — nunca invocar os dois pro mesmo
+diff/decisão. Auditoria completa dos plugins do projeto, tabela de conflito
+e o que foi desligado e por quê: `docs/SKILLS.md`, seção "plugins e agentes
+do projeto".
 
 ## Regras de manutenção (obrigatórias)
 

@@ -84,6 +84,109 @@ Issues e specs vivem como arquivos markdown em `.scratch/<feature>/`. See `docs/
 
 Layout single-context: um `CONTEXT.md` + `docs/adr/` na raiz. See `docs/agents/domain.md`.
 
+# Skill: plugins e agentes do projeto (auditoria de 09/09/2026)
+
+Auditoria pedida pelo usuário: todo plugin habilitado neste projeto tinha que
+provar utilidade real, não só estar ligado. Quatro investigações paralelas
+(uma por grupo de plugin) confirmaram uso ou justificaram desligar. Estado
+final, com o porquê — para não repetir a investigação a cada sessão nova.
+
+## Desligados neste projeto (`.claude/settings.json`, escopo project — não afeta outros projetos do usuário)
+
+- **`superpowers@claude-plugins-official`** — framework genérico de
+  desenvolvimento (brainstorming → plano → TDD → subagentes) que nunca foi
+  documentado nem usado aqui, e duplica o que o `ecc@ecc` já cobre com
+  agentes próprios e mais específicos ao stack (Python).
+- **`codex@openai-codex`** — canal PARALELO de acesso ao Codex (sessão
+  persistente, `/codex:rescue`, hook de `Stop` que pode interceptar o fim da
+  sessão silenciosamente), redundante e não documentado. O projeto já usa o
+  Codex de propósito, mas por outra via: o `claude-council` chama o binário
+  `codex` diretamente (seção abaixo) — desligar este plugin **não afeta** o
+  council nem a autenticação do Codex CLI no sistema, que são independentes
+  deste plugin do Claude Code.
+- **`humanizer@humanizer`** — reescreve texto em INGLÊS pra soar menos "IA"
+  (calibrado no guia "Signs of AI writing" da Wikipédia, todo o dicionário de
+  "palavras a vigiar" é vocabulário inglês). Não é redundante com a exigência
+  de "Idioma da resposta" do `CLAUDE.md` — é **incompatível**: essa exigência
+  já é cumprida escrevendo em PT-BR direto, e o humanizer não tem base
+  nenhuma calibrada pra esse idioma.
+- **`ruflo-swarm@ruflo`** — coordenação de múltiplos agentes em topologia
+  hierárquica. Duplica o `Agent`/`Workflow` nativo do Claude Code (já usado
+  neste projeto várias vezes pra investigação paralela) sem vantagem
+  identificada, com o custo extra de uma ferramenta nova pra manter.
+- **`ruflo-rag-memory@ruflo`** — memória semântica vetorial (HNSW). Medido:
+  banco **vazio** (`claude-flow memory stats` → 0 entradas, também nenhum
+  resultado buscando "blazesbot"). Redundante com dois sistemas que já
+  existem e resolvem melhor o mesmo problema: a memória nativa do usuário
+  (arquivos markdown legíveis e versionáveis, indexados por `MEMORY.md`) pra
+  contexto entre sessões, e o `graphify` (`graphify-out/`, mandatado pelo
+  `CLAUDE.md`: "o graphify manda") pra qualquer pergunta sobre o código.
+
+**`ruflo-core@ruflo` continua ligado** — é infraestrutura de suporte
+(`ruflo-core:ruflo-doctor`/`ruflo-status`) que o `swarm`/`rag-memory` usavam;
+sem função ativa própria além de diagnóstico, mas custa pouco e serve se algo
+quebrar. Contrato de configuração completo (config/memória/daemon/hooks) na
+seção própria mais abaixo.
+
+## `ecc@ecc` — os agentes existem, a documentação global tinha 2 bugs (corrigidos, fora deste repo)
+
+O plugin (v2.2.0, `github.com/affaan-m/ECC`) traz 67 agentes + 284 skills,
+descobertos automaticamente pelo Claude Code a partir de
+`~/.claude/plugins/cache/ecc/ecc/<versão>/agents/*.md` (frontmatter `name:`)
+— **não** de `~/.claude/agents/`, como as regras globais do usuário
+(`~/.claude/rules/ecc/agents.md`) afirmavam. Essa linha estava errada e foi
+corrigida (09/09/2026, fora deste repositório — é config global do usuário,
+não do BlazesBot). Confirmados existindo de verdade, com frontmatter
+completo: `planner`, `architect`, `tdd-guide`, `code-reviewer`,
+`security-reviewer`, `build-error-resolver`, `e2e-runner`,
+`refactor-cleaner`, `doc-updater`, `rust-reviewer`, `python-reviewer`,
+`typescript-reviewer`, `go-reviewer`, `harmonyos-app-resolver`.
+
+**Segundo bug, também corrigido fora deste repo:** os 5 arquivos de regra
+Python do usuário (`~/.claude/rules/ecc/coding-style.md`, `hooks.md`,
+`patterns.md`, `security.md`, `testing.md`) dizem "extends
+`common/X.md`", mas `~/.claude/rules/common/` nunca existia — uma instalação
+manual anterior copiou os arquivos soltos de `rules/common/` e `rules/python/`
+pro mesmo diretório achatado, e como têm nomes iguais, `python/` sobrescreveu
+`common/` em silêncio. Restaurado copiando `rules/common/*.md` do próprio
+cache do plugin para `~/.claude/rules/common/`.
+
+### Uso proativo dos agentes ECC (diretriz permanente — 09/09/2026)
+
+Ver `CLAUDE.md`, seção "Agentes especializados do ECC" — o compromisso de
+invocar sem esperar pedido está lá porque é regra de atenção constante, não
+detalhe de área. O detalhe de QUANDO cada agente serve está na tabela do
+próprio `~/.claude/rules/ecc/agents.md`.
+
+## `mattpocock-skills@claude-plugins-official` — habilitado GLOBAL (todos os projetos do usuário, não só aqui)
+
+Por estar em escopo global, **não desliguei o plugin** — poderia quebrar
+outro projeto do usuário que dependa dele. O que fiz foi registrar o
+conflito, pra este projeto priorizar certo quando as duas fontes oferecem o
+mesmo papel:
+
+| skill do mattpocock | conflita com (ECC) | neste projeto |
+|---|---|---|
+| `tdd` | `tdd-guide` (agente) + `development-workflow.md` passo 2 + `ecc:python-testing` | **ECC vence** — mais específico ao stack |
+| `code-review` | `code-reviewer`/`security-reviewer` (agentes) + `code-review.md` + `ecc:code-review`/`orch-review` | **ECC vence** — checklist de severidade formalizado (também existe um TERCEIRO concorrente, `code-review@claude-code-plugins`, global — mesmo problema, não investigado a fundo) |
+| `research` | `development-workflow.md` passo 0, mandatório ("Research & Reuse") | **ECC vence** — já é passo obrigatório do pipeline |
+| `domain-modeling`, `codebase-design` | agente `architect` + `ecc:architecture-decision-records`/`hexagonal-architecture` | sobreposição parcial — usar mattpocock só se o formato ADR/Context específico dele for desejado de propósito; senão, `architect` |
+| `diagnosing-bugs`, `prototype`, `resolving-merge-conflicts`, `wizard`, `grilling`, `writing-for-agents` | nenhum equivalente real no ECC | **sem conflito, usar livremente** |
+
+Regra prática: **nunca invocar as duas fontes pro mesmo diff/decisão** — pra
+`tdd`/`code-review`/`research` neste projeto, ECC é a única fonte.
+
+## `find-skills` (vercel-labs/skills) — instalado 09/09/2026, global
+
+Skill de descoberta: ajuda a achar e instalar skills novas quando surge uma
+necessidade sem cobertura ainda (ex.: "queria algo que fizesse X"). Instalado
+em `~/.agents/skills/find-skills` (symlink pro Claude Code). **Uso
+esperado:** quando notar uma lacuna de capacidade real neste projeto (não
+coberta por ECC nem pelas skills já instaladas), invocar esta skill antes de
+tentar resolver tudo à mão ou de propor instalar algo escolhido às cegas —
+ela cruza o pedido contra o [skills.sh](https://skills.sh) e prioriza fontes
+com reputação (`vercel-labs`, `anthropics`) e contagem real de instalação.
+
 # Skill: claude-council (consulta multi-agente)
 
 Plugin de Claude Code que consulta vários modelos em paralelo e mostra as

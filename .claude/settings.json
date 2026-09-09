@@ -1,4 +1,12 @@
 {
+  "env": {
+    "COUNCIL_PROVIDERS": "openrouter-1,openrouter-2,openrouter-3,codex",
+    "OPENROUTER_MODELS": "z-ai/glm-5.2:free,cohere/north-mini-code:free,minimax/minimax-m3:free",
+    "OPENROUTER_MODEL": "z-ai/glm-5.2:free",
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1",
+    "CLAUDE_FLOW_V3_ENABLED": "true",
+    "CLAUDE_FLOW_HOOKS_ENABLED": "true"
+  },
   "permissions": {
     "allow": [
       "Bash(./.venv/Scripts/python.exe -c ' *)",
@@ -48,12 +56,12 @@
   },
   "enabledPlugins": {
     "ecc@ecc": true,
-    "superpowers@claude-plugins-official": true,
-    "codex@openai-codex": true,
-    "humanizer@humanizer": true,
+    "superpowers@claude-plugins-official": false,
+    "codex@openai-codex": false,
+    "humanizer@humanizer": false,
     "ruflo-core@ruflo": true,
-    "ruflo-swarm@ruflo": true,
-    "ruflo-rag-memory@ruflo": true,
+    "ruflo-swarm@ruflo": false,
+    "ruflo-rag-memory@ruflo": false,
     "claude-council@hex-claude-marketplace": true
   },
   "extraKnownMarketplaces": {
@@ -81,13 +89,5 @@
         "repo": "hex/claude-marketplace"
       }
     }
-  },
-  "env": {
-    "COUNCIL_PROVIDERS": "openrouter-1,openrouter-2,openrouter-3,codex",
-    "OPENROUTER_MODELS": "z-ai/glm-5.2:free,cohere/north-mini-code:free,minimax/minimax-m3:free",
-    "OPENROUTER_MODEL": "z-ai/glm-5.2:free",
-    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1",
-    "CLAUDE_FLOW_V3_ENABLED": "true",
-    "CLAUDE_FLOW_HOOKS_ENABLED": "true"
   }
 }
