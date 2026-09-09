@@ -466,9 +466,17 @@
           </div>
         </div>
 
-        <div class="campo mt-4 w-64">
-          <span data-i18n="campo_uso_bolsas">Uso de Bolsas</span>
-          <select id="ed-bolsas" class="campo-input"></select>
+        <div class="flex gap-4 mt-4">
+          <div class="campo w-64">
+            <span data-i18n="campo_uso_bolsas">Uso de Bolsas</span>
+            <select id="ed-bolsas" class="campo-input"></select>
+          </div>
+          <div class="campo w-64">
+            <span class="rotulo"><span data-i18n="campo_qtd_cliques">Quantidade de Cliques</span> <span class="ajuda"
+              data-i18n-ajuda="ajuda_qtd_cliques"
+              data-ajuda="Total de cliques na visita ao vendedor, que o bot divide em passadas de 24 — o limite do jogo por venda.&#10;&#10;Vale para TODAS as caves: o número é sobre quanta bolsa este personagem tem para esvaziar, e a cave não muda o tamanho do inventário.">?</span></span>
+            <select id="ed-cliques-venda" class="campo-input"></select>
+          </div>
         </div>
       </div>
 
@@ -727,8 +735,9 @@
                 class="campo-input text-center" /></label>
             <label class="campo w-32"><span data-i18n="campo_slot_inicial">Slot inicial</span><input id="ed-slot-venda" type="number" min="1" max="24" step="1"
                 class="campo-input text-center" /></label>
-            <label class="campo w-36"><span data-i18n="campo_qtd_cliques">Quantidade de Cliques</span><select id="ed-cliques-venda"
-                class="campo-input"></select></label>
+            <!-- A QUANTIDADE DE CLIQUES saiu daqui em 09/09/2026: o número é
+                 do PERSONAGEM (quanta bolsa esvaziar) e vale para todas as
+                 caves. Está na aba Personagem, junto do uso de bolsas. -->
             <label class="campo-check mb-2 ml-4"><input id="ed-recomprar-charm" type="checkbox" /><span data-i18n="ck_recomprar_charm">Recomprar Charm
                 de Retorno</span></label>
           </div>

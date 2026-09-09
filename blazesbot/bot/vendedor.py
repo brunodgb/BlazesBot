@@ -218,7 +218,7 @@ ESPERA_ENTRE_CLIQUES_DA_VENDA = 0.065
 # quantidade total de vezes que o usuário configurou como estava antes").
 #
 # DESLIGADA, a venda faz exatamente o que fazia antes de a conferência existir:
-# clica as `sell_clicks` vezes que o usuário configurou, em passadas de 24, e
+# clica as `settings.sell_clicks` vezes configuradas, em passadas de 24, e
 # clica em Sell no fim de cada uma. Nada mais.
 #
 # Não foi APAGADA porque as duas tentativas de conferir custaram medição de
@@ -830,8 +830,11 @@ class JanelaDeVenda:
         # a próxima.
         acabou = False
         antes = ctx.memory.bag_count()
-        passadas = cfg.passadas_necessarias
-        restantes = max(1, cfg.sell_clicks)
+        # O TOTAL É DO PERSONAGEM desde 09/09/2026 -- uma bolsa, um número,
+        # valendo para toda cave. O TETO de passadas continua sendo da cave.
+        total_de_cliques = max(1, ctx.settings.sell_clicks)
+        passadas = cfg.passadas_para(total_de_cliques)
+        restantes = total_de_cliques
 
         ctx.log.info(
             "Venda: %s clique(s) no total, em até %s passada(s) de %s "

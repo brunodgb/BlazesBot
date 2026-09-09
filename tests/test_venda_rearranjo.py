@@ -105,9 +105,13 @@ def _servico(monkeypatch, itens: int, cliques: int):
         def warning(self, *a, **k): ...
 
     class Vendor:
-        sell_clicks = cliques
+        # O TOTAL DE CLIQUES é do PERSONAGEM desde 09/09/2026; aqui fica só o
+        # que continuou sendo da cave -- o slot inicial e o teto de passadas.
         sell_start_slot = 4
-        passadas_necessarias = max(1, -(-cliques // janela_de_venda.CLIQUES_POR_PASSADA))
+
+        @staticmethod
+        def passadas_para(total):
+            return max(1, -(-total // janela_de_venda.CLIQUES_POR_PASSADA))
 
     class Memoria:
         # A bolsa encolhe junto com a grade: é o que o serviço loga no fim, e
@@ -122,7 +126,8 @@ def _servico(monkeypatch, itens: int, cliques: int):
     class Ctx:
         log = Log()
         account_login = "simulacao"
-        settings = type("S", (), {"vendor": Vendor()})()
+        settings = type("S", (), {"vendor": Vendor(),
+                                  "sell_clicks": cliques})()
         memory = Memoria()
 
         def raise_if_stopped(self): ...

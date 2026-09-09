@@ -805,9 +805,8 @@ class BCVendor:
     # itens na bolsa para saber a folga era imprecisa e o bot nunca entrava em
     # venda; o gatilho virou "depois de N runs da cave, busca o vendedor".
     runs_before_selling: int = 5
-    # Total de cliques desejado na visita. O bot divide isso em passadas de 24,
-    # porque 24 é o limite do jogo por venda: clica 24, aperta Sell, repete.
-    sell_clicks: int = 24
+    # O TOTAL DE CLIQUES NÃO MORA AQUI -- é do PERSONAGEM
+    # (`AccountSettings.sell_clicks`). O que é de cave é o TETO de passadas.
     max_sell_passes: int = 4
     buy_return_charm: bool = False
     buy_quantity_clicks: int = 1
@@ -822,10 +821,15 @@ class BCVendor:
 
         return POSICAO_DO_VENDEDOR
 
-    @property
-    def passadas_necessarias(self) -> int:
-        """Quantas passadas de 24 cliques cobrem o total configurado."""
-        alvo = max(1, self.sell_clicks)
+    def passadas_para(self, cliques: int) -> int:
+        """Quantas passadas de 24 cobrem este total de cliques.
+
+        RECEBE O TOTAL em vez de lê-lo: ele passou a ser do personagem em
+        09/09/2026, e uma propriedade que fosse buscá-lo em `AccountSettings`
+        faria a configuração da cave depender da conta -- o contrário da
+        direção em que essa árvore aponta.
+        """
+        alvo = max(1, cliques)
         return min(self.max_sell_passes,
                    -(-alvo // CLIQUES_POR_PASSADA))   # divisão para cima
 
@@ -964,7 +968,7 @@ class HHVendor:
     # Quantas runs antes de ir vender. A conta de verdade é a bolsa
     # (`BagConfig`); isto é o teto de segurança para quando a leitura falhar.
     runs_before_selling: int = 5
-    sell_clicks: int = 24
+    # O total de cliques é do PERSONAGEM; aqui fica só o teto de passadas.
     max_sell_passes: int = 4
 
 
@@ -1039,30 +1043,24 @@ class AccountSettings:
     hh: HHConfig = field(default_factory=HHConfig)
     # Marque na conta que fica parada só para as outras resetarem a cave.
     accept_team_invites: bool = False
-    # ===================================================================
-    # A CONTA DE RESET É DO PERSONAGEM, E NÃO DA CAVE
-    # ===================================================================
+    # A CONTA DE RESET É DO PERSONAGEM, E NÃO DA CAVE: o reseter é UM por conta
+    # logada, e no modo fada da HH é ele que entra junto para curar.
     #
-    # Nick da conta que fica parada só para resetar a cave desta conta (e que,
-    # no modo fada da HH, entra junto para curar).
+    # Vazio = não usa reset de time; preenchido, o bot convida esse nick antes
+    # de cada entrada, nas duas caves. LISTA FECHADA nas duas interfaces --
+    # reseter tem de ser conta cadastrada aqui, porque é isso que permite ao bot
+    # perceber que ela caiu e SEGURAR a entrada em vez de perder a run.
     #
-    # ERA UM CAMPO POR CAVE (`bc.reset_nick` e `hh.reset_nick`) e isso estava
-    # errado por desenho, não por acaso: o reseter é UM por conta logada. Dois
-    # campos criavam três estados impossíveis -- preencher um e esquecer o
-    # outro (medido em 03/09/2026: o usuário configurou o da HH, o do BC ficou
-    # vazio, e `montar_time` devolvia False para sempre), preencher os dois com
-    # nicks diferentes, e a pergunta sem resposta de qual deles vale para o
-    # código compartilhado (`TeamService`, `problema_do_reset`, o modo estrito
-    # do aceitador).
-    #
-    # Vazio = não usa reset de time. Preenchido = o bot convida esse nick antes
-    # de cada entrada, nas duas caves. Não há liga/desliga separado: o campo em
-    # branco já diz tudo, e um interruptor a mais seria só uma forma de errar.
-    #
-    # LISTA FECHADA nas duas interfaces: o reseter precisa ser uma conta
-    # cadastrada aqui, porque é isso que permite ao bot perceber que ela caiu e
-    # SEGURAR a entrada em vez de perder a run.
+    # Era um campo por cave, e os três estados impossíveis que isso criava estão
+    # em `docs/decisoes/reset-de-time.md`, Decisão 8.
     reset_nick: str = ""
+    # QUANTOS CLIQUES A VENDA DÁ -- do PERSONAGEM, e não da cave. O bot divide
+    # este total em passadas de 24, que é o limite do jogo por venda.
+    #
+    # Era um campo por cave, e o número não é sobre a cave: é sobre QUANTA
+    # BOLSA este personagem tem para esvaziar. O que continua sendo de cave é
+    # `max_sell_passes`. Ver `docs/decisoes/venda.md`, "O total de cliques".
+    sell_clicks: int = 24
     # Catar o loot do chão na mão, para a conta cujo pet NÃO tem a skill de
     # auto pick.
     #
@@ -1883,6 +1881,20 @@ class BotConfig:
         # O BC GANHA quando as duas estão preenchidas com nicks diferentes: era
         # dele que `problema_do_reset` lia, então é o valor que o bot de fato
         # usava para vetar o farm e para travar a entrada.
+        # O TOTAL DE CLIQUES DA VENDA, migrado das duas chaves de cave. LÊ DO
+        # BRUTO pelo mesmo motivo do `reset_nick` (o `_filtra` descartaria), e
+        # o BC ganha o empate -- na conta do usuário os dois DIVERGIAM (BC 72,
+        # HH 24) e foi o do BC que ele apontou como o certo a promover.
+        if "sell_clicks" in dados:
+            st.sell_clicks = int(dados["sell_clicks"] or 24)
+        else:
+            for bloco in ("bc", "hh"):
+                antigo = ((dados.get(bloco) or {}).get("vendor")
+                          or {}).get("sell_clicks")
+                if antigo:
+                    st.sell_clicks = int(antigo)
+                    break
+
         if "reset_nick" in dados:
             st.reset_nick = str(dados["reset_nick"] or "").strip()
         else:
@@ -1988,8 +2000,11 @@ class BotConfig:
         antiga_venda = dados.get("vendor", {})
         if antiga_venda:
             v = cls._filtra(BCVendor, antiga_venda)
-            if "sell_clicks_per_pass" in antiga_venda:
-                v["sell_clicks"] = antiga_venda["sell_clicks_per_pass"]
+            if "sell_clicks_per_pass" in antiga_venda and not st.sell_clicks:
+                # v1/v2: o total morava na venda. Vai para o personagem, que é
+                # onde o campo mora agora.
+                st.sell_clicks = int(antiga_venda["sell_clicks_per_pass"])
+            v.pop("sell_clicks", None)
             bc.vendor = BCVendor(**v)
 
         antigo_time = dados.get("team_reset", {})

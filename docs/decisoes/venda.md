@@ -469,3 +469,51 @@ Travado por `tests/test_venda.py::test_o_Sell_tem_respiro_ANTES_e_DEPOIS`, que
 lê o AST e confere a ORDEM — respiro, clique, respiro. E por um segundo teste
 que garante que o respiro é maior que a cadência da rajada: um respiro da ordem
 do intervalo entre os cliques não seria respiro nenhum, seria mais um clique.
+
+## O total de cliques é do PERSONAGEM, não da cave (09/09/2026)
+
+> *"a 'quantidade de cliques' que hoje está na configuração de BC, ela deve ir
+> para a aba do personagem, para valer para todas as caves, pois na hora da
+> venda essa vai ser a quantidade de cliques totais como é feito em BC"*
+
+### E o número justifica o escopo
+
+Ele não descreve a cave — descreve **quanta bolsa este personagem tem para
+esvaziar**. A cave muda o que cai dentro do inventário, não o tamanho dele. Dois
+campos para um número só criavam a mesma classe de problema que a conta de reset
+já tinha criado: valores divergentes sem resposta para "qual vale".
+
+Na conta do usuário eles **divergiam de verdade**: BC 72, HH 24. O do BC ganhou
+a migração, porque foi ele que o usuário apontou como o certo.
+
+### Hierarquia
+
+```
+account.settings.sell_clicks            ← ENTRA (escopo do personagem)
+account.settings.bc.vendor.sell_clicks  ← SAI
+account.settings.hh.vendor.sell_clicks  ← SAI
+account.settings.*.vendor.max_sell_passes ← FICA na cave
+```
+
+**`max_sell_passes` continua de cave** porque ele é o TETO de idas à janela de
+venda, e isso é característica do trajeto daquela cave — não do inventário.
+
+### O derivado virou função
+
+`BCVendor.passadas_necessarias` era uma `@property` que lia `self.sell_clicks`.
+Com o total fora da cave, ela virou `passadas_para(cliques)` — **recebe** o
+total em vez de ir buscá-lo. Uma propriedade que fosse ler `AccountSettings`
+faria a configuração da cave depender da conta, o contrário da direção em que
+essa árvore aponta.
+
+### O rótulo da PyQt6 estava mentindo
+
+Ele dizia **"Cliques por passada"**, e o campo nunca foi isso: o bot divide o
+total em passadas de 24 (`CLIQUES_POR_PASSADA`), que é o limite do jogo por
+venda. Na migração o rótulo passou a ser **"Total de cliques na venda"**. A
+interface web já dizia "Quantidade de Cliques", que estava certo.
+
+### Onde ficou, nas duas interfaces
+
+Ao lado do **uso de bolsas**, na aba Personagem — que é o mesmo assunto: quantos
+slots existem para esvaziar, e quantos cliques isso custa.

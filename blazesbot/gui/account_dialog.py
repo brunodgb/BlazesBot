@@ -436,6 +436,23 @@ class AccountDialog(QDialog):
             )
         self.cb_bolsas.currentIndexChanged.connect(self._atualizar_rotulos)
         f.addRow("Quantidade de bolsas:", self.cb_bolsas)
+        # O TOTAL DE CLIQUES DA VENDA FICA AQUI, e não na aba de cave: o número
+        # descreve QUANTA BOLSA este personagem tem para esvaziar, e a cave não
+        # muda o tamanho do inventário. Ver `AccountSettings.sell_clicks`.
+        #
+        # O rótulo antigo dizia "Cliques por passada", e era mentira: o bot
+        # divide este total em passadas de 24, que é o limite do jogo por venda.
+        self.cb_cliques = QComboBox()
+        for n in SELL_CLICK_OPTIONS:
+            self.cb_cliques.addItem(f"{n} cliques", n)
+        self.cb_cliques.setToolTip(
+            "Total de cliques na visita ao vendedor, dividido pelo bot em\n"
+            "passadas de 24 (o limite do jogo por venda).\n"
+            "\n"
+            "Vale para TODAS as caves: é sobre quanta bolsa este personagem\n"
+            "tem para esvaziar, não sobre onde ele farma."
+        )
+        f.addRow("Total de cliques na venda:", self.cb_cliques)
         self.lbl_bolsas = QLabel()
         self.lbl_bolsas.setObjectName("hint")
         self.lbl_bolsas.setWordWrap(True)
@@ -1004,10 +1021,6 @@ class AccountDialog(QDialog):
         self.lbl_slot = QLabel()
         self.lbl_slot.setStyleSheet(f"color: {TEXT_DIM}; font-size: 12px;")
         f.addRow("", self.lbl_slot)
-        self.cb_cliques = QComboBox()
-        for n in SELL_CLICK_OPTIONS:
-            self.cb_cliques.addItem(f"{n} cliques", n)
-        f.addRow("Cliques por passada:", self.cb_cliques)
         self.ck_charm = QCheckBox("Comprar Return Charm")
         f.addRow(self.ck_charm)
         outer.addWidget(box)
@@ -1311,10 +1324,10 @@ class AccountDialog(QDialog):
 
         self.sp_runs.setValue(bc.vendor.runs_before_selling)
         self.sp_slot.setValue(bc.vendor.sell_start_slot)
-        idx = self.cb_cliques.findData(bc.vendor.sell_clicks)
+        idx = self.cb_cliques.findData(st.sell_clicks)
         if idx < 0:
-            self.cb_cliques.addItem(f"{bc.vendor.sell_clicks} cliques",
-                                    bc.vendor.sell_clicks)
+            self.cb_cliques.addItem(f"{st.sell_clicks} cliques",
+                                    st.sell_clicks)
             idx = self.cb_cliques.count() - 1
         self.cb_cliques.setCurrentIndex(idx)
         self.ck_charm.setChecked(bc.vendor.buy_return_charm)
@@ -1429,7 +1442,7 @@ class AccountDialog(QDialog):
         hh.vendor.runs_before_selling = self.sp_hh_runs.value()
         bc.vendor.runs_before_selling = self.sp_runs.value()
         bc.vendor.sell_start_slot = self.sp_slot.value()
-        bc.vendor.sell_clicks = self.cb_cliques.currentData() or 24
+        st.sell_clicks = self.cb_cliques.currentData() or 24
         bc.vendor.buy_return_charm = self.ck_charm.isChecked()
 
         self.accept()

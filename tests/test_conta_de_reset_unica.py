@@ -207,3 +207,103 @@ def test_o_dist_foi_reconstruido():
     assert 'id="ed-reset-nick"' in dist
     assert 'id="ed-hh-reset"' not in dist, (
         "o `dist/` está mais velho que o `web/`: rode `npm run build`")
+
+
+# ===========================================================================
+# O TOTAL DE CLIQUES DA VENDA -- mesma promoção, mesmo risco
+# ===========================================================================
+#
+# 09/09/2026: *"a 'quantidade de cliques' que hoje está na configuração de BC,
+# ela deve ir para a aba do personagem, para valer para todas as caves"*.
+#
+# O número não descreve a cave -- descreve quanta bolsa este personagem tem
+# para esvaziar. Ver `docs/decisoes/venda.md`, "O total de cliques".
+
+
+def test_o_total_de_cliques_mora_no_PERSONAGEM():
+    from blazesbot.config import BCVendor, HHVendor
+
+    assert "sell_clicks" in AccountSettings.__dataclass_fields__
+    for classe in (BCVendor, HHVendor):
+        assert "sell_clicks" not in classe.__dataclass_fields__, (
+            f"{classe.__name__} voltou a ter total de cliques próprio")
+        # O TETO DE PASSADAS continua de cave: ele é do trajeto, não da bolsa.
+        assert "max_sell_passes" in classe.__dataclass_fields__
+
+
+def test_config_antigo_do_BC_migra_os_cliques():
+    st = _settings({"bc": {"vendor": {"sell_clicks": 72}}})
+    assert st.sell_clicks == 72
+
+
+def test_config_antigo_da_HH_migra_os_cliques():
+    st = _settings({"hh": {"vendor": {"sell_clicks": 48}}})
+    assert st.sell_clicks == 48
+
+
+def test_com_os_DOIS_divergindo_o_BC_ganha():
+    """Na conta do usuário eles divergiam de verdade: BC 72, HH 24."""
+    st = _settings({"bc": {"vendor": {"sell_clicks": 72}},
+                    "hh": {"vendor": {"sell_clicks": 24}}})
+    assert st.sell_clicks == 72
+
+
+def test_o_campo_NOVO_ganha_do_legado():
+    st = _settings({"sell_clicks": 96,
+                    "bc": {"vendor": {"sell_clicks": 72}}})
+    assert st.sell_clicks == 96
+
+
+def test_o_derivado_RECEBE_o_total_em_vez_de_le_lo():
+    """Propriedade que fosse buscar em `AccountSettings` faria a configuração
+    da cave depender da conta -- o contrário da direção da árvore."""
+    from blazesbot.config import BCVendor
+
+    v = BCVendor()
+    assert not hasattr(v, "passadas_necessarias"), (
+        "a propriedade antiga voltou, e ela lê um campo que não existe mais")
+    assert v.passadas_para(72) == 3, v.passadas_para(72)
+    assert v.passadas_para(24) == 1
+    assert v.passadas_para(0) >= 1, "zero cliques não pode virar zero passadas"
+
+
+def test_a_venda_le_o_total_do_PERSONAGEM():
+    from blazesbot.bot.vendedor import JanelaDeVenda
+
+    fonte = inspect.getsource(JanelaDeVenda.sell_from_slot)
+    assert "ctx.settings.sell_clicks" in fonte
+    assert "cfg.sell_clicks" not in fonte
+
+
+def test_as_DUAS_interfaces_moveram_o_seletor_de_cliques():
+    gui = (RAIZ / "blazesbot/gui/account_dialog.py").read_text(encoding="utf-8")
+    aba = gui[gui.index("def _aba_personagem"):gui.index("def _aba_teclas")]
+    assert "self.cb_cliques = QComboBox()" in aba, (
+        "o seletor de cliques não está na aba Personagem da PyQt6")
+    bc = gui[gui.index("def _aba_bc"):gui.index("def _aba_hh")]
+    assert "cb_cliques" not in bc, "a aba BC voltou a ter o seletor"
+    # E O RÓTULO MENTIROSO SAIU: o campo nunca foi "por passada".
+    #
+    # PELA CHAMADA `addRow`, e não pelo texto solto: o comentário do código
+    # cita o rótulo antigo para dizer que era mentira, e uma busca no texto
+    # acharia a explicação e reprovaria a correção.
+    assert 'addRow("Cliques por passada:"' not in gui
+    assert 'addRow("Total de cliques na venda:"' in gui
+
+    html = (RAIZ / "web/index.html").read_text(encoding="utf-8")
+    pessoa = html[html.index('id="aba-personagem"'):html.index('id="aba-teclas"')]
+    assert 'id="ed-cliques-venda"' in pessoa
+    bc_html = html[html.index('id="aba-bc"'):html.index('id="aba-hh"')]
+    assert "ed-cliques-venda" not in bc_html
+
+    js = (RAIZ / "web/main.js").read_text(encoding="utf-8")
+    assert 'sell_clicks: Number($("#ed-cliques-venda").value || 24)' in js
+    py = (RAIZ / "blazesbot/web_app.py").read_text(encoding="utf-8")
+    assert '"sell_clicks": st.sell_clicks' in py
+    assert "st.bc.vendor.sell_clicks" not in py
+
+    dist = (RAIZ / "dist/index.html").read_text(encoding="utf-8")
+    i_pessoa = dist.index('id="aba-personagem"')
+    i_teclas = dist.index('id="aba-teclas"')
+    assert 'id="ed-cliques-venda"' in dist[i_pessoa:i_teclas], (
+        "o `dist/` está mais velho que o `web/`: rode `npm run build`")

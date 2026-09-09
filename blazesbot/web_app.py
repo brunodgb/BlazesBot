@@ -394,6 +394,9 @@ class _App:
             # A CONTA DE RESET, no nível da CONTA -- uma para todas as caves.
             # Estava em `bc` e `hh`; ver `AccountSettings.reset_nick`.
             "reset_nick": st.reset_nick,
+            # O TOTAL DE CLIQUES DA VENDA, no nível da CONTA -- vale para toda
+            # cave. Ver `AccountSettings.sell_clicks`.
+            "sell_clicks": st.sell_clicks,
             # AS CANDIDATAS A RESETER. O campo "conta que reseta a cave" deixou
             # de ser texto livre: o reseter precisa ser uma conta cadastrada
             # AQUI, porque é isso que permite ao bot perceber que ela caiu e
@@ -476,7 +479,6 @@ class _App:
                 "vendor": {
                     "runs_before_selling": st.bc.vendor.runs_before_selling,
                     "sell_start_slot": st.bc.vendor.sell_start_slot,
-                    "sell_clicks": st.bc.vendor.sell_clicks,
                     "buy_return_charm": st.bc.vendor.buy_return_charm,
                 },
             },
@@ -699,6 +701,7 @@ class _App:
         c.grupo = str(dados.get("grupo", "") or "").strip()[:LIMITE_DO_NOME_DO_GRUPO]
         st.accept_team_invites = bool(dados.get("accept_team_invites", False))
         st.reset_nick = str(dados.get("reset_nick", "") or "").strip()
+        st.sell_clicks = int(dados.get("sell_clicks", 24) or 24)
         st.usar_catador = bool(dados.get("usar_catador", False))
         st.mount_speed_pct = int(dados.get("mount_speed_pct") or MOUNT_SPEEDS[0])
 
@@ -812,7 +815,6 @@ class _App:
         V = bc.get("vendor", {})
         st.bc.vendor.runs_before_selling = int(V.get("runs_before_selling", 5))
         st.bc.vendor.sell_start_slot = int(V.get("sell_start_slot", 3))
-        st.bc.vendor.sell_clicks = int(V.get("sell_clicks", 24))
         st.bc.vendor.buy_return_charm = bool(V.get("buy_return_charm", False))
 
         self._aplicar()

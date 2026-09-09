@@ -1133,6 +1133,11 @@
     "en": "Number of Clicks",
     "es": "Cantidad de Clics"
   },
+  "ajuda_qtd_cliques": {
+    "pt-br": "Total de cliques na visita ao vendedor, dividido pelo bot em passadas de 24 — o limite do jogo por venda. Vale para TODAS as caves.",
+    "en": "Total clicks per vendor visit, split by the bot into passes of 24 — the game's per-sale limit. Applies to ALL caves.",
+    "es": "Total de clics en la visita al vendedor, dividido por el bot en pasadas de 24 — el límite del juego por venta. Vale para TODAS las cuevas."
+  },
   "ck_recomprar_charm": {
     "pt-br": "Recomprar Charm\n                de Retorno",
     "en": "Repurchase Return\n                Charm",

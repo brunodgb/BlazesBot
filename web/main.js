@@ -1192,6 +1192,9 @@ function preencherEditor(d) {
   $("#ed-nick").value = d.nick || "";
   $("#ed-grupo").value = d.grupo || "";
   $("#ed-aceitar-time").checked = !!d.accept_team_invites;
+  // O TOTAL DE CLIQUES DA VENDA é do personagem desde 09/09/2026 -- uma bolsa,
+  // um número, valendo para toda cave.
+  $("#ed-cliques-venda").value = String(d.sell_clicks ?? 24);
   $("#ed-usar-catador").checked = !!d.usar_catador;
   $("#ed-montaria").value = String(d.mount_speed_pct);
   $("#ed-pet-summon").checked = !!d.pet.summon_on_login;
@@ -1572,7 +1575,6 @@ function preencherBC(bc) {
   // `montarListaDeReset`, que roda antes e é a única dona da lista.
   $("#ed-runs-venda").value = bc.vendor.runs_before_selling;
   $("#ed-slot-venda").value = bc.vendor.sell_start_slot;
-  $("#ed-cliques-venda").value = String(bc.vendor.sell_clicks);
   $("#ed-recomprar-charm").checked = !!bc.vendor.buy_return_charm;
 }
 
@@ -1622,6 +1624,7 @@ function salvarEditor() {
     usar_catador: $("#ed-usar-catador").checked,
     // A CONTA DE RESET é da CONTA, e não de uma cave. Uma por conta logada.
     reset_nick: $("#ed-reset-nick").value.trim(),
+    sell_clicks: Number($("#ed-cliques-venda").value || 24),
     mount_speed_pct: Number($("#ed-montaria").value),
     pet: {
       summon_on_login: $("#ed-pet-summon").checked,
@@ -1659,7 +1662,6 @@ function salvarEditor() {
       vendor: {
         runs_before_selling: Number($("#ed-runs-venda").value),
         sell_start_slot: Number($("#ed-slot-venda").value),
-        sell_clicks: Number($("#ed-cliques-venda").value),
         buy_return_charm: $("#ed-recomprar-charm").checked,
       },
     },
