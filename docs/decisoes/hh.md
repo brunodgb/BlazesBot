@@ -1470,3 +1470,101 @@ A única ressalva é a **altura**: 28 px contra 17–22 dos outros, com o conte�
 nas linhas 7..23 — ou seja, 11 das 28 linhas são margem de fundo. Não impede o
 casamento (o fundo do diálogo é constante), mas é folga em troca de nada; um
 recorte mais justo teria mais tinta por pixel.
+
+## 23. O PERSONAGEM CONGELADO, E A MONTARIA COMO REMÉDIO (08/09/2026)
+
+### O relato
+
+> *"dentro de HH tem lag e rollback muito forte, mas no caso de HH eu percebi
+> algumas vezes que o lag é tanto que chega a travar o personagem, e só destrava
+> se ele faz alguma ação e como está na montaria, a única ação possível é sair da
+> montaria... caso perceba que está mais de 20 segundos parado, sem mudar as
+> coordenadas e sem estar fazendo nada, o ideal é sair da montaria, caso esteja
+> em batalha, mate os mobs ative a montaria e siga em frente"*
+
+E o mecanismo, na resposta dele à Q12: *"o ideal é sempre mexer na montaria,
+seja desmontando ou montando nela de volta, nessas tentativas obriga o servidor
+a pensar e com isso na maioria das vezes faz desbugar e destravar"*.
+
+### A assinatura, medida no log
+
+Seis cliques de minimapa seguidos com a **mesma distância**, montado, sem mover
+um pixel:
+
+```
+-1.3s  Montaria ativa (120% de velocidade)
+-1.3s  HH: andei atrás dos mobs (estou em (315,156), o ponto é (272,136))
++0.0s  sem progresso indo para (272, 136) (distância 47) — relançando (1)
++2.7s  sem progresso indo para (272, 136) (distância 47) — relançando (3)
++7.8s  sem progresso indo para (272, 136) (distância 47) — relançando (3)
++8.9s  Não consegui parar em (272, 136) (estou em (315, 156))
+```
+
+Outros, na fase `ate_o_boss`: **347 s** em (80,42), 66 s em (80,42), 60 s em
+(507,107), 49 s em (408,131).
+
+### Congelamento NÃO é rollback, e a diferença decide o remédio
+
+| fenômeno | assinatura | remédio |
+|---|---|---|
+| **congelamento** | coordenada **idêntica**, cliques sem efeito | mexer na montaria |
+| **rollback** | coordenada **muda** (medido 2 → 2 → **7**) | reancorar a rota |
+
+Por isso **qualquer** mudança de coordenada zera o relógio. E há um detalhe que o
+usuário observou e que fecha o desenho: *"quando está travado ele fica em uma
+posição só, mas na hora que destrava, por exemplo quando sai da montaria, vai ter
+um rollback"* — ou seja, o destravamento se **anuncia** por um rollback. Que já
+é tratado dentro de `follow_path`, que espera 0,25 s o servidor assentar e
+reancora pelo waypoint por onde o personagem *acabou de passar*. Nenhuma
+reancoragem nova foi escrita.
+
+### A escada, com os dois números do usuário e nada inventado no meio
+
+| momento | ação |
+|---|---|
+| **15 s** na mesma coordenada, tentando andar | desmonta (`permitir_em_batalha=True`) |
+| **~0,22 s depois** | `_manter_montaria` remonta sozinho — o segundo toque vem de graça |
+| **22,5 s** ainda congelado | desmonta de novo (terceiro e quarto toques) |
+| **30 s** (`TETO_PRESO_NO_MESMO_PONTO`, dele, de 04/09) | aborta o trajeto; a rotina decide |
+
+Os 22,5 s são **derivados** — o meio entre 15 e 30 — e a expressão no código usa
+as duas constantes, então mudar um dos números do usuário reposiciona a segunda
+cutucada sozinha.
+
+**Em batalha nada novo foi escrito.** Desmontou ⇒ está a pé e em batalha ⇒ o
+gancho `matar_quando_o_trajeto_trava`, que já existia e já era da HH, mata; e a
+rotina remonta ao sair do combate. Exatamente a sequência do relato, por
+composição.
+
+### Por que virou módulo próprio (`bot/congelamento.py`)
+
+`navegacao.py` estava com **2375 linhas** e teto de 2380 — cinco de folga. A
+catraca de qualidade disse o que fazer: *"divida-o em pacote de contexto antes de
+continuar crescendo"*. O vigia é uma unidade coesa (relógio + limiares + decisão
++ registro) com uma dependência injetada (quem desmonta), então virou módulo — e
+`navegacao.py` ficou com **quatro linhas**: o campo e a chamada.
+
+De passagem, a prosa da montaria (34 linhas de narrativa medida) foi movida
+verbatim para `docs/decisoes/navegacao.md`, que é o destino dela.
+
+### O relógio é do vigia, não do trajeto
+
+**Obrigatório assim.** O congelamento medido acontece nos trajetos **curtos de
+5 s** ("voltar ao ponto do boss"), e um relógio que nascesse zerado em cada
+chamada de `follow_path` nunca chegaria aos 15: seriam três relógios de 5. O
+`Navigator` guarda uma instância pela run inteira.
+
+### Só a HH liga
+
+`ligado` nasce desligado — a mesma disciplina dos dois ganchos de destravamento,
+e pela mesma razão: em 04/09/2026 o BC herdou um desmonte que era da HH e passou
+a lutar antes do Altar Stone. Decisão do usuário: *"BC pode manter como está,
+pois já rodamos runs o suficiente para verificar que não aconteceu esse
+travamento indefinido, mas em HH já aconteceu mais de 2 vezes"*.
+
+### Evento próprio no diário
+
+`"congelado"`, e **não** o `"travado"` que já existe (aquele é do teto de
+insistência). Grava quanto tempo ficou parado, se estava montado e qual cutucada
+foi — é o que, em alguns dias, responde se 15 s é o número certo e se a montaria
+é de fato o remédio. Confundir os dois eventos apagaria essa medida.

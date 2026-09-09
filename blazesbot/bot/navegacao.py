@@ -58,6 +58,7 @@ from ..core.zones import (
     zona_do_local,
 )
 from . import hotbar
+from .congelamento import VigiaDoCongelamento
 from .context import BotContext, Disconnected
 from .velocidade import SkillDeVelocidade
 
@@ -154,6 +155,7 @@ FOLGA_ROLLBACK = 1
 # anormais. Longo o bastante para não confundir com a fração de segundo entre
 # terminar um trecho e o clique seguinte sair.
 SEGUNDOS_PARADO_DE_VERDADE = 1.5
+
 
 # Quanto a posição pode variar e ainda contar como "não saiu do lugar". Uma
 # unidade cobre o ruído do arredondamento da coordenada (o jogo guarda float e o
@@ -269,40 +271,15 @@ SEGUNDOS_POR_CLIQUE_CIRCULO = 1.0
 # Cadência da manutenção durante o deslocamento (poção).
 INTERVALO_MANUTENCAO = 0.6
 
-# ===========================================================================
-# A MONTARIA É PRÉ-REQUISITO DE ANDAR, NÃO UMA OTIMIZAÇÃO
-# ===========================================================================
+# A MONTARIA É PRÉ-REQUISITO DE ANDAR, NÃO UMA OTIMIZAÇÃO -- tudo que este bot
+# sabe sobre andar foi medido MONTADO. Ela é conferida em DOIS lugares
+# estruturais: no PORTÃO de toda função que produz movimento
+# (`garantir_montaria_para_andar`) e a cada volta do laço (`_manter_montaria`).
 #
-# Tudo que este bot sabe sobre andar foi medido MONTADO: o orçamento de tempo de
-# cada trecho, as tolerâncias dos waypoints, o alcance de um clique no minimapa
-# (~17,6 unidades por clique) e a skill de velocidade, que afeta a montaria e não
-# o personagem. A pé, o trajeto passa do dobro da duração -- e dentro da cave
-# dobrar a duração é o trem de mobs alcançando.
-#
-# Por isso a montaria não é conferida "onde alguém lembrou de chamar
-# ensure_mounted". Ela é conferida em DOIS lugares estruturais:
-#
-#   * no PORTÃO de toda função que produz movimento -- `garantir_montaria_para_andar`
-#   * a cada volta do laço de deslocamento -- `_manter_montaria`
-#
-# Espalhar a checagem pelos estados da rotina garantia apenas os trechos lembrados:
-# a volta da venda, o ajuste fino depois de um teleporte, o retorno para a porta
-# da cave e a caminhada até os NPCs andavam a pé sem ninguém notar.
-#
-# Intervalo MÍNIMO entre dois toques na tecla da montaria. A tecla é um
-# INTERRUPTOR: apertá-la de novo antes de o cliente confirmar desmonta justamente
-# quem acabou de montar. Tem que ser maior que o tempo de confirmação do jogo e
-# menor que o custo de seguir a pé até a checagem seguinte.
-#
-# ERA 1,50 s, E ISSO ERA MENOS QUE O TEMPO DE MONTAR. Medição do usuário em
-# 25/08/2026: *"subir na montaria pode levar 1 a 3 segundos, porque depende da
-# montaria; se não tiver montaria depois de 3 segundos clica de novo"*.
-#
-# Com 1,50 s o segundo toque caía DENTRO da subida da montaria mais lenta -- e a
-# tecla é interruptor, então ele desmontava quem estava montando. O sintoma é
-# indistinguível de "a montaria não funcionou": o bot aperta, aperta de novo, e
-# continua a pé. O próprio comentário acima já advertia contra isso; o número é
-# que não acompanhava.
+# Intervalo MÍNIMO entre dois toques na tecla, que é um INTERRUPTOR: apertar de
+# novo antes de o cliente confirmar DESMONTA quem acabou de montar. Era 1,50 s,
+# menos que o tempo de montar (1 a 3 s, medido pelo usuário em 25/08/2026).
+# O relato completo está em `docs/decisoes/navegacao.md`, "A montaria".
 INTERVALO_REMONTAR = 3.0
 
 # Depois de quanto tempo a pé, no meio de um trajeto, o log passa a dizer isso em
@@ -582,6 +559,10 @@ class Navigator:
         # "NAO DESTRAVEI em 60s: 9 morte(s), 8 TAB, 176 golpes".
         self.destravar_o_combate: Callable[[str], bool] | None = None
         self.matar_quando_o_trajeto_trava: Callable[[str], bool] | None = None
+        # CONGELAMENTO DO PERSONAGEM: vigia próprio, em `bot/congelamento.py`.
+        # NASCE DESLIGADO -- só a HH liga. Ver `docs/decisoes/hh.md` §23.
+        self.congelamento = VigiaDoCongelamento(
+            ctx, lambda: self.ensure_dismounted(permitir_em_batalha=True))
         # Desde quando está a pé, e quanto tempo do trajeto atual foi a pé. É o
         # número que diz se a exigência de andar montado está sendo cumprida de
         # verdade -- sem ele, "andou a pé metade da cave" não aparece em log nenhum.
@@ -1435,6 +1416,11 @@ class Navigator:
             # personagem está andando -- e ela só vale a pena andando.
             if dentro_da_cave:
                 self.velocidade.usar_se_puder(True, andando_desde)
+
+            # CONGELAMENTO, antes do rollback de propósito: rollback é mudar de
+            # lugar, congelamento é não mudar. §23.
+            self.congelamento.olhar(atual, f"andar até {caminho[indice]}"
+                                    if indice < total else "andar")
 
             # ROLLBACK / LAG. O personagem voltou muito na rota sem o bot pedir:
             # servidor engasgou, internet oscilou, ou alguém interferiu. Insistir

@@ -235,6 +235,10 @@ class HHRoutine:
         # dois ganchos.
         self.nav.matar_quando_o_trajeto_trava = (
             self._matar_ate_sair_de_batalha)
+        # CONGELAMENTO DO PERSONAGEM: mexer na montaria força o servidor a
+        # reagir. Só a HH liga -- no BC nunca aconteceu em run nenhuma. Ver
+        # `docs/decisoes/hh.md` §23.
+        self.nav.congelamento.ligado = True
         self.ui = EntradaDaHH(ctx, self.nav)
         self.vendedor = VendedorDaHH(ctx, self.nav)
         # O QUE ACONTECE FORA DA CAVE, entre uma run e a seguinte: descarte do

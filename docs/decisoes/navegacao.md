@@ -1122,3 +1122,34 @@ do mapa-múndi**. `zona_do_local` devolve `None` para a cave e um nome de regiã
 para qualquer lugar aberto — é a mesma pergunta que `_mover_pelo_mapa` faz para
 decidir se pode clicar no mapa. Sem leitura de lugar, a resposta é "estou na
 cave": manter o comportamento antigo é mais seguro que estrear o novo às cegas.
+
+## A montaria — prosa movida de `bot/navegacao.py` (08/09/2026)
+
+Movida verbatim quando o arquivo encostou na catraca de linhas para caber o
+vigia do congelamento. Nada aqui mudou de conteúdo.
+
+> A MONTARIA É PRÉ-REQUISITO DE ANDAR, NÃO UMA OTIMIZAÇÃO
+> Tudo que este bot sabe sobre andar foi medido MONTADO: o orçamento de tempo de
+> cada trecho, as tolerâncias dos waypoints, o alcance de um clique no minimapa
+> (~17,6 unidades por clique) e a skill de velocidade, que afeta a montaria e não
+> o personagem. A pé, o trajeto passa do dobro da duração -- e dentro da cave
+> dobrar a duração é o trem de mobs alcançando.
+> Por isso a montaria não é conferida "onde alguém lembrou de chamar
+> ensure_mounted". Ela é conferida em DOIS lugares estruturais:
+> * no PORTÃO de toda função que produz movimento -- `garantir_montaria_para_andar`
+> * a cada volta do laço de deslocamento -- `_manter_montaria`
+> Espalhar a checagem pelos estados da rotina garantia apenas os trechos lembrados:
+> a volta da venda, o ajuste fino depois de um teleporte, o retorno para a porta
+> da cave e a caminhada até os NPCs andavam a pé sem ninguém notar.
+> Intervalo MÍNIMO entre dois toques na tecla da montaria. A tecla é um
+> INTERRUPTOR: apertá-la de novo antes de o cliente confirmar desmonta justamente
+> quem acabou de montar. Tem que ser maior que o tempo de confirmação do jogo e
+> menor que o custo de seguir a pé até a checagem seguinte.
+> ERA 1,50 s, E ISSO ERA MENOS QUE O TEMPO DE MONTAR. Medição do usuário em
+> 25/08/2026: *"subir na montaria pode levar 1 a 3 segundos, porque depende da
+> montaria; se não tiver montaria depois de 3 segundos clica de novo"*.
+> Com 1,50 s o segundo toque caía DENTRO da subida da montaria mais lenta -- e a
+> tecla é interruptor, então ele desmontava quem estava montando. O sintoma é
+> indistinguível de "a montaria não funcionou": o bot aperta, aperta de novo, e
+> continua a pé. O próprio comentário acima já advertia contra isso; o número é
+> que não acompanhava.
