@@ -89,7 +89,7 @@ from collections import deque
 from collections.abc import Callable
 from contextlib import contextmanager
 
-from ..core import esconder_jogadores, janelas_abertas
+from ..core import esconder_jogadores, halo, janelas_abertas
 from ..core.coords import TEMPLATE_ANCHORS
 from ..core.rota import distancia
 from ..core.vision import capture_window, find_template
@@ -1449,18 +1449,33 @@ class UIDoJogo:
         return (x_base + larguraDif, y_base + alturaDif)
 
     def falar_com_npc(self, ponto_npc: tuple[int, int] | None = None,
-                      tentativas: int = 4, larguraDif: int = 0, alturaDif: int = 0) -> tuple[int, int] | None:
-        """Abre o diálogo do NPC à frente. Devolve o ponto que FUNCIONOU."""
-        
+                      tentativas: int = 4, larguraDif: int = 0, alturaDif: int = 0,
+                      halo_px: int = 0) -> tuple[int, int] | None:
+        """Abre o diálogo do NPC à frente. Devolve o ponto que FUNCIONOU.
+
+        `halo_px > 0` tenta também os VIZINHOS de `ponto_npc`, do mais perto
+        para o mais longe -- o porquê e o tamanho do passo estão em
+        `core/halo.py`. O anel PARA assim que a posição muda: clique que caiu no
+        chão fez o personagem andar, e daí em diante todo vizinho vale para um
+        enquadramento que não existe mais.
+        """
         ctx = self.ctx
         self.nav.garantir_montaria_para_andar("interagir com o NPC")
-        
+
         # Aqui você repassa os parâmetros recebidos para a função que calcula o ponto
         ponto_calculado = self._ponto_padrao_do_npc(larguraDif=larguraDif, alturaDif=alturaDif)
-        candidatos = [p for p in (ponto_npc, ponto_calculado) if p]
+        miras = (halo.pontos_em_volta(ponto_npc, halo_px)
+                 if ponto_npc and halo_px > 0 else [ponto_npc])
+        candidatos = [p for p in (*miras, ponto_calculado) if p]
+        partida = ctx.memory.position() if halo_px > 0 else None
 
-        for volta in range(tentativas):
+        for volta in range(max(tentativas, len(candidatos) if halo_px > 0 else 0)):
             ctx.raise_if_stopped()
+            if partida is not None and volta and ctx.memory.position() != partida:
+                ctx.log.info(
+                    "O clique anterior tirou o personagem de %s; paro o anel de "
+                    "tentativas em vez de empurrá-lo para mais longe.", partida)
+                return None
             if self._pontos("dialogue"):
                 return candidatos[0]
             alvo = candidatos[min(volta, len(candidatos) - 1)]

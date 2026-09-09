@@ -63,6 +63,8 @@ PALAVRAS_DE_TEMPO = (
 # catálogo mistura pixels e tentativas com segundos, e deixa de ser útil.
 NOMES_QUE_NAO_SAO_TEMPO = frozenset({
     "PASSO_DA_GRADE", "PASSO_DO_PIXEL", "TENTATIVAS_POR_LINHA_DE_LOG",
+    # O anel de tentativa do clique de NPC anda em PIXELS (`core/halo.py`).
+    "PASSO_DO_HALO",
 })
 
 # As chamadas que ESPERAM. `_sleep_interruptible` é o `tick` do supervisor.

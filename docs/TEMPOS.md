@@ -388,9 +388,9 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | `ESPERA_DA_ROLAGEM` | 0.08 s | *novo* | FIXO | [ui_do_jogo.py:623](blazesbot/bot/ui_do_jogo.py#L623) | `rolar_o_dialogo` | A lista redesenhar depois do clique na seta. Uma volta de laço do cliente, não |
 | *literal em* `resetar_visao` | 0.175 s | = | FIXO | [ui_do_jogo.py:750](blazesbot/bot/ui_do_jogo.py#L750) | `resetar_visao` | Aperta o View Reset para recentrar a câmera. |
 | *literal em* `buscar_npc` | 0.5 s | = | FIXO | [ui_do_jogo.py:1210](blazesbot/bot/ui_do_jogo.py#L1210) | `buscar_npc` | Busca um NPC e devolve o primeiro resultado, conferido. |
-| *literal em* `fechar_dialogo` | 0.3 s | = | FIXO | [ui_do_jogo.py:1728](blazesbot/bot/ui_do_jogo.py#L1728) | `fechar_dialogo` |  |
-| *literal em* `clicar_link` | 0.75 s | = | FIXO | [ui_do_jogo.py:1747](blazesbot/bot/ui_do_jogo.py#L1747) | `clicar_link` | Clica num link do diálogo, localizado pelo texto. Devolve o ponto. |
-| *literal em* `clicar_link` | 0.4 s | = | FIXO | [ui_do_jogo.py:1749](blazesbot/bot/ui_do_jogo.py#L1749) | `clicar_link` | Clica num link do diálogo, localizado pelo texto. Devolve o ponto. |
+| *literal em* `fechar_dialogo` | 0.3 s | = | FIXO | [ui_do_jogo.py:1743](blazesbot/bot/ui_do_jogo.py#L1743) | `fechar_dialogo` |  |
+| *literal em* `clicar_link` | 0.75 s | = | FIXO | [ui_do_jogo.py:1762](blazesbot/bot/ui_do_jogo.py#L1762) | `clicar_link` | Clica num link do diálogo, localizado pelo texto. Devolve o ponto. |
+| *literal em* `clicar_link` | 0.4 s | = | FIXO | [ui_do_jogo.py:1764](blazesbot/bot/ui_do_jogo.py#L1764) | `clicar_link` | Clica num link do diálogo, localizado pelo texto. Devolve o ponto. |
 | `SEGUNDOS_ANDANDO_ANTES` | 0.5 s | = | FIXO | [velocidade.py:45](blazesbot/bot/velocidade.py#L45) | `usar_se_puder` | Quanto o personagem precisa ter andado antes de valer a pena acionar. |
 | `ESPERA_DO_TELEPORTE` | 5 s | = | TETO | [vendedor.py:99](blazesbot/bot/vendedor.py#L99) |  | TETO da espera do teleporte -- não é mais o tempo gasto, é o limite. |
 | `PASSO_DA_ESPERA_DO_TELEPORTE` | 0.12 s | *novo* | PASSO | [vendedor.py:103](blazesbot/bot/vendedor.py#L103) |  | Entre leituras. A posição vem da memória e custa microssegundos; o passo é |

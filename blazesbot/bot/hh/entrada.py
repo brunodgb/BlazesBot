@@ -42,7 +42,7 @@ e faz o personagem andar, saindo da coordenada de onde o NPC responde.
 """
 from __future__ import annotations
 
-from ...core import stone_city
+from ...core import halo, stone_city
 from ..context import BotContext
 from ..navegacao import Navigator
 from ..ui_do_jogo import UIDoJogo
@@ -516,7 +516,21 @@ class EntradaDaHH(UIDoJogo):
                 o_que="sair da HH"):
             return False
 
-        if self.falar_com_npc(ctx.coords.hh_exit_npc) is None:
+        # COM ANEL DE TENTATIVA em volta da mira medida (`core/halo.py`).
+        #
+        # Relato do usuário, 09/09/2026: o clique direito da saída *"às vezes
+        # falha, acredito que por uma pequena diferença de posicionamento"*. É o
+        # preço da folga de `PRECISAO_NO_PONTO_DA_SAIDA` (1,5 unidades de
+        # mundo): dentro dela o NPC ainda passeia dezenas de pixels na tela, e
+        # uma mira de um ponto só cai ao lado dele de vez em quando.
+        #
+        # AQUI E NÃO EM `falar_com_npc` PARA TODO MUNDO: a saída acontece uma
+        # vez por run, com a cave vazia e ninguém disputando -- é onde um punhado
+        # de cliques a mais não custa nada. A rajada de entrada é o oposto
+        # (centenas de tentativas por minuto), e ligá-lo lá seria multiplicar o
+        # trabalho de um caminho que já funciona.
+        if self.falar_com_npc(ctx.coords.hh_exit_npc,
+                              halo_px=halo.PASSO_DO_HALO) is None:
             ctx.log.warning("Não abri o diálogo do %s", mapa_hh.NPC_DA_SAIDA)
             return False
 

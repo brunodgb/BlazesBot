@@ -1870,3 +1870,64 @@ chama `garantir_coordenada_da_entrada` antes de qualquer clique.
 `test_hh_medido_no_jogo.py`: o ponto novo, a distância MAIOR que a folga da
 entrada (é essa desigualdade que obriga a volta), a volta depois da venda, e a
 conversão do clique para a janela de 1029 que o usuário mediu.
+
+## 30. O CLIQUE DA SAÍDA GANHOU UM ANEL DE TENTATIVA (09/09/2026)
+
+### O relato
+
+> *"na saída de HH está acontecendo às vezes do botão direito falhar, acredito
+> por uma pequena diferença de posicionamento, então seria interessante pegar
+> como base onde está o clique direito atualmente e criar uma pequena área em
+> volta de tentativa, pois se clicar em volta não vai atrapalhar e vai acertar
+> logo"* — usuário, 09/09/2026.
+
+### Por que a mira erra "às vezes"
+
+Não é a mira que está errada — é a PARADA que tem folga. `encostar_no_ponto`
+aceita `PRECISAO_NO_PONTO_DA_SAIDA` (1,5 unidades de mundo), e tem de aceitar:
+exigir a casa decimal travaria a rotina num laço sem saída.
+
+E a folga tem preço na tela. Medido na BC em 25/08/2026, cinco unidades de mundo
+moveram o Rich Man **quase 300 px**; na HH, seis unidades moveram o vendedor
+69 px (§29). Dentro de 1,5 unidades o `Servant Child` ainda passeia dezenas de
+pixels — e um ponto só de mira cai ao lado dele de vez em quando.
+
+### O anel
+
+`core/halo.pontos_em_volta` devolve a mira medida e depois os oito vizinhos, do
+mais perto para o mais longe: os quatro lados a 14 px, e só então as quatro
+quinas (que estão √2 vezes mais longe). `UIDoJogo.falar_com_npc` recebe
+`halo_px` e percorre essa lista até o diálogo abrir.
+
+**14 px é número de OBSERVAÇÃO DE CAMPO**, não de medição instrumentada — a
+mesma natureza de `ESPERA_ANTES_DO_SELL`. O que se sabe é a ordem de grandeza:
+erro de alguns pixels, não de centenas (erro grande não seria "às vezes", seria
+sempre). Foi escolhido menor que meio sprite de NPC deste cliente, para o
+vizinho ainda cair sobre o NPC quando a mira erra por pouco.
+
+### As duas travas que impedem o anel de virar clique às cegas
+
+1. **Acertou, para.** Continuar clicando com o diálogo aberto seria clicar
+   DENTRO dele, onde cada ponto é um botão.
+2. **Andou, para.** Clique que erra o NPC cai no chão e FAZ O PERSONAGEM ANDAR.
+   `falar_com_npc` guarda a posição de partida e abandona o anel assim que ela
+   muda — daí em diante todo vizinho valeria para um enquadramento que não
+   existe mais. Quem chama reposiciona e tenta de novo, que é o que
+   `_falar_com_o_npc_da_saida` já fazia por conta.
+
+Sem essas duas, isto seria o clique cego do bot em Lua (`farmer.exitCave` dá
+três cliques direitos em alturas fixas), que este projeto recusou desde o
+começo.
+
+### Ligado na SAÍDA, desligado na ENTRADA
+
+A saída acontece **uma vez por run**, com a cave vazia: um punhado de cliques a
+mais não custa nada. A rajada de entrada é o oposto — centenas de tentativas por
+minuto disputando vaga —, e ligá-lo lá multiplicaria o trabalho de um caminho
+que já funciona.
+
+### Travado por
+
+`tests/test_halo_do_clique_no_npc.py`: a mira primeiro, lados antes das quinas,
+a volta cabendo na janela do passo, o anel parando no diálogo, o anel parando
+quando a posição muda, a saída pedindo o anel e a entrada NÃO pedindo.

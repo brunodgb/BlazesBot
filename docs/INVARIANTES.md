@@ -580,6 +580,12 @@ time a flag não faz nada.
   onde está. Chutar um padrão faria ela apertar algo que faz outra coisa.
 - **O vendedor é o `Roaming Apothecary`, fora da cave** — a venda da BC com outro
   NPC. Isso é dado de rota, não módulo de venda novo.
+- **O CLIQUE DIREITO DA SAÍDA TEM ANEL DE TENTATIVA** (`hh.md` §30,
+  `core/halo.py`): a mira medida primeiro e, só se ela falhar, os oito vizinhos
+  a 14 px. **Duas travas obrigatórias:** para no diálogo aberto (senão clica
+  dentro dele) e para assim que a POSIÇÃO muda (clique no chão faz o personagem
+  andar, e o vizinho seguinte já vale para outra cena). Ligado só na SAÍDA —
+  uma vez por run; na rajada de entrada seria multiplicar o que já funciona.
 - **VENDER E ENTRAR SÃO DOIS PONTOS** (`hh.md` §29): vende-se parado em
   `PONTO_DA_VENDA` (−343,−294) e entra-se de `PONTO_DA_ENTRADA` (−342,−288), a
   ~6 unidades. **Depois de vender, VOLTA para a entrada** — `tentar_entrar_na_hh`
