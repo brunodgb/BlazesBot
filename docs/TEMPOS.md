@@ -400,8 +400,8 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | `ESPERA_PARA_CONFIRMAR_VAZIO` | 0.5 s | = | FIXO | [vendedor.py:284](blazesbot/bot/vendedor.py#L284) | `_confirmar_slot_vazio, sell_from_slot` | As leituras de confirmação são ESPAÇADAS, não coladas: veja |
 | `ESPERA_ANTES_DO_SELL` | 0.4 s | = | FIXO | [vendedor.py:316](blazesbot/bot/vendedor.py#L316) | `sell_from_slot` | O RESPIRO EM VOLTA DO BOTÃO "SELL" |
 | `ESPERA_DEPOIS_DO_SELL` | 0.6 s | = | FIXO | [vendedor.py:317](blazesbot/bot/vendedor.py#L317) | `sell_from_slot` |  |
-| *literal em* `_tentar_abrir_a_venda` | 0.3 s | = | FIXO | [vendedor.py:480](blazesbot/bot/vendedor.py#L480) | `_tentar_abrir_a_venda` |  |
-| *literal em* `_dismiss_confirm` | 0.125 s | = | FIXO | [vendedor.py:534](blazesbot/bot/vendedor.py#L534) | `_dismiss_confirm` | Fecha a caixa "It's precious item, please confirm!", se aberta. |
+| *literal em* `_tentar_abrir_a_venda` | 0.3 s | = | FIXO | [vendedor.py:505](blazesbot/bot/vendedor.py#L505) | `_tentar_abrir_a_venda` |  |
+| *literal em* `_dismiss_confirm` | 0.125 s | = | FIXO | [vendedor.py:559](blazesbot/bot/vendedor.py#L559) | `_dismiss_confirm` | Fecha a caixa "It's precious item, please confirm!", se aberta. |
 | `ESPERA_PELA_MORTE` | 2 s | *novo* | FIXO | [watchdog.py:297](blazesbot/bot/watchdog.py#L297) | `kill_client` | Quanto tempo esperar o Windows realmente derrubar o processo depois do |
 | `PASSO_DA_CONFIRMACAO_DA_MORTE` | 0.05 s | *novo* | PASSO | [watchdog.py:301](blazesbot/bot/watchdog.py#L301) | `_morreu` | Passo entre as conferências de "já morreu?". Fatia curta porque a resposta |
 
@@ -455,7 +455,7 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | `PET_FEED_MINUTOS_MAX` | 60 s (1 min) | *novo* | TETO | [config.py:276](blazesbot/config.py#L276) | `pet_feed_na_faixa, validate` |  |
 | `PASSOS_DO_APP` | 20 s | **16 s** ⚠ | PASSO | [config.py:488](blazesbot/config.py#L488) | `_app_from_dict` | Linhas oferecidas na aba APP. Dezesseis cobre com folga a macro mais longa que |
 | `MINIMO_DELAY_MS` | 100 s (2 min) | *novo* | FIXO | [config.py:507](blazesbot/config.py#L507) | `segundos_para_ms, ms_para_segundos` | Espera mínima de QUALQUER campo de tempo do APP, em milissegundos. |
-| `SPEED_DURACAO_SEGUNDOS` | 30 s | = | FIXO | [config.py:840](blazesbot/config.py#L840) |  | Skill de velocidade da montaria, valores do jogo. Ficam aqui e não na |
+| `SPEED_DURACAO_SEGUNDOS` | 30 s | = | FIXO | [config.py:850](blazesbot/config.py#L850) |  | Skill de velocidade da montaria, valores do jogo. Ficam aqui e não na |
 | `INTERVALO_DE_DESCARGA_MS` | 200 s (3 min) | = | FIXO | [main_window.py:96](blazesbot/gui/main_window.py#L96) | `__init__` | Cadência com que a interface esvazia a fila de log. 5 vezes por segundo é |
 | `PASSO` | 0.25 s | = | PASSO | [ler_camera.py:50](blazesbot/tools/ler_camera.py#L50) | `run_ler_camera` | Cadência da leitura. Barata: são 8 leituras de 4 bytes por volta. |
 | `SEGUNDOS_PADRAO` | 300 s (5 min) | = | TETO | [ler_camera.py:53](blazesbot/tools/ler_camera.py#L53) | `run_ler_camera` | Teto padrão, para a ferramenta fechar sozinha se você esquecer dela aberta. |

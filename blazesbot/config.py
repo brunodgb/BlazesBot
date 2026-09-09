@@ -797,29 +797,21 @@ CLIQUES_POR_PASSADA = 24
 
 
 @dataclass
-class BCVendor:
-    """Venda e recompra ao voltar da cave."""
+class ConfiguracaoDeVenda:
+    """Os três números que TODA venda de NPC precisa, em qualquer cave.
 
+    Cada cave herda daqui com os SEUS valores, e quem consome os recebe pelo
+    gancho `JanelaDeVenda._config_da_venda`. Ver `docs/decisoes/hh.md` §28.
+    """
+
+    # De que slot começar. Os primeiros são equipamento, e a proteção deles é
+    # GEOMÉTRICA (`sell_from_slot`): errar aqui VENDE O EQUIPAMENTO.
     sell_start_slot: int = 3
-    # GATILHO de retorno à cidade: contagem de runs do bot BC. A leitura de
-    # itens na bolsa para saber a folga era imprecisa e o bot nunca entrava em
-    # venda; o gatilho virou "depois de N runs da cave, busca o vendedor".
+    # GATILHO: contagem de runs. A bolsa era imprecisa e nunca disparava (§27).
     runs_before_selling: int = 5
     # O TOTAL DE CLIQUES NÃO MORA AQUI -- é do PERSONAGEM
     # (`AccountSettings.sell_clicks`). O que é de cave é o TETO de passadas.
     max_sell_passes: int = 4
-    buy_return_charm: bool = False
-    buy_quantity_clicks: int = 1
-    # O antigo gatilho por espaço livre da bolsa (folga) foi REMOVIDO: a
-    # leitura de itens da bolsa mostrou ser imprecisa e o bot nunca acionava a
-    # venda por esse caminho. Ver `VendorService.precisa_ir_vender`.
-    vendor_search_text: str = "Rich"
-
-    @property
-    def vendor_position(self) -> tuple[int, int]:
-        from .bot.bc.mapa_bc import POSICAO_DO_VENDEDOR
-
-        return POSICAO_DO_VENDEDOR
 
     def passadas_para(self, cliques: int) -> int:
         """Quantas passadas de 24 cobrem este total de cliques.
@@ -832,6 +824,24 @@ class BCVendor:
         alvo = max(1, cliques)
         return min(self.max_sell_passes,
                    -(-alvo // CLIQUES_POR_PASSADA))   # divisão para cima
+
+
+@dataclass
+class BCVendor(ConfiguracaoDeVenda):
+    """Venda e recompra ao voltar da cave: só o que é da Bewitcher Cave."""
+
+    buy_return_charm: bool = False
+    buy_quantity_clicks: int = 1
+    # O antigo gatilho por espaço livre da bolsa (folga) foi REMOVIDO: a
+    # leitura de itens da bolsa mostrou ser imprecisa e o bot nunca acionava a
+    # venda por esse caminho. Ver `VendorService.precisa_ir_vender`.
+    vendor_search_text: str = "Rich"
+
+    @property
+    def vendor_position(self) -> tuple[int, int]:
+        from .bot.bc.mapa_bc import POSICAO_DO_VENDEDOR
+
+        return POSICAO_DO_VENDEDOR
 
 
 # Skill de velocidade da montaria, valores do jogo. Ficam aqui e não na
@@ -954,22 +964,17 @@ class HHRoute:
 
 
 @dataclass
-class HHVendor:
+class HHVendor(ConfiguracaoDeVenda):
     """A venda da HH: o `Roaming Apothecary`, do lado de fora da cave.
 
     A JANELA É A MESMA DA BC -- mesma moldura, mesma grade, mesma paginação 1/3,
     mesmo par Sell/Cancel. Então a máquina de vender vale sem alteração e o que
     muda é só qual NPC e a partir de que slot.
-    """
 
-    # De que slot da bolsa começar a vender. Os primeiros são equipamento e
-    # consumível; vender a partir deles seria vender o que o bot precisa.
-    sell_start_slot: int = 3
-    # Quantas runs antes de ir vender. A conta de verdade é a bolsa
-    # (`BagConfig`); isto é o teto de segurança para quando a leitura falhar.
-    runs_before_selling: int = 5
-    # O total de cliques é do PERSONAGEM; aqui fica só o teto de passadas.
-    max_sell_passes: int = 4
+    OS TRÊS NÚMEROS vêm de `ConfiguracaoDeVenda` e chegam à máquina por
+    `VendedorDaHH._config_da_venda` (§28); `runs_before_selling` aqui não é
+    teto de segurança: é o gatilho (§27).
+    """
 
 
 @dataclass
@@ -1140,12 +1145,14 @@ class AccountSettings:
                 "Modo APP está ligado mas nenhuma linha tem tecla. Preencha ao "
                 "menos uma, ou desligue o modo."
             )
-        if not (1 <= self.bc.vendor.sell_start_slot <= 24):
-            problemas.append("Slot inicial de venda deve estar entre 1 e 24.")
-        if self.bc.vendor.runs_before_selling < 1:
-            problemas.append(
-                "Runs antes de vender deve ser pelo menos 1."
-            )
+        # AS DUAS CAVES: a HH vende pelo slot DELA desde 09/09/2026 (§28).
+        for cave, venda in (("BC", self.bc.vendor), ("HH", self.hh.vendor)):
+            if not (1 <= venda.sell_start_slot <= 24):
+                problemas.append(
+                    f"Slot inicial de venda da {cave} deve estar entre 1 e 24.")
+            if venda.runs_before_selling < 1:
+                problemas.append(
+                    f"Runs antes de vender da {cave} deve ser pelo menos 1.")
         if not (0 < self.potions.hp_pct < 100):
             problemas.append("Limiar de poção de HP deve estar entre 1 e 99.")
         # "safe" continua sendo aceito na LEITURA para não reprovar config antigo,

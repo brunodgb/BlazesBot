@@ -1753,3 +1753,64 @@ agora a venda da largada é incondicional.
 
 Vender e **depois** apagar o lixo (§25), no mesmo gesto
 (`_vender_e_limpar_na_largada`).
+
+## 28. A VENDA DA HH OBEDECIA À CONFIGURAÇÃO DA BC (09/09/2026)
+
+### O defeito
+
+`AccountSettings.vendor` é uma **propriedade de compatibilidade**: devolve
+`self.bc.vendor`, sempre. `JanelaDeVenda` — a máquina que opera a janela de
+venda do jogo inteiro — lia dali o `sell_start_slot` e o `max_sell_passes`.
+
+Enquanto só a Bewitcher Cave vendia, isso era invisível. Com a HH, a venda dela
+passou a ser feita **com o slot da BC** — enquanto as duas interfaces gravavam,
+e mostravam ao usuário, o `hh.vendor.sell_start_slot`. O campo existia, a tela
+existia, o JSON guardava o número: só a venda não o lia.
+
+### Medido, não suposto
+
+`data/config.json`, 09/09/2026, 7 contas:
+
+| conta | BC | HH | efeito |
+|---|---|---|---|
+| `gamerblazes` | 1 | 3 | venderia a partir do slot **1** |
+| `creubo` | 4 | 4 | coincidência escondia o defeito |
+| as outras 5 | 3 | 3 | idem |
+
+**Slot errado não vende de menos: vende o equipamento.** A proteção dos itens
+bons é GEOMÉTRICA (`sell_from_slot`) — clicar sempre na mesma posição N esvazia
+de N para frente, e 1..N−1 nunca se movem. Começar em 1 é começar no que o
+personagem está usando.
+
+### A correção
+
+Um gancho, `JanelaDeVenda._config_da_venda`, com o padrão de sempre
+(`ctx.settings.vendor`) e um override de uma linha em `VendedorDaHH`
+(`ctx.settings.hh.vendor`). Nenhum chamador da BC muda de comportamento.
+
+Para o gancho poder devolver as duas, os três números viraram uma base comum,
+`config.ConfiguracaoDeVenda` (slot, cota de runs, teto de passadas, e o
+`passadas_para`) — `BCVendor` e `HHVendor` herdam. Antes disso `HHVendor` nem
+tinha o `passadas_para`, e trocar a fonte quebraria a venda no primeiro cálculo.
+
+`validate()` passou a reprovar o slot fora de 1..24 **nas duas caves**; ele
+conferia só a BC.
+
+### A trava do slot: sem janela na tela, não se clica na grade
+
+`_ponto_do_slot` caía para as "coordenadas calculadas" sempre que não achava a
+âncora da janela. Isso é certo em cliente **sem captura** — não há o que
+perguntar — e errado quando o template existe e a janela simplesmente não está
+aberta: o clique cai na **cena 3D**, e no Talisman isso faz o personagem ANDAR,
+para longe do único ponto de onde o clique no vendedor funciona (o mesmo defeito
+que `_open_npc` já conserta um passo antes, no clique do link).
+
+Agora `_ponto_do_slot` devolve `None` nesse caso e `sell_from_slot` encerra a
+venda com aviso, em vez de clicar. Sem o template, o caminho antigo continua
+valendo — a mesma escolha de `_tentar_abrir_a_venda`.
+
+### Travado por
+
+`tests/test_venda_usa_a_config_da_cave.py`: o slot de cada cave, o ponto clicado
+mudando junto, a reprovação do slot fora da grade, e a prova de ponta a ponta de
+que nenhum clique sai com a janela fechada.

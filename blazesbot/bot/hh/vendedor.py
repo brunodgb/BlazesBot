@@ -73,6 +73,24 @@ class VendedorDaHH(JanelaDeVenda):
 
     NOME_DO_VENDEDOR = mapa_hh.NPC_VENDEDOR[1]
 
+    def _config_da_venda(self):
+        """O slot inicial e o teto de passadas SÃO OS DA HH, não os da BC.
+
+        =================================================================
+        ESTE GANCHO CONSERTA UMA VENDA QUE OBEDECIA A OUTRA CAVE
+        =================================================================
+
+        A base lia `ctx.settings.vendor`, e essa propriedade devolve
+        `bc.vendor` SEMPRE (`AccountSettings.vendor`). As duas interfaces
+        gravam `hh.vendor.sell_start_slot` desde que a HH existe, o usuário via
+        o campo na tela -- e a venda da HH usava o número da Bewitcher Cave.
+
+        MEDIDO em `data/config.json`, 09/09/2026: `gamerblazes` tem BC=1 e
+        HH=3, então a venda da HH começaria no slot 1, que é EQUIPAMENTO.
+        `creubo` (4 nos dois) escondia o defeito por coincidência.
+        """
+        return self.ctx.settings.hh.vendor
+
     def __init__(self, ctx: BotContext,
                  navigator: Navigator | None = None) -> None:
         # O navegador nasce com o MAPA DA HH quando não vem pronto -- ver o
@@ -182,7 +200,9 @@ class VendedorDaHH(JanelaDeVenda):
         """Encosta no ponto, abre a janela e vende. Devolve quantos slots foram.
 
         Devolve 0 quando não conseguiu chegar ou abrir -- e isso NÃO é exceção:
-        a bolsa continua sendo o gatilho, e a run seguinte tenta de novo.
+        quem decide quando vender é a COTA DE RUNS (`ManutencaoDaHH`), e a run
+        seguinte tenta de novo. A bolsa deixou de ser gatilho em 09/09/2026;
+        ver `docs/decisoes/hh.md` §27.
         """
         ctx = self.ctx
         if not self.ir_ate_o_vendedor():

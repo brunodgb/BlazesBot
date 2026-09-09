@@ -342,6 +342,31 @@ class JanelaDeVenda:
     # Só para o log dizer com quem se está falando.
     NOME_DO_VENDEDOR = "vendedor"
 
+    def _config_da_venda(self):
+        """De QUAL cave saem o slot inicial e o teto de passadas.
+
+        =================================================================
+        POR QUE ISTO É GANCHO, E NÃO `ctx.settings.vendor` DIRETO
+        =================================================================
+
+        `AccountSettings.vendor` é uma propriedade de compatibilidade: ela
+        devolve `bc.vendor`, SEMPRE. Enquanto só a Bewitcher Cave vendia, isso
+        era invisível; com a HH, a venda dela passou a ser feita com o slot da
+        BC -- e a conta `gamerblazes`, com BC em 1 e HH em 3, venderia a partir
+        do slot 1, que é EQUIPAMENTO. A proteção dos itens bons é geométrica
+        (`sell_from_slot`), então o número errado aqui não vende de menos:
+        vende o que não podia.
+
+        Medido em `data/config.json` em 09/09/2026: 1 das 7 contas tinha os
+        dois números diferentes, e `creubo` (slot 4 nos dois) escondia o
+        defeito por coincidência.
+
+        O PADRÃO CONTINUA SENDO O DA BC para não mudar o comportamento de quem
+        já usava a classe base; quem tem configuração própria sobrescreve (ver
+        `hh/vendedor.VendedorDaHH`).
+        """
+        return self.ctx.settings.vendor
+
     def _ui_do_jogo(self) -> UIDoJogo:
         """A máquina de operar janela do jogo, com o navegador COMPARTILHADO.
 
@@ -787,19 +812,41 @@ class JanelaDeVenda:
             ultima = leitura
         return ultima
 
-    def _ponto_do_slot(self) -> tuple[tuple[int, int], tuple[int, int], str]:
+    def _ponto_do_slot(
+            self) -> tuple[tuple[int, int], tuple[int, int], str] | None:
         """Onde clicar para vender e onde está o botão Sell.
 
         Prefere a janela localizada por imagem; cai para as coordenadas
-        calculadas quando o template não casa.
+        calculadas quando NÃO HÁ COMO PERGUNTAR -- e só nesse caso.
+
+        =================================================================
+        `None` = A JANELA DE VENDA NÃO ESTÁ NA TELA. NÃO CLIQUE.
+        =================================================================
+
+        Tendo o template da âncora e não o achando no quadro, a janela não está
+        aberta -- e a grade não existe onde a conta calculada diz. Clicar ali é
+        clicar na CENA 3D, e no Talisman isso faz o personagem ANDAR: sai do
+        ponto de onde os cliques no vendedor funcionam, e a passada seguinte
+        parte de um lugar pior. É o mesmo defeito que `_open_npc` já conserta
+        no clique do link, um passo adiante.
+
+        SEM O TEMPLATE segue pelas coordenadas calculadas: aí não existe
+        pergunta a fazer, e recusar deixaria a venda impossível em cliente sem
+        captura -- a mesma escolha de `_tentar_abrir_a_venda`.
         """
         ctx = self.ctx
-        cfg = ctx.settings.vendor
+        cfg = self._config_da_venda()
         pontos = self._sell_anchor()
         if pontos:
             slot1 = pontos["slot1"]
             botao = pontos["sell_button"]
             origem = "janela localizada"
+        elif ctx.templates.load(TEMPLATE_ANCHORS["sell"][0]) is not None:
+            ctx.log.warning(
+                "A janela de venda não está na tela; não clico na grade "
+                "calculada -- isso cairia na cena 3D e faria o personagem "
+                "andar para longe do vendedor.")
+            return None
         else:
             slot1 = ctx.coords.sell_slot_xy(1)
             botao = ctx.coords.vendor_sell_button
@@ -824,7 +871,8 @@ class JanelaDeVenda:
         Devolve quantos itens saíram das bolsas, medido por memória.
         """
         ctx = self.ctx
-        cfg = ctx.settings.vendor
+        # A CONFIGURAÇÃO É DA CAVE QUE ESTÁ VENDENDO -- ver `_config_da_venda`.
+        cfg = self._config_da_venda()
 
         # "Acabaram os itens" é POR VENDA: a bolsa desta ida não diz nada sobre
         # a próxima.
@@ -853,7 +901,12 @@ class JanelaDeVenda:
             if not self._open_npc():
                 break
 
-            alvo, botao_vender, origem = self._ponto_do_slot()
+            ponto = self._ponto_do_slot()
+            if ponto is None:
+                # A janela sumiu entre abrir e mirar. Encerra a venda: insistir
+                # aqui é clicar no chão. A run seguinte tenta de novo.
+                break
+            alvo, botao_vender, origem = ponto
             nesta = min(CLIQUES_POR_PASSADA, restantes)
             ctx.log.info("Passada %s/%s: %s cliques em %s [%s]",
                          passada, passadas, nesta, alvo, origem)

@@ -580,6 +580,22 @@ time a flag não faz nada.
   onde está. Chutar um padrão faria ela apertar algo que faz outra coisa.
 - **O vendedor é o `Roaming Apothecary`, fora da cave** — a venda da BC com outro
   NPC. Isso é dado de rota, não módulo de venda novo.
+- **A VENDA TEM DOIS GATILHOS, E A BOLSA NÃO É UM DELES** (`hh.md` §27): a
+  **largada** (na porta, uma vez por vez que o farm é ligado, incondicional) e a
+  **cota de runs** (`hh.vendor.runs_before_selling`, na `MANUTENCAO`). Leitura de
+  quantidade de item na bolsa INFORMA (log e diagnóstico); não DECIDE.
+- **A ordem é VENDER e depois DELETAR**, nos dois momentos (`hh.md` §25 e §27):
+  a venda tira o volume maior de uma vez, e a deleção — que é item a item por
+  template — varre uma bolsa curta.
+- **A HH vende pelo SLOT DA HH** (`hh.vendor.sell_start_slot`), entregue por
+  `VendedorDaHH._config_da_venda`. `ctx.settings.vendor` devolve o da BC, e ler
+  dali fazia a HH vender pelo número da outra cave (`hh.md` §28). A proteção dos
+  itens bons é GEOMÉTRICA: slot errado vende o EQUIPAMENTO.
+- **Sem a janela de venda LOCALIZADA na tela, não se clica na grade.** Tendo o
+  template da âncora e não a achando, `_ponto_do_slot` devolve `None` e a venda
+  encerra: o clique cairia na cena 3D e faria o personagem ANDAR para longe do
+  ponto de onde os cliques no vendedor funcionam. Sem o template, segue pelas
+  coordenadas calculadas — aí não há o que perguntar.
 
 #### Decisão de cave NÃO mora em código compartilhado (06/09/2026)
 
