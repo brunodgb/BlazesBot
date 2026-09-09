@@ -284,12 +284,15 @@ def test_venda_da_largada_IMPEDIDA_nao_reinicia_a_cota():
 
 
 def test_a_venda_da_largada_acontece_ANTES_da_rajada_de_entrada():
-    """`PONTO_DA_VENDA` **é** `PONTO_DA_ENTRADA`, então este é o único momento
-    possível: o personagem já está no lugar e ainda não disputa vaga."""
+    """`PONTO_DA_VENDA` fica a poucos passos do `PONTO_DA_ENTRADA`, então este é
+    o único momento possível: o personagem já está na vizinhança e ainda não
+    disputa vaga na instância."""
     from blazesbot.bot.hh import mapa_hh
 
-    assert mapa_hh.PONTO_DA_VENDA == mapa_hh.PONTO_DA_ENTRADA, (
-        "o ponto de venda deixou de ser o da entrada; o momento da venda da "
+    assert mapa_hh.distancia(
+        mapa_hh.PONTO_DA_VENDA,
+        mapa_hh.PONTO_DA_ENTRADA) <= mapa_hh.RAIO_DA_PORTA, (
+        "o ponto de venda saiu da vizinhança da porta; o momento da venda da "
         "largada precisa ser remedido")
 
     porta = textwrap.dedent(inspect.getsource(HHRoutine._do_ate_a_porta))

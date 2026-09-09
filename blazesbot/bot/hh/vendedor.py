@@ -9,17 +9,20 @@ mesma moldura, mesma grade, mesma paginação 1/3, mesmo par Sell/Cancel do Rich
 Man de Stone City. Então aqui só ficam os NOMES e o CAMINHO.
 
 =========================================================================
-E O CAMINHO É MAIS CURTO QUE O DA BC -- NÃO TEM CAMINHO
+E O CAMINHO É MAIS CURTO QUE O DA BC -- SÃO SEIS PASSOS
 =========================================================================
 
 O Rich Man fica em Stone City, e a rotina da BC gasta uma pedra de retorno ou a
-recarga do token de guilda para chegar nele. O `Roaming Apothecary` fica NO
-MESMO PONTO da porta da HH: parado em `mapa_hh.PONTO_DA_VENDA` (-342,-288), o
-vendedor está logo abaixo do personagem e o NPC da cave logo acima, na escada.
+recarga do token de guilda para chegar nele. O `Roaming Apothecary` fica A SEIS
+UNIDADES da porta da HH: vende-se parado em `mapa_hh.PONTO_DA_VENDA`
+(-343,-294), e entra-se de `PONTO_DA_ENTRADA` (-342,-288), logo acima, na
+escada. Medido pelo usuário em 09/09/2026 -- ver `docs/decisoes/hh.md` §29.
 
-Então **não há painel de arredores, não há busca e não há viagem**: um clique
-direito na coordenada medida abre o diálogo. Foi o usuário que mediu, em
-03/09/2026, e é o `coords.hh_vendor_npc`.
+Então **não há painel de arredores, não há busca e não há viagem**: uns passos
+e um clique direito na coordenada medida abrem o diálogo. Quem anda esses
+passos é `encostar_no_ponto_da_venda`, e quem VOLTA para a entrada depois é
+`HHRoutine._vender_e_limpar_na_largada` -- a entrada recusa o clique de fora do
+ponto dela.
 
 O PREÇO DISSO é que o clique é POSICIONAL na cena 3D: ele só vale a partir
 daquela coordenada. Por isso `_no_ponto_do_vendedor` confere a posição ANTES --

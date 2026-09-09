@@ -1814,3 +1814,59 @@ valendo — a mesma escolha de `_tentar_abrir_a_venda`.
 `tests/test_venda_usa_a_config_da_cave.py`: o slot de cada cave, o ponto clicado
 mudando junto, a reprovação do slot fora da grade, e a prova de ponta a ponta de
 que nenhum clique sai com a janela fechada.
+
+## 29. A VENDA E A ENTRADA SÃO DOIS PONTOS (09/09/2026)
+
+### A medição
+
+> *"o personagem precisa andar até a coordenada X e Y -343, -294 para poder
+> vender os itens e depois ir para o -342,-288 para entrar"* — usuário,
+> 09/09/2026.
+
+E, no mesmo dia, o ponto de tela do clique direito, com o personagem parado no
+ponto NOVO: **(490,519) da área de cliente**, numa janela de 1029 de largura —
+**(488,519)** na base 1024×768.
+
+### O que estava errado
+
+`PONTO_DA_VENDA = PONTO_DA_ENTRADA` desde 03/09/2026, lido do print da porta: o
+vendedor aparecia logo abaixo do personagem e o NPC da cave logo acima, na
+escada. O print mostrava os dois na TELA; o que ele não mostrava é que só o da
+CAVE é alcançável dali. O clique no Roaming Apothecary caía no chão — e clique
+no chão faz o personagem ANDAR, tirando-o do lugar de onde os cliques funcionam.
+
+O número estava separado num nome próprio exatamente para este dia (`mapa_hh`:
+*"se o clique no vendedor começar a cair no chão, é ESTE número que se remede"*),
+e mexer nele não mexeu na entrada, que continua confirmada pelo print e pelo bot
+em Lua.
+
+### O deslocamento na tela confirma a medição
+
+| | ponto de parada | clique direito (base) |
+|---|---|---|
+| 03/09/2026 | porta (−342,−288) | (475,450) |
+| 09/09/2026 | venda (−343,−294) | (488,519) |
+
+Seis unidades de mundo moveram o NPC **69 px** na tela. É a mesma ordem de
+grandeza já medida na BC, onde cinco unidades moveram o Rich Man quase 300 px —
+a prova de que os dois números ANDAM JUNTOS e nenhum se ajusta sozinho.
+
+### A volta para a entrada é obrigatória
+
+`tentar_entrar_na_hh` recusa o clique de fora do `PONTO_DA_ENTRADA` (folga de
+1,5), e a distância entre os dois pontos é ~6. Sem voltar, a rajada de entrada
+inteira passaria sem um clique sair.
+
+Quem volta é `HHRoutine._vender_e_limpar_na_largada`, depois do descarte:
+
+    vender_ao_comecar() -> descartar_o_lixo_ao_comecar() -> garantir_coordenada_da_entrada()
+
+Entre runs não precisa de gesto novo: a venda da cota acontece na `MANUTENCAO`,
+e o `ATE_A_PORTA` seguinte reconhece a etapa (`RAIO_DA_PORTA` = 30 cobre os 6) e
+chama `garantir_coordenada_da_entrada` antes de qualquer clique.
+
+### Travado por
+
+`test_hh_medido_no_jogo.py`: o ponto novo, a distância MAIOR que a folga da
+entrada (é essa desigualdade que obriga a volta), a volta depois da venda, e a
+conversão do clique para a janela de 1029 que o usuário mediu.

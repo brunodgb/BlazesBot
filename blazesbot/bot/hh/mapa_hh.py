@@ -171,14 +171,16 @@ PONTO_DA_ENTRADA = (-342, -288)
 
 # O ponto de onde se vende, no `Roaming Apothecary`.
 #
-# É O MESMO DA ENTRADA, e isso não é preguiça: o print do usuário mostra o
-# personagem parado ali com o vendedor logo abaixo dele e o NPC da cave acima,
-# na escada. Um waypoint serve para as duas coisas.
+# NÃO É O DA ENTRADA -- são dois pontos a ~6 unidades um do outro, e o bot ANDA
+# de um para o outro. Medido pelo usuário em 09/09/2026: *"o personagem precisa
+# andar até a coordenada X e Y -343, -294 para poder vender os itens e depois ir
+# para o -342,-288 para entrar"*. Era o MESMO ponto até então (§29).
 #
-# SEPARADO NUM NOME PRÓPRIO de propósito. Se o clique no vendedor começar a cair
-# no chão, é ESTE número que se remede -- e mexer nele não pode mexer na
-# entrada, que já está confirmada por duas fontes.
-PONTO_DA_VENDA = PONTO_DA_ENTRADA
+# A ORDEM É INEGOCIÁVEL: vende AQUI, depois volta para `PONTO_DA_ENTRADA` --
+# `tentar_entrar_na_hh` recusa o clique de fora da entrada (folga de 1,5), então
+# entrar sem voltar seria a rajada inteira sem um clique sair. Quem faz a volta é
+# `HHRoutine._vender_e_limpar_na_largada`.
+PONTO_DA_VENDA = (-343, -294)
 
 # Folga aceita para considerar que já se está no ponto de conversa.
 PRECISAO_NO_PONTO_DA_ENTRADA = 1.5

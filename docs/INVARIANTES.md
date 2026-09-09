@@ -580,6 +580,12 @@ time a flag não faz nada.
   onde está. Chutar um padrão faria ela apertar algo que faz outra coisa.
 - **O vendedor é o `Roaming Apothecary`, fora da cave** — a venda da BC com outro
   NPC. Isso é dado de rota, não módulo de venda novo.
+- **VENDER E ENTRAR SÃO DOIS PONTOS** (`hh.md` §29): vende-se parado em
+  `PONTO_DA_VENDA` (−343,−294) e entra-se de `PONTO_DA_ENTRADA` (−342,−288), a
+  ~6 unidades. **Depois de vender, VOLTA para a entrada** — `tentar_entrar_na_hh`
+  recusa o clique de fora dela, e sem a volta a rajada inteira passa sem um
+  clique sair. O clique direito no vendedor (`coords.hh_vendor_npc`) foi medido
+  DO PONTO DA VENDA: os dois números andam juntos e nenhum se ajusta sozinho.
 - **A VENDA TEM DOIS GATILHOS, E A BOLSA NÃO É UM DELES** (`hh.md` §27): a
   **largada** (na porta, uma vez por vez que o farm é ligado, incondicional) e a
   **cota de runs** (`hh.vendor.runs_before_selling`, na `MANUTENCAO`). Leitura de

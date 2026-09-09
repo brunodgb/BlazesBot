@@ -604,15 +604,25 @@ class HHRoutine:
         self._ir_para(State.ENTRAR, "na porta da cave")
 
     def _vender_e_limpar_na_largada(self) -> None:
-        """Na porta, ANTES da rajada de entrada: vende e depois apaga o lixo.
+        """Na porta, ANTES da rajada: vende, apaga o lixo e VOLTA para a entrada.
 
         A ORDEM É A DE §25 (vender e depois deletar) e o MOMENTO é o de §27: o
-        ponto de venda é o ponto da entrada, então este é o único instante em
-        que o personagem está onde a venda funciona e ainda não começou a
+        ponto de venda fica a ~6 unidades da porta, então este é o único
+        instante em que o personagem está a um passo dele e ainda não começou a
         disputar vaga na instância.
+
+        A VOLTA NÃO É ENFEITE (§29). São DOIS pontos desde 09/09/2026 -- vende
+        em (-343,-294), entra em (-342,-288) --, e `tentar_entrar_na_hh` recusa
+        o clique de fora da entrada. Sem a volta, a rajada inteira passaria sem
+        um clique sair. É BARATA quando não há o que fazer: `encostar_no_ponto`
+        lê a posição e sai na hora se já estiver dentro da folga.
         """
         self.manutencao.vender_ao_comecar()
         self.manutencao.descartar_o_lixo_ao_comecar()
+        if not self.ui.garantir_coordenada_da_entrada():
+            self.ctx.log.warning(
+                "HH: vendi mas não voltei para %s; a rajada de entrada vai "
+                "recusar o clique até eu chegar lá.", mapa_hh.PONTO_DA_ENTRADA)
 
     def _conferir_o_pet_na_porta(self) -> None:
         """A ÚNICA verificação que acontece fora da cave, e é aqui.

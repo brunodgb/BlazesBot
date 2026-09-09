@@ -150,10 +150,38 @@ def test_o_waypoint_medido_concorda_com_o_do_bot_em_lua():
     assert mapa_hh.distancia(mapa_hh.PONTO_DA_ENTRADA, (-342, -286)) <= 2
 
 
-def test_a_venda_acontece_no_MESMO_ponto_da_porta():
-    """O print mostra o vendedor logo abaixo do personagem e o NPC da cave logo
-    acima, na escada. Um waypoint serve para as duas coisas."""
-    assert mapa_hh.PONTO_DA_VENDA == mapa_hh.PONTO_DA_ENTRADA
+def test_a_venda_acontece_num_ponto_PROPRIO_perto_da_porta():
+    """Medido pelo usuário em 09/09/2026: vende em (-343,-294), entra em
+    (-342,-288). São dois pontos, e o bot ANDA de um para o outro."""
+    assert mapa_hh.PONTO_DA_VENDA == (-343, -294)
+    assert mapa_hh.PONTO_DA_VENDA != mapa_hh.PONTO_DA_ENTRADA
+
+
+def test_o_ponto_da_venda_esta_LONGE_DEMAIS_para_clicar_a_entrada_de_la():
+    """É esta desigualdade que obriga a VOLTA depois de vender.
+
+    `tentar_entrar_na_hh` recusa o clique de fora da entrada, com a folga de
+    `PRECISAO_NO_PONTO_DA_ENTRADA`. Se um dia os dois pontos voltarem a caber
+    na mesma folga, a volta vira desperdício -- e este teste avisa.
+    """
+    assert mapa_hh.distancia(
+        mapa_hh.PONTO_DA_VENDA,
+        mapa_hh.PONTO_DA_ENTRADA) > mapa_hh.PRECISAO_NO_PONTO_DA_ENTRADA
+
+
+def test_a_largada_VOLTA_para_a_entrada_depois_de_vender():
+    """Sem a volta, a rajada inteira passa sem um clique sair."""
+    import inspect
+    import textwrap
+
+    from blazesbot.bot.hh.routine import HHRoutine
+
+    fonte = textwrap.dedent(
+        inspect.getsource(HHRoutine._vender_e_limpar_na_largada))
+    assert "garantir_coordenada_da_entrada" in fonte
+    assert fonte.index("vender_ao_comecar") < fonte.index(
+        "garantir_coordenada_da_entrada"), (
+        "a volta para a entrada passou a acontecer ANTES da venda")
 
 
 def test_os_dois_pontos_tem_NOMES_separados():
@@ -161,7 +189,8 @@ def test_os_dois_pontos_tem_NOMES_separados():
     remede -- e isso não pode mexer na entrada, que já tem duas fontes."""
     fonte = (RAIZ / "blazesbot" / "bot" / "hh" / "mapa_hh.py").read_text(
         encoding="utf-8")
-    assert "PONTO_DA_VENDA = PONTO_DA_ENTRADA" in fonte
+    assert "PONTO_DA_VENDA = (-343, -294)" in fonte
+    assert "PONTO_DA_ENTRADA = (-342, -288)" in fonte
 
 
 def test_happiness_hall_e_o_nome_da_instancia_e_nao_do_lugar():
@@ -216,10 +245,14 @@ def test_a_camera_vai_para_a_pose_padrao_antes_do_clique(o_que, modulo, metodo):
 
 
 def test_o_ponto_do_vendedor_da_HH_e_o_medido():
-    """Medido pelo usuário em 03/09/2026, com o personagem no waypoint da porta:
-    clique direito em (475,450) abre o diálogo do Roaming Apothecary."""
+    """REMEDIDO pelo usuário em 09/09/2026, com o personagem no ponto NOVO da
+    venda (-343,-294): clique direito em (490,519) da área de cliente, numa
+    janela de 1029 de largura -- (488,519) na base. Era (475,450), do waypoint
+    da porta."""
     c = coords_for_size(1024, 768)
-    assert c.hh_vendor_npc == (475, 450)
+    assert c.hh_vendor_npc == (488, 519)
+    assert coords_for_size(1029, 768).hh_vendor_npc == (490, 519), (
+        "a conversão para a janela medida não devolve o ponto do usuário")
 
 
 def test_o_ponto_do_vendedor_da_HH_nao_e_o_da_BC():

@@ -224,15 +224,20 @@ _SPOTS: dict[str, Spot] = {
     "vendor_sell_tab": _from_base(266, 430, C),   # abre a janela de venda
     # O `Roaming Apothecary` da HH, do lado de fora da cave.
     #
-    # MEDIDO pelo usuário em 03/09/2026, com o personagem parado no waypoint da
-    # porta: clique DIREITO aqui abre o diálogo dele. Ele fica logo abaixo do
-    # personagem, e o `Elite Axe Monk Soldier` da entrada fica acima, na escada
-    # -- é por isso que o MESMO waypoint serve para entrar e para vender.
+    # REMEDIDO pelo usuário em 09/09/2026, com o personagem parado no ponto NOVO
+    # da venda (`mapa_hh.PONTO_DA_VENDA`, -343,-294): clique DIREITO em (490,519)
+    # da ÁREA DE CLIENTE, numa janela de 1029 de largura -- o valor abaixo é o
+    # equivalente na base 1024x768. Cai sobre o corpo do NPC, abaixo do nome.
+    #
+    # ERA (475,450), medido em 03/09/2026 do waypoint da PORTA (-342,-288). Os
+    # dois pontos de parada distam ~6 unidades de mundo, e o NPC andou 69 px na
+    # tela -- a mesma ordem de grandeza já medida na BC, onde cinco unidades
+    # moveram o Rich Man quase 300 px.
     #
     # ANDA JUNTO COM `mapa_hh.PONTO_DA_VENDA`: este ponto é um clique na cena
     # 3D, então ele só vale a partir daquela coordenada. Mudar uma sem remedir a
     # outra faz o clique cair no chão -- e clique no chão faz o personagem ANDAR.
-    "hh_vendor_npc": _from_base(475, 450, C),
+    "hh_vendor_npc": _from_base(488, 519, C),
     # O `Servant Child` da HH, DENTRO da cave, no ponto de saída (529,119).
     #
     # MEDIDO pelo usuário em 03/09/2026: clique DIREITO aqui abre o diálogo,

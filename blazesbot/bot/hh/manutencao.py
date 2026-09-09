@@ -142,16 +142,21 @@ class ManutencaoDaHH:
         deve ocorrer obrigatoriamente antes de iniciar o loop de tentativas de
         entrada na instância"*.
 
-        E É O ÚNICO LUGAR EM QUE ELA FUNCIONA: `PONTO_DA_VENDA` **é** o
-        `PONTO_DA_ENTRADA` -- a mesma coordenada (-342,-288), com o vendedor
-        logo abaixo do personagem e o NPC da cave acima, na escada. A venda
-        precisa que o personagem esteja ALI, e quem o leva até lá é o
-        `ATE_A_PORTA`. Chamada no `PREPARAR`, como estava em 08/09/2026, ela
-        tentava encostar num ponto a centenas de unidades de distância.
+        E É O ÚNICO LUGAR EM QUE ELA FUNCIONA: `PONTO_DA_VENDA` (-343,-294)
+        fica a ~6 unidades do `PONTO_DA_ENTRADA` (-342,-288) -- perto o
+        bastante para os últimos passos serem locais, longe o bastante para o
+        clique no vendedor exigir que se ANDE até lá. Quem leva o personagem
+        para essa vizinhança é o `ATE_A_PORTA`. Chamada no `PREPARAR`, como
+        estava em 08/09/2026, ela tentava encostar num ponto a centenas de
+        unidades de distância.
+
+        E QUEM VOLTA PARA A ENTRADA é `HHRoutine._vender_e_limpar_na_largada`,
+        depois do descarte: a rajada de entrada recusa o clique de fora do
+        ponto da porta (§29).
 
         DIRETA, e não pelo estado `MANUTENCAO`: mandar o estado para lá e voltar
         criaria o vai-e-volta que já custou um laço (ver §22). Aqui o gesto é
-        chamado e pronto -- o personagem já está no lugar certo.
+        chamado e pronto -- o personagem já está na vizinhança certa.
         """
         if self.ja_vendi_ao_comecar:
             return 0
