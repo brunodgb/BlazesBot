@@ -208,6 +208,11 @@ def main(argv: list[str] | None = None) -> int:
               "por decisão do usuário.")
     if not sem_leitura and not sem_patch:
         print("Todos os sítios estão com os NOPs: o pet bug está ativo.")
+        # O VISUAL NÃO SERVE DE CONFERÊNCIA COM O BOT RODANDO: o F12 esconde os
+        # personagens E OS PETS (medido pelo usuário em 10/09/2026). Não ver pet
+        # bugado não é sinal de patch ausente -- é a tecla presa fazendo o dela.
+        print("Para VER o efeito, solte o F12 (pare o bot e aperte a tecla à "
+              "mão): com ela presa não há pet na tela, patcheado ou não.")
     return 0
 
 

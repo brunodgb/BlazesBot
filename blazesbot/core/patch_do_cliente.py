@@ -75,9 +75,21 @@ impede o cliente de alcançá-la.
 **É LOCAL:** a escrita é na memória do NOSSO cliente, então quem vê os pets
 parados é só ele.
 
-**E É POR ISSO QUE IMPORTA AQUI:** além de evitar a queda, limpa o caminho. O
-F12 esconde JOGADORES, não os pets deles -- e pet parado na frente do Skull
-Herald bloqueia o clique direito igual a um jogador.
+**E POR QUE IMPORTA AQUI:** para não cair. A queda é o motivo inteiro.
+
+O QUE ESTAVA ESCRITO AQUI ERA FALSO -- *"o F12 esconde JOGADORES, não os pets
+deles, e pet parado bloqueia o clique direito"*. O usuário mediu no jogo em
+10/09/2026: **o F12 esconde os personagens E os pets**. Ele só via os pets
+bugados depois de parar o bot e apertar F12 à mão para trazer todo mundo de
+volta.
+
+Consequência: com a tecla presa (que é o estado normal do farm), pet nenhum
+estorva clique -- eles nem estão na tela. O patch NÃO é sobre limpar caminho.
+
+E consequência prática para quem for CONFERIR se o patch pegou: com o bot
+rodando não se vê pet nenhum, patcheado ou não. Para ver o efeito é preciso
+soltar o F12 (parar o bot e apertar a tecla à mão), que foi como o usuário o
+enxergou nas duas vezes.
 
 =========================================================================
 O F12 NÃO ESTÁ AQUI -- e o motivo é uma descoberta à parte

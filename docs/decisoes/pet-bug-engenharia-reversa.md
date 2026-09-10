@@ -191,11 +191,32 @@ parados pelo mapa.
 **É LOCAL.** A escrita é na memória do NOSSO cliente, então quem vê os pets
 parados é só ele; para os donos, nada mudou.
 
-**E É POR ISSO QUE IMPORTA PARA O BOT.** Além de evitar a queda, ele limpa o
-caminho: o F12 esconde JOGADORES, não os pets deles — e pet parado na frente do
-Skull Herald bloqueia o clique direito igual a um jogador. Sem o patch, os pets
-seguem os donos e se acumulam exatamente onde todo mundo vai. As duas metades do
-programa resolvem estorvos diferentes, e faltar uma já estraga a entrada.
+**E É POR ISSO QUE IMPORTA PARA O BOT: para não cair.** A queda é o motivo
+inteiro, e é o único.
+
+### CORREÇÃO MEDIDA — o F12 esconde os pets também (10/09/2026)
+
+Estava escrito aqui, e estava **errado**: *"o F12 esconde JOGADORES, não os pets
+deles — e pet parado na frente do Skull Herald bloqueia o clique direito igual a
+um jogador"*. Era inferência, não medição.
+
+O usuário mediu no jogo: *"o F12 esconde tanto os personagens quanto os pets; eu
+via os pets bugados depois que eu parava o bot e apertava manualmente o F12 para
+aparecer novamente os players e seus pets"*.
+
+Três coisas mudam com isso:
+
+1. **A justificativa de "limpar o caminho" cai.** Com a tecla presa — o estado
+   normal do farm — pet nenhum estorva clique de NPC, porque nenhum está na
+   tela. O que sobra, e basta, é não cair.
+2. **As duas metades não resolvem estorvos diferentes.** O F12 tira jogadores e
+   pets da cena; o patch impede o cliente de alcançar o asset defeituoso. Uma é
+   sobre o que atrapalha o clique, a outra é sobre a queda.
+3. **Conferir o patch pelo VISUAL exige soltar o F12.** Com o bot rodando não se
+   vê pet nenhum, patcheado ou não — e "não estou vendo pets bugados" não é
+   sinal de patch ausente. Foi assim que o usuário o viu nas duas vezes: parando
+   o bot e apertando a tecla à mão. Para a resposta objetiva, sem depender de
+   olhar a tela, use `python -m blazesbot.tools.conferir_petbug`.
 
 ## A descoberta lateral que vale por si: o F12
 

@@ -236,6 +236,12 @@ idempotente, não cego por timer. O porquê está em
 - **SÓ CONTAS DE CAVE (BC e HH).** Decisão do usuário: *"os APP não precisa
   aplicar"*. O portão é `if self.account.farms:` (= `bc_farm or hh_farm`) e ele
   não pode ser alargado.
+- **A TECLA ESCONDE OS PETS TAMBÉM** — medido pelo usuário em 10/09/2026, contra
+  o que estava escrito. Duas consequências: o patch do pet **não** existe para
+  desobstruir clique (com a tecla presa não há pet na tela), e sim para **não
+  cair**; e conferir o patch pelo VISUAL exige soltar o F12 — com o bot rodando
+  não se vê pet nenhum, patcheado ou não. A resposta objetiva é
+  `python -m blazesbot.tools.conferir_petbug` (`19-CONFERIR-PETBUG.bat`).
 
 ## PetBug (o programa de terceiro, hoje desligado)
 
