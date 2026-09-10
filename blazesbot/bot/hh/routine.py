@@ -69,6 +69,7 @@ from ..context import (
     FarmDesligado,
     StopRequested,
 )
+from ..esconder import EsconderOsJogadores
 from ..espera_do_reseter import esperar_o_reseter
 from ..navegacao import Navigator, PersonagemMortoNoPortao
 from ..team import TeamService
@@ -245,6 +246,9 @@ class HHRoutine:
         # lixo e venda. Mora em `hh/manutencao.py` -- são decisões que não
         # falam com a máquina de estados nem sabem em que trecho a run parou.
         self.manutencao = ManutencaoDaHH(ctx, self.vendedor)
+        # O TRUQUE DO F12, promovido para `bot/esconder.py`. A HH só segurava a
+        # tecla na rajada da porta e nunca fazia o grude. §28.
+        self.esconder = EsconderOsJogadores(ctx)
         self.team = TeamService(
             ctx, nick_do_reset=lambda: ctx.settings.reset_nick)
         self.state = State.SITUAR
@@ -294,6 +298,8 @@ class HHRoutine:
         # supervisor e sobrevive a desligar/ligar o farm; sem isto, só a
         # primeira largada da sessão limpava a bolsa.
         self.manutencao.a_hh_comecou()
+        # ESCONDER OS JOGADORES JÁ NA LARGADA -- §28.
+        self.esconder.garantir("largada da HH")
 
         # Desligar a HH pela interface precisa cortar a fase atual NO MEIO.
         # `farming` é o sinal para `ctx.raise_if_stopped` detonar `FarmDesligado`.
@@ -692,6 +698,10 @@ class HHRoutine:
         # REAFIRMA A TECLA PRESA -- o mesmo que o BC faz antes de cada
         # tentativa de entrada. Tecla fisicamente presa repete sozinha, e
         # reafirmar é o que devolve o esconder depois de um relogin (janela
+        # O GRUDE ANTES DA RAJADA, como o BC faz -- e sem abortar a entrada:
+        # a porta é disputa por vaga. §28.
+        self.esconder.garantir("entrar na HH")
+
         # nova, estado zerado). Ver `esconder_jogadores.prender_a_tecla`.
         esconder_jogadores.prender_a_tecla(
             ctx.settings.keys.hide_players, ctx.segurar_para_sempre, ctx.log)
@@ -1610,31 +1620,16 @@ class HHRoutine:
     def _curar_em_emergencia(self) -> None:
         """Cura fora da rotina, e só quando a vida realmente pede.
 
-        =================================================================
-        PARA CURAR TEM QUE ESTAR FORA DE BATALHA -- E A SAÍDA É MATANDO
-        =================================================================
+        PARA CURAR TEM QUE ESTAR FORA DE BATALHA, e a saída é MATANDO --
+        `limpar_o_combate`, que já existia no motor. Estourando o teto dela sem
+        sair de batalha, NÃO trava: a cura é pulada e a volta seguinte tenta.
 
-        Regra do usuário, 03/09/2026: *"para se curar tem que estar fora de
-        batalha"*, e quando perguntado o que fazer estando em batalha com a vida
-        baixa ele escolheu MATAR: *"você deve matar os mobs até sair de
-        batalha"*.
+        E SÓ ABAIXO DA EMERGÊNCIA (`potions.emergency_pct`, não o limiar
+        normal): os mobs da HH são fracos e a run passaria o tempo bebendo. É o
+        mesmo número que faz a navegação abortar o trajeto, e por isso o mesmo
+        que trouxe o bot até este estado.
 
-        `limpar_o_combate` é exatamente isso, e já existia no motor: mata um,
-        para e olha a flag, e só então TAB para o próximo. Se o teto dela
-        estourar sem sair de batalha, **não trava**: a cura é pulada, o bot
-        volta a se situar, e na volta seguinte tenta de novo.
-
-        =================================================================
-        E SÓ ABAIXO DA EMERGÊNCIA
-        =================================================================
-
-        `precisa_curar` (o limiar normal, `potions.hp_pct`) seria demais aqui:
-        os mobs da HH são fracos e a run passaria o tempo bebendo. Quem manda é
-        `potions.emergency_pct` -- o mesmo número que faz a navegação abortar o
-        trajeto, e por isso o mesmo que trouxe o bot até este estado.
-
-        DENTRO DA CAVE QUEM CURA É `curar_ao_entrar`: rajada curta, sem sentar.
-        `heal_to_full` senta e é para fora da instância.
+        Ver `docs/decisoes/hh.md`, seção 12.
         """
         ctx = self.ctx
         pct = ctx.memory.vida_pct()

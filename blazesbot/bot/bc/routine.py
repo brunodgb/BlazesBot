@@ -73,7 +73,6 @@ from ...core import (
     calibracao,
     catador,
     diario,
-    esconder_jogadores,
     logmodo,
     stats_diarias,
     vision,
@@ -83,6 +82,7 @@ from ...core.lugares import LUGAR_FORA_DA_CAVE
 from ...core.vision import capture_window, find_template, frame_is_blank
 from .. import hotbar
 from ..context import BotContext, Disconnected, FarmDesligado, StopRequested
+from ..esconder import EsconderOsJogadores
 from ..espera_do_reseter import esperar_o_reseter
 from ..navegacao import Navigator, PersonagemMortoNoPortao
 from ..team import TeamService
@@ -193,7 +193,6 @@ TEMPLATE_PACKAGE_COURAGE = "package_courage.png"
 # aberto, e é por isso que o template é ela e não a barra inteira: ao lado do
 # `say:` fica o texto digitado, que muda -- um template com texto variável
 # envelhece na primeira mensagem. Ver `core/esconder_jogadores.py`.
-TEMPLATE_CHAT_ABERTO = "state_chat_aberto.png"
 
 # Botão "Pick up all" da janela de loot. É ELE que autoriza o clique esquerdo do
 # catador, e é o SUMIÇO dele que diz "pegou tudo" -- palavras do usuário. Achar
@@ -225,7 +224,6 @@ LIMIAR_DO_PICK_UP_ALL = 0.85
 # quadro real ela casou a 1.00 e não casou em NENHUM outro lugar da tela, mesmo
 # a 0.95. Um limiar frouxo aqui é pior que um apertado -- falso positivo faria o
 # bot achar que o chat está aberto e apertar Enter, ABRINDO o que estava fechado.
-LIMIAR_DO_CHAT_ABERTO = 0.90
 
 # Rodadas de "procurar -> clicar em todos -> reconferir".
 #
@@ -408,6 +406,9 @@ class BossRushRoutine:
         # `combat` ja importa `navigation`, e o contrario faria ciclo.
         self.nav.destravar_o_combate = self.combat.limpar_o_combate
         self.vendor = VendorService(ctx, self.nav)
+        # O TRUQUE DO F12 subiu para `bot/esconder.py` em 10/09/2026, quando a
+        # HH passou a precisar do mesmo. Ver a documentação de transição lá.
+        self.esconder = EsconderOsJogadores(ctx)
         # O nick do BC é o padrão do `TeamService`; passar explícito
         # deixa as duas caves simétricas e o leitor sem dúvida.
         self.team = TeamService(
@@ -875,7 +876,7 @@ class BossRushRoutine:
         # Esconder jogadores ANTES de qualquer coisa da entrada. Se o truque
         # deixar o chat aberto, entrar seria perder a run em silêncio -- então
         # ele é a única coisa aqui que pode ABORTAR a entrada.
-        if not self._esconder_jogadores():
+        if not self.esconder.garantir("entrar na cave"):
             self._fail("o chat ficou aberto ao esconder jogadores")
             return
 
@@ -1604,56 +1605,6 @@ class BossRushRoutine:
     # ==================================================================
     # BOSS
     # ==================================================================
-
-    def _chat_aberto(self) -> bool | None:
-        """O chat de digitação está aberto? `None` quando não dá para saber.
-
-        `None` NÃO é "fechado". Quem chama usa isso para decidir não apertar
-        Enter no escuro -- Enter ALTERNA o chat, então um aperto por garantia
-        tem metade de chance de ABRIR o que se queria fechar.
-        """
-        ctx = self.ctx
-        template = ctx.templates.load(TEMPLATE_CHAT_ABERTO)
-        if template is None:
-            ctx.log.warning("Template %s não encontrado", TEMPLATE_CHAT_ABERTO)
-            return None
-        quadro = capture_window(ctx.hwnd)
-        if quadro is None or frame_is_blank(quadro):
-            return None
-        return find_template(quadro, template,
-                             threshold=LIMIAR_DO_CHAT_ABERTO) is not None
-
-    def _esconder_jogadores(self) -> bool:
-        """Faz o truque do F12 antes de entrar na cave. True = seguro seguir.
-
-        Roda a CADA entrada, não uma vez no login: o grude vale para a sessão e
-        apertar a tecla de novo o desfaz -- inclusive sem querer, com a pessoa
-        usando a mesma máquina.
-        """
-        ctx = self.ctx
-        resultado = esconder_jogadores.esconder_jogadores(
-            tecla=ctx.settings.keys.hide_players,
-            segurar=ctx.key_down,
-            soltar=ctx.key_up,
-            apertar=lambda tecla: ctx.press(tecla),
-            chat_aberto=self._chat_aberto,
-            esperar=ctx.tick,
-            log=ctx.log,
-        )
-        if resultado.seguro_para_seguir:
-            # Só anuncia o que ACONTECEU. Com o interruptor desligado ou sem
-            # tecla configurada, uma linha por entrada seria ruído a cada run.
-            if resultado.escondeu:
-                ctx.log.info("Esconder jogadores: %s", resultado)
-            else:
-                ctx.log.debug("Esconder jogadores: %s", resultado)
-            return True
-        ctx.log.error(
-            "NÃO vou entrar na cave: %s. Entrar com o chat aberto desvia TODA "
-            "tecla do bot para o campo de texto -- a run morreria em silêncio, "
-            "e um Enter depois publicaria aquilo no chat do jogo.", resultado,
-        )
-        return False
 
     def _onde_esta_o_pick_up_all(self) -> tuple[int, int] | None:
         """Onde está o botão "Pick up all", ou `None` se ele não está na tela.
@@ -2398,6 +2349,18 @@ class BossRushRoutine:
         # `bc_farm` apagar. O `finally` garante que a flag cai mesmo em exceção
         # ou `return` -- senão o laço "online" seguinte (fora do farming)
         # re-detonaria a parada e derrubaria a sessão, o oposto do desejado.
+        # ESCONDER OS JOGADORES JÁ NA LARGADA, e não só antes de entrar.
+        #
+        # Regra do usuário, 10/09/2026: *"toda cave na verdade tem que fazer
+        # isso, pois assim garante que outros player não irão atrapalhar de
+        # forma alguma"*. A travessia, os cliques de NPC e a coordenada da porta
+        # acontecem ANTES da entrada -- e é neles que outro personagem em cima
+        # do alvo faz o clique cair na pessoa errada.
+        #
+        # NÃO SUBSTITUI a chamada de antes de cada entrada: o grude vale para a
+        # sessão e apertar a tecla de novo o desfaz, inclusive sem querer.
+        self.esconder.garantir("largada do BC")
+
         ctx.farming = True
         # QUEM está no ar. É o que faz a parada conferir o
         # interruptor desta cave, e não `account.farms`.

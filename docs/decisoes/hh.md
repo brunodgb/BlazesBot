@@ -1931,3 +1931,69 @@ que já funciona.
 `tests/test_halo_do_clique_no_npc.py`: a mira primeiro, lados antes das quinas,
 a volta cabendo na janela do passo, o anel parando no diálogo, o anel parando
 quando a posição muda, a saída pedindo o anel e a entrada NÃO pedindo.
+
+## 28. O ESCONDER JOGADORES LIGA NA LARGADA, E EM TODA CAVE (10/09/2026)
+
+### A regra
+
+> *"em HH o esconder personagem tem que ser ativo já quando começa a função,
+> pois está aparecendo outros personagens e pode atrapalhar, a função já existe
+> e está tudo certo, só deve ser ativo de início, toda cave na verdade tem que
+> fazer isso, pois assim garante que outros player não irão atrapalhar de forma
+> alguma"*
+
+### O que estava errado — e era DIFERENTE em cada cave
+
+O truque do F12 (segurar a tecla, abrir o chat com Enter, soltar, fechar o chat)
+é o que faz o esconder **grudar pela sessão**. Antes desta mudança:
+
+| cave | fazia o truque? | quando |
+|---|---|---|
+| **BC** | sim | só em `_do_entrar` |
+| **HH** | **nunca** | apenas SEGURAVA a tecla durante a rajada da porta |
+
+Ou seja: no BC, a travessia inteira, os cliques de NPC e a coordenada da porta
+aconteciam com os outros personagens na tela. E na HH o esconder **não valia
+fora daquele instante da rajada** — que é exatamente o sintoma relatado.
+
+E é nessas fases que outro personagem custa: todo clique de NPC deste bot é
+**posicional na cena 3D**, e alguém em cima do alvo faz o clique cair na pessoa
+errada — que é o mesmo defeito já medido na BC em 25/08/2026, quando o clique a
+dois passos pegou o White Eagle.
+
+### O gesto subiu para `bot/esconder.py`
+
+Nasceu no BC (`_esconder_jogadores` + `_chat_aberto`, com as duas constantes de
+template) e subiu porque a HH passou a precisar do mesmo. **Duas cópias
+divergiriam**, e a que ficasse para trás deixaria uma cave sem esconder.
+
+**Por que `bot/` e não `core/`:** recebe `BotContext`. **Por que módulo e não
+`UIDoJogo`**, que seria o vizinho natural: aquele arquivo está a quatro linhas do
+teto da catraca.
+
+**O que é sobre o JOGO subiu; o que é de cave ficou.** Esconder jogadores é o
+cliente do Talisman — a mesma tecla, o mesmo truque, o mesmo perigo. O que é de
+cave é apenas **quando** chamar, e nisso as duas diferem de propósito:
+
+| momento | BC | HH |
+|---|---|---|
+| largada da rotina | esconde | esconde |
+| antes de cada entrada | esconde, e **aborta** se falhar | esconde, e **não aborta** |
+
+**A HH não aborta** porque a porta dela é disputa por vaga: desistir da rajada
+por causa do esconder custaria a run inteira. O `False` já foi para o log como
+erro. No BC a entrada é um clique só, então abortar é barato e correto.
+
+### O perigo do chat aberto continua mandando
+
+A sequência abre o chat de propósito e depois o fecha. Se o segundo Enter não
+pegar, **o chat fica aberto** — e daí em diante toda tecla do bot vai para o
+campo de texto. `garantir` devolve `False` nesse caso, e a conferência do chat
+responde `None` quando não dá para saber: Enter **alterna** o chat, então
+apertar "por garantia" tem metade de chance de abrir o que se queria fechar.
+
+### E o `segurado` continua existindo
+
+São coisas diferentes: o **grude** vale pela sessão; o **segurar** (`key_down`
+durante o par de cliques) protege o clique da própria fila de mensagens do
+cliente. A HH continua fazendo os dois.
