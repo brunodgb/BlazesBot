@@ -873,12 +873,10 @@ class BossRushRoutine:
         ctx = self.ctx
         ctx.log.info("Entrando na cave")
 
-        # Esconder jogadores ANTES de qualquer coisa da entrada. Se o truque
-        # deixar o chat aberto, entrar seria perder a run em silêncio -- então
-        # ele é a única coisa aqui que pode ABORTAR a entrada.
-        if not self.esconder.garantir("entrar na cave"):
-            self._fail("o chat ficou aberto ao esconder jogadores")
-            return
+        # REAFIRMA O F12 PRESO antes de entrar. Não aborta nada: prender a
+        # tecla não abre chat nenhum, então não há o defeito que o truque
+        # antigo podia causar. Ver `bot/esconder.py`.
+        self.esconder.prender("entrar na cave")
 
         # O cronômetro da run (RunStats.begin_run) NÃO começa aqui. A disputa
         # da entrada pode levar vários minutos (instância cheia), e o usuário
@@ -2349,17 +2347,14 @@ class BossRushRoutine:
         # `bc_farm` apagar. O `finally` garante que a flag cai mesmo em exceção
         # ou `return` -- senão o laço "online" seguinte (fora do farming)
         # re-detonaria a parada e derrubaria a sessão, o oposto do desejado.
-        # ESCONDER OS JOGADORES JÁ NA LARGADA, e não só antes de entrar.
+        # O F12 PRESO JÁ NA LARGADA -- *"no momento que eu clicar em BC ou HH,
+        # antes de começar a andar"* (usuário, 10/09/2026). O supervisor prende
+        # ao preparar o cliente, no login; a cave é ligada depois.
         #
-        # Regra do usuário, 10/09/2026: *"toda cave na verdade tem que fazer
-        # isso, pois assim garante que outros player não irão atrapalhar de
-        # forma alguma"*. A travessia, os cliques de NPC e a coordenada da porta
-        # acontecem ANTES da entrada -- e é neles que outro personagem em cima
-        # do alvo faz o clique cair na pessoa errada.
-        #
-        # NÃO SUBSTITUI a chamada de antes de cada entrada: o grude vale para a
-        # sessão e apertar a tecla de novo o desfaz, inclusive sem querer.
-        self.esconder.garantir("largada do BC")
+        # REAFIRMAR É O CORRETO, e não redundância: uma tecla fisicamente presa
+        # repete sozinha, e reenviar recupera o estado quando o cliente o perde
+        # -- num relogin, em que a janela é outra.
+        self.esconder.prender("largada do BC")
 
         ctx.farming = True
         # QUEM está no ar. É o que faz a parada conferir o

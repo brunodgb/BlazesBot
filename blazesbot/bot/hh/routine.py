@@ -246,8 +246,8 @@ class HHRoutine:
         # lixo e venda. Mora em `hh/manutencao.py` -- são decisões que não
         # falam com a máquina de estados nem sabem em que trecho a run parou.
         self.manutencao = ManutencaoDaHH(ctx, self.vendedor)
-        # O TRUQUE DO F12, promovido para `bot/esconder.py`. A HH só segurava a
-        # tecla na rajada da porta e nunca fazia o grude. §28.
+        # O F12 PRESO, em `bot/esconder.py`. A HH só segurava a tecla durante a
+        # rajada da porta -- e soltava depois. §28.
         self.esconder = EsconderOsJogadores(ctx)
         self.team = TeamService(
             ctx, nick_do_reset=lambda: ctx.settings.reset_nick)
@@ -298,8 +298,8 @@ class HHRoutine:
         # supervisor e sobrevive a desligar/ligar o farm; sem isto, só a
         # primeira largada da sessão limpava a bolsa.
         self.manutencao.a_hh_comecou()
-        # ESCONDER OS JOGADORES JÁ NA LARGADA -- §28.
-        self.esconder.garantir("largada da HH")
+        # O F12 PRESO JÁ NA LARGADA, antes de andar -- §28.
+        self.esconder.prender("largada da HH")
 
         # Desligar a HH pela interface precisa cortar a fase atual NO MEIO.
         # `farming` é o sinal para `ctx.raise_if_stopped` detonar `FarmDesligado`.
@@ -698,9 +698,8 @@ class HHRoutine:
         # REAFIRMA A TECLA PRESA -- o mesmo que o BC faz antes de cada
         # tentativa de entrada. Tecla fisicamente presa repete sozinha, e
         # reafirmar é o que devolve o esconder depois de um relogin (janela
-        # O GRUDE ANTES DA RAJADA, como o BC faz -- e sem abortar a entrada:
-        # a porta é disputa por vaga. §28.
-        self.esconder.garantir("entrar na HH")
+        # E REAFIRMA antes da rajada, como o BC faz. §28.
+        self.esconder.prender("entrar na HH")
 
         # nova, estado zerado). Ver `esconder_jogadores.prender_a_tecla`.
         esconder_jogadores.prender_a_tecla(

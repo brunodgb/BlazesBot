@@ -1,4 +1,4 @@
-"""O esconder jogadores liga na LARGADA, e em toda cave.
+"""O F12 é PRESO na largada de cada cave, e nunca solto.
 
 =========================================================================
 A REGRA
@@ -6,36 +6,35 @@ A REGRA
 
 Usuário, 10/09/2026:
 
-> *"em HH o esconder personagem tem que ser ativo já quando começa a função,
-> pois está aparecendo outros personagens e pode atrapalhar, a função já existe
-> e está tudo certo, só deve ser ativo de início, toda cave na verdade tem que
-> fazer isso, pois assim garante que outros player não irão atrapalhar de forma
-> alguma"*
+> *"a regra é apenas dar um key_down no F12 apenas, sem o key_up... ao ativar,
+> no momento que eu clicar em BC ou HH, antes de começar a andar já faz isso"*
+
+E, sobre o que existia antes: *"o truque do F12 (segurar a tecla, abrir o chat
+com Enter, soltar, fechar o chat) só funciona para o usuário, não precisa ser
+feito pelo bot, então pode remover esse truque que ensinei"*.
 
 =========================================================================
-O QUE ESTAVA ERRADO, E ERA DIFERENTE EM CADA CAVE
+O QUE ESTAVA ERRADO
 =========================================================================
 
-O truque do F12 (segurar a tecla, abrir o chat com Enter, soltar, fechar o chat)
-é o que faz o esconder GRUDAR pela sessão. Antes desta mudança:
+O supervisor já prendia a tecla ao PREPARAR O CLIENTE, no login -- e isso está
+certo. Mas a cave é ligada depois, às vezes muito depois, e nenhuma das duas
+rotinas reafirmava o F12 ao começar.
 
-* **BC** fazia o truque, mas só em `_do_entrar` -- ou seja, a travessia inteira,
-  os cliques de NPC e a coordenada da porta aconteciam com os outros
-  personagens na tela;
-* **HH** nunca fazia o truque. Ela apenas SEGURAVA a tecla durante a rajada da
-  porta (`esconder_jogadores.segurado`), então fora daquele instante o esconder
-  simplesmente não valia.
+Pior: o que cada cave fazia era o TRUQUE DO CHAT, que estava desligado por
+interruptor desde 19/08/2026. Ou seja, as chamadas do dia 10/09 pela manhã não
+faziam nada em produção -- e o truque, se ligado, carregava o risco de deixar o
+chat aberto e desviar toda tecla do bot para o campo de texto.
 
 =========================================================================
 O QUE ESTE ARQUIVO PROTEGE
 =========================================================================
 
-1. As duas caves escondem na **largada**, e não só antes de entrar.
-2. As duas continuam escondendo **antes de cada entrada** -- o grude vale para a
-   sessão e apertar a tecla de novo o desfaz, inclusive sem querer.
-3. O gesto é UM (`bot/esconder.py`), promovido do BC. Duas cópias divergiriam,
-   e a que ficasse para trás deixaria uma cave sem esconder.
-4. O perigo do chat aberto continua respeitado: `False` significa "não siga".
+1. As duas caves prendem o F12 na largada, antes de andar.
+2. É KEYDOWN sem KEYUP -- e a tecla entra na lista de intocáveis, para que
+   nenhum `segurado(...)` a solte depois.
+3. Reafirmar é o comportamento correto, e acontece também antes de entrar.
+4. O truque do chat não voltou.
 
 Ver `docs/decisoes/hh.md` §28.
 """
@@ -48,29 +47,21 @@ import textwrap
 from blazesbot.bot.bc.routine import BossRushRoutine
 from blazesbot.bot.esconder import EsconderOsJogadores
 from blazesbot.bot.hh.routine import HHRoutine
-
-
-def _chamadas(metodo) -> list[tuple[int, str]]:
-    """(linha, nome) de cada chamada do corpo, ordenado pela linha."""
-    arvore = ast.parse(textwrap.dedent(inspect.getsource(metodo)))
-    nos = [n for n in ast.walk(arvore) if isinstance(n, ast.Call)]
-    return sorted((n.lineno, getattr(n.func, "attr", getattr(n.func, "id", "")))
-                  for n in nos)
-
+from blazesbot.core import esconder_jogadores as nucleo
 
 # ===========================================================================
-# 1. As duas caves escondem na largada
+# 1. As duas caves prendem na largada
 # ===========================================================================
 
 
-def test_as_DUAS_caves_escondem_na_largada():
+def test_as_DUAS_caves_prendem_o_F12_na_largada():
     for rotina in (BossRushRoutine, HHRoutine):
         fonte = inspect.getsource(rotina.run)
-        assert "esconder.garantir(" in fonte, (
-            f"{rotina.__name__}.run não esconde os jogadores na largada")
+        assert "esconder.prender(" in fonte, (
+            f"{rotina.__name__}.run não prende o F12 na largada")
 
 
-def test_a_largada_esconde_ANTES_do_laco_de_estados():
+def test_a_largada_prende_ANTES_do_laco_de_estados():
     """De nada serve esconder depois de já ter clicado em NPC.
 
     PELO AST, e não por posição de texto: a docstring do `run` das duas caves
@@ -81,151 +72,155 @@ def test_a_largada_esconde_ANTES_do_laco_de_estados():
         arvore = ast.parse(textwrap.dedent(inspect.getsource(rotina.run)))
         metodo = arvore.body[0]
 
-        esconde = [n.lineno for n in ast.walk(metodo)
-                   if isinstance(n, ast.Call)
-                   and getattr(n.func, "attr", "") == "garantir"]
+        prende = [n.lineno for n in ast.walk(metodo)
+                  if isinstance(n, ast.Call)
+                  and getattr(n.func, "attr", "") == "prender"]
         lacos = [n.lineno for n in ast.walk(metodo)
                  if isinstance(n, (ast.While, ast.For))]
 
-        assert esconde, f"{rotina.__name__}.run não esconde"
+        assert prende, f"{rotina.__name__}.run não prende o F12"
         assert lacos, f"{rotina.__name__}.run deixou de ter laço de estados"
-        assert min(esconde) < min(lacos), (
-            f"{rotina.__name__} entra no laço de estados antes de esconder")
+        assert min(prende) < min(lacos), (
+            f"{rotina.__name__} entra no laço de estados antes de prender")
+
+
+def test_o_supervisor_continua_prendendo_ao_preparar_o_cliente():
+    """A largada REAFIRMA; não substitui o que já acontece no login."""
+    from blazesbot.bot import supervisor
+
+    fonte = inspect.getsource(supervisor)
+    assert "prender_a_tecla(" in fonte
 
 
 # ===========================================================================
-# 2. E continuam escondendo antes de cada entrada
-# ===========================================================================
-
-
-def test_o_BC_continua_escondendo_antes_de_entrar():
-    """O grude vale para a sessão, e a pessoa pode desfazê-lo sem querer."""
-    fonte = inspect.getsource(BossRushRoutine._do_entrar)
-    assert "esconder.garantir(" in fonte
-
-
-def test_o_BC_ABORTA_a_entrada_se_o_chat_pode_estar_aberto():
-    """Entrar com o chat aberto desvia toda tecla para o campo de texto."""
-    arvore = ast.parse(textwrap.dedent(
-        inspect.getsource(BossRushRoutine._do_entrar)))
-    ramos = [n for n in ast.walk(arvore) if isinstance(n, ast.If)
-             and "esconder.garantir" in ast.unparse(n.test)]
-
-    assert ramos, "o BC deixou de conferir o resultado do esconder"
-    assert "not " in ast.unparse(ramos[0].test), (
-        "a conferência inverteu de sentido")
-
-
-def test_a_HH_tambem_esconde_antes_da_rajada():
-    fonte = inspect.getsource(HHRoutine._do_entrar)
-    assert "esconder.garantir(" in fonte, (
-        "a HH voltou a entrar sem fazer o grude -- antes ela só segurava a "
-        "tecla durante a rajada, e fora dali o esconder não valia")
-
-
-def test_a_HH_NAO_aborta_a_entrada_por_causa_do_esconder():
-    """A porta da HH é disputa por vaga: desistir dela custaria a run.
-
-    A diferença com o BC é deliberada e é decisão de cave. O `False` já foi
-    para o log como erro.
-    """
-    arvore = ast.parse(textwrap.dedent(
-        inspect.getsource(HHRoutine._do_entrar)))
-    ramos = [n for n in ast.walk(arvore) if isinstance(n, ast.If)
-             and "esconder.garantir" in ast.unparse(n.test)]
-
-    assert not ramos, (
-        "a HH passou a abortar a entrada por causa do esconder, e a porta dela "
-        "é disputa por vaga")
-
-
-def test_a_HH_ainda_SEGURA_a_tecla_na_rajada():
-    """São coisas diferentes: o grude vale pela sessão, o segurar protege o
-    par de cliques de NPC da própria fila de mensagens."""
-    fonte = inspect.getsource(HHRoutine._do_entrar)
-    assert "esconder_jogadores.segurado(" in fonte
-
-
-# ===========================================================================
-# 3. Um gesto só
-# ===========================================================================
-
-
-def test_o_gesto_MORA_em_bot_e_serve_as_duas():
-    assert EsconderOsJogadores.__module__ == "blazesbot.bot.esconder"
-    for rotina in (BossRushRoutine, HHRoutine):
-        assert "EsconderOsJogadores(ctx)" in inspect.getsource(rotina.__init__)
-
-
-def test_NENHUMA_cave_tem_o_truque_proprio():
-    """Duas cópias divergiriam, e a que ficasse para trás perderia o esconder."""
-    for rotina in (BossRushRoutine, HHRoutine):
-        fonte = inspect.getsource(inspect.getmodule(rotina))
-        assert "esconder_jogadores.esconder_jogadores(" not in fonte, (
-            f"{rotina.__name__} voltou a chamar o truque direto")
-        assert "state_chat_aberto" not in fonte, (
-            f"{rotina.__name__} voltou a ter o template do chat")
-
-
-def test_a_documentacao_de_transicao_esta_no_modulo():
-    """Quem promove escreve no código que aquilo é dependência cruzada."""
-    doc = inspect.getmodule(EsconderOsJogadores).__doc__ or ""
-    assert "DEPENDÊNCIA CRUZADA" in doc
-    assert "QUEM USA" in doc
-    assert "DE ONDE VEIO" in doc
-
-
-# ===========================================================================
-# 4. O perigo do chat aberto
+# 2. KEYDOWN sem KEYUP
 # ===========================================================================
 
 
 class _Log:
-    def __init__(self): self.erros: list[str] = []
-    def info(self, *a, **k): pass
+    def __init__(self): self.linhas: list[str] = []
+    def info(self, m, *a): self.linhas.append(m % a if a else m)
     def debug(self, *a, **k): pass
     def warning(self, *a, **k): pass
-    def error(self, m, *a): self.erros.append(m % a if a else m)
 
 
-def _gesto(seguro: bool, escondeu: bool = True):
-    from blazesbot.core import esconder_jogadores as nucleo
-
+def _gesto(tecla: str = "F12"):
     g = object.__new__(EsconderOsJogadores)
-    g.ctx = type("C", (), {
-        "log": _Log(),
-        "settings": type("S", (), {"keys": type("K", (), {
-            "hide_players": "f12"})()})(),
-        "key_down": lambda *a: None,
-        "key_up": lambda *a: None,
-        "press": lambda *a: None,
-        "tick": lambda *a: None,
-    })()
-    g.chat_aberto = lambda: None
-    resultado = nucleo.Resultado(
-        **{campo: False for campo in nucleo.Resultado.__dataclass_fields__})
-    return g, resultado
-
-
-def test_INSEGURO_devolve_False_e_grita_no_log():
-    """O `False` é o contrato: quem chama tem de parar o que ia fazer."""
-    fonte = inspect.getsource(EsconderOsJogadores.garantir)
-
-    assert "return False" in fonte
-    assert "log.error" in fonte
-    assert "campo de texto" in fonte, (
-        "a mensagem deixou de explicar o que acontece com o chat aberto")
-
-
-def test_chat_ILEGIVEL_devolve_None_e_nao_False():
-    """`None` não é "fechado": Enter ALTERNA o chat, e apertar por garantia tem
-    metade de chance de ABRIR o que se queria fechar."""
-    g = object.__new__(EsconderOsJogadores)
+    presas: list[str] = []
 
     class _Ctx:
         log = _Log()
-        templates = type("T", (), {"load": staticmethod(lambda n: None)})()
-        hwnd = 0
+        settings = type("S", (), {"keys": type("K", (), {
+            "hide_players": tecla})()})()
+
+        @staticmethod
+        def segurar_para_sempre(k):
+            presas.append(k)
+            return True
 
     g.ctx = _Ctx()
-    assert g.chat_aberto() is None
+    g.presas = presas
+    return g
+
+
+def test_prender_manda_a_tecla_e_nada_mais():
+    g = _gesto()
+
+    assert g.prender("teste") is True
+    assert g.presas == ["F12"]
+    assert any("PRESA" in linha for linha in g.ctx.log.linhas)
+
+
+def test_o_gesto_usa_segurar_para_sempre_e_NAO_key_down():
+    """`key_down` conta aninhamento e um `key_up` posterior solta.
+
+    `segurar_para_sempre` põe a tecla na lista de intocáveis, e é isso que faz
+    "nunca soltar" ser verdade mesmo com um `segurado(...)` terminando depois.
+    """
+    fonte = inspect.getsource(EsconderOsJogadores.prender)
+
+    assert "segurar_para_sempre" in fonte
+    assert "key_down" not in fonte
+    assert "key_up" not in fonte
+
+
+def test_sem_tecla_configurada_devolve_False_e_ninguem_aborta():
+    """`False` aqui é "não havia o que fazer", não "deu erro"."""
+    g = _gesto(tecla="")
+    assert g.prender("teste") is False
+    assert g.presas == []
+
+    for rotina in (BossRushRoutine, HHRoutine):
+        arvore = ast.parse(textwrap.dedent(inspect.getsource(rotina.run)))
+        ramos = [n for n in ast.walk(arvore) if isinstance(n, ast.If)
+                 and "prender" in ast.unparse(n.test)]
+        assert not ramos, (
+            f"{rotina.__name__} passou a decidir algo com a resposta do "
+            f"esconder -- e ela não é veredito")
+
+
+def test_a_tecla_presa_NAO_e_solta_por_um_bloco_segurado():
+    """A garantia é do `Input`, e este teste é a costura entre os dois."""
+    from blazesbot.core.inputs import Input
+
+    fonte = inspect.getsource(Input.segurar_para_sempre)
+    assert "_presas_para_sempre" in fonte
+    assert "key_up" in fonte, (
+        "a documentação da lista de intocáveis saiu, e é ela que explica por "
+        "que um `segurado(...)` não desfaz o que foi preso")
+
+
+# ===========================================================================
+# 3. Reafirmar também antes de entrar
+# ===========================================================================
+
+
+def test_as_duas_caves_REAFIRMAM_antes_de_entrar():
+    """Uma tecla fisicamente presa repete sozinha; reenviar imita isso, e é o
+    que recupera o estado quando o cliente o perde -- num relogin, por
+    exemplo, em que a janela é outra."""
+    for rotina in (BossRushRoutine, HHRoutine):
+        fonte = inspect.getsource(rotina._do_entrar)
+        assert "esconder.prender(" in fonte, (
+            f"{rotina.__name__}._do_entrar deixou de reafirmar o F12")
+
+
+def test_o_BC_NAO_aborta_mais_a_entrada_por_causa_do_esconder():
+    """Prender a tecla não abre chat nenhum -- o risco que justificava abortar
+    era do truque, e ele saiu."""
+    fonte = inspect.getsource(BossRushRoutine._do_entrar)
+    assert "o chat ficou aberto" not in fonte
+
+
+# ===========================================================================
+# 4. O truque não voltou
+# ===========================================================================
+
+
+def test_o_truque_do_chat_NAO_EXISTE_mais():
+    for nome in ("esconder_jogadores", "Resultado", "TECLA_DO_CHAT",
+                 "ATIVADO"):
+        assert not hasattr(nucleo, nome), (
+            f"o truque do chat voltou: `{nome}` reapareceu em "
+            f"core/esconder_jogadores.py")
+
+
+def test_o_que_SOBROU_no_nucleo():
+    """Duas coisas: prender a tecla, e o bloco que segura (hoje desligado)."""
+    assert callable(nucleo.prender_a_tecla)
+    assert callable(nucleo.segurado)
+    assert nucleo.PRENDER_A_TECLA is True
+
+
+def test_nenhuma_cave_procura_o_chat_aberto():
+    """O template `state_chat_aberto.png` existia só para proteger do truque."""
+    for rotina in (BossRushRoutine, HHRoutine):
+        fonte = inspect.getsource(inspect.getmodule(rotina))
+        assert "state_chat_aberto" not in fonte
+        assert "chat_aberto" not in fonte
+
+
+def test_o_modulo_do_gesto_nao_confere_chat():
+    fonte = inspect.getsource(inspect.getmodule(EsconderOsJogadores))
+    assert "chat_aberto" not in fonte.split('"""')[2], (
+        "a conferência do chat voltou ao código do gesto")

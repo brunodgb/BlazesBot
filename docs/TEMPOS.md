@@ -31,7 +31,7 @@ desta lista é ou uma exceção justificada, ou dívida que ninguém converteu a
 mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 
 
-**357 tempos catalogados** — 250 FIXOS (espera cega), 107 entre TETO e PASSO.
+**356 tempos catalogados** — 250 FIXOS (espera cega), 106 entre TETO e PASSO.
 
 
 **3 estão diferentes do original:** `FATIA_DE_ESPERA`, `INTERVALO_ENTRE_INVOCACOES`, `PASSOS_DO_APP`
@@ -118,7 +118,7 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | `ASSENTAMENTO_DA_BOLSA` | 0.14 s | = | FIXO | [routine.py:315](blazesbot/bot/bc/routine.py#L315) | `_usar_package_courage` | Depois que a MEMÓRIA confirma a bolsa aberta, o quanto esperar o DESENHO dela. |
 | *literal em* `_do_situar` | 1 s | = | FIXO | [routine.py:524](blazesbot/bot/bc/routine.py#L524) | `_do_situar` | Olha onde o personagem está e entra no estado que faz sentido. |
 | *literal em* `_do_preparar` | 0.2 s | = | FIXO | [routine.py:617](blazesbot/bot/bc/routine.py#L617) | `_do_preparar` |  |
-| *literal em* `_do_recuperar` | 3 s | = | FIXO | [routine.py:2205](blazesbot/bot/bc/routine.py#L2205) | `_do_recuperar` | Recuperação após morte ou falhas em sequência. |
+| *literal em* `_do_recuperar` | 3 s | = | FIXO | [routine.py:2203](blazesbot/bot/bc/routine.py#L2203) | `_do_recuperar` | Recuperação após morte ou falhas em sequência. |
 
 
 ## DENTRO DA CAVE — combate
@@ -307,7 +307,7 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | `SEGUNDOS_PARA_ENGAJAR` | 5 s | *novo* | FIXO | [routine.py:141](blazesbot/bot/hh/routine.py#L141) | `_do_boss` | Quanto esperar, num ponto de batalha, para a flag de combate LIGAR. |
 | `SEGUNDOS_POR_TENTATIVA_DE_VOLTAR` | 1.8 s | *novo* | FIXO | [routine.py:148](blazesbot/bot/hh/routine.py#L148) | `_do_boss` | Quanto esperar, por tentativa, a volta ao ponto depois da luta. |
 | *literal em* `_do_situar` | 1 s | *novo* | FIXO | [routine.py:436](blazesbot/bot/hh/routine.py#L436) | `_do_situar` | Descobre em que ponto do ciclo a conta está, e entra por ali. |
-| *literal em* `_do_recuperar` | 2 s | *novo* | FIXO | [routine.py:1604](blazesbot/bot/hh/routine.py#L1604) | `_do_recuperar` | Algo saiu do roteiro. Volta a se situar, sem inventar. |
+| *literal em* `_do_recuperar` | 2 s | *novo* | FIXO | [routine.py:1603](blazesbot/bot/hh/routine.py#L1603) | `_do_recuperar` | Algo saiu do roteiro. Volta a se situar, sem inventar. |
 | `SEGUNDOS_POR_TENTATIVA` | 1.8 s | *novo* | FIXO | [vendedor.py:71](blazesbot/bot/hh/vendedor.py#L71) | `encostar_no_ponto_da_venda` |  |
 | `RECARGA` | 5 s | = | FIXO | [hotbar.py:63](blazesbot/bot/hotbar.py#L63) | `garantir_pagina_1` | Recarga do caminho com `ctx`. Os momentos-chave acontecem em rajada -- o portão |
 | `PASSO_DA_SONDA` | 0.012 s | = | PASSO | [instrumentar_clique.py:110](blazesbot/bot/instrumentar_clique.py#L110) | `_sondar_ate_mudar` | De quanto em quanto tempo a sonda fotografa o minimapa esperando o efeito. |
@@ -416,7 +416,6 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | `TETO_DE_CLIQUES` | 10 s | = | TETO | [catador.py:124](blazesbot/core/catador.py#L124) | `_pegar` | Teto de cliques no botão. REDE DE SEGURANÇA, não estratégia -- mesmo papel do |
 | `PASSO_ENTRE_RETRATOS_DO_TIME` | 80 s (1 min) | *novo* | PASSO | [coords.py:112](blazesbot/core/coords.py#L112) |  |  |
 | `INTERVALO_DE_DESPEJO` | 30 s | *novo* | FIXO | [cronometro.py:98](blazesbot/core/cronometro.py#L98) | `_laco_do_despejo` | De quanto em quanto tempo a thread despeja o que foi acumulado. |
-| `ESPERA_ENTRE_PASSOS` | 0.3 s | = | PASSO | [esconder_jogadores.py:153](blazesbot/core/esconder_jogadores.py#L153) | `esconder_jogadores` | Espera entre os passos da sequência. O cliente precisa processar a abertura do |
 | `TETO_DO_BLOQUEIO_MS` | 80 s (1 min) | = | TETO | [inputs.py:76](blazesbot/core/inputs.py#L76) | `_click_sendmessage_rapido, _click_postmessage_puro` | TETO do bloqueio do mouse físico, em milissegundos -- e TETO, não gasto: o |
 | `INTERVALO_ENTRE_CLIQUES_DIREITOS` | 0.044 s | = | FIXO | [inputs.py:215](blazesbot/core/inputs.py#L215) | `right_click` | Espaço entre um clique e o seguinte. Curto de propósito: a aposta é que a |
 | `SEGUNDOS_ENTRE_CONFERENCIAS_DO_PROCESSO` | 2 s | = | FIXO | [inputs.py:302](blazesbot/core/inputs.py#L302) | `_motivo_para_nao_enviar` | De quanto em quanto tempo o NOME do processo é reconferido. |

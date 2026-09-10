@@ -34,7 +34,7 @@ ligar código não testado.
 | `USAR_A_SAIDA_DE_BATALHA_PARA_CORTAR` | `True` | [blazesbot/bot/app/executor.py:670](blazesbot/bot/app/executor.py#L670) | — | SAIR DE BATALHA CORTA A MACRO NO MEIO |
 | `USAR_A_TELA_COMO_SEGUNDA_PORTA` | `True` | [blazesbot/bot/app/executor.py:692](blazesbot/bot/app/executor.py#L692) | — | A SEGUNDA PORTA: A VIDA PELA TELA -- 26/08/2026 |
 | `USAR_COMBATE_COMO_RESERVA_DE_MORTE` | `True` | [blazesbot/bot/app/executor.py:524](blazesbot/bot/app/executor.py#L524) | supervisor.py | A RESERVA: QUANDO O HP É ILEGÍVEL, QUEM RESPONDE É A FLAG DE COMBATE |
-| `ATIVADO` | `True` | [blazesbot/bot/bc/diagnostico_do_link.py:62](blazesbot/bot/bc/diagnostico_do_link.py#L62) | deletador.py, supervisor.py, esconder_jogadores.py, patch_do_cliente.py, petbug.py | Interruptor, no padrão do `USAR_TAB_NOS_GUARDAS`: desligar é trocar uma |
+| `ATIVADO` | `True` | [blazesbot/bot/bc/diagnostico_do_link.py:62](blazesbot/bot/bc/diagnostico_do_link.py#L62) | deletador.py, supervisor.py, patch_do_cliente.py, petbug.py | Interruptor, no padrão do `USAR_TAB_NOS_GUARDAS`: desligar é trocar uma |
 | `ATACAR_DURANTE_A_CONFIRMACAO_NO_BOSS` | `True` | [blazesbot/bot/combate.py:519](blazesbot/bot/combate.py#L519) | — | SÓ NO BOSS, e a razão é o motivo pelo qual o golpe parava |
 | `DESMONTAR_FORA_DA_CAVE_SO_SEM_PET` | `True` | [blazesbot/bot/combate.py:1006](blazesbot/bot/combate.py#L1006) | — | FORA DA CAVE, SÓ DESMONTA SE O PET NÃO ESTIVER ATIVO |
 | `DESTRAVAMENTO_BATE_NO_ALVO_PROIBIDO` | `True` | [blazesbot/bot/combate.py:820](blazesbot/bot/combate.py#L820) | — | O DESTRAVAMENTO BATE NO CEMETERY GUARD? Decisao do usuario, 01/09/2026. |
@@ -47,7 +47,7 @@ ligar código não testado.
 | `USAR_IMAGEM_DA_FASE_2` | `True` | [blazesbot/bot/combate.py:914](blazesbot/bot/combate.py#L914) | combat.py | A SEGUNDA FASE DO BOSS TAMBÉM É VISTA NA TELA |
 | `USAR_PORTAO_DE_NOME` | `True` | [blazesbot/bot/combate.py:860](blazesbot/bot/combate.py#L860) | memory.py, target_hybrid.py | RELIGADO EM 25/08/2026 -- O NOME VOLTOU |
 | `USAR_TAB_NOS_GUARDAS` | `True` | [blazesbot/bot/combate.py:681](blazesbot/bot/combate.py#L681) | combat.py, diagnostico_do_link.py, inputs.py | >>>  INTERRUPTOR DO EXPERIMENTO -- TROCA DE ALVO POR TAB NOS GUARDAS  <<< |
-| `ATIVADO` | `True` | [blazesbot/bot/deletador.py:74](blazesbot/bot/deletador.py#L74) | diagnostico_do_link.py, supervisor.py, esconder_jogadores.py, patch_do_cliente.py, petbug.py | O caminho continua inteiro com ele em False -- desligado não é apagado. |
+| `ATIVADO` | `True` | [blazesbot/bot/deletador.py:74](blazesbot/bot/deletador.py#L74) | diagnostico_do_link.py, supervisor.py, patch_do_cliente.py, petbug.py | O caminho continua inteiro com ele em False -- desligado não é apagado. |
 | `CIRCULO_POR_RAIO` | `True` | [blazesbot/bot/navegacao.py:265](blazesbot/bot/navegacao.py#L265) | — | True = raio por raio (1,2,3,5; em cada raio os 8 pontos); False = bússola por |
 | `MATAR_JANELA_TRAVADA` | `True` | [blazesbot/bot/sentinela.py:166](blazesbot/bot/sentinela.py#L166) | — | INTERRUPTOR (a convenção do projeto: caminho fora de uso não vira comentário) |
 | `OLHAR_A_TELA` | `False` | [blazesbot/bot/sentinela.py:201](blazesbot/bot/sentinela.py#L201) | — | O VIGIA NÃO LÊ A TELA. INTERRUPTOR DESLIGADO, com o número que o desligou. |
@@ -60,9 +60,8 @@ ligar código não testado.
 | `ATIVADA` | `True` | [blazesbot/core/calibracao.py:82](blazesbot/core/calibracao.py#L82) | routine.py, vendedor.py | INTERRUPTOR |
 | `TELEMETRIA_LIGADA` | `True` | [blazesbot/core/cronometro.py:85](blazesbot/core/cronometro.py#L85) | instrumentacao.py | O INTERRUPTOR |
 | `LIGADO` | `True` | [blazesbot/core/diagnostico_fino.py:28](blazesbot/core/diagnostico_fino.py#L28) | manutencao.py, instrumentar_clique.py, supervisor.py, config.py, log_limitado.py, account_dialog.py | — |
-| `ATIVADO` | `False` | [blazesbot/core/esconder_jogadores.py:102](blazesbot/core/esconder_jogadores.py#L102) | diagnostico_do_link.py, deletador.py, supervisor.py, patch_do_cliente.py, petbug.py | INTERRUPTOR -- DESLIGADO EM 19/08/2026 |
-| `PRENDER_A_TECLA` | `True` | [blazesbot/core/esconder_jogadores.py:75](blazesbot/core/esconder_jogadores.py#L75) | — | A TECLA PRESA PARA SEMPRE -- o caminho do patcher, trazido em 07/09/2026 |
-| `SEGURAR_ATIVADO` | `False` | [blazesbot/core/esconder_jogadores.py:120](blazesbot/core/esconder_jogadores.py#L120) | petbug.py | INTERRUPTOR DO F12 PRESO -- DESLIGADO EM 19/08/2026 |
+| `PRENDER_A_TECLA` | `True` | [blazesbot/core/esconder_jogadores.py:68](blazesbot/core/esconder_jogadores.py#L68) | — | A TECLA PRESA PARA SEMPRE -- o caminho do patcher, trazido em 07/09/2026 |
+| `SEGURAR_ATIVADO` | `False` | [blazesbot/core/esconder_jogadores.py:86](blazesbot/core/esconder_jogadores.py#L86) | petbug.py | INTERRUPTOR DO F12 PRESO -- DESLIGADO EM 19/08/2026 |
 | `CONFERIR_A_JANELA_ANTES_DE_ENVIAR` | `True` | [blazesbot/core/inputs.py:295](blazesbot/core/inputs.py#L295) | — | INTERRUPTOR. Desligar volta ao comportamento anterior (mandar sem conferir), e |
 | `MODO_DE_CLIQUE` | `'postmessage_puro'` | [blazesbot/core/inputs.py:133](blazesbot/core/inputs.py#L133) | ui_service.py, instrumentar_clique.py, teste_do_cursor.py | INTERRUPTOR DO MODO DE CLIQUE |
 | `MODO_DE_TECLA` | `'postmessage'` | [blazesbot/core/inputs.py:177](blazesbot/core/inputs.py#L177) | — | INTERRUPTOR DO TECLADO -- "sendmessage" \| "postmessage" |
@@ -71,8 +70,8 @@ ligar código não testado.
 | `COMPRIMIR_ARQUIVO_MORTO` | `True` | [blazesbot/core/log_limitado.py:108](blazesbot/core/log_limitado.py#L108) | — | O arquivo morto de DIAS ANTERIORES é comprimido. Medido no arquivo da noite de |
 | `USAR_PAINEL_POR_MEMORIA` | `True` | [blazesbot/core/memory.py:579](blazesbot/core/memory.py#L579) | — | ESTADO DE PAINEL DE UI POR MEMÓRIA -- o que sobreviveu ao campo |
 | `USAR_REGIOES_QUENTES` | `True` | [blazesbot/core/memory.py:434](blazesbot/core/memory.py#L434) | — | REGIÕES QUENTES -- a rota que fecha os 38% que o array de entidades perde |
-| `ATIVADO` | `True` | [blazesbot/core/patch_do_cliente.py:132](blazesbot/core/patch_do_cliente.py#L132) | diagnostico_do_link.py, deletador.py, supervisor.py, esconder_jogadores.py, petbug.py | INTERRUPTOR |
-| `ATIVADO` | `False` | [blazesbot/core/petbug.py:125](blazesbot/core/petbug.py#L125) | diagnostico_do_link.py, deletador.py, supervisor.py, esconder_jogadores.py, patch_do_cliente.py | DESLIGADO EM 07/09/2026 -- o bot passou a fazer isto sozinho |
+| `ATIVADO` | `True` | [blazesbot/core/patch_do_cliente.py:132](blazesbot/core/patch_do_cliente.py#L132) | diagnostico_do_link.py, deletador.py, supervisor.py, petbug.py | INTERRUPTOR |
+| `ATIVADO` | `False` | [blazesbot/core/petbug.py:125](blazesbot/core/petbug.py#L125) | diagnostico_do_link.py, deletador.py, supervisor.py, patch_do_cliente.py | DESLIGADO EM 07/09/2026 -- o bot passou a fazer isto sozinho |
 | `NOVA_INSTANCIA_SEMPRE` | `True` | [blazesbot/core/petbug.py:218](blazesbot/core/petbug.py#L218) | — | INSTÂNCIA NOVA A CADA APLICAÇÃO -- 07/09/2026 |
 | `USAR_OFFSET_FIXO_DA_BARRA` | `True` | [blazesbot/core/vision/barra.py:259](blazesbot/core/vision/barra.py#L259) | __init__.py | INTERRUPTOR: o offset fixo é a régua; a âncora azul é a reserva |
 
@@ -80,7 +79,7 @@ ligar código não testado.
 
 ## Números medidos -- tolerância, limiar, teto, cadência
 
-612 constantes, agrupadas por arquivo.
+606 constantes, agrupadas por arquivo.
 
 | constante | valor | onde | quem lê | porquê (resumo) |
 |---|---|---|---|---|
@@ -145,7 +144,7 @@ ligar código não testado.
 | `SEGUNDOS_POR_TENTATIVA_DE_ANCORAR` | `3.0` | [blazesbot/bot/bc/amostragem_de_cliques.py:168](blazesbot/bot/bc/amostragem_de_cliques.py#L168) | — | — |
 | `SEMENTE_DA_ORDEM` | `20260812` | [blazesbot/bot/bc/amostragem_de_cliques.py:131](blazesbot/bot/bc/amostragem_de_cliques.py#L131) | — | Semente do embaralhamento das rodadas. Fixa DE PROPÓSITO: a ordem precisa |
 | `TENTATIVAS_DE_ANCORAR` | `6` | [blazesbot/bot/bc/amostragem_de_cliques.py:167](blazesbot/bot/bc/amostragem_de_cliques.py#L167) | — | Tentativas de encostar na âncora, e o orçamento de cada uma. Mesmo desenho |
-| `TENTATIVAS_DE_FECHAR` | `4` | [blazesbot/bot/bc/amostragem_de_cliques.py:181](blazesbot/bot/bc/amostragem_de_cliques.py#L181) | esconder_jogadores.py | ESCs seguidos sem o diálogo fechar. Passado isto, algo está engolindo o |
+| `TENTATIVAS_DE_FECHAR` | `4` | [blazesbot/bot/bc/amostragem_de_cliques.py:181](blazesbot/bot/bc/amostragem_de_cliques.py#L181) | — | ESCs seguidos sem o diálogo fechar. Passado isto, algo está engolindo o |
 | `TETO_DA_AMOSTRA` | `1.5` | [blazesbot/bot/bc/amostragem_de_cliques.py:140](blazesbot/bot/bc/amostragem_de_cliques.py#L140) | — | Teto da medição. Largo de propósito -- ver o cabeçalho. As aberturas reais |
 | `NOME_DOS_GUARDAS` | `'Gun Witch'` | [blazesbot/bot/bc/combat.py:49](blazesbot/bot/bc/combat.py#L49) | routine.py, config.py | — |
 | `NOME_DO_BOSS` | `'Blaze Skull Marshal'` | [blazesbot/bot/bc/combat.py:50](blazesbot/bot/bc/combat.py#L50) | — | — |
@@ -252,8 +251,6 @@ ligar código não testado.
 | `TETO_DA_BOLSA_ABRIR` | `2.0` | [blazesbot/bot/deletador.py:185](blazesbot/bot/deletador.py#L185) | — | Teto da espera pela bolsa APARECER depois da tecla -- 07/09/2026. |
 | `TETO_DA_CAIXA` | `1.2` | [blazesbot/bot/deletador.py:162](blazesbot/bot/deletador.py#L162) | — | Espera pela caixa de confirmação aparecer, depois do clique no ícone. |
 | `TETO_DE_SEGUNDOS` | `10.0` | [blazesbot/bot/deletador.py:159](blazesbot/bot/deletador.py#L159) | fada_ociosa.py | Teto do passo inteiro (verificar + apagar), pedido do usuário. |
-| `LIMIAR_DO_CHAT_ABERTO` | `0.9` | [blazesbot/bot/esconder.py:63](blazesbot/bot/esconder.py#L63) | — | Limiar do casamento do chat aberto. Alto de propósito: um falso positivo aqui |
-| `TEMPLATE_CHAT_ABERTO` | `'state_chat_aberto.png'` | [blazesbot/bot/esconder.py:58](blazesbot/bot/esconder.py#L58) | — | A carinha do chat de digitação aberto. |
 | `INTERVALO_DO_AVISO_DO_RESETER` | `300.0` | [blazesbot/bot/espera_do_reseter.py:87](blazesbot/bot/espera_do_reseter.py#L87) | — | De quanto em quanto tempo repetir o aviso enquanto a trava dura. |
 | `PASSO_DA_ESPERA_DO_RESETER` | `1.0` | [blazesbot/bot/espera_do_reseter.py:80](blazesbot/bot/espera_do_reseter.py#L80) | — | Cadência da espera pela conta de reset. |
 | `ESPERA_DEPOIS_DE_ERRAR` | `0.333` | [blazesbot/bot/fada.py:120](blazesbot/bot/fada.py#L120) | — | Depois de uma tentativa que não pegou, espera antes da seguinte. |
@@ -548,10 +545,6 @@ ligar código não testado.
 | `LINHAS_MAXIMAS_DO_DIARIO` | `20000` | [blazesbot/core/diario.py:39](blazesbot/core/diario.py#L39) | — | Teto de linhas por diário. Generoso de propósito -- o diário existe para ser |
 | `HP_MAXIMO_PLAUSIVEL` | `5000000` | [blazesbot/core/entidades.py:40](blazesbot/core/entidades.py#L40) | — | Teto de HP que ainda é HP. Cinco milhões é folgado de sobra para qualquer |
 | `NIVEL_MAXIMO_PLAUSIVEL` | `200` | [blazesbot/core/entidades.py:43](blazesbot/core/entidades.py#L43) | — | Faixa de nível. 200 é folga: o jogo vai a 8x, e o boss da cave é nv51. |
-| `ESPERA_ENTRE_PASSOS` | `0.3` | [blazesbot/core/esconder_jogadores.py:153](blazesbot/core/esconder_jogadores.py#L153) | — | Espera entre os passos da sequência. O cliente precisa processar a abertura do |
-| `LEITURAS_SEM_RESPOSTA` | `2` | [blazesbot/core/esconder_jogadores.py:161](blazesbot/core/esconder_jogadores.py#L161) | — | Leituras seguidas sem resposta antes de desistir de conferir. A captura falha |
-| `TECLA_DO_CHAT` | `'ENTER'` | [blazesbot/core/esconder_jogadores.py:149](blazesbot/core/esconder_jogadores.py#L149) | — | Tecla que abre e fecha o chat. Não é configurável: é o Enter, e ele não muda. |
-| `TENTATIVAS_DE_FECHAR` | `3` | [blazesbot/core/esconder_jogadores.py:157](blazesbot/core/esconder_jogadores.py#L157) | amostragem_de_cliques.py | Enters de fechamento antes de desistir. Enter ALTERNA o chat, então cada |
 | `PASSO_DO_HALO` | `14` | [blazesbot/core/halo.py:59](blazesbot/core/halo.py#L59) | entrada.py, indice_de_tempos.py | Quanto anda o anel a cada volta, em pixels da tela. |
 | `ASSENTAR_A_PAGINA` | `0.08` | [blazesbot/core/hotbar.py:94](blazesbot/core/hotbar.py#L94) | combate.py, hotbar.py | DEPOIS DE CHEGAR NA PÁGINA 1, ANTES DE DEVOLVER |
 | `CLIQUES_PARA_VOLTAR_A_PAGINA_1` | `2` | [blazesbot/core/hotbar.py:62](blazesbot/core/hotbar.py#L62) | hotbar.py | Três páginas: do pior caso (página 3) até a 1 são dois cliques para cima. |

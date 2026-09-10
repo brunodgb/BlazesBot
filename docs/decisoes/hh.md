@@ -1932,68 +1932,65 @@ que já funciona.
 a volta cabendo na janela do passo, o anel parando no diálogo, o anel parando
 quando a posição muda, a saída pedindo o anel e a entrada NÃO pedindo.
 
-## 28. O ESCONDER JOGADORES LIGA NA LARGADA, E EM TODA CAVE (10/09/2026)
+## 28. O ESCONDER JOGADORES: F12 PRESO NA LARGADA (10/09/2026)
 
-### A regra
+### A regra, e ela é curta
 
-> *"em HH o esconder personagem tem que ser ativo já quando começa a função,
-> pois está aparecendo outros personagens e pode atrapalhar, a função já existe
-> e está tudo certo, só deve ser ativo de início, toda cave na verdade tem que
-> fazer isso, pois assim garante que outros player não irão atrapalhar de forma
-> alguma"*
+> *"a regra é apenas dar um key_down no F12 apenas, sem o key_up... ao ativar,
+> no momento que eu clicar em BC ou HH, antes de começar a andar já faz isso"*
 
-### O que estava errado — e era DIFERENTE em cada cave
+E a mesma coisa já havia sido dita em 07/09/2026: *"realmente é sobre deixar a
+tecla F12 down sempre clicado, nunca soltar"*.
 
-O truque do F12 (segurar a tecla, abrir o chat com Enter, soltar, fechar o chat)
-é o que faz o esconder **grudar pela sessão**. Antes desta mudança:
+### O que estava errado
 
-| cave | fazia o truque? | quando |
-|---|---|---|
-| **BC** | sim | só em `_do_entrar` |
-| **HH** | **nunca** | apenas SEGURAVA a tecla durante a rajada da porta |
+O supervisor **já prendia** a tecla ao preparar o cliente, no login — e isso
+está certo. Mas a cave é ligada depois, às vezes muito depois, e nenhuma das
+duas rotinas reafirmava o F12 ao começar.
 
-Ou seja: no BC, a travessia inteira, os cliques de NPC e a coordenada da porta
-aconteciam com os outros personagens na tela. E na HH o esconder **não valia
-fora daquele instante da rajada** — que é exatamente o sintoma relatado.
+E o que cada cave chamava era o **truque do chat**, que estava desligado por
+interruptor desde 19/08/2026. Ou seja: as chamadas que eu havia acabado de ligar
+nas duas caves **não faziam nada em produção**.
 
-E é nessas fases que outro personagem custa: todo clique de NPC deste bot é
-**posicional na cena 3D**, e alguém em cima do alvo faz o clique cair na pessoa
-errada — que é o mesmo defeito já medido na BC em 25/08/2026, quando o clique a
-dois passos pegou o White Eagle.
+### O truque do chat foi REMOVIDO
 
-### O gesto subiu para `bot/esconder.py`
+> *"o truque do F12 (segurar a tecla, abrir o chat com Enter, soltar, fechar o
+> chat) só funciona para o usuário, não precisa ser feito pelo bot, então pode
+> remover esse truque que ensinei, ele não faz sentido para o bot"*
 
-Nasceu no BC (`_esconder_jogadores` + `_chat_aberto`, com as duas constantes de
-template) e subiu porque a HH passou a precisar do mesmo. **Duas cópias
-divergiriam**, e a que ficasse para trás deixaria uma cave sem esconder.
+Saíram com ele: a sequência, a conferência do chat aberto, o template
+`state_chat_aberto.png`, o `Resultado`, o interruptor `ATIVADO` e treze testes.
 
-**Por que `bot/` e não `core/`:** recebe `BotContext`. **Por que módulo e não
-`UIDoJogo`**, que seria o vizinho natural: aquele arquivo está a quatro linhas do
-teto da catraca.
+**E o risco saiu junto.** O truque abria o chat de propósito; se o segundo Enter
+não pegasse, o chat ficava aberto e **toda tecla do bot ia para o campo de
+texto** — com um Enter posterior publicando aquilo no chat. Era o único motivo
+de o esconder poder ABORTAR a entrada na cave, e essa condição também saiu:
+prender a tecla não abre chat nenhum.
 
-**O que é sobre o JOGO subiu; o que é de cave ficou.** Esconder jogadores é o
-cliente do Talisman — a mesma tecla, o mesmo truque, o mesmo perigo. O que é de
-cave é apenas **quando** chamar, e nisso as duas diferem de propósito:
+### Por que a tecla presa não é solta por acidente
 
-| momento | BC | HH |
-|---|---|---|
-| largada da rotina | esconde | esconde |
-| antes de cada entrada | esconde, e **aborta** se falhar | esconde, e **não aborta** |
+`Input.segurar_para_sempre` põe a tecla numa lista de **intocáveis**, e a partir
+daí `key_up` a recusa. É o que faz "nunca soltar" ser verdade mesmo quando um
+`segurado(...)` termina depois — e é por isso que o gesto usa
+`segurar_para_sempre` e não `key_down`, que conta aninhamento e é solto pelo
+`key_up` do par.
 
-**A HH não aborta** porque a porta dela é disputa por vaga: desistir da rajada
-por causa do esconder custaria a run inteira. O `False` já foi para o log como
-erro. No BC a entrada é um clique só, então abortar é barato e correto.
+### Quem prende, e quando
 
-### O perigo do chat aberto continua mandando
+| momento | quem |
+|---|---|
+| preparar o cliente (login, com o patch e o pet bug) | `supervisor` |
+| largada do BC, antes de andar | `BossRushRoutine.run` |
+| largada da HH, antes de andar | `HHRoutine.run` |
+| antes de cada entrada, nas duas | `_do_entrar` |
 
-A sequência abre o chat de propósito e depois o fecha. Se o segundo Enter não
-pegar, **o chat fica aberto** — e daí em diante toda tecla do bot vai para o
-campo de texto. `garantir` devolve `False` nesse caso, e a conferência do chat
-responde `None` quando não dá para saber: Enter **alterna** o chat, então
-apertar "por garantia" tem metade de chance de abrir o que se queria fechar.
+**Reafirmar não é redundância:** uma tecla fisicamente presa repete sozinha, e
+reenviar imita isso — é o que recupera o estado quando o cliente o perde, num
+relogin em que a janela é outra.
 
-### E o `segurado` continua existindo
+### `segurado(...)` continua desligado, e agora sem função
 
-São coisas diferentes: o **grude** vale pela sessão; o **segurar** (`key_down`
-durante o par de cliques) protege o clique da própria fila de mensagens do
-cliente. A HH continua fazendo os dois.
+Ele segurava a tecla durante o par de cliques de NPC. Com a tecla presa para
+sempre não há o que segurar, e o interruptor (`SEGURAR_ATIVADO = False`) já o
+mantinha inerte desde 19/08/2026. Ficou no código, testado — é candidato a
+remoção, não parte desta mudança.

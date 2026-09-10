@@ -1,285 +1,52 @@
-"""Esconder jogadores: a tecla SEMPRE é solta, e o Enter nunca sai no escuro.
+"""O esconder jogadores: a tecla PRESA, e o `segurado(...)` que sobrou.
 
-=============================================================================
-O QUE ESTÁ SOB TESTE
-=============================================================================
+=========================================================================
+O TRUQUE DO CHAT SAIU EM 10/09/2026
+=========================================================================
 
-O truque: com a tecla de esconder presa, abrir o chat com Enter faz o esconder
-GRUDAR pela sessão. Solta-se a tecla e fecha-se o chat com outro Enter.
+Este arquivo tinha treze testes da sequência "segurar F12, abrir o chat com
+Enter, soltar, fechar o chat" -- o truque que fazia o esconder grudar. O usuário
+mandou remover: *"só funciona para o usuário, não precisa ser feito pelo bot"*.
 
-Duas coisas podem dar muito errado, e é o que estes testes travam.
+Saíram com ele a conferência do chat aberto e o desfecho de "o chat pode ter
+ficado aberto", que era o defeito mais caro daquele caminho.
 
-**1. A tecla ficar presa.** `key_down` sem `key_up` deixa o jogo recebendo a
-tecla como pressionada, e todo o resto do bot passa a jogar com ela ativa. Por
-isso o `finally` -- e `test_a_tecla_e_sempre_solta` cobre inclusive o caminho da
-exceção, que é o que ninguém lembra.
+O que este arquivo cobre agora:
 
-**2. O chat ficar aberto.** A sequência ABRE o chat de propósito. Se o Enter de
-fechar não pegar, toda tecla do bot daí em diante (skill, poção, montaria, TAB)
-vai para o campo de texto em vez de ir para o jogo -- o bot parece rodando e não
-faz nada, e um Enter posterior PUBLICA aquilo no chat do jogo.
+  * `prender_a_tecla` -- KEYDOWN sem KEYUP, reafirmado a cada chamada, e a
+    garantia de que **nenhum `segurado(...)` solta** o que foi preso;
+  * `segurado(...)` -- o bloco que segura e solta, hoje desligado por
+    interruptor, com a contagem de aninhamento que o protege.
 
-**A armadilha do conserto:** Enter ALTERNA. Apertar "por garantia" sem saber o
-estado tem metade de chance de ABRIR o que se queria fechar. Por isso
-`test_nao_aperta_enter_no_escuro` -- com a leitura sem resposta, o módulo não
-aperta nada e devolve "não sei". Deixar como está é melhor que apostar.
+Ver `docs/decisoes/hh.md` §28.
 """
 import loggingfrom types import SimpleNamespaceimport pytestfrom blazesbot.core import esconder_jogadores as ejTECLA = "F12"
 
-# Lido NA IMPORTAÇÃO, antes de o `autouse` abaixo forçar o caminho ligado. Sem
-# isto, o teste que confere o estado real do interruptor leria o valor
-# patchado -- e passaria a afirmar o contrário do que existe no código.
-ATIVADO_NO_CODIGO = ej.ATIVADO
+# Lido NA IMPORTAÇÃO, antes de qualquer `monkeypatch`. Sem isto, o teste que
+# confere o estado real do interruptor leria o valor patchado -- e passaria a
+# afirmar o contrário do que existe no código.
 SEGURAR_NO_CODIGO = ej.SEGURAR_ATIVADO
 
 
-class ClienteFalso:
-    """Modela o chat: o Enter ALTERNA, como no jogo."""
-
-    def __init__(self, respostas=None, enter_falha_vezes=0):
-        self.chat = False
-        self.presas: list[str] = []
-        self.soltas: list[str] = []
-        self.apertos: list[str] = []
-        self.enter_falha_vezes = enter_falha_vezes
-        # `respostas` sobrepõe a leitura, para simular captura que não responde.
-        self.respostas = list(respostas) if respostas is not None else None
-        self.log = SimpleNamespace(info=lambda *a, **k: None,
-                                   warning=lambda *a, **k: None)
-
-    def segurar(self, tecla):
-        self.presas.append(tecla)
-
-    def soltar(self, tecla):
-        self.soltas.append(tecla)
-
-    def apertar(self, tecla):
-        self.apertos.append(tecla)
-        if tecla != ej.TECLA_DO_CHAT:
-            return
-        # A falha simulada é a do Enter que FECHA -- que é a que importa. Um
-        # Enter de ABERTURA engolido só faz o chat nunca abrir, e aí não há
-        # problema nenhum a testar: o esconder não gruda e a run segue.
-        if self.chat and self.enter_falha_vezes > 0:
-            self.enter_falha_vezes -= 1
-            return                      # o cliente engoliu o Enter
-        self.chat = not self.chat       # ALTERNA, como no jogo
-
-    def chat_aberto(self):
-        if self.respostas:
-            return self.respostas.pop(0)
-        return self.chat
-
-    def esperar(self, _s):
-        pass
-
-    @property
-    def enters(self) -> int:
-        return self.apertos.count(ej.TECLA_DO_CHAT)
-
-
 @pytest.fixture(autouse=True)
-def _forcar_ligado(monkeypatch):
-    """TODO teste deste módulo roda com o caminho LIGADO.
+def _com_o_segurar_ligado(monkeypatch):
+    """Força `SEGURAR_ATIVADO` ligado para a suíte inteira.
 
-    `ATIVADO` está em `False` -- o usuário pediu para deixar o truque de fora
-    por enquanto. A regra da casa é que o caminho desligado continue testado,
-    "para que voltar atrás não seja ligar código não testado".
+    A fixture que fazia isto morava no bloco do truque do chat e foi embora com
+    ele em 10/09/2026. Sem ela, os testes de `segurado(...)` exercitavam o
+    caminho DESLIGADO e não provavam nada -- passavam por não fazer nada.
 
-    Aqui isso vale dobrado: o que este módulo faz é ABRIR O CHAT de propósito, e
-    o que o torna seguro é a conferência de que ele fechou. Ligá-lo de volta sem
-    essa conferência exercitada seria ligar a parte perigosa com a proteção não
-    verificada.
+    Quem confere o estado REAL do interruptor lê `SEGURAR_NO_CODIGO`, capturado
+    na importação, antes desta fixture rodar.
     """
-    monkeypatch.setattr(ej, "ATIVADO", True)
-    # `SEGURAR_ATIVADO` também está em `False` -- o F12 preso saiu de uso quando
-    # o `petbug.exe` entrou. Mesma regra: o caminho continua exercitado, para que
-    # religar não seja ligar código não verificado.
     monkeypatch.setattr(ej, "SEGURAR_ATIVADO", True)
-
-
-def _rodar(cliente, tecla=TECLA):
-    return ej.esconder_jogadores(
-        tecla=tecla,
-        segurar=cliente.segurar,
-        soltar=cliente.soltar,
-        apertar=cliente.apertar,
-        chat_aberto=cliente.chat_aberto,
-        esperar=cliente.esperar,
-        log=cliente.log,
-    )
-
-
-# ---------------------------------------------------------------------------
-# 1. A TECLA SEMPRE É SOLTA
-# ---------------------------------------------------------------------------
-
-def test_a_tecla_e_solta_no_caminho_normal():
-    cliente = ClienteFalso()
-    _rodar(cliente)
-
-    assert cliente.presas == [TECLA]
-    assert cliente.soltas == [TECLA]
-
-
-def test_a_tecla_e_sempre_solta_mesmo_com_excecao():
-    """O caminho que ninguém lembra. Tecla presa = o bot inteiro passa a jogar
-    com ela apertada."""
-    cliente = ClienteFalso()
-
-    def apertar_explode(_tecla):
-        raise RuntimeError("janela morreu no meio da sequência")
-
-    with pytest.raises(RuntimeError):
-        ej.esconder_jogadores(
-            tecla=TECLA, segurar=cliente.segurar, soltar=cliente.soltar,
-            apertar=apertar_explode, chat_aberto=cliente.chat_aberto,
-            esperar=cliente.esperar, log=cliente.log,
-        )
-
-    assert cliente.soltas == [TECLA], "a tecla ficou PRESA depois da exceção"
-
-
-# ---------------------------------------------------------------------------
-# 2. A SEQUÊNCIA
-# ---------------------------------------------------------------------------
-
-def test_a_ordem_e_segurar_enter_soltar():
-    """O grude depende de o chat abrir COM a tecla ainda presa."""
-    cliente = ClienteFalso()
-    _rodar(cliente)
-
-    # O primeiro Enter tem que acontecer ANTES de a tecla ser solta. Como o
-    # dublê registra em listas separadas, o teste é que houve exatamente um
-    # segurar, e que ele veio antes de qualquer soltar.
-    assert cliente.presas and cliente.soltas
-    assert cliente.enters >= 1
-
-
-def test_fecha_o_chat_e_confirma():
-    cliente = ClienteFalso()
-    resultado = _rodar(cliente)
-
-    assert resultado.escondeu is True
-    assert resultado.chat_fechado is True
-    assert resultado.seguro_para_seguir is True
-    assert cliente.chat is False
-
-
-def test_insiste_quando_o_enter_e_engolido():
-    """O cliente às vezes come a tecla; insistir é certo -- mas só com a
-    leitura dizendo que ainda está aberto."""
-    cliente = ClienteFalso(enter_falha_vezes=1)
-    resultado = _rodar(cliente)
-
-    assert resultado.seguro_para_seguir is True
-    assert cliente.enters >= 3
-
-
-def test_desiste_se_o_chat_nao_fechar():
-    cliente = ClienteFalso(enter_falha_vezes=99)
-    resultado = _rodar(cliente)
-
-    assert resultado.chat_fechado is False
-    assert resultado.seguro_para_seguir is False
-
-
-# ---------------------------------------------------------------------------
-# 3. NUNCA APERTAR ENTER NO ESCURO -- ele ALTERNA
-# ---------------------------------------------------------------------------
-
-def test_nao_aperta_enter_no_escuro():
-    """Leitura sem resposta: não sabe se está aberto. Apertar tem metade de
-    chance de ABRIR o que se queria fechar."""
-    cliente = ClienteFalso(respostas=[None, None])
-    enters_antes_da_conferencia = 1     # o Enter que ABRE o chat
-
-    resultado = _rodar(cliente)
-
-    assert resultado.chat_fechado is None
-    assert resultado.seguro_para_seguir is False, (
-        "'não sei' não pode contar como seguro -- entrar na cave com o chat "
-        "possivelmente aberto perde a run em silêncio"
-    )
-    assert cliente.enters == enters_antes_da_conferencia, (
-        f"apertou Enter {cliente.enters}x sem saber o estado do chat"
-    )
-
-
-def test_uma_leitura_sem_resposta_nao_desiste():
-    """Insistir na LEITURA é de graça -- ela não fala com o jogo."""
-    cliente = ClienteFalso(respostas=[None, False])
-    resultado = _rodar(cliente)
-
-    assert resultado.chat_fechado is True
-
-
-# ---------------------------------------------------------------------------
-# 4. Sem tecla configurada
-# ---------------------------------------------------------------------------
-
-def test_sem_tecla_nao_faz_nada_e_nao_e_erro():
-    """Esconder é conveniência, não requisito. Sem tecla a run segue."""
-    cliente = ClienteFalso()
-    resultado = _rodar(cliente, tecla="")
-
-    assert cliente.presas == [] and cliente.apertos == []
-    assert resultado.escondeu is False
-    assert resultado.seguro_para_seguir is True, (
-        "não configurar a tecla não pode bloquear a entrada na cave"
-    )
-
-
-# ---------------------------------------------------------------------------
-# 5. O INTERRUPTOR, e o que ele NÃO pode fazer
-# ---------------------------------------------------------------------------
-
-def test_desligado_nao_aperta_nada(monkeypatch):
-    monkeypatch.setattr(ej, "ATIVADO", False)
-
-    cliente = ClienteFalso()
-    resultado = _rodar(cliente)
-
-    assert cliente.presas == []
-    assert cliente.soltas == []
-    assert cliente.apertos == []
-    assert resultado.escondeu is False
-
-
-def test_desligado_NAO_bloqueia_a_entrada_na_cave(monkeypatch):
-    """O dente do interruptor.
-
-    Quem chama aborta a entrada quando `seguro_para_seguir` é falso. Se o
-    desligado devolvesse falso, desligar o truque impediria o bot de entrar na
-    cave -- ou seja, desligar uma conveniência quebraria o farm inteiro.
-    """
-    monkeypatch.setattr(ej, "ATIVADO", False)
-
-    resultado = _rodar(ClienteFalso())
-
-    assert resultado.seguro_para_seguir is True, (
-        "com o truque desligado a entrada na cave tem que seguir normalmente"
-    )
-
-
-def test_o_interruptor_esta_desligado_hoje():
-    """Registra o estado ATUAL, para uma mudança acidental aparecer no diff.
-
-    Não é opinião sobre o valor certo: é o mesmo papel dos testes de constante
-    medida. Ligar de propósito é trocar esta linha junto.
-    """
-    assert ATIVADO_NO_CODIGO is False
-
-
-if __name__ == "__main__":
-    pytest.main([__file__, "-v"])
 
 
 # ===========================================================================
 # `segurado`: a tecla PRESA durante o par de cliques no NPC
 # ===========================================================================
 #
-# A forma que roda hoje. O truque do chat acima está desligado; esta é a regra do
+# O truque do chat SAIU em 10/09/2026; esta é a regra do
 # usuário: *"sempre que precisar o clique no NPC fora da cave é importante que o
 # F12 esteja apertado... só no par de clique, porque só atrapalha quando tenta
 # clicar no NPC em si."*

@@ -1,55 +1,49 @@
-"""Esconder os outros jogadores, pelo truque do F12 preso com o chat.
+"""Esconder os outros jogadores: a tecla F12 PRESA, e mais nada.
 
 =============================================================================
-O QUE É, E POR QUE É UM TRUQUE
+O QUE É
 =============================================================================
 
-A tecla de esconder jogadores (F12, por padrão) esconde enquanto está apertada.
-Existe um comportamento do cliente que a faz GRUDAR: com a tecla presa, abrir o
-chat com Enter deixa os personagens escondidos permanentemente. Solta-se a tecla
-e fecha-se o chat com outro Enter, e o esconder continua valendo.
+A tecla de esconder jogadores (F12, por padrão) esconde **enquanto está
+apertada**. Então o bot a aperta e NÃO SOLTA -- `prender_a_tecla`, apoiada em
+`Input.segurar_para_sempre`, que põe a tecla numa lista de intocáveis para que
+nenhum `key_up` posterior a solte.
 
-Serve para o clique direito no chão não acertar outro personagem quando o bot vai
-catar loot, e de quebra tira da tela dezenas de personagens que o cliente
+Regra do usuário, dita em 07/09/2026 e reafirmada em 10/09/2026: *"é sobre
+deixar a tecla F12 down sempre clicado, nunca soltar"*, e *"a regra é apenas dar
+um key_down no F12 apenas, sem o key_up"*.
+
+Serve para o clique direito no chão não acertar outro personagem quando o bot
+vai catar loot, e de quebra tira da tela dezenas de personagens que o cliente
 desenharia.
 
 =============================================================================
-É POR SESSÃO, E O USUÁRIO PODE DESFAZER SEM QUERER
+O TRUQUE DO CHAT FOI REMOVIDO -- 10/09/2026
 =============================================================================
 
-O grude vale para a sessão. E apertar F12 de novo o desfaz -- inclusive sem
-querer, que é o caso comum quando a mesma máquina é usada pela pessoa.
+Havia aqui uma sequência que "grudava" o esconder: com a tecla presa, abrir o
+chat com Enter deixava os personagens escondidos permanentemente; soltava-se a
+tecla e fechava-se o chat com outro Enter.
 
-Por isso a sequência roda **antes de CADA entrada na cave**, não uma vez no
-login. Custa quatro teclas.
+**Ela não servia para o bot**, e quem disse foi quem a ensinou: *"o truque do
+F12 só funciona para o usuário, não precisa ser feito pelo bot, então pode
+remover esse truque que ensinei, ele não faz sentido para o bot"*.
 
-=============================================================================
-O PERIGO: SE O CHAT FICAR ABERTO, O BOT DIGITA EM VEZ DE JOGAR
-=============================================================================
+Ela já estava desligada por interruptor desde 19/08/2026, e carregava o defeito
+mais caro deste módulo: **se o segundo Enter não pegasse, o chat ficava aberto**
+-- e daí em diante toda tecla do bot (skill, poção, montaria, TAB) ia para o
+campo de texto, com um Enter posterior PUBLICANDO aquilo no chat.
 
-A sequência ABRE o chat de propósito e depois o fecha. Se o segundo Enter não
-pegar, **o chat fica aberto** -- e daí em diante toda tecla do bot (skill, poção,
-montaria, TAB) vai para o campo de texto em vez de ir para o jogo. O bot parece
-rodando e não faz nada; e um Enter posterior **publica** aquilo no chat.
+Com a tecla simplesmente presa, nada disso existe: não se abre chat nenhum.
 
-É a classe de defeito que este projeto persegue -- a ação que parece ter
-acontecido e não aconteceu -- com o agravante de o desfecho ser público.
+O que sobrou é isto e o `segurado(...)`, que segura a tecla durante um bloco --
+e que também está desligado por interruptor, porque com a tecla presa para
+sempre não há o que segurar.
 
-Então o fechamento é CONFERIDO, pelo template `state_chat_aberto.png`: a carinha
-amarela no fim da barra de digitação, que só existe com o chat aberto. O template
-é a carinha e **não a barra inteira**, porque o texto ao lado do `say:` muda e um
-template que inclui texto variável envelhece na primeira mensagem.
-
-E há uma armadilha no conserto: **Enter ALTERNA**. Apertar Enter "por garantia"
-quando não se sabe o estado tem metade de chance de ABRIR o chat em vez de
-fechar. Por isso, quando a leitura não responde, este módulo **não aperta nada** e
-devolve "não sei" -- deixar como está é melhor que apostar.
-
-MÓDULO DE USO GERAL: recebe PEÇAS e não `BotContext`, no molde do
-`watchdog.avaliar_saude`. Qualquer ecossistema pode chamar.
+Ver `docs/decisoes/hh.md` §28.
 """
-from __future__ import annotationsfrom collections.abc import Callablefrom dataclasses import dataclass__all__ = ["ATIVADO", "PRENDER_A_TECLA", "SEGURAR_ATIVADO", "TECLA_DO_CHAT",
-           "Resultado", "esconder_jogadores", "prender_a_tecla", "segurado"]
+from __future__ import annotationsfrom collections.abc import Callable__all__ = ["PRENDER_A_TECLA", "SEGURAR_ATIVADO", "prender_a_tecla",
+           "segurado"]
 
 # ===========================================================================
 # A TECLA PRESA PARA SEMPRE -- o caminho do patcher, trazido em 07/09/2026
@@ -68,33 +62,6 @@ from __future__ import annotationsfrom collections.abc import Callablefrom da
 # Enter posterior PUBLICA aquilo). O caminho do patcher chega no mesmo lugar
 # sem nunca tocar no chat.
 PRENDER_A_TECLA = True
-
-# ===========================================================================
-# INTERRUPTOR -- DESLIGADO EM 19/08/2026
-# ===========================================================================
-#
-# `False` = o truque não é executado. `esconder_jogadores` devolve na hora, sem
-#           apertar nada, e -- isto é o que importa -- com `seguro_para_seguir`
-#           VERDADEIRO: desligado não pode bloquear a entrada na cave.
-# `True`  = executa a sequência inteira.
-#
-# Decisão do usuário: "por enquanto vamos deixar sem ele, para testar outra
-# hora". O pedido foi para COMENTAR o bug, e a convenção da casa diz o
-# contrário: *"Interruptor, não comentário nem apagar. Caminho que sai de uso
-# vira `X = False` no topo do módulo, com os testes forçando o caminho ligado
-# para ele não apodrecer."*
-#
-# A diferença importa aqui mais que no caso comum. O que este módulo faz é
-# ABRIR O CHAT DE PROPÓSITO, e o que o torna seguro é a conferência de que ele
-# fechou. Código comentado não roda em teste nenhum: quando alguém
-# descomentasse, meses depois, estaria ligando um caminho que abre o chat sem
-# ninguém ter conferido que a parte que o fecha continua funcionando. Ligar de
-# volta não pode ser ligar código não testado -- e é exatamente por isso que a
-# regra existe.
-#
-# `tests/test_esconder_jogadores.py` força `ATIVADO = True` para todo o módulo,
-# então a sequência inteira continua sendo exercitada a cada corrida da suíte.
-ATIVADO = False
 
 # ===========================================================================
 # INTERRUPTOR DO F12 PRESO -- DESLIGADO EM 19/08/2026
@@ -138,111 +105,6 @@ def prender_a_tecla(tecla: str, segurar_para_sempre, log) -> bool:
         log.debug("Esconder jogadores: não deu para prender %r (%s).",
                   tecla, exc)
         return False
-
-
-# Tecla que abre e fecha o chat. Não é configurável: é o Enter, e ele não muda.
-TECLA_DO_CHAT = "ENTER"
-
-# Espera entre os passos da sequência. O cliente precisa processar a abertura do
-# chat antes de a tecla ser solta, senão o grude não acontece.
-ESPERA_ENTRE_PASSOS = 0.3
-
-# Enters de fechamento antes de desistir. Enter ALTERNA o chat, então cada
-# tentativa só acontece com a leitura dizendo "ainda aberto" -- nunca no escuro.
-TENTATIVAS_DE_FECHAR = 3
-
-# Leituras seguidas sem resposta antes de desistir de conferir. A captura falha
-# durante queda e relogin, e insistir ali não produz informação.
-LEITURAS_SEM_RESPOSTA = 2
-
-
-@dataclass(frozen=True, slots=True)
-class Resultado:
-    escondeu: bool
-    chat_fechado: bool | None      # None = não deu para conferir
-    motivo: str
-
-    @property
-    def seguro_para_seguir(self) -> bool:
-        """Só é seguro com o chat CONFIRMADAMENTE fechado.
-
-        `None` não conta. Seguir com o chat possivelmente aberto é entrar na cave
-        com o teclado do bot desviado para o campo de texto -- e essa run está
-        perdida antes de começar.
-        """
-        return self.chat_fechado is True
-
-    def __str__(self) -> str:
-        return self.motivo
-
-
-def _conferir(chat_aberto: Callable[[], bool | None]) -> bool | None:
-    """Pergunta se o chat está aberto, insistindo só enquanto NÃO SEI."""
-    for _ in range(LEITURAS_SEM_RESPOSTA):
-        resposta = chat_aberto()
-        if resposta is not None:
-            return resposta
-    return None
-
-
-def esconder_jogadores(
-    *,
-    tecla: str,
-    segurar: Callable[[str], None],
-    soltar: Callable[[str], None],
-    apertar: Callable[[str], None],
-    chat_aberto: Callable[[], bool | None],
-    esperar: Callable[[float], None],
-    log,
-) -> Resultado:
-    """Faz a sequência e CONFERE que o chat fechou.
-
-    Devolve sempre; nunca levanta. Quem chamou decide o que fazer com um
-    `seguro_para_seguir` falso -- e no BC a decisão é não entrar na cave.
-
-    `tecla` vazia = o usuário não configurou, e não há nada a fazer. Isso é
-    sucesso, não falha: o esconder é conveniência, não requisito.
-    """
-    if not ATIVADO:
-        # `chat_fechado=True` de propósito: desligado, o módulo não mexeu no
-        # chat, então não há nada de inseguro. Devolver `None` aqui faria a
-        # entrada na cave ser abortada por uma coisa que nem aconteceu.
-        return Resultado(False, True, "esconder jogadores DESLIGADO "
-                                      "(esconder_jogadores.ATIVADO)")
-
-    if not tecla:
-        return Resultado(False, True, "sem tecla de esconder jogadores "
-                                      "configurada; nada a fazer")
-
-    try:
-        segurar(tecla)
-        esperar(ESPERA_ENTRE_PASSOS)
-        apertar(TECLA_DO_CHAT)          # abre o chat COM a tecla presa: gruda
-        esperar(ESPERA_ENTRE_PASSOS)
-    finally:
-        # `finally` e não "solta depois": uma exceção no meio deixaria F12 preso,
-        # e o bot inteiro passaria a jogar com a tecla apertada.
-        soltar(tecla)
-    esperar(ESPERA_ENTRE_PASSOS)
-
-    for tentativa in range(1, TENTATIVAS_DE_FECHAR + 1):
-        aberto = _conferir(chat_aberto)
-        if aberto is None:
-            return Resultado(True, None,
-                             "não consegui conferir se o chat fechou; não vou "
-                             "apertar Enter no escuro (ele ALTERNA)")
-        if not aberto:
-            return Resultado(True, True,
-                             f"jogadores escondidos, chat fechado na tentativa "
-                             f"{tentativa}")
-        log.info("Esconder jogadores: o chat ainda está aberto (tentativa %s)",
-                 tentativa)
-        apertar(TECLA_DO_CHAT)
-        esperar(ESPERA_ENTRE_PASSOS)
-
-    return Resultado(True, False,
-                     f"o chat continuou aberto depois de {TENTATIVAS_DE_FECHAR} "
-                     "tentativas de fechar")
 
 
 # ===========================================================================

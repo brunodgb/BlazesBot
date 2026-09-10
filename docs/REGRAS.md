@@ -613,26 +613,24 @@
     mensagem. O usuário vai conferir na tela (as outras contas dele são os
     "outros jogadores" na entrada e no vendedor). Custo de errar: uma mensagem
     ignorada.
-- **ESCONDER JOGADORES pelo truque do F12 — DESLIGADO hoje**
-  (`esconder_jogadores.ATIVADO = False`, decisão do usuário em 19/08/2026: "para
-  testar outra hora"). O caminho está inteiro e os testes o forçam LIGADO, e
-  aqui isso vale dobrado — o que o módulo faz é ABRIR O CHAT de propósito, e o
-  que o torna seguro é a conferência de que ele fechou; comentar deixaria a
-  parte perigosa para ser religada com a proteção nunca exercitada.
-  **Desligado NÃO bloqueia a entrada na cave** — travado por teste.
-  (`core/esconder_jogadores.py`, `KeyBinds.hide_players`, opcional): segura a
-  tecla, abre o chat com Enter (o esconder GRUDA pela sessão), solta, fecha o
-  chat. Rodaria **antes de CADA entrada na cave**, porque é por sessão e apertar
-  a tecla de novo desfaz.
-  - **A tecla é solta num `finally`** — presa, o bot inteiro passa a jogar com
-    ela apertada.
-  - **O fechamento do chat é CONFERIDO** (`state_chat_aberto.png`, a carinha
-    amarela que só existe com o chat aberto — a barra inteira não serve, o texto
-    ao lado do `say:` muda). Chat aberto desvia TODA tecla do bot para o campo de
-    texto: a run morre em silêncio e um Enter depois **publica** aquilo no chat.
-    Por isso é a única coisa da entrada que pode ABORTÁ-LA.
-  - **Enter ALTERNA**, então leitura sem resposta NÃO aperta nada. Apertar "por
-    garantia" tem metade de chance de abrir o que se queria fechar.
+- **ESCONDER JOGADORES = A TECLA PRESA, e mais nada** (`core/esconder_jogadores.
+  prender_a_tecla`, `KeyBinds.hide_players`, opcional). `WM_KEYDOWN` sem
+  `WM_KEYUP`, e a tecla entra na lista de INTOCÁVEIS do `Input` -- nenhum
+  `key_up` posterior a solta, inclusive o de um `segurado(...)` que termine.
+  - **QUANDO:** ao preparar o cliente (login, junto do patch e do pet bug) e na
+    LARGADA de cada cave, antes de andar. Reafirmar é o correto: tecla
+    fisicamente presa repete sozinha, e reenviar recupera o estado quando o
+    cliente o perde -- num relogin, em que a janela é outra.
+  - **O TRUQUE DO CHAT SAIU em 10/09/2026.** Ele segurava a tecla, abria o chat
+    com Enter para o esconder GRUDAR, soltava e fechava o chat. Estava desligado
+    por interruptor desde 19/08/2026 e o usuário mandou remover: *"só funciona
+    para o usuário, não precisa ser feito pelo bot"*. Com ele saíram a
+    conferência do chat aberto (`state_chat_aberto.png`) e o desfecho de "o chat
+    pode ter ficado aberto" -- que era o único motivo de o esconder poder
+    ABORTAR a entrada na cave. Prender a tecla não abre chat nenhum.
+  - **`segurado(...)` continua no código e continua DESLIGADO**
+    (`SEGURAR_ATIVADO = False`): com a tecla presa para sempre, não há o que
+    segurar durante um bloco. O caminho segue testado.
 - **Pós-boss usa o(s) `package_courage`** pelo inventário, casamento **EM COR**
   (0.92; em cinza o vão não existe). COMPLEMENTO: nunca derruba a run. Três
   travas: `bag_open()` antes de clicar, posição a CADA clique, progresso por

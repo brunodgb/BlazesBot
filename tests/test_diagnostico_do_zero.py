@@ -45,7 +45,6 @@ import numpy as np
 from blazesbot.bot import deletador
 from blazesbot.core import vision
 
-
 # ===========================================================================
 # A medida
 # ===========================================================================
