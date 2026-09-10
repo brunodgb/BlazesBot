@@ -26,7 +26,7 @@ na mesma conta seriam duas mãos no mesmo teclado -- e o `_uma_volta` da
 POR QUE SEGUIR COM A TECLA DO JOGO, E NÃO COM WAYPOINTS
 =========================================================================
 
-A Fada poderia refazer os 65 waypoints por conta própria. Seria pior de três
+A Fada poderia refazer os 66 waypoints por conta própria. Seria pior de três
 formas:
 
   1. Ela chegaria nos pontos em outro instante que o líder, e curar de longe não

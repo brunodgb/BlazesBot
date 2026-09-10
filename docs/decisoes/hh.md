@@ -416,9 +416,9 @@ o vendedor está no waypoint da porta. Os dois estão travados por teste.
 
 Registrado aqui para não virar palpite depois:
 
-1. **Nomes de área DENTRO da cave — 2 de 65 medidos.** Os prints de 03/09/2026
+1. **Nomes de área DENTRO da cave — 2 de 66 medidos.** Os prints de 03/09/2026
    deram `Happiness Hall Dungeon` em (55,33) e `Happiness Hall Main Hall` em
-   (529,118). Os outros 63 waypoints continuam com `AREA_INTERNA_NAO_MEDIDA`, e
+   (529,118). Os outros 64 waypoints continuam com `AREA_INTERNA_NAO_MEDIDA`, e
    `mapa_hh.area_medida()` continua `False` — ela responde pelo CONJUNTO,
    porque o recuo "volte ao começo da área" só serve quando se sabe onde cada
    área começa. O inventário do que já se sabe é `mapa_hh.areas_medidas()`, e o

@@ -29,15 +29,20 @@ from blazesbot.core.rota import (
 # 07/09/2026. Antes vinha do `hh.lua` (22/16/12/15/1); o que mudou foi o trecho
 # 4, e o usuário disse: *"agora esses vão ser os waypoints oficiais"*.
 #
-# O TRECHO 3 GANHOU (420,136) em 08/09/2026 e o DEVOLVEU em 10/09/2026 -- por
-# isso ele tem 12 e não 13. O ponto entrou porque *"ali é uma area estreita
-# entao e importante ter cuidado com a precisão"*, e saiu depois de rodar:
-# *"pelo visto está melhor sem ele, por isso eu comentei manualmente"*.
+# A ENTRADA DO TRECHO 3 TEVE TRÊS VERSÕES, todas do usuário, todas medidas no
+# jogo -- e a contagem 13 vale para a primeira e a terceira:
 #
-# A GEOMETRIA EXPLICA OS DOIS: ele ficava a 6,3 unidades de (426,138), menos que
-# a tolerância de chegada (7), então os dois eram dados por alcançados na mesma
-# leitura -- um dos dois sempre foi decoração. Ele continua no mapa, comentado,
-# como registro de ponto medido.
+#   08/09  (420,136) entra ...... *"ali é uma area estreita entao e importante
+#          ter cuidado com a precisão, eu adicionei pq justamente ele acabou
+#          indo para o lugar errado em um dos testes"*
+#   10/09  (420,136) sai ........ *"pelo visto está melhor sem ele"*
+#   10/09  (414,136) entra ...... *"fiz mais uma mudança, pq começou a travar"*
+#
+# A GEOMETRIA EXPLICA A TROCA: (420,136) ficava a 6,3 unidades de (426,138),
+# MENOS que a tolerância de chegada (7) -- os dois eram dados por alcançados na
+# mesma leitura, então um deles sempre foi decoração. (414,136) está a 12,2, e
+# por isso é perseguido de verdade. Na mesma passada o fim do trecho 2 andou de
+# (408,131) para (409,128).
 #
 # O QUE ELE MUDOU NO TRECHO 4, e por que importa saber: saiu a ESPORA -- o par
 # (510,126)/(509,93), que descia 19 unidades para depois subir 33 --, e entrou
@@ -48,7 +53,7 @@ from blazesbot.core.rota import (
 CONTAGEM_OFICIAL = {
     "CAMINHO_ATE_O_BOSS_1": 22,
     "CAMINHO_ATE_O_BOSS_2": 16,
-    "CAMINHO_ATE_O_BOSS_3": 12,
+    "CAMINHO_ATE_O_BOSS_3": 13,
     "CAMINHO_ATE_O_BOSS_4": 14,
     "CAMINHO_ATE_A_SAIDA": 1,
 }
@@ -61,12 +66,12 @@ def test_cada_trecho_tem_a_contagem_medida(nome, esperado):
 
 
 def test_o_total_da_rota_oficial():
-    """65 desde que (420,136) voltou a sair do trecho 3, em 10/09/2026.
+    """66 de novo: (414,136) tomou o lugar de (420,136) em 10/09/2026.
 
     O número existe para uma coisa só: waypoint que desaparece por acidente não
     dá erro em lugar nenhum, o bot apenas passa a bater na parede.
     """
-    assert len(m.TODOS_OS_WAYPOINTS) == sum(CONTAGEM_OFICIAL.values()) == 65
+    assert len(m.TODOS_OS_WAYPOINTS) == sum(CONTAGEM_OFICIAL.values()) == 66
 
 
 def test_todo_waypoint_tem_o_clique_calibrado():
@@ -127,15 +132,21 @@ def test_a_anotacao_do_lua_fica_perto_do_ponto_de_luta():
 
     O teto separa "de onde se bate" de "outro lugar da cave".
 
-    SEIS, e não três: o usuário remediu os pontos de luta no jogo em 07/09/2026
-    e a anotação do Lua ficou um pouco mais longe -- a "Dupla" passou de 2,2
-    para 4,5. A pergunta continua a mesma (*"o ponto de luta está na MESMA SALA
-    que o Lua anotou?"*), e seis unidades ainda são muito menos que a distância
-    entre duas salas: os trechos vizinhos estão a 20+ unidades.
+    O TETO SOBE COM A MEDIÇÃO, e sempre subiu: 3 -> 6 quando o usuário remediu
+    os pontos de luta em 07/09/2026, e 6 -> 8 em 10/09, quando o fim do trecho 2
+    andou de (408,131) para (409,128) porque o bot *"começou a travar"*. Só a
+    "Dupla" se mexe nessa conta -- ela foi de 2,2 para 4,5 e agora está em 7,07;
+    os outros três estão em 2,24, 0,00 e 1,00.
+
+    A PERGUNTA NÃO MUDOU: *"o ponto de luta está na MESMA SALA que o Lua
+    anotou?"*. E oito unidades continuam muito longe de responder "sim" por
+    acidente -- os pontos de luta vizinhos estão a 87, 137 e 155 unidades um do
+    outro. O teto separa "de onde se bate" de "outro lugar da cave", e para isso
+    ele tem uma ordem de grandeza de folga.
     """
     for rotulo, _, posicao in m.TRECHOS_DOS_BOSSES:
         anotada = m.COORDENADA_ANOTADA_NO_LUA[rotulo]
-        assert m.distancia(posicao, anotada) <= 6, (
+        assert m.distancia(posicao, anotada) <= 8, (
             f"{rotulo}: ponto de luta {posicao} vs anotacao {anotada}")
 
 
@@ -532,10 +543,10 @@ def test_nenhum_par_da_rota_e_uma_ESPORA_sem_aviso():
         ("Fa-Yuan", (209, 182), (207, 186)),
         # O PAR DO TRECHO 3 SAIU EM 10/09/2026, e a saída dele é a conclusão
         # deste inventário: (420,136) ficava a 6,3 unidades de (426,138), menos
-        # que a tolerância de chegada, então os dois eram dados por alcançados na
-        # mesma leitura e um deles sempre foi decoração. O usuário comentou o
-        # ponto depois de rodar -- *"pelo visto está melhor sem ele"* -- e o
-        # trecho voltou a ter só waypoints que o bot de fato persegue.
+        # que a tolerância de chegada, então os dois eram dados por alcançados
+        # na mesma leitura e um deles sempre foi decoração. O usuário o trocou
+        # por (414,136), que está a 12,2 do seguinte -- entrada do trecho ainda
+        # protegida, e agora com os dois pontos sendo perseguidos de verdade.
     ], (
         f"o inventário de pares apertados mudou: {apertados}")
 

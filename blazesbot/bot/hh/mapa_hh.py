@@ -7,9 +7,9 @@ DE ONDE VIERAM ESTES NÚMEROS
 Do bot de terceiros em Lua/UoPilot que roda esta cave HOJE, em produção, na
 máquina do usuário (`D:\\Versoes do Bot\\OutrosBots\\HH - cave full - ARVV3N`,
 módulos `hh.lua` e `farmer.lua`). Eram 66 waypoints medidos passo a passo, cada um
-com clique de minimapa calibrado à mão; HOJE SÃO 65 (64 nos trechos e 1 na saída)
--- o usuário remediu a rota em 07/09/2026 e tirou (420,136) em 10/09. Contagem por
-trecho e o porquê de cada mudança: `tests/test_mapa_hh.CONTAGEM_OFICIAL`.
+com clique de minimapa calibrado à mão. HOJE TAMBÉM SÃO 66 (65 nos trechos e 1 na
+saída), mas não os mesmos: o usuário remediu a rota em 07/09/2026 e mexeu na
+entrada do trecho 3 em 10/09 -- ver `tests/test_mapa_hh.CONTAGEM_OFICIAL`.
 
 **ISSO NÃO É PALPITE E NÃO É ARREDONDAMENTO.** É a medição de um bot que
 funciona, e é a fonte mais forte disponível sem remedir a cave inteira. A
@@ -47,7 +47,7 @@ cave inteira como um nome só:
 
 Fora da cave é `Black Wind Camp Dungeon`, que já estava medido.
 
-Os outros 63 waypoints continuam com `AREA_INTERNA_NAO_MEDIDA`. É um
+Os outros 64 waypoints continuam com `AREA_INTERNA_NAO_MEDIDA`. É um
 MARCADOR EXPLÍCITO, não uma adivinhação disfarçada de dado: enquanto ele estiver
 ali, a área não serve para conferir onde o bot está, e quem depender disso tem de
 tratar a ausência. Preencher exige rodar a ferramenta de medição pela rota e
@@ -431,15 +431,15 @@ CAMINHO_ATE_O_BOSS_2: tuple[Waypoint, ...] = _wp([
     (392, 164, _A, (918, 134)),
     (394, 150, _A, (921, 128)),
     (409, 150, _A, (933, 115)),
-    (408, 131, _A, (918, 129)),
+    (409, 128, _A, (918, 129)),
 ])
 
 # Do boss 2 até o boss 3 (Green Robmaster).
 CAMINHO_ATE_O_BOSS_3: tuple[Waypoint, ...] = _wp([
-    # (420,136) FORA desde 10/09/2026, comentado à mão pelo usuário: ficava a
-    # 6,3 unidades de (426,138), menos que a tolerância de chegada (7), e um dos
-    # dois sempre foi decoração. Fica como registro -- é ponto medido.
-    #(420, 136, _A, (929, 113)),
+    # (414,136) É A TERCEIRA VERSÃO desta entrada, medida em 10/09/2026 porque
+    # "começou a travar". A anterior, (420,136), ficava a 6,3 do ponto seguinte
+    # -- dentro da tolerância de chegada (7) --, e esta está a 12,2.
+    (414, 136, _A, (929, 113)),
     (426, 138, _A, (935, 114)),
     (429, 152, _A, (921, 100)),
     (456, 152, _A, (955, 115)),
@@ -572,7 +572,7 @@ TODOS_OS_WAYPOINTS: tuple[Waypoint, ...] = _todos_os_waypoints()
 # o passo pela metade até caber. Mas esse corte vale só para o clique CALCULADO:
 # os `via` são calibrados à mão e passam por fora dele.
 #
-# DOIS dos 65 fogem da caixa, ambos no começo do trecho do boss 4 -- (893, 101) e
+# DOIS dos 66 fogem da caixa, ambos no começo do trecho do boss 4 -- (893, 101) e
 # (890, 107), os dois com X abaixo de 895. Não são erro de digitação: aquele
 # trecho anda PARA TRÁS sobre o caminho do boss 3, e um passo para trás no
 # minimapa cai à esquerda do centro.
