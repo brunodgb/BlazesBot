@@ -389,6 +389,140 @@ def test_a_regiao_exclui_a_area_do_equipamento():
     assert not (x <= 650 <= x + larg and y <= 300 <= y + alt)
 
 
+# ===========================================================================
+# AS CINCO LINHAS DA BOLSA PRINCIPAL
+# ===========================================================================
+#
+# GEOMETRIA MEDIDA no print de referência (`entrada/inventario.jpg`), onde a
+# âncora `state_bag_tabs.png` casa em 1.000 com centro em (665,466): os
+# separadores da grade caem em dy +13, +48, +83, +118, +153 e +190 -- cinco
+# linhas de 35 px --, e a primeira coluna começa em dx -118.
+#
+# O DEFEITO QUE ISTO TRAVA (10/09/2026): o retângulo terminava em +186, quatro
+# pixels ACIMA do fim da grade. `matchTemplate` exige o modelo INTEIRO dentro do
+# recorte, então item na 5ª linha não era reconhecido -- e as quatro linhas de
+# cima funcionavam, o que fazia o defeito parecer coisa do item.
+ANCORA_DAS_ABAS = (665, 466)
+TOPO_DAS_LINHAS = (13, 48, 83, 118, 153)
+FIM_DA_GRADE = 190
+LADO_DA_CELULA = 35
+PRIMEIRA_COLUNA = -118
+
+
+def _onde_estao_as_abas(quadro):
+    """Onde a âncora das abas está NESTE quadro, pela mesma busca do bot.
+
+    O número medido é ponto de partida; quem manda é o casamento. A janela do
+    inventário se ARRASTA -- ela não é fixa na tela --, e é por isso que a
+    região nasce da âncora a cada chamada em vez de ser coordenada de tela.
+    """
+    from pathlib import Path
+
+    import cv2
+
+    tpl = cv2.imread(str(Path("data") / "templates" / "state_bag_tabs.png"))
+    r = cv2.matchTemplate(quadro, tpl, cv2.TM_CCOEFF_NORMED)
+    _, nota, _, canto = cv2.minMaxLoc(r)
+    assert nota > 0.9, f"não achei a linha de abas no print (nota {nota:.3f})"
+    alt, larg = tpl.shape[:2]
+    return canto[0] + larg // 2, canto[1] + alt // 2
+
+
+def test_a_geometria_medida_ainda_e_a_do_print():
+    """Se o print de referência for trocado, os números acima envelhecem juntos."""
+    assert _onde_estao_as_abas(_print_do_inventario()) == ANCORA_DAS_ABAS
+
+
+def test_a_regiao_da_principal_alcanca_o_FIM_da_grade():
+    """A borda de baixo do retângulo tem de passar do fim da grade.
+
+    Terminar exatamente nela já seria defeito: o modelo inteiro precisa caber
+    dentro do recorte, e ícone encostado na borda não casa.
+    """
+    quadro = _print_do_inventario()
+    regioes = d.regioes_visiveis(_CtxComTela(), quadro)
+    _rotulo, (_x, y, _larg, alt) = regioes[0]
+    fim_da_grade = ANCORA_DAS_ABAS[1] + FIM_DA_GRADE
+    assert y + alt > fim_da_grade, (
+        f"a região termina em {y + alt} e a grade em {fim_da_grade}: item na "
+        f"última linha não é reconhecido")
+
+
+@pytest.mark.parametrize("linha", range(1, 6))
+@pytest.mark.parametrize("lado", [22, 27, 35, 40])
+def test_item_em_QUALQUER_das_cinco_linhas_e_encontrado(linha, lado):
+    """O item é colado numa linha de cada vez, e tem de ser achado em todas.
+
+    O TAMANHO DO MODELO ENTRA NO TESTE porque é ele que expõe a borda: um
+    recorte pequeno cabia mesmo com a régua curta, e por isso o defeito só
+    aparecia com parte dos itens. Os modelos reais da HH vão de 22x22 a 29x26,
+    e um recorte de célula inteira chega a 35x35.
+    """
+    import cv2
+
+    quadro = _print_do_inventario()
+    cx, cy = ANCORA_DAS_ABAS
+    topo_da_linha1 = cy + TOPO_DAS_LINHAS[0]
+    margem = max(0, (LADO_DA_CELULA - lado) // 2)
+    x0 = cx + PRIMEIRA_COLUNA + margem
+    icone = quadro[topo_da_linha1 + margem:topo_da_linha1 + margem + lado,
+                   x0:x0 + lado].copy()
+    assert icone.shape[:2] == (lado, lado), "o print de referência mudou"
+
+    topo = cy + TOPO_DAS_LINHAS[linha - 1] + margem
+    teste = quadro.copy()
+    teste[topo:topo + lado, x0:x0 + lado] = icone
+
+    regioes = d.regioes_visiveis(_CtxComTela(), teste)
+    achados = d._casamentos_nas_regioes(teste, icone, regioes)
+    centro_esperado = (x0 + lado // 2, topo + lado // 2)
+    assert any(abs(p[0] - centro_esperado[0]) <= 3
+               and abs(p[1] - centro_esperado[1]) <= 3 for p in achados), (
+        f"modelo {lado}x{lado} na linha {linha} não foi encontrado "
+        f"(esperado perto de {centro_esperado}, achados: {achados})")
+    assert cv2 is not None
+
+
+@pytest.mark.parametrize("arrasto", [(-120, -80), (90, 60)])
+def test_a_ultima_linha_continua_valendo_com_o_INVENTARIO_ARRASTADO(arrasto):
+    """A janela do inventário NÃO é fixa: o usuário a arrasta para onde quiser.
+
+    Regra do usuário, 10/09/2026: *"é bom só tomar cuidado que o usuário pode
+    mudar onde está o inventário aberto, pois ela não é fixa na tela"*.
+
+    A região sempre nasceu da ÂNCORA, e não de coordenada de tela -- este teste
+    é a prova disso valendo também para a 5ª linha, que é onde a régua era
+    curta. O quadro inteiro é deslocado, então a âncora vai junto e tudo o que
+    se mede a partir dela tem de acompanhar.
+    """
+    import numpy as np
+
+    dx, dy = arrasto
+    quadro = _print_do_inventario()
+    cx, cy = _onde_estao_as_abas(quadro)
+
+    # O ícone da 1ª linha, colado na 5ª -- a linha que o defeito comia.
+    lado = LADO_DA_CELULA
+    x0 = cx + PRIMEIRA_COLUNA
+    topo1 = cy + TOPO_DAS_LINHAS[0]
+    topo5 = cy + TOPO_DAS_LINHAS[4]
+    quadro[topo5:topo5 + lado, x0:x0 + lado] = \
+        quadro[topo1:topo1 + lado, x0:x0 + lado].copy()
+
+    arrastado = np.roll(np.roll(quadro, dy, axis=0), dx, axis=1)
+    cx2, cy2 = _onde_estao_as_abas(arrastado)
+    assert (cx2, cy2) == (cx + dx, cy + dy), "a âncora não acompanhou o arrasto"
+
+    icone = arrastado[topo5 + dy:topo5 + dy + lado, x0 + dx:x0 + dx + lado].copy()
+    regioes = d.regioes_visiveis(_CtxComTela(), arrastado)
+    achados = d._casamentos_nas_regioes(arrastado, icone, regioes)
+    esperado = (x0 + dx + lado // 2, topo5 + dy + lado // 2)
+    assert any(abs(p[0] - esperado[0]) <= 3 and abs(p[1] - esperado[1]) <= 3
+               for p in achados), (
+        f"com o inventário arrastado em {arrasto}, o item da 5ª linha sumiu "
+        f"(esperado perto de {esperado}, achados: {achados})")
+
+
 def test_sem_a_linha_de_abas_nao_deleta_nada(monkeypatch):
     """Sem achar a grade, o desfecho seguro é não apagar coisa nenhuma."""
     ctx = _Ctx([0.0])

@@ -274,6 +274,11 @@ e `docs/decisoes/deletador.md`.
   título por `(-76,+172)`).
 - **SÓ ABAIXO DA LINHA DE ABAS** "Item | Quest | Arrange | Ext." — acima é
   equipamento em uso; sem achar a linha, **não apaga nada**.
+- **O RETÂNGULO TEM DE PASSAR DO FIM DA GRADE**, nunca fechar nela: a bolsa
+  principal tem **5 linhas** entre dy +13 e +190 (35 px cada, ancoradas nas
+  abas), e o retângulo vai até +195. Fechar em +186 custou a 5ª linha inteira —
+  `matchTemplate` quer o modelo INTEIRO dentro do recorte, e não há casamento
+  parcial (`deletador.md`, 10/09/2026).
 - `data/templates/deletar/` é a **LISTA BRANCA única** (PNG autoriza, tirar
   revoga), relida a cada chamada. A tecla do inventário é interruptor ⇒ o estado
   é **LIDO antes**; `None` não é "aberto".

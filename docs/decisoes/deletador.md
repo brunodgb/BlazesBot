@@ -230,3 +230,78 @@ aberto. Com isso os dois casos ficam cobertos pelo mesmo mecanismo:
 | abriu no prazo | aberta | fecha |
 | abriu depois do teto | aberta | **fecha** |
 | não abriu | fechada | não aperta |
+
+## A quinta linha da bolsa principal, que nunca era varrida — 10/09/2026
+
+### O relato
+
+> *"nessa parte do inventário tem 5 linhas, mas na última e quinta linha, quando
+> fica algo nessa parte do inventário em específico o item não é deletado pela
+> função de deletar itens de HH. Eu testei com vários itens ali, e não
+> reconhece... nos expand bag funciona corretamente"* — usuário, com prints.
+
+### A medição
+
+No print de referência `data/templates/entrada/inventario.jpg`, a âncora
+`state_bag_tabs.png` casa em **1.000** com centro em (665,466). Os separadores
+da grade caem em:
+
+| dy | +13 | +48 | +83 | +118 | +153 | **+190** |
+|---|---|---|---|---|---|---|
+
+Cinco linhas de 35 px, terminando em **+190**. O retângulo da bolsa principal
+ia até **+186** — quatro pixels a menos.
+
+E `matchTemplate` **exige o modelo INTEIRO dentro do recorte**: não existe
+casamento parcial. Item na 5ª linha simplesmente não era encontrado.
+
+### Por que as Expand Bag funcionavam
+
+A régua delas sempre teve folga: grade até +186, retângulo até +193. É a mesma
+folga de ~5 px que o resto da lista usa e que a bolsa principal tinha perdido.
+
+### Por que o defeito parecia "coisa do item"
+
+Reproduzido no print, colando um ícone em cada linha:
+
+| modelo | linhas 1–4 | linha 5 |
+|---|---|---|
+| 22×22 | acha | acha |
+| 27×27 | acha | acha |
+| 33×33 | acha | **não acha** |
+| 35×35 e 40×40 | acha | **não acha** |
+
+Recorte pequeno e alto na célula cabia nos 186 px; recorte de célula cheia, ou
+qualquer um colado mais para baixo (o número da quantidade fica no rodapé do
+slot), não cabia. Daí "às vezes não reconhece" em vez de "nunca".
+
+### A correção
+
+`dy1` da bolsa principal: **186 → 195** (os +190 da grade mais os ~5 px de folga
+da convenção). Nada mais mudou: a borda de cima continua em +12, logo abaixo da
+linha de abas, porque a regra de não tocar no equipamento não mudou.
+
+### A janela do inventário NÃO é fixa na tela
+
+Lembrete do usuário no mesmo dia: *"é bom só tomar cuidado que o usuário pode
+mudar onde está o inventário aberto, pois ela não é fixa na tela"*. É por isso
+que a região nasce da ÂNCORA a cada chamada (`regioes_visiveis` procura
+`state_bag_tabs.png` no quadro e deriva o retângulo dela), e não de coordenada
+de tela. Todo número desta seção é RELATIVO ao centro da linha de abas.
+
+A correção mexeu só no deslocamento, então essa propriedade não mudou -- e
+agora ela está travada também para a 5ª linha, que é onde a régua era curta.
+
+### Travado por
+
+`tests/test_deletador.py`:
+
+* `test_a_geometria_medida_ainda_e_a_do_print` -- os números medidos envelhecem
+  junto com o print de referência, em vez de mentir calados;
+* `test_a_regiao_da_principal_alcanca_o_FIM_da_grade` -- a borda de baixo passa
+  do fim da grade, nunca fecha nela;
+* `test_item_em_QUALQUER_das_cinco_linhas_e_encontrado` -- um ícone em cada uma
+  das cinco linhas, em quatro tamanhos de modelo (com o valor antigo, três
+  casos reprovam);
+* `test_a_ultima_linha_continua_valendo_com_o_INVENTARIO_ARRASTADO` -- o quadro
+  inteiro é deslocado em duas direções e a 5ª linha continua sendo encontrada.

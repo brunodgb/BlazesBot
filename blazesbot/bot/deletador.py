@@ -237,7 +237,12 @@ REGIOES_DA_BOLSA: tuple[RegiaoDaBolsa, ...] = (
     # não é capricho: `matchTemplate` exige o modelo INTEIRO dentro do recorte,
     # então um ícone encostado na borda não casaria se o retângulo fechasse
     # exatamente nele.
-    RegiaoDaBolsa("state_bag_tabs.png", -130, 12, 125, 186, "bolsa principal"),
+    # A ÚLTIMA LINHA CABE -- e não cabia até 10/09/2026, quando o retângulo
+    # terminava em +186 e a grade termina em +190. As cinco linhas ficam entre
+    # +13 e +190, de 35 em 35 px (medido no print de referência). Faltavam
+    # QUATRO pixels, e `matchTemplate` quer o modelo INTEIRO dentro do recorte:
+    # item na 5ª linha não era reconhecido. Ver `docs/decisoes/deletador.md`.
+    RegiaoDaBolsa("state_bag_tabs.png", -130, 12, 125, 195, "bolsa principal"),
     # AS BOLSAS EXTRAS ("Expand Bag 1" e "Expand Bag 2"), ancoradas na ETIQUETA
     # e não no título -- e essa escolha é a regra inteira.
     #
