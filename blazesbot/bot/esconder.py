@@ -48,7 +48,7 @@ DEPENDÊNCIA CRUZADA
   * O QUE **NÃO** SUBIU: nada de cave. Prender o F12 é sobre o cliente do
     Talisman, e QUANDO prender é de quem chama.
 
-Ver `docs/decisoes/hh.md` §28.
+Ver `docs/decisoes/hh.md` §31.
 """
 from __future__ import annotations
 

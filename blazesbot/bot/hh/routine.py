@@ -247,7 +247,7 @@ class HHRoutine:
         # falam com a máquina de estados nem sabem em que trecho a run parou.
         self.manutencao = ManutencaoDaHH(ctx, self.vendedor)
         # O F12 PRESO, em `bot/esconder.py`. A HH só segurava a tecla durante a
-        # rajada da porta -- e soltava depois. §28.
+        # rajada da porta -- e soltava depois. §31.
         self.esconder = EsconderOsJogadores(ctx)
         self.team = TeamService(
             ctx, nick_do_reset=lambda: ctx.settings.reset_nick)
@@ -298,7 +298,7 @@ class HHRoutine:
         # supervisor e sobrevive a desligar/ligar o farm; sem isto, só a
         # primeira largada da sessão limpava a bolsa.
         self.manutencao.a_hh_comecou()
-        # O F12 PRESO JÁ NA LARGADA, antes de andar -- §28.
+        # O F12 PRESO JÁ NA LARGADA, antes de andar -- §31.
         self.esconder.prender("largada da HH")
 
         # Desligar a HH pela interface precisa cortar a fase atual NO MEIO.
@@ -698,7 +698,7 @@ class HHRoutine:
         # REAFIRMA A TECLA PRESA -- o mesmo que o BC faz antes de cada
         # tentativa de entrada. Tecla fisicamente presa repete sozinha, e
         # reafirmar é o que devolve o esconder depois de um relogin (janela
-        # E REAFIRMA antes da rajada, como o BC faz. §28.
+        # E REAFIRMA antes da rajada, como o BC faz. §31.
         self.esconder.prender("entrar na HH")
 
         # nova, estado zerado). Ver `esconder_jogadores.prender_a_tecla`.

@@ -40,7 +40,7 @@ O que sobrou é isto e o `segurado(...)`, que segura a tecla durante um bloco --
 e que também está desligado por interruptor, porque com a tecla presa para
 sempre não há o que segurar.
 
-Ver `docs/decisoes/hh.md` §28.
+Ver `docs/decisoes/hh.md` §31.
 """
 from __future__ import annotationsfrom collections.abc import Callable__all__ = ["PRENDER_A_TECLA", "SEGURAR_ATIVADO", "prender_a_tecla",
            "segurado"]

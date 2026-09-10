@@ -1932,7 +1932,7 @@ que já funciona.
 a volta cabendo na janela do passo, o anel parando no diálogo, o anel parando
 quando a posição muda, a saída pedindo o anel e a entrada NÃO pedindo.
 
-## 28. O ESCONDER JOGADORES: F12 PRESO NA LARGADA (10/09/2026)
+## 31. O ESCONDER JOGADORES: F12 PRESO NA LARGADA (10/09/2026)
 
 ### A regra, e ela é curta
 

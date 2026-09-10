@@ -36,7 +36,7 @@ O QUE ESTE ARQUIVO PROTEGE
 3. Reafirmar é o comportamento correto, e acontece também antes de entrar.
 4. O truque do chat não voltou.
 
-Ver `docs/decisoes/hh.md` §28.
+Ver `docs/decisoes/hh.md` §31.
 """
 from __future__ import annotations
 

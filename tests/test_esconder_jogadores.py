@@ -18,7 +18,7 @@ O que este arquivo cobre agora:
   * `segurado(...)` -- o bloco que segura e solta, hoje desligado por
     interruptor, com a contagem de aninhamento que o protege.
 
-Ver `docs/decisoes/hh.md` §28.
+Ver `docs/decisoes/hh.md` §31.
 """
 import loggingfrom types import SimpleNamespaceimport pytestfrom blazesbot.core import esconder_jogadores as ejTECLA = "F12"
 
