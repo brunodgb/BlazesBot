@@ -477,3 +477,67 @@ Com a chave certa, **36 candidatos**, e a bandeira conhecida entre eles.
 **Antes de acusar a ferramenta, confira o que você fez com a resposta dela.** É o
 mesmo erro do bloco de `+0x3A0`, onde eu culpei minha janela de leitura para
 salvar uma hipótese errada.
+
+---
+
+## Virada 6400 → 6401: número de versão novo, binário IGUAL (10/09/2026)
+
+O jogo passou a se anunciar como `ver.6401` e a pergunta natural foi *"os
+ponteiros mudaram?"*. **Não mudou nada** — e o valor deste registro é o método,
+porque a resposta saiu em minutos em vez de uma varredura inteira.
+
+### O que a virada mudou de fato
+
+Na pasta de instalação, **dois arquivos**:
+
+| arquivo | mudou? |
+|---|---|
+| `game.ver` | **sim** — 9 bytes, contendo o texto `ver.6401` |
+| `config.ini` | sim (última conta/servidor) |
+| `client.exe` | **NÃO** — 13.127.680 bytes, mtime de 30/07 |
+| `data.evp` | **NÃO** — mtime de 30/07 |
+
+O título da janela (`Talisman Online | ver.6401`) é montado a partir do
+`game.ver`. **O número de versão é um selo de texto, não o binário.**
+
+### A prova que decide, e que não depende de mtime
+
+Comparar a **imagem em memória** do processo novo com a de um processo antigo,
+em fatias, é prova direta — mtime de arquivo é prova fraca (pode ter sido
+tocado, pode ter sido substituído por igual):
+
+| faixa | fatias de 256 KB | resultado |
+|---|---|---|
+| `0x00400000`–`0x01000000` (código + só-leitura) | 48 | **48 idênticas** |
+| `0x01000000`–`0x0131A000` (banco de estáticos) | 13 | 9 diferem — **e devem**: é dado de execução, difere entre quaisquer dois processos |
+
+**Se o código é byte-idêntico, nenhum endereço estático pode ter se movido.** Não
+há rebase para procurar, e a regra do `+0x60` não se aplica.
+
+Confirmação empírica: 25 leitores da produção rodados no cliente 6401 —
+responderam **25, com 0 erros e 1 `None`**, e o `None` era honesto (`alvo_atual`
+sem alvo selecionado). O banco de estáticos bate base por base.
+
+### A REGRA, para a próxima virada
+
+**Versão nova não é rebase até que se prove que o binário mudou.** A ordem certa,
+da prova mais barata para a mais cara:
+
+1. o `client.exe` mudou no disco? (tamanho e mtime)
+2. a **imagem em memória** do processo novo é igual à de um antigo, em fatias?
+3. só se o código diferir, procurar rebase — aí sim a matriz `±0x60`.
+
+Inverter essa ordem custa uma varredura inteira para descobrir que nada mudou.
+
+### Dois achados de passagem
+
+- **A comparação de bytes detecta o patch do PetBug de fora**, sem ler o
+  `petbug.py`: os dois sítios (`0x009CFA0B` "guardar" e `0x00457A02` "limpar")
+  aparecem com **seis NOPs** no cliente patcheado e originais nos demais. Isso dá
+  um conferidor independente da própria ferramenta que aplica o patch.
+- **Um `TARGET_ID = 0` não é ponteiro quebrado.** Oito TABs seguidos deram zero
+  na conta recém-logada, e a leitura errada seria "a cadeia do alvo morreu na
+  6401". O array de entidades mostrou o porquê: 15 slots com `Senior PK Arena`,
+  `Villager of White Bear Village`, `Auctioneer` e outros jogadores — a conta
+  estava numa **cidade**, e TAB não seleciona NPC. **Antes de declarar ponteiro
+  morto, confira se o ESTÍMULO existia.**
