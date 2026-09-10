@@ -129,18 +129,63 @@ def conferir(pid: int) -> dict[str, str]:
         k32.CloseHandle(handle)
 
 
-def main() -> int:
+def _escolher(pids: list[int]) -> list[int]:
+    """Qual cliente conferir. Devolve a lista a olhar.
+
+    O PID SOZINHO NÃO DIZ QUAL CONTA É -- todos os processos se chamam
+    `client.exe`. Por isso a lista traz o título da janela
+    (`core/janelas.titulo_do_pid`), que é o nome do personagem logado.
+
+    Enter confere TODOS: quem só quer o retrato geral não precisa escolher nada.
+    """
+    from ..core.janelas import titulo_do_pid
+
+    print("Clientes abertos:\n")
+    for i, pid in enumerate(pids, start=1):
+        print(f"   [{i}]  PID {pid:<8} {titulo_do_pid(pid)}")
+    print()
+    try:
+        resposta = input("Número da lista, PID, ou Enter para TODOS: ").strip()
+    except EOFError:
+        return pids
+    if not resposta:
+        return pids
+    if resposta.isdigit():
+        numero = int(resposta)
+        if 1 <= numero <= len(pids):
+            return [pids[numero - 1]]
+        if numero in pids:
+            return [numero]
+    print(f"\n{resposta!r} não é um número da lista nem um PID aberto; "
+          "conferindo TODOS.")
+    return pids
+
+
+def main(argv: list[str] | None = None) -> int:
+    import sys
+
+    argv = sys.argv[1:] if argv is None else argv
     pids = clientes_abertos()
     if not pids:
         print("Nenhum client.exe aberto.")
         return 1
-    print(f"{len(pids)} cliente(s) aberto(s).\n")
+
+    # `--pid N` pula a pergunta -- para quem chama isto de um script.
+    if "--pid" in argv:
+        escolhido = int(argv[argv.index("--pid") + 1])
+        pids = [escolhido] if escolhido in pids else pids
+    elif len(pids) > 1:
+        pids = _escolher(pids)
+
+    print(f"\nConferindo {len(pids)} cliente(s).\n")
     # "NÃO PUDE LER" e "LI E NÃO ESTÁ LÁ" são coisas diferentes, e misturá-las
     # daria a resposta errada para a pergunta que traz alguém aqui.
     sem_leitura = 0
     sem_patch = 0
+    from ..core.janelas import titulo_do_pid
+
     for pid in pids:
-        print(f"PID {pid}")
+        print(f"PID {pid}   {titulo_do_pid(pid)}")
         leitura = conferir(pid)
         if "__erro__" in leitura:
             print(f"   {leitura['__erro__']}")

@@ -21,8 +21,12 @@ echo ============================================================
 echo   O PET BUG ESTA APLICADO AGORA?
 echo ============================================================
 echo.
-echo Le os dois sitios do client.exe em cada cliente aberto e diz
-echo o que esta la NESTE instante. SO LE -- nunca escreve.
+echo Le os dois sitios do client.exe e diz o que esta la NESTE
+echo instante. SO LE -- nunca escreve.
+echo.
+echo Ele lista os clientes abertos com o nome do personagem: digite
+echo o numero (ou o PID) da conta que voce quer conferir, ou Enter
+echo para conferir todas.
 echo.
 echo Lembre: o patch e aplicado no LOGIN, e so em conta com farm
 echo de cave (BC ou HH) ligado. Conta em modo APP nao recebe.
