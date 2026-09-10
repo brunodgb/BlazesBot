@@ -2,7 +2,7 @@
 
 ESTE TESTE EXISTE PORQUE OS WAYPOINTS SÃO O ÚNICO ATIVO INSUBSTITUÍVEL da
 integração. Combate, navegação e venda o BlazesBot já sabe fazer melhor que o bot
-original; os 66 pontos medidos passo a passo, não -- remedir custa horas de jogo.
+original; os pontos medidos passo a passo, não -- remedir custa horas de jogo.
 
 Então aqui se trava o que não pode mudar por acidente: a contagem, a ordem, a
 continuidade dos trechos e o clique calibrado de cada ponto. Também se trava a
@@ -29,9 +29,15 @@ from blazesbot.core.rota import (
 # 07/09/2026. Antes vinha do `hh.lua` (22/16/12/15/1); o que mudou foi o trecho
 # 4, e o usuário disse: *"agora esses vão ser os waypoints oficiais"*.
 #
-# O TRECHO 3 GANHOU (420,136) em 08/09/2026, no começo dele: *"ali é uma area
-# estreita entao e importante ter cuidado com a precisão, eu adicionei pq
-# justamente ele acabou indo para o lugar errado em um dos testes"*.
+# O TRECHO 3 GANHOU (420,136) em 08/09/2026 e o DEVOLVEU em 10/09/2026 -- por
+# isso ele tem 12 e não 13. O ponto entrou porque *"ali é uma area estreita
+# entao e importante ter cuidado com a precisão"*, e saiu depois de rodar:
+# *"pelo visto está melhor sem ele, por isso eu comentei manualmente"*.
+#
+# A GEOMETRIA EXPLICA OS DOIS: ele ficava a 6,3 unidades de (426,138), menos que
+# a tolerância de chegada (7), então os dois eram dados por alcançados na mesma
+# leitura -- um dos dois sempre foi decoração. Ele continua no mapa, comentado,
+# como registro de ponto medido.
 #
 # O QUE ELE MUDOU NO TRECHO 4, e por que importa saber: saiu a ESPORA -- o par
 # (510,126)/(509,93), que descia 19 unidades para depois subir 33 --, e entrou
@@ -42,7 +48,7 @@ from blazesbot.core.rota import (
 CONTAGEM_OFICIAL = {
     "CAMINHO_ATE_O_BOSS_1": 22,
     "CAMINHO_ATE_O_BOSS_2": 16,
-    "CAMINHO_ATE_O_BOSS_3": 13,
+    "CAMINHO_ATE_O_BOSS_3": 12,
     "CAMINHO_ATE_O_BOSS_4": 14,
     "CAMINHO_ATE_A_SAIDA": 1,
 }
@@ -55,12 +61,12 @@ def test_cada_trecho_tem_a_contagem_medida(nome, esperado):
 
 
 def test_o_total_da_rota_oficial():
-    """66 depois de (420,136) entrar no trecho 3 em 08/09/2026.
+    """65 desde que (420,136) voltou a sair do trecho 3, em 10/09/2026.
 
     O número existe para uma coisa só: waypoint que desaparece por acidente não
     dá erro em lugar nenhum, o bot apenas passa a bater na parede.
     """
-    assert len(m.TODOS_OS_WAYPOINTS) == sum(CONTAGEM_OFICIAL.values()) == 66
+    assert len(m.TODOS_OS_WAYPOINTS) == sum(CONTAGEM_OFICIAL.values()) == 65
 
 
 def test_todo_waypoint_tem_o_clique_calibrado():
@@ -524,13 +530,12 @@ def test_nenhum_par_da_rota_e_uma_ESPORA_sem_aviso():
     ]
     assert apertados == [
         ("Fa-Yuan", (209, 182), (207, 186)),
-        # (420,136) entrou em 08/09/2026 para VIRAR A DIREÇÃO do clique na área
-        # estreita da entrada do trecho 3, e ficou a 6,3 unidades do waypoint
-        # seguinte -- menos que a tolerância de chegada. A consequência é que os
-        # dois são dados por alcançados na MESMA leitura: o personagem anda até
-        # (420,136) e o clique seguinte já sai para (429,152), sem passar por
-        # (426,138). O ponto novo faz o serviço; o antigo virou decoração.
-        ("Green Robmaster", (420, 136), (426, 138)),
+        # O PAR DO TRECHO 3 SAIU EM 10/09/2026, e a saída dele é a conclusão
+        # deste inventário: (420,136) ficava a 6,3 unidades de (426,138), menos
+        # que a tolerância de chegada, então os dois eram dados por alcançados na
+        # mesma leitura e um deles sempre foi decoração. O usuário comentou o
+        # ponto depois de rodar -- *"pelo visto está melhor sem ele"* -- e o
+        # trecho voltou a ter só waypoints que o bot de fato persegue.
     ], (
         f"o inventário de pares apertados mudou: {apertados}")
 

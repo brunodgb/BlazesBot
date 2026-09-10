@@ -131,8 +131,8 @@ class KeyBinds:
     #
     # Quem usa: `bot/hh/fada.py`, no modo HH+Fada -- a curandeira clica no
     # retrato do líder e aperta isto, e o JOGO caminha por ela. É o que o bot em
-    # Lua faz (`keys.follow = "p"`), e é muito melhor que a Fada refazer os 66
-    # waypoints por conta própria: seguir não tem como sair da rota.
+    # Lua faz (`keys.follow = "p"`), e é muito melhor que a Fada refazer os
+    # waypoints da cave por conta própria: seguir não tem como sair da rota.
     follow: str = ""
     next_target: str = "TAB"
     inventory: str = "I"

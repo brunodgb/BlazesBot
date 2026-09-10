@@ -283,28 +283,28 @@ ligar código não testado.
 | `INTERVALO_DE_REAFIRMAR_O_FOLLOW` | `4.0` | [blazesbot/bot/hh/fada.py:80](blazesbot/bot/hh/fada.py#L80) | — | De quanto em quanto tempo reafirmar a tecla de seguir. |
 | `PASSO_DO_ACOMPANHAMENTO` | `0.3` | [blazesbot/bot/hh/fada.py:73](blazesbot/bot/hh/fada.py#L73) | — | Quanto esperar entre duas leituras enquanto acompanha o líder. |
 | `PASSO_ESPERANDO_O_LIDER` | `0.5` | [blazesbot/bot/hh/fada.py:87](blazesbot/bot/hh/fada.py#L87) | — | — |
-| `AREA_DA_SAIDA` | `'Happiness Hall Main Hall'` | [blazesbot/bot/hh/mapa_hh.py:121](blazesbot/bot/hh/mapa_hh.py#L121) | — | — |
-| `AREA_INTERNA_NAO_MEDIDA` | `'HH (área não medida)'` | [blazesbot/bot/hh/mapa_hh.py:96](blazesbot/bot/hh/mapa_hh.py#L96) | — | Marcador para a área que ainda não foi medida. Ver o cabeçalho do módulo: é |
-| `BOSS_1` | `'Fa-Yuan'` | [blazesbot/bot/hh/mapa_hh.py:217](blazesbot/bot/hh/mapa_hh.py#L217) | bosses.py | Os quatro bosses |
-| `BOSS_2` | `'Dupla'` | [blazesbot/bot/hh/mapa_hh.py:218](blazesbot/bot/hh/mapa_hh.py#L218) | bosses.py | — |
-| `BOSS_3` | `'Green Robmaster'` | [blazesbot/bot/hh/mapa_hh.py:219](blazesbot/bot/hh/mapa_hh.py#L219) | bosses.py | — |
-| `BOSS_4` | `'Purple'` | [blazesbot/bot/hh/mapa_hh.py:220](blazesbot/bot/hh/mapa_hh.py#L220) | bosses.py | — |
-| `DESTINO_DO_TRANSPORTE` | `'West Suburb of Stone City'` | [blazesbot/bot/hh/mapa_hh.py:147](blazesbot/bot/hh/mapa_hh.py#L147) | — | O destino no diálogo do Fay. **SÓ APARECE ROLANDO A LISTA ATÉ O FIM.** |
-| `ETAPA_DENTRO` | `'dentro da cave'` | [blazesbot/bot/hh/mapa_hh.py:698](blazesbot/bot/hh/mapa_hh.py#L698) | routine.py | EM QUE ETAPA DA VIAGEM O PERSONAGEM ESTÁ |
-| `ETAPA_LONGE` | `'longe, viagem completa'` | [blazesbot/bot/hh/mapa_hh.py:701](blazesbot/bot/hh/mapa_hh.py#L701) | — | — |
-| `ETAPA_NA_PORTA` | `'na porta da cave'` | [blazesbot/bot/hh/mapa_hh.py:699](blazesbot/bot/hh/mapa_hh.py#L699) | routine.py | — |
-| `ETAPA_NA_VIZINHANCA` | `'já passei do teleporte'` | [blazesbot/bot/hh/mapa_hh.py:700](blazesbot/bot/hh/mapa_hh.py#L700) | routine.py | — |
-| `FOLGA_DA_CAIXA` | `25` | [blazesbot/bot/hh/mapa_hh.py:604](blazesbot/bot/hh/mapa_hh.py#L604) | mapa_bc.py | A caixa que envolve o interior da cave |
-| `GRUPO_DOS_ARREDORES` | `'Outside Black Wind Camp'` | [blazesbot/bot/hh/mapa_hh.py:81](blazesbot/bot/hh/mapa_hh.py#L81) | — | O grupo do painel de arredores naquele lugar. Serve para conferir que o painel |
-| `LUGAR_FORA_DA_HH` | `'Black Wind Camp Dungeon'` | [blazesbot/bot/hh/mapa_hh.py:77](blazesbot/bot/hh/mapa_hh.py#L77) | — | A zona de FORA da cave, lida da tela em 01/09/2026 (o rótulo do canto superior |
-| `NOME_DA_INSTANCIA` | `'Happiness Hall'` | [blazesbot/bot/hh/mapa_hh.py:92](blazesbot/bot/hh/mapa_hh.py#L92) | — | O QUE "HH" SIGNIFICA: **Happiness Hall**. |
-| `NPC_DA_ENTRADA` | `'Elite Axe Monk Soldier'` | [blazesbot/bot/hh/mapa_hh.py:189](blazesbot/bot/hh/mapa_hh.py#L189) | entrada.py | O NPC com quem se fala para entrar na cave. |
-| `NPC_DA_SAIDA` | `'Servant Child'` | [blazesbot/bot/hh/mapa_hh.py:482](blazesbot/bot/hh/mapa_hh.py#L482) | entrada.py, routine.py | Do boss 4 até o ponto de onde se sai da cave pelo NPC. |
-| `PRECISAO_NO_PONTO_DA_ENTRADA` | `1.5` | [blazesbot/bot/hh/mapa_hh.py:186](blazesbot/bot/hh/mapa_hh.py#L186) | entrada.py, routine.py | Folga aceita para considerar que já se está no ponto de conversa. |
-| `PRECISAO_PARA_ABRIR_OS_ARREDORES` | `12` | [blazesbot/bot/hh/mapa_hh.py:670](blazesbot/bot/hh/mapa_hh.py#L670) | entrada.py | Com que precisão é preciso estar em cada um deles. |
-| `RAIO_DA_PORTA` | `30` | [blazesbot/bot/hh/mapa_hh.py:721](blazesbot/bot/hh/mapa_hh.py#L721) | entrada.py | Quão perto da porta ainda conta como "estou nela". |
-| `ROTULO_DE_TELA_DA_CHEGADA` | `'Happiness Hall Dungeon'` | [blazesbot/bot/hh/mapa_hh.py:120](blazesbot/bot/hh/mapa_hh.py#L120) | — | NÃO COMPARE ESTES NOMES COM `Memory.location()` |
-| `TABS_ENTRE_OS_ALVOS_DO_PONTO` | `2` | [blazesbot/bot/hh/mapa_hh.py:303](blazesbot/bot/hh/mapa_hh.py#L303) | — | Quantos TABs dar depois de cada morte, num ponto com mais de um alvo. |
+| `AREA_DA_SAIDA` | `'Happiness Hall Main Hall'` | [blazesbot/bot/hh/mapa_hh.py:122](blazesbot/bot/hh/mapa_hh.py#L122) | — | — |
+| `AREA_INTERNA_NAO_MEDIDA` | `'HH (área não medida)'` | [blazesbot/bot/hh/mapa_hh.py:97](blazesbot/bot/hh/mapa_hh.py#L97) | — | Marcador para a área que ainda não foi medida. Ver o cabeçalho do módulo: é |
+| `BOSS_1` | `'Fa-Yuan'` | [blazesbot/bot/hh/mapa_hh.py:218](blazesbot/bot/hh/mapa_hh.py#L218) | bosses.py | Os quatro bosses |
+| `BOSS_2` | `'Dupla'` | [blazesbot/bot/hh/mapa_hh.py:219](blazesbot/bot/hh/mapa_hh.py#L219) | bosses.py | — |
+| `BOSS_3` | `'Green Robmaster'` | [blazesbot/bot/hh/mapa_hh.py:220](blazesbot/bot/hh/mapa_hh.py#L220) | bosses.py | — |
+| `BOSS_4` | `'Purple'` | [blazesbot/bot/hh/mapa_hh.py:221](blazesbot/bot/hh/mapa_hh.py#L221) | bosses.py | — |
+| `DESTINO_DO_TRANSPORTE` | `'West Suburb of Stone City'` | [blazesbot/bot/hh/mapa_hh.py:148](blazesbot/bot/hh/mapa_hh.py#L148) | — | O destino no diálogo do Fay. **SÓ APARECE ROLANDO A LISTA ATÉ O FIM.** |
+| `ETAPA_DENTRO` | `'dentro da cave'` | [blazesbot/bot/hh/mapa_hh.py:702](blazesbot/bot/hh/mapa_hh.py#L702) | routine.py | EM QUE ETAPA DA VIAGEM O PERSONAGEM ESTÁ |
+| `ETAPA_LONGE` | `'longe, viagem completa'` | [blazesbot/bot/hh/mapa_hh.py:705](blazesbot/bot/hh/mapa_hh.py#L705) | — | — |
+| `ETAPA_NA_PORTA` | `'na porta da cave'` | [blazesbot/bot/hh/mapa_hh.py:703](blazesbot/bot/hh/mapa_hh.py#L703) | routine.py | — |
+| `ETAPA_NA_VIZINHANCA` | `'já passei do teleporte'` | [blazesbot/bot/hh/mapa_hh.py:704](blazesbot/bot/hh/mapa_hh.py#L704) | routine.py | — |
+| `FOLGA_DA_CAIXA` | `25` | [blazesbot/bot/hh/mapa_hh.py:608](blazesbot/bot/hh/mapa_hh.py#L608) | mapa_bc.py | A caixa que envolve o interior da cave |
+| `GRUPO_DOS_ARREDORES` | `'Outside Black Wind Camp'` | [blazesbot/bot/hh/mapa_hh.py:82](blazesbot/bot/hh/mapa_hh.py#L82) | — | O grupo do painel de arredores naquele lugar. Serve para conferir que o painel |
+| `LUGAR_FORA_DA_HH` | `'Black Wind Camp Dungeon'` | [blazesbot/bot/hh/mapa_hh.py:78](blazesbot/bot/hh/mapa_hh.py#L78) | — | A zona de FORA da cave, lida da tela em 01/09/2026 (o rótulo do canto superior |
+| `NOME_DA_INSTANCIA` | `'Happiness Hall'` | [blazesbot/bot/hh/mapa_hh.py:93](blazesbot/bot/hh/mapa_hh.py#L93) | — | O QUE "HH" SIGNIFICA: **Happiness Hall**. |
+| `NPC_DA_ENTRADA` | `'Elite Axe Monk Soldier'` | [blazesbot/bot/hh/mapa_hh.py:190](blazesbot/bot/hh/mapa_hh.py#L190) | entrada.py | O NPC com quem se fala para entrar na cave. |
+| `NPC_DA_SAIDA` | `'Servant Child'` | [blazesbot/bot/hh/mapa_hh.py:486](blazesbot/bot/hh/mapa_hh.py#L486) | entrada.py, routine.py | Do boss 4 até o ponto de onde se sai da cave pelo NPC. |
+| `PRECISAO_NO_PONTO_DA_ENTRADA` | `1.5` | [blazesbot/bot/hh/mapa_hh.py:187](blazesbot/bot/hh/mapa_hh.py#L187) | entrada.py, routine.py | Folga aceita para considerar que já se está no ponto de conversa. |
+| `PRECISAO_PARA_ABRIR_OS_ARREDORES` | `12` | [blazesbot/bot/hh/mapa_hh.py:674](blazesbot/bot/hh/mapa_hh.py#L674) | entrada.py | Com que precisão é preciso estar em cada um deles. |
+| `RAIO_DA_PORTA` | `30` | [blazesbot/bot/hh/mapa_hh.py:725](blazesbot/bot/hh/mapa_hh.py#L725) | entrada.py | Quão perto da porta ainda conta como "estou nela". |
+| `ROTULO_DE_TELA_DA_CHEGADA` | `'Happiness Hall Dungeon'` | [blazesbot/bot/hh/mapa_hh.py:121](blazesbot/bot/hh/mapa_hh.py#L121) | — | NÃO COMPARE ESTES NOMES COM `Memory.location()` |
+| `TABS_ENTRE_OS_ALVOS_DO_PONTO` | `2` | [blazesbot/bot/hh/mapa_hh.py:304](blazesbot/bot/hh/mapa_hh.py#L304) | — | Quantos TABs dar depois de cada morte, num ponto com mais de um alvo. |
 | `ENTRE_TENTATIVAS_DE_ENTRAR` | `0.025` | [blazesbot/bot/hh/routine.py:104](blazesbot/bot/hh/routine.py#L104) | — | Entre uma tentativa de entrada e a seguinte. É o RESTO do orçamento da |
 | `ENTRE_TENTATIVAS_DE_SAIR` | `1.0` | [blazesbot/bot/hh/routine.py:161](blazesbot/bot/hh/routine.py#L161) | — | Entre uma tentativa de sair e a seguinte. Maior que o da entrada porque cada |
 | `LIMIAR_DO_PICK_UP_ALL` | `0.85` | [blazesbot/bot/hh/routine.py:178](blazesbot/bot/hh/routine.py#L178) | routine.py | — |
