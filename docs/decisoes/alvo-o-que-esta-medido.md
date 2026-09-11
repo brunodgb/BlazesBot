@@ -603,3 +603,139 @@ O council resumiu em uma frase: *"sem a cauda, qualquer teto é chute"*.
 Se os estouros continuarem em ~9% **com mob por perto**, 2,5 s basta e o
 diagnóstico está certo. Se aparecerem estouros **sem mob nenhum por perto**, o
 problema não é o teto — é a flag ou a leitura, e aí a decisão muda de lugar.
+
+---
+
+## O ALVO FANTASMA — por que às vezes o HH não vê a morte e não dá TAB (10/09/2026)
+
+Relato do usuário: *"em HH, parece que em algumas vezes não identifica que o
+target morreu e não dá TAB, mas é só às vezes"*. Achado nos logs, com número.
+
+### A base de medição
+
+105.207 linhas da conta de HH em ~23 h de farm, e 12.909 leituras de alvo com
+os campos completos em todos os logs disponíveis.
+
+### O caminho saudável é sólido — não é aí que está o problema
+
+| medida | resultado |
+|---|---|
+| `ALVO MORREU` | 2474 |
+| `Alvo caiu em <pacote>: TAB N de M` | 2460 |
+| morte **com** TAB em seguida | **2468 de 2474** |
+| atraso morte → TAB | mediana **0,157 s**, p90 0,194 s |
+| acima de 2 s | 8 (0,3%) |
+
+As 6 mortes sem TAB não são defeito: quatro são o mesmo episódio de fantasma
+(abaixo) e duas são luta de **destravamento**, onde `0 TAB` é o desenho —
+o log registra `DESTRAVADO … 1 morte(s), 0 TAB` e o bot seguiu certo.
+
+**Então a detecção de morte por memória está certa.** O que falha é *o que ele
+está olhando quando falha*.
+
+### O defeito: o alvo resolvido NÃO É UM MOB
+
+A assinatura, crua do log:
+
+```
+ALVO #461589701  0.0% [----------] (1/1177280513, nv1)  alvo novo
+ALVO #461589701  0.0% [----------] (1/1177280513, nv1)  +0%      (x5, por 9 s)
+```
+
+`max_hp = 1.177.280.513`, nível 1, sem nome. E os `max_hp` absurdos são
+**padrões de bits de float** lidos como inteiro:
+
+| valor lido | em hexa | como float |
+|---|---|---|
+| 1065353216 | `0x3F800000` | **1.0** |
+| 1177280513 | `0x462BE001` | 11000.001 |
+| 1153705192 | `0x44C424E8` | 1569.15 |
+| 1230735792 | `0x495B89B0` | 899227.0 |
+
+Um objeto que guarda float onde um mob guarda int **não é um mob**. O JOIN
+`entidade+0x8 == TARGET_ID` casou com outra estrutura.
+
+**HIPÓTESE QUE EU LEVANTEI E QUE CAIU:** *"o `TARGET_ID` está guardando um
+float"*. O id fantasma `1108344853` decodifica como float `36.0`, o que parecia
+confirmar — mas um id **real** (`1091567835`) decodifica como `9.0`. A
+decodificação não discrimina, e a hipótese não se sustenta. O que está medido é
+o **objeto resolvido**, não a origem do id.
+
+### O custo medido
+
+| medida | resultado |
+|---|---|
+| leituras fantasma | **44** de 6144 (0,7%) |
+| episódios | **25** |
+| tempo total travado | **250,5 s** em ~23 h (0,3%) |
+| pior episódio | **37,4 s** |
+| fase | **`boss` em 100%** dos casos |
+| perto de um `O TAB nao trocou` | 71% |
+
+`O TAB nao trocou o alvo em 350 ms` aparece **300 vezes**, em rajadas de até 4.
+Com um fantasma travado, o HP lido não muda (`+0%`) e o TAB não tem para onde
+ir — que é exatamente *"não identifica que morreu e não dá TAB"* visto de fora.
+
+### A causa: o filtro certo existe e NÃO está no caminho vivo
+
+`Memory.alvo_atual()` valida assim:
+
+```python
+if hp is None or maximo is None or maximo <= 0 or hp < 0 or hp > maximo:
+    return None
+```
+
+É `hp <= max_hp` — **e o próprio projeto já provou que isso não serve.** O
+docstring de `core/entidades.py` diz, de uma medição de 26/08/2026:
+
+> `hp <= max_hp` sozinho aprova qualquer coisa, porque `max_hp` gigante torna a
+> relação trivialmente verdadeira
+
+Com `max_hp = 1177280513` e `hp = 1`, a relação é trivialmente verdadeira e o
+lixo passa. E `TargetHybrid.veredito` confia nisso: *"a struct já foi validada
+por quem leu"*.
+
+O filtro que funciona — `hp_plausivel`, com `HP_MAXIMO_PLAUSIVEL = 5_000_000` —
+existe em `core/entidades.py` desde 26/08/2026, escrito **para este mesmo
+lixo**, e está ligado em **um lugar só**: `investigar_alvo_perdido`, que é
+ferramenta de diagnóstico. O caminho que o combate usa não o alcança.
+
+É o caso da diretiva de promoção outra vez: *quando uma pergunta aparece pela
+segunda vez, o custo não é escrever de novo — é reaprender com o jogo na frente
+o que a primeira versão já sabia.*
+
+### O que a correção resolveria, medido contra o log
+
+| | resultado |
+|---|---|
+| leituras REAIS reprovadas por engano | **0 de 5600** |
+| fantasmas pegos pelo teto de HP | **31 de 44 (70%)** |
+| fantasmas que ainda escapariam | **13** — todos `max_hp = 1` ou `2` |
+
+Custo zero em falso positivo, 70% do defeito. **Não foi aplicado ainda** — o HH
+está rodando e mexer no combate é assunto de sessão própria, com o usuário
+olhando.
+
+### O resíduo, e o número que FALTA medir
+
+Os 13 que escapam têm `max_hp = 1`, e `hp_plausivel(1)` aprova porque 1 está na
+faixa. Medição que sustentaria um piso:
+
+> em **12.909** leituras de alvo, `max_hp` foi **exatamente 100** em 12.823
+> (99,3%), e **todo** valor diferente de 100 era fantasma. `max_hp <= 10`
+> apareceu 23 vezes, **todas** fantasma. Nenhuma leitura real abaixo de 100.
+
+**Mas isso é só HH:** as contas de BC e APP registram alvo em outro formato e
+não entram nesta conta. Antes de virar piso, precisa da medição do outro lado —
+senão é número inventado, e a regra do projeto é que número novo precisa de
+medição.
+
+### Detalhe menor, mas que engana quem lê o log
+
+`#id` no lugar do nome tem **dois** significados, e misturar os dois infla o
+problema por 4×:
+
+| caso | quantas | é defeito? |
+|---|---|---|
+| `#id` com `hp/nível` plausíveis | 163 | **não** — mob real, nome não lido, e o `core/entidades.py` diz de propósito que nome não entra como filtro |
+| `#id` com `hp/nível` absurdos | 44 | **sim** — é o fantasma |
