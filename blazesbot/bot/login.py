@@ -354,9 +354,21 @@ class LoginSequence:
         self._abort_if_stopped()
         self.input.left_click(*ponto)
 
-    def _type(self, texto: str) -> None:
+    def _type(self, texto: str, rotulo: str = "texto") -> int:
+        """Digita pela funcao BLINDADA, e diz quantos caracteres sairam.
+
+        `type_string_safely` e nao `type_text`: o login e o unico lugar do bot
+        que digita SEGREDO, e e onde o vazamento de 09/09/2026 aconteceu. O
+        `rotulo` existe para o log dizer O QUE estava sendo digitado sem nunca
+        dizer O QUE ERA -- senha em arquivo de log e senha vazada.
+
+        NAO ENGOLE `TextoRecusado`: texto recusado significa que o que ia ser
+        digitado nao era o login nem a senha desta conta, e seguir o login com
+        credencial errada queima tentativa no servidor -- o caminho para a
+        conta bloqueada.
+        """
         self._abort_if_stopped()
-        self.input.type_text(texto)
+        return self.input.type_string_safely(texto, rotulo=rotulo)
 
     def _clear(self, vezes: int = 16) -> None:
         self._abort_if_stopped()
@@ -376,7 +388,16 @@ class LoginSequence:
         sleep(0.35)
         self._clear(50)
         sleep(0.15)
-        self._type(self.account.login)
+        # CONFERE QUE SAIU INTEIRO. A digitacao para sozinha quando a janela
+        # deixa de ser confiavel no meio -- e login pela metade nao e login: e
+        # uma tentativa queimada no servidor, com a senha certa indo para um
+        # campo que ja tem lixo. Abortar aqui devolve a conta ao backoff.
+        saiu = self._type(self.account.login, rotulo="login")
+        if saiu != len(self.account.login):
+            raise LoginError(
+                f"o login saiu pela metade ({saiu} de "
+                f"{len(self.account.login)} caracteres): a janela deixou de ser "
+                "confiavel no meio da digitacao")
         sleep(0.3)
 
         self._click(campo_senha)
@@ -387,7 +408,13 @@ class LoginSequence:
         # exatamente o laço infinito que isso já causou uma vez.
         self._clear(16)
         sleep(0.15)
-        self._type(self.account.get_password())
+        senha = self.account.get_password()
+        saiu = self._type(senha, rotulo="senha")
+        if saiu != len(senha):
+            raise LoginError(
+                f"a senha saiu pela metade ({saiu} de {len(senha)} "
+                "caracteres): a janela deixou de ser confiavel no meio da "
+                "digitacao")
         sleep(0.3)
 
         self._click(botao_ok)

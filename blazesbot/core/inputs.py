@@ -37,6 +37,19 @@ from ctypes.wintypes import DWORD, HWND, LPARAM, RECT, WPARAM
 
 from .cronometro import cronometrar
 
+# RE-EXPORT DELIBERADO. A injecao de texto saiu para `injecao_de_texto.py` em
+# 09/09/2026 (ver o cabecalho de la), mas `inputs` e a porta de entrada de tudo
+# que e teclado e mouse -- quebrar este import quebraria chamador que nao tem
+# nada a ver com a mudanca.
+from .injecao_de_texto import (  # noqa: F401
+    LIMITE_DE_BACKSPACES,
+    LIMITE_DE_CARACTERES,
+    TextoRecusado,
+    _e_caractere_de_controle,
+    injetar_texto,
+    limpar_campo,
+)
+
 try:
     from .mouse_shield import MouseShield
     MOUSE_SHIELD_DISPONIVEL = True
@@ -284,6 +297,7 @@ VK_CODES: dict[str, int] = {
 # "não sei" sem que isso vire veredito.
 NOME_DO_PROCESSO_DO_JOGO = "client.exe"
 
+
 # `HWND_BROADCAST`. Mandar mensagem para cá acerta TODA janela de topo do
 # sistema -- é o valor que transformaria um bug de handle em digitação
 # simultânea em tudo que está aberto.
@@ -454,22 +468,41 @@ class Input:
             return "não consegui saber de quem é a janela"
 
         if self._pid_da_janela is None:
-            # PINO TARDIO. O `Input` pode nascer no instante em que a janela
-            # ainda não responde quem é o dono -- no login ela está literalmente
-            # nascendo. Fixar `None` como pino e comparar contra ele deixaria o
-            # bot MUDO para sempre: seria trocar o defeito raro pelo permanente.
+            # =============================================================
+            # PINO TARDIO -- e AQUI ESTAVA O VAZAMENTO DE TECLAS (09/09/2026)
+            # =============================================================
             #
-            # Então o pino se fecha na primeira leitura que der certo, e a
-            # identidade é conferida ANTES de fixar.
+            # O `Input` nasce quando a janela ainda pode não dizer quem é o
+            # dono (no login ela está nascendo), então o pino se fecha depois.
+            #
+            # O ERRO: `nome is None` ("não consegui ler o processo") fechava o
+            # pino MESMO ASSIM e liberava o envio -- e como `_nome_do_processo`
+            # ficava `None` para sempre, a conferência periódica lá embaixo
+            # nunca mais disparava. O `Input` ficava preso a uma janela que
+            # ninguém provou ser o jogo. No laço de relogin, com o cliente morto
+            # no meio do login e o HWND reciclado, isso digitou ~10 caracteres
+            # por tentativa no Bloco de Notas do usuário.
+            #
+            # A CORREÇÃO É UMA DISTINÇÃO, não uma trava nova -- "não sei" tem
+            # dois significados e eles não podem ter o mesmo desfecho:
+            #   ESTABELECER o pino sem prova -> BLOQUEIA (ficar mudo é
+            #       reversível; senha na janela de outro programa não é).
+            #   MANTER um pino JÁ CONFIRMADO -> NÃO bloqueia, como sempre foi:
+            #       `AccessDenied` passageiro não pode emudecer o bot.
+            # Medição e alternativas: `docs/decisoes/sistema.md`.
             nome = _nome_do_processo(dono)
-            if nome is not None and nome != NOME_DO_PROCESSO_DO_JOGO:
+            if nome is None:
+                return ("ainda não consegui CONFIRMAR que a janela é do "
+                        f"{NOME_DO_PROCESSO_DO_JOGO} (pid {dono}); não envio "
+                        "sem prova -- o handle pode ter sido reciclado")
+            if nome != NOME_DO_PROCESSO_DO_JOGO:
                 return (f"a janela é do processo {nome!r}, não de "
                         f"{NOME_DO_PROCESSO_DO_JOGO}")
             self._pid_da_janela = dono
             self._nome_do_processo = nome
             self._conferido_em = time.monotonic()
             _logger.info("Input hwnd=%s: pino fechado no pid %s (%s)",
-                         hwnd, dono, nome or "processo não identificado")
+                         hwnd, dono, nome)
             return None
 
         if dono != self._pid_da_janela:
@@ -659,16 +692,31 @@ class Input:
         self.key_up(name)
         return True
 
+    def type_string_safely(self, text: str, per_char: float = 0.04,
+                           rotulo: str = "texto") -> int:
+        """Digita texto com trava de tamanho, conteudo e destino.
+
+        A REGRA mora em `core/injecao_de_texto.injetar_texto` -- aqui fica so a
+        porta, porque `Input` e o objeto que todo chamador ja tem na mao.
+        """
+        return injetar_texto(self, text, per_char=per_char, rotulo=rotulo)
+
     def type_text(self, text: str, per_char: float = 0.04) -> None:
-        """Digita texto caractere por caractere via WM_CHAR."""
-        for ch in text:
-            self._enviar_tecla(WM_CHAR, ord(ch))
-            time.sleep(jitter(per_char, 0.4))
+        """Digita texto caractere por caractere via WM_CHAR.
+
+        DELEGA para `type_string_safely` -- nao e um segundo caminho. Eram
+        quatro os chamadores desta assinatura quando a trava nasceu, e duplicar
+        a logica daria duas definicoes de "injecao segura" para divergirem na
+        primeira manutencao.
+        """
+        self.type_string_safely(text, per_char=per_char)
 
     def clear_field(self, presses: int = 50) -> None:
-        """Limpa um campo de texto com BACKSPACE repetido."""
-        for _ in range(presses):
-            self.key("BACKSPACE", hold=0.01)
+        """Limpa um campo de texto com BACKSPACE repetido, com teto e parada.
+
+        A REGRA mora em `core/injecao_de_texto.limpar_campo`.
+        """
+        limpar_campo(self, presses)
 
     # -- mouse -------------------------------------------------------------
 

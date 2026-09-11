@@ -10,6 +10,39 @@
 > em `docs/decisoes/<area>.md` — e é lá que mora a alternativa que já reprovou.
 
 ---
+## Injeção de teclado — `docs/decisoes/sistema.md`
+
+> A regra permanente ("nenhuma mensagem sai para uma janela que não é o jogo")
+> está no `CLAUDE.md`. Aqui está o que ela exige na prática.
+
+- **IDENTIDADE SE PROVA, NÃO SE SUPÕE.** O pino da janela só fecha com uma
+  leitura POSITIVA de `client.exe`. "Não consegui ler o processo" **bloqueia** ao
+  estabelecer o pino — nunca houve prova. Custou 918 caracteres digitados no
+  Bloco de Notas do usuário em 09/09/2026.
+- **MAS "NÃO SEI" NÃO REVOGA PINO JÁ CONFIRMADO.** Um `AccessDenied` passageiro
+  não pode trocar um defeito raro (tecla na janela errada) por um permanente
+  (bot mudo). As duas metades são travadas por teste.
+- **TETO DE `LIMITE_DE_CARACTERES` (50) POR INJEÇÃO, e ele RECUSA por exceção.**
+  Truncar mandaria 50 caracteres de lixo e esconderia o defeito. Nada que este
+  bot digita passa de ~20 caracteres.
+- **TETO DE `LIMITE_DE_BACKSPACES` (64) NA LIMPEZA DE CAMPO**, e o BACKSPACE sai
+  pelo NOME resolvido em `VK_CODES` (0x08), nunca por literal.
+- **CARACTERE DE CONTROLE É RECUSADO.** Não existe em login, senha nem nick — é
+  a assinatura de bytes crus de memória chegando como se fossem texto.
+- **A JANELA É RECONFERIDA A CADA CARACTERE**, e a digitação PARA quando ela
+  deixa de ser confiável. É o caso normal do relogin: o cliente cai com a senha
+  sendo digitada.
+- **MODIFICADORES SÃO SOLTOS ANTES DE CADA INJEÇÃO** (uma vez por texto, não por
+  caractere): SHIFT grudado transforma o login inteiro em maiúsculas.
+- **DIGITAÇÃO PARCIAL ABORTA O LOGIN.** Login pela metade não é login: é
+  tentativa queimada no servidor, e tentativa queimada é o caminho para a conta
+  bloqueada.
+- **O LOG NUNCA MOSTRA O TEXTO** — só o rótulo (`login`/`senha`) e o tamanho.
+  Senha em arquivo de log é senha vazada.
+- Travado por `tests/test_injecao_de_texto_blindada.py` (18) e
+  `tests/test_trava_da_janela.py`.
+
+---
 ## Login e relogin — `docs/decisoes/login-e-relogin.md`
 
 > É o ecossistema BASE: **todo** ecossistema, presente e futuro, obedece.

@@ -203,7 +203,11 @@ def test_a_janela_certa_deixa_a_tecla_passar(monkeypatch):
     entrada = _entrada(0x1234, pid_da_janela=100)
     entrada.type_text("abc", per_char=0.0)
 
-    assert len(enviados) == 3
+    # Só os `WM_CHAR`: os três `WM_KEYUP` de SHIFT/CTRL/ALT que
+    # `type_string_safely` manda antes entram na lista desde
+    # 09/09/2026. Ver `test_injecao_de_texto_blindada.py`.
+    chars = [a for a in enviados if a[1] == inputs.WM_CHAR]
+    assert len(chars) == 3
     assert entrada.bloqueadas() == 0
 
 
@@ -267,7 +271,13 @@ def test_com_a_trava_DESLIGADA_a_mensagem_sai(monkeypatch):
 
     _entrada(0x1234, pid_da_janela=100).type_text("abc", per_char=0.0)
 
-    assert len(enviados) == 3
+    # OS TRÊS `WM_KEYUP` DOS MODIFICADORES entram na conta desde 09/09/2026:
+    # `type_string_safely` solta SHIFT/CTRL/ALT uma vez antes de digitar, porque
+    # modificador virtualmente preso troca a tecla que chega do outro lado -- um
+    # SHIFT grudado transforma o login inteiro em maiúsculas. O que este teste
+    # mede é o DESTINO, então ele conta só os `WM_CHAR`.
+    chars = [a for a in enviados if a[1] == inputs.WM_CHAR]
+    assert len(chars) == 3
 
 
 @pytest.mark.parametrize("metodo", ["_enviar_tecla", "_click", "set_title"])

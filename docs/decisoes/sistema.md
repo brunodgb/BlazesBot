@@ -348,3 +348,88 @@ varreduras simultâneas.
 | Thread permanente com `sleep` | Uma thread viva o tempo todo para acordar de hora em hora. A de vida curta faz o mesmo e morre. |
 | Retenção por BYTES | Dia é a unidade em que se pensa sobre isto ("o que aconteceu ontem à noite"). Byte não é — e o volume por dia varia 10× conforme o que está sendo depurado. |
 | Manter 7 dias e filtrar por data na consulta | Depende de quem consulta lembrar de filtrar. Foi exatamente o que não aconteceu na auditoria que errou. |
+
+## 09/09/2026 — 918 caracteres de lixo digitados no Bloco de Notas
+
+Relato: durante um laço de relogin, o bot foi gerando uma string de letras
+minúsculas aleatórias, ~10 caracteres por tentativa de login. O usuário a
+capturou porque **o Bloco de Notas estava em foco e recebeu tudo**:
+
+```
+dcgspkjpxfeublmmumyvpcbbwjvkdrqwzzxsvcfgtmgiviiuzlvsqiuekskvyoggokjodgnuoc... (918)
+```
+
+### O que a evidência dizia antes de qualquer leitura de código
+
+Três fatos, e cada um elimina uma família inteira de hipóteses:
+
+1. **Chegou ao Bloco de Notas.** `PostMessageW` e `SendMessageW` entregam a
+   **um** `hwnd`. Para o caractere aparecer noutro programa, o `hwnd` que o bot
+   usava **era** do outro programa. Isso aponta direto para o handle reciclado —
+   o defeito que a trava de janela existe para impedir.
+2. **~10 caracteres por tentativa**, acumulando. 918 / 10 ≈ 92 tentativas, que a
+   ~19 s por relogin dá ~29 min. Bate com o laço observado.
+3. **Estatística da string:** 918 caracteres, alfabeto `b`–`z` (**a letra `a`
+   não aparece uma única vez**), entropia 4.620 bits/char contra log₂(25) =
+   4.644, vogais em 14.2% (texto natural fica perto de 40%), 466 bigramas
+   distintos em 917 — ou seja, **uniforme e sem repetição**.
+
+### O que foi DESCARTADO por medição
+
+* **Gerador de string aleatória no bot.** Não existe: `random.choice`,
+  `ascii_lowercase` e `ascii_letters` não aparecem em lugar nenhum do pacote.
+* **Biblioteca de entrada global.** `pyautogui`, `keyboard`, `pynput` e
+  `pydirectinput` **não estão nem instalados**, e não há `keybd_event` nem
+  `SendInput` em `blazesbot/`. `MODO_DE_TECLA = "postmessage"`.
+* **Laço de limpeza mapeado na tecla errada.** `clear_field` sempre resolveu
+  `"BACKSPACE"` por `VK_CODES` → `0x08`. Nunca digitou letra.
+* **Programa vizinho.** O `T-R0XX Auto Login` também usa `SendMessage`
+  direcionado (`keyboard.write` → `WM_CHAR` no `hwnd`), e não estava em
+  execução. `petbug.ATIVADO = False` barra o patcher de terceiro.
+
+### A causa: o PINO TARDIO liberava sem prova
+
+Em `Input._motivo_para_nao_enviar`:
+
+```python
+nome = _nome_do_processo(dono)
+if nome is not None and nome != NOME_DO_PROCESSO_DO_JOGO:
+    return "a janela é do processo X, não de client.exe"
+self._pid_da_janela = dono          # fecha o pino
+return None                         # e LIBERA o envio
+```
+
+`nome is None` significa **"não consegui ler o processo"**, e caía no caminho do
+`None` de retorno — ou seja, **liberava**. Pior: `self._nome_do_processo` ficava
+`None` para sempre, e a conferência periódica mais abaixo é
+`if self._nome_do_processo is not None and != ...` — **nunca mais disparava**. O
+`Input` ficava permanentemente preso a uma janela que ninguém provou ser o jogo.
+
+No laço de relogin isso é o cenário exato: o cliente morre no meio do login, o
+Windows recicla o valor do HWND, o `Input` seguinte nasce com um handle que
+agora é de outra janela — e a leitura do processo falha justamente porque tudo
+está mudando ao mesmo tempo.
+
+### A correção é uma DISTINÇÃO, não uma trava nova
+
+"Não sei" tem dois significados, e eles não podem ter o mesmo desfecho:
+
+| momento | "não sei" | por quê |
+|---|---|---|
+| **ESTABELECER** o pino | **BLOQUEIA** | nunca houve prova de que é o jogo; ficar mudo alguns ciclos é reversível, senha no programa errado não é |
+| **MANTER** um pino já confirmado | **não bloqueia** | comportamento original, intacto: `AccessDenied` passageiro não pode emudecer o bot |
+
+A segunda linha é `core/injecao_de_texto.py`, que confere **conteúdo** onde a
+trava confere **destino**: teto de 50 caracteres (recusa por exceção, não
+trunca), recusa de caractere de controle, e reconferência da janela **a cada
+caractere** — antes, `_enviar_tecla` barrava mensagem por mensagem em silêncio
+e o laço ia até o fim.
+
+### O que continua sem explicação, e está registrado de propósito
+
+**Por que as letras eram aleatórias e por que o `a` nunca aparece.** O login
+digita duas strings fixas (`account.login` e `get_password()`); texto repetido
+daria bigramas repetidos, e a medição mostra o contrário. A trava fechada
+impede o vazamento independentemente da resposta, e a próxima ocorrência agora
+deixa rastro: a recusa sai no log com o rótulo (`login`/`senha`) e o tamanho,
+sem nunca mostrar o texto.
