@@ -107,7 +107,28 @@ SEGUNDOS_POR_TENTATIVA_DE_ENCOSTAR = 1.8
 # esperar cego.
 #
 # Entrou, sai na hora. Não entrou, a janela fecha e a tentativa seguinte começa.
-TETO_DA_ENTRADA = 0.25
+#
+# =========================================================================
+# 0,25 -> 0,12 EM 11/09/2026, E O NÚMERO SAIU DO LOG
+# =========================================================================
+#
+# Medido nos logs de dev de 09 e 10/09/2026, 221 entradas confirmadas aqui:
+#
+#     p50 ......    0 ms        acima de 100 ms ...  16 (7,2%)
+#     p90 ......    0 ms        acima de 250 ms ...  12 (5,4%)
+#     p99 ....... 288 ms        máximo ........... 294 ms
+#
+# NOVE EM DEZ CONFIRMAM EM ZERO -- quando a entrada pega, o personagem já está
+# dentro na primeira leitura, porque a troca de mapa aconteceu durante os
+# cliques. O que o teto de 0,25 s fazia era pagar a janela INTEIRA nas 61.928
+# tentativas que não entraram: **4,3 horas de espera** na amostra.
+#
+# E NADA SE PERDE COM O CORTE. As entradas que levam mais de 0,12 s caem no
+# ramo "Já estou dentro da HH" no topo da volta seguinte (`_do_entrar`), que lê
+# a posição antes de clicar -- caminho que já existia e que disparou 12 vezes na
+# mesma amostra, com log próprio. O que se ganha é ~20% mais tentativas por
+# minuto numa vaga que é disputada com outros jogadores.
+TETO_DA_ENTRADA = 0.12
 PASSO_DA_ESPERA_DA_ENTRADA = 0.04
 
 # A CONFIRMAÇÃO DA SAÍDA é mais generosa que a da entrada, e de propósito.

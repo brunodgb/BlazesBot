@@ -1994,3 +1994,43 @@ Ele segurava a tecla durante o par de cliques de NPC. Com a tecla presa para
 sempre não há o que segurar, e o interruptor (`SEGURAR_ATIVADO = False`) já o
 mantinha inerte desde 19/08/2026. Ficou no código, testado — é candidato a
 remoção, não parte desta mudança.
+
+## 32. A JANELA DE CONFIRMAÇÃO DA ENTRADA: 0,25 → 0,12 (11/09/2026)
+
+### O que o log disse
+
+Dos logs de dev de 09 e 10/09/2026, **221 entradas confirmadas** por
+`esperar_entrar`:
+
+| p50 | p90 | p99 | máximo | acima de 100 ms | acima de 250 ms |
+|---|---|---|---|---|---|
+| 0 ms | 0 ms | 288 ms | 294 ms | 16 (7,2%) | 12 (5,4%) |
+
+**Nove em dez confirmam em ZERO ms.** Quando a entrada pega, o personagem já
+está dentro na primeira leitura de posição — a troca de mapa aconteceu durante
+os cliques, antes de a janela começar a contar.
+
+E o contrapeso: **61.928 tentativas não entraram** e pagaram a janela inteira.
+A 0,25 s cada, são **4,3 horas de espera** na amostra, num ponto em que a vaga
+está sendo disputada com outros jogadores.
+
+### Por que nada se perde
+
+As entradas que levam mais de 0,12 s caem no ramo *"Já estou dentro da HH"* no
+topo da volta seguinte de `_do_entrar`, que lê a posição ANTES de clicar. Não é
+caminho teórico: ele disparou **12 vezes** na mesma amostra, com log próprio
+dizendo em que tentativa e depois de quantos segundos de disputa.
+
+O preço do corte é descobrir ~7% das entradas uma volta depois (~0,6 s); o ganho
+é ~20% mais tentativas por minuto enquanto a vaga está em disputa.
+
+### O BC ficou em 0,25, e isso é deliberado
+
+`bc/routine.JANELA_DE_RECONHECIMENTO` não é medição, é **orçamento**: seis
+tentativas em dez segundos, 1,06 s de ação mecânica medida, sobram 0,60 s para
+reconhecer e reagir. Não há amostra do BC nestes logs (ele quase não rodou), e
+encurtar por simetria seria arredondamento. Quem medir lá pode encurtar lá.
+
+`tests/test_rotina_da_hh.test_a_confirmacao_de_uma_tentativa_e_CURTA` deixou de
+exigir igualdade e passou a exigir a **desigualdade**: a janela da HH nunca pode
+ficar maior que a do BC.

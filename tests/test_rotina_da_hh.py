@@ -572,13 +572,24 @@ def test_o_intervalo_entre_tentativas_e_o_mesmo_do_BC():
 def test_a_confirmacao_de_uma_tentativa_e_CURTA():
     """Eram 2,0 s, e enquanto o bot esperava ninguém estava tentando de novo.
 
-    A janela do BC é 0,25 s porque perguntar é uma leitura de memória: dá para
-    perguntar várias vezes dentro dela em vez de esperar cego.
+    A JANELA DA HH DESCOLOU DA DO BC EM 11/09/2026, e o motivo é que ela passou
+    a ter medição própria. Nos logs de 09 e 10/09, das 221 entradas confirmadas
+    aqui, 9 em 10 confirmam em ZERO ms -- quando a entrada pega, a troca de mapa
+    já aconteceu durante os cliques. As 61.928 que não entraram pagavam a janela
+    inteira: 4,3 horas na amostra.
+
+    O BC MANTÉM 0,25 s porque lá o número não é medido, é ORÇAMENTO: seis
+    tentativas em dez segundos, 1,06 s de ação mecânica, sobram 0,60 s para
+    reconhecer e reagir (ver `bc/routine.JANELA_DE_RECONHECIMENTO`). Quem medir
+    o BC pode encurtar lá também; até então, o que vale é a desigualdade.
     """
     from blazesbot.bot.bc import routine as bc
     from blazesbot.bot.hh import entrada
 
-    assert entrada.TETO_DA_ENTRADA == bc.JANELA_DE_RECONHECIMENTO
+    assert entrada.TETO_DA_ENTRADA == 0.12, (
+        "o teto da HH é MEDIDO; mudá-lo pede log novo, não arredondamento")
+    assert entrada.TETO_DA_ENTRADA <= bc.JANELA_DE_RECONHECIMENTO, (
+        "a janela da HH ficou MAIOR que a do BC, que é orçamento e não medição")
     assert entrada.PASSO_DA_ESPERA_DA_ENTRADA == bc.PASSO_DO_RECONHECIMENTO
 
 
