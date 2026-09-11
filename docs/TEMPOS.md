@@ -292,11 +292,11 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | `TETO_DO_FEITICO` | 8 s | *novo* | TETO | [fada_reviver.py:77](blazesbot/bot/fada_reviver.py#L77) | `_esperar_levantar` | Quanto se espera o feitiço pegar depois de apertar a tecla. |
 | `PASSO_DA_ESPERA` | 0.2 s | *novo* | PASSO | [fada_reviver.py:80](blazesbot/bot/fada_reviver.py#L80) | `reviver, _esperar_levantar` | Passo entre duas perguntas enquanto o feitiço prepara. |
 | `SEGUNDOS_POR_TENTATIVA_DE_ENCOSTAR` | 1.8 s | *novo* | FIXO | [entrada.py:90](blazesbot/bot/hh/entrada.py#L90) | `_ir_ao_ponto_de_abrir_os_arredores, garantir_coordenada_da_entrada (+1)` | Quanto tempo dar a cada tentativa de encostar no ponto exato. |
-| `TETO_DA_ENTRADA` | 0.12 s | *novo* | TETO | [entrada.py:131](blazesbot/bot/hh/entrada.py#L131) | `esperar_entrar` | 0,25 -> 0,12 EM 11/09/2026, E O NÚMERO SAIU DO LOG |
-| `PASSO_DA_ESPERA_DA_ENTRADA` | 0.04 s | *novo* | PASSO | [entrada.py:132](blazesbot/bot/hh/entrada.py#L132) | `esperar_sair, esperar_entrar` |  |
-| `TETO_DA_SAIDA` | 3 s | *novo* | TETO | [entrada.py:141](blazesbot/bot/hh/entrada.py#L141) | `esperar_sair` | A CONFIRMAÇÃO DA SAÍDA é mais generosa que a da entrada, e de propósito. |
-| `TETO_DO_TELEPORTE` | 2 s | *novo* | TETO | [entrada.py:144](blazesbot/bot/hh/entrada.py#L144) | `viajar_para_a_hh, _ir_ao_ponto_de_abrir_os_arredores` | Teto da espera pelo teleporte do Fay. |
-| `PASSO_DA_ESPERA_DO_TELEPORTE` | 0.08 s | *novo* | PASSO | [entrada.py:145](blazesbot/bot/hh/entrada.py#L145) | `viajar_para_a_hh, _ir_ao_ponto_de_abrir_os_arredores` |  |
+| `TETO_DA_ENTRADA` | 0.12 s | *novo* | TETO | [entrada.py:167](blazesbot/bot/hh/entrada.py#L167) | `esperar_entrar` | 0,25 -> 0,12 EM 11/09/2026, E O NÚMERO SAIU DO LOG |
+| `PASSO_DA_ESPERA_DA_ENTRADA` | 0.04 s | *novo* | PASSO | [entrada.py:168](blazesbot/bot/hh/entrada.py#L168) | `esperar_sair, esperar_entrar` |  |
+| `TETO_DA_SAIDA` | 3 s | *novo* | TETO | [entrada.py:177](blazesbot/bot/hh/entrada.py#L177) | `esperar_sair` | A CONFIRMAÇÃO DA SAÍDA é mais generosa que a da entrada, e de propósito. |
+| `TETO_DO_TELEPORTE` | 2 s | *novo* | TETO | [entrada.py:180](blazesbot/bot/hh/entrada.py#L180) | `viajar_para_a_hh, _ir_ao_ponto_de_abrir_os_arredores` | Teto da espera pelo teleporte do Fay. |
+| `PASSO_DA_ESPERA_DO_TELEPORTE` | 0.08 s | *novo* | PASSO | [entrada.py:181](blazesbot/bot/hh/entrada.py#L181) | `viajar_para_a_hh, _ir_ao_ponto_de_abrir_os_arredores` |  |
 | `PASSO_DO_ACOMPANHAMENTO` | 0.3 s | *novo* | PASSO | [fada.py:73](blazesbot/bot/hh/fada.py#L73) | `acompanhar` | Quanto esperar entre duas leituras enquanto acompanha o líder. |
 | `INTERVALO_DE_REAFIRMAR_O_FOLLOW` | 4 s | *novo* | FIXO | [fada.py:80](blazesbot/bot/hh/fada.py#L80) | `acompanhar` | De quanto em quanto tempo reafirmar a tecla de seguir. |
 | `PASSO_ESPERANDO_O_LIDER` | 0.5 s | *novo* | PASSO | [fada.py:87](blazesbot/bot/hh/fada.py#L87) | `esperar_o_lider_entrar` |  |

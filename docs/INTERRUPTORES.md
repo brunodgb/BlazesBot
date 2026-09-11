@@ -82,7 +82,7 @@ ligar código não testado.
 
 ## Números medidos -- tolerância, limiar, teto, cadência
 
-616 constantes, agrupadas por arquivo.
+617 constantes, agrupadas por arquivo.
 
 | constante | valor | onde | quem lê | porquê (resumo) |
 |---|---|---|---|---|
@@ -275,14 +275,15 @@ ligar código não testado.
 | `LINK_ENTRAR_HH` | `'link_enter_hh.png'` | [blazesbot/bot/hh/entrada.py:65](blazesbot/bot/hh/entrada.py#L65) | — | — |
 | `LINK_SAIR_HH` | `'link_leave_hh.png'` | [blazesbot/bot/hh/entrada.py:67](blazesbot/bot/hh/entrada.py#L67) | — | O link do diálogo do `Servant Child`, DENTRO da cave. |
 | `LINK_WEST_SUBURB` | `'link_west_suburb.png'` | [blazesbot/bot/hh/entrada.py:64](blazesbot/bot/hh/entrada.py#L64) | — | Links dentro dos diálogos, localizados por imagem. |
-| `PASSO_DA_ESPERA_DA_ENTRADA` | `0.04` | [blazesbot/bot/hh/entrada.py:132](blazesbot/bot/hh/entrada.py#L132) | — | — |
-| `PASSO_DA_ESPERA_DO_TELEPORTE` | `0.08` | [blazesbot/bot/hh/entrada.py:145](blazesbot/bot/hh/entrada.py#L145) | ui_service.py, vendedor.py | — |
+| `MIRA_NO_PONTO_DA_SAIDA` | `0.9` | [blazesbot/bot/hh/entrada.py:126](blazesbot/bot/hh/entrada.py#L126) | — | ONDE A CAMINHADA DA SAÍDA PARA -- e é um número DIFERENTE do de clicar |
+| `PASSO_DA_ESPERA_DA_ENTRADA` | `0.04` | [blazesbot/bot/hh/entrada.py:168](blazesbot/bot/hh/entrada.py#L168) | — | — |
+| `PASSO_DA_ESPERA_DO_TELEPORTE` | `0.08` | [blazesbot/bot/hh/entrada.py:181](blazesbot/bot/hh/entrada.py#L181) | ui_service.py, vendedor.py | — |
 | `SEGUNDOS_POR_TENTATIVA_DE_ENCOSTAR` | `1.8` | [blazesbot/bot/hh/entrada.py:90](blazesbot/bot/hh/entrada.py#L90) | routine.py | Quanto tempo dar a cada tentativa de encostar no ponto exato. |
 | `TENTATIVAS_DE_CHEGAR_PELA_MUTUAL` | `3` | [blazesbot/bot/hh/entrada.py:83](blazesbot/bot/hh/entrada.py#L83) | — | Quantas vezes reabrir o painel de arredores e reclicar no NPC da porta. |
 | `TENTATIVAS_DE_POSICIONAR` | `3` | [blazesbot/bot/hh/entrada.py:72](blazesbot/bot/hh/entrada.py#L72) | — | Quantas vezes refazer a caminhada pelo painel de arredores antes de desistir |
-| `TETO_DA_ENTRADA` | `0.12` | [blazesbot/bot/hh/entrada.py:131](blazesbot/bot/hh/entrada.py#L131) | routine.py | 0,25 -> 0,12 EM 11/09/2026, E O NÚMERO SAIU DO LOG |
-| `TETO_DA_SAIDA` | `3.0` | [blazesbot/bot/hh/entrada.py:141](blazesbot/bot/hh/entrada.py#L141) | — | A CONFIRMAÇÃO DA SAÍDA é mais generosa que a da entrada, e de propósito. |
-| `TETO_DO_TELEPORTE` | `2.0` | [blazesbot/bot/hh/entrada.py:144](blazesbot/bot/hh/entrada.py#L144) | — | Teto da espera pelo teleporte do Fay. |
+| `TETO_DA_ENTRADA` | `0.12` | [blazesbot/bot/hh/entrada.py:167](blazesbot/bot/hh/entrada.py#L167) | routine.py | 0,25 -> 0,12 EM 11/09/2026, E O NÚMERO SAIU DO LOG |
+| `TETO_DA_SAIDA` | `3.0` | [blazesbot/bot/hh/entrada.py:177](blazesbot/bot/hh/entrada.py#L177) | — | A CONFIRMAÇÃO DA SAÍDA é mais generosa que a da entrada, e de propósito. |
+| `TETO_DO_TELEPORTE` | `2.0` | [blazesbot/bot/hh/entrada.py:180](blazesbot/bot/hh/entrada.py#L180) | — | Teto da espera pelo teleporte do Fay. |
 | `INTERVALO_DE_REAFIRMAR_O_FOLLOW` | `4.0` | [blazesbot/bot/hh/fada.py:80](blazesbot/bot/hh/fada.py#L80) | — | De quanto em quanto tempo reafirmar a tecla de seguir. |
 | `PASSO_DO_ACOMPANHAMENTO` | `0.3` | [blazesbot/bot/hh/fada.py:73](blazesbot/bot/hh/fada.py#L73) | — | Quanto esperar entre duas leituras enquanto acompanha o líder. |
 | `PASSO_ESPERANDO_O_LIDER` | `0.5` | [blazesbot/bot/hh/fada.py:87](blazesbot/bot/hh/fada.py#L87) | — | — |

@@ -2034,3 +2034,63 @@ encurtar por simetria seria arredondamento. Quem medir lá pode encurtar lá.
 `tests/test_rotina_da_hh.test_a_confirmacao_de_uma_tentativa_e_CURTA` deixou de
 exigir igualdade e passou a exigir a **desigualdade**: a janela da HH nunca pode
 ficar maior que a do BC.
+
+
+## §32 — A saída da HH mira o ponto EXATO (11/09/2026)
+
+> *"No waypoint de saída da HH está falhando às vezes, no caso nem sempre está
+> abrindo o diálogo com o NPC, pois está variando a posição, é importante
+> aumentar a precisão do X e Y do último waypoint pois assim ajuda a garantir
+> que vai sair da cave, isso é um ponto crucial não ficar travado."*
+
+O usuário estava certo, e a medição dá o tamanho do efeito. Cruzando a posição
+em que a perna fina da caminhada parou com o desfecho da tentativa, em 122
+saídas do log de produção:
+
+| posição fina | saiu | falhou | % de falha | distância do alvo |
+|---|---|---|---|---|
+| **(527, 124)** | 50 | 0 | **0%** | 0 |
+| (527, 125) | 8 | 1 | 11% | 1,0 |
+| (526, 123) | 1 | 4 | 80% | 1,4 |
+| **(527, 123)** | 8 | 48 | **86%** | 1,0 |
+
+**Uma unidade de folga em Y multiplica a falha por oitenta.** E (527,123) está a
+distância 1,0 do alvo, ou seja DENTRO de `PRECISAO_NO_PONTO_DA_SAIDA` (1,5) --
+a navegação parava ali e declarava chegada.
+
+### O custo, no log
+
+Entre 01h e 04h do dia 11/09 foram **29 runs seguidas sem sair da cave**. Cada
+uma gastou os 5 minutos de `MAX_SEGUNDOS_PARA_SAIR` em 17 ou 18 tentativas de
+~18 s: dez cliques do anel do halo, cada um esperando o teto do desespero
+(1200 ms), todos a partir de (527,123).
+
+Nas horas saudáveis (23h, 00h, 05h-16h) a saída sai na tentativa 1 ou 2 e nunca
+passa da 2 — o que também mostra que **insistir não conserta**: das 116 saídas,
+62 foram na tentativa 1, 52 na 2, e só 2 depois disso (nas tentativas 16 e 17).
+O desfecho é decidido pela posição, não pelo número de tentativas.
+
+### Por que DUAS réguas, e não apertar a que existia
+
+`PRECISAO_NO_PONTO_DA_SAIDA` (1,5) e `MIRA_NO_PONTO_DA_SAIDA` (0,9) respondem
+perguntas diferentes:
+
+  * **"posso clicar daqui?"** — protege do outro NPC que mora por perto (medido
+    em 04/09/2026). Apertar esta régua faria a tentativa ser **pulada** em vez
+    de acontecer de um ponto pior — e de (527,123) e (527,125) ainda saíram 16
+    vezes, contra 0 de não clicar. Fica em 1,5;
+  * **"onde eu quero parar?"** — decide de onde o clique sai, e ali só o ponto
+    medido funciona. Vira 0,9.
+
+`Memory.position()` devolve inteiros, então qualquer valor abaixo de 1,0
+significa a mesma coisa — *o ponto, e nenhum vizinho*. 0,9 deixa um fio de folga
+caso a leitura um dia passe a ter casa decimal.
+
+### Por que isto não é o laço sem saída que a folga evitava
+
+Quem exige o ponto exato é só a CAMINHADA. `encostar_no_ponto` tenta três vezes
+e, se não conseguir, devolve `False` sem derrubar nada: o clique continua
+acontecendo sob a régua de 1,5, como antes. **O pior caso novo é o
+comportamento antigo**; o caso comum é parar no ponto que nunca falhou.
+
+Travado por `tests/test_mira_da_saida_da_hh.py`.

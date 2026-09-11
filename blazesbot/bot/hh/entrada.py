@@ -89,6 +89,42 @@ ENTRE_TENTATIVAS_DA_MUTUAL = 1.0
 # Quanto tempo dar a cada tentativa de encostar no ponto exato.
 SEGUNDOS_POR_TENTATIVA_DE_ENCOSTAR = 1.8
 
+# ===========================================================================
+# ONDE A CAMINHADA DA SAÍDA PARA -- e é um número DIFERENTE do de clicar
+# ===========================================================================
+#
+# `mapa_hh.PRECISAO_NO_PONTO_DA_SAIDA` (1,5) responde *"posso clicar daqui?"* e
+# é generosa porque protege do outro NPC que mora perto. Esta responde *"onde eu
+# quero parar?"*, e a resposta medida é **em cima do ponto**.
+#
+# MEDIDO EM 11/09/2026, cruzando a posição em que a perna fina parou com o
+# desfecho, nas 122 saídas do log de produção:
+#
+#     (527, 124)  saiu 50, falhou  0 --   0%   <- o ponto medido
+#     (527, 125)  saiu  8, falhou  1 --  11%
+#     (526, 123)  saiu  1, falhou  4 --  80%
+#     (527, 123)  saiu  8, falhou 48 --  86%   <- UMA unidade de folga
+#
+# Uma unidade em Y multiplica a falha por oitenta -- e (527,123) está a
+# distância 1,0 do alvo, ou seja DENTRO da folga de 1,5: a navegação parava ali
+# e declarava chegada. Custo no log: 29 runs seguidas sem sair da cave, entre
+# 01h e 04h, cada uma gastando 5 min em 18 tentativas.
+#
+# 0,9 PORQUE A POSIÇÃO É INTEIRA. `Memory.position()` devolve inteiros, então
+# abaixo de 1,0 tudo quer dizer *só o ponto exato*; o fio de folga cobre uma
+# leitura futura com casa decimal.
+#
+# E EXIGIR O PONTO NÃO TRAVA A ROTINA, porque quem exige é só a caminhada:
+# `encostar_no_ponto` desiste em `TENTATIVAS_DE_POSICIONAR` e devolve False sem
+# impedir o clique, que segue sob a régua de 1,5. O pior caso novo é o
+# comportamento antigo.
+#
+# MORA AQUI, e não em `mapa_hh`, porque é irmão dos dois de cima: o mapa diz
+# ONDE o ponto fica, este arquivo diz QUANTO se insiste em parar nele.
+#
+# A tabela inteira e o custo do defeito: `docs/decisoes/hh.md` §32.
+MIRA_NO_PONTO_DA_SAIDA = 0.9
+
 # Teto da espera pela troca de mapa depois de clicar no link de entrar.
 #
 # Mesmo valor do teleporte da Fay na BC, e pelo mesmo motivo: estourar o teto
@@ -497,10 +533,16 @@ class EntradaDaHH(UIDoJogo):
         **outro NPC por perto**, e o clique de longe abre o diálogo DELE. O
         personagem então caminha até esse outro NPC, saindo do único ponto de
         onde o `Servant Child` é alcançável, e a saída deixa de acontecer.
+
+        MIRA NO PONTO EXATO, E NÃO NA FOLGA DE QUEM CLICA: a régua aqui é
+        `MIRA_NO_PONTO_DA_SAIDA` (0,9), porque em 122 saídas medidas parar em
+        (527,124) falhou 0 de 50 vezes e parar em (527,123) -- uma unidade, que
+        cabia na folga de 1,5 -- falhou 48 de 56. Andar essa unidade a mais é o
+        conserto inteiro.
         """
         return self.encostar_no_ponto(
             alvo=mapa_hh.PONTO_DA_SAIDA,
-            precisao=mapa_hh.PRECISAO_NO_PONTO_DA_SAIDA,
+            precisao=MIRA_NO_PONTO_DA_SAIDA,
             tentativas=TENTATIVAS_DE_POSICIONAR,
             segundos_por_tentativa=SEGUNDOS_POR_TENTATIVA_DE_ENCOSTAR,
             o_que=f"falar com o {mapa_hh.NPC_DA_SAIDA}",
