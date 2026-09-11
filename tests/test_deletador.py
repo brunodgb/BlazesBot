@@ -196,7 +196,7 @@ def test_o_teto_corta_entre_exclusoes_e_nao_no_meio(monkeypatch):
     monkeypatch.setattr(d, "regioes_visiveis",
                         lambda ctx, q: [("bolsa", (0, 0, 400, 400))])
     monkeypatch.setattr(d, "_casamentos_nas_regioes",
-                        lambda q, tpl, reg: casamentos())
+                        lambda q, tpl, reg, placar=None: casamentos())
 
     apagados = d.deletar_lixo(ctx, teto_segundos=10.0)
 
@@ -255,7 +255,7 @@ def test_o_teto_de_exclusoes_segura_um_modelo_ruim(monkeypatch):
                         lambda ctx, q: [("bolsa", (0, 0, 400, 400))])
     # 50 casamentos, bem espalhados para não caírem no dedup
     monkeypatch.setattr(d, "_casamentos_nas_regioes",
-                        lambda *a: [(i * 40, 100) for i in range(50)])
+                        lambda *a, **k: [(i * 40, 100) for i in range(50)])
 
     assert d.deletar_lixo(ctx, teto_segundos=999) == d.MAXIMO_DE_EXCLUSOES
 
@@ -274,7 +274,7 @@ def test_o_mesmo_slot_nao_e_apagado_duas_vezes(monkeypatch):
                         lambda ctx, q: [("bolsa", (0, 0, 400, 400))])
     # os dois modelos casam PRATICAMENTE no mesmo pixel: é um item só
     monkeypatch.setattr(d, "_casamentos_nas_regioes",
-                        lambda *a: [(100, 100)])
+                        lambda *a, **k: [(100, 100)])
 
     assert d.deletar_lixo(ctx, teto_segundos=999) == 1
 

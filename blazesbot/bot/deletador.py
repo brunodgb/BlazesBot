@@ -366,11 +366,18 @@ def regioes_visiveis(ctx: BotContext, quadro) -> list[tuple[str, tuple[int, int,
     return achadas
 
 
-def _casamentos_nas_regioes(quadro, template, regioes) -> list[tuple[int, int]]:
+def _casamentos_nas_regioes(quadro, template, regioes,
+                            placar: list[float] | None = None,
+                            ) -> list[tuple[int, int]]:
     """Casa o modelo SÓ dentro das regiões, e devolve em coordenada da janela.
 
     Recortar antes de casar não é só o filtro pedido -- é o que torna a
     varredura barata: ~245x170 por região contra 1024x768 da janela inteira.
+
+    `placar`, se dado, recebe o MAIOR valor de correlação visto em qualquer
+    região -- DE GRAÇA, porque o `matchTemplate` já roda e antes esse número era
+    descartado. É ele que separa "não tem esse item na tela" de "tem, e o modelo
+    quase bate" -- ver `_quem_nao_casou`.
     """
     centros: list[tuple[int, int]] = []
     for _rotulo, (x, y, larg, alt) in regioes:
@@ -381,7 +388,8 @@ def _casamentos_nas_regioes(quadro, template, regioes) -> list[tuple[int, int]]:
                 or recorte.shape[1] < template.shape[1]):
             continue
         for cx, cy in vision.find_all_templates(
-                recorte, template, threshold=LIMIAR_EM_COR, colorido=True):
+                recorte, template, threshold=LIMIAR_EM_COR, colorido=True,
+                placar=placar):
             centros.append((cx + x, cy + y))
     return centros
 
@@ -513,6 +521,8 @@ def deletar_lixo(ctx: BotContext,
     apagados = 0
     verificados = 0
     ja_clicados: list[tuple[int, int]] = []
+    # QUEM NÃO CASOU, e o quanto faltou. Ver `_quem_nao_casou` no fim.
+    nao_casaram: dict[str, float] = {}
 
     for nome in nomes:
         if time.perf_counter() >= limite or apagados >= MAXIMO_DE_EXCLUSOES:
@@ -520,7 +530,11 @@ def deletar_lixo(ctx: BotContext,
         ctx.raise_if_stopped()
         verificados += 1
 
-        centros = _casamentos_nas_regioes(quadro, templates[nome], regioes)
+        pontuacoes: list[float] = []
+        centros = _casamentos_nas_regioes(
+            quadro, templates[nome], regioes, placar=pontuacoes)
+        if not centros and pontuacoes:
+            nao_casaram[nome] = max(pontuacoes)
         for centro in centros:
             if time.perf_counter() >= limite or apagados >= MAXIMO_DE_EXCLUSOES:
                 break
@@ -540,67 +554,44 @@ def deletar_lixo(ctx: BotContext,
         "verificados em %.1f s%s", apagados, verificados, len(templates),
         gasto, " (teto atingido)" if gasto >= teto_segundos else "")
 
-    if apagados == 0:
-        _explicar_o_zero(ctx, quadro, templates, regioes, nomes[:verificados])
+    _quem_nao_casou(ctx, nao_casaram)
     return apagados
 
 
-def _explicar_o_zero(ctx: BotContext, quadro, templates: dict,
-                     regioes: list, verificados: list[str]) -> None:
-    """Diz POR QUE a limpeza não apagou nada. Só roda quando apagou zero.
+def _quem_nao_casou(ctx: BotContext, placar: dict[str, float]) -> None:
+    """Diz quanto FALTOU para cada modelo que não casou nesta passada.
 
     =======================================================================
     POR QUE ISTO EXISTE
     =======================================================================
 
-    "0 item(ns) apagado(s)" tem TRÊS causas com correções opostas, e nenhuma
-    delas aparecia no log:
+    Um modelo que NUNCA casa é invisível: a passada apaga os outros, o log diz
+    "7 item(ns) deletado(s)" e parece tudo certo. Relato do usuário em
+    11/09/2026 sobre o `Trap-Meshwork`: *"agora adicionei de volta, porém não
+    está deletando os itens que são iguais"* -- e o log da época não tinha como
+    responder, porque o diagnóstico só rodava quando a passada apagava ZERO.
 
-      1. não havia lixo na bolsa -- e aí zero é a resposta certa;
-      2. o item estava lá, mas em região não varrida (bolsa extra FECHADA,
-         painel arrastado). Geometria: mexer no limiar não muda nada;
-      3. o item estava numa região varrida e o casamento ficou ABAIXO do
-         limiar. Aí o número diz se falta pouco (refazer o PNG, ou medir um
-         limiar novo) ou muito (o modelo não é daquele item).
+    =======================================================================
+    E O NÚMERO SEPARA DUAS CAUSAS OPOSTAS
+    =======================================================================
 
-    O usuário relatou o caso 2 ou 3 em 08/09/2026: *"mesmo eu limpando o
-    inventario, não deletou o item, sendo que eu fiz o template a partir desse
-    item do inventario"* -- e o `Trap-Meshwork` já havia sido apagado 3 vezes
-    antes, ou seja, o modelo funciona. Sem esta linha não havia como separar as
-    duas hipóteses sem adivinhar.
+      * **0,30-0,60** -- o item não está na tela agora, ou o modelo é de outro
+        item. Nada a consertar no limiar;
+      * **0,80-0,91** -- o item ESTÁ lá e o modelo quase bate: recorte ruim
+        (zoom, fundo diferente, número de pilha por cima). Refazer o PNG.
 
-    CUSTO: um `matchTemplate` por modelo já verificado, e SÓ no caso de zero.
-    Medido antes em 2,86 ms por modelo por região -- uns 90 ms no pior caso, e
-    só quando a limpeza já não tinha nada a fazer.
-
-    NUNCA LEVANTA: é diagnóstico. Falhar aqui não pode custar a run.
+    CUSTO ZERO: o valor vem do `matchTemplate` que já rodava, por `placar`.
+    Antes eu pagava uma segunda varredura para isso (`_explicar_o_zero`), e ela
+    foi embora junto.
     """
-    try:
-        placar: list[tuple[float, str, str]] = []
-        for nome in verificados:
-            tpl = templates.get(nome)
-            if tpl is None:
-                continue
-            for rotulo, (x, y, larg, alt) in regioes:
-                recorte = vision.crop(quadro, (x, y, larg, alt))
-                valor = vision.melhor_casamento(recorte, tpl, colorido=True)
-                if valor is not None:
-                    placar.append((valor, nome, rotulo))
-        if not placar:
-            ctx.log.info(
-                "Nada apagado e nenhum modelo pôde ser medido nas regiões "
-                "visíveis -- o recorte é menor que o modelo, ou não há bolsa.")
-            return
-        placar.sort(reverse=True)
-        melhores = ", ".join(f"{nome} {valor:.2f} ({rotulo})"
-                             for valor, nome, rotulo in placar[:5])
-        ctx.log.info(
-            "Nada apagado. Melhores casamentos (limiar %.2f): %s. Abaixo do "
-            "limiar em TODAS as bolsas visíveis significa uma de duas coisas: "
-            "o item não está nelas, ou o modelo não bate com o ícone de hoje.",
-            LIMIAR_EM_COR, melhores)
-    except Exception as exc:                       # diagnóstico não derruba run
-        ctx.log.debug("Não consegui explicar o zero da limpeza: %s", exc)
+    if not placar:
+        return
+    piores = sorted(placar.items(), key=lambda kv: kv[1], reverse=True)[:6]
+    ctx.log.info(
+        "Não casaram (limiar %.2f): %s. Acima de ~0,80 o item está na tela e o "
+        "recorte é que não bate; abaixo de ~0,60 o item não está lá.",
+        LIMIAR_EM_COR,
+        ", ".join(f"{nome} {valor:.2f}" for nome, valor in piores))
 
 
 def esquecer_a_fila() -> None:

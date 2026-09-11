@@ -540,3 +540,59 @@ validação e interface — está registrado aqui para quem for limpar.
 
 O detalhe de POR QUE a largada vende na porta e não antes está em
 `docs/decisoes/hh.md` §27.
+
+## O deletador diz quanto FALTOU, em toda passada (11/09/2026)
+
+### O que estava invisível
+
+Um modelo que **nunca** casa é mudo: a passada apaga os outros, o log diz
+"7 item(ns) deletado(s)" e parece tudo certo.
+
+Relato do usuário sobre o `Trap-Meshwork`: *"agora adicionei de volta, porém não
+está deletando os itens que são iguais"*. Medido nos logs: dos 15 modelos da HH,
+**treze apagaram** (o `Purple-Cowry` 52 vezes) e **dois nunca apagaram** —
+`Trap-Meshwork` e `Warm-Jade`.
+
+E o diagnóstico que existia (09/09/2026) não respondia: ele só rodava quando a
+passada apagava **zero**, e as passadas da HH estavam apagando de 2 a 9 itens.
+
+### O relatório agora sai sempre, e de graça
+
+`find_all_templates` ganhou `placar`: uma lista opcional que recebe o maior
+valor de correlação visto. **Não custa nada** — o `matchTemplate` já rodava e
+esse número era simplesmente descartado.
+
+Com isso, a versão anterior do diagnóstico (`_explicar_o_zero`, que refazia o
+casamento só para medir) **foi embora**: custava ~90 ms por passada e, pior,
+media *depois*, com a bolsa já diferente daquela em que a decisão foi tomada.
+
+### Como ler o número
+
+| faixa | significado | o que fazer |
+|---|---|---|
+| **0,30–0,60** | o item não está na tela, ou o modelo é de outro item | nada |
+| **0,80–0,91** | o item **está** lá e o recorte quase bate | refazer o PNG |
+
+O limiar é `LIMIAR_EM_COR = 0.92`.
+
+### O que a medição offline já disse sobre os dois modelos
+
+Comparados com os treze que funcionam (22×22, 4 canais opacos, todos):
+
+| modelo | desvio | bordas | nitidez (Laplaciano) |
+|---|---|---|---|
+| média dos 13 que funcionam | — | — | **14 937** |
+| `Purple-Cowry` (52 exclusões) | 43,7 | 33,1% | 3 437 |
+| **`Warm-Jade`** | **30,7** | **20,0%** | **1 067** |
+| **`Trap-Meshwork`** | 49,4 | 39,0% | 4 302 |
+
+**O `Warm-Jade` se explica**: é a menor nitidez de todas, e a imagem confirma —
+o recorte pegou só o **miolo liso** de uma esfera laranja, sem contorno e sem o
+fundo escuro do slot. Correlação precisa de estrutura para travar; gradiente
+suave correlaciona igualmente bem com qualquer outro gradiente suave.
+
+**O `Trap-Meshwork` NÃO se explica por aí**: 4 302 é mais que o `Purple-Cowry`,
+que apaga o tempo todo. Ele também é um recorte do miolo (o interior azul da
+pedra, sem contorno), mas a medida offline não basta para afirmar a causa — ela
+precisa do casamento contra um quadro que contenha o item, e é isso que o
+relatório novo passa a dar na próxima passada.

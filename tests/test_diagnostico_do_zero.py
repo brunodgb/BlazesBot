@@ -33,6 +33,12 @@ apagado 3 vezes -- então adivinhar o limiar teria sido mexer no lugar errado.
 
 Este arquivo protege o instrumento que responde isso, e a regra de que ele é
 **só instrumento**: quem decide apagar continua sendo o limiar.
+
+**ELE MUDOU DE FORMA em 11/09/2026.** Rodava só quando a passada apagava ZERO --
+e isso deixava invisível o caso mais comum: um modelo que nunca casa enquanto os
+outros casam. O relato foi sobre o `Trap-Meshwork`, que nunca apagou nenhuma vez
+enquanto treze irmãos apagavam. Agora o relatório sai em TODA passada, e de
+graça: o valor vem do `matchTemplate` que já rodava.
 """
 from __future__ import annotations
 
@@ -125,20 +131,68 @@ def test_a_medida_NAO_DECIDE_nada():
 # ===========================================================================
 
 
-def test_o_diagnostico_roda_SO_quando_apagou_zero():
+def test_o_relatorio_roda_em_TODA_passada():
+    """Era só quando a passada apagava ZERO -- e isso deixava invisível o caso
+    do usuário em 11/09/2026: o `Trap-Meshwork` nunca apagava, mas os outros
+    apagavam, então a passada nunca dava zero e o diagnóstico nunca rodava.
+    """
     fonte = inspect.getsource(deletador.deletar_lixo)
-    assert "if apagados == 0:" in fonte
-    assert "_explicar_o_zero" in fonte
+
+    assert "_quem_nao_casou(" in fonte
+    assert "if apagados == 0:" not in fonte, (
+        "o relatório voltou a depender de a passada não apagar nada")
 
 
-def test_o_diagnostico_NAO_derruba_a_run():
+def test_o_relatorio_NAO_paga_uma_segunda_varredura():
+    """O valor vem do `matchTemplate` que já rodava, por `placar`.
+
+    A primeira versão (09/09/2026) refazia o casamento de cada modelo só para
+    medir. Custava ~90 ms por passada e, pior, media DEPOIS -- com a bolsa já
+    diferente daquela em que a decisão foi tomada.
+    """
+    fonte = inspect.getsource(deletador)
+
+    assert "melhor_casamento" not in fonte, (
+        "o deletador voltou a refazer o casamento só para medir")
+    assert "placar=pontuacoes" in fonte
+
+
+def test_o_placar_vem_do_matchTemplate_que_ja_rodava():
+    from blazesbot.core.vision import find_all_templates
+
+    # PELO AST: a docstring da função cita `matchTemplate` para explicar de
+    # onde o número vem, e contar no texto acharia a explicação também.
+    arvore = ast.parse(textwrap.dedent(inspect.getsource(find_all_templates)))
+    casamentos = [n for n in ast.walk(arvore) if isinstance(n, ast.Call)
+                  and ast.unparse(n.func) == "cv2.matchTemplate"]
+    placares = [n.lineno for n in ast.walk(arvore) if isinstance(n, ast.Call)
+                and ast.unparse(n.func) == "placar.append"]
+
+    assert len(casamentos) == 1, (
+        f"{len(casamentos)} matchTemplate -- o placar deixou de ser de graça")
+    assert placares and casamentos[0].lineno < placares[0], (
+        "o placar deixou de ser lido do resultado que já existia")
+
+
+def test_o_relatorio_NAO_derruba_a_run():
     """Falhar num diagnóstico não pode custar a run."""
-    arvore = ast.parse(textwrap.dedent(
-        inspect.getsource(deletador._explicar_o_zero)))
-    handlers = [n for n in ast.walk(arvore) if isinstance(n, ast.ExceptHandler)]
+    fonte = inspect.getsource(deletador._quem_nao_casou)
 
-    assert handlers, "o diagnóstico não tem rede de proteção"
-    assert any(getattr(h.type, "id", "") == "Exception" for h in handlers)
+    assert "if not placar:" in fonte, (
+        "sem placar o relatório tem que sair calado, não estourar")
+
+
+def test_o_relatorio_diz_o_LIMIAR_e_como_LER_o_numero():
+    """Um número solto não se interpreta: 0,87 é longe ou perto?
+
+    E as duas faixas pedem correções OPOSTAS -- recortar de novo o PNG, ou não
+    mexer em nada porque o item simplesmente não está na tela.
+    """
+    fonte = inspect.getsource(deletador._quem_nao_casou)
+
+    assert "LIMIAR_EM_COR" in fonte
+    assert "0,80" in fonte and "0,60" in fonte, (
+        "o relatório deixou de dizer como interpretar o número")
 
 
 def test_o_log_das_BOLSAS_VISIVEIS_existe():
@@ -149,20 +203,3 @@ def test_o_log_das_BOLSAS_VISIVEIS_existe():
     """
     fonte = inspect.getsource(deletador.deletar_lixo)
     assert "Bolsas visíveis para a limpeza" in fonte
-
-
-def test_o_diagnostico_mede_DENTRO_das_regioes():
-    """Medir na janela inteira daria o melhor casamento de qualquer lugar.
-
-    Inclusive de fora da bolsa -- e o número passaria a não responder a
-    pergunta que ele existe para responder.
-    """
-    fonte = inspect.getsource(deletador._explicar_o_zero)
-    assert "vision.crop" in fonte
-    assert "regioes" in fonte
-
-
-def test_o_diagnostico_diz_o_LIMIAR_junto():
-    """Um número solto não se interpreta: 0,87 é longe ou perto?"""
-    fonte = inspect.getsource(deletador._explicar_o_zero)
-    assert "LIMIAR_EM_COR" in fonte

@@ -271,6 +271,7 @@ def find_all_templates(
     threshold: float = DEFAULT_THRESHOLD,
     region: tuple[int, int, int, int] | None = None,
     colorido: bool = False,
+    placar: list[float] | None = None,
 ) -> list[tuple[int, int]]:
     """Todos os CENTROS dos matches do template, não só o melhor.
 
@@ -288,6 +289,12 @@ def find_all_templates(
 
     Devolve lista vazia quando não há match acima do limiar -- que é diferente
     de "captura falhou" (quem chama distingue pelo `frame`).
+
+    `placar`, se dado, recebe o MAIOR valor de correlação visto -- de graça,
+    porque o `matchTemplate` já roda aqui e esse número era simplesmente
+    descartado. É o que permite a quem chama distinguir "não tem esse item na
+    tela" (0,30) de "tem, mas o modelo não bate bem o bastante" (0,85 contra
+    limiar 0,92) sem pagar uma segunda varredura. Ver `deletador.deletar_lixo`.
 
     `colorido=True` compara os TRÊS CANAIS em vez da luminância. É o modo certo
     para ÍCONE DE ITEM: em cinza, dois itens de mesma forma e cores diferentes
@@ -319,6 +326,8 @@ def find_all_templates(
         )
 
     result = cv2.matchTemplate(cena, template, cv2.TM_CCOEFF_NORMED)
+    if placar is not None and result.size:
+        placar.append(float(result.max()))
     th, tw = template.shape[:2]
 
     # (valor, x, y) para todos os pontos acima do limiar, do mais forte ao mais
