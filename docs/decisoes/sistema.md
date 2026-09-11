@@ -433,3 +433,77 @@ daria bigramas repetidos, e a medição mostra o contrário. A trava fechada
 impede o vazamento independentemente da resposta, e a próxima ocorrência agora
 deixa rastro: a recusa sai no log com o rótulo (`login`/`senha`) e o tamanho,
 sem nunca mostrar o texto.
+
+## 11/09/2026 — o SHIFT do navegador entrava no jogo em segundo plano
+
+Relato: com o jogo em **segundo plano** e o usuário segurando SHIFT no
+navegador por alguns segundos, o cliente passava a ler "SHIFT + tecla do bot".
+O comando virava outro e a skill não saía.
+
+### A função existia e não funcionava
+
+`Input._liberar_modificadores_fisicos` já mandava `WM_KEYUP` para SHIFT, CTRL e
+ALT antes de cada tecla alvo. Ela não tinha efeito porque `_enviar_tecla`
+chumbava `LPARAM(0)` — e **um `WM_KEYUP` com `lParam` zerado é malformado**.
+
+O `lParam` de uma mensagem de teclado não é campo livre: é um registro de bits.
+Com ele em zero a mensagem afirma duas coisas ao mesmo tempo:
+
+* bit 30 = 0 → *"a tecla NÃO estava pressionada"*
+* bit 31 = 0 → *"NÃO está havendo transição para solta"*
+
+Ou seja, descreve um KEYUP de uma tecla que nunca esteve apertada e que não está
+sendo solta. O cliente lê o registro, vê a contradição, e descarta.
+
+### A matemática, campo por campo
+
+```
+bits  0-15   contagem de repetição      -> 1
+bits 16-23   SCAN CODE da tecla         -> scan_code << 16
+bit     24   tecla estendida            -> 0
+bits 25-28   reservado                  -> 0
+bit     29   contexto (ALT apertado)    -> 0
+bit     30   ESTADO ANTERIOR            -> 1   (a tecla ESTAVA apertada)
+bit     31   ESTADO DE TRANSIÇÃO        -> 1   (está sendo SOLTA agora)
+```
+
+`lparam = 1 | (scan_code << 16) | (1 << 30) | (1 << 31)`
+
+Medido nesta máquina:
+
+| tecla | vk | scan code | lParam |
+|---|---|---|---|
+| SHIFT | 0x10 | 0x2A | `0xC02A0001` |
+| CTRL | 0x11 | 0x1D | `0xC01D0001` |
+| ALT | 0x12 | 0x38 | `0xC0380001` |
+
+O **scan code** sai de `win32api.MapVirtualKey(vk, MAPVK_VK_TO_VSC)` e nunca de
+literal: o VK é lógico e igual em toda máquina, o scan code é **físico** e muda
+com o layout. Scan errado é outra tecla.
+
+### O que este conserto NÃO resolve, e está escrito para ninguém supor que sim
+
+Um `WM_KEYUP` na fila da janela conserta o estado de teclado **por thread** —
+o que `GetKeyState` devolve quando o cliente processa a mensagem. Ele **não**
+toca `GetAsyncKeyState` nem RawInput, que leem o hardware, e **nenhuma mensagem
+sintética toca**. Se este cliente ler o estado assíncrono, o vazamento continua
+e a saída não existe por mensagem.
+
+O `lParam` malformado era, ainda assim, um defeito real: ele impedia até o
+caminho que poderia funcionar. Conserta-se o que está errado e mede-se o efeito.
+
+### Por que a matemática ficou em `core/teclado_win32.py`
+
+`core/inputs.py` estava em **1221 linhas com teto de 1222** na catraca de
+tamanho do projeto — ou seja, não podia crescer, e a regra da casa é *mover
+conteúdo, não comprimir texto*. Mas o motivo de fundo não é a contagem: montar
+um registro de bits do Windows **não precisa saber nada sobre o bot** — não
+conhece `hwnd`, nem conta, nem `MODO_DE_TECLA`. É a mesma pergunta que
+`core/janelas.py` responde para janelas.
+
+### O que ficou de fora, de propósito
+
+`key_up` e o laço de soltura de `inputs.py` mandam `WM_KEYUP` com o **mesmo**
+`LPARAM(0)` malformado — as teclas que o próprio bot solta. O escopo deste
+hotfix foi fixado nas duas funções do vazamento de modificadores; o restante
+fica registrado aqui para não se perder.

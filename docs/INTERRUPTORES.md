@@ -63,10 +63,10 @@ ligar código não testado.
 | `LIGADO` | `True` | [blazesbot/core/diagnostico_fino.py:28](blazesbot/core/diagnostico_fino.py#L28) | manutencao.py, instrumentar_clique.py, supervisor.py, config.py, log_limitado.py, account_dialog.py | — |
 | `PRENDER_A_TECLA` | `True` | [blazesbot/core/esconder_jogadores.py:68](blazesbot/core/esconder_jogadores.py#L68) | — | A TECLA PRESA PARA SEMPRE -- o caminho do patcher, trazido em 07/09/2026 |
 | `SEGURAR_ATIVADO` | `False` | [blazesbot/core/esconder_jogadores.py:86](blazesbot/core/esconder_jogadores.py#L86) | petbug.py | INTERRUPTOR DO F12 PRESO -- DESLIGADO EM 19/08/2026 |
-| `CONFERIR_A_JANELA_ANTES_DE_ENVIAR` | `True` | [blazesbot/core/inputs.py:309](blazesbot/core/inputs.py#L309) | — | INTERRUPTOR. Desligar volta ao comportamento anterior (mandar sem conferir), e |
-| `MODO_DE_CLIQUE` | `'postmessage_puro'` | [blazesbot/core/inputs.py:146](blazesbot/core/inputs.py#L146) | ui_service.py, instrumentar_clique.py, teste_do_cursor.py | INTERRUPTOR DO MODO DE CLIQUE |
-| `MODO_DE_TECLA` | `'postmessage'` | [blazesbot/core/inputs.py:190](blazesbot/core/inputs.py#L190) | injecao_de_texto.py | INTERRUPTOR DO TECLADO -- "sendmessage" \| "postmessage" |
-| `USAR_MOUSE_SHIELD` | `False` | [blazesbot/core/inputs.py:78](blazesbot/core/inputs.py#L78) | instrumentar_clique.py, teste_do_cursor.py | INTERRUPTOR DO MOUSE SHIELD |
+| `CONFERIR_A_JANELA_ANTES_DE_ENVIAR` | `True` | [blazesbot/core/inputs.py:310](blazesbot/core/inputs.py#L310) | — | INTERRUPTOR. Desligar volta ao comportamento anterior (mandar sem conferir), e |
+| `MODO_DE_CLIQUE` | `'postmessage_puro'` | [blazesbot/core/inputs.py:147](blazesbot/core/inputs.py#L147) | ui_service.py, instrumentar_clique.py, teste_do_cursor.py | INTERRUPTOR DO MODO DE CLIQUE |
+| `MODO_DE_TECLA` | `'postmessage'` | [blazesbot/core/inputs.py:191](blazesbot/core/inputs.py#L191) | injecao_de_texto.py, teclado_win32.py | INTERRUPTOR DO TECLADO -- "sendmessage" \| "postmessage" |
+| `USAR_MOUSE_SHIELD` | `False` | [blazesbot/core/inputs.py:79](blazesbot/core/inputs.py#L79) | instrumentar_clique.py, teste_do_cursor.py | INTERRUPTOR DO MOUSE SHIELD |
 | `INSTRUMENTAR_O_PACOTE_INTEIRO` | `True` | [blazesbot/core/instrumentacao.py:77](blazesbot/core/instrumentacao.py#L77) | — | O INTERRUPTOR |
 | `COMPRIMIR_ARQUIVO_MORTO` | `True` | [blazesbot/core/log_limitado.py:108](blazesbot/core/log_limitado.py#L108) | — | O arquivo morto de DIAS ANTERIORES é comprimido. Medido no arquivo da noite de |
 | `EXIGIR_VIDA_MAXIMA_DE_MOB` | `True` | [blazesbot/core/memory.py:579](blazesbot/core/memory.py#L579) | — | INTERRUPTOR. Desligado, volta ao teste antigo (`hp <= max_hp`) e o fantasma |
@@ -82,7 +82,7 @@ ligar código não testado.
 
 ## Números medidos -- tolerância, limiar, teto, cadência
 
-613 constantes, agrupadas por arquivo.
+616 constantes, agrupadas por arquivo.
 
 | constante | valor | onde | quem lê | porquê (resumo) |
 |---|---|---|---|---|
@@ -561,11 +561,11 @@ ligar código não testado.
 | `RODAPE` | `'\n---\n\n## Se você mudou um tempo e deu errado\n\n1. Ache a linha aqui pelo nome (ou pelo arquivo).\n2. A coluna **ORIGINAL** com `⚠` traz o valor de referência.\n3. Volte para ele no arquivo apontado pela coluna ONDE.\n\nO ponto de restauração vive em `docs/tempos-originais.json`.\n\n**Ele NÃO é atualizado sozinho, e isso é de propósito**: se toda geração\nrefotografasse os valores, o "original" seria sempre o de agora e o arquivo não\nserviria para nada. Refotografar é ato deliberado:\n\n```python\nfrom blazesbot.core.indice_de_tempos import extrair, gravar_originais\ngravar_originais(extrair())\n```\n\nFaça isso **só** quando um valor novo já estiver provado em produção e você\nquiser que ele passe a ser a referência.\n\n## O que este catálogo NÃO cobre\n\n* **Tempo que vem da configuração** (`attack_delay`, `max_fight_seconds`,\n  `launch_delay`, `time_factor`, os `delay_ms` da macro do APP): muda por conta,\n  na interface, e não tem "valor original" único. Está em `blazesbot/config.py`.\n* **Tempo que o JOGO impõe** (animação de montar, teleporte, efeito de poção):\n  não é nosso, e o bot só pode medir.\n* **Esperas calculadas** (`tick(resto)`, `tick(segundos * fator)`): o valor não\n  é literal, então não há número para catalogar. Elas aparecem indiretamente,\n  pelas constantes que as alimentam.\n'` | [blazesbot/core/indice_de_tempos.py:347](blazesbot/core/indice_de_tempos.py#L347) | — | — |
 | `LIMITE_DE_BACKSPACES` | `64` | [blazesbot/core/injecao_de_texto.py:67](blazesbot/core/injecao_de_texto.py#L67) | inputs.py | O mesmo para o BACKSPACE. `login._do_credentials` pede 50 -- o maior pedido |
 | `LIMITE_DE_CARACTERES` | `50` | [blazesbot/core/injecao_de_texto.py:62](blazesbot/core/injecao_de_texto.py#L62) | inputs.py | OS TETOS -- trava de segurança, não configuração |
-| `CLIQUES_DIREITOS_POR_TENTATIVA` | `10` | [blazesbot/core/inputs.py:224](blazesbot/core/inputs.py#L224) | rajada_de_npc.py | QUANTOS CLIQUES DIREITOS POR TENTATIVA |
-| `INTERVALO_ENTRE_CLIQUES_DIREITOS` | `0.044` | [blazesbot/core/inputs.py:228](blazesbot/core/inputs.py#L228) | rajada_de_npc.py | Espaço entre um clique e o seguinte. Curto de propósito: a aposta é que a |
-| `NOME_DO_PROCESSO_DO_JOGO` | `'client.exe'` | [blazesbot/core/inputs.py:298](blazesbot/core/inputs.py#L298) | — | NENHUMA MENSAGEM SAI PARA UMA JANELA QUE NÃO É O JOGO |
-| `SEGUNDOS_ENTRE_CONFERENCIAS_DO_PROCESSO` | `2.0` | [blazesbot/core/inputs.py:316](blazesbot/core/inputs.py#L316) | — | De quanto em quanto tempo o NOME do processo é reconferido. |
-| `TETO_DO_BLOQUEIO_MS` | `80.0` | [blazesbot/core/inputs.py:89](blazesbot/core/inputs.py#L89) | — | TETO do bloqueio do mouse físico, em milissegundos -- e TETO, não gasto: o |
+| `CLIQUES_DIREITOS_POR_TENTATIVA` | `10` | [blazesbot/core/inputs.py:225](blazesbot/core/inputs.py#L225) | rajada_de_npc.py | QUANTOS CLIQUES DIREITOS POR TENTATIVA |
+| `INTERVALO_ENTRE_CLIQUES_DIREITOS` | `0.044` | [blazesbot/core/inputs.py:229](blazesbot/core/inputs.py#L229) | rajada_de_npc.py | Espaço entre um clique e o seguinte. Curto de propósito: a aposta é que a |
+| `NOME_DO_PROCESSO_DO_JOGO` | `'client.exe'` | [blazesbot/core/inputs.py:299](blazesbot/core/inputs.py#L299) | — | NENHUMA MENSAGEM SAI PARA UMA JANELA QUE NÃO É O JOGO |
+| `SEGUNDOS_ENTRE_CONFERENCIAS_DO_PROCESSO` | `2.0` | [blazesbot/core/inputs.py:317](blazesbot/core/inputs.py#L317) | — | De quanto em quanto tempo o NOME do processo é reconferido. |
+| `TETO_DO_BLOQUEIO_MS` | `80.0` | [blazesbot/core/inputs.py:90](blazesbot/core/inputs.py#L90) | — | TETO do bloqueio do mouse físico, em milissegundos -- e TETO, não gasto: o |
 | `AMOSTRAS_PARA_DECIDIR` | `20` | [blazesbot/core/instrumentacao.py:84](blazesbot/core/instrumentacao.py#L84) | — | Quantas chamadas medir antes de decidir se o embrulho fica. |
 | `SEM_JANELA` | `'(sem janela)'` | [blazesbot/core/janelas.py:36](blazesbot/core/janelas.py#L36) | — | O TÍTULO DE QUEM NÃO TEM JANELA. Texto, e não `None`, porque todo chamador |
 | `TIMEOUT_DA_SONDA_MS` | `1500` | [blazesbot/core/janelas.py:116](blazesbot/core/janelas.py#L116) | — | A SONDA DE TRAVAMENTO -- "Não Está Respondendo", medido em vez de suposto |
@@ -643,6 +643,9 @@ ligar código não testado.
 | `SEGUNDOS_ATE_O_RELOGIN` | `300.0` | [blazesbot/core/teclado_mudo.py:95](blazesbot/core/teclado_mudo.py#L95) | — | Quanto tempo mudo até declarar queda e mandar relogar. |
 | `SEGUNDOS_ENTRE_AVISOS` | `60.0` | [blazesbot/core/teclado_mudo.py:225](blazesbot/core/teclado_mudo.py#L225) | — | De quanto em quanto tempo o TAB MUDO volta a falar -- 06/09/2026. |
 | `SEGUNDOS_ENTRE_RELOGINS` | `900.0` | [blazesbot/core/teclado_mudo.py:103](blazesbot/core/teclado_mudo.py#L103) | — | Espaço mínimo entre dois relogins automáticos por teclado mudo. |
+| `BIT_ESTADO_ANTERIOR` | `30` | [blazesbot/core/teclado_win32.py:61](blazesbot/core/teclado_win32.py#L61) | — | Bits do registro. Nomeados porque `1 << 30` solto no meio de uma expressão |
+| `BIT_TRANSICAO` | `31` | [blazesbot/core/teclado_win32.py:62](blazesbot/core/teclado_win32.py#L62) | — | — |
+| `MAPVK_VK_TO_VSC` | `0` | [blazesbot/core/teclado_win32.py:65](blazesbot/core/teclado_win32.py#L65) | — | `MAPVK_VK_TO_VSC`: traduz código virtual (lógico) para scan code (físico). |
 | `BARRA_DO_ALVO_X0` | `466` | [blazesbot/core/vision/barra.py:52](blazesbot/core/vision/barra.py#L52) | __init__.py | A BARRA DO ALVO POR OFFSET FIXO -- medida pelo usuário em 25/08/2026 |
 | `BARRA_DO_ALVO_X1` | `600` | [blazesbot/core/vision/barra.py:53](blazesbot/core/vision/barra.py#L53) | __init__.py | — |
 | `BARRA_DO_ALVO_Y0` | `46` | [blazesbot/core/vision/barra.py:54](blazesbot/core/vision/barra.py#L54) | __init__.py | — |

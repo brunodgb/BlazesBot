@@ -15,6 +15,18 @@
 > A regra permanente ("nenhuma mensagem sai para uma janela que não é o jogo")
 > está no `CLAUDE.md`. Aqui está o que ela exige na prática.
 
+- **`WM_KEYUP` SE MANDA COM `lParam` MONTADO, NUNCA COM ZERO.** Os bits 30
+  (estado anterior) e 31 (transição) têm de valer 1, e o scan code sai de
+  `MapVirtualKey(vk, 0)` — nunca de literal, porque o scan é físico e muda com o
+  layout. Com `lParam = 0` a mensagem se contradiz e o cliente descarta: era por
+  isso que o SHIFT segurado no navegador contaminava o jogo em segundo plano
+  (11/09/2026). A fórmula mora em `core/teclado_win32.lparam_de_keyup`.
+- **MAS ISSO SÓ ALCANÇA `GetKeyState`.** Mensagem sintética não toca
+  `GetAsyncKeyState` nem RawInput, que leem o hardware. Nenhuma toca. Quem
+  prometer isolamento total por mensagem está errado.
+- **`_enviar_tecla` ACEITA `lparam`, COM PADRÃO ZERO.** Zero está certo para
+  `WM_KEYDOWN` e `WM_CHAR`; só o KEYUP precisa do registro montado, e quem
+  precisa passa.
 - **IDENTIDADE SE PROVA, NÃO SE SUPÕE.** O pino da janela só fecha com uma
   leitura POSITIVA de `client.exe`. "Não consegui ler o processo" **bloqueia** ao
   estabelecer o pino — nunca houve prova. Custou 918 caracteres digitados no

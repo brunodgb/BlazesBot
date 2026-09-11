@@ -49,6 +49,7 @@ from .injecao_de_texto import (  # noqa: F401
     injetar_texto,
     limpar_campo,
 )
+from .teclado_win32 import lparam_de_keyup
 
 try:
     from .mouse_shield import MouseShield
@@ -468,28 +469,15 @@ class Input:
             return "não consegui saber de quem é a janela"
 
         if self._pid_da_janela is None:
-            # =============================================================
-            # PINO TARDIO -- e AQUI ESTAVA O VAZAMENTO DE TECLAS (09/09/2026)
-            # =============================================================
+            # PINO TARDIO -- AQUI ESTAVA O VAZAMENTO DE TECLAS (09/09/2026).
+            # O pino fecha depois porque a janela pode ainda não dizer quem é o
+            # dono. O ERRO era `nome is None` ("não consegui ler") fechar o pino
+            # MESMO ASSIM e liberar o envio, para sempre.
             #
-            # O `Input` nasce quando a janela ainda pode não dizer quem é o
-            # dono (no login ela está nascendo), então o pino se fecha depois.
-            #
-            # O ERRO: `nome is None` ("não consegui ler o processo") fechava o
-            # pino MESMO ASSIM e liberava o envio -- e como `_nome_do_processo`
-            # ficava `None` para sempre, a conferência periódica lá embaixo
-            # nunca mais disparava. O `Input` ficava preso a uma janela que
-            # ninguém provou ser o jogo. No laço de relogin, com o cliente morto
-            # no meio do login e o HWND reciclado, isso digitou ~10 caracteres
-            # por tentativa no Bloco de Notas do usuário.
-            #
-            # A CORREÇÃO É UMA DISTINÇÃO, não uma trava nova -- "não sei" tem
-            # dois significados e eles não podem ter o mesmo desfecho:
-            #   ESTABELECER o pino sem prova -> BLOQUEIA (ficar mudo é
-            #       reversível; senha na janela de outro programa não é).
-            #   MANTER um pino JÁ CONFIRMADO -> NÃO bloqueia, como sempre foi:
-            #       `AccessDenied` passageiro não pode emudecer o bot.
-            # Medição e alternativas: `docs/decisoes/sistema.md`.
+            # A CORREÇÃO É UMA DISTINÇÃO: ESTABELECER o pino sem prova BLOQUEIA
+            # (ficar mudo é reversível; senha no programa errado não é); MANTER
+            # um pino JÁ CONFIRMADO não bloqueia, como sempre foi. O relato
+            # medido está em `docs/decisoes/sistema.md`.
             nome = _nome_do_processo(dono)
             if nome is None:
                 return ("ainda não consegui CONFIRMAR que a janela é do "
@@ -533,35 +521,43 @@ class Input:
 
     # -- teclado -----------------------------------------------------------
 
-    def _enviar_tecla(self, mensagem: int, wparam: int) -> None:
+    def _enviar_tecla(self, mensagem: int, wparam: int,
+                      lparam: int = 0) -> None:
         """Uma mensagem de teclado, pelo caminho que `MODO_DE_TECLA` escolher.
 
         PONTO ÚNICO por onde toda tecla passa: `key`, `type_text` e
         `clear_field` chegam aqui. Trocar o interruptor troca as três de uma vez,
         e nenhuma delas precisa saber qual mecanismo está em uso -- que é o que
         impede o par de caminhos de divergir em um lugar e não no outro.
+
+        `lparam` DEIXOU DE SER CHUMBADO EM ZERO (11/09/2026). Zero está certo
+        para KEYDOWN e WM_CHAR e ERRADO para KEYUP -- ver `core/teclado_win32`.
+        O padrão continua ZERO porque só o KEYUP precisa do registro montado.
         """
         if not self._janela_confiavel():
             return
         if MODO_DE_TECLA == "sendmessage":
             user32.SendMessageW(HWND(self.hwnd), mensagem, WPARAM(wparam),
-                                LPARAM(0))
+                                LPARAM(lparam))
             return
         user32.PostMessageW(HWND(self.hwnd), mensagem, WPARAM(wparam),
-                            LPARAM(0))
+                            LPARAM(lparam))
 
     def _liberar_modificadores_fisicos(self) -> None:
-        """Envia WM_KEYUP sintético para SHIFT/CTRL/ALT antes de cada tecla alvo.
+        """WM_KEYUP BEM FORMADO para SHIFT/CTRL/ALT antes de cada tecla alvo.
 
-        Mitigação de Input Bleed (Eixo 1): o jogo lê RawInput/GetKeyboardState
-        e vê modificadores físicos pressionados pelo usuário. Enviar KEYUP
-        para a fila da janela força estado "limpo" para WM_KEYDOWN/WM_CHAR.
-        Não afeta RawInput/hardware state, mas reduz janela de sangramento.
+        SINTOMA (11/09/2026): com o jogo em SEGUNDO PLANO e o usuário segurando
+        SHIFT no navegador, o cliente lia "SHIFT + tecla do bot".
+
+        Esta função JÁ EXISTIA e já mandava o KEYUP. Ela não funcionava porque
+        `_enviar_tecla` chumbava `LPARAM(0)`, e KEYUP com lParam zerado é
+        MALFORMADO -- o cliente descarta. O registro de bits, o scan code e o
+        que isto NÃO resolve (`GetAsyncKeyState`/RawInput): `core/teclado_win32`.
         """
         for mod in ("SHIFT", "CTRL", "ALT"):
             vk = VK_CODES.get(mod)
             if vk is not None:
-                self._enviar_tecla(WM_KEYUP, vk)
+                self._enviar_tecla(WM_KEYUP, vk, lparam_de_keyup(vk))
 
     def key_down(self, name: str) -> bool:
         """SEGURA a tecla, sem soltar. Quem chama É RESPONSÁVEL pelo `key_up`.

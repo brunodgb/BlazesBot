@@ -86,7 +86,7 @@ def mundo(monkeypatch):
 
     monkeypatch.setattr(mod, "user32", _User32)
     monkeypatch.setattr(Input, "_enviar_tecla",
-                        lambda self, msg, wp: m.enviadas.append((msg, wp)))
+                        lambda self, msg, wp, lp=0: m.enviadas.append((msg, wp)))
     monkeypatch.setattr(mod.time, "sleep", lambda _s: None)
     return m
 

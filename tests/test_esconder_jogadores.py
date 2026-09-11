@@ -179,7 +179,7 @@ def _input_falso():
     # A lista de INTOCÁVEIS -- ver `Input.segurar_para_sempre`.
     entrada._presas_para_sempre = set()
     entrada.enviadas: list[tuple[str, int]] = []
-    entrada._enviar_tecla = lambda m, vk: entrada.enviadas.append(
+    entrada._enviar_tecla = lambda m, vk, lp=0: entrada.enviadas.append(
         ("down" if m == 0x0100 else "up", vk))
     return entrada
 

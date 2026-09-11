@@ -416,14 +416,14 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | `TETO_DE_CLIQUES` | 10 s | = | TETO | [catador.py:124](blazesbot/core/catador.py#L124) | `_pegar` | Teto de cliques no botão. REDE DE SEGURANÇA, não estratégia -- mesmo papel do |
 | `PASSO_ENTRE_RETRATOS_DO_TIME` | 80 s (1 min) | *novo* | PASSO | [coords.py:112](blazesbot/core/coords.py#L112) |  |  |
 | `INTERVALO_DE_DESPEJO` | 30 s | *novo* | FIXO | [cronometro.py:98](blazesbot/core/cronometro.py#L98) | `_laco_do_despejo` | De quanto em quanto tempo a thread despeja o que foi acumulado. |
-| `TETO_DO_BLOQUEIO_MS` | 80 s (1 min) | = | TETO | [inputs.py:89](blazesbot/core/inputs.py#L89) | `_click_sendmessage_rapido, _click_postmessage_puro` | TETO do bloqueio do mouse físico, em milissegundos -- e TETO, não gasto: o |
-| `INTERVALO_ENTRE_CLIQUES_DIREITOS` | 0.044 s | = | FIXO | [inputs.py:228](blazesbot/core/inputs.py#L228) | `right_click` | Espaço entre um clique e o seguinte. Curto de propósito: a aposta é que a |
-| `SEGUNDOS_ENTRE_CONFERENCIAS_DO_PROCESSO` | 2 s | = | FIXO | [inputs.py:316](blazesbot/core/inputs.py#L316) | `_motivo_para_nao_enviar` | De quanto em quanto tempo o NOME do processo é reconferido. |
-| *literal em* `_click_postmessage_com_delay` | 0.015 s | = | FIXO | [inputs.py:870](blazesbot/core/inputs.py#L870) | `_click_postmessage_com_delay` | 5ms (insuficiente) |
-| *literal em* `_click_sendmessage_rapido` | 0.002 s | = | FIXO | [inputs.py:956](blazesbot/core/inputs.py#L956) | `_click_sendmessage_rapido` | TESTE 2 (2026-08-14): SendMessage com sleep reduzido de 15ms → 1ms. |
-| *literal em* `_click_sendmessage_rapido` | 0.002 s | = | FIXO | [inputs.py:966](blazesbot/core/inputs.py#L966) | `_click_sendmessage_rapido` | TESTE 2 (2026-08-14): SendMessage com sleep reduzido de 15ms → 1ms. |
-| *literal em* `_click_rapido_reafirmado` | 0.002 s | = | FIXO | [inputs.py:1022](blazesbot/core/inputs.py#L1022) | `_click_rapido_reafirmado` | O rápido, mais a coordenada REAFIRMADA entre o down e o up. |
-| *literal em* `_click_postmessage_puro` | 0.002 s | = | FIXO | [inputs.py:1131](blazesbot/core/inputs.py#L1131) | `_click_postmessage_puro` | AS QUATRO mensagens por `PostMessageW`. Nenhuma síncrona. |
+| `TETO_DO_BLOQUEIO_MS` | 80 s (1 min) | = | TETO | [inputs.py:90](blazesbot/core/inputs.py#L90) | `_click_sendmessage_rapido, _click_postmessage_puro` | TETO do bloqueio do mouse físico, em milissegundos -- e TETO, não gasto: o |
+| `INTERVALO_ENTRE_CLIQUES_DIREITOS` | 0.044 s | = | FIXO | [inputs.py:229](blazesbot/core/inputs.py#L229) | `right_click` | Espaço entre um clique e o seguinte. Curto de propósito: a aposta é que a |
+| `SEGUNDOS_ENTRE_CONFERENCIAS_DO_PROCESSO` | 2 s | = | FIXO | [inputs.py:317](blazesbot/core/inputs.py#L317) | `_motivo_para_nao_enviar` | De quanto em quanto tempo o NOME do processo é reconferido. |
+| *literal em* `_click_postmessage_com_delay` | 0.015 s | = | FIXO | [inputs.py:866](blazesbot/core/inputs.py#L866) | `_click_postmessage_com_delay` | 5ms (insuficiente) |
+| *literal em* `_click_sendmessage_rapido` | 0.002 s | = | FIXO | [inputs.py:952](blazesbot/core/inputs.py#L952) | `_click_sendmessage_rapido` | TESTE 2 (2026-08-14): SendMessage com sleep reduzido de 15ms → 1ms. |
+| *literal em* `_click_sendmessage_rapido` | 0.002 s | = | FIXO | [inputs.py:962](blazesbot/core/inputs.py#L962) | `_click_sendmessage_rapido` | TESTE 2 (2026-08-14): SendMessage com sleep reduzido de 15ms → 1ms. |
+| *literal em* `_click_rapido_reafirmado` | 0.002 s | = | FIXO | [inputs.py:1018](blazesbot/core/inputs.py#L1018) | `_click_rapido_reafirmado` | O rápido, mais a coordenada REAFIRMADA entre o down e o up. |
+| *literal em* `_click_postmessage_puro` | 0.002 s | = | FIXO | [inputs.py:1127](blazesbot/core/inputs.py#L1127) | `_click_postmessage_puro` | AS QUATRO mensagens por `PostMessageW`. Nenhuma síncrona. |
 | `TIMEOUT_DA_SONDA_MS` | 1500 s (25 min) | *novo* | TETO | [janelas.py:116](blazesbot/core/janelas.py#L116) | `janela_responde` | A SONDA DE TRAVAMENTO -- "Não Está Respondendo", medido em vez de suposto |
 | `INTERVALO_ENTRE_LIMPEZAS` | 3600 s (60 min) | *novo* | FIXO | [log_limitado.py:89](blazesbot/core/log_limitado.py#L89) | `_limpar_de_tempos_em_tempos` | De quanto em quanto tempo varrer a pasta do arquivo morto. |
 | `SEGUNDOS_DE_SILENCIO_ANTES_DE_COMPRIMIR` | 60 s (1 min) | *novo* | FIXO | [log_limitado.py:97](blazesbot/core/log_limitado.py#L97) | `_esta_quieto` | Quanto tempo um arquivo precisa estar QUIETO para poder ser comprimido. |
