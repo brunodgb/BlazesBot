@@ -163,7 +163,19 @@ OFF_RELOGIO_MS = 0x85C
 # Endereços estáticos
 ADDR_MODAL = 0x012CE35C  # DC / erro de login / caixa de confirmação (contextual)
 ADDR_QUEUE = 0x011BDF1C  # string da fila de login
-ADDR_TARGET_ID = 0x0115CB20
+# ATENÇÃO: `ADDR_TARGET_ID` NÃO fica aqui -- ele é definido mais abaixo, junto
+# da medição que o confirmou, e o valor certo é `IMAGE_BASE + 0x00D5CB80`
+# (= 0x0115CB80).
+#
+# Até 10/09/2026 havia AQUI uma segunda atribuição, `ADDR_TARGET_ID =
+# 0x0115CB20` -- o endereço da versão 6139, que está MORTO na 6400. Ela era
+# inofensiva por acidente: a definição de baixo vem depois e vence no import.
+# Mas era uma armadilha de duas pontas. Quem lesse esta seção acreditaria no
+# valor morto, e bastava alguém reordenar o arquivo para a produção passar a ler
+# endereço morto CALADO -- o modo de falha que este projeto mais combate.
+#
+# A regra que sai disto: endereço mora num lugar só, ao lado da medição que o
+# sustenta. Travado por `tests/test_endereco_unico.py`.
 ADDR_LOOT_WINDOW = 0x0105B958
 ADDR_NOTIFICATION = 0x0117097C
 
@@ -519,6 +531,9 @@ PAGE_GUARD = 0x100
 # A única divergência foi a TELA atrasada (23,1% quando a memória já lia 6%) --
 # a memória estava certa. É o argumento que inverteu as fontes: quem decide
 # passou a ser a memória, e a tela virou reserva.
+#
+# ESTA É A ÚNICA DEFINIÇÃO. O `0x0115CB20` da 6139 aparece acima só como
+# registro do que foi removido em 10/09/2026, e no exemplo do GhostBot.
 ADDR_TARGET_ID = IMAGE_BASE + 0x00D5CB80
 
 # Onde a entidade guarda o próprio id. Vem do `b = a + 0x8` do `search_id()`.
