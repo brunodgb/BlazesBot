@@ -214,3 +214,69 @@ def test_desligado_volta_a_aceitar_o_fantasma(monkeypatch):
     teste deixa explícito o que se perde ao desligar: o fantasma volta."""
     monkeypatch.setattr(mem, "EXIGIR_VIDA_MAXIMA_DE_MOB", False)
     assert _memoria(hp=1, maximo=1177280513).alvo_atual() is not None
+
+
+# ===========================================================================
+# O F1 MIRA EM MIM — e isso é de propósito
+# ===========================================================================
+#
+# O reancorar do HH aperta F1 justamente para soltar o alvo antigo antes do TAB
+# ("F1 para mirar em mim, e TAB para o mob mais perto"). Medido em 11/09/2026,
+# 1196 amostras por conta:
+#
+#     conta de HH   ADDR_TARGET_ID == o próprio id em 29,9% das leituras
+#     as outras 5   0%
+#
+# E o próprio personagem NÃO aparece no array de entidades em nenhuma das seis.
+# Procurá-lo ali é varrer 512 slots atrás de quem não está — com a chance de
+# casar com lixo no caminho, que era a origem do alvo fantasma.
+
+def _memoria_mirando_em_mim(meu_id, alvo_id):
+    m = mem.Memory.__new__(mem.Memory)
+    base = 0x20000000
+    valores = {
+        mem.PLAYER_BASE: base,
+        base + mem.OFF_ENTITY_ID: meu_id,
+        mem.ADDR_TARGET_ID: alvo_id,
+    }
+    m.read_uint = lambda e: valores.get(e)
+    m.read_int = lambda e: valores.get(e)
+    m.read_byte = lambda e: valores.get(e)
+    m.read_float = lambda e: 0.0
+    m._obj_do_alvo = None
+    m._id_do_alvo = alvo_id
+    chamou = []
+    m._procurar_entidade = lambda _id: chamou.append(_id)
+    m._varreu = chamou
+    return m
+
+
+def test_mirando_em_mim_devolve_None_SEM_varrer():
+    """O ganho não é só a resposta certa: é não varrer 512 slots atrás de quem
+    não está no array."""
+    m = _memoria_mirando_em_mim(meu_id=1091567835, alvo_id=1091567835)
+    assert m.alvo_atual() is None
+    assert m._varreu == [], "varreu o array procurando o próprio personagem"
+
+
+def test_alvo_de_verdade_NAO_e_confundido_com_eu_mesmo():
+    """O atalho só vale quando os ids são o mesmo. Com um mob selecionado, o
+    caminho normal tem de seguir."""
+    m = _memoria_mirando_em_mim(meu_id=1091567835, alvo_id=451152222)
+    m.alvo_atual()
+    assert m._varreu == [451152222], "o caminho normal deixou de procurar"
+
+
+def test_sem_saber_quem_eu_sou_o_atalho_NAO_inventa_um_nao():
+    """Se o próprio id não dá para ler, o caminho normal ainda responde — o
+    atalho não pode transformar 'não sei quem sou' em 'não tenho alvo'."""
+    m = _memoria_mirando_em_mim(meu_id=None, alvo_id=451152222)
+    m.alvo_atual()
+    assert m._varreu == [451152222]
+
+
+def test_a_medicao_do_F1_fica_escrita():
+    fonte = inspect.getsource(mem.Memory.alvo_atual)
+    assert "29,9%" in fonte
+    assert "não aparece no\n            # array de entidades" in fonte or \
+           "não aparece no" in fonte

@@ -1608,6 +1608,18 @@ class Memory:
                         if tamanho == PEDACO_DA_VARREDURA else tamanho)
         return None
 
+    def _estou_mirando_em_mim(self, alvo_id: int) -> bool:
+        """O alvo selecionado sou EU? Então não há mob, e não há o que procurar.
+
+        `False` quando não deu para ler o próprio id: sem saber quem eu sou, o
+        caminho normal ainda responde, e o atalho não pode inventar um "não".
+        """
+        base = self.read_uint(PLAYER_BASE)
+        if not base:
+            return False
+        meu = self.read_uint(base + OFF_ENTITY_ID)
+        return bool(meu) and meu == alvo_id
+
     def _recusar_por_vida_maxima(self, alvo_id: int, obj: int, hp: int,
                                  maximo: int) -> None:
         """Registra a recusa UMA VEZ por combinação, e segue.
@@ -1673,6 +1685,22 @@ class Memory:
         alvo_id = self.id_do_alvo()
         if not alvo_id:
             self._obj_do_alvo = None
+            return None
+
+        if self._estou_mirando_em_mim(alvo_id):
+            # O F1 MIRA EM MIM, E ISSO É DE PROPÓSITO: o reancorar do HH aperta
+            # F1 justamente para soltar o alvo antigo antes do TAB ("F1 para
+            # mirar em mim, e TAB para o mob mais perto").
+            #
+            # MEDIDO em 11/09/2026, 1196 amostras por conta: a conta de HH lê o
+            # PRÓPRIO id em `ADDR_TARGET_ID` em **29,9%** das leituras; as
+            # outras cinco, em 0%. E o próprio personagem **não aparece no
+            # array de entidades** em nenhuma das seis -- então procurá-lo ali é
+            # varrer 512 slots atrás de quem não está, com a chance de casar com
+            # lixo no caminho.
+            #
+            # Sair aqui é a mesma resposta ("não tenho mob") por dois cheques em
+            # vez de uma varredura, e fecha a porta do alvo fantasma na origem.
             return None
 
         obj = self._obj_do_alvo

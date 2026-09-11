@@ -790,3 +790,97 @@ sendo os **250,5 s em ~23 h**.
 **E o patch é seguro pelo mesmo motivo:** com `None` no lugar do fantasma, o
 `veredito` devolve `None`, que cai no ramo `morreu=False` — o laço segue e sai
 pela flag. Não há spam de TAB.
+
+---
+
+## O F1 MIRA EM MIM — a origem do alvo fantasma (11/09/2026)
+
+O "fantasma" não era lixo aleatório. É um estado **legítimo, que o próprio bot
+cria de propósito**.
+
+O reancorar do HH aperta F1 justamente para soltar o alvo antigo antes do TAB —
+*"F1 para mirar em mim, e TAB para o mob mais perto"*. O F1 mira em si mesmo, e
+`ADDR_TARGET_ID` passa a guardar o **id do próprio personagem**.
+
+### Medido, 1196 amostras por conta
+
+| conta | `TARGET_ID` == o próprio id |
+|---|---|
+| **HH** | **29,9%** (358 de 1196) |
+| as outras cinco | **0%** |
+
+Só o HH, porque só ele usa o reancorar por F1 nessa cadência.
+
+### E o personagem NÃO está no array de entidades
+
+Conferido nas seis contas: o próprio id **não aparece** em nenhum dos 512 slots.
+Então procurá-lo ali é varrer o array inteiro atrás de quem não está — e é no
+meio dessa varredura que o JOIN casava com lixo e produzia o alvo fantasma.
+
+### O conserto: sair antes de procurar
+
+`Memory._estou_mirando_em_mim()` compara `ADDR_TARGET_ID` com o id do próprio
+personagem e devolve `None` sem varrer nada. Em HH isso é **30% das leituras de
+alvo** que deixam de fazer uma busca inútil, e fecha a porta do fantasma na
+origem, antes da regra dos 100.
+
+Quando o próprio id não dá para ler, o atalho **não** decide: o caminho normal
+segue. "Não sei quem eu sou" não pode virar "não tenho alvo".
+
+---
+
+## A SAÍDA DE COMBATE MAIS RÁPIDA EM HH — três tentativas, e o que ficou
+
+Pedido do usuário: *"em HH é importante que seja notado mais rapidamente se saiu
+de batalha"*, com a observação de que **em HH não existe troca de fase do boss**.
+
+A observação está certa, e a justificativa que eu tinha dado para o debounce
+(virada de fase) **não se aplica ao HH**. Mas a medição mostrou que o debounce
+serve para outra coisa, e que ele é necessário.
+
+### 1. Encurtar `CONFIRMACAO_DE_SAIDA_DE_COMBATE` — REPROVADO
+
+O comentário da própria constante já dizia qual é o papel dela, e não é a
+virada de fase: *"quatro guardas morrendo um a um dão janelas de não-combate
+entre eles; sem esta confirmação a fase 1 terminaria no primeiro"*. E o HH luta
+exatamente em **pacotes** (`Dupla`, `o pacote do Fa-Yuan`, `o pacote do Green
+Robmaster`).
+
+Medido em 30,5 h de log:
+
+| | |
+|---|---|
+| confirmações de saída | 578 |
+| confirmações **abortadas** (a flag voltou) | **25 (4,3%)** |
+| maior intervalo entre morte e o mob seguinte engajar | **2,1 s** |
+| margem do debounce de 2,5 s | **0,4 s** |
+
+As 25 são salvamentos reais: o log mostra a flag baixando e, 0,5 a 2,1 s depois,
+um mob **novo a 100%** engajando. **É constante apertada, não folgada** — cortar
+para 1,0 s teria causado saída falsa em pelo menos uma delas, e sair de um
+pacote pela metade custa muito mais do que os segundos economizados.
+
+**E o que se ganharia é pequeno:** 3,3 saídas por run, run de 354 s de mediana —
+o debounce é **2,3% da run**. Cair para 1,0 s economizaria 5,0 s por run (1,4%),
+contra o risco de perder o pacote.
+
+### 2. Sair por "não há mob vivo por perto" — REFUTADO
+
+Ideia minha, e a medição a derrubou: em 240 s a 100 ms na conta de HH, **825 de
+826 amostras fora de combate (99,9%) ainda tinham mob vivo a menos de 60
+unidades**. A contagem nem muda na transição (4→4, 8→8, 13→13). As salas do HH
+são cheias de mob vivo não engajado.
+
+### 3. Achar em quem o mob está mirando — REFUTADO
+
+Se a struct do mob guardasse o id de quem ele ataca, a saída viraria pergunta.
+Varri os `0x1200` bytes de cada mob vivo procurando o meu id, em 371 amostras:
+**nenhum offset guarda**. Ou o mob não publica o alvo dele, ou publica fora da
+janela varrida.
+
+### O que fica
+
+O debounce de 2,5 s **permanece**, com o porquê agora medido e não suposto.
+Quem for tentar de novo precisa de um sinal de **engajamento por entidade** —
+e os dois lugares óbvios (proximidade e o alvo do mob) já foram procurados e
+não estão lá.
