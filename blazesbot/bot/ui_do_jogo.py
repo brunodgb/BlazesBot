@@ -94,6 +94,7 @@ from ..core.coords import TEMPLATE_ANCHORS
 from ..core.rota import distancia
 from ..core.vision import capture_window, find_template
 from ..core.zones import distancia_linear
+from . import rajada_de_npc
 from .context import BotContext, StopRequested
 from .navegacao import Navigator
 
@@ -1687,9 +1688,12 @@ class UIDoJogo:
         """O par de cliques em si. Separado só para o `with` acima ficar legível."""
         ctx = self.ctx
         #ctx.log.info("Clique DIREITO no NPC em %s (%s)", ponto_npc, o_que)
-        ctx.right_click(ponto_npc)
-
-        aberto = self._esperar_o_dialogo(limite_da_espera_do_dialogo())
+        # A RAJADA PERGUNTA ENTRE OS CLIQUES e para quando abre; o piso de
+        # 424 ms por conversa está medido em `bot/rajada_de_npc.py`.
+        aberto = rajada_de_npc.clicar_ate_abrir(ctx, ponto_npc,
+                                                self.dialogo_esta_aberto)
+        if aberto is not True:
+            aberto = self._esperar_o_dialogo(limite_da_espera_do_dialogo())
         if aberto is False:
             ctx.log.info(
                 "O clique direito em %s não abriu o diálogo (%s). NÃO vou clicar "

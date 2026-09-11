@@ -134,3 +134,65 @@
   abandono. A implementação (`cursor_hook.py`, `cursor_hook.c`, `injector.*`,
   `compilar.bat`, scripts de teste `.bat`) foi apagada — consulte
   `docs/decisoes/dll-cursor-hook.md` para o registro completo da decisão.
+
+## A rajada de clique direito passou a PERGUNTAR — 11/09/2026
+
+### O piso medido
+
+Telemetria de 09 e 10/09/2026 (`logs/latencia/latencia.jsonl`, 81,6 milhões de
+chamadas cronometradas):
+
+| o que | n | média | mínimo |
+|---|---|---|---|
+| `Input._click_postmessage_puro` (o clique em si) | 957.315 | 2,68 ms | 2,04 ms |
+| `Input.right_click` (a rajada inteira) | 116.666 | 295,93 ms | 2,08 ms |
+| `UIDoJogo._abrir_dialogo_e_clicar` | 64.076 | 491,26 ms | **424,32 ms** |
+| `UIDoJogo.dialogo_esta_aberto` (a pergunta) | 224.353 | 27,61 ms | 0,02 ms |
+
+**O mínimo de 424 ms é a assinatura do desperdício:** nenhuma conversa com NPC
+no bot inteiro custou menos que a rajada cega, porque a rajada cega ERA o piso.
+Dez cliques a 44 ms de espaçamento são 396 ms pagos sempre, inclusive quando o
+primeiro já abriu o diálogo.
+
+### A conta que decidiu
+
+Perguntar custa **27,61 ms** e responde. Esperar um espaçamento custa **44 ms** e
+não responde. Então perguntar entre os cliques é mais barato que o silêncio
+entre eles — e é a regra da casa (*"onde havia espera cega, agora se PERGUNTA"*)
+aplicada ao maior custo fixo do caminho quente.
+
+| cenário | antes | agora |
+|---|---|---|
+| abre no 1º clique (caso comum) | 424 ms | ~30 ms |
+| abre no 3º clique | 424 ms | ~150 ms |
+| nunca abre (3,9% das rajadas) | ~420 ms + teto | ~743 ms + teto |
+
+O pior caso ficou mais caro, e é aceito: ele acontece em 2.473 de 64.076
+rajadas, e o tempo a mais é gasto PERGUNTANDO — que é o que pega o diálogo
+atrasado, em vez de dormir até o fim e perguntar uma vez só.
+
+### `CLIQUES_DIREITOS_POR_TENTATIVA` virou TETO
+
+Com a rajada cega, subir o número custava 44 ms por clique em TODA conversa do
+bot. Com a pergunta no meio, quem abre no primeiro clique não paga os outros
+nove. O 10 continua lá, e agora é de graça.
+
+### O que NÃO mudou
+
+* **Sem captura, a rajada sai inteira e cega.** Cliente minimizado é modo normal
+  de operação deste bot: ali `capture_window` devolve quadro preto e nenhum
+  template casa. Recusar a rajada nesse caso deixaria a entrada na cave
+  impossível, então a aposta original continua valendo onde não há o que
+  perguntar.
+* **O clique continua sendo um só por vez** (`repetir=False`): a repetição
+  passou a ser do laço, e quem a controla é a resposta, não o relógio.
+* **`_esperar_o_dialogo` continua atrás**, com o teto adaptativo: o diálogo pode
+  chegar depois do último clique, e é ele quem conta as falhas seguidas.
+
+### Travado por
+
+`tests/test_rajada_de_npc.py` — para no clique que abriu, espaçamento só entre
+cliques, teto de cliques respeitado, rajada inteira quando não há imagem, e a
+integração em `_clicar_no_npc_e_no_link` (que não pode voltar a clicar cego).
+O interruptor `PERGUNTAR_ENTRE_OS_CLIQUES = False` devolve o comportamento
+antigo inteiro.
