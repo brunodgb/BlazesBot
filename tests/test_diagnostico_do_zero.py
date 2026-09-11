@@ -203,3 +203,55 @@ def test_o_log_das_BOLSAS_VISIVEIS_existe():
     """
     fonte = inspect.getsource(deletador.deletar_lixo)
     assert "Bolsas visíveis para a limpeza" in fonte
+
+
+# ===========================================================================
+# O limiar, e o vão que o justifica
+# ===========================================================================
+#
+# Remedido em 11/09/2026 com 3456 pontuações de não-casamento do log de
+# produção. Ver `docs/decisoes/deletador.md`, "O limiar em cor, REMEDIDO".
+
+# O maior distrator medido em TODO o conjunto de lixo (`Biddha-Bone`).
+MAIOR_DISTRATOR_MEDIDO = 0.70
+
+# O casamento verdadeiro que o limiar antigo rejeitava (`Trap-Meshwork`, em 48
+# relatórios seguidos, sempre o mesmo valor).
+VERDADEIRO_QUE_FALHAVA = 0.90
+
+
+def test_o_limiar_fica_DENTRO_do_vao_medido():
+    """0,71 a 0,89 está vazio: nenhuma das 3456 amostras cai ali.
+
+    Abaixo do maior distrator, o bot apagaria item que não é lixo -- e apagar é
+    irreversível. Acima do verdadeiro, volta o defeito que o usuário relatou:
+    o item na bolsa e o bot nunca o apagando.
+    """
+    assert MAIOR_DISTRATOR_MEDIDO < deletador.LIMIAR_EM_COR, (
+        f"o limiar {deletador.LIMIAR_EM_COR} está ABAIXO do maior distrator "
+        f"medido ({MAIOR_DISTRATOR_MEDIDO}) -- o bot passa a apagar o que não "
+        f"é lixo")
+    assert deletador.LIMIAR_EM_COR < VERDADEIRO_QUE_FALHAVA, (
+        f"o limiar {deletador.LIMIAR_EM_COR} está ACIMA do casamento "
+        f"verdadeiro medido ({VERDADEIRO_QUE_FALHAVA}) -- volta o defeito de "
+        f"11/09/2026, com o item na bolsa e o bot nunca apagando")
+
+
+def test_a_margem_para_o_distrator_e_maior_que_para_o_verdadeiro():
+    """O erro barato é não apagar; o caro é apagar o que não devia.
+
+    Por isso a folga para baixo (contra falso positivo) tem de ser a maior das
+    duas -- e é: 0,15 contra 0,05.
+    """
+    folga_abaixo = deletador.LIMIAR_EM_COR - MAIOR_DISTRATOR_MEDIDO
+    folga_acima = VERDADEIRO_QUE_FALHAVA - deletador.LIMIAR_EM_COR
+
+    assert folga_abaixo > folga_acima, (
+        f"a folga contra falso positivo ({folga_abaixo:.2f}) ficou menor que a "
+        f"folga contra falso negativo ({folga_acima:.2f}) -- e apagar é "
+        f"irreversível")
+
+
+def test_a_conferencia_sem_apagar_continua_existindo():
+    """A única proteção que não depende de palpite."""
+    assert callable(deletador.conferir)

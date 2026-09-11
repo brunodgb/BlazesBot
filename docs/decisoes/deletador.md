@@ -305,3 +305,81 @@ agora ela está travada também para a 5ª linha, que é onde a régua era curta
   casos reprovam);
 * `test_a_ultima_linha_continua_valendo_com_o_INVENTARIO_ARRASTADO` -- o quadro
   inteiro é deslocado em duas direções e a 5ª linha continua sendo encontrada.
+
+## O limiar em cor, REMEDIDO (11/09/2026)
+
+### O pedido que estava no código desde sempre
+
+O comentário de `LIMIAR_EM_COR` dizia, palavra por palavra: *"PRECISA SER
+REMEDIDO com os templates de lixo"*. O 0,92 vinha do `package_courage`, onde o
+vão medido era item verdadeiro **0,971–0,999** contra distrator **0,583–0,878** —
+com distratores chegando a 0,878, 0,92 era o mínimo seguro **para aquele
+conjunto**.
+
+### O sintoma que forçou a remedição
+
+> *"eu tinha removido a Trap-Meshwork.png, mas agora adicionei de volta, porém
+> não está deletando os itens que são iguais"* — e, depois de um dia inteiro de
+> farm: *"ainda não está deletando os Trap Meshwork"*.
+
+Dos 15 modelos da HH, treze apagavam normalmente (o `Purple-Cowry` 52 vezes) e o
+`Trap-Meshwork` **nunca**.
+
+### A medição
+
+3456 pontuações de não-casamento colhidas do log de produção pelo relatório
+`_quem_nao_casou`, cobrindo as duas pastas (208 modelos globais + 15 da HH). A
+distribuição é **bimodal**, com um vão vazio no meio:
+
+| faixa | ocorrências | quem |
+|---|---|---|
+| 0,90–0,91 | 48 | **só o `Trap-Meshwork`**, em todas as passadas |
+| **0,71–0,89** | **0** | **o vão** |
+| 0,50–0,70 | 3408 | todo o resto |
+
+Os maiores distratores, por modelo:
+
+| modelo | melhor não-casamento |
+|---|---|
+| `Biddha-Bone` | 0,70 |
+| `RottedSeed`, `charm` | 0,68 |
+| `greenid` | 0,67 |
+| `Silver_Ore` | 0,65 |
+
+**O distrator mais forte de todo o conjunto de lixo marca 0,70** — muito abaixo
+dos 0,878 do `package_courage` que justificavam o 0,92. E o `Trap-Meshwork`
+marcava **0,90 de forma absolutamente estável** (idêntico em 48 relatórios ao
+longo de horas), o que diz que a diferença entre o PNG e o que o cliente desenha
+é **fixa e pequena** — não é ruído de renderização, que variaria.
+
+### A decisão: 0.85
+
+Fica **dentro do vão vazio**: 0,15 acima do maior distrator medido e 0,05 abaixo
+do casamento verdadeiro que estava falhando. **Nenhuma das 3456 amostras cai
+nessa margem** — baixar de 0,92 para 0,85 não faz nenhum item novo passar, além
+dos `Trap-Meshwork` que deveriam passar desde o começo.
+
+### O que NÃO muda
+
+**Apagar continua irreversível**, e a proteção continua sendo a mesma:
+`conferir()` — o botão "Conferir Modelos de Exclusão" — desenha o que **seria**
+apagado, sem apagar. Rodar antes de ligar a limpeza continua sendo a única
+proteção que não depende de palpite.
+
+### A alternativa que NÃO foi escolhida, e por quê
+
+Refazer o recorte do `Trap-Meshwork` (incluindo o contorno do ícone e o fundo
+escuro do slot, como estão o `Purple-Cowry` e o `Dragon-Roc`) levaria aquele
+modelo de 0,90 para ~0,98 e não mexeria em nada global.
+
+Mas isso conserta **um** modelo. A medição mostra que o problema é do **limiar**:
+ele foi calibrado para outro conjunto de imagens, e o próximo recorte novo que o
+usuário fizer bate na mesma parede. Consertar o número que estava errado é o que
+resolve a classe.
+
+**As duas coisas convivem:** um recorte melhor continua sendo melhor, e o
+`Warm-Jade` — que marca 0,54, muito abaixo do vão — é candidato a isso. Naquele,
+o recorte pegou só o miolo liso da esfera, sem contorno e sem fundo: nitidez
+1 067 contra a média de 14 937 dos que funcionam. Gradiente suave não dá o que
+correlacionar. Mas 0,54 também é compatível com "o item não estava na tela", e
+isso ainda não foi separado.

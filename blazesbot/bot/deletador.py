@@ -126,11 +126,17 @@ PASTA_DO_LIXO_DA_HH = Path("data") / "templates" / "deletar_hh"
 # desenha o que seria apagado, sem apagar. **Rodar a conferência antes de ligar
 # a limpeza continua sendo a única proteção que não depende de palpite.**
 
-# Limiar do casamento EM COR dos itens. Vem do `package_courage`, que mediu o
-# vão entre item verdadeiro (0.971-0.999) e distrator de mesma forma
-# (0.583-0.878). PRECISA SER REMEDIDO com os templates de lixo -- é para isso
-# que existe a `conferir`.
-LIMIAR_EM_COR = 0.92
+# Limiar do casamento EM COR dos itens.
+#
+# ERA 0.92, vindo do `package_courage`, e o comentário daqui pedia: *"PRECISA
+# SER REMEDIDO com os templates de lixo"*. Remedido em 11/09/2026 com 3456
+# pontuações de não-casamento do log de produção: o distrator mais forte de todo
+# o conjunto marca 0,70, e havia um casamento VERDADEIRO sendo rejeitado por
+# 0,02. O vão de 0,71 a 0,89 está VAZIO, e 0.85 fica dentro dele.
+#
+# APAGAR É IRREVERSÍVEL: a proteção continua sendo `conferir()`, que desenha o
+# que SERIA apagado sem apagar. Ver `docs/decisoes/deletador.md`.
+LIMIAR_EM_COR = 0.85
 
 # Teto de exclusões por chamada. Um template ruim não pode esvaziar a bolsa.
 MAXIMO_DE_EXCLUSOES = 20
