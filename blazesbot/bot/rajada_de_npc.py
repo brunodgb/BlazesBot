@@ -70,6 +70,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
+from ..core import espera
 from ..core.inputs import (
     CLIQUES_DIREITOS_POR_TENTATIVA,
     INTERVALO_ENTRE_CLIQUES_DIREITOS,
@@ -109,19 +110,22 @@ def clicar_ate_abrir(
         ctx.right_click(ponto)
         return None
 
-    for i in range(quantos):
-        if i:
-            ctx.tick(espaco)
-        # UM clique por vez: `repetir=False`. A repetição é deste laço agora, e
-        # quem a controla é a RESPOSTA, não o relógio.
-        ctx.right_click(ponto, repetir=False)
-        resposta = esta_aberto()
-        if resposta is True:
-            return True
-        if resposta is None:
-            _rajada_cega(ctx, ponto, espaco, restantes=quantos - i - 1)
-            return None
-    return False
+    # O LAÇO É DO ORQUESTRADOR (`core/espera.py`): ele guarda o teto, o passo,
+    # o Parar e a telemetria. Aqui fica o que é da rajada -- a AÇÃO (um clique
+    # por vez, `repetir=False`, porque a repetição passou a ser da resposta e
+    # não do relógio) e o teto em VOLTAS, que é como se conta clique.
+    fim = espera.ate(
+        esta_aberto,
+        ctx=ctx,
+        teto=None,                      # quem limita aqui são os cliques
+        passo=espaco,
+        o_que="rajada_de_npc",
+        agir=lambda: ctx.right_click(ponto, repetir=False),
+        voltas_maximas=quantos,
+    )
+    if fim.motivo == espera.NAO_SEI:
+        _rajada_cega(ctx, ponto, espaco, restantes=quantos - fim.voltas)
+    return fim.confirmado
 
 
 def _rajada_cega(ctx, ponto: tuple[int, int], espaco: float,

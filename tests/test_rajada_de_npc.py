@@ -31,17 +31,26 @@ PONTO = (467, 377)
 
 
 class _Ctx:
-    """Anota o que a rajada fez: cliques (com `repetir`) e esperas."""
+    """Anota o que a rajada fez: cliques (com `repetir`), esperas e Paradas.
+
+    `raise_if_stopped` está aqui porque o orquestrador (`core/espera.py`)
+    pergunta por ela a cada volta -- é ela que faz o Parar do usuário valer
+    dentro de uma rajada de dez cliques.
+    """
 
     def __init__(self) -> None:
         self.cliques: list[tuple[tuple[int, int], bool]] = []
         self.esperas: list[float] = []
+        self.paradas = 0
 
     def right_click(self, ponto, repetir=True):
         self.cliques.append((ponto, repetir))
 
     def tick(self, segundos):
         self.esperas.append(segundos)
+
+    def raise_if_stopped(self):
+        self.paradas += 1
 
 
 def _respostas(*valores):
@@ -113,6 +122,13 @@ def test_o_teto_de_cliques_pode_ser_reduzido_por_quem_chama():
     ctx = _Ctx()
     assert r.clicar_ate_abrir(ctx, PONTO, _respostas(False), cliques=3) is False
     assert len(ctx.cliques) == 3
+
+
+def test_o_PARAR_e_perguntado_a_cada_volta():
+    """Rajada de dez cliques sem olhar o Parar seria meio segundo de bot surdo."""
+    ctx = _Ctx()
+    r.clicar_ate_abrir(ctx, PONTO, _respostas(False))
+    assert ctx.paradas == CLIQUES_DIREITOS_POR_TENTATIVA
 
 
 def test_DESLIGADO_volta_a_rajada_cega_de_sempre(monkeypatch):

@@ -89,7 +89,7 @@ from collections import deque
 from collections.abc import Callable
 from contextlib import contextmanager
 
-from ..core import esconder_jogadores, halo, janelas_abertas
+from ..core import esconder_jogadores, espera, halo, janelas_abertas
 from ..core.coords import TEMPLATE_ANCHORS
 from ..core.rota import distancia
 from ..core.vision import capture_window, find_template
@@ -1920,23 +1920,20 @@ class UIDoJogo:
         curto -- e a linha do log traz o número para decidir, em vez de palpite.
         """
         ctx = self.ctx
-        comeco = time.time()
-        limite = comeco + teto
-        while True:
-            ctx.raise_if_stopped()
-            if chegou():
-                ctx.log.info("%s confirmado em %.0f ms: %s | local %s", o_que,
-                             (time.time() - comeco) * 1000,
-                             ctx.memory.position(), ctx.memory.location())
-                return True
-            if time.time() >= limite:
-                ctx.log.warning(
-                    "%s NÃO confirmado em %.0f ms (teto): ainda em %s | local "
-                    "%s. Seguindo -- o passo seguinte relê a posição.",
-                    o_que, teto * 1000, ctx.memory.position(),
-                    ctx.memory.location())
-                return False
-            ctx.tick(passo)
+        # O LAÇO É DO ORQUESTRADOR (`core/espera.py`) -- aqui fica só a
+        # pergunta e o que se diz no log. De quebra, toda chegada passa a ser
+        # cronometrada e CONTADA POR DESFECHO, sem uma linha a mais.
+        fim = espera.ate(chegou, ctx=ctx, teto=teto, passo=passo,
+                         o_que=f"chegada.{o_que}")
+        if fim:
+            ctx.log.info("%s confirmado em %.0f ms: %s | local %s", o_que,
+                         fim.ms, ctx.memory.position(), ctx.memory.location())
+            return True
+        ctx.log.warning(
+            "%s NÃO confirmado em %.0f ms (teto): ainda em %s | local "
+            "%s. Seguindo -- o passo seguinte relê a posição.",
+            o_que, teto * 1000, ctx.memory.position(), ctx.memory.location())
+        return False
 
     # ==================================================================
     # Rolar a lista do diálogo

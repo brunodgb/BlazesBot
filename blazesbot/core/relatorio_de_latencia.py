@@ -73,7 +73,12 @@ def _arquivos() -> list[Path]:
 
 
 def juntar() -> dict[str, _Junto]:
-    """Todas as janelas de todas as contas, num acumulado por nome."""
+    """Todas as janelas de todas as contas, num acumulado por nome.
+
+    SÓ AS LINHAS DE DURAÇÃO. As de desfecho (`tipo == "desfecho"`) não têm
+    `min_ms`/`max_ms` e são lidas por `juntar_desfechos` -- duas perguntas, dois
+    acumulados, o mesmo arquivo.
+    """
     por_nome: dict[str, _Junto] = defaultdict(_Junto)
     for caminho in _arquivos():
         abrir = gzip.open if caminho.suffix == ".gz" else open
@@ -86,6 +91,8 @@ def juntar() -> dict[str, _Junto]:
                         d = json.loads(linha)
                     except Exception:
                         continue
+                    if d.get("tipo") == "desfecho":
+                        continue
                     j = por_nome[d["nome"]]
                     j.n += d["n"]
                     j.total += d["total_ms"]
@@ -96,6 +103,56 @@ def juntar() -> dict[str, _Junto]:
         except OSError:
             continue
     return dict(por_nome)
+
+
+def juntar_desfechos() -> dict[str, dict[str, int]]:
+    """Quantas vezes cada ação terminou de cada jeito.
+
+    É a pergunta que a duração não responde: uma espera de 280 ms só quer dizer
+    alguma coisa quando se sabe se ela terminou CONFIRMADA ou no TETO.
+    """
+    por_nome: dict[str, dict[str, int]] = defaultdict(dict)
+    for caminho in _arquivos():
+        abrir = gzip.open if caminho.suffix == ".gz" else open
+        try:
+            with abrir(caminho, "rt", encoding="utf-8", errors="replace") as f:
+                for linha in f:
+                    if '"desfecho"' not in linha:
+                        continue
+                    try:
+                        d = json.loads(linha)
+                    except Exception:
+                        continue
+                    if d.get("tipo") != "desfecho":
+                        continue
+                    alvo = por_nome[d["nome"]]
+                    for motivo, quantas in (d.get("desfechos") or {}).items():
+                        alvo[motivo] = alvo.get(motivo, 0) + quantas
+        except OSError:
+            continue
+    return dict(por_nome)
+
+
+def _tabela_de_desfechos(por_nome: dict[str, dict[str, int]],
+                         quantos: int) -> str:
+    """Ordenada pelo que MAIS morre no teto -- é onde há tempo ou defeito."""
+    titulo = "COMO AS AÇÕES TERMINAM (desfecho, não duração)"
+    saida = [f"\n{titulo}", "-" * len(titulo)]
+    if not por_nome:
+        saida.append("Nenhum desfecho registrado ainda (`cronometro.marcar`).")
+        return "\n".join(saida)
+    saida.append(f"{'nome':<44} {'n':>9} {'confirmado':>11} {'teto':>8} "
+                 f"{'voltas':>7} {'nao_sei':>8}")
+    def _perdidas(item):
+        _, d = item
+        return -(d.get("teto", 0) + d.get("voltas", 0))
+    for nome, d in sorted(por_nome.items(), key=_perdidas)[:quantos]:
+        n = sum(d.values())
+        pct = d.get("confirmado", 0) / n * 100 if n else 0.0
+        saida.append(f"{nome[:44]:<44} {n:>9,} {pct:>10.1f}% "
+                     f"{d.get('teto', 0):>8,} {d.get('voltas', 0):>7,} "
+                     f"{d.get('nao_sei', 0):>8,}")
+    return "\n".join(saida)
 
 
 def _tabela(titulo: str, linhas, chave) -> str:
@@ -127,13 +184,17 @@ def relatorio(quantos: int = 20) -> str:
         _tabela("O QUE É INSTÁVEL (máximo ÷ média, com n >= 30)",
                 sorted((i for i in itens if i[1].n >= 30),
                        key=lambda x: -x[1].instabilidade)[:quantos], None),
+        _tabela_de_desfechos(juntar_desfechos(), quantos),
     ]
     partes.append(
         "\nCOMO LER: o ranking por TOTAL diz onde otimizar tem efeito. "
         "Um máximo muito acima da média é espera cega ou bloqueio — tempo a "
         "devolver. Instabilidade alta pede teto MAIOR, não menor: é a ação "
         "que às vezes atropela o jogo. Cruze com `docs/TEMPOS.md`, que diz "
-        "quais esperas são TETO, PASSO ou FIXO."
+        "quais esperas são TETO, PASSO ou FIXO.\n"
+        "E a tabela de DESFECHOS diz o que a duração não diz: espera que quase "
+        "sempre morre no teto ou é teto curto demais, ou é ação que não "
+        "funciona -- e as duas exigem olhar, não mais um sleep."
     )
     return "\n".join(partes)
 

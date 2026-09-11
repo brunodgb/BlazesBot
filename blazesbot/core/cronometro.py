@@ -132,12 +132,20 @@ class _Acumulado:
 
 
 class _Balde:
-    """Os acumuladores de UMA thread, mais quem ela é."""
+    """Os acumuladores de UMA thread, mais quem ela é.
 
-    __slots__ = ("conta", "nomes", "thread")
+    DUAS PERGUNTAS NO MESMO BALDE, e não é economia de arquivo: "quanto custou"
+    e "como terminou" são lidas JUNTAS -- uma espera de 280 ms só quer dizer
+    alguma coisa quando se sabe se ela terminou confirmada ou no teto. Dividir
+    em dois módulos duplicaria o registro por thread, a thread de despejo e o
+    arquivo, para depois exigir um `join` na hora de ler.
+    """
+
+    __slots__ = ("conta", "desfechos", "nomes", "thread")
 
     def __init__(self) -> None:
         self.nomes: dict[str, _Acumulado] = {}
+        self.desfechos: dict[str, dict[str, int]] = {}
         self.conta = ""
         self.thread = threading.current_thread().name
 
@@ -186,6 +194,38 @@ def anotar(nome: str, gasto: float) -> None:
         ac.maximo = gasto
     ac.n += 1
     ac.soma += gasto
+
+
+def marcar(nome: str, desfecho: str) -> None:
+    """Conta COMO uma ação terminou. NÃO escreve nada, e não olha o relógio.
+
+    =====================================================================
+    MAIS BARATO QUE MEDIR TEMPO, E RESPONDE O QUE O TEMPO NÃO RESPONDE
+    =====================================================================
+
+    `anotar` paga dois `perf_counter` (298 ns medidos). Aqui não há relógio
+    nenhum: dois lookups de dicionário e um `+= 1`, na casa de 80 ns.
+
+    E é a pergunta que faltava. Na auditoria de 10/09/2026 foi preciso CONTAR
+    STRINGS EM PROSA no log de dev para saber quantas tentativas de entrada
+    falharam (`"NÃO confirmado"` -> 61.928). Isso quebra na primeira vez que
+    alguém reescrever a mensagem, e não sobrevive a `log.debug`.
+
+    O NOME É DA AÇÃO, o desfecho é COMO ela terminou -- os dois curtos, porque
+    viram chave de dicionário no caminho quente:
+
+        marcar("espera.entrada_na_hh", "confirmado")
+        marcar("espera.entrada_na_hh", "teto")
+    """
+    try:
+        desfechos = _local.balde.desfechos
+    except AttributeError:
+        desfechos = _meu_balde().desfechos
+    por_desfecho = desfechos.get(nome)
+    if por_desfecho is None:
+        desfechos[nome] = {desfecho: 1}
+        return
+    por_desfecho[desfecho] = por_desfecho.get(desfecho, 0) + 1
 
 
 class cronometro:   # minúsculo de propósito: é usado como `with cronometro(...)`
@@ -319,6 +359,23 @@ def despejar() -> int:
                 "med_ms": round(ac.soma / ac.n * 1000, 3),
                 "max_ms": round(ac.maximo * 1000, 3),
                 "total_ms": round(ac.soma * 1000, 1),
+            }, ensure_ascii=False))
+            linhas += 1
+
+        # OS DESFECHOS SAEM NA MESMA LINHA-A-LINHA, com `tipo` para o leitor
+        # separar sem adivinhar. Uma linha por NOME, com todos os desfechos
+        # dele: é o formato que responde "de 62.149 tentativas, quantas
+        # confirmaram" sem juntar nada depois.
+        colhidos, balde.desfechos = balde.desfechos, {}
+        for nome, por_desfecho in colhidos.items():
+            log.info(json.dumps({
+                "ts": agora,
+                "tipo": "desfecho",
+                "nome": nome,
+                "conta": balde.conta or None,
+                "thread": balde.thread,
+                "n": sum(por_desfecho.values()),
+                "desfechos": por_desfecho,
             }, ensure_ascii=False))
             linhas += 1
     return linhas

@@ -49,7 +49,7 @@ ligar código não testado.
 | `USAR_TAB_NOS_GUARDAS` | `True` | [blazesbot/bot/combate.py:681](blazesbot/bot/combate.py#L681) | combat.py, diagnostico_do_link.py, inputs.py | >>>  INTERRUPTOR DO EXPERIMENTO -- TROCA DE ALVO POR TAB NOS GUARDAS  <<< |
 | `ATIVADO` | `True` | [blazesbot/bot/deletador.py:74](blazesbot/bot/deletador.py#L74) | diagnostico_do_link.py, supervisor.py, patch_do_cliente.py, petbug.py | O caminho continua inteiro com ele em False -- desligado não é apagado. |
 | `CIRCULO_POR_RAIO` | `True` | [blazesbot/bot/navegacao.py:265](blazesbot/bot/navegacao.py#L265) | — | True = raio por raio (1,2,3,5; em cada raio os 8 pontos); False = bússola por |
-| `PERGUNTAR_ENTRE_OS_CLIQUES` | `True` | [blazesbot/bot/rajada_de_npc.py:84](blazesbot/bot/rajada_de_npc.py#L84) | — | INTERRUPTOR -- desligar devolve a rajada cega de sempre. |
+| `PERGUNTAR_ENTRE_OS_CLIQUES` | `True` | [blazesbot/bot/rajada_de_npc.py:85](blazesbot/bot/rajada_de_npc.py#L85) | — | INTERRUPTOR -- desligar devolve a rajada cega de sempre. |
 | `MATAR_JANELA_TRAVADA` | `True` | [blazesbot/bot/sentinela.py:166](blazesbot/bot/sentinela.py#L166) | — | INTERRUPTOR (a convenção do projeto: caminho fora de uso não vira comentário) |
 | `OLHAR_A_TELA` | `False` | [blazesbot/bot/sentinela.py:201](blazesbot/bot/sentinela.py#L201) | — | O VIGIA NÃO LÊ A TELA. INTERRUPTOR DESLIGADO, com o número que o desligou. |
 | `CONFIRMAR_CHEGADA_POR_COORDENADA` | `False` | [blazesbot/bot/ui_do_jogo.py:521](blazesbot/bot/ui_do_jogo.py#L521) | — | INTERRUPTOR: a coordenada do painel CONFIRMA a chegada? |
@@ -81,7 +81,7 @@ ligar código não testado.
 
 ## Números medidos -- tolerância, limiar, teto, cadência
 
-606 constantes, agrupadas por arquivo.
+610 constantes, agrupadas por arquivo.
 
 | constante | valor | onde | quem lê | porquê (resumo) |
 |---|---|---|---|---|
@@ -547,6 +547,10 @@ ligar código não testado.
 | `LINHAS_MAXIMAS_DO_DIARIO` | `20000` | [blazesbot/core/diario.py:39](blazesbot/core/diario.py#L39) | — | Teto de linhas por diário. Generoso de propósito -- o diário existe para ser |
 | `HP_MAXIMO_PLAUSIVEL` | `5000000` | [blazesbot/core/entidades.py:40](blazesbot/core/entidades.py#L40) | — | Teto de HP que ainda é HP. Cinco milhões é folgado de sobra para qualquer |
 | `NIVEL_MAXIMO_PLAUSIVEL` | `200` | [blazesbot/core/entidades.py:43](blazesbot/core/entidades.py#L43) | — | Faixa de nível. 200 é folga: o jogo vai a 8x, e o boss da cave é nv51. |
+| `CONFIRMADO` | `'confirmado'` | [blazesbot/core/espera.py:72](blazesbot/core/espera.py#L72) | executor.py, combate.py, ui_do_jogo.py, memory.py, petbug.py, barra.py | Os motivos de uma espera terminar. São chave de contador -- curtos e fixos. |
+| `NAO_SEI` | `'nao_sei'` | [blazesbot/core/espera.py:75](blazesbot/core/espera.py#L75) | rajada_de_npc.py | — |
+| `TETO` | `'teto'` | [blazesbot/core/espera.py:73](blazesbot/core/espera.py#L73) | afericao_do_aliado.py, cura.py, executor.py, sincronia.py, amostragem_de_cliques.py, combate.py, deletador.py, fada.py, mapa_hh.py, routine.py, morte.py, mural.py, navegacao.py, rajada_de_npc.py, supervisor.py, ui_do_jogo.py, vendedor.py, config.py, coleira_do_ponto.py, diario.py, indice_de_tempos.py, inputs.py, mouse_shield.py, pet.py, relatorio_de_latencia.py, volta_ao_ponto.py | — |
+| `VOLTAS` | `'voltas'` | [blazesbot/core/espera.py:74](blazesbot/core/espera.py#L74) | executor.py, rajada_de_npc.py, config.py | — |
 | `PASSO_DO_HALO` | `14` | [blazesbot/core/halo.py:59](blazesbot/core/halo.py#L59) | entrada.py, indice_de_tempos.py | Quanto anda o anel a cada volta, em pixels da tela. |
 | `ASSENTAR_A_PAGINA` | `0.08` | [blazesbot/core/hotbar.py:94](blazesbot/core/hotbar.py#L94) | combate.py, hotbar.py | DEPOIS DE CHEGAR NA PÁGINA 1, ANTES DE DEVOLVER |
 | `CLIQUES_PARA_VOLTAR_A_PAGINA_1` | `2` | [blazesbot/core/hotbar.py:62](blazesbot/core/hotbar.py#L62) | hotbar.py | Três páginas: do pior caso (página 3) até a 1 são dois cliques para cima. |
@@ -685,9 +689,9 @@ ligar código não testado.
 | `COR_MP_BORDA` | `'#4A7BC4'` | [blazesbot/gui/widgets.py:28](blazesbot/gui/widgets.py#L28) | — | — |
 | `CHUNK` | `1048576` | [blazesbot/tools/find_base.py:57](blazesbot/tools/find_base.py#L57) | — | — |
 | `MUDOU` | `0.0005` | [blazesbot/tools/ler_camera.py:57](blazesbot/tools/ler_camera.py#L57) | afericao_do_aliado.py, executor.py, localizacao.py, routine.py, combate.py, context.py, fada.py, config.py, calibracao.py, memory.py, target_hybrid.py | O que conta como "mudou". Menor que isto é ruído de interpolação -- andando, o |
-| `PASSO` | `0.25` | [blazesbot/tools/ler_camera.py:50](blazesbot/tools/ler_camera.py#L50) | routine.py, entrada.py, mapa_hh.py, supervisor.py, ui_do_jogo.py, indice_de_tempos.py, relatorio_de_latencia.py, vigiar_combate.py | Cadência da leitura. Barata: são 8 leituras de 4 bytes por volta. |
+| `PASSO` | `0.25` | [blazesbot/tools/ler_camera.py:50](blazesbot/tools/ler_camera.py#L50) | routine.py, entrada.py, mapa_hh.py, supervisor.py, ui_do_jogo.py, espera.py, indice_de_tempos.py, relatorio_de_latencia.py, vigiar_combate.py | Cadência da leitura. Barata: são 8 leituras de 4 bytes por volta. |
 | `SEGUNDOS_PADRAO` | `300.0` | [blazesbot/tools/ler_camera.py:53](blazesbot/tools/ler_camera.py#L53) | vigiar_combate.py | Teto padrão, para a ferramenta fechar sozinha se você esquecer dela aberta. |
-| `PASSO` | `0.1` | [blazesbot/tools/vigiar_combate.py:48](blazesbot/tools/vigiar_combate.py#L48) | routine.py, entrada.py, mapa_hh.py, supervisor.py, ui_do_jogo.py, indice_de_tempos.py, relatorio_de_latencia.py, ler_camera.py | Cadência da leitura. É memória pura -- algumas leituras de 4 bytes por volta, |
+| `PASSO` | `0.1` | [blazesbot/tools/vigiar_combate.py:48](blazesbot/tools/vigiar_combate.py#L48) | routine.py, entrada.py, mapa_hh.py, supervisor.py, ui_do_jogo.py, espera.py, indice_de_tempos.py, relatorio_de_latencia.py, ler_camera.py | Cadência da leitura. É memória pura -- algumas leituras de 4 bytes por volta, |
 | `SEGUNDOS_ENTRE_ECOS` | `5.0` | [blazesbot/tools/vigiar_combate.py:58](blazesbot/tools/vigiar_combate.py#L58) | — | De quanto em quanto tempo repetir uma linha que NÃO mudou. |
 | `SEGUNDOS_PADRAO` | `900.0` | [blazesbot/tools/vigiar_combate.py:51](blazesbot/tools/vigiar_combate.py#L51) | ler_camera.py | Teto padrão, para a ferramenta fechar sozinha se você esquecer dela aberta. |
 | `MAX_LINHAS_GUARDADAS` | `12000` | [blazesbot/web_app.py:84](blazesbot/web_app.py#L84) | main_window.py | Linhas guardadas em memória para permitir refiltrar por conta, espelho do |
