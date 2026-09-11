@@ -764,3 +764,88 @@ Medir `state_conn_prefix` contra as telas de login **com a região travada no
 centro** — a medição que não existe. Só ela diria qual limiar separa a queda
 real (0.980-0.983 em jogo) da família "Connection failed" / "Connecting to the
 server". Subir o 0.92 no chute é como se erra calado.
+
+## 11/09/2026 — três contas de APP/Fada travadas com a caixa na tela
+
+Relato, com print: `Tsuki69` (Fada do APP) parada com
+*"Connection interrupted, please open client again."* na tela, sem relogin. Nos
+minutos seguintes, mais duas contas de APP no mesmo estado.
+
+### Foi regressão do commit `49b668a`, e a justificativa dele estava errada
+
+Ao desligar `sentinela.OLHAR_A_TELA` eu escrevi que o aviso na tela *"já tinha
+DOIS leitores: o watchdog inline e o `LoginDetector`"*.
+
+**O watchdog inline só existe no BC.** `ctx.watchdog` é injetado num lugar só —
+`bc/routine.py`, no `__init__` da rotina. Verificado por AST em todo o pacote:
+é a única atribuição. Conta de APP, de Fada e de HH sem BC tem
+`ctx.watchdog = None`, e `BotContext.check_watchdog` sai por `return` na
+primeira linha. **Elas nunca tiveram o segundo leitor que eu supus.**
+
+Pior na Fada, e é por isso que ela travou primeiro:
+
+* ela **não chama `ctx.tick()` em ponto nenhum** — nem a consulta ao vigia acontece;
+* a única queda que ela percebe é `IsWindow`, **depois** que o laço retorna
+  (`fada_montagem.py`, a correção de 04/09/2026);
+* a caixa "Connection interrupted" deixa a janela **viva** → o laço nunca
+  retorna → a conta fica presa para sempre.
+
+Corroboração no log daquele dia: os três decretos do vigia foram **todos** por
+"processo do cliente encerrado". Nenhum por tela, porque o interruptor estava
+desligado.
+
+### E os 48 falsos positivos que motivaram o desligamento?
+
+Já estavam resolvidos quando desliguei. Os 48 aconteceram **todos nas telas de
+login**, e a suspensão de juízo durante o login
+(`SO_FATO_DO_SISTEMA_DURANTE_O_LOGIN`, commit `32bf95f`) é **anterior** ao
+interruptor. Com ela valendo, o vigia só lê a tela com a sessão estabelecida —
+exatamente a população onde o limiar 0.92 foi medido, com margem de +0.559.
+
+Desligar depois disso foi zelo em cima de causa já consertada, e custou três
+contas travadas. `OLHAR_A_TELA = True`.
+
+### O invariante que o usuário formulou, e que isto passa a cumprir
+
+> *"É importante que o login/relogin não dependa de forma alguma dos outros
+> ecossistemas (…) se eu adicionar novos ecossistemas, ele continue verificando
+> se caiu a conta para derrubar e logar ela novamente."*
+>
+> *"O login/relogin não deve precisar ser instanciado em outros ecossistemas,
+> deve rodar em paralelo com eles, para que na hora que adicionar mais, não
+> precise chamar o watchdog."*
+
+O desenho que cumpre isso é o vigia global: **thread paralela**, registrada
+**uma vez** no `run()` do supervisor, recebendo **peças** (o login e uma função
+que devolve `(pid, hwnd)`) e nada de `BotContext`. Ele não importa nada de
+`bc/`, `app/` nem `hh/` — travado por AST.
+
+O que um ecossistema novo recebe **sem escrever uma linha**:
+
+| etapa | quem faz | o ecossistema participa? |
+|---|---|---|
+| perceber a queda | vigia, thread própria | não |
+| matar o cliente | vigia (`TerminateProcess`) | não |
+| gravar no Histórico | `_registrar_queda`, lendo o anúncio | não |
+| relogar | `AccountSupervisor.run` | não |
+
+O `_registrar_queda` passou a consultar `sentinela.cobrar_a_queda` quando
+`ctx.ultima_queda` está vazio — é o que faz o cartão do Histórico sair também
+para quem não tem onde anotá-lo, que era o caso da Fada.
+
+### O resíduo, declarado e não escondido
+
+**A SAÍDA da thread do ecossistema ainda é cooperativa.** O vigia mata o
+processo, e a partir daí toda mensagem é barrada pelo funil
+(`Input._janela_confiavel`) — mas quem faz a thread do ecossistema *desistir* é
+ainda o próprio ecossistema: o BC e a HH pelo `check_watchdog`, o APP pelo
+`conferir_saude`, a Fada pelo `IsWindow` do fim do laço.
+
+Na prática isso se resolve sozinho na volta ao `_operate`, que chama `ctx.tick()`.
+O caso ruim é o ecossistema novo que rode um laço longo sem voltar — o mesmo
+defeito que o APP teve em 18/08/2026.
+
+O caminho natural é o funil do `Input` parar a thread quando houver anúncio para
+aquela conta, já que ele é o ponto único por onde todo ecossistema fala com o
+jogo. Não foi feito aqui: é decisão de arquitetura com mais de um caminho, e as
+contas estavam travadas agora.

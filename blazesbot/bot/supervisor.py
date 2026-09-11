@@ -1230,7 +1230,16 @@ class AccountSupervisor(threading.Thread):
         try:
             queda = ctx.ultima_queda
             if not queda:
-                return
+                # O ANÚNCIO DO VIGIA, PARA QUEM NÃO TEM ONDE ANOTÁ-LO.
+                # `ctx.ultima_queda` só é escrito por quem chama
+                # `check_watchdog` ou o `conferir_saude` do APP -- a Fada não
+                # chama nenhum dos dois, e o cartão dela se perdia. Aqui porque
+                # este é o funil do Histórico para TODO ecossistema, presente e
+                # futuro: um lugar, não um por modo.
+                anuncio = sentinela.cobrar_a_queda(self.account.login)
+                if not anuncio:
+                    return
+                queda = (anuncio[0], anuncio[1])
             ctx.ultima_queda = None
             chave, quadro = queda
             rodando = (time.time() - ctx.stats.started_at

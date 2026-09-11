@@ -22,6 +22,7 @@ caminho que já existia.
 from __future__ import annotations
 
 import ast
+import dataclasses
 import inspect
 import logging
 import textwrap
@@ -138,9 +139,11 @@ class _Mundo:
         self.mortos: list[int] = []
 
     def instalar(self, monkeypatch):
-        # FORÇA O INTERRUPTOR LIGADO -- é a convenção do projeto para caminho
-        # fora de uso: ele não some, e o teste continua exercitando a lógica.
-        monkeypatch.setattr(mod, "OLHAR_A_TELA", True)
+        # NÃO FORÇA `OLHAR_A_TELA`. Ele era forçado para `True` aqui enquanto o
+        # padrão era `False`, e isso MASCARAVA o defeito: o teste do
+        # ecossistema novo passava mesmo com o vigia cego, que foi o estado
+        # que travou três contas em 11/09/2026. O dublê usa o valor REAL do
+        # módulo; quem quer o outro valor troca no próprio teste.
         monkeypatch.setattr(mod, "janela_responde",
                             lambda hwnd, *a, **k: self.responde)
         monkeypatch.setattr(mod, "quadro_com_aviso_de_conexao",
@@ -597,20 +600,53 @@ def test_o_supervisor_diz_ao_vigia_quando_esta_logando():
         "a virada saiu do ponto em que o login CONCLUI")
 
 
-def test_o_vigia_vem_DE_FABRICA_sem_ler_a_tela():
-    """48 decretos na primeira noite, todos por leitura de tela, todos errados.
+def test_o_vigia_LE_a_tela_porque_e_o_unico_leitor_de_quem_nao_tem_watchdog():
+    """Desligar isto travou três contas de APP/Fada em 11/09/2026.
 
-    O aviso "Connection interrupted" tem DOIS leitores que já funcionavam: o
-    watchdog inline (na thread da conta, a cada 10 s) e o `LoginDetector`. O
-    vigia foi o terceiro, e não somou cobertura -- somou uma chance de errar
-    sozinho, num contexto onde o limiar dele nunca foi medido.
+    A justificativa de 09/09/2026 para desligar dizia que o aviso na tela "já
+    tinha dois leitores". **O watchdog inline só existe no BC** -- `ctx.watchdog`
+    é injetado num lugar só, `bc/routine.py`. Conta de APP, de Fada e de HH sem
+    BC tem `ctx.watchdog = None`, e `check_watchdog` sai por `return` na
+    primeira linha.
 
-    O que faltava (a conta em LIMBO) é thread parada dentro de um `SendMessageW`
-    síncrono, e isso os outros três sinais respondem sem ver a tela.
+    E os 48 falsos positivos que motivaram o desligamento aconteceram TODOS nas
+    telas de login, que a suspensão de juízo durante o login já cobre --
+    `SO_FATO_DO_SISTEMA_DURANTE_O_LOGIN`, do mesmo dia e anterior a este
+    interruptor.
     """
-    assert mod.OLHAR_A_TELA is False, (
-        "o vigia voltou a ler a tela por padrão — sem antes medir o "
-        "`state_conn_prefix` contra as telas de login com a região travada")
+    assert mod.OLHAR_A_TELA is True, (
+        "o vigia parou de ler a tela — quem não tem watchdog inline (APP, "
+        "Fada, HH sem BC, e todo ecossistema futuro) fica sem NENHUM leitor do "
+        "aviso de conexão interrompida")
+
+
+def test_o_watchdog_inline_existe_em_UM_ecossistema_so():
+    """E o fato que derrubou a justificativa do desligamento.
+
+    Enquanto `ctx.watchdog` for injetado num lugar so, o vigia global e a UNICA
+    rede de quem nao e BC. Se um dia todo ecossistema injetar o seu, este teste
+    reprova e a decisao pode ser reexaminada com o fato novo na mao.
+
+    LE O AST, NAO O TEXTO: a primeira versao procurava a string `ctx.watchdog =`
+    e reprovava por causa do COMENTARIO em `sentinela.py` que explica justamente
+    este fato -- a mesma licao que `tests/test_ecossistemas.py` ja registra.
+    """
+    raiz = Path(mod.__file__).parent.parent
+    injetam = set()
+    for arq in raiz.rglob("*.py"):
+        try:
+            arvore = ast.parse(arq.read_text(encoding="utf-8"))
+        except (SyntaxError, UnicodeDecodeError):
+            continue
+        for no in ast.walk(arvore):
+            if not isinstance(no, ast.Assign):
+                continue
+            for alvo in no.targets:
+                if isinstance(alvo, ast.Attribute) and alvo.attr == "watchdog":
+                    injetam.add(arq.relative_to(raiz).as_posix())
+
+    assert injetam == {"bot/bc/routine.py"}, (
+        f"mudou quem injeta o watchdog inline: {sorted(injetam)}")
 
 
 def test_desligado_ele_nao_MATA_nem_CAPTURA(monkeypatch):
@@ -633,3 +669,91 @@ def test_desligado_ele_nao_MATA_nem_CAPTURA(monkeypatch):
         assert fotos == [], "capturou mesmo com o interruptor desligado"
     finally:
         v.desligar()
+
+
+# ===========================================================================
+# INDEPENDÊNCIA DE ECOSSISTEMA -- diretriz do usuário, 11/09/2026
+# ===========================================================================
+#
+# *"É importante que o login/relogin não dependa de forma alguma dos outros
+# ecossistemas, o watchdog funcione de forma independente. Se eu adicionar
+# novos ecossistemas, ele continue verificando se caiu a conta para derrubar e
+# logar ela novamente."*
+#
+# O defeito que isto impede é de DESENHO, não de código: hoje cada ecossistema
+# se liga à detecção do seu jeito -- o BC pelo watchdog inline, o APP pelo
+# `conferir_saude` injetado, a HH pelo `check_watchdog` do `_guard`, e a Fada
+# por nada. Um ecossistema novo nasce CEGO, e ninguém percebe até uma conta
+# travar em campo.
+#
+# O vigia existe para que isso deixe de ser verdade: ele recebe PEÇAS
+# (login, uma função que devolve pid/hwnd) e não sabe o que é ecossistema.
+
+
+def test_o_vigia_NAO_conhece_ecossistema_nenhum():
+    """Ecossistema novo tem de ficar coberto sem uma linha de mudança aqui."""
+    fonte = Path(mod.__file__).read_text(encoding="utf-8")
+    arvore = ast.parse(fonte)
+    importados = set()
+    for no in ast.walk(arvore):
+        if isinstance(no, ast.ImportFrom) and no.module:
+            importados.add(no.module)
+        elif isinstance(no, ast.Import):
+            importados.update(a.name for a in no.names)
+
+    for proibido in (".bc", ".app", ".hh", "bc.routine", "app.executor",
+                     "hh.routine"):
+        assert not any(proibido in m for m in importados), (
+            f"o vigia passou a importar `{proibido}` — ele deixou de ser "
+            f"independente de ecossistema")
+
+
+def test_o_posto_recebe_PECAS_e_nunca_um_BotContext():
+    """`BotContext` carrega o estado do FARM. O vigia recebendo um passaria a
+    depender do ecossistema que está rodando -- é a mesma lição de
+    `watchdog.avaliar_saude`."""
+    campos = {c.name for c in dataclasses.fields(mod.Posto)}
+    assert "ctx" not in campos and "contexto" not in campos
+    assert {"login", "fonte"} <= campos
+
+    params = list(inspect.signature(mod.Vigia.vigiar).parameters)
+    assert params == ["self", "login", "fonte", "avisar", "em_sessao"], params
+
+
+def test_um_ECOSSISTEMA_NOVO_e_coberto_sem_fazer_nada(vigia, monkeypatch):
+    """O teste que vale pelo desenho inteiro.
+
+    Simula um ecossistema que ninguém escreveu ainda: ele NÃO chama
+    `check_watchdog`, NÃO tem watchdog inline, NÃO tem `conferir_saude`. Só tem
+    uma janela. O vigia tem que matá-la assim mesmo.
+
+    É exatamente a situação da Fada em 11/09/2026 -- e ela ficou travada porque
+    o vigia estava com a leitura de tela desligada.
+    """
+    mundo = _Mundo(aviso="a caixa de conexão interrompida na tela")
+    mundo.instalar(monkeypatch)
+    # SEM `em_sessao=False`: a conta está EM JOGO, que é onde o limiar do
+    # template foi medido.
+    _por(vigia, mundo, login="ecossistema-que-ninguem-escreveu")
+
+    vigia._uma_volta()
+
+    assert mundo.mortos == [4242], (
+        "um ecossistema que não se liga à detecção ficou sem cobertura — é o "
+        "defeito de desenho que o vigia existe para acabar")
+    anuncio = vigia.queda_anunciada("ecossistema-que-ninguem-escreveu")
+    assert anuncio is not None and anuncio[0] == "conexao"
+
+
+def test_o_HISTORICO_pega_o_anuncio_de_quem_nao_tem_onde_anotar():
+    """A Fada não chama `ctx.tick()`, então nada escreve `ctx.ultima_queda`.
+
+    Sem esta consulta o cartão se perdia justamente no ecossistema que travou.
+    `_registrar_queda` é o funil do Histórico para TODO ecossistema -- é ali que
+    a consulta mora, e não num tratamento por modo.
+    """
+    from blazesbot.bot import supervisor as mod_sup
+
+    fonte = inspect.getsource(mod_sup.AccountSupervisor._registrar_queda)
+    assert "cobrar_a_queda" in fonte, (
+        "o Histórico voltou a depender de o ecossistema ter anotado a queda")

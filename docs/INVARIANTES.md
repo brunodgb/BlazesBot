@@ -82,16 +82,27 @@
   usá-lo fora dela é o que o projeto proíbe. Custou um laço de relogin a cada
   19 s em 09/09/2026. Agravante do travamento: a **fila de login** passa de três
   horas e não há medição de como o cliente bombeia mensagens nela.
-- **O VIGIA NÃO LÊ A TELA** (`sentinela.OLHAR_A_TELA = False`). Quem lê o aviso
-  "Connection interrupted" é o **watchdog inline** (thread da conta, a cada 10 s)
-  e o **`LoginDetector`** — os dois já faziam isso bem. O vigia foi o terceiro
-  leitor da mesma tela, e o saldo da primeira noite em campo foi **48 decretos,
-  todos por leitura de tela, todos numa conta só, nenhum deles uma queda**.
-  Terceiro leitor não somou cobertura: somou uma chance de errar sozinho. E o
-  que faltava — a conta em LIMBO — não é falta de leitura de tela: é a thread
-  parada dentro de um `SendMessageW` síncrono, que os outros três sinais
-  respondem sem ver nada. **Religar exige a medição que não existe**:
-  `state_conn_prefix` contra as telas de login, com a região travada no centro.
+- **O LOGIN/RELOGIN NÃO SE INSTANCIA EM ECOSSISTEMA NENHUM — ELE RODA EM
+  PARALELO** (diretriz do usuário, 11/09/2026). O vigia é uma **thread própria**,
+  registrada UMA vez no `run()` do supervisor, que recebe PEÇAS (o login e uma
+  função que devolve `(pid, hwnd)`) e nunca um `BotContext`. Ecossistema novo
+  recebe detecção, kill, Histórico e relogin **sem escrever uma linha** e sem
+  chamar nada. O vigia não importa nada de `bc/`, `app/` nem `hh/` — travado por
+  AST em `tests/test_vigia_global.py`.
+- **O VIGIA LÊ A TELA** (`sentinela.OLHAR_A_TELA = True`). Desligá-lo travou três
+  contas de APP/Fada em 11/09/2026, porque **o watchdog inline só existe no BC**
+  — `ctx.watchdog` é injetado num lugar só (`bc/routine.py`), e quem não é BC sai
+  por `return` na primeira linha de `check_watchdog`. A Fada é o caso extremo:
+  não chama `ctx.tick()` e só percebe queda por `IsWindow` DEPOIS do laço, que a
+  caixa na tela nunca deixa terminar. Os 48 falsos positivos que motivaram o
+  desligamento aconteceram todos nas telas de login, e a suspensão de juízo
+  durante o login já os cobre — é anterior ao interruptor.
+- **O HISTÓRICO DE QUEDAS NÃO DEPENDE DE O ECOSSISTEMA TER ANOTADO.**
+  `_registrar_queda` consulta o anúncio do vigia quando `ctx.ultima_queda` está
+  vazio. É o funil do Histórico para todo ecossistema, presente e futuro.
+- **RESÍDUO CONHECIDO:** a *saída* da thread do ecossistema ainda é cooperativa
+  (o vigia mata, mas quem desiste do laço é o próprio ecossistema). Ver
+  `docs/decisoes/login-e-relogin.md`.
 - **QUATRO SINAIS, E O QUARTO É NOVO.** Processo sumido, janela sumida e aviso na
   tela continuam em `watchdog.avaliar_saude` — a UMA definição de queda, sem
   estado, que todo mundo chama. O **travamento** mora no vigia porque exige

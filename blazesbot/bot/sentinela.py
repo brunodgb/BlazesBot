@@ -166,39 +166,40 @@ STRIKES_PARA_JANELA_TRAVADA = 3
 MATAR_JANELA_TRAVADA = True
 
 # ===========================================================================
-# O VIGIA NÃO LÊ A TELA. INTERRUPTOR DESLIGADO, com o número que o desligou.
+# O VIGIA LÊ A TELA -- religado em 11/09/2026, e o porquê do vaivém importa
 # ===========================================================================
 #
-# O aviso "Connection interrupted" na tela É o sinal principal de queda -- mas
-# quem o lê é o WATCHDOG INLINE (a cada 10 s, na thread da conta) e o
-# `LoginDetector` (durante o login). Os dois já faziam isso, e faziam bem: o
-# relato do usuário sobre o comportamento anterior é explícito -- *"o relogin
-# estava funcionando bem; só o ato de fechar uma conta que já caiu não
-# acontecia em 100% das vezes"*.
+# ELE FOI DESLIGADO EM 09/09/2026, e a justificativa estava ERRADA num ponto
+# decisivo. O que eu escrevi então: *"o aviso na tela já tinha DOIS leitores, o
+# watchdog inline e o `LoginDetector`"*.
 #
-# O vigia foi o TERCEIRO leitor da mesma tela, e o saldo dele, medido na
-# primeira noite em campo (09/09/2026, `logs/dev/blazes-dev.jsonl`):
+# O WATCHDOG INLINE SÓ EXISTE NO BC. `ctx.watchdog` é injetado num lugar só --
+# `bc/routine.py`, no `__init__` da rotina. Conta de APP, de Fada e de HH sem BC
+# tem `ctx.watchdog = None`, e `BotContext.check_watchdog` sai por `return` na
+# primeira linha. Elas nunca tiveram o segundo leitor que eu supus.
 #
-#     48 decretos       TODOS por "aviso de conexão interrompida na tela"
-#     1 conta atingida  blazesgamer, sempre na tela de login
-#     0 decretos        nas outras quatro contas, a noite inteira
-#     0 quedas          que os leitores que já existiam não teriam pego
+# PIOR NA FADA: ela não chama `ctx.tick()` em ponto nenhum, então nem a consulta
+# ao vigia acontece; e a única queda que ela percebe é `IsWindow` DEPOIS que o
+# laço retorna (`fada_montagem.py`). A caixa "Connection interrupted" deixa a
+# janela VIVA -- o laço nunca retorna, e a conta fica presa para sempre.
 #
-# Quarenta e oito mortes, nenhuma delas uma queda. Um terceiro leitor da mesma
-# tela não somou cobertura: somou uma chance de errar sozinho, num contexto
-# (as telas de login) onde o limiar dele nunca foi medido.
+# MEDIDO EM 11/09/2026: três contas de APP/Fada travadas ao mesmo tempo com a
+# caixa na tela, nenhuma derrubada. Os três decretos do vigia naquele dia foram
+# TODOS por "processo do cliente encerrado" -- nenhum por tela, porque o
+# interruptor estava aqui em `False`.
 #
-# E O QUE FALTAVA -- a conta que cai e fica em LIMBO -- não é falta de leitura
-# de tela: é a thread da conta parada dentro de um `SendMessageW` síncrono, sem
-# poder perguntar nada. Isso quem responde são os três sinais que SOBRAM aqui:
-# processo sumido, janela sumida e a sonda de travamento. Nenhum deles precisa
-# ver a tela, e nenhum deles depende de limiar.
+# E OS 48 FALSOS POSITIVOS QUE MOTIVARAM O DESLIGAMENTO? Já estavam resolvidos
+# quando desliguei. Todos os 48 aconteceram nas TELAS DE LOGIN, e a suspensão do
+# juízo durante o login (`SO_FATO_DO_SISTEMA_DURANTE_O_LOGIN`, do mesmo dia) é
+# anterior a este interruptor. Com ela valendo, o vigia só lê a tela com a
+# sessão ESTABELECIDA -- que é exatamente a população onde o limiar 0.92 foi
+# medido, com margem de +0.559 sobre o pior falso. Desligar depois disso foi
+# zelo em cima de causa já consertada, e custou três contas travadas.
 #
-# PARA RELIGAR é uma linha -- mas só depois de medir `state_conn_prefix` contra
-# as telas de login COM A REGIÃO TRAVADA no centro, que é a medição que não
-# existe. Sem ela não dá para dizer qual limiar separa as populações, e subir o
-# 0.92 no chute é como se erra calado.
-OLHAR_A_TELA = False
+# O QUE CONTINUA VERDADE do texto antigo: o vigia não é o único leitor em jogo
+# -- no BC o watchdog inline vê primeiro, a cada 10 s. Aqui ele é a REDE para
+# quem não tem watchdog inline nenhum, que é todo o resto.
+OLHAR_A_TELA = True
 
 # ===========================================================================
 # DURANTE O LOGIN, O VIGIA SÓ RECONHECE FATO DO SISTEMA OPERACIONAL
