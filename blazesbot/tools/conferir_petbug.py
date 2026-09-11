@@ -124,9 +124,35 @@ def conferir(pid: int) -> dict[str, str]:
                 estado = (f"OUTRA COISA: {bytes_lidos.hex(' ')} — o cliente "
                           "pode ter sido atualizado")
             saida[assinatura.nome] = f"0x{endereco:X}  {estado}"
+
+        # A OUTRA METADE: o F12 preso. Até 10/09/2026 só dava para conferir
+        # olhando a tela -- e com o bot rodando a tela não serve, porque a
+        # tecla presa esconde os pets, patcheado ou não. Agora sai da memória.
+        saida["F12 preso (esconde jogadores e pets)"] = _estado_do_f12(pid)
         return saida
     finally:
         k32.CloseHandle(handle)
+
+
+def _estado_do_f12(pid: int) -> str:
+    """As duas bandeiras do F12, em texto. A medição está em `core/memory.py`.
+
+    Importa a `Memory` aqui dentro de propósito: este conferidor roda sozinho,
+    e uma falha do mapa de memória não pode tirar dele a resposta sobre os
+    NOPs, que é a pergunta principal.
+    """
+    try:
+        from ..core.memory import Memory
+        ativo = Memory(pid=pid).esconder_jogadores_ativo()
+    except Exception as erro:
+        return f"não consegui ler ({type(erro).__name__})"
+    if ativo is None:
+        return ("NÃO SEI — leitura falhou, ou as duas bandeiras discordaram "
+                "(que é resposta honesta, não defeito)")
+    if ativo:
+        return "PRESO — jogadores e pets escondidos"
+    return ("SOLTO — o F12 NÃO está preso; a metade de esconder do patcher "
+            "não está valendo neste cliente")
 
 
 def _escolher(pids: list[int]) -> list[int]:
@@ -208,11 +234,12 @@ def main(argv: list[str] | None = None) -> int:
               "por decisão do usuário.")
     if not sem_leitura and not sem_patch:
         print("Todos os sítios estão com os NOPs: o pet bug está ativo.")
-        # O VISUAL NÃO SERVE DE CONFERÊNCIA COM O BOT RODANDO: o F12 esconde os
-        # personagens E OS PETS (medido pelo usuário em 10/09/2026). Não ver pet
-        # bugado não é sinal de patch ausente -- é a tecla presa fazendo o dela.
-        print("Para VER o efeito, solte o F12 (pare o bot e aperte a tecla à "
-              "mão): com ela presa não há pet na tela, patcheado ou não.")
+        # ANTES ERA AQUI QUE O CONFERIDOR PEDIA PARA OLHAR A TELA: o visual não
+        # serve com o bot rodando, porque o F12 esconde os personagens E OS PETS
+        # (medido em 10/09/2026), então não ver pet bugado não é sinal de patch
+        # ausente. A linha do F12 acima responde isso sem parar o bot.
+        print("A linha do F12 acima responde a OUTRA metade do patcher — "
+              "sem parar o bot e sem olhar a tela.")
     return 0
 
 

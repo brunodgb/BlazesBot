@@ -166,6 +166,41 @@ ADDR_QUEUE = 0x011BDF1C  # string da fila de login
 ADDR_TARGET_ID = 0x0115CB20
 ADDR_LOOT_WINDOW = 0x0105B958
 ADDR_NOTIFICATION = 0x0117097C
+
+# ===========================================================================
+# O F12 PRESO -- a metade do patcher que era conferivel SO OLHANDO A TELA
+# ===========================================================================
+#
+# O patcher nativo tem duas metades, e ele mesmo se anuncia como
+# "Pet Bug Fix & F12 Hide": os seis NOPs (conferiveis em memoria desde
+# 07/09/2026) e um `PostMessage(WM_KEYDOWN, VK_F12)` SEM o KEYUP, que deixa o
+# cliente achando a tecla presa para sempre.
+#
+# A segunda metade nao tinha conferencia objetiva: `tools/conferir_petbug`
+# mandava PARAR O BOT e apertar a tecla a mao para ver o efeito. Agora tem.
+#
+# COMO FOI ACHADO (10/09/2026): alternancia. Com a tecla presa pelo patcher,
+# mandar KEYUP solta e KEYDOWN prende de novo; cinco fotos do banco de dados da
+# imagem, exigindo `f1 == f3 == f5` e `f2 == f4` e `f1 != f2`, deixaram 32
+# DWORDs. Destes, DOIS sao booleanos limpos, e os dois DISCRIMINARAM em 3 de 3
+# rodadas de solta/prende:
+#
+#     0x0115CB88  presa=1  solta=0
+#     0x011636BC  presa=1  solta=0
+#
+# E os seis clientes leram 1 nos dois logo depois do patcher rodar.
+#
+# SAO DOIS DE PROPOSITO. Nao se sabe qual dos dois e "a" bandeira -- podem ser
+# jogadores e pets, ou o estado da tecla e o efeito dele. Como este projeto
+# cobra duas fontes no mesmo instante, a redundancia vira o proprio controle:
+# discordancia devolve `None`, nao um booleano com cara de certeza.
+#
+# O QUE O F12 *NAO* FAZ, e isso importa: o array de entidades NAO muda (37
+# entradas com a tecla presa e 37 solta, medido). Ele tira da CENA, nao do jogo
+# -- e e por isso que a leitura de alvo funciona normalmente com a tecla presa.
+USAR_BANDEIRA_DO_F12 = True
+ADDR_F12_PRESO = 0x0115CB88
+ADDR_F12_PRESO_SEGUNDA = 0x011636BC
 ADDR_SYSTEM_MENU = 0x012DC1F5
 # Raiz das cadeias de UI (bolsa, diálogo, arredores).
 #
@@ -1077,6 +1112,35 @@ class Memory:
     def is_mounted(self) -> bool:
         addr = self._player_field(OFF_MOUNT)
         return bool(self.read_int(addr)) if addr else False
+
+    def esconder_jogadores_ativo(self) -> bool | None:
+        """O F12 esta preso, escondendo jogadores e pets? `None` = nao sei.
+
+        `True` = as duas bandeiras dizem que sim. `False` = as duas dizem que
+        nao. `None` = interruptor desligado, leitura falhou, ou **as duas
+        discordaram** -- e discordancia e resposta honesta, nao defeito.
+
+        Substitui a conferencia visual: `tools/conferir_petbug` mandava parar o
+        bot e apertar a tecla a mao, porque com ela presa nao ha pet na tela,
+        patcheado ou nao. Agora a resposta sai sem tela e sem parar nada.
+
+        Medicao completa no comentario de `ADDR_F12_PRESO`. Em resumo:
+        discriminou em 3 de 3 rodadas de solta/prende, e os seis clientes leram
+        `True` logo depois do patcher nativo rodar.
+
+        NAO decide nada no bot ainda -- e capacidade e diagnostico.
+        """
+        if not USAR_BANDEIRA_DO_F12:
+            return None
+        a = self.read_int(ADDR_F12_PRESO)
+        b = self.read_int(ADDR_F12_PRESO_SEGUNDA)
+        if a is None or b is None:
+            return None
+        if a not in (0, 1) or b not in (0, 1):
+            return None            # valor nunca visto nao vira booleano
+        if a != b:
+            return None            # as duas fontes discordam: nao sei
+        return a == 1
 
     def pet_active(self) -> bool | None:
         """O pet está invocado? `None` = não deu para ler.
@@ -2475,6 +2539,9 @@ class Memory:
                                        xp1 is not None and xp2 is not None)
         relogio = self.relogio_ms()
         campos["relogio ms (0x85C)"] = (relogio, relogio is not None)
+
+        campos["F12 preso (esconde jogadores)"] = (
+            self.esconder_jogadores_ativo(), True)
 
         campos["algum painel aberto (uma via)"] = (
             self.algum_painel_aberto(), True)

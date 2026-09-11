@@ -427,9 +427,9 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | `TIMEOUT_DA_SONDA_MS` | 1500 s (25 min) | *novo* | TETO | [janelas.py:116](blazesbot/core/janelas.py#L116) | `janela_responde` | A SONDA DE TRAVAMENTO -- "Não Está Respondendo", medido em vez de suposto |
 | `INTERVALO_ENTRE_LIMPEZAS` | 3600 s (60 min) | *novo* | FIXO | [log_limitado.py:89](blazesbot/core/log_limitado.py#L89) | `_limpar_de_tempos_em_tempos` | De quanto em quanto tempo varrer a pasta do arquivo morto. |
 | `SEGUNDOS_DE_SILENCIO_ANTES_DE_COMPRIMIR` | 60 s (1 min) | *novo* | FIXO | [log_limitado.py:97](blazesbot/core/log_limitado.py#L97) | `_esta_quieto` | Quanto tempo um arquivo precisa estar QUIETO para poder ser comprimido. |
-| `TETO_DA_PROVA_DA_CAMERA` | 1 s | = | TETO | [memory.py:337](blazesbot/core/memory.py#L337) | `_esperar_o_termometro` | Teto da espera pelo termômetro depois de uma escrita na câmera. |
-| `PASSO_DA_PROVA_DA_CAMERA` | 0.05 s | = | PASSO | [memory.py:338](blazesbot/core/memory.py#L338) | `_esperar_o_termometro` |  |
-| `PASSO_ENTRE_MEMBROS` | 136 s (2 min) | *novo* | PASSO | [memory.py:368](blazesbot/core/memory.py#L368) | `time_do_jogo, vida_do_time` |  |
+| `TETO_DA_PROVA_DA_CAMERA` | 1 s | = | TETO | [memory.py:372](blazesbot/core/memory.py#L372) | `_esperar_o_termometro` | Teto da espera pelo termômetro depois de uma escrita na câmera. |
+| `PASSO_DA_PROVA_DA_CAMERA` | 0.05 s | = | PASSO | [memory.py:373](blazesbot/core/memory.py#L373) | `_esperar_o_termometro` |  |
+| `PASSO_ENTRE_MEMBROS` | 136 s (2 min) | *novo* | PASSO | [memory.py:403](blazesbot/core/memory.py#L403) | `time_do_jogo, vida_do_time` |  |
 | *literal em* `_ensure_hook_installed` | 0.05 s | = | FIXO | [mouse_shield.py:223](blazesbot/core/mouse_shield.py#L223) | `_ensure_hook_installed` | Sobe o hook uma vez. NADA aqui bloqueia o callback. |
 | `SEGUNDOS_PARA_A_COMIDA_SER_USADA` | 1.5 s | *novo* | FIXO | [pet.py:131](blazesbot/core/pet.py#L131) |  | QUANTO TEMPO A COMIDA PRECISA ANTES DA PRÓXIMA AÇÃO |
 | `INTERVALO_MINIMO` | 30 s | = | FIXO | [petbug.py:227](blazesbot/core/petbug.py#L227) | `aplicar_patch` | Tempos |

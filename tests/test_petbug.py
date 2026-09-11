@@ -420,3 +420,88 @@ def test_o_PETBUG_que_explode_nao_derruba_a_entrada(monkeypatch):
     monkeypatch.setattr(mod_ui.petbug, "aplicar_patch", explode)
     for _ in range(mod_ui.FALHAS_MECANICAS_PARA_REAPLICAR_O_PETBUG):
         ui.registrar_falha_de_entrada()
+
+
+# ===========================================================================
+# A METADE DO F12 -- conferivel por MEMORIA desde 10/09/2026
+# ===========================================================================
+#
+# O patcher nativo se anuncia como "Pet Bug Fix & F12 Hide". A primeira metade
+# (os seis NOPs) sempre foi conferivel em memoria. A segunda nao era: o
+# conferidor mandava PARAR O BOT e apertar a tecla a mao, porque com o F12
+# preso nao ha pet na tela -- patcheado ou nao.
+#
+# A auditoria de 10/09/2026 rodou o patcher nativo nos seis clientes com o
+# antes-e-depois de toda pagina de 4 KB, e provou de passagem que ele NAO faz
+# nada alem dos dois sitios: zero mudanca de protecao, zero modulo novo, zero
+# thread nova, zero regiao executavel nova.
+
+def _memoria_f12(a, b, ligado=True):
+    """Duble com as duas bandeiras do F12."""
+    from blazesbot.core import memory as mem_mod
+    m = mem_mod.Memory.__new__(mem_mod.Memory)
+    valores = {mem_mod.ADDR_F12_PRESO: a,
+               mem_mod.ADDR_F12_PRESO_SEGUNDA: b}
+    m.read_int = lambda e: valores.get(e)
+    return m
+
+
+def test_os_enderecos_do_f12_sao_os_medidos():
+    from blazesbot.core import memory as mem_mod
+    assert mem_mod.ADDR_F12_PRESO == 0x0115CB88
+    assert mem_mod.ADDR_F12_PRESO_SEGUNDA == 0x011636BC
+    assert mem_mod.USAR_BANDEIRA_DO_F12 is True
+
+
+def test_f12_preso_e_solto():
+    assert _memoria_f12(1, 1).esconder_jogadores_ativo() is True
+    assert _memoria_f12(0, 0).esconder_jogadores_ativo() is False
+
+
+def test_as_DUAS_bandeiras_DISCORDANDO_devolve_None():
+    """Sao duas de proposito: nao se sabe qual e "a" bandeira, entao a
+    redundancia vira o controle. Discordancia e "nao sei", nao um booleano com
+    cara de certeza."""
+    assert _memoria_f12(1, 0).esconder_jogadores_ativo() is None
+    assert _memoria_f12(0, 1).esconder_jogadores_ativo() is None
+
+
+def test_valor_NUNCA_VISTO_devolve_None():
+    """So 0 e 1 foram observados em 3 rodadas de solta/prende nos seis
+    clientes. Qualquer outra coisa nao vira booleano calado."""
+    for nunca_visto in (2, -1, 903, None):
+        assert _memoria_f12(nunca_visto, nunca_visto
+                            ).esconder_jogadores_ativo() is None
+
+
+def test_ilegivel_devolve_None():
+    assert _memoria_f12(None, 1).esconder_jogadores_ativo() is None
+    assert _memoria_f12(1, None).esconder_jogadores_ativo() is None
+
+
+def test_desligado_devolve_None_e_nao_False(monkeypatch):
+    from blazesbot.core import memory as mem_mod
+    monkeypatch.setattr(mem_mod, "USAR_BANDEIRA_DO_F12", False)
+    assert _memoria_f12(1, 1).esconder_jogadores_ativo() is None
+
+
+def test_o_F12_NAO_mexe_no_array_de_entidades():
+    """Medido: 37 entradas com a tecla presa e 37 solta. Ele tira da CENA, nao
+    do jogo -- e e por isso que a leitura de alvo funciona com a tecla presa.
+    Se alguem escrever que o F12 esvazia o array, este teste aponta a medicao."""
+    import inspect
+
+    from blazesbot.core import memory as mem_mod
+    fonte = inspect.getsource(mem_mod)
+    assert "array de entidades NAO muda" in fonte
+
+
+def test_o_conferidor_checa_as_DUAS_metades():
+    """Ele nao pode voltar a mandar olhar a tela: com o bot rodando o visual
+    nao responde, porque o F12 esconde os pets patcheado ou nao."""
+    import inspect
+
+    from blazesbot.tools import conferir_petbug
+    fonte = inspect.getsource(conferir_petbug)
+    assert "esconder_jogadores_ativo" in fonte
+    assert "F12 preso" in fonte

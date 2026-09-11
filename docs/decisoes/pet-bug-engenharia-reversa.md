@@ -321,6 +321,94 @@ teste:
 | o padrão original | patcheia e confere a releitura |
 | outra coisa | varre a imagem; único candidato → patcheia e AVISA que o sítio mudou de lugar; zero ou dois → RECUSA |
 
+## AUDITORIA DO NATIVO EM EXECUÇÃO — 10/09/2026
+
+O documento acima foi feito por engenharia reversa **estática**. Isto é a
+medição do efeito **vivo**, na condição ideal que apareceu depois de o PC
+reiniciar: **cinco clientes limpos e um já patcheado** (o que roda HH).
+
+### O instrumento, e por que ele tem um piso de ruído
+
+Impressão digital completa de cada cliente, antes e depois: **toda página de
+4 KB** da imagem (sha256 + proteção), o mapa de regiões do espaço inteiro, a
+lista de módulos e a contagem de threads.
+
+O jogo escreve em memória sem parar, então **duas fotos sem patcher nenhum**
+mediram o ruído natural primeiro:
+
+| indicador | ruído natural |
+|---|---|
+| bytes em página **de código / só-leitura** | **0** nos seis |
+| mudança de **proteção** | **0** nos seis |
+| **módulos** | 7 → 7 |
+| **threads** | estável |
+| bytes em página escrivível | 29–44 páginas (é o jogo rodando) |
+
+Com zero de ruído nos quatro primeiros, o que aparecer ali é do patcher.
+
+### O veredito: ele faz exatamente o que o desmonte dizia, e nada mais
+
+| indicador | depois de clicar em `Patch` |
+|---|---|
+| páginas de **código** alteradas | **exatamente 2** por cliente limpo: `0x00457000` e `0x009CF000` |
+| no cliente já patcheado | **0** — a idempotência é medida, não suposta |
+| **proteção** deixada para trás | **0** — ele restaura `RX` corretamente |
+| **módulos** | 7 → 7: nenhuma DLL injetada |
+| **threads** | inalteradas: nenhuma thread remota |
+| região nova **executável** | nenhuma |
+
+O log dele: `=== Starting Pet Bug Fix & F12 Hide ===` / `[OK] Patch applied to
+all running clients.` / `=== Completed ===`, sem nenhum erro de privilégio.
+
+**Isso fecha o item "ver o nativo patchar um cliente LIMPO"** da lista abaixo:
+os cinco limpos passaram a ler `909090909090` nos dois sítios.
+
+## A METADE DO F12, AGORA MEDIDA EM MEMÓRIA — 10/09/2026
+
+Esta era a metade sem conferência objetiva. O conferidor mandava **parar o bot
+e apertar a tecla à mão**, porque com o F12 preso não há pet na tela —
+patcheado ou não.
+
+### Como foi achada
+
+Alternância. Com a tecla presa pelo patcher, `WM_KEYUP` solta e `WM_KEYDOWN`
+prende de novo; cinco fotos do banco de dados da imagem, exigindo
+`f1 == f3 == f5` e `f2 == f4` e `f1 != f2`, deixaram **32 DWORDs**. Destes,
+**dois são booleanos limpos**, e os dois discriminaram em **3 de 3** rodadas:
+
+| endereço | preso | solto |
+|---|---|---|
+| **`0x0115CB88`** | 1 | 0 |
+| **`0x011636BC`** | 1 | 0 |
+
+E os seis clientes leram `1` nos dois logo depois do patcher rodar.
+
+### São DOIS de propósito
+
+Não se sabe qual dos dois é *"a"* bandeira — podem ser jogadores e pets, ou o
+estado da tecla e o efeito dele. Como este projeto cobra **duas fontes no mesmo
+instante**, a redundância vira o próprio controle: **discordância devolve
+`None`**, não um booleano com cara de certeza. Valor fora de `{0, 1}` também.
+
+### O que o F12 *NÃO* faz, e isso importa
+
+**O array de entidades não muda:** 37 entradas com a tecla presa e 37 solta.
+Ele tira da **cena**, não do jogo — e é por isso que a leitura de alvo funciona
+normalmente com a tecla presa. Quem escrever que o F12 esvazia o array está
+contrariando medição.
+
+Um terceiro candidato, `0x0116334C`, também discriminou (6 preso / 14 solto) e
+**varia por cliente** (3, 3, 3, 6, 6, 4). Tem cara de contagem do que está
+sendo desenhado, mas **não bate** com o número de entidades do array
+(10→3, 15→3, 12→6, 37→6, 11→4), então o que ele conta fica **em aberto** e
+nenhum leitor depende dele.
+
+### O que entrou no bot
+
+`Memory.esconder_jogadores_ativo()` e a linha nova do
+`tools/conferir_petbug`, que passou a responder **as duas metades** sem parar o
+bot e sem olhar a tela. Nada decide por isto ainda.
+
 ## O que falta, se um dia interessar
 
 - **Descobrir o que é `+0x10A8`.** Precisa do jogo rodando: achar o objeto que
@@ -329,7 +417,10 @@ teste:
 - **Trazer o F12.** É uma linha (`PostMessage(hwnd, 0x100, 0x7B, 0)`), e aí o
   `.exe` sai de cena. Não foi feito hoje porque o KEYDOWN sem KEYUP mexe com o
   estado de tecla do cliente, e isso merece ser ligado com o usuário olhando.
-- **Ver o nativo patchar um cliente LIMPO.** A conferência de hoje pegou os
-  clientes já patcheados pelo `.exe`, então o que ficou provado é que os
-  endereços estão certos e que o nativo os reconhece. Falta o log de uma sessão
-  em que ele chegue primeiro -- `PET BUG: guardar NOPado em 0x9CFA0B`.
+- ~~**Ver o nativo patchar um cliente LIMPO.**~~ **FEITO em 10/09/2026** — ver
+  a auditoria acima: cinco clientes limpos, duas páginas de código alteradas
+  cada, e nada além disso.
+- **O que `0x0116334C` conta.** Discrimina com o F12 (6 preso / 14 solto) e
+  varia por cliente, mas não bate com o número de entidades do array.
+- **Qual das duas bandeiras do F12 é qual.** Hoje a redundância é usada como
+  controle; separá-las exigiria uma tecla que esconda só uma das categorias.
