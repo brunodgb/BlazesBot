@@ -409,6 +409,36 @@ nenhum leitor depende dele.
 `tools/conferir_petbug`, que passou a responder **as duas metades** sem parar o
 bot e sem olhar a tela. Nada decide por isto ainda.
 
+### A auditoria ficou REPETIVEL, e isso vale mais que o resultado
+
+O clique no botao `Patch` foi dado **por mensagem**, não à mão:
+
+```
+EnumWindows -> a janela 'RaaskiBot - PetBug' (classe TfrmMain)
+EnumChildWindows -> TButton 'Patch'  +  TMemo (o log)
+SendMessage(botao, BM_CLICK)
+WM_GETTEXT no TMemo -> le o que ele escreveu
+```
+
+Duas consequências práticas:
+
+1. **o instante é exato**, então o antes-e-depois não tem janela de dúvida;
+2. **a auditoria roda de novo sozinha** — na próxima versão do patcher, ou
+   depois de uma atualização do jogo, é um comando, não uma sessão inteira.
+
+As ferramentas ficaram em `Teste-Ponteiros/`: `_impressao_digital.py`
+(`snap`/`diff`), `_rodar_patcher.py`, `_cacar_f12.py`, `_confirmar_f12.py`.
+
+### O piso de ruído é a parte que não se pode pular
+
+O jogo escreve em memória sem parar: **29 a 44 páginas de 4 KB** mudam entre
+duas fotos com patcher nenhum. Sem medir isso primeiro, "o patcher mexeu em 50
+páginas" não quer dizer nada.
+
+O que dá a resposta é que o ruído nas quatro dimensões que importam é **zero**:
+página de código, proteção, módulo e thread. Aí duas páginas de código a mais
+são inequívocas.
+
 ## O que falta, se um dia interessar
 
 - **Descobrir o que é `+0x10A8`.** Precisa do jogo rodando: achar o objeto que
