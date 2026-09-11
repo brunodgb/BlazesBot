@@ -84,6 +84,7 @@ perdida custa um segundo; um clique no chão condena todas as seguintes.
 """
 from __future__ import annotations
 
+import math
 import time
 from collections import deque
 from collections.abc import Callable
@@ -209,26 +210,17 @@ _ABERTURAS_DO_DIALOGO: deque[float] = deque(maxlen=MEMORIA_DE_ABERTURAS_DO_DIALO
 # O TETO TAMBÉM APRENDE COM A FALHA -- 07/09/2026
 # ===========================================================================
 #
-# MEDIDO NO LOG DE PRODUÇÃO (13 h, conta `creubo`):
-#
-#     08:14:05  o teto congela em 427 ms
-#     08h  427ms x 2733   | entradas na cave: 0
-#     09h  427ms x 3574   | entradas na cave: 0
-#     10h  427ms x 3573   | entradas na cave: 0
-#     11h  427ms x 3569   | entradas na cave: 0
-#     12:05:07  um diálogo abre  ->  DENTRO da cave 25 s depois
-#
-# Nas horas saudáveis o teto varia o tempo todo (180, 286, 327, 650...) porque
-# cada abertura entra na amostra. A partir das 08:14 ele fica IDÊNTICO por
-# 3 h 51 min e 13.449 tentativas seguidas -- e teto adaptativo que não se mexe é
-# a assinatura de uma realimentação que morreu.
+# MEDIDO NO LOG DE PRODUÇÃO (13 h, conta `creubo`): a partir das 08:14 o teto
+# congelou em 427 ms e ficou IDÊNTICO por 3 h 51 min e 13.449 tentativas
+# seguidas, com ZERO entradas na cave. Teto adaptativo que não se mexe é a
+# assinatura de uma realimentação que morreu.
 #
 # A CAUSA É ESTRUTURAL, não é o número: a amostra só entra quando o diálogo
 # ABRE. Se a latência real sobe acima do teto, toda tentativa é reprovada, e
 # uma tentativa reprovada não produz amostra. **A medição que levantaria o teto
-# só pode ser feita pelo sucesso que o próprio teto impede.** A conta ficou
-# quatro horas presa num laço que se alimentava sozinho, e só saiu quando uma
-# abertura por acaso veio abaixo dos 427 ms.
+# só pode ser feita pelo sucesso que o próprio teto impede.**
+#
+# A auditoria inteira das 13 h: `docs/decisoes/madrugada-07-09-2026.md`.
 #
 # ENTÃO A FALHA TAMBÉM PASSA A INFORMAR. Falhas CONSECUTIVAS afrouxam o teto,
 # em degraus, até um limite de desespero; qualquer abertura zera a contagem e
@@ -252,6 +244,15 @@ FATOR_DE_AFROUXAMENTO = 2.0
 # cobre qualquer abertura legítima com folga. Passado daí não é lentidão, e
 # esperar 2 s só faz a conta perder a disputa duas vezes.
 TETO_DO_DESESPERO = 1.2
+
+# O DEGRAU MÁXIMO -- existe porque o `**` ESTOUROU EM PRODUÇÃO: o contador só
+# zera quando um diálogo ABRE, chegou a 5.120 na saída da HH em 11/09/2026, e
+# `2.0 ** 1024` matou o estado 962x numa hora. Passado o degrau em que o teto já alcança `TETO_DO_DESESPERO` o `min` vence sempre, então limitar aqui
+# não muda espera nenhuma -- só tira a capacidade de estourar. DERIVADO do pior
+# caso, o teto partindo do piso. Porquê medido: `docs/decisoes/hh.md` §33.
+DEGRAUS_ATE_O_DESESPERO = math.ceil(math.log(
+    TETO_DO_DESESPERO / LIMITE_MINIMO_DA_ESPERA_DO_DIALOGO,
+    FATOR_DE_AFROUXAMENTO))
 
 
 def limite_da_espera_do_dialogo() -> float:
@@ -1535,6 +1536,8 @@ class UIDoJogo:
         degraus = self._dialogos_seguidos_sem_abrir // FALHAS_SEGUIDAS_ANTES_DE_AFROUXAR
         if degraus <= 0:
             return limite
+        # LIMITADO: ver `DEGRAUS_ATE_O_DESESPERO` -- sem isto a potência estoura.
+        degraus = min(degraus, DEGRAUS_ATE_O_DESESPERO)
         return min(TETO_DO_DESESPERO, limite * FATOR_DE_AFROUXAMENTO ** degraus)
 
     def _esperar_o_dialogo(self, limite: float) -> bool | None:

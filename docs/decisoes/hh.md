@@ -2094,3 +2094,59 @@ acontecendo sob a régua de 1,5, como antes. **O pior caso novo é o
 comportamento antigo**; o caso comum é parar no ponto que nunca falhou.
 
 Travado por `tests/test_mira_da_saida_da_hh.py`.
+
+
+## §33 — O teto do diálogo estourava o float e matava o estado SAIR (11/09/2026)
+
+Enquanto media a saída da HH para o §32, o log mostrou outra coisa na mesma
+fase, e pior:
+
+    04:25:30  HH: erro no estado SAIR: (34, 'Result too large')
+    04:25:31  HH: erro no estado SAIR: (34, 'Result too large')
+    ...                                              962 vezes em uma hora
+
+`(34, 'Result too large')` é `OverflowError`. Ele vem de `_afrouxar_o_teto`:
+
+```python
+degraus = self._dialogos_seguidos_sem_abrir // FALHAS_SEGUIDAS_ANTES_DE_AFROUXAR
+return min(TETO_DO_DESESPERO, limite * FATOR_DE_AFROUXAMENTO ** degraus)
+```
+
+`_dialogos_seguidos_sem_abrir` **só zera quando um diálogo ABRE**, então
+enquanto o defeito do §32 durava ele crescia sem limite. Chegou a **5.120**,
+`degraus` virou 1.024, e `2.0 ** 1024` passa do maior float.
+
+O maior contador que o log chegou a registrar é **5.119** — em 5.120 a função
+estoura antes da linha que o imprimiria. Foi essa borda que confirmou o
+diagnóstico: o valor teórico e o último valor observado batem exatamente.
+
+### Por que era ABSORVENTE
+
+Quem estoura **não chega a clicar**. Sem clique nenhum diálogo abre; sem diálogo
+o contador não zera; com o contador parado acima de 5.120, a tentativa seguinte
+estoura igual. O estado morria e renascia para morrer de novo — literalmente o
+*"isso é um ponto crucial não ficar travado"* do relato.
+
+É o mesmo formato de defeito que a madrugada de 07/09 já tinha mostrado
+(`docs/decisoes/madrugada-07-09-2026.md`): **uma realimentação cuja única fonte
+de recuperação depende do sucesso que ela mesma impede.** Lá era o teto que só
+aprendia com abertura; aqui é o contador que só zera com abertura. A correção de
+07/09 — fazer a falha também informar — criou este segundo laço sem querer.
+
+### O conserto não muda comportamento nenhum
+
+O resultado já passava por `min(TETO_DO_DESESPERO, ...)`. Passado o degrau em
+que `limite * FATOR ** degraus` alcança o teto do desespero, contar mais alto
+não altera **uma única espera** — só dá ao `**` a chance de estourar.
+
+`DEGRAUS_ATE_O_DESESPERO` é DERIVADO desse ponto, a partir do pior caso real (o
+teto partindo de `LIMITE_MINIMO_DA_ESPERA_DO_DIALOGO`), então mexer em qualquer
+um dos três números o reajusta sozinho. Com os valores de hoje dá **3**.
+
+### Vale para todos os ecossistemas
+
+`_afrouxar_o_teto` mora em `bot/ui_do_jogo.py`, por onde passam os seis pares de
+clique de NPC do bot. O estouro foi observado na HH porque foi lá que o contador
+subiu, mas a BC corria o mesmo risco em qualquer poço longo o bastante.
+
+Travado por `tests/test_teto_do_dialogo_nao_estoura.py`.
