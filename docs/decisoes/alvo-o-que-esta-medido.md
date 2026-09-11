@@ -739,3 +739,54 @@ problema por 4×:
 |---|---|---|
 | `#id` com `hp/nível` plausíveis | 163 | **não** — mob real, nome não lido, e o `core/entidades.py` diz de propósito que nome não entra como filtro |
 | `#id` com `hp/nível` absurdos | 44 | **sim** — é o fantasma |
+
+### A CORREÇÃO APLICADA — mob válido tem vida máxima 100 (11/09/2026)
+
+Regra do usuário: *"mob e boss de verdade sempre vai ter a vida máxima 100, pelo
+menos com base em todas as leituras que fiz até o momento… então mob válido é
+para ser identificado dessa forma"*.
+
+**Conferida antes de virar regra**, contra 45.162 leituras de alvo nos logs:
+
+| conta | leituras | `== 100` | exceções |
+|---|---|---|---|
+| APP | 15.545 | **100,00%** | **nenhuma** |
+| BC | 16.208 | 99,98% | 3, todas padrão de float |
+| HH | 13.409 | 98,96% | `1` (46×) e padrões de float |
+
+E o corte é limpo **por nome**, que é o que fecha: dos **99 nomes distintos** já
+vistos como alvo, todo nome real lê 100 e só 100 — `Elite Fatal Centipede` em
+1439 leituras, `Green Robe Master` em 293, `Zaton` em 272, e o boss `Gun Witch`
+(nv50) em 7. **Todo** valor diferente de 100 veio de entrada sem nome (`#id`).
+A única exceção nomeada foi `JBU`, com cara de nick de jogador — e recusar
+jogador é o comportamento certo para quem caça mob.
+
+**Por que `== 100` e não um teto:** o teto de 5 milhões do `core/entidades.py`
+pegaria 31 dos 44 fantasmas. Os 13 que escapavam têm `max_hp` de 1, 2 ou 3 — o
+lixo *pequeno*, que nenhum teto alto alcança. A igualdade pega os 44.
+
+**Validado contra os clientes vivos**, 180 s com o farm rodando: **13.031 alvos
+aceitos, ZERO falso positivo**, incluindo os mobs de HH (`Elite Axe Monk
+Soldier`, `Roaming Apothecary`, `Buddhist Monk Purple Moon`) e jogadores, que
+também leem 100.
+
+**O log que o usuário pediu:** cada recusa sai uma vez por combinação
+`(id, vida máxima)`, com id, nome, hp e nível — o suficiente para julgar se a
+regra errou. Uma vez por combinação é requisito, não economia: o fantasma
+medido repetia a mesma leitura a cada 2 s por até 37 s.
+
+### CORREÇÃO A UMA AFIRMAÇÃO MINHA: o bot NÃO trava para sempre
+
+Eu tinha deixado no ar que o fantasma prendia o bot. **Não prende.** O log
+mostra a recuperação: o fantasma entra às 05:34:56, e às 05:34:57 a **flag de
+combate baixa** e o bot conclui certo (*"a memória confirmou a morte de Green
+Robe Master"*). A flag é a segunda fonte, e ela funciona.
+
+O custo real do fantasma é **TAB desperdiçado e segundos** — no episódio acima,
+`TAB 12 de 2` e 26 s de luta —, não travamento permanente. Isso não diminui o
+valor do conserto, mas muda o tamanho do problema, e o número honesto continua
+sendo os **250,5 s em ~23 h**.
+
+**E o patch é seguro pelo mesmo motivo:** com `None` no lugar do fantasma, o
+`veredito` devolve `None`, que cai no ramo `morreu=False` — o laço segue e sai
+pela flag. Não há spam de TAB.

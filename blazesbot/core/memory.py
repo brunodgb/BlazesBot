@@ -540,6 +540,45 @@ ADDR_TARGET_ID = IMAGE_BASE + 0x00D5CB80
 OFF_ENTITY_ID = 0x8
 
 # ===========================================================================
+# MOB VÁLIDO TEM VIDA MÁXIMA 100 -- e é assim que se sabe que é mob
+# ===========================================================================
+#
+# A entidade não guarda vida absoluta: guarda uma BARRA NORMALIZADA, e o máximo
+# dela é sempre 100. Regra do usuário em 10/09/2026 (*"mob e boss de verdade
+# sempre vai ter a vida máxima 100"*), conferida contra **45.162 leituras** de
+# alvo nos logs, nos três ecossistemas:
+#
+#     conta APP    15.545 leituras   100,00% == 100   NENHUMA exceção
+#     conta BC     16.208 leituras    99,98% == 100   3 exceções
+#     conta HH     13.409 leituras    98,96% == 100   46 + padrões de float
+#
+# E o corte é limpo por NOME, que é o que fecha a questão: dos 99 nomes
+# distintos já vistos como alvo, TODO nome real lê 100 e só 100 --
+# `Elite Fatal Centipede` em 1439 leituras, `Green Robe Master` em 293, `Zaton`
+# em 272, e o boss `Gun Witch` (nv50) em 7. **Todo** valor diferente de 100 veio
+# de entrada SEM NOME (`#id`), que é lixo. A única exceção nomeada foi `JBU`,
+# com cara de nick de jogador -- e recusar jogador é o comportamento certo para
+# quem caça mob.
+#
+# POR QUE ISSO IMPORTA, e não é refinamento: o teste que havia aqui era
+# `hp <= max_hp`, e o próprio projeto já tinha provado que ele não serve (ver
+# `core/entidades.py`, medição de 26/08/2026: *"max_hp gigante torna a relação
+# trivialmente verdadeira"*). Com `max_hp = 1177280513` e `hp = 1` a relação é
+# verdadeira e o lixo passava. O custo medido em ~23 h de HH: 44 leituras
+# fantasma, 25 episódios, **250,5 s travados**, pior episódio de **37,4 s** --
+# e é isso que o usuário via como *"às vezes não identifica que o alvo morreu e
+# não dá TAB"*: com um fantasma preso, o HP não muda e o TAB não tem para onde
+# ir.
+#
+# Detalhe em `docs/decisoes/alvo-o-que-esta-medido.md`, seção "O ALVO FANTASMA".
+VIDA_MAXIMA_DE_MOB = 100
+
+# INTERRUPTOR. Desligado, volta ao teste antigo (`hp <= max_hp`) e o fantasma
+# volta junto. Existe para o caso de aparecer um alvo legítimo com outra vida
+# máxima -- e se aparecer, o log de recusa abaixo mostra qual é.
+EXIGIR_VIDA_MAXIMA_DE_MOB = True
+
+# ===========================================================================
 # SELEÇÃO VISUAL: PONTEIROS ESTÁTICOS (descobertos em 21/08/2026)
 # ===========================================================================
 #
@@ -1569,6 +1608,39 @@ class Memory:
                         if tamanho == PEDACO_DA_VARREDURA else tamanho)
         return None
 
+    def _recusar_por_vida_maxima(self, alvo_id: int, obj: int, hp: int,
+                                 maximo: int) -> None:
+        """Registra a recusa UMA VEZ por combinação, e segue.
+
+        O usuário pediu o log justamente para conferir se a regra dos 100 é
+        verdade em campo -- *"é bom adicionar isso ao log e ver se isso é 100%
+        verdade, principalmente em HH"*. Então a linha traz tudo que permite
+        julgar: id, nome, vida e nível.
+
+        UMA VEZ POR COMBINAÇÃO, e isso é requisito: o alvo fantasma medido
+        repetia a mesma leitura a cada 2 s por até 37 s. Sem o limite, o log
+        vira ruído e a informação se perde no volume.
+        """
+        chave = (alvo_id, maximo)
+        vistos = getattr(self, "_recusas_por_vida", None)
+        if vistos is None:
+            vistos = self._recusas_por_vida = set()
+        if chave in vistos:
+            return
+        vistos.add(chave)
+        try:
+            nome = self._nome_da_entidade(obj)
+        except Exception:
+            nome = None
+        # `read_byte`, igual ao `alvo_atual`: ler como int32 aqui pegaria
+        # os bytes vizinhos e o log mostraria um nível que não existe.
+        nivel = self.read_byte(obj + OFF_LEVEL)
+        _logger.warning(
+            "ALVO RECUSADO: vida máxima %s, e mob de verdade é sempre %s — "
+            "id=%s nome=%r hp=%s nível=%s obj=0x%08X. Não é mob; devolvo "
+            "\"não sei\" em vez de um alvo inventado.",
+            maximo, VIDA_MAXIMA_DE_MOB, alvo_id, nome, hp, nivel, obj)
+
     @cronometrar("memoria.alvo_atual")
     def alvo_atual(self) -> dict | None:
         """O ALVO, inteiro, da memória. `None` = sem alvo ou não achei.
@@ -1615,6 +1687,11 @@ class Memory:
         if hp is None or maximo is None or maximo <= 0 or hp < 0 or hp > maximo:
             # Struct inconsistente: melhor "não sei" do que um HP inventado.
             # É a mesma regra da régua da barra, que também sabe dizer isso.
+            return None
+        if EXIGIR_VIDA_MAXIMA_DE_MOB and maximo != VIDA_MAXIMA_DE_MOB:
+            # NÃO É MOB. Ver `VIDA_MAXIMA_DE_MOB`: em 45.162 leituras, todo
+            # alvo legítimo leu 100, e todo valor diferente veio de lixo.
+            self._recusar_por_vida_maxima(alvo_id, obj, hp, maximo)
             return None
 
         bx = self.read_float(obj + OFF_X)

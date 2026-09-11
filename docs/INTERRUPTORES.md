@@ -69,8 +69,9 @@ ligar código não testado.
 | `USAR_MOUSE_SHIELD` | `False` | [blazesbot/core/inputs.py:65](blazesbot/core/inputs.py#L65) | instrumentar_clique.py, teste_do_cursor.py | INTERRUPTOR DO MOUSE SHIELD |
 | `INSTRUMENTAR_O_PACOTE_INTEIRO` | `True` | [blazesbot/core/instrumentacao.py:77](blazesbot/core/instrumentacao.py#L77) | — | O INTERRUPTOR |
 | `COMPRIMIR_ARQUIVO_MORTO` | `True` | [blazesbot/core/log_limitado.py:108](blazesbot/core/log_limitado.py#L108) | — | O arquivo morto de DIAS ANTERIORES é comprimido. Medido no arquivo da noite de |
+| `EXIGIR_VIDA_MAXIMA_DE_MOB` | `True` | [blazesbot/core/memory.py:579](blazesbot/core/memory.py#L579) | — | INTERRUPTOR. Desligado, volta ao teste antigo (`hp <= max_hp`) e o fantasma |
 | `USAR_BANDEIRA_DO_F12` | `True` | [blazesbot/core/memory.py:213](blazesbot/core/memory.py#L213) | — | O F12 PRESO -- a metade do patcher que era conferivel SO OLHANDO A TELA |
-| `USAR_PAINEL_POR_MEMORIA` | `True` | [blazesbot/core/memory.py:629](blazesbot/core/memory.py#L629) | — | ESTADO DE PAINEL DE UI POR MEMÓRIA -- o que sobreviveu ao campo |
+| `USAR_PAINEL_POR_MEMORIA` | `True` | [blazesbot/core/memory.py:668](blazesbot/core/memory.py#L668) | — | ESTADO DE PAINEL DE UI POR MEMÓRIA -- o que sobreviveu ao campo |
 | `USAR_REGIOES_QUENTES` | `True` | [blazesbot/core/memory.py:481](blazesbot/core/memory.py#L481) | — | REGIÕES QUENTES -- a rota que fecha os 38% que o array de entidades perde |
 | `ATIVADO` | `True` | [blazesbot/core/patch_do_cliente.py:144](blazesbot/core/patch_do_cliente.py#L144) | diagnostico_do_link.py, deletador.py, supervisor.py, petbug.py | INTERRUPTOR |
 | `ATIVADO` | `False` | [blazesbot/core/petbug.py:125](blazesbot/core/petbug.py#L125) | diagnostico_do_link.py, deletador.py, supervisor.py, patch_do_cliente.py | DESLIGADO EM 07/09/2026 -- o bot passou a fazer isto sozinho |
@@ -81,7 +82,7 @@ ligar código não testado.
 
 ## Números medidos -- tolerância, limiar, teto, cadência
 
-610 constantes, agrupadas por arquivo.
+611 constantes, agrupadas por arquivo.
 
 | constante | valor | onde | quem lê | porquê (resumo) |
 |---|---|---|---|---|
@@ -580,11 +581,11 @@ ligar código não testado.
 | `LUGAR_FORA_DA_CAVE` | `'Ghost Din Woods'` | [blazesbot/core/lugares.py:102](blazesbot/core/lugares.py#L102) | localizacao.py, routine.py | O lugar em que o personagem está quando NÃO está na cave e o X é grande. |
 | `MINIMO_CAUDA` | `5` | [blazesbot/core/lugares.py:126](blazesbot/core/lugares.py#L126) | — | Menor cauda que ainda identifica um lugar com segurança. Abaixo disso, |
 | `ANGULO_DA_CAMERA` | `956.720459` | [blazesbot/core/memory.py:360](blazesbot/core/memory.py#L360) | ler_camera.py | O ângulo em que os cliques na cena 3D foram medidos. |
-| `BAG_CLOSED_VALUE` | `902` | [blazesbot/core/memory.py:686](blazesbot/core/memory.py#L686) | — | Valor da bolsa FECHADA. Medido em 02/09/2026 alternando a tecla `I` e lido em |
-| `BAG_OPEN_VALUE` | `903` | [blazesbot/core/memory.py:682](blazesbot/core/memory.py#L682) | — | — |
-| `DIALOGO_ABERTO_VALOR` | `16775` | [blazesbot/core/memory.py:614](blazesbot/core/memory.py#L614) | — | — |
-| `DIALOGO_FECHADO_VALOR` | `16774` | [blazesbot/core/memory.py:615](blazesbot/core/memory.py#L615) | — | — |
-| `ESCALA_DE_INIMIGO` | `100` | [blazesbot/core/memory.py:691](blazesbot/core/memory.py#L691) | afericao_do_aliado.py | HP máximo padrão de inimigos do covil (Gun Witch, Cemetery Guard, etc.) |
+| `BAG_CLOSED_VALUE` | `902` | [blazesbot/core/memory.py:725](blazesbot/core/memory.py#L725) | — | Valor da bolsa FECHADA. Medido em 02/09/2026 alternando a tecla `I` e lido em |
+| `BAG_OPEN_VALUE` | `903` | [blazesbot/core/memory.py:721](blazesbot/core/memory.py#L721) | — | — |
+| `DIALOGO_ABERTO_VALOR` | `16775` | [blazesbot/core/memory.py:653](blazesbot/core/memory.py#L653) | — | — |
+| `DIALOGO_FECHADO_VALOR` | `16774` | [blazesbot/core/memory.py:654](blazesbot/core/memory.py#L654) | — | — |
+| `ESCALA_DE_INIMIGO` | `100` | [blazesbot/core/memory.py:730](blazesbot/core/memory.py#L730) | afericao_do_aliado.py | HP máximo padrão de inimigos do covil (Gun Witch, Cemetery Guard, etc.) |
 | `ESPELHO_DELTA` | `928` | [blazesbot/core/memory.py:110](blazesbot/core/memory.py#L110) | — | O BLOCO ATRASADO EM +0x3A0 -- o passado do estado, nao uma segunda fonte |
 | `JANELA_DE_COMBATE` | `16` | [blazesbot/core/memory.py:71](blazesbot/core/memory.py#L71) | — | Quantos bytes ler de cada lado de `OFF_BATTLE` em `battle_window()`. Serve para |
 | `LIMITE_DE_ENTIDADES` | `512` | [blazesbot/core/memory.py:468](blazesbot/core/memory.py#L468) | target_hybrid.py | Quantos slots do array de entidades varrer. 512 cobre com folga o que o |
@@ -592,11 +593,12 @@ ligar código não testado.
 | `PASSO_DA_PROVA_DA_CAMERA` | `0.05` | [blazesbot/core/memory.py:385](blazesbot/core/memory.py#L385) | — | — |
 | `PASSO_ENTRE_MEMBROS` | `136` | [blazesbot/core/memory.py:415](blazesbot/core/memory.py#L415) | — | — |
 | `PROVA_DA_CAMERA` | `5.0` | [blazesbot/core/memory.py:372](blazesbot/core/memory.py#L372) | — | Quanto o diagnóstico soma ao ângulo para PROVAR que a escrita move a câmera. |
-| `SIT_VALUE` | `200` | [blazesbot/core/memory.py:681](blazesbot/core/memory.py#L681) | — | Valores sentinela observados no cliente |
-| `SYSTEM_MENU_VALUE` | `1610612736` | [blazesbot/core/memory.py:687](blazesbot/core/memory.py#L687) | — | — |
+| `SIT_VALUE` | `200` | [blazesbot/core/memory.py:720](blazesbot/core/memory.py#L720) | — | Valores sentinela observados no cliente |
+| `SYSTEM_MENU_VALUE` | `1610612736` | [blazesbot/core/memory.py:726](blazesbot/core/memory.py#L726) | — | — |
 | `TETO_DA_PROVA_DA_CAMERA` | `1.0` | [blazesbot/core/memory.py:384](blazesbot/core/memory.py#L384) | — | Teto da espera pelo termômetro depois de uma escrita na câmera. |
 | `TOLERANCIA_DA_POSE` | `0.001` | [blazesbot/core/memory.py:317](blazesbot/core/memory.py#L317) | — | Quanto cada campo da pose pode variar e ainda contar como certo. |
 | `TOLERANCIA_DO_ANGULO` | `0.001` | [blazesbot/core/memory.py:366](blazesbot/core/memory.py#L366) | — | Quanto o ângulo pode variar e ainda contar como certo. |
+| `VIDA_MAXIMA_DE_MOB` | `100` | [blazesbot/core/memory.py:574](blazesbot/core/memory.py#L574) | — | MOB VÁLIDO TEM VIDA MÁXIMA 100 -- e é assim que se sabe que é mob |
 | `HC_ACTION` | `0` | [blazesbot/core/mouse_shield.py:126](blazesbot/core/mouse_shield.py#L126) | instrumentar_clique.py | — |
 | `VALIDADE_DO_RETANGULO` | `2.0` | [blazesbot/core/mouse_shield.py:130](blazesbot/core/mouse_shield.py#L130) | — | Quanto tempo o retângulo da janela vale antes de ser relido. A janela do jogo |
 | `WH_MOUSE_LL` | `14` | [blazesbot/core/mouse_shield.py:118](blazesbot/core/mouse_shield.py#L118) | instrumentar_clique.py, supervisor.py, inputs.py | Constantes Win32 |
