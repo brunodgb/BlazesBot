@@ -1103,6 +1103,20 @@ Cada item é o que **não pode ser violado**. O detalhe de cada área mora em
   escapava.
 
 
+## Espera ativa — `docs/decisoes/espera-ativa.md`
+
+- **TODA espera COM observável passa por `core/espera.ate`**: a pergunta é de
+  quem chama, o laço/teto/passo/Parar/telemetria são do orquestrador. Quem não
+  tem o que perguntar usa `ctx.tick` e assume por escrito que espera cego.
+- **`None` NÃO é "não aconteceu"** — é "não dá para saber" (cliente minimizado,
+  sem template, memória ilegível). Tratar os dois igual faz toda volta ir até o
+  teto.
+- **Espera sem teto nenhum levanta `ValueError`.** Um dos dois — tempo ou
+  voltas — é obrigatório.
+- **O número de esperas CEGAS pode cair, nunca subir**
+  (`tests/test_catraca_da_espera_cega.py`, linha de base de 11/09/2026: 250).
+  A catraca também APERTA: converteu uma, baixa o número no mesmo commit.
+
 ## Telemetria de latência — `core/cronometro.py`
 
 - **NÃO SE CRONOMETRA NADA ABAIXO DE `PISO_PARA_CRONOMETRAR = 10 µs`.** Medir
