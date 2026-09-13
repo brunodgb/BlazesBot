@@ -2150,3 +2150,77 @@ clique de NPC do bot. O estouro foi observado na HH porque foi lá que o contado
 subiu, mas a BC corria o mesmo risco em qualquer poço longo o bastante.
 
 Travado por `tests/test_teto_do_dialogo_nao_estoura.py`.
+
+
+## §34 — Fora da cave não se desmonta, e a HH não sabia disso (13/09/2026)
+
+> *"ao lado de fora da cave HH tem vezes que está saindo da montaria, mas no
+> geral não deve sair, eu tenho notado principalmente depois de vender os itens
+> acaba sendo pressionado o botão da montaria e ele desce... ainda mais que logo
+> em seguida, nem 3/4 segundos depois é ativo a montaria novamente."*
+
+Eram **dois** defeitos somados, e o segundo escondia o primeiro.
+
+### 1. O veto de 25/08 nunca valeu na HH
+
+`CombatEngine._preparar_para_agir` recusa desmontar fora da cave desde
+25/08/2026 — regra do usuário: *"fora da cave BC ele só vai sair da mount caso o
+pet não esteja ativo; de resto... vai ser feito naquele momento que entra na
+cave"*.
+
+O veto pergunta `self._esta_fora_da_cave()`, e o motor responde `False` ("não
+sei") **de propósito**: cada cave responde com a caixa dela. A BC respondia
+(`bc/combat.CombateBC`). **A HH usava o motor cru** — então lá o veto perguntava,
+ouvia "não sei", e deixava passar todo desmonte de fora da cave.
+
+Não era uma regra errada: era uma regra que nunca chegou a rodar. Agora existe
+`hh/combate.CombateHH`, espelho exato do arquivo da BC, com a prova de estar
+fora vinda do SINAL DA COORDENADA — a mesma que o `farmer.lua` usa em três
+lugares: dentro da HH X e Y são positivos; fora (porta em (-342,-288), vendedor
+em (-343,-294)) os dois são negativos.
+
+`posicao_esta_fora_da_hh` **não é** a negação de `esta_dentro_da_hh`: com
+`pos is None` as duas respondem `False`, porque "não sei" não é "não está".
+Negar a de dentro transformaria uma leitura que falhou em prova de estar fora, e
+aí o veto bloquearia um buff DENTRO da cave.
+
+### 2. A porta invocava o pet, e invocar é desmontar
+
+Mesmo com o veto valendo, o caso que o usuário viu continuaria: o veto só
+protege quando o pet está ATIVO, e `_conferir_o_pet_na_porta` só agia quando ele
+estava caído.
+
+Medido no log de 11/09: **17 desmontes na porta**, todos logo depois da venda. E
+o relógio bate com o relato:
+
+    08:47:35,1  HH: manutenção feita; próxima run
+    08:47:36,2  Desmontando para invocar o pet
+    08:47:37,1  Invocando pet
+    08:47:38,6  Invocando pet
+    08:47:40,4  Pet ativo                        <- 4,2 s depois do desmonte
+
+Agora a porta **só olha e anota**. Quem invoca é `_do_preparar_dentro`, assim que
+a instância abre — num desmonte que ele já paga pelos buffs. Adiar alguns
+segundos troca um desmonte por zero, e é o mesmo padrão que
+`Navigator._vigiar_o_pet` já usa no meio do trajeto: avisa aqui, conserta no
+próximo ponto seguro.
+
+### O que a medição também mostrou, e ainda não foi mexido
+
+Dois números do mesmo log que não fecham, e que valem uma investigação própria:
+
+  * **93% dos "O PET CAIU no meio do trajeto" terminaram em "o pet voltou
+    sozinho"** (14 de 15), depois de uma mediana de 588 s e até 916 s — sem
+    nenhuma tecla apertada. Ou o pet volta por conta, ou a leitura fica presa em
+    falso por minutos;
+  * **as 17 invocações da porta precisaram de exatamente 2 toques, 17 de 17.**
+    Nunca 1. Isso não é ruído, e a docstring de `Memory.pet_active` já avisa que
+    *"em várias classes a tecla é INTERRUPTOR, então o toque a mais desinvoca o
+    pet que acabou de vir"*.
+
+Nada disso foi alterado aqui — a correção acima não depende de resolver nenhum
+dos dois, e mexer na cadência de `ensure_pet` sem medir seria trocar um palpite
+por outro.
+
+Travado por `tests/test_montaria_e_preparo.py` (seção 2b) e
+`tests/test_rotina_da_hh.py`.

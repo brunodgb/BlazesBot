@@ -25,6 +25,8 @@ from blazesbot.bot import combate as motor_de_combate
 from blazesbot.bot import navegacao as navigation
 from blazesbot.bot.bc import mapa_bc
 from blazesbot.bot.bc.combat import CombatEngine
+from blazesbot.bot.hh import mapa_hh
+from blazesbot.bot.hh.combate import CombateHH
 from blazesbot.core.pet import PetFeeder
 
 # ===========================================================================
@@ -313,6 +315,71 @@ def test_o_interruptor_devolve_o_comportamento_antigo(monkeypatch):
 
     assert motor._preparar_para_agir("alimentar o pet") is True
     assert motor.desmontou is True
+
+
+# ===========================================================================
+# 2b. E A HH TAMBÉM SABE ONDE FICA A CAVE DELA -- 13/09/2026
+# ===========================================================================
+#
+# Tudo acima exercita o motor da BC. A HH usava o motor CRU, cujo
+# `_esta_fora_da_cave` responde `False` ("não sei") de propósito, porque cada
+# cave responde com a caixa dela. Resultado: na HH o veto perguntava, ouvia
+# "não sei", e deixava passar TODO desmonte de fora da cave.
+#
+# Relato do usuário: *"ao lado de fora da cave HH tem vezes que está saindo da
+# montaria, mas no geral não deve sair, eu tenho notado principalmente depois de
+# vender os itens"*.
+
+
+def _motor_hh(pet_ativo=True, pos=mapa_hh.PONTO_DA_ENTRADA):
+    motor = _motor(pet_ativo=pet_ativo)
+    motor.__class__ = CombateHH
+    motor.ctx.memory.position = lambda: pos
+    return motor
+
+
+def test_a_HH_fora_da_cave_com_pet_ativo_NAO_desmonta():
+    """O caso do usuário: na porta, logo depois de vender."""
+    motor = _motor_hh(pet_ativo=True, pos=mapa_hh.PONTO_DA_ENTRADA)
+
+    assert motor._preparar_para_agir("alimentar o pet") is False
+    assert motor.desmontou is False
+
+
+def test_a_HH_no_ponto_da_VENDA_tambem_esta_fora():
+    """É de lá que o usuário viu o desmonte acontecer."""
+    motor = _motor_hh(pet_ativo=True, pos=mapa_hh.PONTO_DA_VENDA)
+
+    assert motor._preparar_para_agir("recuperar vida e mana") is False
+    assert motor.desmontou is False
+
+
+def test_a_HH_DENTRO_da_cave_desmonta_normalmente():
+    """A regra é só para fora. Dentro, buff e cura exigem estar a pé -- e o
+    ponto de saída fica dentro, com X e Y positivos."""
+    motor = _motor_hh(pet_ativo=True, pos=mapa_hh.PONTO_DA_SAIDA)
+
+    assert motor._preparar_para_agir("aplicar buffs") is True
+    assert motor.desmontou is True
+
+
+def test_a_HH_sem_leitura_de_posicao_DEIXA_PASSAR():
+    """"Não sei" não bloqueia: um buff que não sai dentro da cave custa a run,
+    e um desmonte a mais fora dela custa segundos."""
+    motor = _motor_hh(pet_ativo=True, pos=None)
+
+    assert motor._preparar_para_agir("curar depois de entrar") is True
+    assert motor.desmontou is True
+
+
+def test_o_motor_CRU_continua_respondendo_nao_sei():
+    """É o padrão, e ele tem que continuar valendo para quem não respondeu.
+
+    Trocá-lo por um palpite faria toda cave futura herdar a caixa errada em
+    silêncio -- que é exatamente como a HH passou a ter este defeito.
+    """
+    motor = _motor(pet_ativo=True)
+    assert motor_de_combate.CombatEngine._esta_fora_da_cave(motor) is False
 
 
 # ===========================================================================

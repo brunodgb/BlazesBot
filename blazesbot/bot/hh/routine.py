@@ -62,7 +62,6 @@ from ...config import CAVE_HH, MODO_FADA_DA_HH
 from ...core import catador, diario, esconder_jogadores, logmodo
 from ...core.vision import capture_window, find_template
 from .. import mural
-from ..combate import CombatEngine
 from ..context import (
     BotContext,
     Disconnected,
@@ -74,6 +73,7 @@ from ..espera_do_reseter import esperar_o_reseter
 from ..navegacao import Navigator, PersonagemMortoNoPortao
 from ..team import TeamService
 from . import bosses, mapa_hh
+from .combate import CombateHH
 from .entrada import EntradaDaHH
 from .manutencao import ManutencaoDaHH
 from .ponto_do_boss import do_trecho
@@ -203,7 +203,7 @@ class HHRoutine:
     def __init__(self, ctx: BotContext) -> None:
         self.ctx = ctx
         self.nav = Navigator(ctx, mapa_hh)
-        self.combat = CombatEngine(ctx, self.nav)
+        self.combat = CombateHH(ctx, self.nav)
         # LIGA O PORTÃO DA MONTARIA NO COMBATE, e esta linha faltava.
         #
         # Em batalha o jogo RECUSA montar, e o portão insiste sem teto. Sem esta
@@ -542,8 +542,9 @@ class HHRoutine:
 
         FICA AQUI: a câmera e a montaria para viajar. A VENDA SAIU daqui em
         09/09/2026 -- ela tem dois gatilhos, e nenhum é este. Ver §27.
-        O PET fica em `_do_ate_a_porta` -- é a única verificação que acontece
-        fora, e só ao CHEGAR na porta (regra do usuário na mesma data).
+        O PET é OLHADO em `_do_ate_a_porta` -- única verificação que acontece
+        fora, e só ao CHEGAR na porta (regra do usuário na mesma data). Quem o
+        invoca é `_do_preparar_dentro`: invocar é desmontar.
         """
         ctx = self.ctx
 
@@ -631,22 +632,27 @@ class HHRoutine:
                 "recusar o clique até eu chegar lá.", mapa_hh.PONTO_DA_ENTRADA)
 
     def _conferir_o_pet_na_porta(self) -> None:
-        """A ÚNICA verificação que acontece fora da cave, e é aqui.
+        """OLHA o pet na porta e ANOTA. Não invoca, porque invocar é desmontar.
 
         Regra do usuário, 03/09/2026: *"o pet também pode verificar fora da
-        cave, mas só ao chegar na frente da cave, antes não precisa"*.
+        cave, mas só ao chegar na frente da cave, antes não precisa"*. A
+        verificação continua; o que saiu foi a AÇÃO.
 
-        O LUGAR É ESTE, e não dentro do laço de tentativas: a rajada de entrada
-        pode durar uma hora com uma tentativa a cada 25 ms, e reler o pet ali
-        seriam centenas de leituras por minuto de uma coisa que não muda com o
-        personagem parado na porta. Aqui roda uma vez, ao chegar.
-
-        Dentro da cave o pet é conferido DE NOVO (`_do_preparar_dentro`), e a
-        repetição é de propósito: a tela de carregamento da instância é
-        justamente onde ele some.
+        POR QUE SÓ OLHAR (13/09/2026): invocar exige estar a pé, então este
+        método descia, invocava e subia de novo -- 17 vezes no log de 11/09,
+        sempre logo depois da venda. E não se perde nada: `_do_preparar_dentro`
+        confere o pet assim que a instância abre, num desmonte que ele já paga
+        pelos buffs. Avisa aqui, conserta no ponto seguro -- o padrão de
+        `Navigator._vigiar_o_pet`. Ver `docs/decisoes/hh.md` §34.
         """
-        if self.ctx.settings.pet.summon_on_login:
-            self.combat.ensure_pet()
+        ctx = self.ctx
+        if not ctx.settings.pet.summon_on_login:
+            return
+        if ctx.memory.pet_active() is False:
+            ctx.log.info(
+                "HH: o pet está caído na porta. NÃO desço da montaria para "
+                "invocá-lo aqui -- isso fica para o preparo dentro da cave, "
+                "que já desmonta para os buffs.")
 
     # ==================================================================
     # ENTRAR -- a vaga é disputada
@@ -805,16 +811,17 @@ class HHRoutine:
             1. CURAR    -- primeiro, porque buff em personagem que vai morrer é
                            buff desperdiçado
             2. BUFFS    -- com a vida já cheia
-            3. PET      -- de novo: a tela de carregamento da instância é onde
-                           ele some, e a checagem da porta ficou do outro lado
-                           dela
+            3. PET      -- e é AQUI que ele é invocado. A porta só OLHA (ver
+                           `_conferir_o_pet_na_porta`): invocar é desmontar, e
+                           fora da cave não se desmonta
             4. COMIDA   -- por último, porque o cronômetro dela começa a valer
                            daqui (ver `PetFeeder`)
             5. MONTAR   -- e é AQUI que os cronômetros da run começam
 
         É a ordem da BC, ponto por ponto. O usuário pediu a checagem de pet em
-        primeiro lugar; ela acontece antes, na PORTA (`_conferir_o_pet_na_porta`),
-        e por isso a sequência aqui dentro pode manter a da BC -- que existe
+        primeiro lugar; a LEITURA acontece antes, na porta
+        (`_conferir_o_pet_na_porta`), e a invocação espera por aqui, onde o
+        desmonte já está pago -- por isso a sequência mantém a da BC, que existe
         porque cada passo depende do estado que o anterior deixa.
 
         =================================================================

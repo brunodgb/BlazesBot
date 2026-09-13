@@ -166,12 +166,30 @@ def test_o_PET_e_conferido_na_PORTA_e_so_uma_vez():
     chegar na frente da cave, antes não precisa"*. E FORA do laço de tentativas:
     a rajada pode durar uma hora com uma tentativa a cada 25 ms.
     """
-    assert "ensure_pet" in _chamadas(HHRoutine._conferir_o_pet_na_porta)
+    assert "pet_active" in _chamadas(HHRoutine._conferir_o_pet_na_porta)
     assert "ensure_pet" not in _chamadas(HHRoutine._do_entrar)
     # e o estado que chega na porta chama o conferidor nos DOIS caminhos
     # (já estava na porta, e viajou até ela)
     assert _chamadas(HHRoutine._do_ate_a_porta).count(
         "_conferir_o_pet_na_porta") == 2
+
+
+def test_a_porta_OLHA_o_pet_mas_NAO_o_invoca():
+    """Invocar exige estar a pé, e fora da cave não se desmonta.
+
+    Relato do usuário em 13/09/2026: *"ao lado de fora da cave HH tem vezes que
+    está saindo da montaria, mas no geral não deve sair... principalmente depois
+    de vender os itens"*. Era este método: 17 desmontes no log de 11/09, todos
+    logo depois da venda, cada um custando descer, invocar e subir.
+    """
+    assert "ensure_pet" not in _chamadas(HHRoutine._conferir_o_pet_na_porta), (
+        "a porta voltou a invocar o pet -- e invocar é desmontar")
+
+
+def test_quem_INVOCA_o_pet_e_o_preparo_de_DENTRO():
+    """É o que torna a porta poder só olhar: lá dentro o desmonte já está pago
+    pelos buffs, então adiar alguns segundos troca um desmonte por zero."""
+    assert "ensure_pet" in _chamadas(HHRoutine._do_preparar_dentro)
 
 
 def test_a_contagem_da_run_comeca_no_preparo_de_DENTRO():
@@ -499,13 +517,49 @@ def test_farms_cobre_as_DUAS_caves():
 
 
 def test_a_HH_usa_o_MESMO_motor_da_BC():
-    """A diretiva de reuso, verificada na identidade das peças."""
-    from blazesbot.bot.bc.combat import CombatEngine as combate_bc
-    from blazesbot.bot.combate import CombatEngine as motor
-    from blazesbot.bot.hh.routine import CombatEngine as combate_hh
+    """A diretiva de reuso, verificada na identidade das peças.
 
-    assert combate_hh is motor
-    assert issubclass(combate_bc, motor)
+    As DUAS caves derivam do mesmo motor, e cada uma só acrescenta o que é do
+    mapa dela. A HH passou a derivar em 13/09/2026: usando o motor cru, o veto
+    de `_preparar_para_agir` perguntava *"estou fora da cave?"*, ouvia o
+    "não sei" do padrão, e deixava todo desmonte de fora da cave passar.
+    """
+    from blazesbot.bot.bc.combat import CombateBC
+    from blazesbot.bot.combate import CombatEngine as motor
+    from blazesbot.bot.hh.combate import CombateHH
+
+    for cave in (CombateBC, CombateHH):
+        assert issubclass(cave, motor)
+    assert not issubclass(CombateHH, CombateBC), (
+        "um ecossistema passou a herdar do outro")
+
+
+def test_a_HH_SABE_provar_que_esta_fora_da_cave():
+    """Sem isto o veto de desmontar fora da cave nunca disparava na HH."""
+    from blazesbot.bot.combate import CombatEngine as motor
+    from blazesbot.bot.hh.combate import CombateHH
+
+    assert CombateHH._esta_fora_da_cave is not motor._esta_fora_da_cave
+
+
+def test_a_prova_de_estar_fora_da_HH_NAO_e_a_negacao_de_estar_dentro():
+    """`None` tem que responder False nas DUAS -- "não sei" não é "não está".
+
+    Negar `esta_dentro_da_hh` transformaria uma leitura que falhou em prova de
+    estar fora, e aí o veto bloquearia um buff DENTRO da cave.
+    """
+    from blazesbot.bot.hh.combate import posicao_esta_fora_da_hh
+
+    assert posicao_esta_fora_da_hh(None) is False
+    assert mapa_hh.esta_dentro_da_hh(None) is False
+
+    for fora in (mapa_hh.PONTO_DA_ENTRADA, mapa_hh.PONTO_DA_VENDA):
+        assert posicao_esta_fora_da_hh(fora), f"{fora} devia provar que é fora"
+        assert not mapa_hh.esta_dentro_da_hh(fora)
+
+    for dentro in (mapa_hh.PONTO_DA_SAIDA, mapa_hh.CHEGADA_NA_HH):
+        assert not posicao_esta_fora_da_hh(dentro)
+        assert mapa_hh.esta_dentro_da_hh(dentro)
 
 
 def test_o_vendedor_da_HH_herda_a_MESMA_janela_de_venda():
