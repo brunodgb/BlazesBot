@@ -125,6 +125,10 @@ class _Executor:
         e.voltas_abortadas = 0
         e._ultimo_corte = "início"
         e._estava_em_batalha = True
+        # A conferência da comida roda no ramo de batalha do laço vivo
+        # (`_avisar_se_a_comida_esta_presa`). Sem tecla configurada ela devolve
+        # na primeira linha -- é o executor sem pet, que é um caso real.
+        e._tecla_do_pet_food = ""
         e._lutava_na_volta_anterior = True
         e.morte = None
         e.cura = None

@@ -58,7 +58,11 @@ import time
 from dataclasses import dataclass
 
 from ..core import calibracao, diario, target_hybrid, vision
-from ..core.pet import SEGUNDOS_PARA_A_COMIDA_SER_USADA, PetFeeder
+from ..core.pet import (
+    LIMITE_DE_ATRASO_DA_COMIDA_EM_MINUTOS,
+    SEGUNDOS_PARA_A_COMIDA_SER_USADA,
+    PetFeeder,
+)
 from ..core.target_hybrid import MorteDoAlvo, TargetHybrid
 from . import hotbar
 from .context import BotContext, Disconnected
@@ -1123,7 +1127,8 @@ class CombatEngine:
         """
         return self.ctx.memory.critical_ok()
 
-    def _preparar_para_agir(self, motivo: str) -> bool:
+    def _preparar_para_agir(self, motivo: str,
+                            mesmo_fora_da_cave: bool = False) -> bool:
         """Deixa o personagem em condição de usar item ou skill: A PÉ.
 
         Montado, o jogo IGNORA a tecla e não devolve erro nenhum -- o bot
@@ -1155,11 +1160,18 @@ class CombatEngine:
         `True` quando a coordenada PROVA que está fora; sem leitura ela responde
         `False` e a ação passa. É a direção segura: não curar dentro da cave mata
         o personagem, e um desmonte a mais fora dela custa alguns segundos.
+
+        `mesmo_fora_da_cave` É A SAÍDA DE EMERGÊNCIA (13/09/2026). O veto acima
+        combate DEZENAS de desmontes por trajeto; não pode virar proibição
+        absoluta, porque pet sem comida DESAPARECE. Único chamador: `feed_pet`,
+        e só passado `LIMITE_DE_ATRASO_DA_COMIDA_EM_MINUTOS`. Cura e buff não
+        usam -- esperar o preparo não lhes custa nada.
         """
         ctx = self.ctx
         if not ctx.memory.is_mounted():
             return True
         if (DESMONTAR_FORA_DA_CAVE_SO_SEM_PET
+                and not mesmo_fora_da_cave
                 and self._esta_fora_da_cave()
                 and ctx.memory.pet_active()):
             ctx.log.info(
@@ -3857,48 +3869,91 @@ class CombatEngine:
         except Exception as exc:
             self.ctx.log.debug("Não gravei a grade da comida do pet: %s", exc)
 
-    def feed_pet(self, force: bool = False, dentro_da_cave: bool = False) -> bool:
+    def cuidar_da_comida_no_laco(self, em_transito: bool) -> bool:
+        """A REDE DE SEGURANÇA da comida, chamada a CADA volta do laço.
+
+        NÃO substitui o preparo de entrada -- cobre a falta dele, e só age
+        depois do prazo. A POLÍTICA (quando é tarde, quando pode tentar de
+        novo) mora no `PetFeeder`; aqui fica só o que toca o jogo. Porquê
+        medido: `docs/decisoes/comida-do-pet.md`.
+
+        Args:
+            em_transito: `True` onde parar é parar com o trem de mobs em cima.
+
+        Returns:
+            `True` se alimentou. `False` é o caso comum -- ainda não é hora.
+        """
+        ctx = self.ctx
+        if not ctx.settings.keys.pet_food:
+            return False
+        # LEITURA PURA -- é ela que torna a chamada por volta viável num laço de
+        # 20 voltas por segundo. NÃO usa `deve_alimentar`: aquela MUTA.
+        if not self._pet_feeder.a_fome_e_urgente(
+                ctx.settings.pet.feed_every_minutes):
+            return False
+        # EM BATALHA A TECLA É ENGOLIDA. `feed_pet` já barra; quem barra AQUI é
+        # o silêncio -- lá a recusa sai em INFO e repetiria a linha na luta
+        # inteira. "Não sei" (`None`) não bloqueia.
+        if ctx.memory.in_battle() is True:
+            return False
+        if not self._pet_feeder.tentativa_liberada():
+            return False
+        return self.feed_pet(em_transito=em_transito)
+
+    def feed_pet(self, force: bool = False, em_transito: bool = False) -> bool:
         """Alimenta o pet respeitando o intervalo configurado.
 
         Pet sem comida DESAPARECE sozinho, e um pet que sumiu no meio da cave
         estraga a run sem avisar. Por isso a alimentação é por tempo decorrido,
         não por evento: o bot conta os minutos desde a última vez.
 
-        ONDE ELA ACONTECE MUDOU EM 25/08/2026. Antes era "dentro da cave nunca,
-        e adianta antes de entrar" -- porque alimentar exige desmontar e
-        desmontar no meio da travessia é parar com meia cave correndo atrás.
-
-        Agora é no PREPARO DE ENTRADA (`RotinaBC._do_curar`): já dentro, ainda
-        parado, e já a pé por causa da cura. Isso resolve os dois lados -- não
-        desmonta fora da cave (regra do usuário) e não para no meio da travessia
-        (a razão da regra antiga).
-
-        O que continua proibido é alimentar DEPOIS que a travessia começou, e
-        quem garante isso é `dentro_da_cave=True`, passado por quem chama de
-        dentro do trajeto.
+        ONDE ELA ACONTECE MUDOU EM 25/08/2026: saiu do trajeto e foi para o
+        PREPARO DE ENTRADA (`_do_curar` na BC, `_do_preparar_dentro` na HH), com
+        o personagem já parado e a pé por causa da cura. `em_transito=True`
+        barra a alimentação depois que a travessia começou.
 
         Usa o `PetFeeder` compartilhado para decidir QUANDO alimentar, com grade
         FIXA: atrasar uma refeição não empurra as seguintes.
+
+        A ESPERA PELO LUGAR CERTO TEM PRAZO (13/09/2026). Passado
+        `LIMITE_DE_ATRASO_DA_COMIDA_EM_MINUTOS`, a comida é dada ONDE O BOT
+        ESTIVER, pagando o desmonte. O que NUNCA cede é a batalha: lá a tecla é
+        engolida pelo jogo. Ver `docs/decisoes/comida-do-pet.md`.
         """
         ctx = self.ctx
         tecla = ctx.settings.keys.pet_food
         if not tecla:
             return False
 
+        intervalo = ctx.settings.pet.feed_every_minutes
+
         # Delega a DECISÃO para o PetFeeder (lógica compartilhada).
-        if not self._pet_feeder.deve_alimentar(
-            ctx.settings.pet.feed_every_minutes, force=force
-        ):
+        if not self._pet_feeder.deve_alimentar(intervalo, force=force):
             return False
 
-        if dentro_da_cave and not force:
+        # A URGÊNCIA É MEDIDA, NÃO DECLARADA: vem do atraso da própria grade.
+        # Ver `LIMITE_DE_ATRASO_DA_COMIDA_EM_MINUTOS` em `core/pet.py`.
+        urgente = force or self._pet_feeder.a_fome_e_urgente(intervalo)
+
+        if em_transito and not urgente:
             ctx.log.debug(
-                "Comida do pet vencida, mas estou dentro da cave: alimentar aqui "
-                "exigiria desmontar. Fica para a saída."
+                "Comida do pet vencida, mas estou em trânsito: parar aqui é "
+                "parar com o trem de mobs em cima. Fica para o próximo preparo."
             )
             return False
 
-        if not self._preparar_para_agir("alimentar o pet"):
+        if urgente and not force:
+            # INFO e não debug: é o bot abrindo mão de uma regra do usuário.
+            ctx.log.info(
+                "Comida do pet ATRASADA %.0f min (limite %.0f): alimento aqui "
+                "mesmo, sem esperar o preparo de entrada. Pet sem comida "
+                "desaparece.",
+                self._pet_feeder.atraso_minutos(intervalo),
+                LIMITE_DE_ATRASO_DA_COMIDA_EM_MINUTOS,
+            )
+
+        if not self._preparar_para_agir("alimentar o pet",
+                                        mesmo_fora_da_cave=urgente):
             return False
 
         # ==============================================================
@@ -3942,7 +3997,7 @@ class CombatEngine:
         ctx.log.info(
             "Alimentando o pet (a cada %s min) | tecla=%s montado=%s "
             "batalha=%s sentado=%s pet=%s",
-            ctx.settings.pet.feed_every_minutes, tecla,
+            intervalo, tecla,
             ctx.memory.is_mounted(), ctx.memory.in_battle(),
             ctx.memory.is_sitting(), ctx.memory.pet_active(),
         )
@@ -3971,8 +4026,7 @@ class CombatEngine:
         # A GRADE AVANÇA a partir do vencimento, não do agora -- é o que mantém
         # o número de refeições por dia. O `PetFeeder` já grava no disco. Ver
         # `core/pet.py`.
-        self._pet_feeder.registrar_alimentacao(
-            ctx.settings.pet.feed_every_minutes)
+        self._pet_feeder.registrar_alimentacao(intervalo)
         return True
 
     # ==================================================================

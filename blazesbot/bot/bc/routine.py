@@ -2389,12 +2389,20 @@ class BossRushRoutine:
                     return
 
                 self._guard()
-                # Pet passa fome em qualquer estado, então a checagem fica no laço
-                # principal. Dentro da cave ela não faz nada (alimentar exige
-                # desmontar); o adiantamento antes de entrar cobre esse caso.
-                #self.combat.feed_pet(
-                #    dentro_da_cave=self.state in ESTADOS_DENTRO_DA_CAVE
-                #)
+                # A COMIDA DO PET, CONFERIDA A CADA VOLTA -- 13/09/2026.
+                #
+                # ESTA CHAMADA JÁ EXISTIU E ESTAVA COMENTADA. Ela saiu de
+                # circulação porque, do jeito antigo, dentro da cave ela não
+                # fazia nada e fora dela batia no veto do desmonte a cada volta
+                # -- ou seja, era custo sem efeito.
+                #
+                # Voltou com outra forma: `cuidar_da_comida_no_laco` só age
+                # depois de a refeição passar do prazo, e aí ela fura o veto.
+                # O preparo de entrada (`_do_curar`, passo 4) continua sendo o
+                # caminho normal; isto é a rede para quando ele não chega --
+                # venda longa, disputa de entrada, run retomada no meio.
+                self.combat.cuidar_da_comida_no_laco(
+                    em_transito=self.state in ESTADOS_DENTRO_DA_CAVE)
                 # Contexto estruturado do JSON de dev: registra a fase atual
                 # antes de o handler rodar (o log do handler sai com esta fase).
                 logmodo.fase(self.state.name)

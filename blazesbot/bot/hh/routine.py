@@ -320,6 +320,8 @@ class HHRoutine:
                     return
 
                 self._guard()
+                self.combat.cuidar_da_comida_no_laco(  # a rede da comida
+                    em_transito=self.state in ESTADOS_DENTRO_DA_CAVE)
                 self._contar_a_volta()
                 logmodo.fase(self.state.name.lower())
 

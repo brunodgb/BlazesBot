@@ -878,6 +878,12 @@ time a flag não faz nada.
   entrar é disputado — durante a espera o personagem regenera de graça. **A
   única exceção é o PET**, conferido uma vez ao CHEGAR na porta, e **fora** do
   laço de tentativas (a rajada pode dar centenas de leituras por minuto).
+- **A COMIDA DO PET É A SEGUNDA EXCEÇÃO, E TEM PRAZO** (13/09/2026). Ela espera
+  o `PREPARAR_DENTRO` como todo o resto — mas só até 15 min de atraso
+  (`LIMITE_DE_ATRASO_DA_COMIDA_EM_MINUTOS`). Passado isso é dada ONDE O BOT
+  ESTIVER, pagando o desmonte. Medido: 46 min presos em `ATE_A_PORTA` deixaram o
+  pet da `creubo` 77 min sem comer num intervalo de 50, e ele quase sumiu. Ver a
+  seção "Pet (obrigatório)" e `docs/decisoes/comida-do-pet.md` §II.
 - **O PET é conferido nos DOIS lados da tela de carregamento** — na porta e no
   preparo de dentro. A repetição é de propósito: é ali que ele some.
 - **A CURA TEM TRÊS MOMENTOS, e só três:** a entrada (`curar_ao_entrar`), o
@@ -1025,7 +1031,37 @@ Cada item é o que **não pode ser violado**. O detalhe de cada área mora em
   inicial, antes do loop). `ensure_pet()` também roda no PREPARAR e após reviver.
   Respeita `settings.pet.summon_on_login` (padrão True).
 - Alimentação respeita `feed_on_start`: False (padrão) ⇒ cronômetro inicia sem
-  alimentar. `_last_feed` começa em `None` (nunca alimentou), não `0.0`.
+  alimentar. O estado é UM número, `PetFeeder.vence_em`, que começa em `None`
+  (grade não iniciada) e **não** em `0.0` (que seria "venceu em 1970"). Ele
+  sobrevive a reinício em `PetConfig.proxima_comida_em`, gravado pelo próprio
+  `PetFeeder` a cada mudança — inclusive quando a grade apenas NASCE.
+- **A FOME É DERIVADA DA GRADE, NUNCA UM SEGUNDO ESTADO.** Não existe
+  `pet_needs_food` guardado e não deve existir: `com fome == agora >= vence_em`,
+  e isso já fica *latched* sozinho até alguém alimentar. As leituras do laço
+  (`esta_com_fome`, `atraso_minutos`, `a_fome_e_urgente`) são **PURAS** — não
+  mutam a grade e não gravam em disco, porque rodam num laço de até 20 voltas por
+  segundo. Quem MUTA é só `deve_alimentar` (faz a grade nascer) e
+  `registrar_alimentacao`.
+- **A COMIDA É CONFERIDA A CADA VOLTA DO LAÇO, NOS TRÊS ECOSSISTEMAS**
+  (13/09/2026). HH e BC por `CombatEngine.cuidar_da_comida_no_laco`, que só age
+  depois do prazo e **fica em silêncio quando não vai agir** — falar a cada volta
+  inunda o log, e foi por isso que a versão antiga da linha da BC ficou
+  comentada. O APP alimenta na primeira volta calma e, no ramo de batalha,
+  **acusa** em vez de forçar (`_avisar_se_a_comida_esta_presa`).
+- **A ESPERA PELO LUGAR CERTO TEM PRAZO** (`LIMITE_DE_ATRASO_DA_COMIDA_EM_MINUTOS`
+  = 15 min). Até lá a comida espera o preparo de entrada; passado o prazo ela é
+  dada ONDE O BOT ESTIVER, furando o veto de desmonte fora da cave
+  (`_preparar_para_agir(..., mesmo_fora_da_cave=True)`). Buff e poção **não**
+  ganharam essa saída — adiar os dois não custa o pet.
+- **A BATALHA NUNCA CEDE, nem com a comida atrasada.** Em combate o jogo ignora a
+  tecla, e apertá-la faria o `PetFeeder` registrar uma refeição que não houve.
+  `in_battle()` é tri-estado: só `True` barra.
+- **A COTA DIÁRIA É GARANTIDA PELO PRAZO, não pela sorte.** 28,8 refeições/dia
+  com intervalo de 50 min só fecham porque o atraso nunca alcança um intervalo
+  inteiro — é aí que `registrar_alimentacao` re-ancora a grade e a refeição do dia
+  some. Daí os dois lados do número: **abaixo** de `PET_FEED_MINUTOS_MIN` (40) e
+  **acima** da cauda normal das janelas (p90 = 10,8 min em 128 janelas medidas).
+  Ver `docs/decisoes/comida-do-pet.md`.
 - **Trava de posição no APP** (`AppConfig.travar_posicao`, padrão True): salva a
   posição como base; andou > `TOLERANCIA_POSICAO` (1) ⇒ devolvido andando pelo
   minimapa. Só com memória respondendo.

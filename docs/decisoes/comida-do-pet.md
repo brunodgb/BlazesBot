@@ -1,5 +1,7 @@
 # Comida do pet — o porquê medido
 
+> **Duas rodadas.** A Parte I (27/08/2026) consertou a GRADE e o APERTO. A Parte II (13/09/2026) consertou a LATÊNCIA — o defeito que sobrou, e o que quase custou o pet da conta `creubo`.
+
 > **Investigação de 27/08/2026.** Fonte de tudo aqui: `logs/dev/blazes-dev.jsonl`
 > (26/08 22:52 → 27/08 01:21) e `data/config.json`. O relato do usuário:
 >
@@ -212,3 +214,207 @@ barra, "não sei" passa.
 * **`apply_buffs` também aperta uma vez e acredita**, e também não garante a
   página. Não foi tocado nesta rodada porque o usuário não relatou buff falhando
   — mas é o irmão gêmeo do defeito consertado aqui.
+
+
+---
+
+# PARTE II — A LATÊNCIA (13/09/2026): o defeito que sobrou
+
+> Relato do usuário: *"O pet da conta 'creubo' quase desapareceu no ecossistema
+> HH. O timer estourou enquanto o bot estava fora da cave e a alimentação foi
+> ignorada/perdida."*
+
+A Parte I consertou **a grade** (o APP não a guardava) e **o aperto** (a montaria
+cancelava o item). Sobrou um terceiro defeito, de natureza diferente: a grade
+estava certa, a tecla saía, e mesmo assim o pet passou fome.
+
+## 5. A medição
+
+`logs/dev/`, conta `creubo`, HH, intervalo de 50 min. 128 janelas de
+alimentação (`preparar_dentro`) entre 12:25 e 15:30 de 13/09/2026:
+
+| percentil | intervalo entre janelas |
+|---|---|
+| mediana | **6,5 min** |
+| p75 | 8,1 min |
+| p90 | 10,8 min |
+| p99 | 21,4 min |
+| **MAX** | **52,7 min** |
+
+Acima de 10 min: 17 de 127. Acima de 25 min: **1** de 127. A cauda é o defeito.
+
+As três refeições do dia, e o buraco:
+
+```
+12:47:23  Alimentando o pet (a cada 50 min)
+13:37:32  Alimentando o pet (a cada 50 min)   +50,1 min   <- correto
+14:54:28  Alimentando o pet (a cada 50 min)   +76,9 min   <- 27 min de atraso
+15:20:43  Alimentando o pet (a cada 50 min)   +26,3 min   <- a grade recuperando
+```
+
+A janela de 52,7 min, reconstituída fase a fase:
+
+```
+14:01:52  ate_o_boss     run normal
+14:06:07  situar -> preparar
+14:06:22  ate_a_porta    <-- entra aqui
+14:27:32  (a refeição vence, e o bot está FORA da cave)
+14:52:42  ate_a_porta    <-- sai aqui, 46 minutos depois
+14:54:25  preparar_dentro
+14:54:28  Alimentando o pet
+```
+
+## 6. O diagnóstico: a espera não tinha teto
+
+A grade **não falhou** — ela segurou a refeição e a seguinte veio 26 min depois,
+recuperando a cadência. O que falhou foi a **latência até a próxima janela de
+alimentação**, e ela era limitada apenas pela cadência de entradas na cave, que
+não tem teto.
+
+Duas causas somadas, as duas por desenho:
+
+1. **Um único ponto de alimentação por ecossistema.** BC alimenta em `_do_curar`,
+   HH em `_do_preparar_dentro`. Nenhum dos dois tem conferência no laço
+   principal — a da BC existe, mas **comentada** desde 25/08/2026.
+2. **O veto de desmonte fora da cave** (`_preparar_para_agir`,
+   `DESMONTAR_FORA_DA_CAVE_SO_SEM_PET`): fora da cave, com o pet ativo, nenhuma
+   ação que exija estar a pé acontece. Inclusive a comida.
+
+Enquanto o preparo chega a cada 6,5 min, o desenho é ótimo: a comida sai de graça,
+com o personagem já parado e a pé por causa da cura. Ele só quebra na cauda.
+
+### Por que a proposta "flag de fome + só dentro da cave" NÃO resolveria
+
+A proposta avaliada era: o cronômetro liga `pet_needs_food = True`; o Core Loop
+lê a flag e alimenta quando `in_cave == True`. Ela foi **recusada nas duas
+metades**, e a medição é o motivo:
+
+* **A metade "flag" já existe, e duplicá-la piora.** A fome já está inteiramente
+  contida em `_vence_em`: `com fome == agora >= _vence_em`. E já é *latched* de
+  graça — só `registrar_alimentacao` move o número. Um booleano ao lado seria um
+  segundo estado para o mesmo fato, exatamente o que o cabeçalho de `core/pet.py`
+  proíbe desde a primeira versão (*"dois números para a mesma coisa divergem no
+  primeiro atraso"*): processo que morre com a flag ligada, flag ligada por um
+  ecossistema e lida por outro, flag zerada "para destravar" e a refeição some.
+  O que faltava não era estado novo — era uma **leitura que não mutasse**
+  (`deve_alimentar` faz a grade nascer, então não serve para o laço).
+* **A metade "só dentro da cave" não teria mudado nada neste incidente.** O bot
+  passou os 46 minutos em `ATE_A_PORTA`, **fora** da cave. Uma conferência
+  condicionada a `in_cave == True` nunca teria disparado.
+* **E "dentro da cave" não é sinônimo de "seguro".** Neste bot é quase o
+  contrário: `ATE_O_BOSS` e `BOSS` são onde parar custa o trem de mobs. A janela
+  boa não é um LUGAR, é um ESTADO — parado e a pé.
+
+## 7. O conserto: a espera passa a ter prazo
+
+**`LIMITE_DE_ATRASO_DA_COMIDA_EM_MINUTOS = 15.0`** (`core/pet.py`). Passado esse
+atraso, a comida é dada **onde o bot estiver**, pagando o desmonte.
+
+Os dois lados do número, ambos medidos:
+
+* **Acima da cauda normal** (p90 = 10,8 min), senão dispara em operação saudável
+  e o bot desmonta à toa. Dispara em **1 das 127** janelas medidas.
+* **Abaixo de um intervalo inteiro** (40..60 min, `config.PET_FEED_MINUTOS_*`),
+  porque é ao completar um intervalo de atraso que `registrar_alimentacao`
+  **re-ancora** a grade — e aí a refeição do dia é perdida de verdade.
+
+**É esta segunda metade que faz a cota diária fechar.** Com o atraso limitado a
+15 min, o ramo "SEM FILA" nunca é alcançado, e as 28,8 refeições/dia de um
+intervalo de 50 min deixam de depender de o bot estar no lugar certo na hora
+certa. Travado por `test_a_cota_de_28_refeicoes_por_dia_FECHA_com_a_rede`, que
+simula 24 h com a janela boa aparecendo a cada 46 min (a duração do travamento
+medido) e exige exatamente **28** refeições.
+
+### O que custa
+
+Um desmonte + remonte fora da cave, no máximo uma vez por intervalo. Medido em
+`bot/hh/combate.py`: **4,2 s** (desmonte 08:47:36,2 → `Pet ativo` 08:47:40,4).
+São 4 s a cada 50 min = **0,13% do tempo**.
+
+A regra de 25/08/2026 combatia **dezenas** de desmontes por trajeto — cura, buff
+e comida a cada passo em Stone City. Um desmonte a cada 50 minutos não é a mesma
+coisa, e um pet que some custa a run inteira. Por isso o veto virou
+**preferência com prazo**, e não foi removido: sem atraso ele continua valendo
+integralmente (`test_NO_PRAZO_o_veto_de_fora_da_cave_CONTINUA_valendo`).
+
+### O que NUNCA cede
+
+**A batalha.** Em combate o jogo ignora a tecla de alimento; insistir registraria
+uma refeição que não houve — o defeito consertado em 26/08/2026. `in_battle()` é
+tri-estado e só `True` barra: "não sei" passa.
+
+## 8. A forma do conserto
+
+```
+core/pet.py           A POLÍTICA (pura, testável sem jogo)
+                      · esta_com_fome()       leitura derivada, não muta
+                      · atraso_minutos()      idem
+                      · a_fome_e_urgente()    idem
+                      · tentativa_liberada()  cadência anti-rajada
+bot/combate.py        A AÇÃO (o que toca o jogo)
+                      · cuidar_da_comida_no_laco()  a rede de segurança
+                      · feed_pet(em_transito=)      o aperto
+bot/hh/routine.py     uma linha no laço principal
+bot/bc/routine.py     uma linha no laço principal (a que estava comentada)
+bot/app/executor.py   auditoria: ver §9
+```
+
+**As leituras são PURAS de propósito.** O laço da HH roda a cada 0,05 s
+(`PASSO_DENTRO_DA_CAVE`) — até 20 voltas por segundo. Se a conferência mutasse
+ou gravasse, viraria escrita em disco em rajada. Travado por
+`test_as_leituras_de_fome_NAO_MUTAM_a_grade`.
+
+**E ela não fala quando não vai agir.** A versão ingênua (chamar `feed_pet` toda
+volta, que é o que a linha comentada da BC fazia) logava *"NÃO desmonto para
+alimentar o pet"* 20 vezes por segundo durante o trajeto inteiro fora da cave.
+Era por isso que a linha estava comentada. Travado por
+`test_a_rede_NAO_age_enquanto_o_atraso_esta_dentro_do_prazo`, que exige `linhas
+== []`.
+
+**`CADENCIA_DAS_TENTATIVAS_DE_COMIDA = 30.0`** segura a rajada quando a tentativa
+falha por algo que o `PetFeeder` não resolve (não desmontei, janela na frente,
+personagem morto). Mesmo valor e mesmo motivo de `core/petbug.INTERVALO_MINIMO`.
+
+## 9. A auditoria do APP
+
+**Não havia adiamento para consertar.** O APP não tem veto de cave: ele já
+alimenta na primeira volta calma, que é o mais cedo possível em mundo aberto, e
+a grade dele já vem do disco desde a Parte I.
+
+O que a auditoria achou foi um **silêncio**. O único bloqueio do APP é a
+batalha — correto e não negociável, pela mecânica do jogo. Só que uma conta que
+luta sem parar (macro de AoE em ponto cheio) pode atravessar vários vencimentos
+sem uma linha de log, e o pet some sem aviso.
+
+Então o APP **acusa em vez de forçar**: `_avisar_se_a_comida_esta_presa()`, no
+ramo de batalha do laço vivo, com `CADENCIA_DO_AVISO_DE_COMIDA = 300 s` para dar
+uma linha por luta longa em vez de centenas. É o equivalente do
+`cuidar_da_comida_no_laco`, com a diferença de que lá a espera tem um veto para
+furar e aqui tem uma mecânica do jogo, que não se fura.
+
+## 10. Cobertura de estados, depois do conserto
+
+| situação | antes | depois |
+|---|---|---|
+| HH/BC, preparo de entrada chega em 6,5 min | alimenta | alimenta (inalterado) |
+| HH/BC, preso fora da cave 46 min | **fome** | alimenta aos 15 min de atraso |
+| HH, run retomada no meio da cave (pula o preparo) | **fome até a próxima entrada** | alimenta aos 15 min de atraso |
+| BC, ciclo de venda longo | **fome** | alimenta aos 15 min de atraso |
+| HH/BC, em travessia (`em_transito`) | n/a | espera; fura o prazo se passar de 15 min |
+| HH/BC, em batalha | não alimenta (grade intacta) | idem, e agora em silêncio no laço |
+| APP, fora de batalha | alimenta | alimenta (inalterado) |
+| APP, batalha sem fim | **fome silenciosa** | alimenta quando sair; avisa a cada 5 min |
+
+## 11. O que continua ABERTO depois desta rodada
+
+* **`LIMITE_DE_ATRASO_DA_COMIDA_EM_MINUTOS` é derivado, não medido de frente.**
+  Ele vem da distribuição das janelas (p90 = 10,8) e do limite da grade (40 min),
+  não de uma medição da fome real do pet no jogo. **A medição que falta é a do
+  jogo**: quantos minutos o pet aguenta sem comer antes de sumir. Com esse número
+  o limite deixa de ser inferido.
+* **Continua sem confirmação de que o item foi consumido** (§4). A rede de
+  segurança reduz a latência, mas não sabe se a tecla fez efeito.
+* **`vale_alimentar_antes_de_entrar` continua morta.** Agora com um agravante:
+  ela resolvia, de forma pior, o problema que a rede de segurança resolve.
+  Candidata a remoção na próxima limpeza.
+* **`apply_buffs` continua apertando uma vez e acreditando** (§4).

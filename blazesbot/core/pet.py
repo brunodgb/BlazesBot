@@ -131,6 +131,64 @@ from collections.abc import Callable
 SEGUNDOS_PARA_A_COMIDA_SER_USADA = 1.5
 
 
+# ===========================================================================
+# QUANTO ATRASO A REFEIÇÃO AGUENTA ANTES DE FURAR O VETO DA CAVE
+# ===========================================================================
+#
+# A REGRA "SÓ DENTRO DA CAVE" É PREFERÊNCIA, NÃO DOGMA -- e este número é o
+# ponto em que ela cede.
+#
+# Regra do usuário (25/08/2026): fora da cave o bot não desmonta com o pet
+# ativo, e a comida espera o preparo de entrada. O motivo era bom: em Stone
+# City o bot descia da montaria a cada cura, buff e comida no meio do trajeto,
+# e cada desmonte custa descer + agir + subir.
+#
+# O QUE ESSA REGRA NÃO PREVIU é a janela de alimentação sumir por muito tempo.
+# MEDIDO EM 13/09/2026 (`logs/dev/`, conta `creubo`, HH, intervalo de 50 min),
+# 128 janelas de alimentação (`preparar_dentro`):
+#
+#     mediana   6,5 min     p90  10,8 min
+#     p75       8,1 min     p99  21,4 min        MAX  52,7 min
+#
+# A cauda é o defeito. Às 14:06:22 o bot entrou em `ATE_A_PORTA` e ficou lá
+# **46 minutos**; a refeição venceu às 14:27, dentro dessa janela, e só foi dada
+# às 14:54:28 -- **77 minutos** depois da anterior, num intervalo de 50. Foi a
+# vez em que o pet do usuário quase sumiu.
+#
+# POR QUE 15 MINUTOS, E NÃO OUTRO NÚMERO. Ele tem de ficar ACIMA da cauda normal
+# (p90 = 10,8 min) para não disparar em operação saudável, e MUITO ABAIXO de um
+# intervalo inteiro (40..60 min, grampeado em `config.PET_FEED_MINUTOS_*`) --
+# porque é ao completar um intervalo de atraso que `registrar_alimentacao`
+# RE-ANCORA a grade e a refeição do dia é perdida de verdade. 15 min é 25% a 37%
+# do intervalo configurável: dispara em 1 das 127 janelas medidas, e nunca
+# chega perto do ponto de perda.
+#
+# É ISTO QUE FAZ A COTA DIÁRIA FECHAR. Com o atraso limitado a 15 min, o ramo
+# "SEM FILA" de `registrar_alimentacao` nunca é alcançado -- então as 28,8
+# refeições/dia de um intervalo de 50 min deixam de depender de o bot estar no
+# lugar certo na hora certa.
+#
+# O QUE ELE CUSTA: um desmonte + remonte fora da cave, no máximo uma vez por
+# intervalo. Medido em `bot/hh/combate.py`: 4,2 s (desmonte 08:47:36,2 ->
+# `Pet ativo` 08:47:40,4). São 4 s a cada 50 min = 0,13% do tempo. A regra de
+# 25/08 combatia DEZENAS de desmontes por trajeto; um a cada 50 minutos não é
+# a mesma coisa, e um pet que some custa a run inteira.
+LIMITE_DE_ATRASO_DA_COMIDA_EM_MINUTOS = 15.0
+
+# Entre duas TENTATIVAS de alimentar depois de o prazo estourar.
+#
+# NÃO É CADÊNCIA DE ALIMENTAÇÃO -- é o intervalo entre tentativas que FALHARAM.
+# A tentativa pode não ir para frente por algo que o `PetFeeder` não resolve:
+# não consegui desmontar, janela na frente, personagem morto. O laço da HH roda
+# a cada 0,05 s; sem esta cadência, uma recusa viraria 20 tentativas por
+# segundo -- tecla e desmonte em rajada contra um estado que não mudou.
+#
+# 30 s é o mesmo valor, pelo mesmo motivo, de `core/petbug.INTERVALO_MINIMO`:
+# não insistir num estado que não muda sozinho. Com a refeição já 15 min
+# atrasada, mais 30 s não move o ponteiro; uma rajada de teclas move.
+CADENCIA_DAS_TENTATIVAS_DE_COMIDA = 30.0
+
+
 class PetFeeder:
     """Controla o cronômetro de alimentação do pet.
 
@@ -166,6 +224,14 @@ class PetFeeder:
         # Recebe FUNÇÃO porque `core/` não conhece `config.json` nem conta. E a
         # função NÃO PODE LEVANTAR: ver o contrato no cabeçalho.
         self._gravar = gravar
+
+        # A última TENTATIVA de alimentar fora de hora (não a última refeição --
+        # essa é `_vence_em`). Só a rede de segurança usa; ver
+        # `tentativa_liberada` e `CADENCIA_DAS_TENTATIVAS_DE_COMIDA`.
+        #
+        # NÃO É PERSISTIDO de propósito: é anti-rajada dentro de um processo, e
+        # um processo novo tem direito à primeira tentativa imediata.
+        self._ultima_tentativa = 0.0
 
     # -- estado, para quem persiste ---------------------------------------
 
@@ -208,6 +274,83 @@ class PetFeeder:
             return True
 
         return force or agora >= self._vence_em
+
+    # -- leitura da fome: DERIVADA, nunca guardada --------------------------
+    #
+    # =======================================================================
+    # POR QUE NÃO EXISTE UM `pet_needs_food` GUARDADO
+    # =======================================================================
+    #
+    # A proposta natural é um booleano: o cronômetro estoura e liga
+    # `pet_needs_food = True`; quem alimenta desliga. Ele NÃO existe aqui, e a
+    # razão é a mesma que o cabeçalho deste módulo já usa contra guardar a hora
+    # da última refeição: **dois estados para o mesmo fato divergem no primeiro
+    # atraso**.
+    #
+    # A fome já está inteiramente contida em `_vence_em`:
+    #
+    #     com fome  ==  agora >= _vence_em
+    #
+    # E ela já é LATCHED de graça -- continua verdadeira volta após volta,
+    # porque só `registrar_alimentacao` move `_vence_em`. Um booleano ao lado
+    # não acrescentaria nada e acrescentaria um jeito de errar: processo que
+    # morre com a flag ligada e a grade gravada, flag ligada por um ecossistema
+    # e lida por outro, flag que alguém zera "para destravar" e a refeição some.
+    #
+    # O que faltava não era estado novo: era uma leitura que NÃO MUTASSE.
+    # `deve_alimentar` faz a grade NASCER quando ela é `None`, então não serve
+    # para ser chamada a cada volta do laço só para perguntar. Estas duas abaixo
+    # servem: são puras, não gravam, e respondem `False`/`0.0` enquanto a grade
+    # não começou.
+
+    def esta_com_fome(self, intervalo_minutos: int) -> bool:
+        """A refeição já venceu? LEITURA PURA -- não muta, não grava.
+
+        É a "flag de fome": derivada da grade, e não um segundo estado ao lado
+        dela. Grade não iniciada responde `False` -- sem grade não há vencimento,
+        e quem faz a grade nascer é `deve_alimentar`, no ato de alimentar.
+        """
+        if self._vence_em is None:
+            return False
+        return time.time() >= self._vence_em
+
+    def atraso_minutos(self, intervalo_minutos: int) -> float:
+        """Há quantos minutos a refeição está VENCIDA. `0.0` se não venceu.
+
+        LEITURA PURA. É o número que decide se o veto da cave ainda vale (ver
+        `LIMITE_DE_ATRASO_DA_COMIDA_EM_MINUTOS`).
+        """
+        if self._vence_em is None:
+            return 0.0
+        return max(0.0, (time.time() - self._vence_em) / 60.0)
+
+    def a_fome_e_urgente(self, intervalo_minutos: int) -> bool:
+        """O atraso passou do ponto em que esperar o lugar certo sai caro.
+
+        LEITURA PURA. Quem chama usa isto para decidir se paga um desmonte fora
+        da cave -- ver o porquê medido em
+        `LIMITE_DE_ATRASO_DA_COMIDA_EM_MINUTOS`.
+        """
+        return (self.atraso_minutos(intervalo_minutos)
+                >= LIMITE_DE_ATRASO_DA_COMIDA_EM_MINUTOS)
+
+    def tentativa_liberada(self) -> bool:
+        """A cadência permite outra tentativa? MARCA a tentativa ao liberar.
+
+        Chamada só pela rede de segurança (a alimentação atrasada), e nunca pelo
+        caminho normal: o preparo de entrada alimenta uma vez por run e não
+        precisa de anti-rajada.
+
+        MARCA AO LIBERAR, num único método, de propósito. O par
+        "posso?" + "marque" é fácil de usar pela metade, e a metade que falta é
+        justamente a que segura a rajada. Ver
+        `CADENCIA_DAS_TENTATIVAS_DE_COMIDA`.
+        """
+        agora = time.time()
+        if agora - self._ultima_tentativa < CADENCIA_DAS_TENTATIVAS_DE_COMIDA:
+            return False
+        self._ultima_tentativa = agora
+        return True
 
     def registrar_alimentacao(self, intervalo_minutos: int) -> None:
         """Marca que o pet foi alimentado e AVANÇA A GRADE.

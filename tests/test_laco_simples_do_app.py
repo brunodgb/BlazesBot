@@ -53,6 +53,10 @@ def _executor(em_batalha=None, passos=3, tecla="TAB"):
     e._tecla_de_alvo = (lambda: tecla)
     e._em_batalha = em_batalha
     e._estava_em_batalha = False
+    # A conferência da comida roda no ramo de batalha do laço vivo
+    # (`_avisar_se_a_comida_esta_presa`). Sem tecla configurada ela devolve
+    # na primeira linha -- é o executor sem pet, que é um caso real.
+    e._tecla_do_pet_food = ""
     e._espera_depois_do_tab_ms = None
     e._avisou_sem_tecla_de_alvo = False
     # SEM TIME: estes testes montam o executor por `__new__`, então todo

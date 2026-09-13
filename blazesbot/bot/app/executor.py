@@ -154,6 +154,14 @@ FATIA_DE_ESPERA = 0.08
 # `False` -- e o teste que ja existe volta a valer para o codigo que roda.
 LACO_SIMPLES = True
 
+# Entre dois avisos de "a comida venceu e a batalha não deixa alimentar".
+#
+# NÃO é cadência de alimentação: é anti-repetição de LOG. O laço do APP roda
+# uma volta a cada poucos segundos, e sem isto uma luta longa escreveria a mesma
+# linha centenas de vezes. 5 min dá uma linha por luta longa, que é o que se
+# quer ver. Ver `_avisar_se_a_comida_esta_presa`.
+CADENCIA_DO_AVISO_DE_COMIDA = 300.0
+
 # Intervalo mínimo entre dois toques na tecla do pet.
 #
 # O pet não aparece na hora: entre apertar e a memória acusar `pet ativo` passam
@@ -985,6 +993,9 @@ class ExecutorDeMacro:
         # de comida do APP que saía com a página da barra de atalhos NÃO
         # verificada. Agora é a primeira volta que a gasta, depois da garantia.
         self._deve_alimentar_na_largada = feed_on_start
+        # Último AVISO de comida presa pela batalha (não a última refeição --
+        # essa é a grade, e mora no `PetFeeder`).
+        self._ultimo_aviso_de_comida = 0.0
         # A GRADE VEM DO DISCO E VOLTA PARA ELE, igual ao BC. O `PetFeeder`
         # grava sozinho a cada mudança -- inclusive quando a grade só NASCE, que
         # é o caso que estava jogando o relógio fora a cada reinício.
@@ -1341,6 +1352,48 @@ class ExecutorDeMacro:
                 self.log.debug("Não gravei a grade da comida do pet: %s", exc)
 
         return _seguro
+
+    def _avisar_se_a_comida_esta_presa(self) -> None:
+        """Diz no log quando a comida vence e a BATALHA não deixa alimentar.
+
+        =================================================================
+        A AUDITORIA DO APP -- 13/09/2026
+        =================================================================
+
+        O APP não tem veto de cave: a alimentação já acontece na primeira volta
+        calma, que é o mais cedo possível em mundo aberto. **A revisão não achou
+        adiamento para consertar aqui** -- achou um SILÊNCIO.
+
+        O único bloqueio do APP é a batalha, e ele é correto: em combate o jogo
+        IGNORA a tecla de alimento, e alimentar assim mesmo faria o `PetFeeder`
+        registrar uma refeição que não houve (é o defeito consertado em
+        26/08/2026). Só que uma conta que luta sem parar -- macro de AoE em
+        ponto cheio -- pode passar por vários vencimentos sem uma linha de log,
+        e o pet some sem aviso.
+
+        Então a conferência não força nada: ela ACUSA. É o equivalente do
+        `cuidar_da_comida_no_laco` dos ecossistemas de cave, com a diferença que
+        lá a espera tem um veto para furar e aqui tem uma mecânica do jogo, que
+        não se fura.
+        """
+        if not self._tecla_do_pet_food:
+            return
+        intervalo = self._feed_every_minutes()
+        # LEITURA PURA: não muta a grade e não grava. É o que permite chamar
+        # isto a cada volta sem custo.
+        if not self._pet_feeder.a_fome_e_urgente(intervalo):
+            return
+        agora = time.time()
+        if agora - self._ultimo_aviso_de_comida < CADENCIA_DO_AVISO_DE_COMIDA:
+            return
+        self._ultimo_aviso_de_comida = agora
+        self.log.warning(
+            "Comida do pet vencida há %.0f min e o personagem não sai de "
+            "batalha -- a tecla de alimento é IGNORADA em combate, então ela "
+            "não é apertada. Pet sem comida DESAPARECE: se isto se repetir, "
+            "reveja o ponto de farm ou aumente o intervalo.",
+            self._pet_feeder.atraso_minutos(intervalo),
+        )
 
     def feed_pet(self, force: bool = False) -> bool:
         """Alimenta o pet respeitando o intervalo configurado.
@@ -2843,6 +2896,10 @@ class ExecutorDeMacro:
             return self._abortar_a_volta(motivo="perímetro estourado")
 
         lutando = self._ler_em_batalha() is True
+        if lutando:
+            # A COMIDA NÃO É APERTADA EM BATALHA (o jogo ignora), mas o
+            # vencimento não pode passar calado. Ver o método.
+            self._avisar_se_a_comida_esta_presa()
         # EIXO 1: a régua da vida anda em TODA volta, dentro e fora de batalha.
         # Fora dela a marca cai; dentro, uma queda a levanta.
         sob_ataque = self._vigiar_a_vida(lutando)

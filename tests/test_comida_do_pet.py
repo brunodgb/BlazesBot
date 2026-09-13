@@ -41,10 +41,12 @@ from types import SimpleNamespace
 
 import pytest
 
+from blazesbot import config
 from blazesbot.bot import combate as motor_de_combate
 from blazesbot.bot import hotbar
 from blazesbot.bot.app import executor as app_mod
 from blazesbot.bot.bc.combat import CombatEngine
+from blazesbot.core import pet as pet_mod
 from blazesbot.core.pet import SEGUNDOS_PARA_A_COMIDA_SER_USADA, PetFeeder
 
 # ===========================================================================
@@ -272,7 +274,8 @@ def _motor_bc(*, em_batalha=False, montado=False, tecla="6", intervalo=50,
     )
     motor.linhas = linhas
     motor._pet_feeder = PetFeeder(vence_em=vence_em)
-    motor._preparar_para_agir = lambda _motivo: True
+    motor._preparar_para_agir = (
+        lambda _motivo, mesmo_fora_da_cave=False: True)
     return motor
 
 
@@ -387,3 +390,282 @@ def test_o_caminho_do_CLIQUE_assenta_depois_do_ULTIMO_clique():
 def test_o_assentamento_e_maior_que_um_quadro():
     """60 fps = 16,7 ms. Abaixo disso a barra pode não ter trocado ainda."""
     assert hotbar.ASSENTAR_A_PAGINA > 1 / 60
+
+
+# ===========================================================================
+# 7. A ESPERA PELO LUGAR CERTO TEM PRAZO -- 13/09/2026
+# ===========================================================================
+#
+# O incidente: conta `creubo`, HH, intervalo de 50 min. Em 13/09/2026 o bot
+# ficou 46 minutos em `ATE_A_PORTA` (das 14:06:22 às 14:52:42), a refeição
+# venceu às 14:27 dentro dessa janela, e a comida só saiu às 14:54:28 -- 77
+# minutos depois da anterior. O pet quase sumiu.
+#
+# A causa não era a grade (ela segurou a refeição certinho, e a seguinte veio 26
+# min depois, recuperando a cadência). Era a LATÊNCIA: o único ponto de
+# alimentação era o preparo de entrada, e a espera por ele não tinha teto.
+
+
+def _feeder_atrasado(monkeypatch, minutos_de_atraso: float, intervalo=50):
+    """Um `PetFeeder` cuja refeição venceu há N minutos."""
+    agora = 100_000.0
+    monkeypatch.setattr(time, "time", lambda: agora)
+    return PetFeeder(vence_em=agora - minutos_de_atraso * 60)
+
+
+def test_a_fome_e_urgente_so_DEPOIS_do_limite(monkeypatch):
+    limite = pet_mod.LIMITE_DE_ATRASO_DA_COMIDA_EM_MINUTOS
+    assert _feeder_atrasado(monkeypatch, limite - 0.1).a_fome_e_urgente(50) is False
+    assert _feeder_atrasado(monkeypatch, limite + 0.1).a_fome_e_urgente(50) is True
+
+
+def test_o_limite_fica_ACIMA_da_cauda_normal_e_ABAIXO_de_um_intervalo():
+    """Os dois lados do número, e os dois são medidos.
+
+    ACIMA da p90 das janelas de alimentação (10,8 min medidos em 128 janelas da
+    HH), senão dispara em operação saudável e o bot desmonta à toa.
+
+    ABAIXO do menor intervalo configurável, senão a refeição chega ao ponto em
+    que `registrar_alimentacao` RE-ANCORA a grade -- e aí a refeição do dia é
+    perdida de verdade. É esta metade que sustenta a conta de 28,8 refeições/dia.
+    """
+    limite = pet_mod.LIMITE_DE_ATRASO_DA_COMIDA_EM_MINUTOS
+    assert limite > 10.8, "dispararia na cauda NORMAL das janelas medidas"
+    assert limite < config.PET_FEED_MINUTOS_MIN, (
+        "atraso de um intervalo inteiro re-ancora a grade e perde a refeição")
+
+
+def test_as_leituras_de_fome_NAO_MUTAM_a_grade(monkeypatch):
+    """São chamadas a cada volta de um laço de 20 voltas/s. Se mutassem ou
+    gravassem, a conferência viraria escrita em disco em rajada."""
+    monkeypatch.setattr(time, "time", lambda: 1000.0)
+    gravado: list[float] = []
+    f = PetFeeder(gravar=gravado.append)
+
+    assert f.esta_com_fome(50) is False
+    assert f.atraso_minutos(50) == 0.0
+    assert f.a_fome_e_urgente(50) is False
+
+    assert f.vence_em is None, "a leitura fez a grade nascer"
+    assert gravado == [], "a leitura gravou no disco"
+
+
+def test_a_fome_e_DERIVADA_da_grade_e_fica_LATCHED(monkeypatch):
+    """Não existe `pet_needs_food` guardado, e não precisa existir: a fome
+    continua verdadeira volta após volta até alguém alimentar."""
+    agora = [1000.0]
+    monkeypatch.setattr(time, "time", lambda: agora[0])
+    f = PetFeeder(vence_em=1000.0)
+
+    for _ in range(5):
+        agora[0] += 60
+        assert f.esta_com_fome(50) is True, "a fome apagou sozinha"
+
+    f.registrar_alimentacao(50)
+    assert f.esta_com_fome(50) is False, "alimentou e a fome continuou"
+
+
+def test_a_cadencia_segura_a_RAJADA_de_tentativas(monkeypatch):
+    """O laço da HH roda a cada 0,05 s. Sem cadência, uma recusa de desmonte
+    viraria 20 tentativas por segundo."""
+    agora = [1000.0]
+    monkeypatch.setattr(time, "time", lambda: agora[0])
+    f = PetFeeder(vence_em=0.0)
+
+    assert f.tentativa_liberada() is True
+    liberadas = 0
+    for _ in range(400):                      # 20 s de laço a 0,05 s
+        agora[0] += 0.05
+        if f.tentativa_liberada():
+            liberadas += 1
+    assert liberadas == 0, f"{liberadas} tentativas em 20 s de laço"
+
+    agora[0] += pet_mod.CADENCIA_DAS_TENTATIVAS_DE_COMIDA
+    assert f.tentativa_liberada() is True
+
+
+# ===========================================================================
+# 8. A REDE DE SEGURANÇA NO LAÇO (HH e BC)
+# ===========================================================================
+
+def test_a_rede_NAO_age_enquanto_o_atraso_esta_dentro_do_prazo(
+        monkeypatch, _hotbar_falsa):
+    """O caminho normal continua sendo o preparo de entrada. A rede fica quieta
+    -- e QUIETA é literal: nem tecla, nem log."""
+    monkeypatch.setattr(time, "time", lambda: 2000.0)
+    motor = _motor_bc(vence_em=1999.0)             # venceu há 1 segundo
+
+    assert motor.cuidar_da_comida_no_laco(em_transito=False) is False
+    assert motor.teclas == []
+    assert motor.linhas == [], "falou sem agir; num laço de 20 voltas/s isso inunda o log"
+
+
+def test_a_rede_ALIMENTA_quando_o_atraso_passa_do_prazo(monkeypatch, _hotbar_falsa):
+    """O caso `creubo`: 46 min preso fora da cave com a refeição vencida."""
+    agora = 2000.0
+    monkeypatch.setattr(time, "time", lambda: agora)
+    atraso = pet_mod.LIMITE_DE_ATRASO_DA_COMIDA_EM_MINUTOS + 1
+    motor = _motor_bc(vence_em=agora - atraso * 60)
+
+    assert motor.cuidar_da_comida_no_laco(em_transito=False) is True
+    assert motor.teclas == ["6"]
+
+
+def test_atrasada_ela_fura_o_veto_de_NAO_DESMONTAR_fora_da_cave(
+        monkeypatch, _hotbar_falsa):
+    """A regra de 25/08/2026 é preferência, não dogma: pet sem comida some.
+
+    Este teste usa o `_preparar_para_agir` DE VERDADE, porque é justamente ele
+    que continha o veto.
+    """
+    agora = 2000.0
+    monkeypatch.setattr(time, "time", lambda: agora)
+    atraso = pet_mod.LIMITE_DE_ATRASO_DA_COMIDA_EM_MINUTOS + 1
+    motor = _motor_bc(montado=True, vence_em=agora - atraso * 60)
+    del motor._preparar_para_agir                  # o do motor, não o dublê
+    motor._esta_fora_da_cave = lambda: True        # fora da cave
+    motor.desmontou = False
+
+    def desmontar():
+        motor.desmontou = True
+        return True
+
+    motor.nav = SimpleNamespace(ensure_dismounted=desmontar)
+
+    assert motor.cuidar_da_comida_no_laco(em_transito=False) is True
+    assert motor.desmontou is True, "o veto barrou uma refeição já atrasada"
+    assert motor.teclas == ["6"]
+
+
+def test_NO_PRAZO_o_veto_de_fora_da_cave_CONTINUA_valendo(monkeypatch, _hotbar_falsa):
+    """A saída de emergência não pode virar a regra: sem atraso, nada muda."""
+    monkeypatch.setattr(time, "time", lambda: 2000.0)
+    motor = _motor_bc(montado=True, vence_em=1999.0)
+    del motor._preparar_para_agir
+    motor._esta_fora_da_cave = lambda: True
+    motor.desmontou = False
+    motor.nav = SimpleNamespace(
+        ensure_dismounted=lambda: motor.__setattr__("desmontou", True) or True)
+
+    assert motor.feed_pet() is False
+    assert motor.desmontou is False, "desmontou fora da cave sem urgência"
+
+
+def test_a_rede_NUNCA_alimenta_em_batalha(monkeypatch, _hotbar_falsa):
+    """A batalha não cede nem com urgência: a tecla é engolida pelo jogo, e
+    registrar a refeição assim seria fome com o relógio dizendo que comeu."""
+    agora = 2000.0
+    monkeypatch.setattr(time, "time", lambda: agora)
+    atraso = pet_mod.LIMITE_DE_ATRASO_DA_COMIDA_EM_MINUTOS + 10
+    motor = _motor_bc(em_batalha=True, vence_em=agora - atraso * 60)
+
+    assert motor.cuidar_da_comida_no_laco(em_transito=False) is False
+    assert motor.teclas == []
+    assert motor.linhas == [], "a recusa em batalha falou no laço"
+    assert motor._pet_feeder.vence_em == pytest.approx(agora - atraso * 60), (
+        "a grade avançou com a tecla engolida")
+
+
+def test_EM_TRANSITO_espera_o_prazo_mas_nao_espera_para_sempre(
+        monkeypatch, _hotbar_falsa):
+    """Dentro da cave, parar é parar com o trem de mobs em cima -- então a
+    travessia tem preferência. Até a refeição ficar velha demais."""
+    agora = [2000.0]
+    monkeypatch.setattr(time, "time", lambda: agora[0])
+    motor = _motor_bc(vence_em=1999.0)
+
+    assert motor.feed_pet(em_transito=True) is False, "parou no meio da travessia"
+    assert motor.teclas == []
+
+    agora[0] += (pet_mod.LIMITE_DE_ATRASO_DA_COMIDA_EM_MINUTOS + 1) * 60
+    assert motor.feed_pet(em_transito=True) is True, "esperou além do prazo"
+
+
+# ===========================================================================
+# 9. OS TRÊS ECOSSISTEMAS CHAMAM A REDE -- a fiação
+# ===========================================================================
+
+def _chamadas(funcao) -> list[str]:
+    arvore = ast.parse(textwrap.dedent(inspect.getsource(funcao)))
+    return [n.func.attr for n in ast.walk(arvore)
+            if isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute)]
+
+
+def test_o_laco_da_HH_confere_a_comida_a_cada_volta():
+    from blazesbot.bot.hh.routine import HHRoutine
+    assert "cuidar_da_comida_no_laco" in _chamadas(HHRoutine.run)
+
+
+def test_o_laco_da_BC_confere_a_comida_a_cada_volta():
+    from blazesbot.bot.bc.routine import BossRushRoutine
+    assert "cuidar_da_comida_no_laco" in _chamadas(BossRushRoutine.run)
+
+
+def test_o_laco_do_APP_acusa_a_comida_presa_pela_batalha():
+    """O APP não tem veto de cave para furar -- o bloqueio dele é a mecânica do
+    jogo, que não se fura. Então ele ACUSA em vez de forçar."""
+    assert "_avisar_se_a_comida_esta_presa" in _chamadas(
+        app_mod.ExecutorDeMacro._uma_volta_simples)
+
+
+def test_o_aviso_do_APP_sai_UMA_vez_por_luta_longa(monkeypatch):
+    """Sem cadência, uma luta de 10 min escreveria a mesma linha centenas de
+    vezes -- e log que inunda é log que ninguém lê."""
+    agora = [1000.0]
+    monkeypatch.setattr(time, "time", lambda: agora[0])
+    e = _executor_do_app(grade_da_comida=lambda: 1.0)   # vencida em 1970
+
+    def avisos() -> list[str]:
+        return [l for l in e.linhas_do_log if "não sai de batalha" in l]
+
+    e._avisar_se_a_comida_esta_presa()
+    assert len(avisos()) == 1
+    for _ in range(50):
+        agora[0] += 5
+        e._avisar_se_a_comida_esta_presa()
+    assert len(avisos()) == 1, "o aviso repetiu dentro da cadência"
+
+    agora[0] += app_mod.CADENCIA_DO_AVISO_DE_COMIDA
+    e._avisar_se_a_comida_esta_presa()
+    assert len(avisos()) == 2
+
+
+def test_o_APP_nao_avisa_quando_a_comida_esta_em_dia(monkeypatch):
+    monkeypatch.setattr(time, "time", lambda: 1000.0)
+    e = _executor_do_app(grade_da_comida=lambda: 9_000.0)
+    e.linhas_do_log.clear()
+    e._avisar_se_a_comida_esta_presa()
+    assert e.linhas_do_log == []
+
+
+# ===========================================================================
+# 10. A COTA DIÁRIA, QUE É O PEDIDO DO USUÁRIO
+# ===========================================================================
+
+def test_a_cota_de_28_refeicoes_por_dia_FECHA_com_a_rede(monkeypatch):
+    """*"Se o usuário configura o petfood para cada 50 minutos, a rotina DEVE
+    ser executada 28 vezes em 24 horas (com uma sobra final de 40 minutos)."*
+
+    Simula 24 h com a janela de alimentação aparecendo de forma HOSTIL: a cada
+    46 minutos, que é a duração do travamento medido em 13/09/2026. Sem prazo, a
+    refeição só sai quando a janela aparece e a grade re-ancora; com prazo, a
+    rede alimenta no meio e a grade nunca escorrega.
+    """
+    agora = [0.0]
+    monkeypatch.setattr(time, "time", lambda: agora[0])
+    intervalo = 50
+    f = PetFeeder(vence_em=intervalo * 60.0)
+    refeicoes = 0
+
+    while agora[0] < 24 * 3600:
+        agora[0] += 30.0                       # uma volta do laço
+        if not f.esta_com_fome(intervalo):
+            continue
+        # A JANELA BOA (preparo de entrada) só aparece a cada 46 min...
+        janela_boa = int(agora[0]) % (46 * 60) < 30
+        if janela_boa or f.a_fome_e_urgente(intervalo):
+            f.registrar_alimentacao(intervalo)
+            refeicoes += 1
+
+    assert refeicoes == 28, (
+        f"{refeicoes} refeições em 24 h; o usuário exige 28 com intervalo de 50")
