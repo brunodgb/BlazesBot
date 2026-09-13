@@ -251,15 +251,51 @@ def test_a_CADEIA_de_lideres_nao_produz_lider_falso():
     de C, então B não está em time nenhum e "segue A" seria mentira."""
     from blazesbot.config import Account, BotConfig
 
-    def conta(login, segue=()):
+    def conta(login, segue=(), app=True):
         c = Account(login=login)
         c.settings.app.time_logins = list(segue)
+        c.settings.app.enabled = app
         return c
 
     cfg = BotConfig()
     cfg.accounts = [conta("C", ["A"]), conta("A", ["B"]), conta("B")]
     mapa = cfg.lideres_do_time_do_app()
     assert mapa == {"a": "C"}, mapa
+
+
+def test_lider_com_o_APP_DESLIGADO_nao_puxa_ninguem():
+    """Pedido do usuário em 08/09/2026, olhando a tela: *"esse 'segue...' só
+    deve aparecer se o líder estiver com o APP ativo (...) já que eu também
+    posso ativar individualmente e posso estar com o APP inativo do líder"*.
+
+    É a MESMA condição que o supervisor exige para convocar
+    (`_SupervisorDaConta._lider_do_time`, item 2): com o modo APP do líder
+    desmarcado ninguém é convocado, a seguidora fica só no login -- e era isso
+    que a tabela contava errado. Montar o time é uma coisa; o time estar VALENDO
+    é outra, e a lista guardada sozinha não distingue as duas.
+
+    A lista NÃO é apagada quando o líder desliga (`docs/INVARIANTES.md`: "sair
+    do time por `bc_farm` não apaga o login") -- o que muda é só o que a tela
+    diz.
+    """
+    from blazesbot.config import Account, BotConfig
+
+    def conta(login, segue=(), app=False):
+        c = Account(login=login)
+        c.settings.app.time_logins = list(segue)
+        c.settings.app.enabled = app
+        return c
+
+    cfg = BotConfig()
+    lider = conta("lider", ["seg"], app=True)
+    cfg.accounts = [lider, conta("seg")]
+    assert cfg.lideres_do_time_do_app() == {"seg": "lider"}
+
+    lider.settings.app.enabled = False
+    assert cfg.lideres_do_time_do_app() == {}, (
+        "líder sem APP não convoca -- a seguidora é 'só login'")
+    assert lider.settings.app.time_logins == ["seg"], (
+        "desligar o APP não pode APAGAR o time montado")
 
 
 def test_o_lider_e_resolvido_em_UMA_passada():

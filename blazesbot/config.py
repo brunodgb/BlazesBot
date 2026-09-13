@@ -1583,21 +1583,21 @@ class BotConfig:
     def lideres_do_time_do_app(self) -> dict[str, str]:
         """Mapa `login da seguidora -> login do líder EFETIVO`, numa passada.
 
-        Existe por dois motivos, os dois achados na revisão:
+        EFETIVO são três condições, e cada uma foi um defeito de tela:
 
-        1. **CUSTO.** `lider_do_time_do_app` varre todas as contas, e a tabela
-           a chamava uma vez POR CONTA -- O(n²) a cada leitura. Aqui é O(n).
-        2. **CADEIA.** Se C lidera A e A lidera B, a consulta direta devolve
-           "A" para B -- só que a lista de A é IGNORADA enquanto ela é
-           seguidora de C (`docs/INVARIANTES.md`, "Time do APP"), então B não
-           está em time nenhum. Dizer "segue A" seria mentira. Aqui um líder
-           que é seguidor de outro NÃO lidera ninguém.
+        1. **APP LIGADO no líder** -- mesma exigência do supervisor para
+           convocar (`_SupervisorDaConta._lider_do_time`). Montar o time é uma
+           coisa; o time estar VALENDO é outra, e a lista sozinha não distingue.
+        2. **Líder que segue outro NÃO lidera** -- a lista dele é ignorada
+           enquanto ele é seguidor, então "segue A" seria mentira.
+        3. **UMA passada** -- a tabela chamava `lider_do_time_do_app` uma vez
+           por conta, O(n²) a cada leitura. Porquê: `docs/decisoes/time-do-app.md`.
         """
         # Quem é seguidor de alguém (por login, minúsculo -- o campo é livre).
         puxado_por: dict[str, str] = {}
         for conta in self.accounts:
             meu = (conta.login or "").strip().lower()
-            if not meu:
+            if not meu or not conta.settings.app.enabled:
                 continue
             for seguidor in conta.settings.app.time_logins:
                 alvo = str(seguidor or "").strip().lower()

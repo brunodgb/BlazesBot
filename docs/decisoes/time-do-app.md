@@ -348,3 +348,45 @@ Esta lista **só existe na interface web** — a `account_dialog.py` da PyQt6 nu
 teve a escolha do time do APP (só menciona `time_logins` num comentário). A regra
 da elegibilidade fica na ponte web hoje; quando a lista chegar à PyQt6, ela
 desce para `BotConfig` e as duas telas passam a chamar a mesma função.
+
+## "segue X" só vale com o APP do líder LIGADO (08/09/2026)
+
+Relato: *"esse 'segue...' só deve aparecer se o líder estiver com o APP ativo, se
+não, deixa o 'só login', pois só faz sentido aparecer se o líder estiver junto,
+já que eu também posso ativar individualmente e posso estar com o APP inativo do
+líder."*
+
+O selo saía de `lideres_do_time_do_app()`, que respondia "quem tem esta conta na
+lista dele" — e lista guardada **não é** time valendo. O supervisor sempre soube
+disso: `_SupervisorDaConta._lider_do_time` só convoca quando *"esse alguém está
+com o modo APP LIGADO (líder desligou, time acabou)"*. A tabela contava uma
+verdade que o bot não estava praticando — a conta ficava só no login e a tela
+dizia que ela trabalhava para outra.
+
+A condição entrou na mesma função, junto das outras duas que já faziam o líder
+ser **efetivo**: líder que segue outro não lidera, e a resolução é numa passada
+só. Nenhum outro consumidor existe — a função foi criada para a tabela.
+
+**Desligar o APP não apaga o time montado.** `time_logins` continua intacto (a
+invariante de que "sair do time por `bc_farm` não apaga o login" vale igual
+aqui); o que muda é só o que a tela diz. Religar o APP do líder devolve o "segue
+X" sem o usuário remontar nada — travado no teste.
+
+Verificado na tela, nos dois estados, com a config real do usuário:
+
+| líder `blazestpas` | gamerblazes | mfaustoapp069 |
+|---|---|---|
+| APP **ligado** | `segue blazestpas` | `segue blazestpas` |
+| APP **desligado** | `só login` | `só login` |
+
+### O portão de tamanho do `config.py` estourou no caminho
+
+A mudança são 2 linhas de código, mas o comentário que explica o porquê pôs o
+arquivo em 2143 linhas contra um teto de 2136 (`test_quality_gates_python.py`).
+Em vez de dividir o arquivo — refatoração grande e fora do pedido — condensei a
+docstring que eu mesmo tinha escrito nessa função em 06/09: o texto longo é
+exatamente o que a Governança manda morar **aqui**, não no código. O arquivo
+voltou a 2136.
+
+Fica o registro de que `config.py` está **no limite exato**: a próxima linha que
+entrar ali vai ter de vir com a divisão em pacote que o portão pede.
