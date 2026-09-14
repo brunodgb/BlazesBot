@@ -638,6 +638,28 @@ time a flag não faz nada.
   até PERTO da `Mutual Quest Woman` (-358,-289); a conversa é em (-342,-288). É o
   mesmo defeito já medido na BC em 25/08/2026, quando o clique a 2 passos pegou o
   White Eagle.
+- **O ÚLTIMO PASSO ATÉ UM PONTO DE CONVERSA É PELO MINIMAPA, NÃO PELO PAINEL**
+  (14/09/2026, `UIService.garantir_coordenada_da_entrada`). A entrada da BC era
+  a única que corrigia o desvio **repetindo o painel de arredores**, com a
+  justificativa de que ele *"comprovadamente pousa no ponto certo"*. **A medição
+  derrubou isso:** no log ele pousou FORA **34 vezes** — de 4 a 12 unidades,
+  mediana **6**, contra `TOLERANCIA_DO_NPC_DA_ENTRADA = 2` —, e em 2 delas as
+  três tentativas se esgotaram sem corrigir; o usuário achou o bot parado sem
+  conseguir entrar. Repetir o painel é repetir a ferramenta que acabou de errar.
+  - **A outra razão daquela decisão CONTINUA válida** e é o que define o
+    remédio: *"caminhar por coordenada usa clique no chão, que é o que desloca o
+    personagem"*. Por isso a correção **não** é clique no chão —
+    `encostar_no_ponto` anda pelo **minimapa** (`nav.goto(usar_mapa=False)`),
+    que é ordem de andar, não clique na cena 3D.
+  - **É a peça que o altar, a saída, a Fay e o vendedor já usam.** A Fay tem o
+    defeito IDÊNTICO documentado desde 25/08: *"o painel caminha até PERTO, ele
+    aceita folga por construção"*. A entrada era a que faltava.
+  - **O painel fica como RESERVA**, para quando o personagem está longe de
+    verdade — ali o minimapa iria clique por clique.
+  - `TENTATIVAS_DE_ENCOSTAR_NA_ENTRADA = 2` (um clique de minimapa alcança ~17,6
+    unidades e o pior caso medido foi 12) e `TETO_POR_TENTATIVA_NA_ENTRADA = 2.5`
+    — TETO, não gasto: quem encerra é a chegada. Travado por
+    `tests/test_coordenada_exata_da_entrada.py`.
 - **A cave PRECISA de reset** (regra do jogo): sem desfazer e refazer o time os
   bosses não renascem. Dois modos: **HH solo** (igual à BC — reset aceita, o farm
   entra, o time é desfeito) e **HH + Fada** (as duas entram, a Fada acompanha e

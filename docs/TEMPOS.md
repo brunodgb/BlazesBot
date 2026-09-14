@@ -31,7 +31,7 @@ desta lista é ou uma exceção justificada, ou dívida que ninguém converteu a
 mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 
 
-**359 tempos catalogados** — 250 FIXOS (espera cega), 109 entre TETO e PASSO.
+**360 tempos catalogados** — 250 FIXOS (espera cega), 110 entre TETO e PASSO.
 
 
 **3 estão diferentes do original:** `FATIA_DE_ESPERA`, `INTERVALO_ENTRE_INVOCACOES`, `PASSOS_DO_APP`
@@ -55,9 +55,10 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 |---|---|---|---|---|---|---|
 | `TETO_DO_TELEPORTE_DA_FAY` | 2 s | = | TETO | [ui_service.py:54](blazesbot/bot/bc/ui_service.py#L54) | `viajar_para_ghost_din_woods, _esperar_o_teleporte` | TELEPORTE DA FAY (Stone City -> Ghost Din Woods) |
 | `PASSO_DA_ESPERA_DO_TELEPORTE` | 0.08 s | = | PASSO | [ui_service.py:55](blazesbot/bot/bc/ui_service.py#L55) | `viajar_para_ghost_din_woods, _esperar_o_teleporte` |  |
-| `SEGUNDOS_ENTRE_REAPLICACOES` | 120 s (2 min) | *novo* | FIXO | [ui_service.py:114](blazesbot/bot/bc/ui_service.py#L114) | `_reaplicar_o_petbug_se_preciso` | Espaço mínimo entre duas reaplicações vindas DAQUI. |
-| *literal em* `entrar_no_covil_do_boss` | 1.5 s | = | FIXO | [ui_service.py:576](blazesbot/bot/bc/ui_service.py#L576) | `entrar_no_covil_do_boss` | Altar Stone -> "Secret Cemetery", que é a sala do boss. |
-| *literal em* `sair_da_cave` | 1.5 s | = | FIXO | [ui_service.py:613](blazesbot/bot/bc/ui_service.py#L613) | `sair_da_cave` | Skull Herald do covil -> "Leave Bewitcher Cave". |
+| `TETO_POR_TENTATIVA_NA_ENTRADA` | 2.5 s | *novo* | TETO | [ui_service.py:92](blazesbot/bot/bc/ui_service.py#L92) | `garantir_coordenada_da_entrada` | TETO de cada tentativa -- não é o tempo gasto, é o limite. Quem encerra é a |
+| `SEGUNDOS_ENTRE_REAPLICACOES` | 120 s (2 min) | *novo* | FIXO | [ui_service.py:129](blazesbot/bot/bc/ui_service.py#L129) | `_reaplicar_o_petbug_se_preciso` | Espaço mínimo entre duas reaplicações vindas DAQUI. |
+| *literal em* `entrar_no_covil_do_boss` | 1.5 s | = | FIXO | [ui_service.py:610](blazesbot/bot/bc/ui_service.py#L610) | `entrar_no_covil_do_boss` | Altar Stone -> "Secret Cemetery", que é a sala do boss. |
+| *literal em* `sair_da_cave` | 1.5 s | = | FIXO | [ui_service.py:647](blazesbot/bot/bc/ui_service.py#L647) | `sair_da_cave` | Skull Herald do covil -> "Leave Bewitcher Cave". |
 
 
 ## FORA DA CAVE — montaria e trajeto

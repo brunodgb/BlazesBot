@@ -13,7 +13,18 @@ fica só o que é DESTA cave:
 `UIService` herda de `UIDoJogo`, então tudo que a rotina da BC já chamava
 continua no mesmo objeto e com o mesmo nome.
 """
-from __future__ import annotationsimport timefrom ...core import esconder_jogadores, petbugfrom ..ui_do_jogo import (    ESPERA_ANTES_DE_CONFERIR,    FALHAS_ANTES_DE_REDESCOBRIR,    UIDoJogo,)# Nomes usados nas buscas e a confirmação esperada.
+from __future__ import annotations
+
+import time
+
+from ...core import esconder_jogadores, petbug
+from ..ui_do_jogo import (
+    ESPERA_ANTES_DE_CONFERIR,
+    FALHAS_ANTES_DE_REDESCOBRIR,
+    UIDoJogo,
+)
+
+# Nomes usados nas buscas e a confirmação esperada.
 NPC_TRANSPORTE = ("Fay", "Transport Fay")
 NPC_ENTRADA_BC = ("Skull", "Skull Herald")
 
@@ -64,6 +75,21 @@ PASSO_DA_ESPERA_DO_TELEPORTE = 0.08
 # Duas unidades é o que "exato" significa na prática aqui -- e é seis vezes mais
 # apertado que a tolerância genérica de NPC acima.
 TOLERANCIA_DO_NPC_DA_ENTRADA = 2
+
+# Quantas vezes andar os ÚLTIMOS PASSOS pelo minimapa até a coordenada exata.
+#
+# MEDIDO em 14/09/2026, no log: o painel de arredores pousou FORA do ponto 34
+# vezes -- distância de 4 a 12 unidades, mediana 6. Um clique no minimapa
+# alcança ~17,6 unidades, então duas tentativas cobrem o pior caso visto com
+# folga. Mais que isso é o painel que precisa entrar.
+TENTATIVAS_DE_ENCOSTAR_NA_ENTRADA = 2
+
+# TETO de cada tentativa -- não é o tempo gasto, é o limite. Quem encerra é a
+# chegada: `encostar_no_ponto` passa isto como `max_seconds` do `goto`, que
+# devolve no instante em que a posição bate. Doze unidades (o pior caso medido)
+# é meio clique de minimapa; 2,5 s só existe para o caso em que o caminho está
+# bloqueado e insistir não vai resolver.
+TETO_POR_TENTATIVA_NA_ENTRADA = 2.5
 
 # Quantas vezes refazer a caminhada pelo painel de arredores antes de desistir de
 # acertar a coordenada. Três: a primeira resolve no caso normal, e insistir sem
@@ -116,7 +142,8 @@ class UIService(UIDoJogo):
         Não é o chamador que tem de lembrar: é o ecossistema que sabe o mapa
         dele. Mesmo princípio de um ecossistema funcionar sozinho.
         """
-        from ..navegacao import Navigator        from . import mapa_bc
+        from ..navegacao import Navigator
+        from . import mapa_bc
 
         super().__init__(ctx, navigator or Navigator(ctx, mapa_bc))
 
@@ -237,15 +264,24 @@ class UIService(UIDoJogo):
         da porta, mas não na coordenada exata, então "quase lá" é o estado normal
         no começo de toda run a partir da segunda.
 
-        A CORREÇÃO É PELO PAINEL DE ARREDORES, e não caminhando pela coordenada.
-        Duas razões:
+        A CORREÇÃO É PELO MINIMAPA PRIMEIRO, e o painel de arredores é a
+        reserva. Era o contrário até 14/09/2026, e a medição virou a ordem:
 
-          * é a mesma forma que já leva o personagem até ali na primeira vez, e
-            ela comprovadamente pousa no ponto certo -- o painel manda caminhar
-            até o NPC, não até um par de números;
-          * caminhar por coordenada usa clique no chão, que é justamente o que
-            desloca o personagem quando erra. Corrigir um desvio com a ferramenta
-            que causa desvios é pedir para girar em falso.
+          * *"o painel comprovadamente pousa no ponto certo"* NÃO se sustentou.
+            No log ele pousou FORA 34 vezes -- de 4 a 12 unidades, mediana 6 --,
+            e em 2 delas as três tentativas se esgotaram sem corrigir. Repetir o
+            painel é repetir a ferramenta que acabou de errar;
+          * *"caminhar por coordenada usa clique no chão"* continua VERDADE, e é
+            por isso que a correção NÃO é clique no chão: `encostar_no_ponto`
+            anda pelo MINIMAPA (`nav.goto(usar_mapa=False)`), que é ordem de
+            andar e não clique na cena 3D. É a mesma peça que o altar, a saída,
+            a Fay e o vendedor já usam para os últimos passos -- e a Fay tem o
+            defeito IDÊNTICO documentado ("o painel caminha até PERTO, ele
+            aceita folga por construção").
+
+        O painel fica como reserva porque ele ainda é a ferramenta certa quando
+        o personagem está longe de verdade -- ali o minimapa levaria clique por
+        clique.
 
         Devolve se a coordenada foi alcançada. FALSE IMPEDE O CLIQUE, e esta é uma
         decisão revista: antes o bot clicava assim mesmo, com o argumento de que
@@ -287,11 +323,21 @@ class UIService(UIDoJogo):
 
             ctx.log.info(
                 "Estou em %s, a %.0f unidades de %s — o diálogo do Skull Herald "
-                "só abre da coordenada exata. Indo até lá pelo painel de "
-                "arredores (tentativa %s de %s).",
+                "só abre da coordenada exata (tentativa %s de %s).",
                 atual, distancia, alvo, tentativa,
                 TENTATIVAS_DE_POSICIONAR_NA_ENTRADA,
             )
+
+            # OS ÚLTIMOS PASSOS PELO MINIMAPA. Deu certo, volta ao topo do laço,
+            # que relê a posição e confirma -- quem diz "cheguei" é a leitura, e
+            # não esta função.
+            if self.encostar_no_ponto(
+                    alvo=alvo,
+                    precisao=TOLERANCIA_DO_NPC_DA_ENTRADA,
+                    tentativas=TENTATIVAS_DE_ENCOSTAR_NA_ENTRADA,
+                    segundos_por_tentativa=TETO_POR_TENTATIVA_NA_ENTRADA,
+                    o_que="clicar no Skull Herald da entrada"):
+                continue
 
             # NÃO esquece as coordenadas de clique aprendidas.
             #
