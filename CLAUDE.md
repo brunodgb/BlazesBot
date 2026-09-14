@@ -114,10 +114,15 @@ Contrato completo, assentos ativos e quando NÃO vale a pena invocar:
 O plugin `ecc@ecc` traz agentes de revisão auto-descobertos (não é preciso o
 usuário pedir): `code-reviewer`, `security-reviewer`, `python-reviewer`,
 `tdd-guide`, `build-error-resolver`, `refactor-cleaner`, `architect`,
-`planner`. **Invoque-os sozinho, no momento certo:** `python-reviewer`
-depois de editar `.py`, `security-reviewer` em código que toca senha/entrada
-externa/rede, `tdd-guide` ao escrever teste novo, `code-reviewer` depois de
-qualquer edição não trivial. Onde o `mattpocock-skills` (plugin global,
+`planner`, `doc-updater`, `e2e-runner`. **Invoque-os sozinho, no momento
+certo:** `python-reviewer` depois de editar `.py`, `security-reviewer` em
+código que toca senha/entrada externa/rede, `tdd-guide` ao escrever teste
+novo, `code-reviewer` depois de qualquer edição não trivial, `doc-updater`
+sempre que a alteração mudar conhecimento/convenção (a regra 2 já manda
+atualizar o doc certo no mesmo passo — ele é quem faz isso, não só eu
+lembrar), `e2e-runner` depois de qualquer mudança em `web/` (fecha o
+"testar no navegador antes de reportar pronto" sem eu dirigir o
+`test-web.ps1` na mão). Onde o `mattpocock-skills` (plugin global,
 todos os projetos do usuário) oferece o mesmo papel (`tdd`, `code-review`,
 `research`), o ECC vence NESTE projeto — nunca invocar os dois pro mesmo
 diff/decisão. Auditoria completa dos plugins do projeto, tabela de conflito

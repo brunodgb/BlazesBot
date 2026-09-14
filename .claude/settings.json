@@ -41,6 +41,30 @@
             "command": "C:/Users/bruno/.local/bin/graphify.EXE hook-guard read"
           }
         ]
+      },
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".venv\\Scripts\\python.exe .claude\\hooks\\pre_edit_bloquear_docs_gerados.py"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".venv\\Scripts\\python.exe .claude\\hooks\\post_edit_web_build.py"
+          },
+          {
+            "type": "command",
+            "command": ".venv\\Scripts\\python.exe .claude\\hooks\\post_edit_graphify_update.py"
+          }
+        ]
       }
     ],
     "SessionStart": [

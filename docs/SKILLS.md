@@ -151,12 +151,15 @@ pro mesmo diretório achatado, e como têm nomes iguais, `python/` sobrescreveu
 `common/` em silêncio. Restaurado copiando `rules/common/*.md` do próprio
 cache do plugin para `~/.claude/rules/common/`.
 
-### Uso proativo dos agentes ECC (diretriz permanente — 09/09/2026)
+### Uso proativo dos agentes ECC (diretriz permanente — 09/09/2026, ampliada 14/09/2026)
 
 Ver `CLAUDE.md`, seção "Agentes especializados do ECC" — o compromisso de
 invocar sem esperar pedido está lá porque é regra de atenção constante, não
 detalhe de área. O detalhe de QUANDO cada agente serve está na tabela do
-próprio `~/.claude/rules/ecc/agents.md`.
+próprio `~/.claude/rules/ecc/agents.md`. Ampliado 14/09/2026 (auditoria via
+`claude-automation-recommender`, ver seção "plugins e agentes do projeto"
+abaixo): `doc-updater` e `e2e-runner` existiam sem uso proativo comprometido
+— agora entram na lista.
 
 ## `mattpocock-skills@claude-plugins-official` — habilitado GLOBAL (todos os projetos do usuário, não só aqui)
 
@@ -186,6 +189,59 @@ coberta por ECC nem pelas skills já instaladas), invocar esta skill antes de
 tentar resolver tudo à mão ou de propor instalar algo escolhido às cegas —
 ela cruza o pedido contra o [skills.sh](https://skills.sh) e prioriza fontes
 com reputação (`vercel-labs`, `anthropics`) e contagem real de instalação.
+
+## `ponytail@ponytail` e `claude-code-setup@claude-plugins-official` — instalados 14/09/2026, global
+
+- **`ponytail`** (`github.com/DietrichGebert/ponytail`, marketplace própria) —
+  disciplina anti-overengineering ativa (hooks + skill, não só texto): antes
+  de escrever código, checa existe/já tem no repo/stdlib/nativo/dependência
+  já instalada/cabe numa linha, só então o mínimo que funciona. É a versão
+  ATIVA do que o `CLAUDE.md` global do usuário já citava como paráfrase
+  estática ("Ponytail Directives") — não contradiz a seção "Simplicidade
+  primeiro" deste projeto, reforça.
+- **`claude-code-setup`** (marketplace `claude-plugins-official`, já
+  registrada) — uma skill só, `claude-automation-recommender`, LEITURA:
+  analisa o repo e recomenda até 2 automações por categoria (hook, skill,
+  subagente, MCP, plugin). Foi ela quem gerou a auditoria de 14/09/2026
+  abaixo.
+
+## Auditoria `claude-automation-recommender` de 14/09/2026 — 3 hooks novos + 2 agentes promovidos
+
+Aplicado manualmente (a skill ainda não tinha registrado nesta sessão — mesmo
+efeito já visto com as tools MCP do ruflo, plugin novo só aparece em sessão
+nova). Achados usados, com o que NÃO foi usado e por quê:
+
+- **Usado — 2 agentes ECC promovidos a proativo:** `doc-updater` e
+  `e2e-runner` existiam desde a auditoria de 09/09 mas não estavam na lista
+  de invocação sem pedir do `CLAUDE.md`. Ver "Uso proativo dos agentes ECC"
+  acima.
+- **Usado — 3 hooks novos em `.claude/settings.json`**, arquivo em
+  `.claude/hooks/` (mesmo motivo do `task_observer_hook.py`: cmd.exe do
+  Windows engole aspas aninhadas em comando inline):
+  - `post_edit_web_build.py` (`PostToolUse`, `Edit|Write|MultiEdit`) — edição
+    dentro de `web/` roda `npm run build` sozinha. Fecha a regra 1b na marra
+    em vez de só na disciplina (o incidente de 07/09/2026, `dist/` 40 min
+    atrasado, foi exatamente essa lacuna).
+  - `post_edit_graphify_update.py` (mesmo matcher) — edição em
+    `blazesbot/*.py` roda `graphify update .` sozinha. Fecha a regra 1 do
+    mesmo jeito; ao contrário da 1b, esta não tinha nenhuma rede de
+    segurança (nenhum teste cobre grafo desatualizado).
+  - `pre_edit_bloquear_docs_gerados.py` (`PreToolUse`, mesmo matcher) —
+    bloqueia (exit 2) edição direta em `docs/TEMPOS.md` e
+    `docs/INTERRUPTORES.md`: são GERADOS por
+    `python -m blazesbot.core.indice_de_tempos`, editar o `.md` à mão diverge
+    do código sem nenhum teste pegando.
+  - Os três rodam com `.venv\Scripts\python.exe`, testados manualmente
+    (stdin JSON simulado) antes de entrar no `settings.json` — inclusive o
+    caminho positivo real (rodou `graphify update .` e `npm run build` de
+    verdade uma vez cada, sem erro).
+- **NÃO usado — remover o MCP `shadcn`:** a recomendação original considerou
+  o MCP `shadcn` (conectado, `claude mcp list`) lixo pra este projeto
+  (BlazesBot é vanilla JS, sem React). Verificação corrigiu isso: o servidor
+  está em **escopo `user`** (`claude mcp get shadcn`), não `project` — é a
+  mesma infraestrutura que o `CLAUDE.md` global do usuário já reserva pros
+  projetos React/shadcn dele. Removê-lo quebraria os outros projetos; não
+  mexido.
 
 # Skill: claude-council (consulta multi-agente)
 
