@@ -716,33 +716,72 @@ def test_morrer_esperando_o_engajamento_NAO_vira_ponto_limpo():
 # ===========================================================================
 
 
-def test_volta_ao_ponto_depois_da_luta():
-    """Mob ranged não vem até o personagem -- é o personagem que anda até ele.
+def test_a_ORDEM_e_lutar_validar_e_so_entao_creditar():
+    """A validação fica ENTRE a luta e o crédito, e é o ponto todo.
 
-    O CONTRATO mora em `hh/ponto_do_boss.py` desde 05/09/2026 e é testado lá.
-    Aqui só se confere a ORDEM: lutar, voltar, e só então catar e creditar.
+    O CONTRATO mora em `hh/ponto_do_boss.py` e é testado lá. Aqui se confere a
+    costura: nenhum `_avancar_o_trecho` pode acontecer antes de
+    `verificar_morte_do_boss` ter respondido.
     """
     chamadas = _chamadas(HHRoutine._do_boss)
-    assert chamadas.index("_lutar_no_ponto") < chamadas.index("voltar_para_ele")
-    # o loot vem depois do retorno NO CAMINHO DA POSIÇÃO (o último `_catar_o_loot`
-    # da função); o primeiro é o atalho de quando a memória confirmou o nome.
-    assert chamadas.index("voltar_para_ele") < max(
-        i for i, c in enumerate(chamadas) if c == "_catar_o_loot")
+
+    assert (chamadas.index("_lutar_no_ponto")
+            < chamadas.index("verificar_morte_do_boss"))
+    assert (chamadas.index("verificar_morte_do_boss")
+            < max(i for i, c in enumerate(chamadas) if c == "_catar_o_loot"))
 
 
-def test_nao_conseguir_voltar_ao_ponto_NAO_credita_o_boss():
-    """Sair de batalha responde "a flag baixou", nunca "o ponto está limpo".
+def test_a_POSICAO_e_lida_no_instante_da_saida_de_batalha():
+    """Ler depois de caminhar de volta é o que produzia a falsa vitória.
 
-    Medido em 05/09/2026: o personagem limpou um pacote 46 unidades fora do
-    ponto do Fa-Yuan, o retorno falhou, e a run creditou o boss assim mesmo --
-    "1 de 4 já feitos" com o boss vivo.
+    PELO AST: a leitura tem que ser argumento da própria validação, e não uma
+    variável capturada antes da luta ou depois de um deslocamento.
+    """
+    import ast
+    import textwrap
+
+    arvore = ast.parse(textwrap.dedent(_fonte(HHRoutine._do_boss)))
+    chamadas = [n for n in ast.walk(arvore) if isinstance(n, ast.Call)
+                and ast.unparse(n.func) == "verificar_morte_do_boss"]
+
+    assert len(chamadas) == 1
+    argumentos = [ast.unparse(a) for a in chamadas[0].args]
+    assert "ctx.memory.position()" in argumentos, (
+        f"a posição deixou de ser lida no instante da validação: {argumentos}")
+
+
+def test_o_ROLLBACK_nao_credita_e_NAO_sai_da_cave():
+    """Medido em 11/09/2026: 9 falsas vitórias, 5 delas no `Purple`.
+
+    Como o `Purple` é o último boss, creditá-lo é SAIR DA CAVE -- que é o
+    relato do usuário. O ramo do rollback não pode chamar `_avancar_o_trecho`.
     """
     fonte = _fonte(HHRoutine._do_boss)
-    trecho = fonte[fonte.index("voltar_para_ele"):]
-    corte = trecho.index("_avancar_o_trecho")
-    assert "_falhar" in trecho[:corte], (
-        "a falha do retorno é descartada e o trecho avança assim mesmo")
-    assert "State.ATE_O_BOSS" in trecho[:corte]
+    ramo = fonte[fonte.index("veredito.creditar"):]
+    ramo = ramo[ramo.index("self._vetos_de_rollback += 1"):]
+
+    assert "_avancar_o_trecho" not in ramo, (
+        "o caminho do rollback voltou a creditar o boss")
+    assert "State.ATE_O_BOSS" in ramo, (
+        "o rollback deixou de refazer o trecho")
+
+
+def test_o_rollback_tem_TETO_e_o_estouro_nao_credita():
+    """Insistir sem limite prenderia a run; creditar ao desistir reabriria o
+    defeito. O desfecho é `_falhar`, que leva ao `RECUPERAR`."""
+    fonte = _fonte(HHRoutine._do_boss)
+    ramo = fonte[fonte.index("VETOS_ANTES_DE_DESISTIR:"):]
+    corte = ramo.index("State.ATE_O_BOSS")
+
+    assert "_falhar" in ramo[:corte]
+    assert "_avancar_o_trecho" not in ramo[:corte]
+
+
+def test_o_contador_de_vetos_ZERA_ao_fechar_um_trecho():
+    """Senão três rollbacks espalhados pelos quatro bosses derrubariam uma run
+    que está indo bem."""
+    assert "_vetos_de_rollback = 0" in _fonte(HHRoutine._avancar_o_trecho)
+    assert "_vetos_de_rollback = 0" in _fonte(HHRoutine.__init__)
 
 
 def test_a_ancora_do_retorno_e_o_WAYPOINT_e_nao_uma_leitura():

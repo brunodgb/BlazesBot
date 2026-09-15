@@ -76,7 +76,7 @@ from . import bosses, mapa_hh
 from .combate import CombateHH
 from .entrada import EntradaDaHH
 from .manutencao import ManutencaoDaHH
-from .ponto_do_boss import do_trecho
+from .ponto_do_boss import VETOS_ANTES_DE_DESISTIR, do_trecho, verificar_morte_do_boss
 from .progresso import ProgressoDaCave
 from .vendedor import VendedorDaHH
 
@@ -140,13 +140,6 @@ VOLTAS_ANTES_DE_RECUPERAR = 3
 # boss. O usuário foi avisado e escolheu assim -- ver `docs/decisoes/hh.md`.
 SEGUNDOS_PARA_ENGAJAR = 5.0
 
-# Quanto esperar, por tentativa, a volta ao ponto depois da luta.
-#
-# Mesmo valor que `entrada.SEGUNDOS_POR_TENTATIVA_DE_ENCOSTAR` usa para encostar
-# no NPC: é a mesma ação (um clique de minimapa e a caminhada até lá), e o
-# trajeto aqui é ainda mais curto.
-SEGUNDOS_POR_TENTATIVA_DE_VOLTAR = 1.8
-
 # Teto para conseguir sair da cave pelo NPC.
 #
 # Bem menor que o da ENTRADA (uma hora) porque a natureza é outra: entrar
@@ -204,6 +197,8 @@ class HHRoutine:
         self.ctx = ctx
         self.nav = Navigator(ctx, mapa_hh)
         self.combat = CombateHH(ctx, self.nav)
+        # Rollbacks seguidos no trecho atual. Ver `_do_boss`.
+        self._vetos_de_rollback = 0
         # LIGA O PORTÃO DA MONTARIA NO COMBATE, e esta linha faltava.
         #
         # Em batalha o jogo RECUSA montar, e o portão insiste sem teto. Sem esta
@@ -1181,31 +1176,33 @@ class HHRoutine:
         if not self._lutar_no_ponto(rotulo):
             return
 
-        # VI O BOSS CAIR? Prova mais forte que a posição: responde "o boss
-        # morreu?" e não "estou no lugar certo?". SÓ AFIRMA -- não ter visto cai
-        # no contrato de posição, logo abaixo. Ver `hh/bosses.py`.
-        if self._vi_o_boss_cair(rotulo):
+        # A DUPLA VALIDAÇÃO, e o "aqui" da leitura de posição É o conserto:
+        # antes a rotina creditava o boss quando a CAMINHADA de volta ao ponto
+        # dava certo, o que sob rollback lia vitória sem ninguém ter morrido.
+        # Regra e medição em `ponto_do_boss.verificar_morte_do_boss`.
+        veredito = verificar_morte_do_boss(
+            alvo, ctx.memory.position(), self._vi_o_boss_cair(rotulo))
+        ctx.log.info("HH: %s", veredito.motivo)
+
+        if veredito.creditar:
+            self._vetos_de_rollback = 0
             self._catar_o_loot()
             self._avancar_o_trecho(rotulo)
             return
 
-        # VOLTA PARA O PONTO, E A FALHA IMPORTA.
-        #
-        # Sair de batalha responde "a flag baixou", nunca "o ponto está limpo".
-        # No log de 05/09 o personagem limpou um pacote 46 unidades fora do
-        # ponto do Fa-Yuan, o retorno falhou, e a run creditou o boss assim
-        # mesmo. Não voltou ⇒ o boss continua lá ⇒ refaz o trecho.
-        if not alvo.voltar_para_ele(
-                ctx.memory.position(), self.ui.encostar_no_ponto, ctx.log,
-                SEGUNDOS_POR_TENTATIVA_DE_VOLTAR):
-            self._falhar(
-                f"saí de batalha no {rotulo} mas não consegui voltar ao ponto "
-                f"-- não dá para creditar o boss daqui",
-                State.ATE_O_BOSS)
+        # ROLLBACK: a cave CONTINUA ATIVA e o trecho não avança. Quem refaz o
+        # caminho é o `ATE_O_BOSS` -- monta, retoma a rota pelo waypoint mais
+        # perto (`onde_retomar`) e termina na coordenada exata do boss, andando
+        # pelo mapa. A vigilância de combate na volta é do ramo do topo daqui.
+        self._vetos_de_rollback += 1
+        if self._vetos_de_rollback >= VETOS_ANTES_DE_DESISTIR:
+            self._vetos_de_rollback = 0
+            self._falhar(f"{VETOS_ANTES_DE_DESISTIR} rollbacks seguidos no "
+                         f"{rotulo}; paro de insistir e me situo de novo")
             return
-
-        self._catar_o_loot()
-        self._avancar_o_trecho(rotulo)
+        self._ir_para(State.ATE_O_BOSS,
+                      f"rollback no {rotulo} ({self._vetos_de_rollback} de "
+                      f"{VETOS_ANTES_DE_DESISTIR}); refazendo o trecho")
 
     def _vi_o_boss_cair(self, rotulo: str) -> bool:
         """A memória confirmou a morte do boss DESTE ponto, pelo nome?
@@ -1359,6 +1356,7 @@ class HHRoutine:
         A CONTAGEM É DO `ProgressoDaCave`; aqui fica só o que a rotina faz com
         a resposta dele.
         """
+        self._vetos_de_rollback = 0
         seguinte = self.progresso.marcar_feito_e_avancar()
         if seguinte is None:
             self._ir_para(State.SAIR,

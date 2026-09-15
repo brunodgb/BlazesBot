@@ -2224,3 +2224,125 @@ por outro.
 
 Travado por `tests/test_montaria_e_preparo.py` (seção 2b) e
 `tests/test_rotina_da_hh.py`.
+
+
+## §35 — Sair de batalha longe do boss é rollback, não vitória (13/09/2026)
+
+> *"ao se aproximar do último boss em HH, se o servidor der um rollback, o bot
+> sai do estado de batalha por não estar mais perto de mobs. A máquina de estado
+> conclui tragicamente que 'saiu de batalha = boss morreu' e encerra a cave
+> prematuramente."*
+
+### O exploit lógico
+
+`in_battle == False` responde *"não há mais ninguém batendo em mim"*, e isso tem
+DUAS causas que a flag não distingue: **o alvo morreu**, ou **o personagem
+deixou de estar perto dele**. Um rollback de servidor produz a segunda sem a
+primeira.
+
+A trava espacial anula isso porque o rollback é, por definição, um evento de
+POSIÇÃO: ele não consegue fabricar os dois fatos ao mesmo tempo. Morte
+verdadeira acontece ao alcance do boss; rollback acontece longe dele. Exigir os
+dois juntos — flag baixa **e** dentro do raio, no mesmo instante — deixa o
+rollback sem nenhuma das duas assinaturas que ele sabe imitar.
+
+### Por que "voltei para o ponto" não servia como prova
+
+O código anterior já tinha o cheiro certo (§ da auditoria de 05/09) mas
+validava na ordem errada:
+
+```python
+if self._vi_o_boss_cair(rotulo):          # prova forte: OK
+    credita
+if not alvo.voltar_para_ele(...):         # <- e AQUI estava o furo
+    refaz o trecho
+credita                                    # a CAMINHADA creditou o boss
+```
+
+Caminhar de volta para uma coordenada é trivial — prova apenas que o pathfinding
+funciona. Medido no log de produção, 9 ocorrências:
+
+| boss | onde a batalha acabou | distância | desfecho |
+|---|---|---|---|
+| Purple | (470,108) | 56 | CREDITOU e **saiu da cave** |
+| Purple | (469,109) | 57 | CREDITOU e **saiu da cave** |
+| Purple | (471,107) | 55 | CREDITOU e **saiu da cave** |
+| Purple | (471,108) | 55 | CREDITOU e **saiu da cave** |
+| Purple | (471,108) | 55 | CREDITOU e **saiu da cave** |
+| Fa-Yuan | 4 episódios | 27–57 | CREDITOU |
+
+Nenhuma tem `ALVO MORREU` nem confirmação de morte pela memória. O trecho real:
+
+```
+01:57:46  Saí de combate no Purple depois de 17s e 109 golpes -- considerando derrotado
+01:57:52  HH: andei atrás dos mobs do Purple (estou em (470,108), o ponto é (526,108))
+01:57:56  waypoint 1/1 alcançado em 3.7s | posição (511, 108)   <- parou a 15 do ponto
+01:57:56  HH: Purple foi o último; os quatro feitos, saindo     <- cave abandonada
+```
+
+A caminhada de volta usa `tolerância 15`, então ela para **dentro** da folga e
+devolve sucesso. O `Purple` é o último boss: creditá-lo é sair da cave.
+
+Outras 12 ocorrências do mesmo padrão no `Fa-Yuan` **não** creditaram, e só por
+sorte — ali a caminhada de volta falhava (`sem progresso indo para (272,136)`).
+A correção não pode depender de o pathfinding falhar.
+
+### A regra nova
+
+`ponto_do_boss.verificar_morte_do_boss(ponto, onde_acabou, memoria_confirmou)`,
+com `onde_acabou` lido **no instante em que a batalha termina**:
+
+1. **A memória viu o nome cair** → credita, de qualquer lugar. É a pergunta de
+   verdade (*"o boss morreu?"*) e é o caminho normal: 309 confirmações no mesmo
+   log;
+2. **Senão, a posição no instante da saída** dentro de `TOLERANCIA_DO_PONTO`
+   (15) → credita. Reserva para quando a identidade não foi legível — pacote de
+   mobs sem nome, alvo por id;
+3. **Senão** → ROLLBACK. Não credita, não avança o trecho, e vai para
+   `ATE_O_BOSS`.
+
+`onde_acabou is None` **não** credita — o único lugar do ecossistema onde "não
+sei" veta em vez de liberar, pela mesma razão já documentada em
+`PontoDoBoss.estou_nele`: esta resposta autoriza creditar um boss, e errar para
+o lado seguro custa refazer um trecho, contra perder a cave inteira.
+
+### A recuperação já existia: é o `ATE_O_BOSS`
+
+Não foi preciso escrever protocolo de retomada. O estado `ATE_O_BOSS` já
+garante a montaria, retoma a rota pelo waypoint mais perto (`onde_retomar`, que
+existe justamente por causa de rollback — §16) e termina na coordenada exata do
+boss **andando pelo mapa**, sem o clique em linha reta que atravessa parede. A
+vigilância de combate durante a volta é o ramo do topo de `_do_boss`, que já
+trata "fora do ponto, EM BATALHA e A PÉ" matando até sair.
+
+Por isso `PontoDoBoss.voltar_para_ele` **foi removido**: a caminhada deixou de
+ser prova de qualquer coisa, e quem anda é a máquina de estados.
+
+### O teto, e por que estourar não credita
+
+`VETOS_ANTES_DE_DESISTIR = 3`. Cada veto custa refazer o trecho inteiro, então
+insistir sem limite prenderia a run num ponto. Três cobre a dessincronia
+passageira — nas 9 ocorrências medidas nenhuma se repetiu no mesmo trecho — e
+devolve o controle em tempo de a rotina tentar outra coisa. O desfecho de
+estourar é `RECUPERAR`, **nunca creditar**: creditar sem prova é o defeito que a
+trava fecha. O contador zera ao fechar qualquer trecho, para que três rollbacks
+espalhados pelos quatro bosses não derrubem uma run que está indo bem.
+
+### A perseguição legítima de mob ranged não perde o boss
+
+Mob ranged não vem até o personagem, então limpar o pacote às vezes termina a
+dezenas de unidades do ponto — era o caso que o `voltar_para_ele` protegia.
+Sob a regra nova esse caso perde o crédito IMEDIATO e **não perde o boss**: a
+rotina refaz o trecho, chega ao ponto, e `esperar_entrar_em_combate` não engaja
+porque está limpo. O crédito sai então pelo caminho de `SEGUNDOS_PARA_ENGAJAR`,
+com o personagem COMPROVADAMENTE no ponto. Troca-se um palpite por uma volta a
+mais e uma prova melhor.
+
+### Vale para os quatro bosses, e não só para o último
+
+A validação recebe um `PontoDoBoss` — o mesmo objeto que `do_trecho` devolve
+para qualquer índice —, e `_do_boss` é caminho de código único para os quatro
+trechos. Não há rótulo de boss dentro da função, e o teste
+`test_a_validacao_NAO_DEPENDE_de_qual_boss_e` reprova se algum aparecer.
+
+Travado por `tests/test_ponto_do_boss.py` e `tests/test_rotina_da_hh.py`.

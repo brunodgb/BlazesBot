@@ -21,7 +21,12 @@ from __future__ import annotations
 import pytest
 
 from blazesbot.bot.hh import mapa_hh
-from blazesbot.bot.hh.ponto_do_boss import PontoDoBoss, do_trecho
+from blazesbot.bot.hh.ponto_do_boss import (
+    VETOS_ANTES_DE_DESISTIR,
+    PontoDoBoss,
+    do_trecho,
+    verificar_morte_do_boss,
+)
 
 PONTO = (271, 137)
 TOL = 15
@@ -63,39 +68,98 @@ def test_sem_leitura_responde_NAO():
 
 
 # ===========================================================================
-# Voltar para ele
+# A DUPLA VALIDAÇÃO DA MORTE -- 13/09/2026
 # ===========================================================================
+#
+# O `voltar_para_ele` saiu daqui na mesma data. Ele caminhava de volta ao ponto
+# depois da luta, e o SUCESSO DESSA CAMINHADA virou o certificado de morte do
+# boss -- que é o defeito medido abaixo. Ver `docs/decisoes/hh.md` §35.
+
+# As 5 ocorrências do `Purple` no log de 11/09/2026: a batalha acabou aqui, a
+# ~55 unidades do ponto (526,108), e o bot creditou o ÚLTIMO boss -- ou seja,
+# saiu da cave -- sem ninguém ter morrido.
+ROLLBACKS_MEDIDOS = [(470, 108), (469, 109), (471, 107), (471, 108)]
 
 
-def test_ja_estar_nele_e_sucesso_SEM_clique():
-    """Um clique de minimapa é barato, mas não é de graça em toda run."""
-    cliques = []
-    ok = _alvo().voltar_para_ele(
-        PONTO, lambda **kw: cliques.append(kw) or True, _Log(), 1.8)
-    assert ok is True
-    assert cliques == []
+def test_a_memoria_confirmando_credita_DE_QUALQUER_LUGAR():
+    """É a prova forte: responde "o boss morreu?", e não "estou no lugar
+    certo?". 309 confirmações no mesmo log -- é o caminho normal."""
+    for onde in [PONTO, (470, 108), None]:
+        v = verificar_morte_do_boss(_alvo(), onde, memoria_confirmou=True)
+        assert v.creditar is True
 
 
-def test_longe_do_ponto_CLICA_e_devolve_o_resultado():
-    chamadas = []
-
-    def encostar(**kw):
-        chamadas.append(kw)
-        return False        # o jogo recusou -- é o caso do log
-
-    ok = _alvo().voltar_para_ele((317, 149), encostar, _Log(), 1.8)
-    assert ok is False, "a falha do retorno não pode virar sucesso"
-    assert chamadas[0]["alvo"] == PONTO
-    assert chamadas[0]["precisao"] == TOL
+def test_no_ponto_e_sem_memoria_AINDA_credita():
+    """A reserva, para quando a identidade não foi legível -- pacote de mobs
+    sem nome, alvo por id. No ponto, sair de batalha só tem uma explicação."""
+    v = verificar_morte_do_boss(_alvo(), PONTO, memoria_confirmou=False)
+    assert v.creditar is True
 
 
-def test_o_alvo_do_retorno_e_o_PONTO_DO_MAPA():
-    """Nunca uma leitura de posição: leitura é onde o personagem ESTÁ, e o
-    contrato é sobre onde ele DEVERIA estar."""
-    chamadas = []
-    _alvo().voltar_para_ele((317, 149),
-                            lambda **kw: chamadas.append(kw) or True, _Log(), 1.8)
-    assert chamadas[0]["alvo"] == PONTO
+def test_na_BORDA_da_tolerancia_credita():
+    """`<=`, e não `<`: a tolerância existe porque o pathfinding para onde
+    para."""
+    borda = (PONTO[0] + TOL, PONTO[1])
+    assert _alvo().distancia_de(borda) == TOL
+    assert verificar_morte_do_boss(_alvo(), borda, False).creditar is True
+
+
+def test_UMA_unidade_alem_da_tolerancia_NAO_credita():
+    fora = (PONTO[0] + TOL + 1, PONTO[1])
+    assert verificar_morte_do_boss(_alvo(), fora, False).creditar is False
+
+
+def test_os_ROLLBACKS_MEDIDOS_deixam_de_creditar():
+    """O teste de regressão propriamente dito: são as 9 falsas vitórias."""
+    for onde in ROLLBACKS_MEDIDOS:
+        v = verificar_morte_do_boss(_alvo(), onde, memoria_confirmou=False)
+        assert v.creditar is False, f"{onde} voltou a creditar o boss"
+        assert "ROLLBACK" in v.motivo
+
+
+def test_o_motivo_TRAZ_OS_NUMEROS_da_decisao():
+    """Um veredito sem os números não se audita no log depois."""
+    v = verificar_morte_do_boss(_alvo(), (470, 108), False)
+
+    assert "(470, 108)" in v.motivo            # onde a batalha acabou
+    assert str(PONTO) in v.motivo              # onde deveria estar
+    assert str(TOL) in v.motivo                # a régua aplicada
+
+
+def test_SEM_leitura_de_posicao_NAO_credita():
+    """O único lugar do ecossistema onde "não sei" VETA em vez de liberar.
+
+    Esta resposta autoriza creditar um boss; errar para o lado seguro custa
+    refazer um trecho, contra perder a cave inteira.
+    """
+    v = verificar_morte_do_boss(_alvo(), None, memoria_confirmou=False)
+    assert v.creditar is False
+
+
+def test_a_validacao_NAO_DEPENDE_de_qual_boss_e():
+    """Regra global dos quatro trechos, e não código do último boss.
+
+    Ela recebe um `PontoDoBoss` -- o mesmo objeto que `do_trecho` devolve para
+    qualquer índice --, então vale para os quatro pelo caminho de código único
+    de `_do_boss`.
+    """
+    import inspect
+
+    fonte = inspect.getsource(verificar_morte_do_boss)
+    for rotulo in ("Purple", "Fa-Yuan", "Dupla", "Green Robmaster"):
+        assert f'"{rotulo}"' not in fonte, (
+            f"a validação ficou hardcoded para o {rotulo}")
+
+    for trecho in range(len(mapa_hh.TRECHOS_DOS_BOSSES)):
+        alvo = do_trecho(trecho, TOL)
+        longe = (alvo.ponto[0] + 100, alvo.ponto[1] + 100)
+        assert verificar_morte_do_boss(alvo, longe, False).creditar is False
+        assert verificar_morte_do_boss(alvo, alvo.ponto, False).creditar is True
+
+
+def test_o_teto_de_vetos_existe_e_e_finito():
+    """Insistir sem limite prenderia a run num trecho."""
+    assert 1 <= VETOS_ANTES_DE_DESISTIR <= 5
 
 
 # ===========================================================================

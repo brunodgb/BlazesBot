@@ -33,14 +33,35 @@ Três defeitos encadeados produziram isso, e este módulo fecha os três:
 O QUE ESTE MÓDULO NÃO DECIDE
 =========================================================================
 
-Ele não sabe lutar, nem quando desistir. Responde duas perguntas -- *"estou
-nele?"* e *"consegue me levar de volta?"* -- e quem age é a rotina.
+Ele não sabe lutar, nem quando desistir. Responde *"estou nele?"* e, desde
+13/09/2026, *"o que saiu de batalha ali conta como vitória?"* -- e quem age é a
+rotina.
+
+O `voltar_para_ele` SAIU nessa data. Ele caminhava de volta ao ponto depois da
+luta, e o sucesso dessa caminhada virou, sem querer, o certificado de morte do
+boss -- que é o defeito de §35. Quem refaz o caminho agora é o estado
+`ATE_O_BOSS`, que anda pelo mapa em vez de clicar em linha reta, e a caminhada
+deixou de provar qualquer coisa sobre o boss.
 """
 from __future__ import annotations
 
-from collections.abc import Callable
+from typing import NamedTuple
 
 from . import mapa_hh
+
+# Quantos vetos SEGUIDOS de rollback um mesmo trecho aguenta antes de a rotina
+# parar de insistir e mandar se situar de novo.
+#
+# TRÊS, e o número não é arredondamento: cada veto custa refazer o trecho
+# inteiro (`MAX_SEGUNDOS_POR_TRECHO`), então insistir sem limite prenderia a run
+# num ponto. Três cobre a dessincronia passageira -- nas 9 ocorrências medidas
+# em 11/09/2026 nenhuma se repetiu no mesmo trecho -- e ainda devolve o controle
+# à máquina de estados em tempo de ela tentar outra coisa.
+#
+# E O DESFECHO DE ESTOURAR NÃO É CREDITAR. Creditar sem prova é exatamente o
+# defeito que esta trava existe para fechar; quem decide depois é o `RECUPERAR`,
+# que relê onde o personagem está.
+VETOS_ANTES_DE_DESISTIR = 3
 
 
 class PontoDoBoss:
@@ -75,36 +96,111 @@ class PontoDoBoss:
         distancia = self.distancia_de(pos)
         return distancia is not None and distancia <= self.tolerancia
 
-    def voltar_para_ele(
-        self,
-        pos: tuple[int, int] | None,
-        encostar: Callable[..., bool],
-        log,
-        segundos_por_tentativa: float,
-        tentativas: int = 2,
-    ) -> bool:
-        """Traz o personagem de volta ao ponto. Devolve se CONSEGUIU.
+class VeredictoDoBoss(NamedTuple):
+    """Creditar este boss, e a frase que explica por quê."""
 
-        Mob ranged não vem até o personagem -- é o personagem que anda até ele
-        quando a rotação mira longe. O bot em Lua faz o mesmo retorno
-        (`hh.killAtPosition`, *"Char andou pra atacar o mob, voltando pra ..."*).
+    creditar: bool
+    motivo: str
 
-        JÁ ESTAR NELE É SUCESSO, e sem clique nenhum: um clique de minimapa é
-        barato, mas não é de graça em toda run.
-        """
-        if self.estou_nele(pos):
-            return True
 
-        log.info(
-            "HH: andei atrás dos mobs do %s (estou em %s, o ponto é %s); "
-            "voltando ao ponto", self.rotulo, pos, self.ponto)
-        return bool(encostar(
-            alvo=self.ponto,
-            precisao=self.tolerancia,
-            tentativas=tentativas,
-            segundos_por_tentativa=segundos_por_tentativa,
-            o_que=f"voltar ao ponto do {self.rotulo}",
-        ))
+def verificar_morte_do_boss(
+    ponto: PontoDoBoss,
+    onde_acabou: tuple[int, int] | None,
+    memoria_confirmou: bool,
+) -> VeredictoDoBoss:
+    """A DUPLA VALIDAÇÃO: a flag baixou, mas ONDE ela baixou?
+
+    =====================================================================
+    O EXPLOIT QUE ISTO FECHA
+    =====================================================================
+
+    `in_battle == False` responde *"não há mais ninguém batendo em mim"*, e
+    isso tem DUAS causas que a flag não distingue: o alvo morreu, ou o
+    personagem deixou de estar perto dele. Um rollback de servidor produz a
+    segunda sem a primeira -- o servidor puxa o personagem para trás, os mobs
+    ficam fora de alcance, a flag cai, e a rotina lê "vitória".
+
+    Cruzar a flag com a POSIÇÃO NO INSTANTE EM QUE ELA CAIU anula isso, porque
+    o rollback é justamente um evento de posição: ele não consegue produzir os
+    dois fatos ao mesmo tempo. Morte verdadeira acontece ao alcance do boss;
+    rollback acontece longe dele, por definição.
+
+    =====================================================================
+    POR QUE "VOLTEI PARA O PONTO" NÃO SERVE COMO PROVA
+    =====================================================================
+
+    Era o que a rotina fazia antes, e é o defeito medido em 11/09/2026: saiu de
+    batalha longe, caminhou de volta, e o sucesso da CAMINHADA creditava o boss.
+    Mas voltar a pé para uma coordenada é trivial -- prova apenas que o
+    pathfinding funciona. As 9 ocorrências do log:
+
+        boss      onde a batalha acabou   distância   desfecho
+        Purple    (470,108)                      56   CREDITOU e SAIU DA CAVE
+        Purple    (469,109)                      57   CREDITOU e SAIU DA CAVE
+        Purple    (471,107)                      55   CREDITOU e SAIU DA CAVE
+        Purple    (471,108)                      55   CREDITOU e SAIU DA CAVE
+        Purple    (471,108)                      55   CREDITOU e SAIU DA CAVE
+        Fa-Yuan   (322,146) e outras 3       27..57   CREDITOU
+
+    Nenhuma delas tem `ALVO MORREU` nem confirmação de morte pela memória: o
+    bot lutou 17-19 s, deu 109-123 golpes de rotação, a flag caiu 55 unidades
+    fora, e o trecho foi creditado. Com o `Purple` -- o ÚLTIMO boss -- creditar
+    significa **sair da cave**, que é o relato do usuário.
+
+    =====================================================================
+    AS DUAS PROVAS QUE VALEM, E A ORDEM DELAS
+    =====================================================================
+
+      1. **A MEMÓRIA VIU O NOME CAIR.** Vale de qualquer lugar: responde *"o
+         boss morreu?"*, que é a pergunta de verdade. É o caminho normal (309
+         confirmações no mesmo log);
+      2. **A POSIÇÃO NO INSTANTE DA SAÍDA.** Reserva para quando a identidade
+         não foi legível -- pacote de mobs sem nome, alvo por id. Dentro da
+         tolerância do ponto, sair de batalha só tem uma explicação.
+
+    `onde_acabou is None` NÃO credita, e é o único lugar do ecossistema onde
+    "não sei" veta em vez de liberar. O motivo está em `estou_nele`: esta
+    resposta autoriza creditar um boss, e o custo de errar para o lado seguro é
+    refazer um trecho -- contra perder a cave inteira.
+
+    =====================================================================
+    O QUE ACONTECE COM A PERSEGUIÇÃO LEGÍTIMA DE MOB RANGED
+    =====================================================================
+
+    Mob ranged não vem até o personagem, então limpar o pacote às vezes termina
+    a dezenas de unidades do ponto. Sob a regra nova esse caso perde o crédito
+    IMEDIATO -- e não perde o boss: a rotina refaz o trecho, chega ao ponto, e
+    `esperar_entrar_em_combate` não engaja porque está limpo. Aí o crédito sai
+    pelo caminho de `SEGUNDOS_PARA_ENGAJAR`, com o personagem COMPROVADAMENTE
+    no ponto. Troca-se um palpite por uma volta a mais e uma prova melhor.
+
+    Ver `docs/decisoes/hh.md` §35.
+    """
+    if memoria_confirmou:
+        return VeredictoDoBoss(
+            True, f"{ponto.rotulo}: a memória confirmou a morte pelo nome")
+
+    distancia = ponto.distancia_de(onde_acabou)
+    if distancia is None:
+        return VeredictoDoBoss(
+            False,
+            f"{ponto.rotulo}: saí de batalha SEM leitura de posição. Não "
+            f"credito o boss sem saber onde a batalha acabou -- refaço o "
+            f"trecho.")
+
+    if distancia <= ponto.tolerancia:
+        return VeredictoDoBoss(
+            True,
+            f"{ponto.rotulo}: saí de batalha a {distancia:.0f} unidades do "
+            f"ponto (tolerância {ponto.tolerancia}) -- estava nele, o boss "
+            f"caiu")
+
+    return VeredictoDoBoss(
+        False,
+        f"ROLLBACK no {ponto.rotulo}: a batalha acabou em {onde_acabou}, a "
+        f"{distancia:.0f} unidades do ponto {ponto.ponto} (tolerância "
+        f"{ponto.tolerancia}). Sair de batalha longe do boss é dessincronia, "
+        f"não vitória -- NÃO credito, volto e reengajo.")
 
 
 def do_trecho(trecho: int, tolerancia: int) -> PontoDoBoss:
@@ -118,4 +214,5 @@ def do_trecho(trecho: int, tolerancia: int) -> PontoDoBoss:
     return PontoDoBoss(rotulo, ponto, tolerancia)
 
 
-__all__ = ["PontoDoBoss", "do_trecho"]
+__all__ = ["VETOS_ANTES_DE_DESISTIR", "PontoDoBoss", "VeredictoDoBoss", "do_trecho",
+           "verificar_morte_do_boss"]

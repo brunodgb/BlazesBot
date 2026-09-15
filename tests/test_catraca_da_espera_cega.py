@@ -50,7 +50,7 @@ TETO_DE_ESPERAS_CEGAS = {
     "blazesbot/core/inputs.py": 7,
     "blazesbot/bot/bc/routine.py": 7,
     "blazesbot/bot/bc/vendor.py": 6,
-    "blazesbot/bot/hh/routine.py": 4,
+    "blazesbot/bot/hh/routine.py": 3,
     "blazesbot/bot/hh/entrada.py": 1,
 }
 
