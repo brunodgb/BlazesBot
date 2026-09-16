@@ -1047,6 +1047,12 @@ class BossRushRoutine:
         ctx = self.ctx
         self._situacao("preparo de entrada (a pé)")
 
+        # 0. DESTRAVAR ANTES DE TUDO. Regra do usuário, 16/09/2026: o bug de
+        #    estado do jogo *"atrapalha tudo, seja usar a montaria, seja se
+        #    curar, seja fazer qualquer ação"*, e andar o tira. Ver
+        #    `Navigator.destravar_ao_entrar`.
+        self.nav.destravar_ao_entrar("entrada no covil")
+
         # 1 e 2. VIDA E BUFFS.
         self.combat.curar_ao_entrar()
         self.combat.apply_buffs()

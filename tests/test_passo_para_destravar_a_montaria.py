@@ -65,13 +65,76 @@ def _nav(monkeypatch, *, em_batalha=False, morto=False, posicao=(423, 53)):
 
 def test_os_numeros_sao_os_do_usuario():
     assert navegacao.SEGUNDOS_ANTES_DE_CUTUCAR == 10.0
-    assert navegacao.PASSO_PARA_DESTRAVAR_A_MONTARIA == 6
+    assert navegacao.PASSO_PARA_DESTRAVAR == 6
 
 
 def test_o_passo_cabe_dentro_da_tolerancia_do_waypoint():
     """Ele muda o estado sem tirar o personagem do ponto."""
-    assert (navegacao.PASSO_PARA_DESTRAVAR_A_MONTARIA
+    assert (navegacao.PASSO_PARA_DESTRAVAR
             < navegacao.DEFAULT_TOLERANCE * 3)
+
+
+# ---------------------------------------------------------------------------
+# O MESMO PASSO, AGORA TAMBÉM PREVENTIVO -- 16/09/2026
+# ---------------------------------------------------------------------------
+#
+# Regra do usuário: *"o bug do jogo sempre que acontece ele atrapalha tudo, seja
+# usar a montaria, seja se curar, seja fazer qualquer ação, então é melhor dar
+# uma pequena caminhada assim que entra na cave para que o jogo desbugue antes
+# de fazer qualquer ação"*.
+#
+# O passo de resgate continua igual; o que mudou é que ele ganhou um segundo
+# chamador, na largada das DUAS caves.
+
+
+def test_as_DUAS_caves_destravam_ao_entrar():
+    """E antes de qualquer ação -- o preparo inteiro depende do jogo responder."""
+    import ast
+    import inspect
+    import textwrap
+
+    from blazesbot.bot.bc.routine import BossRushRoutine
+    from blazesbot.bot.hh.routine import HHRoutine
+
+    for rotina, preparo in ((BossRushRoutine, "_do_curar"),
+                            (HHRoutine, "_do_preparar_dentro")):
+        metodo = getattr(rotina, preparo)
+        arvore = ast.parse(textwrap.dedent(inspect.getsource(metodo)))
+        chamadas = [(n.lineno, getattr(n.func, "attr", ""))
+                    for n in ast.walk(arvore) if isinstance(n, ast.Call)]
+
+        destrave = [ln for ln, nome in chamadas if nome == "destravar_ao_entrar"]
+        # `garantir_montaria_para_andar` fica FORA da lista de propósito: na HH
+        # ele também aparece no ramo de "retomando no meio da cave", que não é
+        # uma ENTRADA e por isso não destrava -- ali o preparo inteiro é pulado.
+        acoes = [ln for ln, nome in chamadas
+                 if nome in ("curar_ao_entrar", "apply_buffs", "ensure_pet",
+                             "feed_pet")]
+
+        assert destrave, f"{rotina.__name__}.{preparo} não destrava ao entrar"
+        assert acoes, f"{rotina.__name__}.{preparo} perdeu o preparo"
+        assert min(destrave) < min(acoes), (
+            f"{rotina.__name__} age antes de destravar")
+
+
+def test_o_preventivo_NAO_espera_os_10s_do_resgate():
+    """No resgate os 10 s evitam remédio no saudável; na entrada não há o que
+    esperar -- o passo é a primeira coisa que acontece."""
+    import inspect
+
+    fonte = inspect.getsource(navegacao.Navigator.destravar_ao_entrar)
+    assert "_ultimo_passo_de_destrave = 0.0" in fonte, (
+        "a trava de cadência do resgate voltaria a engolir o passo da entrada")
+
+
+def test_o_preventivo_REUSA_o_passo_do_resgate():
+    """Mesma mecânica, mesmo número, mesma bússola -- duas cópias seriam duas
+    chances de só uma ser corrigida."""
+    import inspect
+
+    fonte = inspect.getsource(navegacao.Navigator.destravar_ao_entrar)
+    assert "_passo_para_destravar_a_montaria(" in fonte
+    assert "_clicar_offset_e_verificar" not in fonte
 
 
 # ---------------------------------------------------------------------------
@@ -87,7 +150,7 @@ def test_anda_depois_dos_10s_fora_de_combate(monkeypatch):
     assert len(passos) == 1
     centro, raio, dx, dy = passos[0]
     assert centro == (423, 53)
-    assert raio == navegacao.PASSO_PARA_DESTRAVAR_A_MONTARIA
+    assert raio == navegacao.PASSO_PARA_DESTRAVAR
 
 
 def test_NAO_anda_antes_dos_10s(monkeypatch):

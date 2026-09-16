@@ -1153,3 +1153,62 @@ vigia do congelamento. Nada aqui mudou de conteúdo.
 > indistinguível de "a montaria não funcionou": o bot aperta, aperta de novo, e
 > continua a pé. O próprio comentário acima já advertia contra isso; o número é
 > que não acompanhava.
+
+
+## O passo que destrava o jogo — preventivo, e não só de resgate (16/09/2026)
+
+> *"aquele sistema de andar 6 pixels quando o personagem não consegue ativar a
+> montaria, acho que vai ser interessante usá-lo sempre que entrar nas caves
+> independente do bug, seja em HH ou BC, pois eu notei que o bug do jogo sempre
+> que acontece ele atrapalha tudo, seja usar a montaria, seja se curar, seja
+> fazer qualquer ação, então é melhor dar uma pequena caminhada assim que entra
+> na cave para que o jogo desbugue antes de fazer qualquer ação."*
+
+O passo já existia, mas só como **resgate**: `_passo_para_destravar_a_montaria`
+disparava depois de 10 s sem a montaria subir. A observação do usuário é que o
+estado preso não é da montaria — é do personagem, e engole qualquer tecla:
+poção, buff, invocação do pet, montaria. O remédio é o mesmo (andar), mas o
+momento certo é **antes**, não depois de dez segundos de sintoma.
+
+### O que mudou
+
+`Navigator.destravar_ao_entrar(motivo)` — casca fina sobre o passo que já
+existia, chamada como passo **0** do preparo de entrada das duas caves
+(`bc.routine._do_curar` e `hh.routine._do_preparar_dentro`), antes de curar,
+buffar, invocar pet ou montar.
+
+Ela só faz duas coisas além de delegar:
+
+  * **zera `_ultimo_passo_de_destrave`** — a cadência de 10 s entre passos
+    existe para o resgate não virar remédio no saudável; na entrada não há o que
+    esperar, o passo É a primeira coisa;
+  * passa `gasto = SEGUNDOS_ANTES_DE_CUTUCAR`, que é o que satisfaz o portão de
+    tempo do método compartilhado.
+
+Nada foi duplicado: mesma bússola rotativa, mesmo `PASSO_PARA_DESTRAVAR`, mesma
+verificação de que o personagem realmente se moveu
+(`_clicar_offset_e_verificar`, que mede a posição antes e depois). Duas cópias
+seriam duas chances de só uma ser corrigida.
+
+### Por que 6 unidades continuam seguras aqui
+
+O passo é menor que a tolerância de chegada das duas caves — na HH,
+`TOLERANCIA_DA_CHEGADA` é 12 e o gate `acabei_de_entrar` roda **antes** do
+passo, então andar não muda a decisão de "acabei de entrar" nem tira o
+personagem do ponto de partida.
+
+### A constante foi renomeada
+
+`PASSO_PARA_DESTRAVAR_A_MONTARIA` → `PASSO_PARA_DESTRAVAR`. Com dois usos o nome
+antigo passou a mentir, e o log do passo deixou de falar em montaria: agora diz
+*"Passo de destrave (motivo, Ns): andei 6 unidades de (x,y)"*, que é verdade nos
+dois casos.
+
+### O que NÃO foi feito
+
+Nenhum novo número, nenhum interruptor, nenhuma configuração. O passo preventivo
+custa um clique de minimapa e até `SEGUNDOS_POR_CLIQUE_CIRCULO` de observação,
+uma vez por run — e a resposta dele **não decide nada**: não ter andado não
+adia o preparo.
+
+Travado por `tests/test_passo_para_destravar_a_montaria.py`.
