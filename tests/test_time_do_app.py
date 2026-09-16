@@ -1,273 +1,309 @@
-"""O time do APP: quem lidera, quem segue, e o que nunca entra no campo.
+"""A MONTAGEM DO TIME DO APP -- o líder convida, um por vez. 16/09/2026.
 
-=========================================================================
-O QUE ESTES TESTES IMPEDEM DE VOLTAR
-=========================================================================
+O desenho inteiro veio de uma sessão de perguntas com o usuário; o porquê de
+cada decisão está no cabeçalho de `bot/time_do_app.py`. Aqui se travam as que,
+se mudarem por acidente, quebram calado:
 
-1. O LÍDER VENDO O PRÓPRIO TIME COMO VAZIO. `lider_do_time_do_app` responde
-   "quem já puxa esta conta". A tela do editor faz essa pergunta sobre cada
-   candidata para saber quais desabilitar -- e, sem dispensar a conta que está
-   sendo editada, a pergunta se responde sozinha: os seguidores do próprio
-   líder voltavam "já no time de <ele mesmo>", desmarcados e travados. O
-   usuário abria o time que ele mesmo montou e via um time vazio.
-
-   Foi encontrado olhando a tela, não rodando a suíte: o valor ia e voltava
-   certo no `config.json`, e o defeito estava só na pergunta que a tela faz.
-
-2. UMA CONTA SEGUINDO DOIS LÍDERES. Se A e B puxam a mesma conta, não existe
-   resposta certa para "de quem é a macro". A trava é esta pergunta.
-
-3. LIXO NO CAMPO. Login vazio guardado deixa uma vaga do time apontando para
-   lugar nenhum -- e o time espera a largada de quem nunca vai chegar. Modo
-   desconhecido faz quem lê o modo cair calado no ramo "não é nenhum dos três",
-   e o time não faz nada, sem erro.
+    SÓ O LÍDER MONTA          -- seguidor que volta sem time não faz nada
+    NÃO CONVIDA ÀS CEGAS      -- quem não publica sinal de vida não entra na fila
+    UM POR VEZ                -- a Block list é limpa, o alvo é sempre a linha 1
+    ROTAÇÃO COM TETO          -- 4 passadas e o resto fica para o próximo ciclo
+    EM BATALHA NÃO MONTA      -- abrir janela com mob batendo é apanhar parado
+    NO ARRANQUE DO APP CONFERE -- o usuário abre o bot com as contas já logadas
 """
+
 from __future__ import annotations
 
-from blazesbot.config import (
-    MAXIMO_DE_SEGUIDORES_DO_TIME,
-    MODO_PADRAO_DO_TIME,
-    MODOS_DO_TIME,
-    Account,
-    BotConfig,
-    normalizar_time_logins,
-    normalizar_time_modo,
-)
+from types import SimpleNamespace
+
+import pytest
+
+from blazesbot.bot import mural
+from blazesbot.bot import time_do_app as mod
 
 
-def _conta(login: str, *, segue: list[str] | None = None) -> Account:
-    c = Account(login=login, last_char_name=login.title(), password_enc="x")
-    c.enabled = True
-    c.settings.app.time_logins = list(segue or [])
-    return c
+class _Memoria:
+    def __init__(self, time_do_jogo=None):
+        self._time = time_do_jogo
+
+    def time_do_jogo(self):
+        return self._time
+
+    def tamanho_do_time(self):
+        return len(self._time) if self._time is not None else None
 
 
-def _cfg(*contas: Account) -> BotConfig:
-    cfg = BotConfig()
-    cfg.accounts = list(contas)
-    return cfg
+class _Sup:
+    """O supervisor cru, com só o que a montagem toca."""
+
+    def __init__(self, lider="lider", membros=("lider", "s1", "s2"),
+                 nicks=None, sou_o_lider=True):
+        self.account = SimpleNamespace(login="lider" if sou_o_lider else "s1",
+                                       last_char_name="Lider")
+        self.config = SimpleNamespace(accounts=[])
+        self.pid = 1
+        self.hwnd = 1
+        self.stop_event = SimpleNamespace(is_set=lambda: False)
+        self.pause_event = None
+        self.linhas: list[tuple[str, str]] = []
+        self.log = SimpleNamespace(
+            info=lambda f, *a: self.linhas.append(("INFO", f % a if a else f)),
+            warning=lambda f, *a: self.linhas.append(("WARN", f % a if a else f)),
+            debug=lambda *a, **k: None)
+        self._membros = list(membros)
+        self._nicks = nicks or {"lider": "Lider", "s1": "Um", "s2": "Dois"}
+        self._lider = lider
+
+    def _membros_do_time(self):
+        return list(self._membros)
+
+    def _nick_do_login(self, login):
+        return self._nicks.get(login, "")
+
+    def _dono_da_macro(self):
+        return SimpleNamespace(login=self._lider)
 
 
-# ---------------------------------------------------------------------------
-# QUEM LIDERA QUEM
-# ---------------------------------------------------------------------------
+@pytest.fixture(autouse=True)
+def _sem_espera_de_verdade(monkeypatch):
+    """A espera pela resposta é de 4 s no jogo. Aqui ela só precisa EXISTIR.
 
-def test_conta_livre_nao_tem_lider():
-    cfg = _cfg(_conta("um"), _conta("dois"))
-    assert cfg.lider_do_time_do_app("dois") == ""
-
-
-def test_quem_esta_na_lista_de_outro_tem_lider():
-    cfg = _cfg(_conta("um", segue=["dois"]), _conta("dois"))
-    assert cfg.lider_do_time_do_app("dois") == "um"
-
-
-def test_o_lider_dispensado_nao_conta():
-    """A pergunta da tela: 'além de MIM, alguém já puxa esta conta?'
-
-    Sem o `ignorar`, o editor do próprio líder mostrava o time dele vazio.
+    Sem isto o arquivo leva 49 s -- quatro passadas de quatro segundos em cada
+    teste que não aceita. O que se está travando é a ordem e a contagem, não o
+    relógio.
     """
-    cfg = _cfg(_conta("um", segue=["dois"]), _conta("dois"))
-    assert cfg.lider_do_time_do_app("dois", ignorar="um") == ""
+    monkeypatch.setattr(mod, "ESPERA_PELA_RESPOSTA", 0.01)
+    monkeypatch.setattr(mod, "PASSO_DA_ESPERA_DO_TIME", 0.001)
 
 
-def test_dispensar_um_lider_nao_esconde_o_outro():
-    """Dispensar não pode virar um jeito de a conta seguir dois líderes."""
-    cfg = _cfg(_conta("um", segue=["tres"]),
-               _conta("dois", segue=["tres"]),
-               _conta("tres"))
-    assert cfg.lider_do_time_do_app("tres", ignorar="um") == "dois"
+@pytest.fixture(autouse=True)
+def _mural_limpo():
+    mural.zerar_o_time_para_teste()
+    yield
+    mural.zerar_o_time_para_teste()
 
 
-def test_a_conta_nao_lidera_a_si_mesma():
-    """Um `time_logins` que contenha o próprio login é ignorado.
-
-    Sem isto a conta apareceria como seguidora dela mesma e sairia da lista de
-    escolha da tela -- desligando o time por um dado que não faz sentido em vez
-    de simplesmente não valer.
-    """
-    cfg = _cfg(_conta("um", segue=["um"]))
-    assert cfg.lider_do_time_do_app("um") == ""
-
-
-def test_conta_desativada_continua_dona_da_vaga():
-    """Varre TODAS as contas, inclusive as desligadas.
-
-    Mostrar a vaga como livre faria o usuário montar um time que muda sozinho
-    quando ele religasse a outra conta.
-    """
-    lider = _conta("um", segue=["dois"])
-    lider.enabled = False
-    cfg = _cfg(lider, _conta("dois"))
-    assert cfg.lider_do_time_do_app("dois") == "um"
-
-
-def test_login_vazio_nunca_tem_lider():
-    cfg = _cfg(_conta("um", segue=[""]), _conta("dois"))
-    assert cfg.lider_do_time_do_app("") == ""
-    assert cfg.lider_do_time_do_app("   ") == ""
+def _de_pe(*logins):
+    for login in logins:
+        mural.publicar_estado(login, nick=login, max_hp=1000)
 
 
 # ---------------------------------------------------------------------------
-# O QUE ENTRA NO CAMPO
+# QUEM FALTA
 # ---------------------------------------------------------------------------
 
-def test_a_lista_perde_vazio_e_repetido():
-    assert normalizar_time_logins(["um", "", "um", "  ", "dois"]) == ["um", "dois"]
+def test_time_completo_nao_falta_ninguem():
+    sup = _Sup()
+    memoria = _Memoria(["Lider", "Um", "Dois"])
+    assert mod.falta_alguem(sup, memoria) == []
 
 
-def test_a_lista_respeita_o_teto():
-    demais = [f"conta{i}" for i in range(MAXIMO_DE_SEGUIDORES_DO_TIME + 3)]
-    assert len(normalizar_time_logins(demais)) == MAXIMO_DE_SEGUIDORES_DO_TIME
+def test_time_vazio_faltam_todos_os_seguidores():
+    """O líder sozinho: `time_do_jogo()` devolve só ele (ou lista vazia)."""
+    sup = _Sup()
+    assert mod.falta_alguem(sup, _Memoria(["Lider"])) == ["s1", "s2"]
+    assert mod.falta_alguem(sup, _Memoria([])) == ["s1", "s2"]
 
 
-def test_a_lista_apara_o_espaco():
-    assert normalizar_time_logins(["  um  "]) == ["um"]
+def test_um_so_faltando():
+    sup = _Sup()
+    assert mod.falta_alguem(sup, _Memoria(["Lider", "Um"])) == ["s2"]
 
 
-def test_o_que_nao_e_lista_vira_lista_vazia():
-    """O JavaScript pode mandar qualquer coisa, e o config.json pode ter sido
-    editado à mão. Nenhum dos dois pode derrubar a abertura do bot."""
-    for lixo in (None, "um", 7, {"a": 1}):
-        assert normalizar_time_logins(lixo) == []
+def test_SEM_leitura_do_time_nao_monta_nada():
+    """"Não sei" não convida: cada convite abre a Block list no meio da macro."""
+    sup = _Sup()
+    assert mod.falta_alguem(sup, _Memoria(None)) is None
+    assert mod.montar_o_time(sup, _Memoria(None)) is False
 
 
-def test_modo_desconhecido_cai_no_padrao():
-    for lixo in (None, "", "sincronizado", 7, "LARGADA"):
-        assert normalizar_time_modo(lixo) == MODO_PADRAO_DO_TIME
-
-
-def test_os_tres_modos_passam_inteiros():
-    for modo in MODOS_DO_TIME:
-        assert normalizar_time_modo(modo) == modo
-
-
-def test_o_padrao_e_um_dos_modos():
-    """Âncora: renomear um modo e esquecer o padrão deixaria o default fora da
-    própria lista, e toda conta nova nasceria com um modo inválido."""
-    assert MODO_PADRAO_DO_TIME in MODOS_DO_TIME
+def test_seguidor_SEM_NICK_e_pulado_com_aviso():
+    """Sem nick não há linha para adicionar na Block list."""
+    sup = _Sup(nicks={"lider": "Lider", "s1": "Um", "s2": ""})
+    assert mod.falta_alguem(sup, _Memoria(["Lider"])) == ["s1"]
+    assert any("nunca logou" in t for _n, t in sup.linhas), sup.linhas
 
 
 # ---------------------------------------------------------------------------
-# A LISTA QUE A TELA MOSTRA
-#
-# 4. LISTA QUE SÓ CRESCE. Inelegível ia na lista desabilitada e com o motivo,
-#    para o usuário não procurar uma conta que ele sabe que cadastrou. Com
-#    muitas contas o resultado foi o contrário: o que dá para escolher fica
-#    escondido no meio do que não dá. Pedido do usuário em 07/09/2026 -- e
-#    `docs/INVARIANTES.md` sempre disse que conta farmando a cave "não aparece
-#    na escolha do time"; era o código que divergia.
-#
-# 5. O TIME PERDENDO UM LOGIN AO SALVAR. Quem já está no time aparece SEMPRE, e
-#    habilitado. Esconder o que está gravado faria a tela salvar sem ele, e
-#    `time_logins` perderia o login por causa de um clique em BC que é
-#    reversível ("sair do time por `bc_farm` não apaga o login").
+# SÓ O LÍDER, E SÓ COM SINAL DE VIDA
 # ---------------------------------------------------------------------------
 
-def _ponte(cfg: BotConfig):
-    from blazesbot.web_app import _App
-    p = _App.__new__(_App)
-    p.config, p.manager = cfg, None
-    return p
+def test_SEGUIDOR_nao_monta_time(monkeypatch):
+    """*"Os seguidores, caso voltem e estejam sem time, não devem fazer nada."*"""
+    sup = _Sup(sou_o_lider=False)          # eu sou 's1', o líder é 'lider'
+    _de_pe("s1", "s2")
+    chamou = []
+    monkeypatch.setattr(mod, "BotContext", lambda **k: chamou.append(1))
+    assert mod.montar_o_time(sup, _Memoria(["Um"])) is False
+    assert chamou == [], "o seguidor abriu a montagem"
 
 
-def _candidatas(cfg: BotConfig, login: str) -> tuple[dict[str, str], int]:
-    lider = next(c for c in cfg.accounts if c.login == login)
-    d = _ponte(cfg)._candidatas_do_time(lider)
-    return ({c["login"]: c["motivo"] for c in d["contas_do_time"]},
-            d["contas_do_time_ocultas"])
+def test_quem_NAO_publica_sinal_de_vida_fica_fora_da_fila(monkeypatch):
+    """*"Se algum seguidor estiver off não vai dar para enviar o convite."*"""
+    sup = _Sup()
+    _de_pe("s1")                            # 's2' está fora
+    convidados = []
+    monkeypatch.setattr(mod, "BotContext", _ctx_falso)
+    monkeypatch.setattr(mod, "TeamService", _team_falso(convidados, aceita=()))
+
+    mod.montar_o_time(sup, _Memoria(["Lider"]))
+    assert [n for n in convidados] == ["Um"] * mod.TENTATIVAS_POR_MEMBRO
+    assert any("sem sinal de vida" in t for _n, t in sup.linhas), sup.linhas
 
 
-def test_conta_livre_aparece_sem_motivo():
-    vis, fora = _candidatas(_cfg(_conta("um"), _conta("dois")), "um")
-    assert vis == {"dois": ""}
-    assert fora == 0
+def test_ninguem_de_pe_NAO_abre_a_block_list(monkeypatch):
+    sup = _Sup()
+    abriu = []
+    monkeypatch.setattr(mod, "BotContext", lambda **k: abriu.append(1))
+    assert mod.montar_o_time(sup, _Memoria(["Lider"])) is False
+    assert abriu == []
 
 
-def test_conta_INATIVA_nao_aparece():
-    cfg = _cfg(_conta("um"), _conta("dois"))
-    cfg.accounts[1].enabled = False
-    vis, fora = _candidatas(cfg, "um")
-    assert vis == {}
-    assert fora == 1
+# ---------------------------------------------------------------------------
+# O CONVITE, A ROTAÇÃO E O TETO
+# ---------------------------------------------------------------------------
+
+def _ctx_falso(**kwargs):
+    return SimpleNamespace(close=lambda: None)
 
 
-def test_conta_com_OUTRA_FUNCAO_nao_aparece():
-    """Farmar a cave e rodar o APP são excludentes: convocar arrancaria a conta
-    do meio de uma run (teleporte gasto, boss vivo)."""
-    for funcao in ("bc", "hh"):
-        cfg = _cfg(_conta("um"), _conta("dois"))
-        cfg.definir_funcao_da_conta(cfg.accounts[1], funcao)
-        vis, fora = _candidatas(cfg, "um")
-        assert vis == {}, funcao
-        assert fora == 1, funcao
+def _team_falso(convidados, aceita=(), memoria=None):
+    """Fábrica de `TeamService` de mentira: registra quem foi convidado."""
+    aceitos = set(aceita)
+
+    class _Team:
+        def __init__(self, ctx):
+            self.ctx = ctx
+
+        def _enviar_convite(self, nick):
+            convidados.append(nick)
+            if nick in aceitos:
+                # Simula a outra ponta: anuncia o aceite no mural.
+                mural.anunciar_aceite("Lider", nick)
+            return True
+
+    return _Team
 
 
-def test_conta_em_OUTRO_TIME_nao_aparece():
-    """Com o APP de 'dois' DESLIGADO o time dele não roda, e ele mesmo continua
-    convocável -- é a caixa "Ativar Modo APP" que diz se a conta trabalha por
-    si, não a lista guardada."""
-    cfg = _cfg(_conta("um"), _conta("dois", segue=["tres"]), _conta("tres"))
-    vis, fora = _candidatas(cfg, "um")
-    assert vis == {"dois": ""}
-    assert fora == 1, "a seguidora de 'dois' não pode ser puxada por 'um'"
+def test_convida_UM_POR_VEZ_e_para_quando_todos_entram(monkeypatch):
+    sup = _Sup()
+    _de_pe("s1", "s2")
+    convidados = []
+    monkeypatch.setattr(mod, "BotContext", _ctx_falso)
+    monkeypatch.setattr(mod, "TeamService", _team_falso(convidados,
+                                                        aceita=("Um", "Dois")))
+
+    assert mod.montar_o_time(sup, _Memoria(["Lider"])) is True
+    assert convidados == ["Um", "Dois"], convidados
 
 
-def test_conta_RODANDO_O_APP_nao_aparece():
-    """Pedido do usuário em 07/09/2026, olhando a tela: o líder de um time
-    aparecia como candidato para as outras contas.
+def test_quem_NAO_aceita_volta_para_o_fim_da_fila(monkeypatch):
+    """Rotação: tenta o próximo antes de insistir no mesmo."""
+    sup = _Sup()
+    _de_pe("s1", "s2")
+    convidados = []
+    monkeypatch.setattr(mod, "BotContext", _ctx_falso)
+    monkeypatch.setattr(mod, "TeamService", _team_falso(convidados,
+                                                        aceita=("Dois",)))
 
-    Não impede montar time: o seguidor roda com a caixa "Ativar Modo APP" DELE
-    desmarcada -- é a convocação que o faz rodar. Candidata com a caixa marcada
-    é conta que já trabalha por si.
-    """
-    cfg = _cfg(_conta("um"), _conta("dois"))
-    cfg.definir_funcao_da_conta(cfg.accounts[1], "app")
-    vis, fora = _candidatas(cfg, "um")
-    assert vis == {}
-    assert fora == 1
-
-
-def test_o_LIDER_DE_OUTRO_TIME_diz_que_e_lider():
-    """"rodando o APP" e "líder de um time" são situações diferentes para quem
-    olha: a segunda explica por que várias contas sumiram de uma vez."""
-    cfg = _cfg(_conta("um", segue=["dois"]), _conta("dois"),
-               _conta("tres", segue=["quatro"]), _conta("quatro"))
-    cfg.definir_funcao_da_conta(cfg.accounts[2], "app")
-    cfg.accounts[0].settings.app.time_logins = ["tres"]
-    vis, _ = _candidatas(cfg, "um")
-    assert vis["tres"] == "líder de um time"
+    mod.montar_o_time(sup, _Memoria(["Lider"]))
+    # 1ª passada: Um (não aceita), Dois (aceita). Depois só Um sobra.
+    assert convidados[:2] == ["Um", "Dois"]
+    assert set(convidados[2:]) == {"Um"}, convidados
 
 
-def test_o_PROPRIO_time_aparece_marcavel():
-    """Sem dispensar o líder editado, os seguidores dele voltavam como 'já no
-    time de <ele mesmo>' e o usuário abria o time que montou e via vazio."""
-    cfg = _cfg(_conta("um", segue=["dois"]), _conta("dois"))
-    vis, fora = _candidatas(cfg, "um")
-    assert vis == {"dois": ""}
-    assert fora == 0
+def test_o_TETO_de_passadas_encerra_a_montagem(monkeypatch):
+    """*"Limite de 4 tentativas por vez, daí tenta na próxima macro."*"""
+    sup = _Sup()
+    _de_pe("s1")
+    convidados = []
+    monkeypatch.setattr(mod, "BotContext", _ctx_falso)
+    monkeypatch.setattr(mod, "TeamService", _team_falso(convidados, aceita=()))
+
+    assert mod.montar_o_time(sup, _Memoria(["Lider"])) is False
+    assert len(convidados) == mod.TENTATIVAS_POR_MEMBRO, convidados
+    assert any("não entraram" in t for _n, t in sup.linhas), sup.linhas
 
 
-def test_quem_JA_ESTA_no_time_aparece_mesmo_inelegivel():
-    """Com o motivo à vista, e nunca escondido: a tela salva o que está
-    marcado, e esconder apagaria o login de `time_logins`."""
-    cfg = _cfg(_conta("um", segue=["dois", "tres"]), _conta("dois"),
-               _conta("tres"))
-    cfg.definir_funcao_da_conta(cfg.accounts[1], "bc")
-    cfg.accounts[2].enabled = False
-    vis, fora = _candidatas(cfg, "um")
-    assert vis == {"dois": "farmando a cave", "tres": "inativa"}
-    assert fora == 0
+def test_a_montagem_que_EXPLODE_nao_derruba_o_APP(monkeypatch):
+    sup = _Sup()
+    _de_pe("s1")
+
+    class _Explode:
+        def __init__(self, ctx):
+            raise RuntimeError("a Block list sumiu")
+
+    monkeypatch.setattr(mod, "BotContext", _ctx_falso)
+    monkeypatch.setattr(mod, "TeamService", _Explode)
+    assert mod.montar_o_time(sup, _Memoria(["Lider"])) is False
+    assert any("a montagem falhou" in t for _n, t in sup.linhas), sup.linhas
 
 
-def test_a_conta_editada_nunca_aparece_na_propria_lista():
-    vis, _ = _candidatas(_cfg(_conta("um"), _conta("dois")), "um")
-    assert "um" not in vis
+# ---------------------------------------------------------------------------
+# A PORTA DO LAÇO
+# ---------------------------------------------------------------------------
+
+def test_EM_BATALHA_nao_monta(monkeypatch):
+    sup = _Sup()
+    chamou = []
+    monkeypatch.setattr(mod, "montar_o_time", lambda s, m: chamou.append(1))
+    assert mod.montar_se_for_a_hora(sup, _Memoria([]), em_batalha=True) is False
+    assert chamou == []
 
 
-def test_conta_SEM_LOGIN_nao_aparece():
-    """Login vazio no time deixa uma vaga apontando para lugar nenhum."""
-    cfg = _cfg(_conta("um"), Account(login="", enabled=True))
-    vis, fora = _candidatas(cfg, "um")
-    assert vis == {}
-    assert fora == 0, "conta sem login não é 'conta escondida', é linha em branco"
+def test_SEM_leitura_de_batalha_monta_do_mesmo_jeito(monkeypatch):
+    """"Não sei" conta como FORA: o comportamento cego é o de sempre."""
+    sup = _Sup()
+    chamou = []
+    monkeypatch.setattr(mod, "montar_o_time",
+                        lambda s, m: chamou.append(1) or True)
+    mod.montar_se_for_a_hora(sup, _Memoria([]), em_batalha=None)
+    assert chamou == [1]
+
+
+def test_NO_ARRANQUE_a_cadencia_ja_esta_aberta(monkeypatch):
+    """*"Quando eu iniciar o APP e for um líder, tem que verificar também se
+    está em time, pois às vezes eu posso abrir o BlazesBot depois de estar com
+    as contas logadas."* -- e foi exatamente o que falhou no teste dele."""
+    sup = _Sup()
+    chamou = []
+    monkeypatch.setattr(mod, "montar_o_time",
+                        lambda s, m: chamou.append(1) or True)
+    mod.montar_se_for_a_hora(sup, _Memoria([]), em_batalha=False)
+    assert chamou == [1], "o arranque não conferiu o time"
+
+
+def test_a_CADENCIA_segura_a_segunda_chamada(monkeypatch):
+    sup = _Sup()
+    chamou = []
+    monkeypatch.setattr(mod, "montar_o_time",
+                        lambda s, m: chamou.append(1) or True)
+    mod.montar_se_for_a_hora(sup, _Memoria([]), em_batalha=False)
+    mod.montar_se_for_a_hora(sup, _Memoria([]), em_batalha=False)
+    assert chamou == [1], "conferiu duas vezes dentro da cadência"
+
+
+def test_o_interruptor_DESLIGA_a_montagem(monkeypatch):
+    monkeypatch.setattr(mod, "ATIVADO", False)
+    sup = _Sup()
+    _de_pe("s1", "s2")
+    abriu = []
+    monkeypatch.setattr(mod, "BotContext", lambda **k: abriu.append(1))
+    assert mod.montar_o_time(sup, _Memoria(["Lider"])) is False
+    assert abriu == []
+
+
+def test_o_supervisor_LIGA_a_montagem_nos_DOIS_pontos():
+    """Sem isto a montagem existiria completa e desligada -- que é exatamente o
+    que o usuário viu no teste de 16/09/2026: o APP foi direto para a macro."""
+    import inspect
+
+    from blazesbot.bot import supervisor
+
+    fonte = inspect.getsource(supervisor.AccountSupervisor._rodar_modo_app)
+    assert fonte.count("_montar_time_do_app(") == 2, (
+        "esperava a montagem no ARRANQUE e no gancho por volta")
+    assert "executor.rodar()" in fonte
+    arranque = fonte.index("_montar_time_do_app(", fonte.index("def antes_de_cada_volta"))
+    assert arranque < fonte.index("executor.rodar()"), \
+        "a montagem do arranque tem que vir ANTES da macro"

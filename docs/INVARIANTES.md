@@ -350,7 +350,32 @@ e `docs/decisoes/deletador.md`.
 - **AFERIÇÃO ANTES DE CONFIAR** (`bot/app/afericao.py`): fotografa o que seria
   apagado sem clicar. Deletar não tem desfazer.
 
-## Time do APP — `docs/decisoes/time-do-app.md`
+## Time do APP
+
+### A montagem do time — 16/09/2026
+
+- **SÓ O LÍDER MONTA.** Seguidor que volta sem time não faz nada, só roda a
+  macro: quando ele volta e o resto do time ficou online, **o jogo o recoloca no
+  time sozinho** (mecânica medida pelo usuário). O líder é quem pergunta, e
+  quando ele não tem time, convida todos.
+- **NÃO SE CONVIDA ÀS CEGAS.** Só entra na fila quem publicou sinal de vida nos
+  últimos `mural.ESTADO_VALIDO_SEGUNDOS` — conta deslogada não recebe convite e
+  não gasta ciclo.
+- **UM CONVITE POR VEZ.** A Block list é LIMPA antes de cada registro, então o
+  alvo do clique direito é sempre a primeira linha. Não existe código que
+  distinga linhas, e reconhecer qual é de quem convidaria a pessoa errada
+  quando o recorte não batesse.
+- **ROTAÇÃO COM TETO:** quem não aceita volta para o fim da fila; ao fim de
+  `time_do_app.TENTATIVAS_POR_MEMBRO` passadas a montagem encerra e o resto fica
+  para o ciclo seguinte. O líder não fica parado por causa de uma conta fora.
+- **EM BATALHA NÃO SE MONTA TIME** — abrir a Block list com mob batendo é o
+  personagem parado apanhando. Mesma regra do pet, da comida e da bolsa.
+- **O ARRANQUE DO APP CONFERE O TIME**, antes da primeira volta: o usuário abre
+  o BlazesBot com as contas já logadas, e sem essa conferência o bot ia direto
+  para a macro com o time desfeito.
+
+Porquê de cada decisão: cabeçalho de `bot/time_do_app.py`.
+ — `docs/decisoes/time-do-app.md`
 
 A mesma macro rodando em até cinco contas (um líder + `MAXIMO_DE_SEGUIDORES_DO_TIME`
 seguidores). Pedido do usuário em 27/08/2026.

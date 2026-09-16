@@ -48,6 +48,7 @@ from .login import (
     StopDuringLogin,
 )
 from .team import InviteAcceptor
+from .time_do_app import montar_se_for_a_hora as _montar_time_do_app
 from .watchdog import (
     VISUAL_CHECK_SECONDS,
     DcReason,
@@ -2172,6 +2173,7 @@ class AccountSupervisor(threading.Thread):
                 nick=(self.account.last_char_name or "").strip())
             if garantir_barra is not None:
                 garantir_barra()
+            _montar_time_do_app(self, memoria_do_pet, em_batalha())
 
         def montar_cura(executor_do_app):
             """A fábrica. Recebe o executor porque a cura precisa dos métodos
@@ -2515,6 +2517,12 @@ class AccountSupervisor(threading.Thread):
                         log.info("Trava de posição: base inicial salva no config %s", pos_inicial)
             except Exception as exc:
                 log.warning("Trava de posição: falha ao salvar base inicial: %s", exc)
+
+        # O TIME ANTES DA MACRO -- 16/09/2026. *"Quando eu iniciar o APP e for
+        # um líder, tem que verificar também se está em time, pois às vezes eu
+        # posso abrir o BlazesBot depois de estar com as contas logadas."*
+        # A cadência começa zerada, então esta chamada passa direto.
+        _montar_time_do_app(self, memoria_do_pet, em_batalha())
 
         try:
             executor.rodar()
