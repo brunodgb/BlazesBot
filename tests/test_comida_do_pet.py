@@ -47,7 +47,7 @@ from blazesbot.bot import hotbar
 from blazesbot.bot.app import executor as app_mod
 from blazesbot.bot.bc.combat import CombatEngine
 from blazesbot.core import pet as pet_mod
-from blazesbot.core.pet import SEGUNDOS_PARA_A_COMIDA_SER_USADA, PetFeeder
+from blazesbot.core.pet import PetFeeder
 
 # ===========================================================================
 # 1. O `PetFeeder` GRAVA A GRADE -- nos DOIS momentos em que ela muda
@@ -257,6 +257,9 @@ def _motor_bc(*, em_batalha=False, montado=False, tecla="6", intervalo=50,
     motor.esperas: list[float] = []
     motor.ctx = SimpleNamespace(
         account_login="teste",
+        # A BARREIRA DA COMIDA É POR JANELA (`core/pet._COMIDA_EM`): sem `hwnd`
+        # o motor não tem onde marcar que a tecla saiu.
+        hwnd=4321,
         settings=SimpleNamespace(
             keys=SimpleNamespace(pet_food=tecla),
             pet=SimpleNamespace(feed_every_minutes=intervalo)),
@@ -327,17 +330,48 @@ def test_o_BC_garante_a_pagina_1_ANTES_de_apertar(monkeypatch, _hotbar_falsa):
     assert _hotbar_falsa == ["alimentar o pet"]
 
 
-def test_o_BC_espera_a_comida_SER_USADA_antes_de_devolver(
-        monkeypatch, _hotbar_falsa):
-    """Medido: `_do_curar` monta 600 ms depois da comida, e montar cancela o
-    item. A espera de dentro do `feed_pet` é o que separa os dois."""
+def test_o_BC_MARCA_a_comida_em_vez_de_dormir(monkeypatch, _hotbar_falsa):
+    """16/09/2026: dormir aqui dentro NUNCA poderia resolver.
+
+    Quem cancela o item é a ação seguinte -- montar --, e ela mora em outro
+    arquivo. Com `tick(1,5)` aqui, a montaria saía aos 1,65 s: 150 ms fora da
+    janela, cancelando a comida em TODA refeição (felicidade de 94 para 45 em
+    20 h, com as 26 refeições acontecendo na hora certa).
+
+    Agora `feed_pet` MARCA o instante e quem paga é o portão da montaria, que
+    espera só o que falta. Run que não se move não paga nada.
+    """
     monkeypatch.setattr(time, "time", lambda: 2000.0)
     motor = _motor_bc()
+    pet_mod._COMIDA_EM.clear()
 
     assert motor.feed_pet() is True
-    assert motor.esperas == [pytest.approx(SEGUNDOS_PARA_A_COMIDA_SER_USADA)]
-    assert SEGUNDOS_PARA_A_COMIDA_SER_USADA > 0.5, (
-        "0,5 s era o valor que a tecla da montaria atropelava")
+    assert motor.esperas == [], "voltou a dormir dentro do feed_pet"
+    assert pet_mod.falta_da_comida(motor.ctx.hwnd) > 0, (
+        "a comida não ficou marcada; o portão da montaria não tem o que esperar")
+
+
+def test_a_barreira_da_comida_e_MAIOR_que_o_atraso_da_montaria():
+    """A montaria foi acionada 1,65 s depois da comida no log de 16/09/2026.
+
+    Qualquer valor abaixo disso repete o defeito -- e o custo de ser generoso é
+    4 s por refeição, uma vez a cada 50 min.
+    """
+    assert pet_mod.SEGUNDOS_PARA_A_COMIDA_SER_USADA >= 2.0, (
+        "1,65 s é o atraso MEDIDO da montaria; a barreira tem que cobri-lo")
+
+
+def test_o_PORTAO_DA_MONTARIA_espera_a_comida():
+    """A barreira mora onde todo deslocamento passa, e não em quem alimenta."""
+    import inspect
+    import textwrap
+
+    from blazesbot.bot.navegacao import Navigator
+
+    fonte = textwrap.dedent(
+        inspect.getsource(Navigator.garantir_montaria_para_andar))
+    assert "esperar_a_comida" in fonte, (
+        "o portão da montaria parou de esperar a comida -- montar cancela o item")
 
 
 def test_tecla_recusada_pelo_input_NAO_avanca_a_grade_no_BC(

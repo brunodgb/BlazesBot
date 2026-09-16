@@ -1987,6 +1987,11 @@ class Navigator:
         configuração -- não situação de jogo.
         """
         ctx = self.ctx
+        # A COMIDA DO PET PRIMEIRO. Montar CANCELA o uso do item, e a montaria
+        # saía 1,65 s depois da tecla da comida -- 150 ms fora da janela de 1,5 s
+        # que existia dentro do `feed_pet`. Aqui a barreira é do portão por onde
+        # todo deslocamento passa, então nenhuma ordem de chamada escapa dela.
+        pet_core.esperar_a_comida(ctx, f"montar para {motivo}")
         if not self._exigir_montaria:
             # TRAJETO QUE ACEITA IR A PÉ. Não insiste, não grita: devolve
             # "não montei" e quem chamou segue andando. Ver `_exigir_montaria`.
@@ -2195,7 +2200,7 @@ class Navigator:
         """
         ctx = self.ctx
         # A COMIDA DO PET PRIMEIRO: montar dentro da janela dela cancela o item.
-        pet_core.esperar_a_comida(ctx, f"montar para {motivo}")
+        pet_core.esperar_a_comida(ctx, "remontar")
         if not ctx.settings.keys.mount:
             return
 
