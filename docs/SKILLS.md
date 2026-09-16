@@ -243,6 +243,52 @@ nova). Achados usados, com o que NÃO foi usado e por quê:
   projetos React/shadcn dele. Removê-lo quebraria os outros projetos; não
   mexido.
 
+## `superpowers@obra` revisitado (16/09/2026) — plugin continua desligado, 2 skills portadas
+
+O usuário perguntou por que `superpowers` (`github.com/obra/superpowers`)
+saiu na auditoria de 09/09. Resposta anterior ("duplica o ECC") era
+verdadeira na maioria mas imprecisa — reavaliado skill por skill das 14 que
+o plugin traz:
+
+| skill | veredito |
+|---|---|
+| `test-driven-development`, `writing-plans`, `executing-plans`, `requesting-code-review`, `subagent-driven-development`, `dispatching-parallel-agents`, `verification-before-completion`, `brainstorming` | duplicata real — ECC (`tdd-guide`/`planner`/`code-reviewer`/etc.) ou regra global (`~/.claude/rules/common/agents.md`) já cobrem, e são mais específicos |
+| `using-git-worktrees`, `finishing-a-development-branch` | baixa relevância — o fluxo deste projeto é commit direto em `master` (regra 0), sem branch/PR |
+| `using-superpowers` | **risco, não duplicata** — exige invocar uma skill antes de QUALQUER resposta, inclusive pergunta trivial. É o mesmo tipo de ritual forçado que o usuário rejeitou nesta sessão quando pediu pra não tornar o `claude-council` 100% obrigatório |
+| `systematic-debugging`, `receiving-code-review` | **sem equivalente real** — portadas para `.claude/skills/` (ver abaixo) |
+
+Como não dá pra ligar só parte de um plugin (mesmo problema do
+`mattpocock-skills`), a escolha foi: plugin inteiro continua desligado, e as
+2 skills sem equivalente foram copiadas e adaptadas como skills próprias do
+projeto — mesmo padrão já usado pro `task-observer`.
+
+### `.claude/skills/systematic-debugging/`
+
+4 fases (causa raiz → padrão → hipótese → implementação), lei de ferro "sem
+causa raiz investigada, sem fix proposto", gatilho explícito pra parar e
+questionar arquitetura depois de 3 tentativas falhas. Adaptado: aponta pro
+`graphify query` (Fase 2), pro `tdd-guide` do ECC (Fase 4, em vez de
+`superpowers:test-driven-development`), pra suíte inteira + evidência real
+em vez de `superpowers:verification-before-completion`, e liga o gatilho de
+3+ falhas ao `claude-council` (mesmo critério de "debugging que já falhou
+2+ vezes" do `CLAUDE.md`). A técnica "condition-based waiting" do original
+NÃO foi trazida — já é regra permanente deste projeto ("onde havia espera
+cega, agora se pergunta"). Ficam como referência de apoio (exemplos em
+TypeScript, técnica agnóstica de linguagem): `root-cause-tracing.md`,
+`defense-in-depth.md`.
+
+### `.claude/skills/receiving-code-review/`
+
+Como avaliar com rigor técnico o que `code-reviewer`/`security-reviewer`
+(ECC) ou o `claude-council` apontam — não gera revisão, avalia a recebida.
+Padrão: ler sem reagir → reformular o requisito → verificar contra o código
+real → avaliar se faz sentido NESTE codebase → responder tecnicamente (nunca
+"você tem toda razão!" performático) → implementar um item por vez, testando
+cada um. Reforça a regra já existente do projeto: feedback externo (o
+council em especial, que não tem graphify/memória/logs) é insumo pra
+análise, nunca veredito. Cortada a seção original sobre reply em thread de
+PR do GitHub — este projeto não usa GitHub Actions nem fluxo de PR.
+
 # Skill: claude-council (consulta multi-agente)
 
 Plugin de Claude Code que consulta vários modelos em paralelo e mostra as

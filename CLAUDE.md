@@ -108,6 +108,12 @@ Contrato completo, assentos ativos e quando NÃO vale a pena invocar:
   skills/melhorias. Custo aceito: 24 KB de SKILL.md por sessão de trabalho.
 - **`find-skills`** (vercel-labs) — acha e instala skill nova quando falta
   capacidade real. Invocar sozinho ao notar a lacuna, não só se pedirem.
+- **`systematic-debugging`** e **`receiving-code-review`** (portadas de
+  `obra/superpowers` 14/09/2026, plugin inteiro fica desligado — as outras
+  12 skills dele duplicam ECC/regras já ativas) — a primeira antes de propor
+  qualquer correção de defeito (causa raiz antes de remendo, 4 fases), a
+  segunda ao avaliar o que `code-reviewer`/`security-reviewer`/`claude-council`
+  apontam (verificar antes de implementar, nunca concordância performática).
 
 ## Agentes especializados do ECC: proativo, não sob pedido (diretriz permanente — 09/09/2026)
 
