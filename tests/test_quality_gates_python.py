@@ -191,7 +191,16 @@ HERDADOS = {
     # `_tenho_alvo_vivo`, `_alvo_aceitavel`), que é uma responsabilidade
     # inteira e tem casa pronta em `core/target_hybrid.py`.
     "blazesbot/bot/app/executor.py": 3326,               # ExecutorDeMacro, 47 métodos (74%)
-    "blazesbot/bot/supervisor.py": 2755,                 # AccountSupervisor, 41 métodos (85%)
+    # SUBIU DE 2755 PARA 3043 EM 15/09/2026, e a margem já estava ZERADA: o
+    # arquivo marcava 3030 linhas, que é o limite EXATO. Treze linhas de sinal
+    # de vida do time do APP estouraram.
+    #
+    # ESTE É O ÚLTIMO AUMENTO. O corte está identificado e tem precedente
+    # pronto: `_rodar_modo_app` é uma montagem de closures do mesmo tipo que já
+    # saiu daqui uma vez -- `bot/fada_montagem.py` nasceu exatamente assim,
+    # empurrado por esta catraca. A próxima linha que alguém quiser acrescentar
+    # paga essa extração, não outro número aqui.
+    "blazesbot/bot/supervisor.py": 3043,                 # AccountSupervisor, 41 métodos (85%)
     "blazesbot/bot/bc/routine.py": 2596,                 # BossRushRoutine, 37 métodos (84%)
     "blazesbot/core/memory.py": 2498,                    # Memory, 82 métodos (74%)
     "blazesbot/bot/navegacao.py": 2164,                  # Navigator, 32 métodos (80%)

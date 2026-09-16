@@ -2160,6 +2160,19 @@ class AccountSupervisor(threading.Thread):
             except Exception:
                 return None
 
+        def antes_de_cada_volta() -> None:
+            """SINAL DE VIDA do seguidor + a barra de atalhos, por volta.
+
+            O líder lê isto antes de convidar. O `max_hp` vai junto porque
+            `publicar_estado` SUBSTITUI o estado e a Fada lê dele -- porquê e
+            travas em `tests/test_sinal_de_vida_do_app.py`.
+            """
+            mural.publicar_estado(
+                self.account.login, max_hp=_seguro_max_hp(),
+                nick=(self.account.last_char_name or "").strip())
+            if garantir_barra is not None:
+                garantir_barra()
+
         def montar_cura(executor_do_app):
             """A fábrica. Recebe o executor porque a cura precisa dos métodos
             dele para voltar ao ponto inicial -- ver o parâmetro `cura` do
@@ -2408,7 +2421,7 @@ class AccountSupervisor(threading.Thread):
             # o executor continua cego, importando só `core.*`.
             grade_da_comida=_grade_da_comida_do_app,
             gravar_grade_da_comida=self._gravar_grade_da_comida_do_app,
-            antes_da_volta=garantir_barra,
+            antes_da_volta=antes_de_cada_volta,
             conferir_saude=conferir_saude,
             declarar_queda=declarar_queda,
             limpar_a_bolsa=limpar_a_bolsa,
