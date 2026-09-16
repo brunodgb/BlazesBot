@@ -393,23 +393,22 @@ CAMINHO_ATE_O_BOSS_1: tuple[Waypoint, ...] = _wp([
     (80, 42, _A, (943, 104)),
     (107, 47, _A, (945, 110)),
     (124, 49, _A, (935, 115)),
-    (141, 75, _A, (931, 96)),
-    (162, 82, _A, (930, 102)),
-    (188, 104, _A, (939, 115)),
-    (188, 104, _A, (937, 95)),
-    (188, 140, _A, (915, 82)),
-    (188, 176, _A, (922, 83)),
-    (216, 186, _A, (940, 104)),
-    (250, 192, _A, (924, 109)),
+    (141, 75, _A),
+    (162, 82, _A),
+    (188, 104, _A),
+    (188, 140, _A),
+    (188, 176, _A),
+    (216, 186, _A),
+    (250, 192, _A),
     (232, 188, _A, (941, 109)),
-    (274, 190, _A, (958, 112)),
-    (280, 172, _A, (921, 133)),
-    (300, 176, _A, (942, 113)),
-    (304, 204, _A, (918, 86)),
-    (320, 184, _A, (936, 114)),
-    (318, 140, _A, (913, 139)),
-    (300, 140, _A, (906, 113)),
-    (282, 138, _A, (901, 118)),
+    (274, 190, _A),
+    (280, 172, _A),
+    (300, 176, _A),
+    (304, 204, _A),
+    (320, 184, _A),
+    (318, 140, _A),
+    (300, 140, _A),
+    (282, 138, _A),
     (272, 136, _A, (908, 117)),
 ])
 
@@ -418,15 +417,15 @@ CAMINHO_ATE_O_BOSS_2: tuple[Waypoint, ...] = _wp([
     (288, 139, _A, (930, 113)),
     (306, 140, _A, (936, 114)),
     (316, 142, _A, (929, 113)),
-    (336, 134, _A, (931, 121)),
+    (336, 134, _A),
     (354, 134, _A, (933, 111)),
-    (366, 136, _A, (931, 113)),
-    (368, 162, _A, (920, 98)),
-    (368, 173, _A, (918, 97)),
-    (368, 192, _A, (921, 100)),
+    (366, 136, _A),
+    (368, 162, _A),
+    (368, 173, _A),
+    (368, 192, _A),
     (379, 190, _A, (929, 114)),
-    (392, 190, _A, (932, 121)),
-    (394, 154, _A, (921, 128)),
+    (392, 190, _A),
+    (394, 154, _A),
     (409, 150, _A, (933, 115)),
     (409, 128, _A, (918, 129)),
 ])
@@ -436,29 +435,29 @@ CAMINHO_ATE_O_BOSS_3: tuple[Waypoint, ...] = _wp([
     # (414,136) É A TERCEIRA VERSÃO desta entrada, medida em 10/09/2026 porque
     # "começou a travar". A anterior, (420,136), ficava a 6,3 do ponto seguinte
     # -- dentro da tolerância de chegada (7) --, e esta está a 12,2.
-    (412, 136, _A, (929, 113)),
-    (426, 136, _A, (935, 114)),
-    (427, 152, _A, (921, 100)),
-    (460, 152, _A, (955, 115)),
-    (462, 170, _A, (915, 98)),
-    (448, 184, _A, (904, 113)),
-    (448, 218, _A, (920, 84)),
-    (484, 218, _A, (923, 99)),
-    (516, 212, _A, (948, 122)),
+    (412, 136, _A),
+    (426, 136, _A),
+    (427, 152, _A),
+    (460, 152, _A),
+    (462, 170, _A),
+    (448, 184, _A),
+    (448, 218, _A),
+    (484, 218, _A),
+    (516, 212, _A),
     (544, 196, _A, (947, 130)),
-    (552, 188, _A, (910, 106)),
+    (552, 188, _A),
 ])
 
 # Do boss 3 até o boss 4 (Purple). ANDA PARA TRÁS no começo: o trecho volta
 # sobre o caminho do boss 3 antes de subir. Não é erro de medição.
 CAMINHO_ATE_O_BOSS_4: tuple[Waypoint, ...] = _wp([
-    (524, 208, _A, (893, 101)),
-    (490, 216, _A, (890, 107)),
-    (454, 220, _A, (895, 110)),
-    (448, 184, _A, (918, 153)),
-    (464, 170, _A, (937, 118)),
-    (450, 136, _A, (919, 133)),
-    (460, 108, _A, (919, 129)),
+    (524, 208, _A),
+    (490, 216, _A),
+    (454, 220, _A),
+    (448, 184, _A),
+    (464, 170, _A),
+    (450, 136, _A),
+    (460, 108, _A),
     (470, 108, _A, (930, 136)),
     (478, 108, _A, (936, 118)),
     (508, 108, _A, (948, 114)),
@@ -557,27 +556,25 @@ TODOS_OS_WAYPOINTS: tuple[Waypoint, ...] = _todos_os_waypoints()
 
 
 # ---------------------------------------------------------------------------
-# Os limites úteis do minimapa, e os dois cliques que fogem deles
+# Os limites úteis do minimapa
 # ---------------------------------------------------------------------------
 #
 # `travel.lua:37` recusa clique fora de 895..965 em X e 75..158 em Y, encurtando
 # o passo pela metade até caber. Mas esse corte vale só para o clique CALCULADO:
-# os `via` são calibrados à mão e passam por fora dele.
-#
-# DOIS dos 66 fogem da caixa, ambos no começo do trecho do boss 4 -- (893, 101) e
-# (890, 107), os dois com X abaixo de 895. Não são erro de digitação: aquele
-# trecho anda PARA TRÁS sobre o caminho do boss 3, e um passo para trás no
-# minimapa cai à esquerda do centro.
-#
-# CONSEQUÊNCIA PRÁTICA: se algum dia o `via` for passado pelo mesmo corte do
-# clique calculado, esses dois serão encurtados e deixarão de apontar para onde
-# foram calibrados. O corte é para o cálculo; o `via` vai cru.
+# os `via` são calibrados à mão e podem passar por fora dele.
 LIMITES_DO_MINIMAPA = ((895, 965), (75, 158))
 
-VIA_FORA_DOS_LIMITES: tuple[tuple[int, int], ...] = (
-    (893, 101),
-    (890, 107),
-)
+# Os `via` que fogem da caixa acima. VAZIO desde 16/09/2026.
+#
+# Eram DOIS, (893, 101) e (890, 107), no começo do trecho do boss 4 -- aquele
+# trecho anda PARA TRÁS sobre o caminho do boss 3, e um passo para trás no
+# minimapa cai à esquerda do centro. Os dois saíram junto com os `via` que a
+# remedição deixou órfãos (ver o cabeçalho do `via` em `core/rota.py`).
+#
+# A LISTA CONTINUA EXISTINDO porque a exceção é legítima e volta com a próxima
+# calibração de um trecho que anda para trás. Vazia ela também é resposta: hoje
+# nenhum `via` precisa passar cru pelo corte.
+VIA_FORA_DOS_LIMITES: tuple[tuple[int, int], ...] = ()
 
 
 # Waypoints onde o caminho fica bloqueado por mob, medidos na prática.

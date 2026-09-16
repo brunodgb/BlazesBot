@@ -94,30 +94,69 @@ def test_o_total_da_rota_oficial():
     assert len(m.TODOS_OS_WAYPOINTS) == sum(CONTAGEM_OFICIAL.values()) == 57
 
 
-def test_todo_waypoint_tem_o_clique_calibrado():
-    """O `via` é a RESERVA para quando o motor de navegação desistir.
+# O `via` é um clique de minimapa MEDIDO À MÃO para aquele waypoint, e por isso
+# ele só vale para a coordenada em que foi calibrado. Quando o usuário remediu a
+# rota em 16/09/2026, 39 dos 56 waypoints mudaram de coordenada e ficaram
+# carregando o `via` do ponto antigo -- ele não foi tocado, porque a edição foi
+# só das coordenadas.
+#
+# OS 39 VIRARAM `None`, e essa é a resposta honesta: `None` é ausência de clique
+# calibrado, não erro (`core/rota.py` documenta isso, e a BC inteira roda sem um
+# único `via`). Guardar um clique medido para OUTRO ponto seria pior que não ter
+# nenhum -- no dia em que o `via` virar a reserva de verdade, ele mandaria o
+# personagem para a parede justamente na passagem estreita onde o cálculo falha.
+#
+# NADA MUDOU DE COMPORTAMENTO: nenhuma linha de `blazesbot/` lê `.via` hoje.
+NUM_COM_VIA_CALIBRADO = 18
 
-    Perder um significa perder a única prova de que aquele trecho tem uma
-    passagem que o cálculo não encontra sozinho.
+
+def test_o_inventario_de_cliques_calibrados():
+    """Quantos waypoints ainda têm um `via` medido para a coordenada certa.
+
+    O número existe para o mesmo motivo da contagem de waypoints: `via` que
+    desaparece por acidente não dá erro em lugar nenhum. Ele sobe quando alguém
+    recalibra um trecho no jogo.
     """
-    sem_via = [wp.pos for wp in m.TODOS_OS_WAYPOINTS if wp.via is None]
-    assert not sem_via, f"waypoints sem clique calibrado: {sem_via}"
+    com_via = [wp.pos for wp in m.TODOS_OS_WAYPOINTS if wp.via is not None]
+    assert len(com_via) == NUM_COM_VIA_CALIBRADO, (
+        f"o inventário de cliques calibrados mudou: {len(com_via)} com via")
 
 
-def test_o_clique_calibrado_quase_sempre_cai_nos_limites_do_lua():
-    """Os limites do `travel.lua:37` valem para o clique CALCULADO, não para o `via`.
+def test_o_via_NAO_e_lido_por_ninguem_em_producao():
+    """É o que torna `None` inofensivo -- e o que exige cuidado no dia em que
+    alguém ligar o `via` como reserva de verdade: os 39 ausentes precisam ser
+    remedidos ANTES, não depois.
 
-    Dois dos 66 fogem da caixa, ambos no começo do trecho do boss 4, e não são
-    erro: aquele trecho anda PARA TRÁS sobre o caminho do boss 3, e um passo para
-    trás no minimapa cai à esquerda do centro.
+    PELO AST: `core/rota.py` cita `via` na documentação e no `dataclass`, e uma
+    busca textual acharia as duas.
+    """
+    import ast
+    import pathlib
 
-    Este teste trava a exceção em DOIS. Se aparecer um terceiro, alguém digitou
-    errado -- e se algum dia o `via` passar pelo corte do clique calculado, estes
-    dois deixam de apontar para onde foram calibrados.
+    leituras = [
+        f"{f}:{n.lineno}"
+        for f in pathlib.Path("blazesbot").rglob("*.py")
+        for n in ast.walk(ast.parse(f.read_text(encoding="utf-8")))
+        if isinstance(n, ast.Attribute) and n.attr == "via"
+    ]
+    assert not leituras, (
+        f"alguem passou a LER o `via`: {leituras}. Antes de confiar nele, "
+        f"remeça os {len(m.TODOS_OS_WAYPOINTS) - NUM_COM_VIA_CALIBRADO} "
+        f"waypoints que hoje estao sem clique calibrado.")
+
+
+def test_o_clique_calibrado_que_EXISTE_cai_nos_limites_do_lua():
+    """Os limites do `travel.lua:37` valem para o clique CALCULADO, não para o
+    `via` -- mas hoje nenhum `via` foge deles.
+
+    Eram dois, no começo do trecho do boss 4, e saíram junto com os `via`
+    órfãos. A lista de exceções continua existindo porque a exceção é legítima:
+    aquele trecho anda PARA TRÁS sobre o caminho do boss 3, e um passo para trás
+    no minimapa cai à esquerda do centro. Ela volta com a próxima calibração.
     """
     (xmin, xmax), (ymin, ymax) = m.LIMITES_DO_MINIMAPA
-    fora = [wp.via for wp in m.TODOS_OS_WAYPOINTS
-            if not (xmin <= wp.via[0] <= xmax and ymin <= wp.via[1] <= ymax)]
+    fora = [wp.via for wp in m.TODOS_OS_WAYPOINTS if wp.via is not None
+            and not (xmin <= wp.via[0] <= xmax and ymin <= wp.via[1] <= ymax)]
     assert sorted(fora) == sorted(m.VIA_FORA_DOS_LIMITES), (
         f"a lista de exceções mudou: {fora}")
 
