@@ -38,7 +38,7 @@ ligar código não testado.
 | `ATACAR_DURANTE_A_CONFIRMACAO_NO_BOSS` | `True` | [blazesbot/bot/combate.py:523](blazesbot/bot/combate.py#L523) | — | SÓ NO BOSS, e a razão é o motivo pelo qual o golpe parava |
 | `DESMONTAR_FORA_DA_CAVE_SO_SEM_PET` | `True` | [blazesbot/bot/combate.py:1010](blazesbot/bot/combate.py#L1010) | — | FORA DA CAVE, SÓ DESMONTA SE O PET NÃO ESTIVER ATIVO |
 | `DESTRAVAMENTO_BATE_NO_ALVO_PROIBIDO` | `True` | [blazesbot/bot/combate.py:824](blazesbot/bot/combate.py#L824) | — | O DESTRAVAMENTO BATE NO CEMETERY GUARD? Decisao do usuario, 01/09/2026. |
-| `EXIGIR_SAIR_DE_COMBATE_NOS_GUARDAS` | `True` | [blazesbot/bot/combate.py:582](blazesbot/bot/combate.py#L582) | _alvo.py | O CUSTO, DITO INTEIRO |
+| `EXIGIR_SAIR_DE_COMBATE_NOS_GUARDAS` | `True` | [blazesbot/bot/combate.py:582](blazesbot/bot/combate.py#L582) | — | O CUSTO, DITO INTEIRO |
 | `MODO_DE_CURA` | `'skill_em_laco'` | [blazesbot/bot/combate.py:259](blazesbot/bot/combate.py#L259) | — | O TETO É POR TENTATIVA SEM EFEITO, NÃO POR RELÓGIO |
 | `SO_A_MEMORIA_DECLARA_MORTE` | `True` | [blazesbot/bot/combate.py:896](blazesbot/bot/combate.py#L896) | executor.py, target_hybrid.py | SÓ A MEMÓRIA DECLARA MORTE. A TELA SÓ SABE DIZER "AINDA VIVO". |
 | `SO_O_ALVO_PROIBIDO_PARA_O_GOLPE` | `True` | [blazesbot/bot/combate.py:636](blazesbot/bot/combate.py#L636) | combat.py | O QUE MUDA |
@@ -508,8 +508,8 @@ ligar código não testado.
 | `TENTATIVAS_DO_TOKEN` | `10` | [blazesbot/bot/vendedor.py:133](blazesbot/bot/vendedor.py#L133) | vendor.py | CHEGAR A STONE CITY -- números do usuário (18/08/2026) |
 | `TENTATIVAS_NO_OK` | `3` | [blazesbot/bot/vendedor.py:162](blazesbot/bot/vendedor.py#L162) | — | Quantas vezes reclicar o Ok da caixa "It's precious item" antes de desistir. |
 | `TOLERANCIA_DA_CAMINHADA_ATE_O_VENDEDOR` | `2` | [blazesbot/bot/vendedor.py:139](blazesbot/bot/vendedor.py#L139) | vendor.py | Folga da CAMINHADA até o vendedor. O painel de arredores caminha até perto e |
-| `ESPERA_PELA_MORTE` | `2.0` | [blazesbot/bot/watchdog.py:297](blazesbot/bot/watchdog.py#L297) | — | Quanto tempo esperar o Windows realmente derrubar o processo depois do |
-| `PASSO_DA_CONFIRMACAO_DA_MORTE` | `0.05` | [blazesbot/bot/watchdog.py:301](blazesbot/bot/watchdog.py#L301) | — | Passo entre as conferências de "já morreu?". Fatia curta porque a resposta |
+| `ESPERA_PELA_MORTE` | `2.0` | [blazesbot/bot/watchdog.py:293](blazesbot/bot/watchdog.py#L293) | — | Quanto tempo esperar o Windows realmente derrubar o processo depois do |
+| `PASSO_DA_CONFIRMACAO_DA_MORTE` | `0.05` | [blazesbot/bot/watchdog.py:297](blazesbot/bot/watchdog.py#L297) | — | Passo entre as conferências de "já morreu?". Fatia curta porque a resposta |
 | `RAIO_DA_BUSCA_DO_AVISO` | `120` | [blazesbot/bot/watchdog.py:74](blazesbot/bot/watchdog.py#L74) | — | Meio-lado da janela de busca, em volta de `coords.aviso_de_conexao`. A caixa |
 | `RECONNECT_TEMPLATE` | `'state_conn_prefix.png'` | [blazesbot/bot/watchdog.py:37](blazesbot/bot/watchdog.py#L37) | coords.py | Template do aviso "Connection interrupted[, please open client again]". |
 | `RECONNECT_THRESHOLD` | `0.92` | [blazesbot/bot/watchdog.py:69](blazesbot/bot/watchdog.py#L69) | sentinela.py | POR QUE A BUSCA É PRESA À CAIXA, E NÃO NA TELA INTEIRA |

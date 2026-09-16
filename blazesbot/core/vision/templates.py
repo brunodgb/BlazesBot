@@ -80,18 +80,6 @@ class TemplateLibrary:
             self._cache[chave] = img
         return img
 
-    def load_all(self) -> dict[str, np.ndarray]:
-        result: dict[str, np.ndarray] = {}
-        if not self.folder.is_dir():
-            return result
-        for path in sorted(self.folder.iterdir()):
-            if path.suffix.lower() not in (".bmp", ".png", ".jpg"):
-                continue
-            img = cv2.imread(str(path), cv2.IMREAD_GRAYSCALE)
-            if img is not None:
-                result[path.name] = img
-        return result
-
 
 def crop(
     frame: np.ndarray | None,

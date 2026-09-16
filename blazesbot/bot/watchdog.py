@@ -264,10 +264,6 @@ class Watchdog:
             self.ctx.ultima_queda = (MOTIVO_PARA_HISTORICO[motivo], quadro)
         return motivo
 
-    def _reconnect_dialog_visible(self) -> bool:
-        """Compatibilidade: responde só se o aviso está na tela."""
-        return self._quadro_com_aviso_de_conexao() is not None
-
     def _quadro_com_aviso_de_conexao(self):
         """O quadro COM o aviso de conexão interrompida, ou None.
 

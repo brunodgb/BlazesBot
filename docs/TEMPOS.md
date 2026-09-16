@@ -31,7 +31,7 @@ desta lista é ou uma exceção justificada, ou dívida que ninguém converteu a
 mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 
 
-**364 tempos catalogados** — 250 FIXOS (espera cega), 114 entre TETO e PASSO.
+**363 tempos catalogados** — 249 FIXOS (espera cega), 114 entre TETO e PASSO.
 
 
 **3 estão diferentes do original:** `FATIA_DE_ESPERA`, `INTERVALO_ENTRE_INVOCACOES`, `PASSOS_DO_APP`
@@ -269,7 +269,6 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | *literal em* `ensure_pet` | 1.5 s | = | FIXO | [combate.py:3790](blazesbot/bot/combate.py#L3790) | `ensure_pet` | Garante que o pet está invocado. |
 | *literal em* `ensure_pet` | 1.5 s | = | FIXO | [combate.py:3803](blazesbot/bot/combate.py#L3803) | `ensure_pet` | Garante que o pet está invocado. |
 | *literal em* `apply_buffs` | 0.6 s | = | FIXO | [combate.py:3830](blazesbot/bot/combate.py#L3830) | `apply_buffs` | Aplica os buffs configurados, em si mesmo. |
-| *literal em* `_travar_no_alvo_proibido` | 0.28 s | *novo* | FIXO | [_alvo.py:240](blazesbot/bot/combate/_alvo.py#L240) | `_travar_no_alvo_proibido` | A ÚNICA trava do waypoint dos guardas -- UMA porta, duas fontes. |
 | `SEGUNDOS_PARA_CUTUCAR` | 15 s | *novo* | FIXO | [congelamento.py:76](blazesbot/bot/congelamento.py#L76) | `olhar` | Quanto tempo na MESMA coordenada, tentando andar, antes de mexer na montaria. |
 | `SEGUNDOS_PARA_A_SEGUNDA` | 22.5 s | *novo* | TETO | [congelamento.py:82](blazesbot/bot/congelamento.py#L82) | `olhar` | A segunda cutucada, no MEIO do que resta até aquele teto. |
 | `FATIA_DA_ESPERA` | 0.25 s | = | PASSO | [context.py:212](blazesbot/bot/context.py#L212) | `tick` | Fatia máxima de sono dentro de um `tick`. |
@@ -409,8 +408,8 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | `ESPERA_DEPOIS_DO_SELL` | 0.6 s | = | FIXO | [vendedor.py:317](blazesbot/bot/vendedor.py#L317) | `sell_from_slot` |  |
 | *literal em* `_tentar_abrir_a_venda` | 0.3 s | = | FIXO | [vendedor.py:505](blazesbot/bot/vendedor.py#L505) | `_tentar_abrir_a_venda` |  |
 | *literal em* `_dismiss_confirm` | 0.125 s | = | FIXO | [vendedor.py:559](blazesbot/bot/vendedor.py#L559) | `_dismiss_confirm` | Fecha a caixa "It's precious item, please confirm!", se aberta. |
-| `ESPERA_PELA_MORTE` | 2 s | *novo* | FIXO | [watchdog.py:297](blazesbot/bot/watchdog.py#L297) | `kill_client` | Quanto tempo esperar o Windows realmente derrubar o processo depois do |
-| `PASSO_DA_CONFIRMACAO_DA_MORTE` | 0.05 s | *novo* | PASSO | [watchdog.py:301](blazesbot/bot/watchdog.py#L301) | `_morreu` | Passo entre as conferências de "já morreu?". Fatia curta porque a resposta |
+| `ESPERA_PELA_MORTE` | 2 s | *novo* | FIXO | [watchdog.py:293](blazesbot/bot/watchdog.py#L293) | `kill_client` | Quanto tempo esperar o Windows realmente derrubar o processo depois do |
+| `PASSO_DA_CONFIRMACAO_DA_MORTE` | 0.05 s | *novo* | PASSO | [watchdog.py:297](blazesbot/bot/watchdog.py#L297) | `_morreu` | Passo entre as conferências de "já morreu?". Fatia curta porque a resposta |
 
 
 ## CORE — capacidades compartilhadas
