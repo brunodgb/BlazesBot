@@ -83,7 +83,7 @@ ligar código não testado.
 
 ## Números medidos -- tolerância, limiar, teto, cadência
 
-633 constantes, agrupadas por arquivo.
+634 constantes, agrupadas por arquivo.
 
 | constante | valor | onde | quem lê | porquê (resumo) |
 |---|---|---|---|---|
@@ -386,7 +386,8 @@ ligar código não testado.
 | `MANOBRAS_DE_PARADO` | `2` | [blazesbot/bot/navegacao.py:241](blazesbot/bot/navegacao.py#L241) | — | Quantas vezes a manobra pode rodar no mesmo trajeto. |
 | `MARGEM_RECLIQUE` | `2.0` | [blazesbot/bot/navegacao.py:103](blazesbot/bot/navegacao.py#L103) | — | Distância do fim do trecho já clicado em que o próximo clique é disparado. |
 | `PASSADAS_DO_DESTRAVAMENTO` | `2` | [blazesbot/bot/navegacao.py:199](blazesbot/bot/navegacao.py#L199) | — | Quantas voltas a manobra dá sobre os dois candidatos: frente, trás, frente, trás. |
-| `PASSO_PARA_DESTRAVAR` | `6` | [blazesbot/bot/navegacao.py:381](blazesbot/bot/navegacao.py#L381) | — | O tamanho do passo, em unidades de posicao. Numero do usuario ("6px"). |
+| `PASSO_AO_ENTRAR_NA_CAVE` | `3` | [blazesbot/bot/navegacao.py:381](blazesbot/bot/navegacao.py#L381) | — | METADE dele ao ENTRAR na cave (16/09/2026, *"qualquer andada ja resolve"*). |
+| `PASSO_PARA_DESTRAVAR_A_MONTARIA` | `6` | [blazesbot/bot/navegacao.py:379](blazesbot/bot/navegacao.py#L379) | — | O tamanho do passo, em unidades de posicao. Numero do usuario ("6px"). |
 | `POLL_MOVIMENTO` | `0.22` | [blazesbot/bot/navegacao.py:106](blazesbot/bot/navegacao.py#L106) | — | Intervalo de leitura de posição. É o que define quanto tempo o personagem fica |
 | `RUIDO_DA_POSICAO` | `1.0` | [blazesbot/bot/navegacao.py:164](blazesbot/bot/navegacao.py#L164) | — | Quanto a posição pode variar e ainda contar como "não saiu do lugar". Uma |
 | `SEGUNDOS_ANTES_DE_CUTUCAR` | `10.0` | [blazesbot/bot/navegacao.py:371](blazesbot/bot/navegacao.py#L371) | — | Quanto esperar, desde a PRIMEIRA tentativa, antes de andar um passo. Numero do |

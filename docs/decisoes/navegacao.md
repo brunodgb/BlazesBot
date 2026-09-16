@@ -1212,3 +1212,59 @@ uma vez por run — e a resposta dele **não decide nada**: não ter andado não
 adia o preparo.
 
 Travado por `tests/test_passo_para_destravar_a_montaria.py`.
+
+
+## O passo da entrada é METADE do de resgate (16/09/2026)
+
+> *"aquela mini caminhada assim que entra na cave, pode ser metade, pois
+> qualquer andada já resolve, acho que 6 pixels está sendo muito"*
+
+`PASSO_AO_ENTRAR_NA_CAVE = 3`, contra `PASSO_PARA_DESTRAVAR_A_MONTARIA = 6`.
+
+Os dois números ficam **separados de propósito**, porque respondem perguntas
+diferentes: o de resgate tira um personagem que **já está preso** (e ali pagar
+por um passo maior faz sentido, porque a tentativa anterior falhou); o da
+entrada só cutuca um jogo que ainda está saudável, e qualquer deslocamento
+serve. O de resgate foi medido para outro problema e não muda.
+
+O passo continua cabendo com folga dentro de tudo que importa: 3 unidades é um
+sexto do alcance de um clique de minimapa (~17,6) e menos da metade da
+tolerância de waypoint (7), então o personagem não sai do ponto de entrada.
+
+## O que ainda não está explicado sobre a HH de 16/09/2026
+
+No mesmo dia o usuário relatou: *"o ecossistema de HH estava quase perfeito e
+agora começou a ter vários bugs, indo para lugar errado, não conseguindo sair"*.
+A medição:
+
+| dia | Purple morto | saiu da cave | travou na saída |
+|---|---|---|---|
+| 09-15 | 255 | 233 | **1** |
+| 09-16 | 104 | 89 | **473** |
+
+O padrão é sempre o mesmo: o personagem termina o último boss em (526,108), a
+rota manda andar 16 unidades até (527,124), e ele **não sai do lugar** — o
+`VigiaDoCongelamento` confirma (`CONGELADO em (526, 108) há 15s`). Na véspera a
+saída partiu do mesmo (526,108) **50 vezes** e funcionou.
+
+**Verificado e descartado como causa:**
+
+  * **a rota não mudou** — `mapa_hh.py`, `core/rota.py`, `core/zones.py` e
+    `core/coords.py` não têm commit desde 09-15;
+  * **as constantes de navegação não mudaram** — `SEM_PROGRESSO_SEGUNDOS`,
+    `INTERVALO_RECLIQUE`, `TETO_PRESO_NO_MESMO_PONTO` e as demais estão iguais;
+  * **a taxa de rollback do servidor não piorou** — 10,6 por mil waypoints em
+    09-15 contra 9,9 em 09-16;
+  * **o clique do passo preventivo cai dentro do minimapa** — nas 8 direções da
+    `BUSSOLA` o pixel fica a ~10 px do centro do widget, então ele não vaza para
+    a cena 3D nem mexe na câmera;
+  * **a camada de input não recusou nada** — nenhuma linha do guarda de janela;
+  * **o ESC às cegas não é o gatilho** — os 60 ESC do dia são todos da BC
+    (`Cemetery Guard`), a partir das 10:23, depois de o travamento começar.
+
+**O que resta:** três mudanças entraram em produção na MESMA janela de minutos
+(reinícios às 09:36 e 09:39, primeiro travamento às 09:44) — o passo preventivo
+da entrada, `core/inputs.py` (`passar_o_mouse`) e `core/vision/templates.py`. A
+correlação temporal não distingue entre elas, e nenhuma tem mecanismo provado
+para congelar o personagem. **Se o travamento persistir, o passo preventivo é a
+primeira coisa a desligar** — é a única das três no caminho de movimento da HH.

@@ -65,12 +65,12 @@ def _nav(monkeypatch, *, em_batalha=False, morto=False, posicao=(423, 53)):
 
 def test_os_numeros_sao_os_do_usuario():
     assert navegacao.SEGUNDOS_ANTES_DE_CUTUCAR == 10.0
-    assert navegacao.PASSO_PARA_DESTRAVAR == 6
+    assert navegacao.PASSO_PARA_DESTRAVAR_A_MONTARIA == 6
 
 
 def test_o_passo_cabe_dentro_da_tolerancia_do_waypoint():
     """Ele muda o estado sem tirar o personagem do ponto."""
-    assert (navegacao.PASSO_PARA_DESTRAVAR
+    assert (navegacao.PASSO_PARA_DESTRAVAR_A_MONTARIA
             < navegacao.DEFAULT_TOLERANCE * 3)
 
 
@@ -127,6 +127,43 @@ def test_o_preventivo_NAO_espera_os_10s_do_resgate():
         "a trava de cadência do resgate voltaria a engolir o passo da entrada")
 
 
+def test_o_passo_da_ENTRADA_e_a_METADE_do_de_resgate():
+    """Numero do usuario, 16/09/2026: *"pode ser metade, pois qualquer andada ja
+    resolve, acho que 6 pixels esta sendo muito"*.
+
+    Os dois numeros sao SEPARADOS porque respondem perguntas diferentes: o de
+    resgate tira um personagem ja preso, o da entrada so cutuca um jogo que
+    ainda esta saudavel.
+    """
+    assert (navegacao.PASSO_AO_ENTRAR_NA_CAVE
+            == navegacao.PASSO_PARA_DESTRAVAR_A_MONTARIA // 2)
+    assert navegacao.PASSO_AO_ENTRAR_NA_CAVE == 3
+
+
+def test_o_passo_da_entrada_e_o_QUE_CHEGA_no_clique(monkeypatch):
+    """Nao basta a constante existir -- ela tem que ser a que vai para o clique."""
+    nav, passos, r = _nav(monkeypatch, em_batalha=False)
+    r.agora = 100.0
+
+    nav.destravar_ao_entrar("entrada na cave")
+
+    assert len(passos) == 1
+    _centro, raio, _dx, _dy = passos[0]
+    assert raio == navegacao.PASSO_AO_ENTRAR_NA_CAVE
+
+
+def test_o_RESGATE_continua_com_o_passo_inteiro(monkeypatch):
+    """Encolher a caminhada da entrada nao pode encolher o remedio de quem ja
+    esta preso -- aquele numero foi medido para outro problema."""
+    nav, passos, r = _nav(monkeypatch, em_batalha=False)
+    r.agora = 100.0
+
+    nav._diagnosticar_o_portao("a travessia até o altar", ciclo=2, gasto=11.0)
+
+    assert len(passos) == 1
+    assert passos[0][1] == navegacao.PASSO_PARA_DESTRAVAR_A_MONTARIA
+
+
 def test_o_preventivo_REUSA_o_passo_do_resgate():
     """Mesma mecânica, mesmo número, mesma bússola -- duas cópias seriam duas
     chances de só uma ser corrigida."""
@@ -150,7 +187,7 @@ def test_anda_depois_dos_10s_fora_de_combate(monkeypatch):
     assert len(passos) == 1
     centro, raio, dx, dy = passos[0]
     assert centro == (423, 53)
-    assert raio == navegacao.PASSO_PARA_DESTRAVAR
+    assert raio == navegacao.PASSO_PARA_DESTRAVAR_A_MONTARIA
 
 
 def test_NAO_anda_antes_dos_10s(monkeypatch):

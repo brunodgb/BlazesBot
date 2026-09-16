@@ -376,13 +376,9 @@ SEGUNDOS_ANTES_DE_CUTUCAR = 10.0
 # viajar. Um clique de minimapa alcanca ~17,6 unidades, entao 6 e menos de meio
 # clique -- e a tolerancia dos waypoints da rota e 7, entao o passo cabe DENTRO
 # da tolerancia e nao tira o personagem do ponto.
-#
-# SERVE A DOIS USOS, e por isso o nome nao fala mais em montaria: o passo de
-# resgate quando a montaria nao sobe (`_passo_para_destravar_a_montaria`) e o
-# passo PREVENTIVO ao entrar na cave (`destravar_ao_entrar`). Regra do usuario,
-# 16/09/2026: *"o bug do jogo sempre que acontece ele atrapalha tudo, seja usar
-# a montaria, seja se curar, seja fazer qualquer acao"*.
-PASSO_PARA_DESTRAVAR = 6
+PASSO_PARA_DESTRAVAR_A_MONTARIA = 6
+# METADE dele ao ENTRAR na cave (16/09/2026, *"qualquer andada ja resolve"*).
+PASSO_AO_ENTRAR_NA_CAVE = 3
 
 # Depois de quantos ciclos sem montar o portao para de insistir MUDO e vai
 # PROCURAR A CAUSA -- e, quando a causa tem tratamento, tira ela do caminho.
@@ -2140,31 +2136,13 @@ class Navigator:
         self.destravar_o_combate(motivo)
 
     def destravar_ao_entrar(self, motivo: str) -> bool:
-        """Um passo curto ASSIM QUE ENTRA na cave, antes de qualquer acao.
+        """Passo curto ao ENTRAR na cave, antes de tudo. `decisoes/navegacao.md`."""
+        self._ultimo_passo_de_destrave = 0.0
+        return self._passo_para_destravar_a_montaria(
+            motivo, SEGUNDOS_ANTES_DE_CUTUCAR, passo=PASSO_AO_ENTRAR_NA_CAVE)
 
-        Mesma mecanica de `_passo_para_destravar_a_montaria`, sem as travas de
-        tempo: aqui nao e resgate de um estado ja preso, e sim prevencao no
-        unico instante em que o bug aparece. Ver `docs/decisoes/navegacao.md`.
-
-        Devolve se o personagem realmente se moveu -- e a resposta NAO decide
-        nada: nao ter andado nao e motivo para adiar o preparo.
-        """
-        ctx = self.ctx
-        onde = self.position()
-        if onde is None:
-            return False
-        dx, dy = BUSSOLA[self._direcao_do_passo_de_destrave % len(BUSSOLA)]
-        self._direcao_do_passo_de_destrave += 1
-        andou = self._clicar_offset_e_verificar(onde, PASSO_PARA_DESTRAVAR,
-                                                dx, dy)
-        ctx.log.info(
-            "Destravando ao entrar (%s): andei %s unidades de %s (%s).",
-            motivo, PASSO_PARA_DESTRAVAR, onde,
-            "o personagem se moveu" if andou else "NAO saiu do lugar")
-        return andou
-
-    def _passo_para_destravar_a_montaria(self, motivo: str,
-                                         gasto: float) -> bool:
+    def _passo_para_destravar_a_montaria(self, motivo: str, gasto: float,
+            passo: int = PASSO_PARA_DESTRAVAR_A_MONTARIA) -> bool:
         """Anda um passo curto. Andar destrava a montaria que o jogo cancelou.
 
         So depois de `SEGUNDOS_ANTES_DE_CUTUCAR` desde a primeira tentativa, e
@@ -2194,13 +2172,12 @@ class Navigator:
         dx, dy = BUSSOLA[self._direcao_do_passo_de_destrave % len(BUSSOLA)]
         self._direcao_do_passo_de_destrave += 1
 
-        andou = self._clicar_offset_e_verificar(
-            onde, PASSO_PARA_DESTRAVAR, dx, dy)
+        andou = self._clicar_offset_e_verificar(onde, passo, dx, dy)
         ctx.log.info(
             "Nao monto para %s ha %.0fs e NAO estou em batalha: o jogo deve ter "
             "cancelado a montaria sozinho. Andei %s unidades de %s (%s) -- "
             "andar destrava esse bug.",
-            motivo, gasto, PASSO_PARA_DESTRAVAR, onde,
+            motivo, gasto, passo, onde,
             "o personagem se moveu" if andou else "NAO saiu do lugar",
         )
         return andou
