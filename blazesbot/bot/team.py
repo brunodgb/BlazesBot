@@ -897,7 +897,18 @@ class InviteAcceptor:
             # e como ela nunca responde neste cliente, o log real registrou ONZE
             # cliques seguidos para um convite que já tinha sido aceito no
             # primeiro. Agora o teto é explícito.
-            tamanho = self.ctx.memory.team_size()
+            # A LEITURA QUE RESPONDE -- 15/09/2026.
+            #
+            # Era `team_size()`, que NUNCA respondeu neste cliente: a parada
+            # caía sempre no teto de cliques, mesmo com o convite aceito no
+            # primeiro. `tamanho_do_time()` lê pelo ponteiro rebaseado
+            # (`ADDR_TEAM`, o +0x60) e foi provada ao vivo em seis clientes em
+            # 31/08/2026 -- ver `core/memory.py`.
+            #
+            # O QUE ISSO COMPRA: parar de clicar assim que o time se forma. No
+            # modo APP cada clique esquerdo perdido é o personagem andando, e
+            # é por isso que a troca vem ANTES do time do APP, não junto.
+            tamanho = self.ctx.memory.tamanho_do_time()
             if (tamanho is not None and tamanho > 1) or (
                     self._cliques_de_aceite >= MAX_CLIQUES_DE_ACEITE):
                 consumir_convite(self._meu_nick)

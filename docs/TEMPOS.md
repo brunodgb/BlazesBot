@@ -359,8 +359,8 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | *literal em* `_enviar_convite` | 0.5 s | = | FIXO | [team.py:540](blazesbot/bot/team.py#L540) | `_enviar_convite` | Envia o convite pelo MENU DE CONTEXTO da entrada na Block list. |
 | *literal em* `sair_do_time` | 0.4 s | = | FIXO | [team.py:703](blazesbot/bot/team.py#L703) | `sair_do_time` | Sai do time por DOIS CLIQUES medidos no cliente. |
 | *literal em* `sair_do_time` | 0.5 s | = | FIXO | [team.py:718](blazesbot/bot/team.py#L718) | `sair_do_time` | Sai do time por DOIS CLIQUES medidos no cliente. |
-| *literal em* `_aceitar` | 0.5 s | = | FIXO | [team.py:960](blazesbot/bot/team.py#L960) | `_aceitar` |  |
-| *literal em* `_recusar` | 0.5 s | = | FIXO | [team.py:967](blazesbot/bot/team.py#L967) | `_recusar` |  |
+| *literal em* `_aceitar` | 0.5 s | = | FIXO | [team.py:971](blazesbot/bot/team.py#L971) | `_aceitar` |  |
+| *literal em* `_recusar` | 0.5 s | = | FIXO | [team.py:978](blazesbot/bot/team.py#L978) | `_recusar` |  |
 | `ESPERA_DEPOIS_DO_CLIQUE` | 0.35 s | = | FIXO | [teste_do_cursor.py:100](blazesbot/bot/teste_do_cursor.py#L100) | `_uma_fase` |  |
 | *literal em* `main` | 8 s | = | FIXO | [teste_do_cursor.py:476](blazesbot/bot/teste_do_cursor.py#L476) | `main` |  |
 | `PASSO_DA_ESPERA_DO_DIALOGO` | 0.08 s | = | PASSO | [ui_do_jogo.py:149](blazesbot/bot/ui_do_jogo.py#L149) | `_esperar_o_dialogo` | Diálogo do NPC aparecer. Era 0,30 s fixos, gastos inteiros mesmo quando o |

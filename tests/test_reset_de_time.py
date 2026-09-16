@@ -455,3 +455,20 @@ def test_as_DUAS_interfaces_impedem_tirar_um_reseter_do_ar():
     assert "accounts_reset_by" in gui
     assert "bloqueio_de_reseter" in web
     assert "accounts_reset_by" in web
+
+
+def test_o_aceitador_para_de_clicar_pela_leitura_QUE_RESPONDE():
+    """`team_size()` nunca respondeu neste cliente -- ver `core/memory.py`.
+
+    Com ela, a parada caía SEMPRE no teto de cliques, mesmo com o convite já
+    aceito no primeiro. No modo APP cada clique esquerdo perdido é o personagem
+    andando, então a troca para `tamanho_do_time()` (o ponteiro rebaseado,
+    provado ao vivo em seis clientes) vem ANTES do time do APP.
+    """
+    import inspect
+
+    from blazesbot.bot.team import InviteAcceptor
+
+    fonte = inspect.getsource(InviteAcceptor.check_and_accept)
+    assert "memory.tamanho_do_time()" in fonte
+    assert "memory.team_size()" not in fonte
