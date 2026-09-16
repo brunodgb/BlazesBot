@@ -50,11 +50,31 @@ from blazesbot.core.rota import (
 # produzia o loop infinito de 04/09 (ver `test_rollback_DE_VERDADE...`); com ela
 # fora, o mapa deixou de ter o caso, mas a régua que o conserta continua
 # travada por rota sintética.
+#
+# ===========================================================================
+# REMEDIDA INTEIRA EM 16/09/2026 -- 66 waypoints viraram 57
+# ===========================================================================
+#
+# O usuário remediu os QUATRO trechos de uma vez. O que a nova rota tem de
+# diferente, e que vale registrar porque muda o que os testes abaixo protegem:
+#
+#   * NENHUM PAR APERTADO SOBROU. Antes havia (209,182)/(207,186), a 4,5
+#     unidades -- menos que a tolerância de chegada (7), então os dois eram
+#     dados por alcançados na mesma leitura. Hoje o par mais curto da rota
+#     inteira tem 18 unidades. O inventário de
+#     `test_nenhum_par_da_rota_e_uma_ESPORA_sem_aviso` ficou VAZIO, e a régua
+#     que protegia aquela geometria virou rota sintética -- o dado sumiu, a
+#     régua não pode sumir com ele;
+#   * o trecho 1 perdeu a curva larga do fim: (321,165)/(315,140)/(301,142)
+#     viraram (318,140)/(300,140);
+#   * o trecho 3 deixou de descer até (452,221) antes de subir;
+#   * o trecho 4 encurtou o retorno: saíram (449,214), (467,152), (448,146) e
+#     (448,131).
 CONTAGEM_OFICIAL = {
-    "CAMINHO_ATE_O_BOSS_1": 22,
-    "CAMINHO_ATE_O_BOSS_2": 16,
-    "CAMINHO_ATE_O_BOSS_3": 13,
-    "CAMINHO_ATE_O_BOSS_4": 14,
+    "CAMINHO_ATE_O_BOSS_1": 20,
+    "CAMINHO_ATE_O_BOSS_2": 14,
+    "CAMINHO_ATE_O_BOSS_3": 11,
+    "CAMINHO_ATE_O_BOSS_4": 11,
     "CAMINHO_ATE_A_SAIDA": 1,
 }
 
@@ -66,12 +86,12 @@ def test_cada_trecho_tem_a_contagem_medida(nome, esperado):
 
 
 def test_o_total_da_rota_oficial():
-    """66 de novo: (414,136) tomou o lugar de (420,136) em 10/09/2026.
+    """57 desde a remedição de 16/09/2026 (eram 66).
 
     O número existe para uma coisa só: waypoint que desaparece por acidente não
     dá erro em lugar nenhum, o bot apenas passa a bater na parede.
     """
-    assert len(m.TODOS_OS_WAYPOINTS) == sum(CONTAGEM_OFICIAL.values()) == 66
+    assert len(m.TODOS_OS_WAYPOINTS) == sum(CONTAGEM_OFICIAL.values()) == 57
 
 
 def test_todo_waypoint_tem_o_clique_calibrado():
@@ -457,33 +477,36 @@ def _indice_do(caminho, ponto):
     raise AssertionError(f"{ponto} não está mais na rota; o teste ficou velho")
 
 
-@pytest.mark.parametrize("trecho,anterior,alvo,posicao,por_que", [
-    # Trecho 1: wp10 e wp11 estão a 4,5 unidades -- menos que a tolerância de
-    # chegada (7). O bot cruza os dois de uma vez e o mais próximo continua
-    # sendo o 10, com o índice já no 12.
-    (0, (207, 186), (232, 188), (211, 184),
-     "wp10 e wp11 cabem no mesmo raio de tolerância"),
-    # A SEGUNDA GEOMETRIA -- a ESPORA do trecho 4 -- SAIU DO MAPA em 07/09/2026,
-    # quando o usuário remediu a rota. Ela continua travada em
-    # `test_a_espora_que_saiu_do_mapa_continua_coberta`, com rota sintética: o
-    # dado sumiu, a régua que o consertava não pode sumir com ele.
-])
-def test_andar_no_rumo_certo_NAO_e_rollback(trecho, anterior, alvo, posicao,
-                                            por_que):
-    """O bot ia e voltava para sempre nestes dois pontos. Medido no log.
+# AS DUAS GEOMETRIAS SAÍRAM DO MAPA, e por isso as duas viraram rota sintética:
+#
+#   * a ESPORA do trecho 4 saiu em 07/09/2026;
+#   * o PAR APERTADO do trecho 1 -- (209,182)/(207,186), a 4,5 unidades -- saiu
+#     na remedição de 16/09/2026.
+#
+# O dado sumiu; a régua que o consertava NÃO pode sumir com ele. Qualquer rota
+# futura que traga uma das duas de volta traz o loop infinito junto, e é isso
+# que os dois testes abaixo guardam.
 
-    Em ambos o personagem estava indo para onde mandaram -- em cima da reta que
-    liga o waypoint anterior ao alvo. O que estava errado era a régua.
+
+def test_o_par_APERTADO_que_saiu_do_mapa_continua_coberto():
+    """A geometria do loop de 03/09, agora em rota SINTÉTICA.
+
+    Dois waypoints a menos de 7 unidades (a tolerância de chegada) são cruzados
+    na MESMA leitura: o índice avança para o terceiro, mas o waypoint mais perto
+    continua sendo o primeiro. `houve_rollback` concluía "voltei", a navegação
+    relançava, e o ciclo recomeçava -- com o personagem indo para onde mandaram.
+
+    Era o par (209,182)/(207,186) do trecho 1 até 16/09/2026.
     """
-    caminho = m.TRECHOS_DOS_BOSSES[trecho][1]
-    i_alvo = _indice_do(caminho, alvo)
-    assert caminho[i_alvo - 1].pos == anterior, (
-        "a ordem da rota mudou; conferir se o loop volta com ela")
-
-    assert distancia_ao_trecho(posicao, anterior, alvo) <= 12.0, (
-        f"{posicao} deveria estar EM CIMA do trecho {anterior}->{alvo}")
-    assert houve_rollback(i_alvo, posicao, caminho) is None, (
-        f"loop infinito de volta: {por_que}")
+    apertado = montar([
+        (188, 176, "sintetica", (0, 0)),
+        (209, 182, "sintetica", (0, 0)),
+        (207, 186, "sintetica", (0, 0)),
+        (232, 188, "sintetica", (0, 0)),
+    ])
+    # indo do wp2 (207,186) para o wp3 (232,188), lido em (211,184)
+    assert distancia_ao_trecho((211, 184), (207, 186), (232, 188)) <= 12.0
+    assert houve_rollback(3, (211, 184), apertado) is None
 
 
 def test_a_espora_que_saiu_do_mapa_continua_coberta():
@@ -539,15 +562,16 @@ def test_nenhum_par_da_rota_e_uma_ESPORA_sem_aviso():
         for i in range(1, len(c))
         if m.distancia(c[i - 1].pos, c[i].pos) < 7
     ]
-    assert apertados == [
-        ("Fa-Yuan", (209, 182), (207, 186)),
-        # O PAR DO TRECHO 3 SAIU EM 10/09/2026, e a saída dele é a conclusão
-        # deste inventário: (420,136) ficava a 6,3 unidades de (426,138), menos
-        # que a tolerância de chegada, então os dois eram dados por alcançados
-        # na mesma leitura e um deles sempre foi decoração. O usuário o trocou
-        # por (414,136), que está a 12,2 do seguinte -- entrada do trecho ainda
-        # protegida, e agora com os dois pontos sendo perseguidos de verdade.
-    ], (
+    # VAZIO DESDE 16/09/2026, e a lista chegar a zero é o desfecho deste
+    # inventário. O último sobrevivente era ("Fa-Yuan", (209,182), (207,186)),
+    # a 4,5 unidades; a remedição do usuário o dissolveu, e hoje o par mais
+    # curto da rota inteira tem 18 unidades.
+    #
+    # ZERO NÃO APOSENTA O TESTE -- é o contrário: agora qualquer par novo abaixo
+    # de 7 aparece aqui sozinho, sem se esconder no meio de uma lista que já
+    # tinha itens. A régua que consertava a geometria continua viva em
+    # `test_o_par_APERTADO_que_saiu_do_mapa_continua_coberto`.
+    assert apertados == [], (
         f"o inventário de pares apertados mudou: {apertados}")
 
 
