@@ -132,6 +132,32 @@ def regiao_mudou(
     return float(np.abs(a.astype(np.int16) - b.astype(np.int16)).mean()) >= minimo
 
 
+def altura_da_mudanca(
+    antes: np.ndarray | None,
+    depois: np.ndarray | None,
+    x: int,
+    y: int,
+    largura: int,
+    altura_max: int,
+    minimo: float = 12.0,
+) -> int:
+    """Quantas linhas SEGUIDAS mudaram, descendo a partir de (x, y).
+
+    É a régua de uma caixa opaca que apareceu -- serve para saber QUANTOS itens
+    um menu de contexto trouxe sem ter recorte dos itens em disco.
+
+    SEGUIDAS é o que dá robustez: a varredura para na PRIMEIRA linha que não
+    mudou, então a cena se mexendo mais abaixo não estica a medida. Ela também
+    para cedo se uma linha do menu empatar com o fundo -- a medida erra para
+    MENOS, nunca para mais, e quem chama tem de tratar "curto" como o caso menos
+    arriscado.
+    """
+    for h in range(altura_max):
+        if not regiao_mudou(antes, depois, (x, y + h, largura, 1), minimo):
+            return h
+    return altura_max
+
+
 def region_is_uniform(
     frame: np.ndarray | None,
     region: tuple[int, int, int, int],

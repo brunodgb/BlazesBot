@@ -83,7 +83,7 @@ ligar código não testado.
 
 ## Números medidos -- tolerância, limiar, teto, cadência
 
-627 constantes, agrupadas por arquivo.
+633 constantes, agrupadas por arquivo.
 
 | constante | valor | onde | quem lê | porquê (resumo) |
 |---|---|---|---|---|
@@ -412,19 +412,25 @@ ligar código não testado.
 | `LIMIAR_DO_CONVITE` | `0.9` | [blazesbot/bot/supervisor.py:100](blazesbot/bot/supervisor.py#L100) | — | Limiar do casamento do convite. Mais exigente que o limiar geral de telas |
 | `TETO_DA_ESPERA_PELA_FADA` | `60.0` | [blazesbot/bot/supervisor.py:87](blazesbot/bot/supervisor.py#L87) | — | Quanto uma vítima espera pela Fada antes de voltar para a poção. |
 | `TETO_DA_FATIA_DE_ESPERA` | `0.25` | [blazesbot/bot/supervisor.py:78](blazesbot/bot/supervisor.py#L78) | — | Teto de uma fatia dentro de `_AnyEvent.wait`. É REDE, não o caminho normal -- |
-| `ANCHOR_THRESHOLD` | `0.8` | [blazesbot/bot/team.py:91](blazesbot/bot/team.py#L91) | vendedor.py, ui_do_jogo.py, janelas_abertas.py | — |
-| `ESPERA_DO_MENU` | `0.35` | [blazesbot/bot/team.py:134](blazesbot/bot/team.py#L134) | — | Tempo para o menu de contexto aparecer depois do clique direito. |
-| `ESPERA_PELA_RESPOSTA` | `4.0` | [blazesbot/bot/team.py:139](blazesbot/bot/team.py#L139) | time_do_app.py | Quanto esperar a outra conta aceitar. Ela recebe o anúncio interno e clica no |
-| `INVITE_TEMPLATE` | `'state_team_invite.png'` | [blazesbot/bot/team.py:88](blazesbot/bot/team.py#L88) | — | — |
-| `INVITE_TEXT_TEMPLATE` | `'state_team_invite_texto.png'` | [blazesbot/bot/team.py:89](blazesbot/bot/team.py#L89) | — | — |
-| `INVITE_THRESHOLD` | `0.8` | [blazesbot/bot/team.py:90](blazesbot/bot/team.py#L90) | janelas_abertas.py | — |
-| `MAX_CLIQUES_DE_ACEITE` | `5` | [blazesbot/bot/team.py:159](blazesbot/bot/team.py#L159) | — | Quantas vezes clicar no Ok para o MESMO convite anunciado. |
-| `MAX_ENTRADAS` | `12` | [blazesbot/bot/team.py:150](blazesbot/bot/team.py#L150) | — | Quantas linhas da lista limpar antes de desistir. |
-| `MENU_LEAVE_TEMPLATE` | `'menu_leave_team.png'` | [blazesbot/bot/team.py:92](blazesbot/bot/team.py#L92) | — | — |
-| `MENU_TEAM_UP_TEMPLATE` | `'menu_team_up.png'` | [blazesbot/bot/team.py:108](blazesbot/bot/team.py#L108) | — | Item "Team up" do menu de contexto da entrada na lista. |
-| `PASSO_DA_ESPERA_DO_TIME` | `0.1` | [blazesbot/bot/team.py:147](blazesbot/bot/team.py#L147) | time_do_app.py | De quanto em quanto tempo conferir se o time já formou. |
-| `SEMELHANCA_MINIMA` | `0.9` | [blazesbot/bot/team.py:105](blazesbot/bot/team.py#L105) | — | Semelhança a partir da qual um recorte aprendido é considerado o mesmo texto. |
-| `TEAM_MEMBER_TEMPLATE` | `'state_team_member.png'` | [blazesbot/bot/team.py:100](blazesbot/bot/team.py#L100) | recorte_do_time.py | Painel do companheiro de time, desenhado abaixo do retrato do próprio |
+| `ALTURA_DA_LINHA_DO_MENU` | `21` | [blazesbot/bot/team.py:149](blazesbot/bot/team.py#L149) | — | — |
+| `ALTURA_DO_MENU_LONGO` | `200` | [blazesbot/bot/team.py:153](blazesbot/bot/team.py#L153) | — | — |
+| `ALTURA_MAXIMA_DO_MENU` | `300` | [blazesbot/bot/team.py:152](blazesbot/bot/team.py#L152) | — | — |
+| `ANCHOR_THRESHOLD` | `0.8` | [blazesbot/bot/team.py:92](blazesbot/bot/team.py#L92) | vendedor.py, ui_do_jogo.py, janelas_abertas.py | — |
+| `ESPERA_DO_MENU` | `0.35` | [blazesbot/bot/team.py:156](blazesbot/bot/team.py#L156) | — | Tempo para o menu de contexto aparecer depois do clique direito. |
+| `ESPERA_PELA_RESPOSTA` | `4.0` | [blazesbot/bot/team.py:161](blazesbot/bot/team.py#L161) | time_do_app.py | Quanto esperar a outra conta aceitar. Ela recebe o anúncio interno e clica no |
+| `INICIO_DA_MEDIDA_DO_MENU` | `8` | [blazesbot/bot/team.py:150](blazesbot/bot/team.py#L150) | — | — |
+| `INVITE_TEMPLATE` | `'state_team_invite.png'` | [blazesbot/bot/team.py:89](blazesbot/bot/team.py#L89) | — | — |
+| `INVITE_TEXT_TEMPLATE` | `'state_team_invite_texto.png'` | [blazesbot/bot/team.py:90](blazesbot/bot/team.py#L90) | — | — |
+| `INVITE_THRESHOLD` | `0.8` | [blazesbot/bot/team.py:91](blazesbot/bot/team.py#L91) | janelas_abertas.py | — |
+| `LARGURA_DA_MEDIDA_DO_MENU` | `40` | [blazesbot/bot/team.py:151](blazesbot/bot/team.py#L151) | — | — |
+| `LINHAS_A_MAIS_QUANDO_PERTO` | `3` | [blazesbot/bot/team.py:148](blazesbot/bot/team.py#L148) | — | QUAL DOS DOIS MENUS VEIO se mede na hora, pela ALTURA da caixa que apareceu |
+| `MAX_CLIQUES_DE_ACEITE` | `5` | [blazesbot/bot/team.py:181](blazesbot/bot/team.py#L181) | — | Quantas vezes clicar no Ok para o MESMO convite anunciado. |
+| `MAX_ENTRADAS` | `12` | [blazesbot/bot/team.py:172](blazesbot/bot/team.py#L172) | — | Quantas linhas da lista limpar antes de desistir. |
+| `MENU_LEAVE_TEMPLATE` | `'menu_leave_team.png'` | [blazesbot/bot/team.py:93](blazesbot/bot/team.py#L93) | — | — |
+| `MENU_TEAM_UP_TEMPLATE` | `'menu_team_up.png'` | [blazesbot/bot/team.py:109](blazesbot/bot/team.py#L109) | — | Item "Team up" do menu de contexto da entrada na lista. |
+| `PASSO_DA_ESPERA_DO_TIME` | `0.1` | [blazesbot/bot/team.py:169](blazesbot/bot/team.py#L169) | time_do_app.py | De quanto em quanto tempo conferir se o time já formou. |
+| `SEMELHANCA_MINIMA` | `0.9` | [blazesbot/bot/team.py:106](blazesbot/bot/team.py#L106) | — | Semelhança a partir da qual um recorte aprendido é considerado o mesmo texto. |
+| `TEAM_MEMBER_TEMPLATE` | `'state_team_member.png'` | [blazesbot/bot/team.py:101](blazesbot/bot/team.py#L101) | recorte_do_time.py | Painel do companheiro de time, desenhado abaixo do retrato do próprio |
 | `CLIQUES_POR_FASE` | `20` | [blazesbot/bot/teste_do_cursor.py:91](blazesbot/bot/teste_do_cursor.py#L91) | — | Quantos cliques por fase. 20 dá resolução de 5 pontos percentuais -- suficiente |
 | `DIFERENCA_QUE_E_EFEITO` | `3.0` | [blazesbot/bot/teste_do_cursor.py:95](blazesbot/bot/teste_do_cursor.py#L95) | instrumentar_clique.py | Quanto o minimapa precisa mudar para o clique contar como surtido efeito. O |
 | `DISTANCIA_MINIMA_DO_ALVO` | `120` | [blazesbot/bot/teste_do_cursor.py:98](blazesbot/bot/teste_do_cursor.py#L98) | instrumentar_clique.py | Distância mínima entre o cursor físico e o alvo, em pixels do cliente. |

@@ -196,3 +196,73 @@ cliques, teto de cliques respeitado, rajada inteira quando não há imagem, e a
 integração em `_clicar_no_npc_e_no_link` (que não pode voltar a clicar cego).
 O interruptor `PERGUNTAR_ENTRE_OS_CLIQUES = False` devolve o comportamento
 antigo inteiro.
+
+
+## O menu do convite muda de tamanho com a distância — 16/09/2026
+
+### O sintoma
+
+O APP não montava o time. O convite sai pelo menu de contexto da entrada na
+Block list (`TeamService._enviar_convite`), e o clique em "Team up" é um
+deslocamento medido a partir do clique direito: `(32, 75)`.
+
+### A medição
+
+O usuário mandou o print do menu aberto com o convidado PERTO. O cliente
+acrescenta as opções que só existem com o personagem à vista, e o menu passa de
+7 para 12 itens:
+
+|        | LONGE, 7 itens | PERTO, 12 itens |
+|--------|----------------|-----------------|
+| +13    | [nick]         | [nick]          |
+| +33    | Copy Name      | Follow          |
+| +54    | ---------      | Copy Name       |
+| **+75**| **Team up**    | View Equipment  |
+| +96    | Whisper        | ---------       |
+| +117   | Add Foe        | Trade           |
+| **+138**| Recruit Apprentice | **Team up** |
+| +159…  | —              | Duel, Whisper, Add Foe, Apply to Master, Recruit Apprentice |
+
+O passo é de ~21 px nos dois. No menu longo, o deslocamento de `+75` cai em
+**"View Equipment"**: abre a janela de equipamento e convite nenhum sai.
+
+Isso não é caso de borda do APP — é o caso NORMAL dele: *"normalmente o APP é o
+que vai estar perto"*. O BC nunca viu o problema porque lá o convidado é a conta
+de reset, parada do outro lado do mapa.
+
+### Por que medir a altura, e não escolher por ecossistema
+
+"O APP usa o longo, o BC usa o curto" seria uma regra sobre o ecossistema,
+quando o que manda é a DISTÂNCIA — o seguidor do APP pode estar longe (morto,
+em outro mapa) e o convite sairia errado do mesmo jeito.
+
+Não há recorte do menu em disco (`menu_team_up.png` é carregado e não existe),
+mas uma caixa opaca sobre a cena 3D muda toda linha que cobre. `altura_da_mudanca`
+conta as linhas SEGUIDAS que mudaram entre o quadro de antes do clique direito e
+o de depois: ~150 px no menu curto, ~250 px no longo, limiar em 200.
+
+Captura não é dependência nova aqui: `_enviar_convite` já **precisa** de captura
+para achar a Block list por template (`_pontos("block_list")`). Se ela falhar, a
+função já devolvia `False` antes de chegar no menu. O quadro de antes é o MESMO
+que localiza a lista — nenhuma captura a mais.
+
+### Errar para o curto é o lado barato
+
+A assimetria decide os empates, e é por isso que todo "não sei" fica no curto:
+
+* deslocamento curto no menu longo → **"View Equipment"**, uma janela que o
+  `_fechar_janelas` seguinte fecha;
+* deslocamento longo no menu curto → **"Recruit Apprentice"**, um pedido de
+  aprendiz para a outra conta — que é justamente a conta com um aceitador de
+  caixa rodando.
+
+Daí as três recusas: sem quadro, recorte fora da tela, e régua que bateu no fim
+sem nunca parar (a tela inteira mudando é a cena, não um menu).
+
+### Travado por
+
+`tests/test_menu_do_convite.py` — os dois menus medidos caem de lados opostos do
+limiar, a régua para na primeira linha igual (mob passando mais abaixo não
+estica a caixa), e o quadro de ANTES é capturado antes do clique direito. Esse
+último é auto-sabotagem: capturar depois compararia o menu com ele mesmo, a
+régua daria zero e todo menu pareceria curto — sem nenhum sintoma novo.

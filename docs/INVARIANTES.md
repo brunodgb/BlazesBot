@@ -397,6 +397,15 @@ e `docs/decisoes/deletador.md`.
 - **O "Free" fica na MESMA ALTURA do hover** — ele é o primeiro item e o submenu
   abre alinhado com a linha. Deduzir a altura seria um segundo palpite.
 
+- **O MENU DE CONTEXTO DO CONVITE MUDA DE TAMANHO COM A DISTÂNCIA.** Perto do
+  convidado o cliente acrescenta Follow, View Equipment, Trade e Duel, e
+  "Team up" desce três linhas (7 → 12 itens). O BC convida a conta de reset, do
+  outro lado do mapa; o APP convida quem está ao lado. Qual dos dois veio se
+  mede pela ALTURA da caixa que apareceu (`vision.altura_da_mudanca`), e a
+  medida erra SEMPRE para o menu CURTO: ali o erro é "View Equipment", que o
+  `_fechar_janelas` seguinte fecha — errar para o longo no menu curto clicaria
+  em "Recruit Apprentice", um pedido de aprendiz para a outra conta.
+
 Porquê de cada decisão: cabeçalho de `bot/time_do_app.py`.
  — `docs/decisoes/time-do-app.md`
 

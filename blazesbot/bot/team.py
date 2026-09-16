@@ -64,6 +64,7 @@ from ..core import diario
 from ..core.coords import BLOCK_ENTRY_REGION, TEMPLATE_ANCHORS
 from ..core.vision import (
     LearnedCrops,
+    altura_da_mudanca,
     capture_window,
     find_template,
     region_is_uniform,
@@ -114,21 +115,42 @@ MENU_TEAM_UP_TEMPLATE = "menu_team_up.png"
 # tela erraria assim que a lista mudasse de posição.
 #
 # Medido no print do menu aberto sobre a entrada da Block list. Os itens têm passo
-# de ~21 px e "Team up" é o quarto slot:
+# de ~21 px, e QUANTOS itens vêm depende da DISTÂNCIA até o convidado (medido
+# pelo usuário em 16/09/2026): perto dele o cliente acrescenta as opções que só
+# existem com o personagem à vista, e "Team up" desce três linhas.
 #
-#     +13  [nick]              (cabeçalho)
-#     +33  Copy Name
-#     +54  ---------
-#     +75  Team up             <- este
-#     +96  Whisper
-#     +117 Add Foe
-#     +138 Recruit Apprentice
+#     LONGE, 7 itens             PERTO, 12 itens
+#     +13  [nick]                +13  [nick]
+#     +33  Copy Name             +33  Follow
+#     +54  ---------             +54  Copy Name
+#     +75  Team up        <--    +75  View Equipment
+#     +96  Whisper               +96  ---------
+#     +117 Add Foe               +117 Trade
+#     +138 Recruit Apprentice    +138 Team up          <--
+#                                +159 Duel ... +243 Recruit Apprentice
 #
-# O template acima é tentado PRIMEIRO justamente porque este deslocamento saiu de
-# medição em imagem: se o menu vier com um item a mais no topo para algum
-# personagem, o deslocamento cairia no "Whisper". Errar aqui é barato (o convite
-# não sai e a tentativa seguinte refaz), mas o template elimina a dúvida.
+# O BC convida a conta de reset, do outro lado do mapa; o APP convida quem está
+# ao lado. Este deslocamento é o do menu CURTO -- no longo ele cai em "View
+# Equipment": abre a janela de equipamento e convite nenhum sai.
 DESLOCAMENTO_TEAM_UP = (32, 75)
+
+# QUAL DOS DOIS MENUS VEIO se mede na hora, pela ALTURA da caixa que apareceu
+# (`altura_da_mudanca`): não existe recorte do menu em disco, e uma caixa opaca
+# sobre a cena 3D muda toda linha que cobre. A régua começa 8 px abaixo do
+# clique -- dentro do cabeçalho, já opaco -- e acima de 200 px a caixa é o menu
+# longo (150 px e 250 px medidos; o limiar fica no meio).
+#
+# TODO "NÃO SEI" FICA NO CURTO: sem quadro, recorte fora da tela, ou régua que
+# bateu no fim sem nunca parar (isso é a cena se mexendo, não menu). Errar para
+# o curto é o lado barato -- "View Equipment" abre uma janela que o
+# `_fechar_janelas` seguinte fecha. Errar para o longo no menu curto cairia em
+# "Recruit Apprentice", um pedido de aprendiz para a outra conta.
+LINHAS_A_MAIS_QUANDO_PERTO = 3
+ALTURA_DA_LINHA_DO_MENU = 21
+INICIO_DA_MEDIDA_DO_MENU = 8
+LARGURA_DA_MEDIDA_DO_MENU = 40
+ALTURA_MAXIMA_DO_MENU = 300
+ALTURA_DO_MENU_LONGO = 200
 
 # Tempo para o menu de contexto aparecer depois do clique direito.
 ESPERA_DO_MENU = 0.35
@@ -481,24 +503,35 @@ class TeamService:
     # -- ciclo de reset ----------------------------------------------------
 
     def _achar_team_up(
-        self, ponto_do_clique: tuple[int, int]
+        self, ponto_do_clique: tuple[int, int], antes=None
     ) -> tuple[tuple[int, int], str]:
         """Onde clicar para acionar o "Team up". Devolve (ponto, como achei).
 
         Imagem primeiro, deslocamento como reserva -- é o mesmo critério do
         "Leave the team": template é mais forte que coordenada, porque não depende
         de o menu ter exatamente os itens que estavam no print.
+
+        O deslocamento não é um só: ele DESCE quando o menu vem longo, que é o
+        caso do convidado perto. `antes` é o quadro de ANTES do clique direito, e
+        é comparando com o de agora que se mede a caixa -- ver
+        `DESLOCAMENTO_TEAM_UP`.
         """
         ctx = self.ctx
+        quadro = capture_window(ctx.hwnd)
         template = ctx.templates.load(MENU_TEAM_UP_TEMPLATE)
-        if template is not None:
-            quadro = capture_window(ctx.hwnd)
-            if quadro is not None:
-                achado = find_template(quadro, template, threshold=ANCHOR_THRESHOLD)
-                if achado is not None:
-                    return achado, "template do item"
+        if template is not None and quadro is not None:
+            achado = find_template(quadro, template, threshold=ANCHOR_THRESHOLD)
+            if achado is not None:
+                return achado, "template do item"
+        x, y = ponto_do_clique
         dx, dy = DESLOCAMENTO_TEAM_UP
-        return (ponto_do_clique[0] + dx, ponto_do_clique[1] + dy), "deslocamento medido"
+        alto = altura_da_mudanca(
+            antes, quadro, x + dx, y + INICIO_DA_MEDIDA_DO_MENU,
+            LARGURA_DA_MEDIDA_DO_MENU, ALTURA_MAXIMA_DO_MENU)
+        if ALTURA_DO_MENU_LONGO <= alto < ALTURA_MAXIMA_DO_MENU:
+            dy += LINHAS_A_MAIS_QUANDO_PERTO * ALTURA_DA_LINHA_DO_MENU
+            return (x + dx, y + dy), f"menu longo ({alto}px): o convidado está perto"
+        return (x + dx, y + dy), f"deslocamento medido (caixa de {alto}px)"
 
     def _enviar_convite(self, nick: str) -> bool:
         """Envia o convite pelo MENU DE CONTEXTO da entrada na Block list.
@@ -522,8 +555,10 @@ class TeamService:
             )
             return False
 
-        # Relocaliza a janela: o registro pode ter fechado e reaberto coisas.
-        pontos = self._pontos("block_list")
+        # Relocaliza a janela: o registro pode ter fechado e reaberto coisas. O
+        # quadro fica guardado porque ele é o "antes" da régua do menu.
+        antes = capture_window(ctx.hwnd)
+        pontos = self._pontos("block_list", antes)
         if pontos is None:
             ctx.log.warning(
                 "Não localizei a Block list para abrir o menu de '%s'", nick)
@@ -534,7 +569,7 @@ class TeamService:
         ctx.right_click(linha)
         ctx.tick(ESPERA_DO_MENU)
 
-        alvo, origem = self._achar_team_up(linha)
+        alvo, origem = self._achar_team_up(linha, antes)
         ctx.log.info("Clicando em 'Team up' em %s [%s]", alvo, origem)
         ctx.click(alvo)
         ctx.tick(0.5)
