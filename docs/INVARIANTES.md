@@ -406,6 +406,19 @@ e `docs/decisoes/deletador.md`.
   `_fechar_janelas` seguinte fecha — errar para o longo no menu curto clicaria
   em "Recruit Apprentice", um pedido de aprendiz para a outra conta.
 
+- **O CONTEXTO DO ACEITADOR TEM DE SABER QUEM ELE É.** O seguidor monta um
+  `BotContext` próprio para aceitar dentro da macro, e ele nasce com
+  `char_name = None` — quem preenche é a sessão do supervisor, em OUTRO
+  contexto. O `InviteAcceptor` reconhece o convite pelo anúncio interno
+  (`convite_pendente(meu_nick)`): com o nick vazio, o caminho do anúncio — o
+  único que funciona sem imagem — nem começa, e o seguidor recusa tudo calado.
+  Medido em 16/09/2026: quatro convites, zero cliques, caixa na tela por seis
+  horas.
+- **RECUSA SEM PROVA DEIXA RASTRO.** Havendo convite anunciado e nem imagem nem
+  `modal_open()` para confirmar a caixa, o aceitador registra UMA linha dizendo
+  qual via faltou. Sem ela, "não aceitou em 4s" do lado do líder é tudo o que
+  existe — e não diz nada sobre o lado que não clicou.
+
 Porquê de cada decisão: cabeçalho de `bot/time_do_app.py`.
  — `docs/decisoes/time-do-app.md`
 

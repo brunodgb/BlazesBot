@@ -324,6 +324,24 @@ def aceitador_do_seguidor(sup):
                         "Convite de time não será aceito nesta sessão.", exc)
         return None, None
 
+    # QUEM EU SOU -- sem isto o aceitador não aceita nada.
+    #
+    # `BotContext` nasce com `char_name = None`, e quem preenche é a sessão do
+    # supervisor, no contexto DELA; este aqui é outro. O `InviteAcceptor`
+    # reconhece o convite pelo anúncio interno (`convite_pendente(meu_nick)`), e
+    # com o nick vazio o dicionário nunca bate: o caminho do anúncio -- o único
+    # que funciona sem imagem -- nem começa.
+    #
+    # MEDIDO em 16/09/2026: o líder convidou 'WizzOfBlazes5' quatro vezes,
+    # esperou 4 s por cada uma e desistiu; o seguidor estava na macro e não
+    # clicou nenhuma. A caixa ficou na tela SEIS HORAS, até o aceitador do
+    # supervisor pegá-la num religar do bot.
+    #
+    # O NOME CONFIRMADO NO LOGIN vem primeiro -- é o que a memória leu. O do
+    # config é reserva, e é com ele que o líder anuncia.
+    confirmado = getattr(getattr(sup, "_ctx_atual", None), "char_name", "")
+    ctx.char_name = (confirmado or sup.account.last_char_name or "").strip()
+
     aceitador = InviteAcceptor(ctx, exigir_caixa=True)
 
     def aceitar() -> None:

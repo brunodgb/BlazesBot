@@ -437,10 +437,10 @@ ligar código não testado.
 | `DISTANCIA_MINIMA_DO_ALVO` | `120` | [blazesbot/bot/teste_do_cursor.py:98](blazesbot/bot/teste_do_cursor.py#L98) | instrumentar_clique.py | Distância mínima entre o cursor físico e o alvo, em pixels do cliente. |
 | `ESPERA_DEPOIS_DO_CLIQUE` | `0.35` | [blazesbot/bot/teste_do_cursor.py:100](blazesbot/bot/teste_do_cursor.py#L100) | — | — |
 | `CADENCIA_DAS_CONFERENCIAS` | `60.0` | [blazesbot/bot/time_do_app.py:112](blazesbot/bot/time_do_app.py#L112) | — | De quanto em quanto tempo o líder confere se o time está completo. |
-| `PASSO_DO_MENU` | `0.06` | [blazesbot/bot/time_do_app.py:388](blazesbot/bot/time_do_app.py#L388) | — | — |
-| `TENTATIVAS_DO_PICK_MODE` | `2` | [blazesbot/bot/time_do_app.py:391](blazesbot/bot/time_do_app.py#L391) | — | Tentativas de abrir o submenu antes de desistir nesta montagem. |
+| `PASSO_DO_MENU` | `0.06` | [blazesbot/bot/time_do_app.py:406](blazesbot/bot/time_do_app.py#L406) | — | — |
+| `TENTATIVAS_DO_PICK_MODE` | `2` | [blazesbot/bot/time_do_app.py:409](blazesbot/bot/time_do_app.py#L409) | — | Tentativas de abrir o submenu antes de desistir nesta montagem. |
 | `TENTATIVAS_POR_MEMBRO` | `4` | [blazesbot/bot/time_do_app.py:101](blazesbot/bot/time_do_app.py#L101) | — | Passadas pela fila antes de desistir NESTA montagem. |
-| `TETO_DO_MENU` | `0.8` | [blazesbot/bot/time_do_app.py:387](blazesbot/bot/time_do_app.py#L387) | — | TETO da espera pelo menu e pelo submenu aparecerem. TETO, não gasto: quem |
+| `TETO_DO_MENU` | `0.8` | [blazesbot/bot/time_do_app.py:405](blazesbot/bot/time_do_app.py#L405) | — | TETO da espera pelo menu e pelo submenu aparecerem. TETO, não gasto: quem |
 | `ABERTURAS_POR_TRAJETO` | `4` | [blazesbot/bot/ui_do_jogo.py:566](blazesbot/bot/ui_do_jogo.py#L566) | — | Teto de aberturas do painel por TRAJETO. |
 | `ANCHOR_THRESHOLD` | `0.8` | [blazesbot/bot/ui_do_jogo.py:102](blazesbot/bot/ui_do_jogo.py#L102) | vendedor.py, team.py, janelas_abertas.py | — |
 | `BUSCAS_ANTES_DE_DESISTIR_DA_LEITURA` | `3` | [blazesbot/bot/ui_do_jogo.py:426](blazesbot/bot/ui_do_jogo.py#L426) | — | Quantas buscas seguidas sem a memória responder antes de desistir dela. Duas, e |
@@ -565,7 +565,7 @@ ligar código não testado.
 | `LINHAS_MAXIMAS_DO_DIARIO` | `20000` | [blazesbot/core/diario.py:39](blazesbot/core/diario.py#L39) | — | Teto de linhas por diário. Generoso de propósito -- o diário existe para ser |
 | `HP_MAXIMO_PLAUSIVEL` | `5000000` | [blazesbot/core/entidades.py:40](blazesbot/core/entidades.py#L40) | — | Teto de HP que ainda é HP. Cinco milhões é folgado de sobra para qualquer |
 | `NIVEL_MAXIMO_PLAUSIVEL` | `200` | [blazesbot/core/entidades.py:43](blazesbot/core/entidades.py#L43) | — | Faixa de nível. 200 é folga: o jogo vai a 8x, e o boss da cave é nv51. |
-| `CONFIRMADO` | `'confirmado'` | [blazesbot/core/espera.py:72](blazesbot/core/espera.py#L72) | executor.py, combate.py, ui_do_jogo.py, inputs.py, memory.py, petbug.py, barra.py | Os motivos de uma espera terminar. São chave de contador -- curtos e fixos. |
+| `CONFIRMADO` | `'confirmado'` | [blazesbot/core/espera.py:72](blazesbot/core/espera.py#L72) | executor.py, combate.py, time_do_app.py, ui_do_jogo.py, inputs.py, memory.py, petbug.py, barra.py | Os motivos de uma espera terminar. São chave de contador -- curtos e fixos. |
 | `NAO_SEI` | `'nao_sei'` | [blazesbot/core/espera.py:75](blazesbot/core/espera.py#L75) | rajada_de_npc.py | — |
 | `TETO` | `'teto'` | [blazesbot/core/espera.py:73](blazesbot/core/espera.py#L73) | afericao_do_aliado.py, cura.py, executor.py, sincronia.py, amostragem_de_cliques.py, ui_service.py, combate.py, deletador.py, fada.py, mapa_hh.py, routine.py, morte.py, mural.py, navegacao.py, rajada_de_npc.py, supervisor.py, time_do_app.py, ui_do_jogo.py, vendedor.py, config.py, coleira_do_ponto.py, diario.py, indice_de_tempos.py, inputs.py, mouse_shield.py, pet.py, relatorio_de_latencia.py, volta_ao_ponto.py | — |
 | `VOLTAS` | `'voltas'` | [blazesbot/core/espera.py:74](blazesbot/core/espera.py#L74) | executor.py, rajada_de_npc.py, config.py | — |

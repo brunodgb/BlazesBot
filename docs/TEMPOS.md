@@ -361,13 +361,13 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | *literal em* `_enviar_convite` | 0.5 s | = | FIXO | [team.py:575](blazesbot/bot/team.py#L575) | `_enviar_convite` | Envia o convite pelo MENU DE CONTEXTO da entrada na Block list. |
 | *literal em* `sair_do_time` | 0.4 s | = | FIXO | [team.py:738](blazesbot/bot/team.py#L738) | `sair_do_time` | Sai do time por DOIS CLIQUES medidos no cliente. |
 | *literal em* `sair_do_time` | 0.5 s | = | FIXO | [team.py:753](blazesbot/bot/team.py#L753) | `sair_do_time` | Sai do time por DOIS CLIQUES medidos no cliente. |
-| *literal em* `_aceitar` | 0.5 s | = | FIXO | [team.py:1045](blazesbot/bot/team.py#L1045) | `_aceitar` |  |
-| *literal em* `_recusar` | 0.5 s | = | FIXO | [team.py:1052](blazesbot/bot/team.py#L1052) | `_recusar` |  |
+| *literal em* `_aceitar` | 0.5 s | = | FIXO | [team.py:1065](blazesbot/bot/team.py#L1065) | `_aceitar` |  |
+| *literal em* `_recusar` | 0.5 s | = | FIXO | [team.py:1072](blazesbot/bot/team.py#L1072) | `_recusar` |  |
 | `ESPERA_DEPOIS_DO_CLIQUE` | 0.35 s | = | FIXO | [teste_do_cursor.py:100](blazesbot/bot/teste_do_cursor.py#L100) | `_uma_fase` |  |
 | *literal em* `main` | 8 s | = | FIXO | [teste_do_cursor.py:476](blazesbot/bot/teste_do_cursor.py#L476) | `main` |  |
 | `CADENCIA_DAS_CONFERENCIAS` | 60 s (1 min) | *novo* | PASSO | [time_do_app.py:112](blazesbot/bot/time_do_app.py#L112) | `montar_se_for_a_hora` | De quanto em quanto tempo o líder confere se o time está completo. |
-| `TETO_DO_MENU` | 0.8 s | *novo* | TETO | [time_do_app.py:387](blazesbot/bot/time_do_app.py#L387) | `pick_mode_free` | TETO da espera pelo menu e pelo submenu aparecerem. TETO, não gasto: quem |
-| `PASSO_DO_MENU` | 0.06 s | *novo* | PASSO | [time_do_app.py:388](blazesbot/bot/time_do_app.py#L388) | `pick_mode_free` |  |
+| `TETO_DO_MENU` | 0.8 s | *novo* | TETO | [time_do_app.py:405](blazesbot/bot/time_do_app.py#L405) | `pick_mode_free` | TETO da espera pelo menu e pelo submenu aparecerem. TETO, não gasto: quem |
+| `PASSO_DO_MENU` | 0.06 s | *novo* | PASSO | [time_do_app.py:406](blazesbot/bot/time_do_app.py#L406) | `pick_mode_free` |  |
 | `PASSO_DA_ESPERA_DO_DIALOGO` | 0.08 s | = | PASSO | [ui_do_jogo.py:149](blazesbot/bot/ui_do_jogo.py#L149) | `_esperar_o_dialogo` | Diálogo do NPC aparecer. Era 0,30 s fixos, gastos inteiros mesmo quando o |
 | `LIMITE_INICIAL_DA_ESPERA_DO_DIALOGO` | 0.65 s | = | TETO | [ui_do_jogo.py:188](blazesbot/bot/ui_do_jogo.py#L188) | `limite_da_espera_do_dialogo` | TETO DA ESPERA DO DIÁLOGO -- ajustado pelo que foi MEDIDO, não chutado |
 | `LIMITE_MINIMO_DA_ESPERA_DO_DIALOGO` | 0.18 s | = | TETO | [ui_do_jogo.py:192](blazesbot/bot/ui_do_jogo.py#L192) | `limite_da_espera_do_dialogo` | Piso: o valor que valia antes. Abaixo disto não se aperta nem com evidência -- |

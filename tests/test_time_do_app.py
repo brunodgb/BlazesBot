@@ -327,6 +327,85 @@ def test_o_aceitador_do_seguidor_EXIGE_a_caixa():
     assert "exigir_caixa=True" in fonte
 
 
+def _fabrica_de_ctx(criados):
+    def _fabricar(**kwargs):
+        ctx = _ctx_falso(**kwargs)
+        criados.append(ctx)
+        return ctx
+    return _fabricar
+
+
+def test_o_contexto_do_aceitador_SABE_QUEM_E(monkeypatch):
+    """O DEFEITO DE 16/09/2026 -- o seguidor NUNCA aceitava dentro da macro.
+
+    `BotContext` nasce com `char_name = None` (quem preenche é a sessão do
+    supervisor, no contexto DELA), e o `InviteAcceptor` reconhece o convite por
+    `convite_pendente(meu_nick)`. Com o nick vazio o dicionário nunca bate: o
+    caminho do anúncio -- o único que funciona sem imagem -- nem começa.
+
+    MEDIDO: o líder convidou 'WizzOfBlazes5' quatro vezes, esperou 4 s por cada
+    e desistiu; o seguidor girava a 2 Hz e não clicou nenhuma. A caixa ficou na
+    tela seis horas.
+
+    OS TESTES DAQUI NÃO PEGARAM porque o dublê tinha nome (`char_name="Um"`) e o
+    objeto de verdade não -- por isso este exercita a FÁBRICA, não o aceitador.
+    """
+    sup = _Sup()
+    criados = []
+    monkeypatch.setattr(mod, "BotContext", _fabrica_de_ctx(criados))
+
+    aceitar, fechar = mod.aceitador_do_seguidor(sup)
+
+    assert aceitar is not None and fechar is not None
+    assert criados[0].char_name == "Lider", "o aceitador não sabe quem ele é"
+
+
+def test_o_nome_CONFIRMADO_no_login_vence_o_do_config(monkeypatch):
+    """A memória leu quem realmente está logado; o config pode estar velho."""
+    sup = _Sup()
+    sup._ctx_atual = SimpleNamespace(char_name="OQueOJogoDiz")
+    criados = []
+    monkeypatch.setattr(mod, "BotContext", _fabrica_de_ctx(criados))
+
+    mod.aceitador_do_seguidor(sup)
+
+    assert criados[0].char_name == "OQueOJogoDiz"
+
+
+def test_a_recusa_SEM_PROVA_deixa_rastro_UMA_vez():
+    """Recusar calado foi o que escondeu o defeito por um dia inteiro.
+
+    O líder registra "não aceitou em 4s"; deste lado não havia nada. E uma vez
+    só: o aceitador roda a cada 0,5 s, e repetir a linha encheria o log.
+    """
+    from blazesbot.bot.team import InviteAcceptor
+
+    linhas: list[str] = []
+    ctx = SimpleNamespace(
+        char_name="SemProva",
+        hwnd=1,
+        coords=SimpleNamespace(confirm_ok=(437, 335)),
+        config=SimpleNamespace(farming_accounts=lambda: []),
+        templates=SimpleNamespace(load=lambda nome: None),
+        memory=SimpleNamespace(modal_open=lambda: False, team_size=lambda: None,
+                               tamanho_do_time=lambda: None),
+        click=lambda p: None,
+        tick=lambda s: None,
+        log=SimpleNamespace(info=lambda f, *a: linhas.append(f % a if a else f),
+                            warning=lambda *a, **k: None,
+                            debug=lambda *a, **k: None),
+    )
+    aceitador = InviteAcceptor(ctx, cooldown=0.0, exigir_caixa=True)
+    mural.anunciar_convite("SemProva", "Lider")
+
+    for _ in range(5):
+        assert aceitador.check_and_accept() is False
+
+    avisos = [t for t in linhas if "sem prova de caixa" in t]
+    assert len(avisos) == 1, f"esperava um aviso só: {linhas}"
+    assert "Lider" in avisos[0]
+
+
 def test_sem_caixa_e_sem_imagem_o_aceitador_NAO_clica():
     """O portão de verdade, exercitando o `InviteAcceptor`."""
     from blazesbot.bot.team import InviteAcceptor

@@ -220,7 +220,17 @@ HERDADOS = {
     # `bot/supervisor.py`). Os dois são do caminho quente e nenhum para de
     # crescer sozinho -- o GATE 3 deixou de ser recomendação e virou tarefa.
     "blazesbot/core/inputs.py": 1233,
-    "blazesbot/bot/team.py": 972,                        # TeamService, 18 métodos (59%)
+    # SUBIU DE 972 PARA 1080 EM 16/09/2026. A margem antiga acabou em duas
+    # entregas do mesmo dia: a régua que mede o menu de contexto do convite
+    # (perto do convidado ele vem com 12 itens, não 7) e o aviso da recusa sem
+    # prova de caixa -- sem ele o seguidor recusava o convite CALADO, e o time
+    # do APP não se formava sem deixar uma linha no log.
+    #
+    # O CORTE ESTÁ IDENTIFICADO: `InviteAcceptor` não é `TeamService`. Um
+    # convida e o outro aceita; eles só se encontram pelo mural. São ~200 linhas
+    # com casa pronta (`bot/aceitador.py`), do mesmo tipo que já saiu de
+    # `supervisor.py` para `bot/fada_montagem.py`.
+    "blazesbot/bot/team.py": 1080,                        # TeamService, 18 métodos (59%)
     "blazesbot/bot/vendedor.py": 935,                    # JanelaDeVenda, 19 métodos (65%)
     # COM COSTURA — muitas funções top-level; dividir é possível quando valer
     "blazesbot/config.py": 1942,                         # 15 classes + 10 funções top-level

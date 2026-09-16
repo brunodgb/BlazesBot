@@ -835,6 +835,8 @@ class InviteAcceptor:
         # Cliques dados no Ok para o convite anunciado ATUAL. Zera quando o
         # anúncio é consumido -- ver `MAX_CLIQUES_DE_ACEITE`.
         self._cliques_de_aceite = 0
+        # De quem foi o convite cuja falta de prova eu já avisei.
+        self._sem_prova: str | None = None
 
     # -- modo de verificação -----------------------------------------------
 
@@ -936,6 +938,7 @@ class InviteAcceptor:
             # segunda, e é a que responde quando o `PrintWindow` devolve quadro
             # preto -- que é o caso normal deste cliente fora de primeiro plano.
             if self.exigir_caixa and ponto is None and not self._modal_na_tela():
+                self._avisar_sem_prova(remetente_anunciado, quadro)
                 return False
             # Onde clicar: o Ok localizado por imagem quando ela existe (mais
             # forte), senão a coordenada medida.
@@ -1037,7 +1040,24 @@ class InviteAcceptor:
         )
         return True
 
+    def _avisar_sem_prova(self, remetente: str, quadro) -> None:
+        """Conta UMA vez por convite que não houve prova de caixa na tela.
+
+        Sem esta linha a recusa é INVISÍVEL: o líder registra "não aceitou em
+        4s" e deste lado não há nada -- foi assim que o time do APP não se
+        formou em 16/09/2026 sem deixar rastro. Ela diz qual das duas vias
+        faltou, imagem ou memória, que é a pergunta que sobra.
+        """
+        if self._sem_prova == remetente:
+            return
+        self._sem_prova = remetente
+        self.ctx.log.info(
+            "Convite de '%s' anunciado, mas sem prova de caixa na tela "
+            "(imagem: %s; memória: não) -- não clico às cegas.",
+            remetente, "sem quadro" if quadro is None else "não casou")
+
     def _aceitar(self, ponto: tuple[int, int], motivo: str) -> None:
+        self._sem_prova = None
         self._accepted += 1
         self.ctx.log.info("Convite de time ACEITO (%s no total) — %s @ %s",
                           self._accepted, motivo, ponto)

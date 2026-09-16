@@ -390,3 +390,98 @@ voltou a 2136.
 
 Fica o registro de que `config.py` está **no limite exato**: a próxima linha que
 entrar ali vai ter de vir com a divisão em pacote que o portão pede.
+
+
+## O seguidor nunca aceitava: o contexto do aceitador não sabia quem ele era — 16/09/2026
+
+### O sintoma
+
+*"Reabri o bot e ativei o APP, mas só tem o líder e a fada no time; o terceiro
+integrante, que seria o WizzOfBlazes5, não está em equipe — ele deveria ser
+chamado, mas não foi, simplesmente começa a macro."*
+
+### O que o log dizia — e o que ele não dizia
+
+O líder tinha feito a parte dele, e a montagem funcionou como desenhada:
+
+```
+09:39:13  [blazestpas] Time do APP: faltam gamerblazes no time. Convidando um por vez.
+09:39:23  [blazestpas] 'WizzOfBlazes5' não aceitou em 4s.
+09:39:30  [blazestpas] 'WizzOfBlazes5' não aceitou em 4s.
+09:39:36  [blazestpas] 'WizzOfBlazes5' não aceitou em 4s.
+09:39:43  [blazestpas] gamerblazes não entraram em 4 passada(s).
+```
+
+Do lado do seguidor, **nada**. Nem aceite, nem recusa, nem aviso — e ele estava
+rodando a macro, com o aceitador ligado, a duas conferências por segundo.
+
+Seis horas depois, num religar do bot:
+
+```
+15:09:21  [gamerblazes] Template 'state_team_invite_texto.png' CASOU em (544, 199)
+15:09:21  [gamerblazes] Convite de time ACEITO — sem verificação possível @ (431, 331)
+15:09:26  [gamerblazes] Modo APP iniciado
+```
+
+A caixa do convite tinha ficado na tela o tempo inteiro. Quem a aceitou foi o
+aceitador do SUPERVISOR, nos segundos entre o login e o começo da macro — e foi
+por isso que, quando fui medir, os três já estavam no time.
+
+### A medição que fechou o caso
+
+Leitura ao vivo dos seis clientes, com o bot rodando:
+
+```
+BlazesAPP1     tamanho_do_time()=3   ['BlazesAPP1', 'Tsuki69', 'WizzOfBlazes5']
+Tsuki69        tamanho_do_time()=3   ['BlazesAPP1', 'Tsuki69', 'WizzOfBlazes5']
+WizzOfBlazes5  tamanho_do_time()=3   ['BlazesAPP1', 'Tsuki69', 'WizzOfBlazes5']
+```
+
+Ou seja: no instante da medição o time estava completo e `falta_alguem` devolvia
+`[]` com razão. O defeito não estava na montagem — estava no ACEITE, horas
+antes.
+
+### A causa
+
+`aceitador_do_seguidor` monta um `BotContext` **novo** — o modo APP roda fora do
+contexto do farm, e não há de quem pegar emprestado. Esse contexto nasce com
+`char_name = None`: quem preenche é a sessão do supervisor
+(`supervisor.py`, `ctx.char_name = char_name`), **no contexto dela**.
+
+E o `InviteAcceptor` identifica o convite pelo anúncio interno:
+
+```python
+remetente_anunciado = convite_pendente(self._meu_nick)   # _meu_nick = ctx.char_name
+```
+
+Com o nick vazio o dicionário do mural nunca bate, `remetente_anunciado` é
+`None` e **o caminho do anúncio nem começa**. Sobra o da imagem — e dentro da
+macro o `PrintWindow` deste cliente quase nunca devolve quadro, que é a razão de
+o caminho do anúncio existir.
+
+O `bater(self._meu_nick)` da primeira linha caía na mesma armadilha: com nick
+vazio, a batida também não saía.
+
+### Por que os testes não pegaram
+
+Todos os dublês de contexto passavam `char_name="Um"`. O teste exercitava o
+`InviteAcceptor` — que estava certo — e nunca a FÁBRICA que monta o contexto
+dele. Por isso o teste novo (`test_o_contexto_do_aceitador_SABE_QUEM_E`)
+exercita `aceitador_do_seguidor`, não o aceitador.
+
+### O que mudou
+
+1. **O contexto passa a saber quem é.** Primeiro o nome CONFIRMADO no login
+   (`sup._ctx_atual.char_name`, que veio da memória), e o do config como
+   reserva — que é com ele que o líder anuncia (`_nick_do_login`).
+2. **A recusa sem prova deixa rastro**, uma vez por convite, dizendo qual das
+   duas vias faltou: imagem ou memória. Recusar calado foi o que escondeu isto
+   por um dia inteiro — o líder registrava "não aceitou em 4s" e do outro lado
+   não havia uma linha sequer.
+
+### O que ainda não se sabe
+
+Se `memory.modal_open()` acende para a caixa de convite de time. É a via que
+responde com o cliente fora de primeiro plano, e sem ela o seguidor continuará
+recusando quando a captura vier preta — só que agora **dizendo isso no log**. A
+próxima run responde.
