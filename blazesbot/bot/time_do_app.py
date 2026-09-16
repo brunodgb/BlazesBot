@@ -67,10 +67,16 @@ import time
 
 from . import mural
 from .context import BotContext
-from .team import ESPERA_PELA_RESPOSTA, PASSO_DA_ESPERA_DO_TIME, TeamService
+from .team import (
+    ESPERA_PELA_RESPOSTA,
+    PASSO_DA_ESPERA_DO_TIME,
+    InviteAcceptor,
+    TeamService,
+)
 
 __all__ = ["ATIVADO", "SEGUNDOS_ENTRE_CONFERENCIAS", "TENTATIVAS_POR_MEMBRO",
-           "falta_alguem", "montar_o_time", "montar_se_for_a_hora"]
+           "aceitador_do_seguidor", "falta_alguem", "montar_o_time",
+           "montar_se_for_a_hora"]
 
 # ===========================================================================
 # INTERRUPTOR
@@ -272,3 +278,45 @@ def montar_se_for_a_hora(sup, memoria, em_batalha: bool | None) -> bool:
         return False
     sup._proxima_conferencia_do_time = agora + SEGUNDOS_ENTRE_CONFERENCIAS
     return montar_o_time(sup, memoria)
+
+
+def aceitador_do_seguidor(sup):
+    """(aceitar, fechar) para o seguidor usar DENTRO da macro. `(None, None)`
+    quando não dá para montar.
+
+    =====================================================================
+    POR QUE ISTO PRECISOU EXISTIR
+    =====================================================================
+
+    O `InviteAcceptor` já existe e é bom -- mas ele vive num ramo do laço do
+    supervisor que o modo APP NUNCA alcança: quem entra em `_rodar_modo_app`
+    dá `continue` antes, e fica lá por horas. Uma conta rodando macro nunca
+    aceitaria convite nenhum.
+
+    A CADÊNCIA É A DO EXECUTOR, e não a da volta: o líder espera
+    `ESPERA_PELA_RESPOSTA` por cada convite, e uma volta de macro pode passar
+    disso sozinha. Por isso a chamada entra na espera fatiada da linha, junto do
+    socorro e do perímetro -- ver `executor._esperar`.
+
+    `exigir_caixa=True` é o que separa isto do aceitador da conta de reset:
+    nenhum clique esquerdo sai sem prova de que há caixa na tela.
+    """
+    try:
+        ctx = BotContext(
+            config=sup.config, account=sup.account,
+            pid=sup.pid, hwnd=sup.hwnd,
+            stop_event=sup.stop_event, pause_event=sup.pause_event)
+    except Exception as exc:
+        sup.log.warning("Time do APP: não consegui montar o aceitador (%s). "
+                        "Convite de time não será aceito nesta sessão.", exc)
+        return None, None
+
+    aceitador = InviteAcceptor(ctx, exigir_caixa=True)
+
+    def aceitar() -> None:
+        try:
+            aceitador.check_and_accept()
+        except Exception as exc:
+            sup.log.debug("Time do APP: aceite falhou (%s).", exc)
+
+    return aceitar, ctx.close

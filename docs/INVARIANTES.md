@@ -374,6 +374,17 @@ e `docs/decisoes/deletador.md`.
   o BlazesBot com as contas já logadas, e sem essa conferência o bot ia direto
   para a macro com o time desfeito.
 
+- **O SEGUIDOR ACEITA DENTRO DA MACRO**, na espera fatiada da linha — não entre
+  as voltas. O líder espera poucos segundos por cada convite, e uma volta de
+  macro passa disso sozinha. O `InviteAcceptor` vive num ramo do laço do
+  supervisor que o modo APP nunca alcança.
+- **NENHUM CLIQUE ESQUERDO SAI SEM PROVA DE QUE A CAIXA EXISTE**
+  (`InviteAcceptor(exigir_caixa=True)`). O Ok é clique esquerdo, o mesmo que faz
+  o personagem andar. Imagem primeiro; `memory.modal_open()` é a via que
+  responde com o cliente fora de primeiro plano. A conta de RESET mantém o
+  clique cego de hoje — lá ela fica parada num canto, e apertar a regra mudaria
+  um farm que roda.
+
 Porquê de cada decisão: cabeçalho de `bot/time_do_app.py`.
  — `docs/decisoes/time-do-app.md`
 

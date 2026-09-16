@@ -860,6 +860,9 @@ class HHRoutine:
             self._ir_para(State.ATE_O_BOSS, f"seguindo para o {rotulo}")
             return
 
+        # 0. DESTRAVAR. Antes de tudo -- ver `Navigator.destravar_ao_entrar`.
+        self.nav.destravar_ao_entrar("entrada na HH")
+
         # 1 e 2. VIDA E BUFFS.
         self.combat.curar_ao_entrar()
         self.combat.apply_buffs()

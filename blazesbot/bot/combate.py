@@ -58,9 +58,9 @@ import time
 from dataclasses import dataclass
 
 from ..core import calibracao, diario, target_hybrid, vision
+from ..core import pet as pet_core
 from ..core.pet import (
     LIMITE_DE_ATRASO_DA_COMIDA_EM_MINUTOS,
-    SEGUNDOS_PARA_A_COMIDA_SER_USADA,
     PetFeeder,
 )
 from ..core.target_hybrid import MorteDoAlvo, TargetHybrid
@@ -4016,12 +4016,19 @@ class CombatEngine:
             )
             return False
 
-        # A JANELA EM QUE A AÇÃO SEGUINTE CANCELA O ITEM.
+        # A JANELA EM QUE A AÇÃO SEGUINTE CANCELA O ITEM -- agora é BARREIRA,
+        # não espera cega.
         #
-        # Era `tick(0.5)`, e `_do_curar` monta logo depois: medido no log, a
-        # tecla da montaria saía 600 ms depois da comida e cancelava o uso. Ver
-        # `SEGUNDOS_PARA_A_COMIDA_SER_USADA` em `core/pet.py`.
-        ctx.tick(SEGUNDOS_PARA_A_COMIDA_SER_USADA)
+        # Era `tick(1.5)` aqui dentro, e em 16/09/2026 o log mostrou a montaria
+        # saindo 1,65 s depois da comida: 150 ms fora da janela, cancelando o
+        # item em TODA refeição (felicidade de 94 para 45 em 20 h, com as 26
+        # refeições acontecendo na hora certa).
+        #
+        # Dormir aqui nunca poderia resolver: quem cancela é a ação seguinte, e
+        # ela mora em outro arquivo. Então marca-se o instante e QUEM VAI
+        # MONTAR OU ANDAR espera o que falta (`navegacao`, via
+        # `pet.esperar_a_comida`). Run que não se move não paga nada.
+        pet_core.comeu_agora(ctx.hwnd)
 
         # A GRADE AVANÇA a partir do vencimento, não do agora -- é o que mantém
         # o número de refeições por dia. O `PetFeeder` já grava no disco. Ver

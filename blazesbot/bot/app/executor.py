@@ -886,6 +886,10 @@ class ExecutorDeMacro:
         # entrada morreu. `None` = ninguém ligou o desfecho, e aí o bot faz o
         # que fazia: avisa e continua. Ver `core/teclado_mudo.py`.
         declarar_queda: Callable[[str], None] | None = None,
+        # ACEITAR CONVITE DE TIME, para o seguidor do APP. Chega como função
+        # porque o aceitador mora em `bot/` e este executor importa só `core.*`.
+        # `None` = a conta não aceita convite (é o comportamento de sempre).
+        aceitar_convite: Callable[[], None] | None = None,
         limpar_a_bolsa: Callable[[], None] | None = None,
         voltas_por_limpeza: Callable[[], int] | None = None,
         # Trava de posição: campos de configuração (salvos no config.json).
@@ -1050,6 +1054,7 @@ class ExecutorDeMacro:
         # `_abortar_a_volta` e `core/cadencia_da_bolsa.py`.
         self._ultimo_corte = "início"
         self._declarar_queda = declarar_queda
+        self._aceitar_convite = aceitar_convite
         # O PERÍMETRO: quantos recolhimentos seguidos falharam e até quando a
         # desistência vale. Ver `_recolher_ao_ponto`.
         self._recolhimentos_falhos = 0
@@ -1200,6 +1205,12 @@ class ExecutorDeMacro:
                 # quem mata quem está batendo é ela. Ver `cura.socorro`.
                 if self.cura is not None:
                     self.cura.socorro()
+                # CONVITE DE TIME -- 16/09/2026. Aqui e não entre as voltas: o
+                # líder espera poucos segundos por cada convite, e uma volta de
+                # macro passa disso sozinha. Só age quando há convite
+                # anunciado; sem isso é uma consulta a um dicionário.
+                if self._aceitar_convite is not None:
+                    self._aceitar_convite()
                 # "ABORTA IMEDIATAMENTE QUALQUER ATAQUE, MACRO OU ESPERA" --
                 # e a espera é aqui. Sem isto, uma linha de 3 s continuaria
                 # correndo com o personagem já fora do perímetro.

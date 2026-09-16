@@ -119,16 +119,86 @@ from collections.abc import Callable
 # item, e o sintoma é o que o usuário relatou -- *"estou a horas com a
 # quantidade 20"*: o log diz que alimentou, a bolsa diz que não.
 #
-# O VALOR NÃO É MEDIDO AINDA, e isso está escrito de propósito. Ele é herdado do
-# irmão medido mais próximo: `ensure_pet` espera 1,5 s depois da tecla de
-# invocar (`docs/tempos-originais.json`), no mesmo cliente e no mesmo tipo de
-# ação. É TETO conservador, não gasto fixo -- só custa em run que alimenta, ou
-# seja uma vez por hora.
+# ===========================================================================
+# 1,5 -> 4,0 EM 16/09/2026: O DEFEITO NUNCA FOI CONSERTADO, SÓ ENCURTADO
+# ===========================================================================
 #
-# COMO MEDIR (para quem vier depois): conte os itens na bolsa antes e depois,
-# variando este número para baixo até a contagem parar de cair. Enquanto isso não
-# for feito, o número fica aqui, com este comentário.
-SEGUNDOS_PARA_A_COMIDA_SER_USADA = 1.5
+# Teste do usuário: conta `creubo` rodando HH por 20 horas, alimentação a cada
+# 50 min. A grade cumpriu -- **26 refeições, intervalos de 47 a 53 min** --, e
+# mesmo assim a felicidade do pet caiu de **94 para 45**. O bot apertava a tecla
+# e a comida não entrava.
+#
+# O LOG DE 16/09/2026 08:56 MOSTRA A MESMA FORMA DE 27/08, 150 ms ADIANTE:
+#
+#     +0.00s  Alimentando o pet (a cada 50 min) | tecla=6   <- a tecla sai
+#     +1.65s  Não estou montado; montando antes de atravessar a cave
+#     +1.86s  Barra de atalhos na página 1 (montar)
+#     +3.91s  Montaria ativa
+#
+# A janela de 1,5 s terminava 150 ms antes de a montaria ser acionada. Montar
+# cancela o uso do item -- e a comida se perdia toda vez.
+#
+# A PROVA PELO CONTRÁRIO ESTÁ NO MESMO LOG: no ecossistema APP, que é o único
+# que mantém a felicidade, depois da comida vêm **2,0 s sem nada** e a ação
+# seguinte é uma TECLA de ataque, não uma montaria. Lá a comida entra.
+#
+# POR QUE 4,0 E NÃO 1,7: a duração da animação de comer NÃO é conhecida -- não há
+# ponteiro de fome nem de felicidade mapeado, então não dá para confirmar o
+# consumo por memória. O que se sabe é a ASSIMETRIA: ser generoso custa 4 s por
+# refeição (0,13% do tempo de uma conta que come a cada 50 min), e ser curto
+# custa a refeição INTEIRA. Diante de incerteza, o erro barato é esperar demais.
+#
+# E DESDE 16/09/2026 ISTO É TETO, NÃO GASTO: `feed_pet` não dorme mais este
+# tempo. Ele MARCA o instante (`comeu_agora`) e quem paga é a próxima ação que
+# cancelaria o item -- montar ou andar --, esperando só o que ainda falta. Run
+# que não se move nos 4 s seguintes não paga nada.
+#
+# COMO MEDIR DE VERDADE (para quem vier depois): baixe até a felicidade do pet
+# voltar a cair depois de um dia de farm. É caro, e é por isso que o número
+# começa generoso.
+SEGUNDOS_PARA_A_COMIDA_SER_USADA = 4.0
+
+
+# ===========================================================================
+# A BARREIRA DA COMIDA -- por janela, porque o bot roda várias contas
+# ===========================================================================
+#
+# Guarda o instante da última tecla de comida por `hwnd`. Quem vai MONTAR ou
+# ANDAR pergunta quanto falta e espera só isso. Estado de módulo pelo mesmo
+# motivo de `hotbar._ultimo_reset`: é do CLIENTE, não do ecossistema, e uma
+# thread por conta escreve a sua própria chave.
+_COMIDA_EM: dict[int, float] = {}
+
+
+def comeu_agora(hwnd: int) -> None:
+    """Marca que a tecla da comida acabou de sair nesta janela."""
+    _COMIDA_EM[int(hwnd or 0)] = time.monotonic()
+
+
+def falta_da_comida(hwnd: int) -> float:
+    """Quantos segundos ainda protegem a comida nesta janela. `0.0` = livre."""
+    comeu = _COMIDA_EM.get(int(hwnd or 0))
+    if comeu is None:
+        return 0.0
+    falta = SEGUNDOS_PARA_A_COMIDA_SER_USADA - (time.monotonic() - comeu)
+    return falta if falta > 0 else 0.0
+
+
+def esperar_a_comida(ctx, o_que: str) -> float:
+    """Espera o que falta da comida ANTES de montar ou andar. Devolve o gasto.
+
+    É a correção de 16/09/2026: a montaria saía 1,65 s depois da comida e
+    cancelava o item, com o log dizendo que tinha alimentado. Agora quem cancela
+    é quem espera -- e só quando ainda há o que proteger.
+    """
+    falta = falta_da_comida(getattr(ctx, "hwnd", 0))
+    if falta <= 0:
+        return 0.0
+    ctx.log.info(
+        "Comida do pet ainda sendo usada: seguro %s por %.1f s (montar ou "
+        "andar agora cancelaria o item).", o_que, falta)
+    ctx.tick(falta)
+    return falta
 
 
 # ===========================================================================

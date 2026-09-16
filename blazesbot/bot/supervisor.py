@@ -48,7 +48,12 @@ from .login import (
     StopDuringLogin,
 )
 from .team import InviteAcceptor
-from .time_do_app import montar_se_for_a_hora as _montar_time_do_app
+from .time_do_app import (
+    aceitador_do_seguidor as _aceitador_do_seguidor,
+)
+from .time_do_app import (
+    montar_se_for_a_hora as _montar_time_do_app,
+)
 from .watchdog import (
     VISUAL_CHECK_SECONDS,
     DcReason,
@@ -2161,6 +2166,12 @@ class AccountSupervisor(threading.Thread):
             except Exception:
                 return None
 
+        # O ACEITADOR DO SEGUIDOR, montado uma vez. Ver
+        # `time_do_app.aceitador_do_seguidor`: o `InviteAcceptor` vive num ramo
+        # do laço que o modo APP nunca alcança, e a macro precisa aceitar
+        # convite sem sair dela.
+        _aceitar_convite, _fechar_o_aceitador = _aceitador_do_seguidor(self)
+
         def antes_de_cada_volta() -> None:
             """SINAL DE VIDA do seguidor + a barra de atalhos, por volta.
 
@@ -2426,6 +2437,7 @@ class AccountSupervisor(threading.Thread):
             antes_da_volta=antes_de_cada_volta,
             conferir_saude=conferir_saude,
             declarar_queda=declarar_queda,
+            aceitar_convite=_aceitar_convite,
             limpar_a_bolsa=limpar_a_bolsa,
             # FUNÇÃO, e não número: mudar o "a cada N voltas" na interface com o
             # bot rodando passa a valer na volta seguinte, sem religar nada.
@@ -2527,6 +2539,11 @@ class AccountSupervisor(threading.Thread):
         try:
             executor.rodar()
         finally:
+            if _fechar_o_aceitador is not None:
+                try:
+                    _fechar_o_aceitador()
+                except Exception:
+                    pass
             # SAIR DO MURAL. Sem isto a conta que parou continuaria publicada
             # por `ESTADO_VALIDO_SEGUNDOS`, e nesse intervalo o time esperaria
             # a largada de quem não está mais lá -- exatamente o "esperar por

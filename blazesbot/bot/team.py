@@ -772,9 +772,27 @@ class InviteAcceptor:
     deixaria o reset impossível nesse arranjo.
     """
 
-    def __init__(self, ctx: BotContext, cooldown: float = 0.5) -> None:
+    def __init__(self, ctx: BotContext, cooldown: float = 0.5,
+                 exigir_caixa: bool = False) -> None:
         self.ctx = ctx
         self.cooldown = cooldown
+        # SÓ CLICA COM A CAIXA CONFIRMADA -- 16/09/2026, para o modo APP.
+        #
+        # O caminho do anúncio clica no Ok pela coordenada medida ANTES de a
+        # caixa aparecer, de propósito: ela leva um ou dois segundos e um clique
+        # cedo demais não aceitaria nada. Numa conta de reset, parada num canto,
+        # clique perdido não custa nada.
+        #
+        # NO MODO APP CUSTA: o Ok é clique ESQUERDO, o mesmo que faz o
+        # personagem andar, e um que caia na cena 3D tira a conta do ponto de
+        # farm. Pedido do usuário em 15/09/2026: *"é importante que só clique
+        # depois que aparecer a mensagem de aceitar, mesmo que isso atrase um
+        # pouco o aceitar"*.
+        #
+        # LIGADO POR INSTÂNCIA, e não para todo mundo: o reset da cave funciona
+        # hoje com o clique cego, e apertar a regra lá mudaria um farm que roda
+        # sem ninguém ter pedido.
+        self.exigir_caixa = exigir_caixa
         self._last_check = 0.0
         self._accepted = 0
         self._recusados = 0
@@ -807,6 +825,19 @@ class InviteAcceptor:
             conta.settings.reset_nick.strip().lower() == meu
             for conta in self.ctx.config.farming_accounts()
         )
+
+    def _modal_na_tela(self) -> bool:
+        """O jogo diz que há uma caixa modal aberta? Leitura de MEMÓRIA.
+
+        `modal_open()` é o mesmo flag genérico que a Block list já usa para
+        saber se a confirmação do Remove apareceu. Ele não distingue QUAL caixa
+        -- e não precisa: quem diz que existe um convite é o anúncio interno;
+        isto só confirma que há algo clicável na tela.
+        """
+        try:
+            return bool(self.ctx.memory.modal_open())
+        except Exception:
+            return False
 
     def _achar_caixa(self, quadro) -> tuple[int, int] | None:
         """Centro do texto invariante do convite, se a caixa está na tela."""
@@ -863,6 +894,14 @@ class InviteAcceptor:
         # template do convite nunca casava e a conta de reset não clicava em nada.
         remetente_anunciado = convite_pendente(self._meu_nick)
         if remetente_anunciado is not None:
+            # O PORTÃO (só com `exigir_caixa`): sem prova de que a caixa está na
+            # tela, não sai clique.
+            #
+            # A IMAGEM é a primeira via (e dá o ponto exato). A MEMÓRIA é a
+            # segunda, e é a que responde quando o `PrintWindow` devolve quadro
+            # preto -- que é o caso normal deste cliente fora de primeiro plano.
+            if self.exigir_caixa and ponto is None and not self._modal_na_tela():
+                return False
             # Onde clicar: o Ok localizado por imagem quando ela existe (mais
             # forte), senão a coordenada medida.
             if ponto is not None:

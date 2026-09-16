@@ -48,6 +48,7 @@ import time
 from collections.abc import Callable
 
 from ..core import diario
+from ..core import pet as pet_core
 from ..core.rota import distancia, houve_rollback, vizinhos_na_rota
 from ..core.zones import (
     MAP_DISTANCE_THRESHOLD,
@@ -375,7 +376,13 @@ SEGUNDOS_ANTES_DE_CUTUCAR = 10.0
 # viajar. Um clique de minimapa alcanca ~17,6 unidades, entao 6 e menos de meio
 # clique -- e a tolerancia dos waypoints da rota e 7, entao o passo cabe DENTRO
 # da tolerancia e nao tira o personagem do ponto.
-PASSO_PARA_DESTRAVAR_A_MONTARIA = 6
+#
+# SERVE A DOIS USOS, e por isso o nome nao fala mais em montaria: o passo de
+# resgate quando a montaria nao sobe (`_passo_para_destravar_a_montaria`) e o
+# passo PREVENTIVO ao entrar na cave (`destravar_ao_entrar`). Regra do usuario,
+# 16/09/2026: *"o bug do jogo sempre que acontece ele atrapalha tudo, seja usar
+# a montaria, seja se curar, seja fazer qualquer acao"*.
+PASSO_PARA_DESTRAVAR = 6
 
 # Depois de quantos ciclos sem montar o portao para de insistir MUDO e vai
 # PROCURAR A CAUSA -- e, quando a causa tem tratamento, tira ela do caminho.
@@ -1931,6 +1938,10 @@ class Navigator:
                                      timeout: float = TETO_DO_PORTAO) -> bool:
         """PORTÃO obrigatório antes de qualquer deslocamento.
 
+        E TAMBÉM O PORTÃO DA COMIDA DO PET (16/09/2026): montar cancela o uso do
+        item, e a montaria saía 1,65 s depois da tecla da comida. Ver
+        `core/pet.esperar_a_comida`.
+
         A ORDEM É ESTRITA e é o ponto todo desta função:
 
             1. CONFERIR   -- a memória diz se a montaria está ativa
@@ -2128,6 +2139,30 @@ class Navigator:
         )
         self.destravar_o_combate(motivo)
 
+    def destravar_ao_entrar(self, motivo: str) -> bool:
+        """Um passo curto ASSIM QUE ENTRA na cave, antes de qualquer acao.
+
+        Mesma mecanica de `_passo_para_destravar_a_montaria`, sem as travas de
+        tempo: aqui nao e resgate de um estado ja preso, e sim prevencao no
+        unico instante em que o bug aparece. Ver `docs/decisoes/navegacao.md`.
+
+        Devolve se o personagem realmente se moveu -- e a resposta NAO decide
+        nada: nao ter andado nao e motivo para adiar o preparo.
+        """
+        ctx = self.ctx
+        onde = self.position()
+        if onde is None:
+            return False
+        dx, dy = BUSSOLA[self._direcao_do_passo_de_destrave % len(BUSSOLA)]
+        self._direcao_do_passo_de_destrave += 1
+        andou = self._clicar_offset_e_verificar(onde, PASSO_PARA_DESTRAVAR,
+                                                dx, dy)
+        ctx.log.info(
+            "Destravando ao entrar (%s): andei %s unidades de %s (%s).",
+            motivo, PASSO_PARA_DESTRAVAR, onde,
+            "o personagem se moveu" if andou else "NAO saiu do lugar")
+        return andou
+
     def _passo_para_destravar_a_montaria(self, motivo: str,
                                          gasto: float) -> bool:
         """Anda um passo curto. Andar destrava a montaria que o jogo cancelou.
@@ -2160,12 +2195,12 @@ class Navigator:
         self._direcao_do_passo_de_destrave += 1
 
         andou = self._clicar_offset_e_verificar(
-            onde, PASSO_PARA_DESTRAVAR_A_MONTARIA, dx, dy)
+            onde, PASSO_PARA_DESTRAVAR, dx, dy)
         ctx.log.info(
             "Nao monto para %s ha %.0fs e NAO estou em batalha: o jogo deve ter "
             "cancelado a montaria sozinho. Andei %s unidades de %s (%s) -- "
             "andar destrava esse bug.",
-            motivo, gasto, PASSO_PARA_DESTRAVAR_A_MONTARIA, onde,
+            motivo, gasto, PASSO_PARA_DESTRAVAR, onde,
             "o personagem se moveu" if andou else "NAO saiu do lugar",
         )
         return andou
@@ -2182,6 +2217,8 @@ class Navigator:
         e só o TOQUE na tecla respeita intervalo, porque a tecla é um interruptor.
         """
         ctx = self.ctx
+        # A COMIDA DO PET PRIMEIRO: montar dentro da janela dela cancela o item.
+        pet_core.esperar_a_comida(ctx, f"montar para {motivo}")
         if not ctx.settings.keys.mount:
             return
 

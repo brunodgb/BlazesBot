@@ -307,3 +307,120 @@ def test_o_supervisor_LIGA_a_montagem_nos_DOIS_pontos():
     arranque = fonte.index("_montar_time_do_app(", fonte.index("def antes_de_cada_volta"))
     assert arranque < fonte.index("executor.rodar()"), \
         "a montagem do arranque tem que vir ANTES da macro"
+
+
+# ---------------------------------------------------------------------------
+# O SEGUIDOR ACEITANDO DENTRO DA MACRO
+# ---------------------------------------------------------------------------
+
+def test_o_aceitador_do_seguidor_EXIGE_a_caixa():
+    """*"É importante que só clique depois que aparecer a mensagem de aceitar,
+    mesmo que isso atrase um pouco."*
+
+    O Ok é clique ESQUERDO -- o mesmo que faz o personagem andar. O aceitador da
+    conta de reset clica antes de a caixa existir DE PROPÓSITO (ela é parada num
+    canto); no APP isso tira a conta do ponto de farm.
+    """
+    import inspect
+
+    fonte = inspect.getsource(mod.aceitador_do_seguidor)
+    assert "exigir_caixa=True" in fonte
+
+
+def test_sem_caixa_e_sem_imagem_o_aceitador_NAO_clica():
+    """O portão de verdade, exercitando o `InviteAcceptor`."""
+    from blazesbot.bot.team import InviteAcceptor
+
+    cliques = []
+    ctx = SimpleNamespace(
+        char_name="Um",
+        hwnd=1,
+        coords=SimpleNamespace(confirm_ok=(437, 335)),
+        config=SimpleNamespace(farming_accounts=lambda: []),
+        templates=SimpleNamespace(load=lambda nome: None),
+        memory=SimpleNamespace(modal_open=lambda: False, team_size=lambda: None,
+                               tamanho_do_time=lambda: None),
+        click=lambda p: cliques.append(p),
+        tick=lambda s: None,
+        log=SimpleNamespace(info=lambda *a, **k: None,
+                            warning=lambda *a, **k: None,
+                            debug=lambda *a, **k: None),
+    )
+    aceitador = InviteAcceptor(ctx, cooldown=0.0, exigir_caixa=True)
+    mural.anunciar_convite("Um", "Lider")
+
+    assert aceitador.check_and_accept() is False
+    assert cliques == [], "clicou sem prova de que a caixa existe"
+
+
+def test_COM_o_modal_aberto_o_aceitador_clica():
+    """A memória é a via que responde com o cliente fora de primeiro plano."""
+    from blazesbot.bot.team import InviteAcceptor
+
+    cliques = []
+    ctx = SimpleNamespace(
+        char_name="Um",
+        hwnd=1,
+        coords=SimpleNamespace(confirm_ok=(437, 335)),
+        config=SimpleNamespace(farming_accounts=lambda: []),
+        templates=SimpleNamespace(load=lambda nome: None),
+        memory=SimpleNamespace(modal_open=lambda: True, team_size=lambda: None,
+                               tamanho_do_time=lambda: 2),
+        click=lambda p: cliques.append(p),
+        tick=lambda s: None,
+        log=SimpleNamespace(info=lambda *a, **k: None,
+                            warning=lambda *a, **k: None,
+                            debug=lambda *a, **k: None),
+    )
+    aceitador = InviteAcceptor(ctx, cooldown=0.0, exigir_caixa=True)
+    mural.anunciar_convite("Um", "Lider")
+
+    assert aceitador.check_and_accept() is True
+    assert cliques == [(437, 335)]
+    assert mural.aceite_pendente("Lider") == "Um", "não avisou quem convidou"
+
+
+def test_a_conta_de_RESET_continua_clicando_sem_a_caixa():
+    """O padrão é o comportamento de hoje -- um farm que roda não muda sozinho."""
+    from blazesbot.bot.team import InviteAcceptor
+
+    cliques = []
+    ctx = SimpleNamespace(
+        char_name="Reseter",
+        hwnd=1,
+        coords=SimpleNamespace(confirm_ok=(437, 335)),
+        config=SimpleNamespace(farming_accounts=lambda: []),
+        templates=SimpleNamespace(load=lambda nome: None),
+        memory=SimpleNamespace(modal_open=lambda: False, team_size=lambda: None,
+                               tamanho_do_time=lambda: None),
+        click=lambda p: cliques.append(p),
+        tick=lambda s: None,
+        log=SimpleNamespace(info=lambda *a, **k: None,
+                            warning=lambda *a, **k: None,
+                            debug=lambda *a, **k: None),
+    )
+    aceitador = InviteAcceptor(ctx, cooldown=0.0)      # sem `exigir_caixa`
+    mural.anunciar_convite("Reseter", "Lider")
+
+    assert aceitador.check_and_accept() is True
+    assert cliques == [(437, 335)]
+
+
+def test_o_executor_CHAMA_o_aceite_na_espera_fatiada():
+    """Entre voltas seria tarde: o líder desiste antes de a volta terminar."""
+    import inspect
+
+    from blazesbot.bot.app import executor
+
+    fonte = inspect.getsource(executor.ExecutorDeMacro._esperar)
+    assert "self._aceitar_convite()" in fonte
+
+
+def test_o_supervisor_INJETA_o_aceite_no_executor():
+    import inspect
+
+    from blazesbot.bot import supervisor
+
+    fonte = inspect.getsource(supervisor.AccountSupervisor._rodar_modo_app)
+    assert "_aceitador_do_seguidor(self)" in fonte
+    assert "aceitar_convite=_aceitar_convite" in fonte
