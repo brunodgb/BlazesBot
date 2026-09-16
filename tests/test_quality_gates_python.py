@@ -212,7 +212,14 @@ HERDADOS = {
     "blazesbot/gui/account_dialog.py": 1418,             # AccountDialog, 20 métodos (92%)
     #  +3 em 04/09: campo, carga e gravação da tecla `revive_skill`
     "blazesbot/bot/login.py": 1134,                      # LoginSequence, 26 métodos (84%)
-    "blazesbot/core/inputs.py": 1111,                    # Input, 27 métodos (68%)
+    # SUBIU DE 1111 PARA 1233 EM 16/09/2026, e a folga que sobrava era de TRÊS
+    # linhas. O que entrou foi `passar_o_mouse` -- o hover sintético, primitiva
+    # nova e sem substituto: submenu de menu de contexto NÃO abre com clique.
+    #
+    # É O SEGUNDO ARQUIVO NESTA SEMANA a encostar em 100% da margem (o outro é
+    # `bot/supervisor.py`). Os dois são do caminho quente e nenhum para de
+    # crescer sozinho -- o GATE 3 deixou de ser recomendação e virou tarefa.
+    "blazesbot/core/inputs.py": 1233,
     "blazesbot/bot/team.py": 972,                        # TeamService, 18 métodos (59%)
     "blazesbot/bot/vendedor.py": 935,                    # JanelaDeVenda, 19 métodos (65%)
     # COM COSTURA — muitas funções top-level; dividir é possível quando valer

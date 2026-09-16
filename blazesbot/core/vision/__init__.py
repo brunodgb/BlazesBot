@@ -84,6 +84,7 @@ from blazesbot.core.vision.templates import (
     find_template,
     highlight_ratio,
     melhor_casamento,
+    regiao_mudou,
     region_is_uniform,
     template_present,
 )
@@ -125,6 +126,7 @@ __all__ = [
     "marcador_de_morte",
     "marcador_de_morte_em_cor",
     "melhor_casamento",
+    "regiao_mudou",
     "region_is_uniform",
     "release_pool",
     "template_present",

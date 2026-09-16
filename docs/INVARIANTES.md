@@ -385,6 +385,18 @@ e `docs/decisoes/deletador.md`.
   clique cego de hoje — lá ela fica parada num canto, e apertar a regra mudaria
   um farm que roda.
 
+- **PICK MODE: FREE, ao formar o time.** Sem ele o loot dos mobs não é
+  recolhido. O submenu **não abre com clique** — clicar em "Pick Mode:" FECHA o
+  menu (medido à mão pelo usuário); abre com o mouse POR CIMA
+  (`Input.passar_o_mouse`, `WM_MOUSEMOVE` sintético, sem cursor físico).
+- **SEM PROVA, NENHUM CLIQUE NO SUBMENU.** Não existe template de menu de
+  contexto em disco — `menu_leave_team.png` e `menu_team_up.png` são carregados
+  e não existem, e as coordenadas medidas é que são o mecanismo. Aqui a prova é
+  a REGIÃO MUDAR (`vision.regiao_mudou`). Errar a linha do submenu selecionaria
+  "Dice" ou "Teamlead", que é pior que não fazer nada.
+- **O "Free" fica na MESMA ALTURA do hover** — ele é o primeiro item e o submenu
+  abre alinhado com a linha. Deduzir a altura seria um segundo palpite.
+
 Porquê de cada decisão: cabeçalho de `bot/time_do_app.py`.
  — `docs/decisoes/time-do-app.md`
 

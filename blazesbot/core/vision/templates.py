@@ -108,6 +108,30 @@ def crop(
     return frame[y:y + h, x:x + w]
 
 
+def regiao_mudou(
+    antes: np.ndarray | None,
+    depois: np.ndarray | None,
+    region: tuple[int, int, int, int],
+    minimo: float = 12.0,
+) -> bool:
+    """Alguma coisa APARECEU (ou sumiu) nesta região entre os dois quadros?
+
+    Responde "o submenu abriu?" sem template: o menu de contexto do jogo não tem
+    recorte em disco, e um submenu que aparece sobre a cena 3D muda a região
+    inteira. Compara-se a média absoluta da diferença -- ruído de animação da
+    cena fica bem abaixo de `minimo`, uma caixa opaca aparecendo fica muito
+    acima.
+
+    `False` quando falta qualquer um dos quadros: sem os dois não há comparação,
+    e "não sei" nunca autoriza um clique.
+    """
+    a = crop(antes, region)
+    b = crop(depois, region)
+    if a is None or b is None or a.size == 0 or a.shape != b.shape:
+        return False
+    return float(np.abs(a.astype(np.int16) - b.astype(np.int16)).mean()) >= minimo
+
+
 def region_is_uniform(
     frame: np.ndarray | None,
     region: tuple[int, int, int, int],

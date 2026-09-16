@@ -424,3 +424,134 @@ def test_o_supervisor_INJETA_o_aceite_no_executor():
     fonte = inspect.getsource(supervisor.AccountSupervisor._rodar_modo_app)
     assert "_aceitador_do_seguidor(self)" in fonte
     assert "aceitar_convite=_aceitar_convite" in fonte
+
+
+# ---------------------------------------------------------------------------
+# PICK MODE: FREE
+# ---------------------------------------------------------------------------
+
+class _CtxMenu:
+    """O `ctx` do menu de contexto, com o quadro trocando (ou não) no hover."""
+
+    def __init__(self, submenu_abre=True, hover_aceito=True):
+        import numpy as np
+
+        self.cliques: list[tuple[int, int]] = []
+        self.direitos: list[tuple[int, int]] = []
+        self.teclas: list[str] = []
+        self.hovers: list[tuple[int, int]] = []
+        self._submenu_abre = submenu_abre
+        self._hover_aceito = hover_aceito
+        self._np = np
+        self._quadro = np.zeros((300, 400, 3), dtype=np.uint8)
+        self.hwnd = 1
+        self.coords = SimpleNamespace(own_portrait=(44, 48),
+                                      menu_leave_team=(82, 97))
+        self.input = SimpleNamespace(passar_o_mouse=self._hover)
+
+    def _hover(self, x, y):
+        self.hovers.append((x, y))
+        if self._hover_aceito and self._submenu_abre:
+            # A caixa opaca aparecendo sobre a cena.
+            self._quadro = self._np.full((300, 400, 3), 180, dtype=self._np.uint8)
+        return self._hover_aceito
+
+    def capturar(self, _hwnd):
+        return self._quadro.copy()
+
+    def right_click(self, p, **k):
+        self.direitos.append(p)
+        # O menu desenhando: a região do retrato deixa de ser o que era.
+        self._quadro = self._np.full((300, 400, 3), 90, dtype=self._np.uint8)
+
+    def click(self, p):
+        self.cliques.append(p)
+
+    def press(self, tecla, **k):
+        self.teclas.append(tecla)
+
+    def tick(self, s):
+        pass
+
+    def raise_if_stopped(self):
+        """`espera.ate` pergunta isto a cada volta -- o botão Parar responde."""
+        pass
+
+
+def _com_captura(monkeypatch, ctx):
+    from blazesbot.core import vision
+
+    monkeypatch.setattr(vision, "capture_window", ctx.capturar)
+
+
+def test_o_pick_mode_passa_o_mouse_e_clica_no_Free(monkeypatch):
+    """*"Tem que passar o mouse em cima do 'Pick Mode:' (pois o clique fecha o
+    menu) e selecionar a opção 'Free'."*"""
+    sup = _Sup()
+    ctx = _CtxMenu(submenu_abre=True)
+    _com_captura(monkeypatch, ctx)
+
+    assert mod.pick_mode_free(sup, ctx) is True
+    assert ctx.direitos == [(44, 48)], "não abriu o menu do próprio personagem"
+    assert ctx.hovers, "não passou o mouse"
+    assert ctx.cliques, "não clicou no Free"
+
+
+def test_o_Free_fica_na_MESMA_altura_do_hover():
+    """O submenu abre alinhado com a linha, e Free é o PRIMEIRO item.
+
+    Deduzir a altura do Free seria um segundo palpite -- e errá-lo selecionaria
+    'Dice' ou 'Teamlead', que é pior que não fazer nada.
+    """
+    assert mod.DESLOCAMENTO_DO_FREE[1] == 0
+
+
+def test_o_pick_mode_usa_a_MESMA_coluna_do_Leave_the_team():
+    """As duas são linhas do mesmo menu; só a altura muda."""
+    assert mod.DESLOCAMENTO_DO_PICK_MODE[0] == 0
+
+
+def test_SUBMENU_que_nao_abre_NAO_clica_em_nada(monkeypatch):
+    """Sem prova de que o submenu está na tela, nenhum clique sai.
+
+    É o pior lugar da tela para clicar no escuro: errar a linha troca o modo
+    para 'Dice' ou 'Teamlead'.
+    """
+    sup = _Sup()
+    ctx = _CtxMenu(submenu_abre=False)
+    _com_captura(monkeypatch, ctx)
+
+    assert mod.pick_mode_free(sup, ctx) is False
+    assert ctx.cliques == [], "clicou sem o submenu ter aberto"
+    assert ctx.teclas.count("ESC") >= 1, "deixou o menu aberto"
+    assert any("não abriu" in t for _n, t in sup.linhas), sup.linhas
+
+
+def test_janela_que_RECUSA_o_movimento_desiste_na_hora(monkeypatch):
+    sup = _Sup()
+    ctx = _CtxMenu(hover_aceito=False)
+    _com_captura(monkeypatch, ctx)
+
+    assert mod.pick_mode_free(sup, ctx) is False
+    assert ctx.cliques == []
+
+
+def test_o_pick_mode_so_roda_quando_ALGUEM_ENTROU(monkeypatch):
+    """Ele é propriedade do TIME: some com o time, volta quando o time volta.
+
+    Aplicar a cada conferência seria abrir um menu no meio da tela sem motivo.
+    """
+    sup = _Sup()
+    _de_pe("s1")
+    chamou = []
+    monkeypatch.setattr(mod, "BotContext", _ctx_falso)
+    monkeypatch.setattr(mod, "TeamService", _team_falso([], aceita=()))
+    monkeypatch.setattr(mod, "pick_mode_free",
+                        lambda s, c: chamou.append(1) or True)
+
+    mod.montar_o_time(sup, _Memoria(["Lider"]))     # ninguém entrou
+    assert chamou == []
+
+    monkeypatch.setattr(mod, "TeamService", _team_falso([], aceita=("Um",)))
+    mod.montar_o_time(sup, _Memoria(["Lider"]))     # 'Um' entrou
+    assert chamou == [1]

@@ -729,6 +729,22 @@ class Input:
         )
         user32.SendMessageW(HWND(self.hwnd), WM_MOUSEMOVE, WPARAM(0), _lparam(x, y))
 
+    def passar_o_mouse(self, x: int, y: int) -> bool:
+        """HOVER: só o movimento, sem clique. `False` = janela recusada.
+
+        Submenu de menu de contexto NÃO abre com clique -- clicar FECHA o menu.
+        É o mesmo `WM_MOUSEMOVE` que `_prime_cursor` já manda antes de cada
+        clique, usado sozinho. O escudo entra porque hover é ESTADO: um
+        movimento FÍSICO do usuário reescreveria a posição. Porquê e medições
+        em `bot/time_do_app.pick_mode_free`.
+        """
+        if not self._janela_confiavel():
+            return False
+        if self._shield:
+            self._shield.block_momentarily(duration_ms=TETO_DO_BLOQUEIO_MS)
+        self._prime_cursor(x, y)
+        return True
+
     @cronometrar("input.clique")
     def _click(self, down: int, down_wparam: int, up: int,
                x: int, y: int) -> None:

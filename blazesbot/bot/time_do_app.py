@@ -74,9 +74,16 @@ from .team import (
     TeamService,
 )
 
-__all__ = ["ATIVADO", "SEGUNDOS_ENTRE_CONFERENCIAS", "TENTATIVAS_POR_MEMBRO",
-           "aceitador_do_seguidor", "falta_alguem", "montar_o_time",
-           "montar_se_for_a_hora"]
+__all__ = [
+    "ATIVADO",
+    "CADENCIA_DAS_CONFERENCIAS",
+    "TENTATIVAS_POR_MEMBRO",
+    "aceitador_do_seguidor",
+    "falta_alguem",
+    "montar_o_time",
+    "montar_se_for_a_hora",
+    "pick_mode_free",
+]
 
 # ===========================================================================
 # INTERRUPTOR
@@ -102,7 +109,7 @@ TENTATIVAS_POR_MEMBRO = 4
 #
 # A conferência é barata; a MONTAGEM é que custa (Block list aberta, digitação,
 # cliques), e ela só acontece quando falta alguém de verdade.
-SEGUNDOS_ENTRE_CONFERENCIAS = 60.0
+CADENCIA_DAS_CONFERENCIAS = 60.0
 
 
 def _nicks_no_time(memoria) -> list[str] | None:
@@ -251,6 +258,12 @@ def montar_o_time(sup, memoria) -> bool:
             sup.log.warning(
                 "Time do APP: %s não entraram em %s passada(s). Volto a tentar "
                 "no próximo ciclo.", ", ".join(fila), TENTATIVAS_POR_MEMBRO)
+        if entrou_alguem:
+            # O PICK MODE É DO TIME, não da conta: ele some junto com o time, e
+            # por isso é reaplicado quando o time se forma -- e só então.
+            # Aplicar a cada conferência seria abrir um menu no meio da tela
+            # sem motivo. Ver `pick_mode_free`.
+            pick_mode_free(sup, ctx)
     except Exception as exc:
         sup.log.warning("Time do APP: a montagem falhou (o APP segue): %s", exc)
     finally:
@@ -276,7 +289,7 @@ def montar_se_for_a_hora(sup, memoria, em_batalha: bool | None) -> bool:
     agora = time.monotonic()
     if agora < getattr(sup, "_proxima_conferencia_do_time", 0.0):
         return False
-    sup._proxima_conferencia_do_time = agora + SEGUNDOS_ENTRE_CONFERENCIAS
+    sup._proxima_conferencia_do_time = agora + CADENCIA_DAS_CONFERENCIAS
     return montar_o_time(sup, memoria)
 
 
@@ -320,3 +333,131 @@ def aceitador_do_seguidor(sup):
             sup.log.debug("Time do APP: aceite falhou (%s).", exc)
 
     return aceitar, ctx.close
+
+
+# ===========================================================================
+# PICK MODE: FREE -- o submenu que só abre com o mouse por cima
+# ===========================================================================
+#
+# *"O líder deve clicar com o botão direito em si, como é feito com o 'Leave the
+# team', mas tem que passar o mouse em cima do 'Pick Mode:' (pois o clique fecha
+# o menu) e selecionar a opção 'Free', pois por padrão vem como 'Dice', o que
+# não é interessante para os APP."* -- usuário, 15/09/2026.
+#
+# *"Estar como Free é primordial, pois senão os itens que caírem dos mobs não
+# vão ser recolhidos."*
+#
+# O CLIQUE FECHA, O HOVER ABRE -- medido pelo usuário na mão. O bot nunca move o
+# cursor físico, então o hover é `WM_MOUSEMOVE` sintético
+# (`Input.passar_o_mouse`), o mesmo movimento que `_prime_cursor` já mandava
+# antes de cada clique. Se o cliente ignorar o movimento sintético para abrir
+# submenu, não há atalho: sem submenu não há "Free", e o bot desiste e registra.
+#
+# COMO SE SABE QUE O SUBMENU ABRIU, sem template: ele não existe em disco --
+# `menu_leave_team.png` e `menu_team_up.png` são carregados pelo código e também
+# não existem, e é por isso que aquelas coordenadas medidas são o mecanismo de
+# verdade. Aqui a prova é a REGIÃO MUDAR entre o quadro de antes e o de depois
+# do hover (`vision.regiao_mudou`): uma caixa opaca aparecendo sobre a cena 3D
+# muda a região inteira.
+#
+# SEM PROVA, NENHUM CLIQUE. Clicar às cegas no meio da tela é o pior lugar para
+# isso -- e errar a linha do submenu selecionaria "Dice" ou "Teamlead".
+
+# Onde fica "Pick Mode:" no menu do próprio personagem.
+#
+# MESMA COLUNA do "Leave the team" (`coords.menu_leave_team`, x=82) -- os dois
+# são linhas do mesmo menu. A diferença é só a altura, e ela vem do print do
+# usuário: "Leave the team" é a 2ª linha e "Pick Mode:" é a 4ª, 24 px abaixo.
+DESLOCAMENTO_DO_PICK_MODE = (0, 24)
+
+# Do item "Pick Mode:" para dentro do submenu.
+#
+# SÓ EM X, e isso não é economia: no print do usuário o submenu abre ALINHADO
+# com a linha, e "Free" é o PRIMEIRO item -- na mesma altura do hover. Deduzir
+# a altura do "Free" seria um segundo palpite, e errá-lo selecionaria "Dice".
+# Mantendo o Y do hover, o único número medido é o quanto andar para a direita.
+DESLOCAMENTO_DO_FREE = (150, 0)
+
+# A região onde o submenu aparece, relativa ao ponto do hover.
+# (dx, dy, largura, altura) -- cobre a caixa inteira com folga.
+REGIAO_DO_SUBMENU = (100, -10, 110, 60)
+
+# TETO da espera pelo menu e pelo submenu aparecerem. TETO, não gasto: quem
+# espera PERGUNTA (`espera.ate`) e sai no instante em que a região muda.
+TETO_DO_MENU = 0.8
+PASSO_DO_MENU = 0.06
+
+# Tentativas de abrir o submenu antes de desistir nesta montagem.
+TENTATIVAS_DO_PICK_MODE = 2
+
+
+def _ponto(base: tuple[int, int], desloc: tuple[int, int]) -> tuple[int, int]:
+    return (base[0] + desloc[0], base[1] + desloc[1])
+
+
+def pick_mode_free(sup, ctx) -> bool:
+    """Põe o modo de pick do time em Free. `True` = cliquei no Free.
+
+    NUNCA LEVANTA e nunca clica sem prova. Falhar aqui custa o loot dividido no
+    dado; clicar errado custa o modo trocado para pior.
+    """
+    from ..core import espera
+    from ..core.vision import capture_window, regiao_mudou
+
+    item = _ponto(ctx.coords.menu_leave_team, DESLOCAMENTO_DO_PICK_MODE)
+    alvo = _ponto(item, DESLOCAMENTO_DO_FREE)
+    regiao = (item[0] + REGIAO_DO_SUBMENU[0], item[1] + REGIAO_DO_SUBMENU[1],
+              REGIAO_DO_SUBMENU[2], REGIAO_DO_SUBMENU[3])
+
+    def _apareceu(antes, onde) -> bool:
+        """A região MUDOU desde `antes`? É a pergunta que substitui a espera.
+
+        Sem template para o menu de contexto (nenhum existe em disco), a prova
+        de que algo abriu é a região deixar de ser o que era.
+        """
+        return regiao_mudou(antes, capture_window(ctx.hwnd), onde)
+
+    regiao_do_menu = (ctx.coords.own_portrait[0], ctx.coords.own_portrait[1],
+                      160, 120)
+
+    for tentativa in range(1, TENTATIVAS_DO_PICK_MODE + 1):
+        if sup.stop_event.is_set():
+            return False
+        try:
+            sem_menu = capture_window(ctx.hwnd)
+            ctx.right_click(ctx.coords.own_portrait)
+            if not espera.ate(lambda: _apareceu(sem_menu, regiao_do_menu),
+                              ctx=ctx, teto=TETO_DO_MENU, passo=PASSO_DO_MENU,
+                              o_que="o menu do próprio personagem abrir"):
+                sup.log.info("Pick Mode: o menu não abriu (tentativa %s de %s).",
+                             tentativa, TENTATIVAS_DO_PICK_MODE)
+                continue
+
+            antes = capture_window(ctx.hwnd)
+            if not ctx.input.passar_o_mouse(item[0], item[1]):
+                sup.log.info("Pick Mode: a janela recusou o movimento do mouse.")
+                return False
+
+            if not espera.ate(lambda: _apareceu(antes, regiao),
+                              ctx=ctx, teto=TETO_DO_MENU, passo=PASSO_DO_MENU,
+                              o_que="o submenu do Pick Mode abrir"):
+                sup.log.info(
+                    "Pick Mode: o submenu não abriu com o mouse por cima "
+                    "(tentativa %s de %s).", tentativa, TENTATIVAS_DO_PICK_MODE)
+                ctx.press("ESC")
+                continue
+
+            sup.log.info("Pick Mode: submenu aberto; clicando em 'Free' em %s.",
+                         alvo)
+            ctx.click(alvo)
+            ctx.press("ESC")
+            return True
+        except Exception as exc:
+            sup.log.warning("Pick Mode: falhou (%s).", exc)
+            return False
+
+    sup.log.warning(
+        "Pick Mode: desisti depois de %s tentativas. O time fica no modo que "
+        "estiver -- se for 'Dice', o loot dos mobs não é recolhido.",
+        TENTATIVAS_DO_PICK_MODE)
+    return False
