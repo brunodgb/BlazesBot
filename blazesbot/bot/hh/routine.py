@@ -615,11 +615,9 @@ class HHRoutine:
         instante em que o personagem está a um passo dele e ainda não começou a
         disputar vaga na instância.
 
-        A VOLTA NÃO É ENFEITE (§29). São DOIS pontos desde 09/09/2026 -- vende
-        em (-343,-294), entra em (-342,-288) --, e `tentar_entrar_na_hh` recusa
-        o clique de fora da entrada. Sem a volta, a rajada inteira passaria sem
-        um clique sair. É BARATA quando não há o que fazer: `encostar_no_ponto`
-        lê a posição e sai na hora se já estiver dentro da folga.
+        A VOLTA NÃO É ENFEITE (§29): vende em (-343,-294), entra em (-342,-288),
+        e `tentar_entrar_na_hh` recusa o clique de fora da entrada. É barata --
+        `encostar_no_ponto` sai na hora se já estiver dentro da folga.
         """
         self.manutencao.vender_ao_comecar()
         self.manutencao.descartar_o_lixo_ao_comecar()
@@ -1189,6 +1187,8 @@ class HHRoutine:
         if veredito.creditar:
             self._vetos_de_rollback = 0
             self._catar_o_loot()
+            # A 2ª CHANCE DA COMIDA: mapa velho, pet de volta (`core/pet`).
+            self.combat.feed_pet()
             self._avancar_o_trecho(rotulo)
             return
 

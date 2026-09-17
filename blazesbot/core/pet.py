@@ -170,6 +170,56 @@ SEGUNDOS_PARA_A_COMIDA_SER_USADA = 4.0
 _COMIDA_EM: dict[int, float] = {}
 
 
+# ===========================================================================
+# QUANTO TEMPO NO MAPA ANTES DE ALIMENTAR -- o defeito de 15 e 16/09/2026
+# ===========================================================================
+#
+# MEDIDO nos logs, cruzando com a felicidade que o usuário lia na tela:
+#
+#     as QUATRO alimentações da madrugada saíram 4,0s / 3,0s / 5,0s / 4,0s
+#     depois de "Entrada na HH confirmado"
+#
+# E o resultado de um dia inteiro assim: 26 refeições na hora certa, comida
+# saindo da bolsa, e a felicidade caindo de 94 para 45.
+#
+# A PROVA PELO CONTRÁRIO, do próprio usuário: *"eu alimentei o pet manualmente,
+# não foi o bot"* -- a mesma tecla, no mesmo cliente, com a run andando, subiu
+# a felicidade de 78 para 100 de uma vez. E o ecossistema APP, que nunca troca
+# de mapa, é o único que mantinha o pet feliz.
+#
+# ENTÃO O QUE FALTAVA NÃO ERA A TECLA NEM A JANELA DA MONTARIA: era o PET. Ao
+# trocar de mapa o servidor recria o pet no mundo novo, e por alguns segundos
+# não há a quem dar comida. A tecla sai, o item é consumido, e o pet -- que
+# ainda não está lá -- não recebe nada.
+#
+# TRINTA SEGUNDOS, e o número é conservador de propósito: alimentar cedo demais
+# QUEIMA a refeição inteira (e a grade avança achando que comeu), enquanto
+# esperar meio minuto não custa nada numa run de vários minutos. A rede de
+# atraso (`LIMITE_DE_ATRASO_DA_COMIDA_EM_MINUTOS`) continua valendo para o caso
+# de a run inteira passar sem um momento bom.
+SEGUNDOS_NO_MAPA_ANTES_DE_ALIMENTAR = 30.0
+
+# Quando cada janela trocou de mapa. Marcado por quem CONFIRMA a troca --
+# `UIDoJogo.esperar_a_chegada` --, que é o ponto por onde passam entrada, saída
+# e teleporte.
+_ENTROU_NO_MAPA_EM: dict[int, float] = {}
+
+
+def trocou_de_mapa(hwnd: int) -> None:
+    """O mapa mudou nesta janela. O pet vai levar alguns segundos para voltar."""
+    _ENTROU_NO_MAPA_EM[int(hwnd or 0)] = time.monotonic()
+
+
+def segundos_no_mapa(hwnd: int) -> float | None:
+    """Há quanto tempo esta janela está no mapa atual. `None` = nunca vi trocar.
+
+    `None` NÃO BLOQUEIA: quem nunca viu uma troca de mapa não pode concluir que
+    acabou de acontecer uma. É a mesma regra do "não sei" do resto do projeto.
+    """
+    entrou = _ENTROU_NO_MAPA_EM.get(int(hwnd or 0))
+    return None if entrou is None else time.monotonic() - entrou
+
+
 def comeu_agora(hwnd: int) -> None:
     """Marca que a tecla da comida acabou de sair nesta janela."""
     _COMIDA_EM[int(hwnd or 0)] = time.monotonic()
@@ -316,6 +366,7 @@ class PetFeeder:
         self,
         intervalo_minutos: int,
         force: bool = False,
+        ctx=None,
     ) -> bool:
         """Decide se é hora de alimentar o pet.
 
@@ -323,11 +374,46 @@ class PetFeeder:
             intervalo_minutos: Intervalo configurado entre alimentações.
             force: Se True, alimenta independentemente da grade (usado para
                    `feed_on_start = True`).
+            ctx: O contexto da conta, quando houver. Serve para UMA pergunta:
+                 há quanto tempo esta janela trocou de mapa. Ver abaixo.
 
         Returns:
             True se deve alimentar agora, False caso contrário.
+
+        =================================================================
+        ACABEI DE TROCAR DE MAPA? ENTÃO NÃO -- E A GRADE NÃO AVANÇA
+        =================================================================
+
+        O defeito de 15 e 16/09/2026, medido no log contra a felicidade lida na
+        tela: as alimentações saíam **3 a 5 segundos** depois de "Entrada na HH
+        confirmado", a comida sumia da bolsa, e a felicidade caía assim mesmo --
+        de 94 para 45 em 20 horas, com 26 refeições acontecendo na hora certa.
+
+        Ao trocar de mapa o servidor RECRIA o pet no mundo novo. A tecla sai, o
+        item é consumido, e não há a quem dar.
+
+        A PROVA PELO CONTRÁRIO É DO USUÁRIO: *"eu alimentei o pet manualmente,
+        não foi o bot"* -- a mesma tecla, no mesmo cliente, com a run andando,
+        subiu de 78 para 100 de uma vez. E o ecossistema APP, que nunca troca de
+        mapa, era o único que mantinha o pet feliz.
+
+        NEM A URGÊNCIA FURA ESTA REGRA: comida queimada não alimenta nem quando
+        está atrasada. Quem dá a segunda chance é o ponto do boss, com o
+        personagem parado e o mapa com minutos de vida.
         """
         agora = time.time()
+
+        janela = getattr(ctx, "hwnd", None)
+        no_mapa = segundos_no_mapa(janela) if janela else None
+        if (no_mapa is not None and not force
+                and no_mapa < SEGUNDOS_NO_MAPA_ANTES_DE_ALIMENTAR):
+            if ctx is not None:
+                ctx.log.info(
+                    "Comida do pet: troquei de mapa há %.0f s (mínimo %.0f). O "
+                    "pet ainda está voltando e a comida seria queimada -- a "
+                    "grade NÃO avança.",
+                    no_mapa, SEGUNDOS_NO_MAPA_ANTES_DE_ALIMENTAR)
+            return False
 
         # Grade não iniciada: só alimenta se for `force=True` (feed_on_start).
         # Sem force, a grade começa AGORA e a primeira refeição vence daqui a um

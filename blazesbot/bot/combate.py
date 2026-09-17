@@ -3928,7 +3928,7 @@ class CombatEngine:
         intervalo = ctx.settings.pet.feed_every_minutes
 
         # Delega a DECISÃO para o PetFeeder (lógica compartilhada).
-        if not self._pet_feeder.deve_alimentar(intervalo, force=force):
+        if not self._pet_feeder.deve_alimentar(intervalo, force, ctx):
             return False
 
         # A URGÊNCIA É MEDIDA, NÃO DECLARADA: vem do atraso da própria grade.

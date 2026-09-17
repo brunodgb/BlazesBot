@@ -418,3 +418,74 @@ furar e aqui tem uma mecânica do jogo, que não se fura.
   ela resolvia, de forma pior, o problema que a rede de segurança resolve.
   Candidata a remoção na próxima limpeza.
 * **`apply_buffs` continua apertando uma vez e acreditando** (§4).
+
+## O PET NÃO ESTAVA LÁ — 17/09/2026
+
+### O que o teste do usuário mostrou
+
+Conta `creubo`, HH, comida a cada 50 min, 20 horas de farm:
+
+| | |
+|---|---|
+| refeições registradas | **26**, intervalos de 47 a 53 min |
+| comida saindo da bolsa | **sim**, o usuário viu a quantidade cair |
+| felicidade | **94 → 45** |
+
+E a alimentação de 16/09 às 21:20, que levou o pet de 78 para 100, **foi à mão**:
+*"eu alimentei o pet manualmente, não foi o bot"*.
+
+### A medição que fechou
+
+Cruzando o log de dev com o horário da entrada na cave:
+
+    00:49:28   4,0 s depois de "Entrada na HH confirmado"
+    01:38:48   3,0 s depois
+    02:25:25   5,0 s depois
+    03:16:11   4,0 s depois
+
+**Toda alimentação automática acontece 3 a 5 segundos depois de o personagem
+entrar na instância.** Ao trocar de mapa o servidor RECRIA o pet no mundo novo;
+naqueles segundos a tecla sai, o item é consumido, e não há a quem dar.
+
+### Por que o APP nunca teve o problema
+
+Ele não troca de mapa. Alimenta no meio da macro, com o pet no mundo há horas —
+e era o único ecossistema que mantinha a felicidade alta. A pista estava na
+pergunta do usuário desde o começo.
+
+### As duas correções anteriores não eram erradas — eram insuficientes
+
+| data | o que se achou | o que era |
+|---|---|---|
+| 27/08 | a montaria saía 600 ms depois da comida | verdade, e foi encurtado para 1,5 s |
+| 16/09 | a montaria saía 1,65 s depois — 150 ms fora da janela | verdade, e virou barreira de 4 s |
+| 17/09 | **o pet ainda não estava no mapa** | a causa raiz |
+
+As duas primeiras protegiam o item de ser CANCELADO. Esta protege o item de ser
+gasto num mundo onde o pet ainda não voltou. São defeitos diferentes no mesmo
+gesto, e os três consertos convivem.
+
+### Como ficou
+
+1. **`UIDoJogo.esperar_a_chegada` marca a troca de mapa** (`pet.trocou_de_mapa`).
+   É o único ponto por onde passam entrada, saída e teleporte.
+2. **`PetFeeder.deve_alimentar` recusa** enquanto o mapa tiver menos de
+   `SEGUNDOS_NO_MAPA_ANTES_DE_ALIMENTAR` (30 s) — **e a grade NÃO avança**, que
+   é o que impede a refeição de ser dada por perdida.
+3. **Nem a urgência fura a regra.** Comida queimada não alimenta nem atrasada.
+4. **A segunda chance é no ponto do boss**, depois do loot: personagem parado, a
+   pé, fora de combate, mapa com minutos de vida. É o momento que mais se parece
+   com a alimentação manual que funcionou.
+
+### Os 30 segundos
+
+Não são medidos — são conservadores por assimetria, a mesma lógica da barreira
+da montaria: alimentar cedo demais **queima a refeição inteira**, e esperar meio
+minuto numa run de vários minutos não custa nada. Quem quiser medir: baixe até a
+felicidade voltar a cair depois de um dia de farm.
+
+### Travado por
+
+`tests/test_comida_do_pet.py`. O que ninguém pode desfazer sem o teste reprovar:
+a recusa logo depois da troca de mapa, a grade que não avança nessa recusa, e a
+chamada no ponto do boss.

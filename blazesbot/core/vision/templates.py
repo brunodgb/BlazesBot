@@ -11,12 +11,16 @@ uma estatística de cor por linha.
 """
 from __future__ import annotations
 
+import logging
+
 from pathlib import Path
 
 import cv2
 import numpy as np
 
 from blazesbot.core.vision.captura import capture_window
+
+_log = logging.getLogger(__name__)
 
 DEFAULT_THRESHOLD = 0.87
 
@@ -50,6 +54,14 @@ HIGHLIGHT_BGR = (153, 68, 51)
 #
 # Lista explícita, então. Pasta nova de categoria entra aqui, e
 # `tests/test_templates_por_categoria.py` reprova se um nome ficar em duas.
+# A PASTA É RESOLVIDA CONTRA A RAIZ DO PROJETO, NUNCA CONTRA O CWD.
+#
+# Todo chamador constrói a biblioteca com `Path("data") / "templates"` --
+# caminho RELATIVO, que depende de onde o processo foi lançado. Um atalho, um
+# .bat com outro diretório de trabalho ou um serviço fariam TODO template sumir
+# de uma vez, e template que some não levanta exceção: ele só não casa.
+RAIZ_DO_PROJETO = Path(__file__).resolve().parents[3]
+
 SUBPASTAS_DE_CATEGORIA = (
     "estado", "link", "botao", "janela", "npc", "combate", "item",
 )
@@ -59,8 +71,10 @@ class TemplateLibrary:
     """Carrega e cacheia templates .bmp/.png de uma pasta."""
 
     def __init__(self, folder: str | Path) -> None:
-        self.folder = Path(folder)
+        pasta = Path(folder)
+        self.folder = pasta if pasta.is_absolute() else RAIZ_DO_PROJETO / pasta
         self._cache: dict[str, np.ndarray] = {}
+        self._faltando: set[str] = set()
 
     def caminho_de(self, name: str) -> Path | None:
         """Onde está o template `name`. `None` = não achei em lugar nenhum.
@@ -76,7 +90,33 @@ class TemplateLibrary:
             candidato = self.folder / sub / name
             if candidato.exists():
                 return candidato
+        self._avisar_que_falta(name)
         return None
+
+    def _avisar_que_falta(self, name: str) -> None:
+        """Um aviso por nome, na PRIMEIRA vez que ele não for achado.
+
+        TEMPLATE QUE SOME NÃO LEVANTA EXCEÇÃO -- `load` devolve `None`,
+        `find_template` com `None` não casa, e quem pediu simplesmente deixa de
+        enxergar o que aquele modelo identifica. Quase nenhum chamador registra
+        isso, então o defeito aparece horas depois como "o bot parou de X".
+
+        MEDIDO em 16/09/2026: a reorganização em subpastas moveu os PNG às
+        21:05; o bot estava rodando desde as 15:24, com o carregador antigo (só
+        a raiz) já em memória. Às 21:06 ele perdeu TODO template de categoria e
+        passou sete horas sem apagar um item -- e quem contou foi o deletador,
+        que é o único que avisa. Por isso o aviso passou a ser da BIBLIOTECA.
+
+        Uma vez por nome: o pedido se repete a cada volta do laço, e a mesma
+        linha doze mil vezes não informa mais que uma.
+        """
+        if name in self._faltando:
+            return
+        self._faltando.add(name)
+        _log.warning(
+            "Template %r não existe em %s nem nas subpastas de categoria. "
+            "Quem o pediu segue SEM ENXERGAR o que ele identifica.",
+            name, self.folder)
 
     def load(self, name: str) -> np.ndarray | None:
         if name in self._cache:

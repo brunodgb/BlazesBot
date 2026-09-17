@@ -91,6 +91,7 @@ from collections.abc import Callable
 from contextlib import contextmanager
 
 from ..core import esconder_jogadores, espera, halo, janelas_abertas
+from ..core import pet as pet_core
 from ..core.coords import TEMPLATE_ANCHORS
 from ..core.rota import distancia
 from ..core.vision import capture_window, find_template
@@ -1691,8 +1692,7 @@ class UIDoJogo:
         """O par de cliques em si. Separado só para o `with` acima ficar legível."""
         ctx = self.ctx
         #ctx.log.info("Clique DIREITO no NPC em %s (%s)", ponto_npc, o_que)
-        # A RAJADA PERGUNTA ENTRE OS CLIQUES e para quando abre; o piso de
-        # 424 ms por conversa está medido em `bot/rajada_de_npc.py`.
+        # A rajada PERGUNTA entre os cliques (`bot/rajada_de_npc.py`).
         aberto = rajada_de_npc.clicar_ate_abrir(ctx, ponto_npc,
                                                 self.dialogo_esta_aberto)
         if aberto is not True:
@@ -1923,12 +1923,12 @@ class UIDoJogo:
         curto -- e a linha do log traz o número para decidir, em vez de palpite.
         """
         ctx = self.ctx
-        # O LAÇO É DO ORQUESTRADOR (`core/espera.py`) -- aqui fica só a
-        # pergunta e o que se diz no log. De quebra, toda chegada passa a ser
-        # cronometrada e CONTADA POR DESFECHO, sem uma linha a mais.
+        # O laço é do orquestrador (`core/espera.py`), com a telemetria junto.
         fim = espera.ate(chegou, ctx=ctx, teto=teto, passo=passo,
                          o_que=f"chegada.{o_que}")
         if fim:
+            # `core/pet.SEGUNDOS_NO_MAPA_ANTES_DE_ALIMENTAR` explica o porquê.
+            pet_core.trocou_de_mapa(ctx.hwnd)
             ctx.log.info("%s confirmado em %.0f ms: %s | local %s", o_que,
                          fim.ms, ctx.memory.position(), ctx.memory.location())
             return True
