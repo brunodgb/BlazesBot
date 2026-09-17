@@ -15,10 +15,25 @@ desfazer**:
 
 
 
+import pathlib
+
 import pytest
 
 from blazesbot.bot.app import deletador as d
 from blazesbot.core import teclado_mudo
+
+
+def _tpl(nome: str):
+    """O arquivo do template, esteja ele na raiz ou na subpasta da categoria.
+
+    Passa pelo MESMO resolvedor do bot (`TemplateLibrary.caminho_de`), senão o
+    teste afirma sobre um caminho que o código não usa. Devolve o caminho da
+    raiz quando não acha, para o `.exists()` de quem chama continuar dizendo
+    "não existe" em vez de estourar.
+    """
+    from blazesbot.core.vision.templates import TemplateLibrary
+    pasta = pathlib.Path("data") / "templates"
+    return TemplateLibrary(pasta).caminho_de(nome) or pasta / nome
 
 
 @pytest.fixture(autouse=True)
@@ -319,10 +334,9 @@ def test_a_ancora_do_Ok_veio_da_medicao():
 
 def test_os_templates_de_ui_existem():
     """Sem eles o deletador não sabe onde clicar, e a conferência não desenha."""
-    from pathlib import Path
 
     for nome in ("state_delete_confirm.png", "btn_delete_item.png"):
-        assert (Path("data") / "templates" / nome).is_file(), nome
+        assert _tpl(nome).is_file(), nome
 
 
 # ===========================================================================
@@ -338,11 +352,10 @@ class _Templates:
     """
 
     def load(self, nome):
-        from pathlib import Path
 
         import cv2
 
-        return cv2.imread(str(Path("data") / "templates" / nome),
+        return cv2.imread(str(_tpl(nome)),
                           cv2.IMREAD_GRAYSCALE)
 
 
@@ -416,11 +429,10 @@ def _onde_estao_as_abas(quadro):
     inventário se ARRASTA -- ela não é fixa na tela --, e é por isso que a
     região nasce da âncora a cada chamada em vez de ser coordenada de tela.
     """
-    from pathlib import Path
 
     import cv2
 
-    tpl = cv2.imread(str(Path("data") / "templates" / "state_bag_tabs.png"))
+    tpl = cv2.imread(str(_tpl("state_bag_tabs.png")))
     r = cv2.matchTemplate(quadro, tpl, cv2.TM_CCOEFF_NORMED)
     _, nota, _, canto = cv2.minMaxLoc(r)
     assert nota > 0.9, f"não achei a linha de abas no print (nota {nota:.3f})"

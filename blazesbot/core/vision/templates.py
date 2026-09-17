@@ -25,6 +25,36 @@ DEFAULT_THRESHOLD = 0.87
 HIGHLIGHT_BGR = (153, 68, 51)
 
 
+# ===========================================================================
+# AS SUBPASTAS DE CATEGORIA
+# ===========================================================================
+#
+# Os templates da raiz de `data/templates` estão agrupados por FUNÇÃO. Quem
+# chama continua pedindo pelo NOME (`load("state_queue.png")`) e não sabe em
+# que pasta o arquivo está -- a categoria é para o humano que abre o diretório,
+# não para o código.
+#
+# POR QUE NÃO É BUSCA RECURSIVA. Debaixo de `data/templates` existem quatro
+# pastas que NÃO podem entrar na busca:
+#
+#   `entrada/`     outra `TemplateLibrary`, com a caixa da entrada da cave
+#   `deletar/`     208 PNG do usuário, carregados por `glob` (`bot/deletador`)
+#   `deletar_hh/`  o mesmo, para a HH
+#   `aprendidos/`  recortes gravados em tempo de execução (`LearnedCrops`)
+#
+# E a colisão não é hipótese: `boss_2_fase.png`, `dialogo_seta_baixo.png`,
+# `link_enter_hh.png` e `link_west_suburb.png` existem na raiz **e** em
+# `entrada/`, com conteúdo diferente. Uma varredura recursiva acharia o errado
+# metade das vezes, e erraria CALADA -- template errado não levanta exceção,
+# ele só não casa.
+#
+# Lista explícita, então. Pasta nova de categoria entra aqui, e
+# `tests/test_templates_por_categoria.py` reprova se um nome ficar em duas.
+SUBPASTAS_DE_CATEGORIA = (
+    "estado", "link", "botao", "janela", "npc", "combate", "item",
+)
+
+
 class TemplateLibrary:
     """Carrega e cacheia templates .bmp/.png de uma pasta."""
 
@@ -32,11 +62,27 @@ class TemplateLibrary:
         self.folder = Path(folder)
         self._cache: dict[str, np.ndarray] = {}
 
+    def caminho_de(self, name: str) -> Path | None:
+        """Onde está o template `name`. `None` = não achei em lugar nenhum.
+
+        Procura na raiz primeiro e nas subpastas de categoria depois. É o único
+        ponto que sabe que a categoria existe -- por isso mover um PNG de
+        categoria não toca em nenhum chamador.
+        """
+        direto = self.folder / name
+        if direto.exists():
+            return direto
+        for sub in SUBPASTAS_DE_CATEGORIA:
+            candidato = self.folder / sub / name
+            if candidato.exists():
+                return candidato
+        return None
+
     def load(self, name: str) -> np.ndarray | None:
         if name in self._cache:
             return self._cache[name]
-        path = self.folder / name
-        if not path.exists():
+        path = self.caminho_de(name)
+        if path is None:
             return None
         img = cv2.imread(str(path), cv2.IMREAD_GRAYSCALE)
         if img is not None:
@@ -72,8 +118,8 @@ class TemplateLibrary:
         chave = f"__cor__{name}"
         if chave in self._cache:
             return self._cache[chave]
-        path = self.folder / name
-        if not path.exists():
+        path = self.caminho_de(name)
+        if path is None:
             return None
         img = cv2.imread(str(path), cv2.IMREAD_COLOR)
         if img is not None:

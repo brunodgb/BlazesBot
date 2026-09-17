@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import ast
 import inspect
+import pathlib
 import textwrap
 from pathlib import Path
 from types import SimpleNamespace
@@ -37,6 +38,19 @@ from blazesbot.bot import ui_do_jogo
 from blazesbot.bot.bc import ui_service
 from blazesbot.core import janelas_abertas as ja
 from blazesbot.core.vision import TemplateLibrary
+
+
+def _tpl(nome: str):
+    """O arquivo do template, esteja ele na raiz ou na subpasta da categoria.
+
+    Passa pelo MESMO resolvedor do bot (`TemplateLibrary.caminho_de`), senão o
+    teste afirma sobre um caminho que o código não usa. Devolve o caminho da
+    raiz quando não acha, para o `.exists()` de quem chama continuar dizendo
+    "não existe" em vez de estourar.
+    """
+    from blazesbot.core.vision.templates import TemplateLibrary
+    pasta = pathlib.Path("data") / "templates"
+    return TemplateLibrary(pasta).caminho_de(nome) or pasta / nome
 
 RAIZ = Path(__file__).resolve().parents[1]
 TEMPLATES = RAIZ / "data" / "templates"
@@ -64,7 +78,7 @@ def test_os_dois_templates_existem_e_sao_COLORIDOS():
     """
     lib = TemplateLibrary(TEMPLATES)
     for nome in (ja.TEMPLATE_DO_X, ja.TEMPLATE_DA_MOLDURA):
-        assert (TEMPLATES / nome).exists(), f"{nome} sumiu de data/templates"
+        assert _tpl(nome).exists(), f"{nome} sumiu de data/templates"
         colorido = lib.load_color(nome)
         assert colorido is not None and colorido.ndim == 3, nome
 

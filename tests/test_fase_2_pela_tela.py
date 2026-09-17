@@ -38,6 +38,7 @@ da luta do boss.
 personagem é um par vida+mana igual, no canto superior esquerdo. Sem a faixa,
 "a minha barra" viraria "o boss virou de fase".
 """
+import pathlib
 from types import SimpleNamespace
 
 import cv2
@@ -48,7 +49,20 @@ from blazesbot.bot import combate as motor_de_combate
 from blazesbot.bot.bc.combat import CombatEngine
 from blazesbot.core import vision
 
-CAMINHO_DO_MODELO = "data/templates/boss_2_fase.png"
+
+def _tpl(nome: str):
+    """O arquivo do template, esteja ele na raiz ou na subpasta da categoria.
+
+    Passa pelo MESMO resolvedor do bot (`TemplateLibrary.caminho_de`), senão o
+    teste afirma sobre um caminho que o código não usa. Devolve o caminho da
+    raiz quando não acha, para o `.exists()` de quem chama continuar dizendo
+    "não existe" em vez de estourar.
+    """
+    from blazesbot.core.vision.templates import TemplateLibrary
+    pasta = pathlib.Path("data") / "templates"
+    return TemplateLibrary(pasta).caminho_de(nome) or pasta / nome
+
+CAMINHO_DO_MODELO = str(_tpl("boss_2_fase.png"))
 
 
 @pytest.fixture(scope="module")

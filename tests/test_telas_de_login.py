@@ -26,12 +26,26 @@ por prefixo tem que ser o ÚLTIMO a opinar entre os modais.
 """
 from __future__ import annotations
 
+import pathlib
 from pathlib import Path
 
 import cv2
 import pytest
 
 from blazesbot.bot.login_states import _SIGNATURES, THRESHOLD, LoginScreen
+
+
+def _tpl(nome: str):
+    """O arquivo do template, esteja ele na raiz ou na subpasta da categoria.
+
+    Passa pelo MESMO resolvedor do bot (`TemplateLibrary.caminho_de`), senão o
+    teste afirma sobre um caminho que o código não usa. Devolve o caminho da
+    raiz quando não acha, para o `.exists()` de quem chama continuar dizendo
+    "não existe" em vez de estourar.
+    """
+    from blazesbot.core.vision.templates import TemplateLibrary
+    pasta = pathlib.Path("data") / "templates"
+    return TemplateLibrary(pasta).caminho_de(nome) or pasta / nome
 
 ENTRADA = Path("data") / "templates" / "entrada"
 TEMPLATES = Path("data") / "templates"
@@ -49,7 +63,7 @@ def _classificar(imagem):
     """A MESMA varredura do detector: primeira assinatura que casar vence."""
     for tela, nomes in _SIGNATURES:
         for nome in nomes:
-            tpl = cv2.imread(str(TEMPLATES / nome), cv2.IMREAD_GRAYSCALE)
+            tpl = cv2.imread(str(_tpl(nome)), cv2.IMREAD_GRAYSCALE)
             if tpl is None:
                 continue
             if (tpl.shape[0] > imagem.shape[0]
@@ -102,7 +116,7 @@ def test_DENTE_com_o_prefixo_em_primeiro_a_falha_de_conexao_se_disfarca():
     if not caminho.is_file():
         pytest.skip("captura de referência não está no repo")
     img = cv2.imread(str(caminho), cv2.IMREAD_GRAYSCALE)
-    prefixo = cv2.imread(str(TEMPLATES / "state_conn_prefix.png"),
+    prefixo = cv2.imread(str(_tpl("state_conn_prefix.png")),
                          cv2.IMREAD_GRAYSCALE)
     _, nota, _, _ = cv2.minMaxLoc(
         cv2.matchTemplate(img, prefixo, cv2.TM_CCOEFF_NORMED))
@@ -123,7 +137,7 @@ def test_o_vao_de_cada_template_especifico():
         "state_acquiring_ip.png": "login-ip-address.png",
     }
     for nome, dono in especificos.items():
-        tpl = cv2.imread(str(TEMPLATES / nome), cv2.IMREAD_GRAYSCALE)
+        tpl = cv2.imread(str(_tpl(nome)), cv2.IMREAD_GRAYSCALE)
         if tpl is None:
             pytest.skip(f"{nome} não está no repo")
         notas = {}

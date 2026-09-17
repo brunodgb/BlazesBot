@@ -24,6 +24,19 @@ import pytest
 from blazesbot.bot.hh import entrada, mapa_hh, vendedor
 from blazesbot.core.coords import coords_for_size
 
+
+def _tpl(nome: str):
+    """O arquivo do template, esteja ele na raiz ou na subpasta da categoria.
+
+    Passa pelo MESMO resolvedor do bot (`TemplateLibrary.caminho_de`), senão o
+    teste afirma sobre um caminho que o código não usa. Devolve o caminho da
+    raiz quando não acha, para o `.exists()` de quem chama continuar dizendo
+    "não existe" em vez de estourar.
+    """
+    from blazesbot.core.vision.templates import TemplateLibrary
+    pasta = pathlib.Path("data") / "templates"
+    return TemplateLibrary(pasta).caminho_de(nome) or pasta / nome
+
 RAIZ = pathlib.Path(__file__).resolve().parent.parent
 TEMPLATES = RAIZ / "data" / "templates"
 EVIDENCIA = TEMPLATES / "entrada"
@@ -60,7 +73,7 @@ def test_o_template_existe_na_pasta_de_onde_o_codigo_carrega(
     cada recorte saiu. Um template deixado só lá é um template que o bot não
     encontra, e a falha aparece como "a HH não entra" sem mais explicação.
     """
-    assert (TEMPLATES / arquivo).exists(), (
+    assert _tpl(arquivo).exists(), (
         f"falta {arquivo} ({o_que}) em data/templates/")
 
 
@@ -74,7 +87,7 @@ def test_o_template_e_um_RECORTE_e_nao_uma_tela(arquivo, o_que, max_w, max_h):
     O teste não sabe se o recorte está CERTO; ele sabe que uma tela inteira está
     errada, e é essa a confusão que aconteceu.
     """
-    img = cv2.imread(str(TEMPLATES / arquivo))
+    img = cv2.imread(str(_tpl(arquivo)))
     assert img is not None, f"{arquivo} não abre como imagem"
     h, w = img.shape[:2]
     assert w <= max_w and h <= max_h, (
@@ -98,7 +111,7 @@ def test_o_recorte_do_link_de_vender_tem_TEXTO_e_nao_so_fundo():
     tinta para correlacionar, e o casamento passa a depender do fundo -- que é
     igual em toda a caixa de diálogo.
     """
-    caminho = TEMPLATES / vendedor.TEMPLATE_DO_LINK_DE_VENDER
+    caminho = _tpl(vendedor.TEMPLATE_DO_LINK_DE_VENDER)
     cinza = cv2.imread(str(caminho), cv2.IMREAD_GRAYSCALE)
     assert cinza is not None, f"{caminho.name} não abre como imagem"
 
