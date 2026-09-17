@@ -383,3 +383,75 @@ o recorte pegou só o miolo liso da esfera, sem contorno e sem fundo: nitidez
 1 067 contra a média de 14 937 dos que funcionam. Gradiente suave não dá o que
 correlacionar. Mas 0,54 também é compatível com "o item não estava na tela", e
 isso ainda não foi separado.
+
+
+## Sete horas sem apagar nada: o processo era mais velho que os arquivos — 17/09/2026
+
+### O sintoma
+
+*"O deletador de itens no APP parou de funcionar."* E, na sequência: *"tem vezes
+que o inventário está sendo fechado, mesmo quando o usuário deixou aberto."*
+
+### O que o log dizia
+
+```
+21:05:34   as subpastas de categoria são criadas (data/templates/botao/, estado/, ...)
+21:06:14   [blazestpas] Sem o template btn_delete_item.png; não sei onde clicar para deletar.
+...        12.804 vezes, sem parar, por sete horas
+03:52:32   [blazestpas] A bolsa não apareceu em 2.0s depois da tecla 'I'.
+```
+
+Quarenta segundos entre mover os arquivos e o primeiro erro.
+
+### A causa
+
+O commit `45f2d4d` (16/09, 21:17) organizou os templates em subpastas por
+função, e `TemplateLibrary.caminho_de` passou a procurar na raiz **e** nas
+categorias. O código ficou certo. O que não ficou foi o processo:
+
+| quando | o quê |
+|---|---|
+| 16/09 15:24 | o bot subiu — `templates.py` carregado em memória, versão que só olha a RAIZ |
+| 16/09 21:05 | os PNG saíram da raiz para `botao/`, `estado/`, `janela/`, … |
+| 16/09 21:06 | o bot perdeu TODO template de categoria |
+
+Python lê o módulo uma vez, no import. Editar o arquivo depois não alcança um
+processo que já está rodando — e a migração de dados alcançou. **Nenhum
+reinício, nenhuma exceção, nenhum sinal** além da linha que o deletador, sozinho
+entre os chamadores, tem o cuidado de registrar.
+
+### Os dois sintomas eram o mesmo defeito
+
+O ícone de deletar é o SINAL de que a bolsa está aberta (`inventario_esta_aberto`
+— a leitura de UI por memória falhou em 5 de 5 runs). E ele respondia assim:
+
+```python
+return _achar_icone(ctx, quadro) is not None      # None do template == "fechada"
+```
+
+Sem o PNG, `_achar_icone` devolve `None`, e isso virava **"a bolsa está
+fechada"**, com toda a confiança. O resto se segue sozinho: o bot aperta 'I' no
+inventário que o usuário tinha deixado ABERTO e o fecha; espera dois segundos
+pelo ícone que não existe; desiste; e não devolve nada, porque o fechamento do
+fim também decide olhando. A queixa do inventário não era um segundo defeito —
+era o mesmo, visto de outro ângulo.
+
+### O que mudou
+
+1. **A pasta é resolvida contra a raiz do projeto, não contra o CWD.** Todo
+   chamador constrói a biblioteca com `Path("data") / "templates"`, e um atalho
+   lançado de outro diretório faria TODOS os templates sumirem de uma vez.
+2. **Template que falta AVISA — uma vez por nome, na biblioteca.** Era o
+   deletador, sozinho, quem registrava o `None`; agora quem registra é quem
+   carrega, e vale para vendedor, login, entrada da cave e o resto.
+3. **Sem o modelo, `inventario_esta_aberto` devolve `None`** — não "fechada".
+4. **Cego, a limpeza não encosta na tecla.** A regra antiga era "sem leitura,
+   faz o que se fazia antes de haver conferência"; ela custou o inventário
+   aberto do usuário. Sem tela não há o que apagar de qualquer forma.
+
+### O que isto NÃO conserta
+
+O processo que já está rodando. Um bot no ar desde antes de uma alteração roda o
+código de antes dela — vale para esta e para qualquer outra. A cada mudança de
+código **ou de arquivo de dados**, o que passa a valer só vale no próximo
+arranque.

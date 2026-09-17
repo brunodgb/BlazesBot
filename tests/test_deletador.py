@@ -16,7 +16,9 @@ desfazer**:
 
 
 import pathlib
+import types
 
+import numpy
 import pytest
 
 from blazesbot.bot.app import deletador as d
@@ -714,15 +716,43 @@ def test_o_fechamento_e_CONFERIDO_e_insiste(monkeypatch):
     assert ctx.teclas.count("I") == 3, ("abriu 1 + fechou 2", ctx.teclas)
 
 
-def test_sem_leitura_da_tela_abre_e_fecha_como_antes(monkeypatch):
-    """`None` não é "está aberto". Sem conferência, o desfecho seguro é o
-    comportamento que existia antes de haver conferência nenhuma."""
-    ctx = _CtxTecla(aberto_no_inicio=False)
+def test_SEM_LEITURA_nao_encosta_na_tecla(monkeypatch):
+    """REVERSÃO DE 17/09/2026 — antes, `None` abria assim mesmo.
+
+    A regra velha era "sem conferência, faz o que se fazia antes de haver
+    conferência". A noite de 16/09 mostrou o preço: com o modelo do ícone fora
+    do lugar a leitura ficou cega, o bot apertou 'I' no inventário que o usuário
+    tinha deixado ABERTO e o fechou — sem apagar nada, porque apagar também
+    depende da tela. E não devolveu: o fim também fecha OLHANDO.
+
+    Cego, a única jogada sem dano é não encostar na tecla.
+    """
+    ctx = _CtxTecla(aberto_no_inicio=True)
     monkeypatch.setattr(d, "inventario_esta_aberto", lambda c: None)
     monkeypatch.setattr(d, "deletar_lixo", lambda c, teto=None, pasta=None: 0)
 
-    d.limpar_a_bolsa(ctx, "I")
-    assert ctx.teclas, "sem leitura, não tentou nem abrir"
+    assert d.limpar_a_bolsa(ctx, "I") == 0
+    assert ctx.teclas == [], "mexeu na tecla sem saber o estado da bolsa"
+    assert ctx.aberto is True, "fechou a bolsa que o usuário deixou aberta"
+
+
+def test_SEM_O_MODELO_do_icone_a_resposta_e_NAO_SEI(monkeypatch):
+    """O defeito de 16/09/2026 em uma linha.
+
+    `_achar_icone` devolve `None` tanto para "não tem ícone na tela" quanto
+    para "não tenho o PNG" — e a segunda virava "a bolsa está FECHADA", com
+    toda a confiança. Daí saía a tecla que fechou o inventário do usuário.
+
+    A TELA AQUI ESTÁ BOA de propósito: quadro cheio, nada de branco. O único
+    que falta é o modelo, e mesmo assim a resposta tem de ser "não sei".
+    """
+    ctx = _CtxTecla(aberto_no_inicio=True)
+    ctx.templates = types.SimpleNamespace(load=lambda nome: None)
+    monkeypatch.setattr(d.vision, "capture_window",
+                        lambda hwnd: numpy.zeros((768, 1024, 3), numpy.uint8))
+    monkeypatch.setattr(d.vision, "frame_is_blank", lambda quadro: False)
+
+    assert d.inventario_esta_aberto(ctx) is None
 
 
 def test_sem_tecla_configurada_nao_faz_nada(monkeypatch):

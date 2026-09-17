@@ -344,6 +344,15 @@ e `docs/decisoes/deletador.md`.
 - `data/templates/deletar/` é a **LISTA BRANCA única** (PNG autoriza, tirar
   revoga), relida a cada chamada. A tecla do inventário é interruptor ⇒ o estado
   é **LIDO antes**; `None` não é "aberto".
+- **CEGO NÃO ENCOSTA NA TECLA** (17/09/2026). `inventario_esta_aberto` devolvendo
+  `None` — sem quadro **ou sem o modelo do ícone** — encerra a limpeza sem
+  apertar nada. Apertar sem saber FECHA a bolsa que o usuário deixou aberta, e o
+  fim não devolve (ele também fecha olhando); e apagar depende da tela do mesmo
+  jeito, então não se perde limpeza nenhuma.
+- **SEM O MODELO, A RESPOSTA É "NÃO SEI".** O ícone de deletar é a evidência de
+  que a bolsa está aberta: sem o PNG carregado, "não achei o ícone" NÃO é "a
+  bolsa está fechada". Foi essa mentira que fechou o inventário do usuário
+  durante sete horas quando os templates mudaram de pasta.
 - Gatilho `AppConfig.apagar_lixo_a_cada` (padrão 10, `0` = nunca). **CAMPO NOVO
   EM `AppConfig`/`AccountSettings` PRECISA ENTRAR NO `_app_from_dict` /
   `_settings_from_dict`** (travado por `tests/test_config_ida_e_volta.py`).

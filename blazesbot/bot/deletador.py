@@ -638,6 +638,8 @@ def inventario_esta_aberto(ctx: BotContext) -> bool | None:
     isso o FECHA -- aí nada é apagado e, pior, o "fechar" do fim o reabre e
     deixa a bolsa aberta engolindo as teclas da macro pelo resto da noite.
     """
+    if ctx.templates.load(TEMPLATE_DO_ICONE) is None:
+        return None            # sem o MODELO não se sabe nada da bolsa
     quadro = vision.capture_window(ctx.hwnd)
     if quadro is None or vision.frame_is_blank(quadro):
         return None
@@ -669,10 +671,12 @@ def limpar_a_bolsa(ctx: BotContext, tecla_do_inventario: str,
     aberto_antes = inventario_esta_aberto(ctx)
     eu_abri = False
     try:
+        if aberto_antes is None:
+            # CEGO NÃO MEXE NA TECLA: ela é INTERRUPTOR e FECHARIA a bolsa que
+            # o usuário deixou aberta -- e sem tela não há o que apagar.
+            ctx.log.warning("Não sei se a bolsa está aberta; não mexo na tecla.")
+            return 0
         if aberto_antes is not True:
-            # Inclui o caso `None`: sem leitura, o desfecho seguro é abrir e
-            # devolver ao fechado -- é o comportamento que existia antes de
-            # haver conferência nenhuma.
             ctx.press(tecla_do_inventario)
             eu_abri = True
             if not _esperar_a_bolsa_abrir(ctx):

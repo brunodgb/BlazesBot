@@ -677,7 +677,7 @@ ligar código não testado.
 | `LIMIAR_DA_FASE_2_DO_BOSS` | `0.92` | [blazesbot/core/vision/marcadores.py:233](blazesbot/core/vision/marcadores.py#L233) | combate.py, __init__.py | A SEGUNDA FASE DO BOSS, LIDA NA TELA. |
 | `LIMIAR_DO_MARCADOR_DE_MORTE` | `0.85` | [blazesbot/core/vision/marcadores.py:78](blazesbot/core/vision/marcadores.py#L78) | __init__.py | Limiar do marcador de inimigo morto. Sprite pequeno (26x22) num quadro de UI, |
 | `LINHAS_ENTRE_HP_E_MP` | `7` | [blazesbot/core/vision/marcadores.py:40](blazesbot/core/vision/marcadores.py#L40) | __init__.py, barra.py | Distância da barra vermelha para a azul, em linhas, e altura da faixa. |
-| `DEFAULT_THRESHOLD` | `0.87` | [blazesbot/core/vision/templates.py:21](blazesbot/core/vision/templates.py#L21) | __init__.py | — |
+| `DEFAULT_THRESHOLD` | `0.87` | [blazesbot/core/vision/templates.py:24](blazesbot/core/vision/templates.py#L24) | __init__.py | — |
 | `RAIO` | `40` | [blazesbot/core/vizinhanca.py:34](blazesbot/core/vizinhanca.py#L34) | — | Raio, em unidades de jogo, do que conta como "em volta". |
 | `SEGUNDOS_PARA_CHEGAR` | `5.0` | [blazesbot/core/volta_ao_ponto.py:44](blazesbot/core/volta_ao_ponto.py#L44) | cura.py, executor.py | Teto da caminhada de volta ao ponto. |
 | `TOLERANCIA` | `1` | [blazesbot/core/volta_ao_ponto.py:32](blazesbot/core/volta_ao_ponto.py#L32) | executor.py | Quanto o personagem pode estar fora do ponto e ainda contar como "chegou". |

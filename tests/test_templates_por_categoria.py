@@ -19,6 +19,7 @@ Então a rede é aqui:
 """
 from __future__ import annotations
 
+import logging
 import re
 from pathlib import Path
 
@@ -139,3 +140,42 @@ def test_a_raiz_nao_acumula_PNG_sem_categoria():
 ])
 def test_a_classificacao_e_a_esperada(nome, esperado):
     assert categoria_de(nome) == esperado
+
+
+# ===========================================================================
+# A PASTA E O AVISO — as duas formas de o template sumir CALADO
+# ===========================================================================
+
+def test_a_pasta_RELATIVA_e_resolvida_contra_a_raiz_do_projeto(monkeypatch,
+                                                               tmp_path):
+    """Todo chamador passa `Path("data") / "templates"`, que depende do CWD.
+
+    Um atalho, um .bat ou um serviço lançados de outro diretório fariam TODOS
+    os templates sumirem de uma vez -- e sumir, aqui, não levanta exceção.
+    """
+    monkeypatch.chdir(tmp_path)
+    lib = TemplateLibrary(Path("data") / "templates")
+
+    assert lib.folder.is_absolute()
+    assert lib.load("btn_delete_item.png") is not None, (
+        "a biblioteca deixou de achar o template fora do diretório do projeto")
+
+
+def test_template_que_FALTA_avisa_uma_vez(caplog):
+    """MEDIDO em 16/09/2026: a reorganização moveu os PNG às 21:05, o bot
+    rodava desde as 15:24 com o carregador antigo em memória, e às 21:06 ele
+    perdeu todo template de categoria. Passou SETE HORAS sem apagar um item.
+
+    Quem contou foi o deletador -- o único chamador que registra o `None`. Por
+    isso o aviso passou a ser da biblioteca, que serve a todos.
+
+    Uma vez por nome: o pedido se repete a cada volta, e a mesma linha doze mil
+    vezes (foi o número real) não informa mais que uma.
+    """
+    lib = TemplateLibrary(PASTA)
+    with caplog.at_level(logging.WARNING, logger="blazesbot.core.vision.templates"):
+        for _ in range(3):
+            assert lib.load("nao_existe_em_lugar_nenhum.png") is None
+
+    avisos = [r for r in caplog.records if "nao_existe_em_lugar_nenhum" in r.message]
+    assert len(avisos) == 1, f"esperava um aviso só: {[r.message for r in avisos]}"
