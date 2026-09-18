@@ -1562,5 +1562,110 @@
     "pt-br": "APAGA da bolsa todo item com imagem em data/templates/deletar_hh/ — o lixo que o Roaming Apothecary não compra. Apagar é IRREVERSÍVEL, e a lista é só da HH: a global serve o APP e a Bewitcher Cave. Ligue só depois de conferir o que há naquela pasta.",
     "en": "DELETES from the bag every item with an image in data/templates/deletar_hh/ — the trash the Roaming Apothecary will not buy. Deleting is IRREVERSIBLE, and the list is HH-only: the global one serves APP and Bewitcher Cave. Only turn this on after checking what you put in that folder.",
     "es": "BORRA de la bolsa todo ítem con imagen en data/templates/deletar_hh/ — la basura que el Roaming Apothecary no compra. Borrar es IRREVERSIBLE, y la lista es solo de HH: la global sirve al APP y a Bewitcher Cave. Actívalo solo después de revisar lo que pusiste en esa carpeta."
+  },
+  "btn_itens_do_lixo": {
+    "pt-br": "Escolher os itens…",
+    "en": "Choose the items…",
+    "es": "Elegir los ítems…"
+  },
+  "btn_itens_do_lixo_title": {
+    "pt-br": "Escolha item a item o que esta conta apaga. A pasta continua valendo para todas as contas; aqui ficam as exceções DESTA.",
+    "en": "Pick item by item what this account deletes. The folder still applies to every account; these are THIS account's exceptions.",
+    "es": "Elige ítem por ítem lo que esta cuenta borra. La carpeta sigue valiendo para todas las cuentas; aquí quedan las excepciones de ESTA."
+  },
+  "ph_lixo_busca": {
+    "pt-br": "Buscar por nome ou arquivo…",
+    "en": "Search by name or file…",
+    "es": "Buscar por nombre o archivo…"
+  },
+  "filtro_lixo_todos": {
+    "pt-br": "Todos",
+    "en": "All",
+    "es": "Todos"
+  },
+  "filtro_lixo_ativos": {
+    "pt-br": "Ativos (apaga)",
+    "en": "Active (deletes)",
+    "es": "Activos (borra)"
+  },
+  "filtro_lixo_inativos": {
+    "pt-br": "Inativos (mantém)",
+    "en": "Inactive (keeps)",
+    "es": "Inactivos (conserva)"
+  },
+  "selo_lixo_mantem": {
+    "pt-br": "mantém",
+    "en": "keep",
+    "es": "conserva"
+  },
+  "lixo_nada_no_filtro": {
+    "pt-br": "Nenhum item com esse filtro.",
+    "en": "No item matches this filter.",
+    "es": "Ningún ítem con ese filtro."
+  },
+  "lixo_itens": {
+    "pt-br": "itens",
+    "en": "items",
+    "es": "ítems"
+  },
+  "lixo_mantidos": {
+    "pt-br": "mantidos",
+    "en": "kept",
+    "es": "conservados"
+  },
+  "btn_lixo_manter": {
+    "pt-br": "Manter os visíveis",
+    "en": "Keep the visible ones",
+    "es": "Conservar los visibles"
+  },
+  "btn_lixo_apagar": {
+    "pt-br": "Apagar os visíveis",
+    "en": "Delete the visible ones",
+    "es": "Borrar los visibles"
+  },
+  "lixo_nota_sem_religar": {
+    "pt-br": "Vale na próxima limpeza, sem religar o bot.",
+    "en": "Takes effect on the next cleanup, without restarting the bot.",
+    "es": "Vale en la próxima limpieza, sin reiniciar el bot."
+  },
+  "lixo_nota_orfaos": {
+    "pt-br": "guardados não estão mais na pasta",
+    "en": "kept items are no longer in the folder",
+    "es": "conservados ya no están en la carpeta"
+  },
+  "lixo_titulo": {
+    "pt-br": "Itens do deletador",
+    "en": "Deleter items",
+    "es": "Ítems del borrador"
+  },
+  "lixo_sub_app": {
+    "pt-br": "Lista do APP — data/templates/deletar",
+    "en": "APP list — data/templates/deletar",
+    "es": "Lista del APP — data/templates/deletar"
+  },
+  "lixo_sub_hh": {
+    "pt-br": "Lista da HH — data/templates/deletar_hh",
+    "en": "HH list — data/templates/deletar_hh",
+    "es": "Lista de la HH — data/templates/deletar_hh"
+  },
+  "lixo_indisponivel": {
+    "pt-br": "Não consegui ler a lista de itens.",
+    "en": "Could not read the item list.",
+    "es": "No pude leer la lista de ítems."
+  },
+  "lixo_nao_salvou": {
+    "pt-br": "Não consegui salvar a seleção.",
+    "en": "Could not save the selection.",
+    "es": "No pude guardar la selección."
+  },
+  "lixo_salvo": {
+    "pt-br": "Seleção salva — vale na próxima limpeza.",
+    "en": "Selection saved — effective on the next cleanup.",
+    "es": "Selección guardada — vale en la próxima limpieza."
+  },
+  "lixo_descartar": {
+    "pt-br": "Você mexeu na seleção e não salvou. Descartar as alterações?",
+    "en": "You changed the selection and did not save. Discard the changes?",
+    "es": "Cambiaste la selección y no la guardaste. ¿Descartar los cambios?"
   }
 }

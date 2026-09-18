@@ -629,6 +629,15 @@
                 <input id="ed-app-limpar" type="number" min="0" max="999" step="1"
                        class="campo-input campo-num" />
               </label>
+              <!-- A JANELA DOS ITENS. Fica colada no "limpar a cada" porque é a
+                   outra metade da mesma decisão: com que frequência apagar, e O QUE
+                   apagar. O contador no botão evita abrir a janela só para conferir. -->
+              <button id="btn-lixo-app" class="bt bt-secundario w-full mb-1.5"
+                      data-i18n-title="btn_itens_do_lixo_title"
+                      title="Escolha item a item o que esta conta apaga. A pasta continua valendo para todas as contas; aqui ficam as exceções DESTA.">
+                <span data-i18n="btn_itens_do_lixo">Escolher os itens…</span>
+                <span id="lbl-lixo-app-conta" class="text-[11px] opacity-70"></span>
+              </button>
               <label class="campo-check w-full"
                      data-i18n-title="ck_travar_posicao_title"
                      title="Trava o personagem na posição em que o APP foi iniciado. Se ele andar mais de 1 unidade, volta andando (sem montura).">
@@ -793,6 +802,12 @@
               <span data-i18n="campo_hh_deletar">Jogar o lixo da HH fora antes de vender</span>
               <span class="ajuda" data-i18n-ajuda="ajuda_hh_deletar" data-ajuda="APAGA da bolsa todo item com imagem em data/templates/deletar_hh/ — o lixo que o Roaming Apothecary não compra. Apagar é IRREVERSÍVEL, e a lista é só da HH: a global serve o APP e a Bewitcher Cave. Ligue só depois de conferir o que há naquela pasta.">?</span>
             </label>
+            <button id="btn-lixo-hh" class="bt bt-secundario w-full mt-1.5"
+                    data-i18n-title="btn_itens_do_lixo_title"
+                    title="Escolha item a item o que esta conta apaga. A pasta continua valendo para todas as contas; aqui ficam as exceções DESTA.">
+              <span data-i18n="btn_itens_do_lixo">Escolher os itens…</span>
+              <span id="lbl-lixo-hh-conta" class="text-[11px] opacity-70"></span>
+            </button>
           </div>
         </div>
 
@@ -834,6 +849,50 @@
         <button id="btn-confirmar-nao" class="bt bt-secundario" data-i18n="btn_cancelar">Cancelar</button>
         <button id="btn-confirmar-ok" class="bt bt-perigo" data-i18n="btn_confirmar">Confirmar</button>
       </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================
+       OS ITENS QUE ESTA CONTA APAGA
+       ===================================================================
+       NADA FECHA ESTA JANELA além de Salvar e Cancelar: sem Esc, sem X e sem
+       clique no fundo. Pedido do usuário em 18/09/2026, e o motivo é concreto
+       -- fechar sem querer depois de marcar trinta itens perde os trinta.
+       Cancelar com alteração pendente pergunta antes. -->
+  <div id="modal-lixo" class="modal-mascara escondida">
+    <div class="janela-lixo">
+      <header class="lixo-cabecalho">
+        <div>
+          <div id="lbl-lixo-titulo" class="text-[15px] font-semibold text-ink"></div>
+          <div id="lbl-lixo-sub" class="text-[12px] text-ink-dim"></div>
+        </div>
+        <div id="lbl-lixo-contador" class="lixo-contador"></div>
+      </header>
+
+      <div class="lixo-barra">
+        <input id="ed-lixo-busca" type="search" class="campo-input flex-1"
+               data-i18n-placeholder="ph_lixo_busca" placeholder="Buscar por nome ou arquivo…" />
+        <div class="lixo-filtros" role="group">
+          <button type="button" data-filtro="todos" class="ativo" data-i18n="filtro_lixo_todos">Todos</button>
+          <button type="button" data-filtro="ativos" data-i18n="filtro_lixo_ativos">Ativos (apaga)</button>
+          <button type="button" data-filtro="inativos" data-i18n="filtro_lixo_inativos">Inativos (mantém)</button>
+        </div>
+        <!-- O ESCOPO VAI ESCRITO NO BOTÃO: com 208 itens e um filtro ligado,
+             "todos" seria a armadilha -- o usuário vê catorze e o botão mexe
+             em duzentos. O texto é gerado com o número do que está na tela. -->
+        <button id="btn-lixo-ignorar" type="button" class="bt bt-secundario"></button>
+        <button id="btn-lixo-reativar" type="button" class="bt bt-secundario"></button>
+      </div>
+
+      <div id="lixo-grade" class="lixo-grade"></div>
+
+      <footer class="lixo-rodape">
+        <div id="lbl-lixo-nota" class="text-[11px] text-ink-dim"></div>
+        <div class="flex gap-2">
+          <button id="btn-lixo-cancelar" type="button" class="bt bt-secundario" data-i18n="btn_cancelar">Cancelar</button>
+          <button id="btn-lixo-salvar" type="button" class="bt bt-primario" data-i18n="btn_salvar">Salvar</button>
+        </div>
+      </footer>
     </div>
   </div>
 

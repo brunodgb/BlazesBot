@@ -1566,3 +1566,199 @@ kbd {
   border-radius: 8px;
   border: 1px solid var(--color-line);
 }
+
+/* ===========================================================================
+   OS ITENS QUE ESTA CONTA APAGA — a janela de seleção (18/09/2026)
+   ===========================================================================
+
+   QUEM DECIDE É O DESENHO, NÃO O NOME. `AlmOre`, `bag3` e `Amuleto39` não
+   dizem nada; o ícone de 20 px é o que a pessoa reconhece do jogo. Por isso a
+   grade, e por isso o ícone vai AMPLIADO — com `image-rendering: pixelated`,
+   porque suavizar um ícone de 20 px vira borrão e borrão não se reconhece.
+
+   O CARTÃO INTEIRO É O ALVO DO CLIQUE. Caixinha de 12 px em grade de 208
+   itens é erro de pontaria garantido.
+
+   ALTURA POR FLEX, SEM `calc()`: só a grade rola; cabeçalho, barra e rodapé
+   ficam parados. É o mesmo motivo do `.painel-aba` — número mágico mente
+   assim que uma das barras muda de altura. */
+
+.janela-lixo {
+  display: flex;
+  flex-direction: column;
+  width: min(1120px, 94vw);
+  max-height: 90vh;
+  overflow: hidden;
+  border-radius: 16px;
+  border: 1px solid var(--color-line);
+  background: var(--color-surface);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5);
+}
+
+.lixo-cabecalho {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--color-line);
+}
+
+.lixo-contador {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-ink-dim);
+  white-space: nowrap;
+}
+
+.lixo-barra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-bottom: 1px solid var(--color-line);
+}
+
+/* Segmentado: três estados excludentes, um só visível como escolhido. */
+.lixo-filtros {
+  display: flex;
+  border: 1px solid var(--color-line);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.lixo-filtros button {
+  padding: 5px 12px;
+  font-size: 12px;
+  color: var(--color-ink-dim);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
+.lixo-filtros button + button {
+  border-left: 1px solid var(--color-line);
+}
+
+.lixo-filtros button:hover {
+  color: var(--color-ink);
+}
+
+.lixo-filtros button.ativo {
+  color: #fff;
+  background: var(--color-primary, #2563eb);
+}
+
+.lixo-grade {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
+  gap: 10px;
+  padding: 14px 18px;
+}
+
+.lixo-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 6px 8px;
+  border: 1px solid var(--color-line);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.02);
+  cursor: pointer;
+  user-select: none;
+  transition: border-color 0.12s, background 0.12s, transform 0.12s;
+}
+
+.lixo-card:hover {
+  border-color: var(--color-primary, #2563eb);
+  background: rgba(37, 99, 235, 0.08);
+}
+
+/* A caixa tem tamanho fixo e a imagem se estica para caber: os modelos vão de
+   14 px a 30 px, e cartão de tamanho variável faz a grade tremer. */
+.lixo-thumb-caixa {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 74px;
+}
+
+.lixo-thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+  transition: transform 0.12s;
+}
+
+/* A lupa do hover: o mesmo gesto das quedas, sem clique e sem tela nova. */
+.lixo-card:hover .lixo-thumb {
+  transform: scale(1.35);
+}
+
+.lixo-nome {
+  font-size: 12px;
+  line-height: 1.25;
+  text-align: center;
+  color: var(--color-ink);
+  overflow-wrap: anywhere;
+}
+
+.lixo-arquivo {
+  font-size: 10px;
+  color: var(--color-ink-dim);
+  opacity: 0.75;
+  overflow-wrap: anywhere;
+}
+
+/* IGNORADO SE LÊ DE LONGE: cinza e apagado, com o selo dizendo a palavra.
+   Cor sozinha não serve -- quem não distingue verde de vermelho fica sem
+   informação nenhuma. */
+.lixo-card.ignorado {
+  background: transparent;
+  border-style: dashed;
+}
+
+.lixo-card.ignorado .lixo-thumb {
+  filter: grayscale(1);
+  opacity: 0.35;
+}
+
+.lixo-card.ignorado .lixo-nome {
+  color: var(--color-ink-dim);
+  text-decoration: line-through;
+}
+
+.lixo-selo {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 1px 6px;
+  border-radius: 999px;
+  border: 1px solid var(--color-line);
+  color: var(--color-ink-dim);
+}
+
+.lixo-rodape {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 18px;
+  border-top: 1px solid var(--color-line);
+}
+
+.lixo-vazio {
+  grid-column: 1 / -1;
+  padding: 28px 0;
+  text-align: center;
+  font-size: 13px;
+  color: var(--color-ink-dim);
+}

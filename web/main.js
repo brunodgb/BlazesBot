@@ -1206,6 +1206,9 @@ function preencherEditor(d) {
   $("#ed-bolsas").value = String(d.bags.bolsas);
   $("#ed-app-ligado").checked = !!d.app.enabled;
   $("#ed-app-limpar").value = String(d.app.apagar_lixo_a_cada ?? 10);
+  // O contador no botão: quantos itens esta conta preserva em cada
+  // lista. Evita abrir a janela só para conferir.
+  marcarContadoresDoLixo(d.app.desativados, (d.hh || {}).desativados);
   $("#ed-app-travar").checked = !!d.app.travar_posicao;
   $("#ed-app-shuffle").value = String(d.app.shuffle_apos_n_voltas ?? 30);
   $("#ed-app-time-modo").value = d.app.time_modo || "largada";
@@ -2927,3 +2930,192 @@ document.addEventListener("wheel", (e) => {
   campo.dispatchEvent(new Event("input", { bubbles: true }));
   campo.dispatchEvent(new Event("change", { bubbles: true }));
 }, { passive: false });
+
+/* ===========================================================================
+   OS ITENS QUE ESTA CONTA APAGA — a janela de seleção (18/09/2026)
+   ===========================================================================
+
+   A pasta `data/templates/deletar/` continua dizendo o que PODE ser apagado, e
+   é uma só para o bot inteiro. Aqui o usuário marca as EXCEÇÕES daquela conta.
+
+   O ESTADO EM EDIÇÃO VIVE AQUI, não no disco: `ignorados` é o que está na
+   tela, `guardados` é o que estava salvo quando a janela abriu. A diferença
+   entre os dois é a resposta para "tem alteração pendente?" -- e é ela que faz
+   o Cancelar perguntar antes de jogar fora meia hora de trabalho. */
+
+const lixo = {
+  lista: "app",
+  itens: [],
+  ignorados: new Set(),
+  guardados: new Set(),
+  orfaos: 0,
+  filtro: "todos",
+  busca: "",
+};
+
+function lixoSujo() {
+  if (lixo.ignorados.size !== lixo.guardados.size) return true;
+  for (const nome of lixo.ignorados) if (!lixo.guardados.has(nome)) return true;
+  return false;
+}
+
+function lixoVisiveis() {
+  const busca = lixo.busca.trim().toLowerCase();
+  return lixo.itens.filter((item) => {
+    const ignorado = lixo.ignorados.has(item.arquivo);
+    if (lixo.filtro === "ativos" && ignorado) return false;
+    if (lixo.filtro === "inativos" && !ignorado) return false;
+    if (!busca) return true;
+    return (item.rotulo || "").toLowerCase().includes(busca)
+        || (item.arquivo || "").toLowerCase().includes(busca);
+  });
+}
+
+function desenharLixo() {
+  const grade = $("#lixo-grade");
+  const visiveis = lixoVisiveis();
+  grade.textContent = "";
+
+  for (const item of visiveis) {
+    const ignorado = lixo.ignorados.has(item.arquivo);
+    const card = document.createElement("div");
+    card.className = "lixo-card" + (ignorado ? " ignorado" : "");
+    card.title = item.arquivo;
+
+    const caixa = document.createElement("div");
+    caixa.className = "lixo-thumb-caixa";
+    const img = document.createElement("img");
+    img.className = "lixo-thumb";
+    img.src = item.imagem;
+    img.alt = item.rotulo;
+    caixa.appendChild(img);
+
+    const nome = document.createElement("div");
+    nome.className = "lixo-nome";
+    nome.textContent = item.rotulo;
+
+    const arquivo = document.createElement("div");
+    arquivo.className = "lixo-arquivo";
+    arquivo.textContent = item.arquivo;
+
+    card.append(caixa, nome, arquivo);
+    if (ignorado) {
+      const selo = document.createElement("span");
+      selo.className = "lixo-selo";
+      selo.textContent = t("selo_lixo_mantem");
+      card.appendChild(selo);
+    }
+    // O CARTÃO INTEIRO é o alvo: caixinha de 12 px em grade de 208 é erro de
+    // pontaria garantido.
+    card.addEventListener("click", () => {
+      if (ignorado) lixo.ignorados.delete(item.arquivo);
+      else lixo.ignorados.add(item.arquivo);
+      desenharLixo();
+    });
+    grade.appendChild(card);
+  }
+
+  if (!visiveis.length) {
+    const vazio = document.createElement("div");
+    vazio.className = "lixo-vazio";
+    vazio.textContent = t("lixo_nada_no_filtro");
+    grade.appendChild(vazio);
+  }
+
+  const total = lixo.itens.length;
+  const mantidos = lixo.itens.filter((i) => lixo.ignorados.has(i.arquivo)).length;
+  $("#lbl-lixo-contador").textContent =
+    `${total} ${t("lixo_itens")} · ${mantidos} ${t("lixo_mantidos")}`;
+
+  // O ESCOPO VAI NO BOTÃO: com filtro ou busca ligados, "todos" mentiria.
+  $("#btn-lixo-ignorar").textContent = `${t("btn_lixo_manter")} (${visiveis.length})`;
+  $("#btn-lixo-reativar").textContent = `${t("btn_lixo_apagar")} (${visiveis.length})`;
+  $("#btn-lixo-ignorar").disabled = !visiveis.length;
+  $("#btn-lixo-reativar").disabled = !visiveis.length;
+
+  const notas = [t("lixo_nota_sem_religar")];
+  if (lixo.orfaos) notas.push(`${lixo.orfaos} ${t("lixo_nota_orfaos")}`);
+  $("#lbl-lixo-nota").textContent = notas.join(" · ");
+}
+
+function marcarContadoresDoLixo(app, hh) {
+  const escrever = (id, quantos) => {
+    const el = $(id);
+    if (el) el.textContent = quantos ? `(${quantos} ${t("lixo_mantidos")})` : "";
+  };
+  escrever("#lbl-lixo-app-conta", (app || []).length);
+  escrever("#lbl-lixo-hh-conta", (hh || []).length);
+}
+
+async function abrirLixo(lista) {
+  if (!contaUidEditando) return;
+  const d = await chamar("lixo_da_conta", contaUidEditando, lista);
+  if (!d || !d.ok) {
+    avisar((d && d.erro) || t("lixo_indisponivel"));
+    return;
+  }
+  lixo.lista = lista;
+  lixo.itens = d.itens || [];
+  lixo.guardados = new Set(d.desativados || []);
+  lixo.ignorados = new Set(d.desativados || []);
+  lixo.orfaos = d.orfaos || 0;
+  lixo.filtro = "todos";
+  lixo.busca = "";
+  $("#ed-lixo-busca").value = "";
+  $$("#modal-lixo .lixo-filtros button").forEach((b) => {
+    b.classList.toggle("ativo", b.dataset.filtro === "todos");
+  });
+  $("#lbl-lixo-titulo").textContent = t("lixo_titulo");
+  $("#lbl-lixo-sub").textContent =
+    (lista === "hh" ? t("lixo_sub_hh") : t("lixo_sub_app"));
+  $("#modal-lixo").classList.remove("escondida");
+  desenharLixo();
+}
+
+async function salvarLixo() {
+  const r = await chamar("salvar_lixo_da_conta", contaUidEditando, lixo.lista,
+                         [...lixo.ignorados]);
+  if (!r || !r.ok) {
+    avisar((r && r.erro) || t("lixo_nao_salvou"));
+    return;
+  }
+  lixo.guardados = new Set(r.desativados || []);
+  if (lixo.lista === "hh") marcarContadoresDoLixo(null, r.desativados);
+  else marcarContadoresDoLixo(r.desativados, null);
+  $("#modal-lixo").classList.add("escondida");
+  toast(t("lixo_salvo"), "ok");
+}
+
+async function fecharLixo() {
+  // PERGUNTA ANTES DE JOGAR FORA. Nada mais fecha esta janela -- sem Esc, sem
+  // X e sem clique no fundo -- justamente para o descarte ser sempre uma
+  // decisão, nunca um escorregão.
+  if (lixoSujo() && !(await confirmar(t("lixo_descartar")))) return;
+  $("#modal-lixo").classList.add("escondida");
+}
+
+$("#btn-lixo-app").addEventListener("click", () => abrirLixo("app"));
+$("#btn-lixo-hh").addEventListener("click", () => abrirLixo("hh"));
+$("#btn-lixo-salvar").addEventListener("click", salvarLixo);
+$("#btn-lixo-cancelar").addEventListener("click", fecharLixo);
+$("#ed-lixo-busca").addEventListener("input", (e) => {
+  lixo.busca = e.target.value || "";
+  desenharLixo();
+});
+$$("#modal-lixo .lixo-filtros button").forEach((b) => {
+  b.addEventListener("click", () => {
+    lixo.filtro = b.dataset.filtro;
+    $$("#modal-lixo .lixo-filtros button").forEach((o) => {
+      o.classList.toggle("ativo", o === b);
+    });
+    desenharLixo();
+  });
+});
+$("#btn-lixo-ignorar").addEventListener("click", () => {
+  lixoVisiveis().forEach((i) => lixo.ignorados.add(i.arquivo));
+  desenharLixo();
+});
+$("#btn-lixo-reativar").addEventListener("click", () => {
+  lixoVisiveis().forEach((i) => lixo.ignorados.delete(i.arquivo));
+  desenharLixo();
+});
