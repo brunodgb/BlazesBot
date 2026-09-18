@@ -1655,10 +1655,11 @@ kbd {
   min-height: 0;
   overflow-y: auto;
   display: grid;
-  /* 96 px, E NÃO 118: com o ícone pela metade, a coluna larga só deixava
-     espaço vazio. Assim cabem ~10 por linha em vez de 8 -- o ganho que o
-     usuário pediu, *"assim também vai aparecer bem mais png cada vez"*. */
-  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  /* 72 px: o alvo é CABER 13 POR LINHA na janela de 1120 px, pedido do usuário
+     em 18/09/2026. A conta do `auto-fill` é n = ⌊(largura + espaço) / (mínimo +
+     espaço)⌋, então 72 + 10 dá 13 colunas com folga -- 76 já resvalaria em 12
+     numa janela um pouco menor. */
+  grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
   gap: 10px;
   padding: 14px 18px;
 }
@@ -1668,7 +1669,9 @@ kbd {
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  padding: 8px 6px 6px;
+  /* 4 px de folga lateral, e não 6: numa coluna de 72 px cada pixel é largura
+     de texto, e era o que faltava para "BambShoot" não quebrar no meio. */
+  padding: 8px 4px 6px;
   /* SEM ISTO A COLUNA NÃO ENCOLHE. Item de grade nasce com `min-width: auto`,
      e aí o nome do arquivo em `nowrap` vira o piso da largura -- as reticências
      nunca apareceriam e `minmax(96px, …)` seria letra morta. */
@@ -1716,33 +1719,21 @@ kbd {
 
 /* A lupa do hover: o mesmo gesto das quedas, sem clique e sem tela nova.
 
-   2x É O TAMANHO DE ANTES (37 x 2 = 74). Com a caixa pela metade, a lupa passa
-   a ser a única forma de ver o ícone grande -- e ela mostra exatamente o que a
-   grade mostrava antes, para quem precisar olhar de perto. */
+   1,5x, E NÃO 2x -- medido na tela pelo usuário: com o cartão em 72 px, dobrar
+   o ícone o fazia transbordar do cartão e ficava desproporcional. Meia vez a
+   mais dá o "olhar de perto" sem estourar a célula. */
 .lixo-card:hover .lixo-thumb {
-  transform: scale(2);
+  transform: scale(1.5);
 }
 
 .lixo-nome {
-  font-size: 12px;
+  /* 11 px: com a coluna em 72 px, 12 px fazia nome de uma palavra só quebrar
+     no meio ("BambShoo/t"), que é pior de ler do que um ponto menor. */
+  font-size: 11px;
   line-height: 1.25;
   text-align: center;
   color: var(--color-ink);
   overflow-wrap: anywhere;
-}
-
-/* O NOME DO ARQUIVO CABE EM UMA LINHA, com reticências. Ele é a informação
-   secundária -- serve para editar o dicionário de rótulos --, e deixá-lo
-   quebrar em três linhas numa coluna de 96 px faria cada cartão ter uma altura
-   diferente. O nome inteiro continua no `title` do cartão. */
-.lixo-arquivo {
-  max-width: 100%;
-  font-size: 10px;
-  color: var(--color-ink-dim);
-  opacity: 0.75;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 /* IGNORADO SE LÊ DE LONGE: cinza e apagado, com o selo dizendo a palavra.

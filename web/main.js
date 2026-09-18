@@ -2994,11 +2994,11 @@ function desenharLixo() {
     nome.className = "lixo-nome";
     nome.textContent = item.rotulo;
 
-    const arquivo = document.createElement("div");
-    arquivo.className = "lixo-arquivo";
-    arquivo.textContent = item.arquivo;
-
-    card.append(caixa, nome, arquivo);
+    // SÓ O NOME DO ITEM no cartão -- pedido do usuário em 18/09/2026. O nome do
+    // arquivo continua no `title` (e a busca continua casando com ele), que é
+    // por onde o dicionário de rótulos é editado; na grade ele era a segunda
+    // linha de texto em cada um dos 208 cartões.
+    card.append(caixa, nome);
     if (ignorado) {
       const selo = document.createElement("span");
       selo.className = "lixo-selo";
