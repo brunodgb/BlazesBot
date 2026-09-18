@@ -3119,3 +3119,28 @@ $("#btn-lixo-reativar").addEventListener("click", () => {
   lixoVisiveis().forEach((i) => lixo.ignorados.delete(i.arquivo));
   desenharLixo();
 });
+
+$("#btn-lixo-exportar").addEventListener("click", async () => {
+  const r = await chamar("exportar_lixo_da_conta", contaUidEditando, lixo.lista,
+                         [...lixo.ignorados]);
+  if (!r || r.cancelado) return;
+  if (!r.ok) { avisar(r.erro || t("lixo_nao_exportou")); return; }
+  toast(t("lixo_exportado", { quantos: r.quantos }), "ok");
+});
+
+$("#btn-lixo-importar").addEventListener("click", async () => {
+  const r = await chamar("importar_lixo_da_conta", contaUidEditando, lixo.lista);
+  if (!r || r.cancelado) return;
+  if (!r.ok) { avisar(r.erro || t("lixo_nao_importou")); return; }
+  // O QUE MUDA, ANTES DE MUDAR. Importar SUBSTITUI, e substituir sem dizer
+  // com o que a conta fica é a forma de perder seleção sem perceber.
+  const pergunta = t("lixo_confirmar_import",
+                     { arquivo: r.quantos, atual: lixo.ignorados.size });
+  if (!(await confirmar(pergunta))) return;
+  lixo.ignorados = new Set(r.desativados || []);
+  desenharLixo();
+  const aviso = r.ausentes
+    ? ` · ${r.ausentes} ${t("lixo_ausentes")}`
+    : "";
+  toast(t("lixo_importado", { quantos: r.quantos }) + aviso, "ok");
+});

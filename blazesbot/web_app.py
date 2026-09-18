@@ -945,6 +945,24 @@ class _App:
         self._aplicar()
         return resposta
 
+    def exportar_lixo_da_conta(self, uid: str, lista: Any,
+                               desativados: Any) -> dict[str, Any]:
+        """Grava a seleção num `.json` que o usuário escolhe onde salvar."""
+        try:
+            conta = self._conta(uid)
+            return web_lixo.exportar(conta, str(lista), desativados)
+        except ValueError as exc:
+            return {"ok": False, "erro": str(exc)}
+
+    def importar_lixo_da_conta(self, uid: str, lista: Any) -> dict[str, Any]:
+        """Lê um `.json` e DEVOLVE a seleção. Não grava: quem aplica é a tela,
+        e por isso o Cancelar da janela ainda desfaz."""
+        try:
+            conta = self._conta(uid)
+            return web_lixo.importar(conta, str(lista))
+        except ValueError as exc:
+            return {"ok": False, "erro": str(exc)}
+
     def abrir_imagem_da_afericao(self, caminho: Any) -> dict[str, Any]:
         try:
             import os
@@ -1409,6 +1427,13 @@ class Api:
     def salvar_lixo_da_conta(self, uid: Any, lista: Any,
                              desativados: Any) -> dict[str, Any]:
         return self._app.salvar_lixo_da_conta(uid, lista, desativados)
+
+    def exportar_lixo_da_conta(self, uid: Any, lista: Any,
+                               desativados: Any) -> dict[str, Any]:
+        return self._app.exportar_lixo_da_conta(uid, lista, desativados)
+
+    def importar_lixo_da_conta(self, uid: Any, lista: Any) -> dict[str, Any]:
+        return self._app.importar_lixo_da_conta(uid, lista)
 
     def abrir_imagem_da_afericao(self, caminho: Any) -> dict[str, Any]:
         return self._app.abrir_imagem_da_afericao(caminho)

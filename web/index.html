@@ -887,7 +887,16 @@
       <div id="lixo-grade" class="lixo-grade"></div>
 
       <footer class="lixo-rodape">
-        <div id="lbl-lixo-nota" class="text-[11px] text-ink-dim"></div>
+        <div class="flex items-center gap-2">
+          <!-- LEVAR A SELEÇÃO PARA OUTRA CONTA OU OUTRA MÁQUINA. O arquivo diz
+               de qual lista ele é: importar um do APP na janela da HH passaria
+               despercebido, com os nomes não casando com nada. -->
+          <button id="btn-lixo-exportar" type="button" class="bt bt-secundario"
+                  data-i18n="btn_lixo_exportar">Exportar…</button>
+          <button id="btn-lixo-importar" type="button" class="bt bt-secundario"
+                  data-i18n="btn_lixo_importar">Importar…</button>
+          <div id="lbl-lixo-nota" class="text-[11px] text-ink-dim"></div>
+        </div>
         <div class="flex gap-2">
           <button id="btn-lixo-cancelar" type="button" class="bt bt-secundario" data-i18n="btn_cancelar">Cancelar</button>
           <button id="btn-lixo-salvar" type="button" class="bt bt-primario" data-i18n="btn_salvar">Salvar</button>

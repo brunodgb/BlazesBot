@@ -14,6 +14,7 @@ O que estes testes protegem:
 """
 from __future__ import annotations
 
+import json
 from types import SimpleNamespace
 
 import pytest
@@ -33,9 +34,13 @@ def conta(tmp_path, monkeypatch):
             (pasta / nome).write_bytes(b"png-de-mentira:" + nome.encode())
     monkeypatch.setitem(web_lixo.LISTAS, "app", (app, "app"))
     monkeypatch.setitem(web_lixo.LISTAS, "hh", (hh, "hh"))
-    return SimpleNamespace(settings=SimpleNamespace(
-        app=SimpleNamespace(desativados=[]),
-        hh=SimpleNamespace(desativados=[])))
+    return SimpleNamespace(
+        # `last_char_name`/`login` entram no arquivo exportado: quem recebe a
+        # seleção de um amigo merece saber de qual personagem ela veio.
+        last_char_name="BlazesAPP1", login="conta-de-teste",
+        settings=SimpleNamespace(
+            app=SimpleNamespace(desativados=[]),
+            hh=SimpleNamespace(desativados=[])))
 
 
 def test_a_miniatura_vai_EMBUTIDA(conta):
@@ -99,3 +104,98 @@ def test_gravar_lista_vazia_reativa_tudo(conta):
     web_lixo.guardar(conta, "app", [])
     assert conta.settings.app.desativados == []
     assert all(i["ativo"] for i in web_lixo.itens(conta, "app")["itens"])
+
+
+# ===========================================================================
+# LEVAR A SELEÇÃO PARA OUTRA CONTA — ou para outra máquina
+# ===========================================================================
+
+def _dialogo_fixo(monkeypatch, caminho):
+    monkeypatch.setattr(web_lixo, "_dialogo", lambda salvar, sugestao="": str(caminho))
+
+
+def test_exportar_grava_o_arquivo_com_a_LISTA_dentro(conta, tmp_path, monkeypatch):
+    """Sem dizer de qual lista é, importar um arquivo do APP na janela da HH
+    passaria despercebido: os nomes não casariam com nada e a pessoa ficaria
+    com a seleção vazia achando que importou."""
+    alvo = tmp_path / "selecao.json"
+    _dialogo_fixo(monkeypatch, alvo)
+
+    r = web_lixo.exportar(conta, "app", ["Bag.png", "Bag.png", ""])
+
+    assert r["ok"] and r["quantos"] == 1
+    gravado = json.loads(alvo.read_text(encoding="utf-8"))
+    assert gravado["blazesbot"] == web_lixo.MARCA_DO_ARQUIVO
+    assert gravado["lista"] == "app"
+    assert gravado["desativados"] == ["Bag.png"]
+
+
+def test_exportar_leva_o_que_esta_na_TELA(conta, tmp_path, monkeypatch):
+    """A conta tem uma coisa guardada e a janela mostra outra: vai a da janela,
+    que é o que a pessoa está vendo."""
+    conta.settings.app.desativados = ["Blue_Wolf_Meat.png"]
+    alvo = tmp_path / "selecao.json"
+    _dialogo_fixo(monkeypatch, alvo)
+
+    web_lixo.exportar(conta, "app", ["Bag.png"])
+
+    assert json.loads(alvo.read_text(encoding="utf-8"))["desativados"] == ["Bag.png"]
+
+
+def test_importar_devolve_a_selecao_e_NAO_grava(conta, tmp_path, monkeypatch):
+    """Quem aplica é a janela, no estado em edição -- por isso o Cancelar dela
+    ainda desfaz uma importação."""
+    alvo = tmp_path / "selecao.json"
+    alvo.write_text(json.dumps({
+        "blazesbot": web_lixo.MARCA_DO_ARQUIVO, "versao": 1, "lista": "app",
+        "desativados": ["Bag.png"]}), encoding="utf-8")
+    _dialogo_fixo(monkeypatch, alvo)
+
+    r = web_lixo.importar(conta, "app")
+
+    assert r["ok"] and r["desativados"] == ["Bag.png"]
+    assert conta.settings.app.desativados == [], "importar gravou sozinho"
+
+
+def test_importar_RECUSA_arquivo_da_outra_lista(conta, tmp_path, monkeypatch):
+    alvo = tmp_path / "selecao.json"
+    alvo.write_text(json.dumps({
+        "blazesbot": web_lixo.MARCA_DO_ARQUIVO, "lista": "hh",
+        "desativados": ["Trap.png"]}), encoding="utf-8")
+    _dialogo_fixo(monkeypatch, alvo)
+
+    r = web_lixo.importar(conta, "app")
+
+    assert r["ok"] is False and "hh" in r["erro"]
+
+
+def test_importar_RECUSA_json_que_nao_e_do_bot(conta, tmp_path, monkeypatch):
+    alvo = tmp_path / "qualquer.json"
+    alvo.write_text('{"algo": 1}', encoding="utf-8")
+    _dialogo_fixo(monkeypatch, alvo)
+
+    assert web_lixo.importar(conta, "app")["ok"] is False
+
+
+def test_importar_CONTA_os_nomes_que_nao_existem_aqui(conta, tmp_path, monkeypatch):
+    """O arquivo do amigo pode ter PNG que esta instalação não tem. Os nomes
+    são mantidos -- o PNG pode voltar --, mas a pessoa merece saber."""
+    alvo = tmp_path / "selecao.json"
+    alvo.write_text(json.dumps({
+        "blazesbot": web_lixo.MARCA_DO_ARQUIVO, "lista": "app",
+        "desativados": ["Bag.png", "SoNoPcDoAmigo.png"]}), encoding="utf-8")
+    _dialogo_fixo(monkeypatch, alvo)
+
+    r = web_lixo.importar(conta, "app")
+
+    assert r["quantos"] == 2 and r["ausentes"] == 1
+
+
+@pytest.mark.parametrize("funcao", ["exportar", "importar"])
+def test_fechar_o_dialogo_nao_e_erro(conta, monkeypatch, funcao):
+    """Desistir do seletor de arquivo é desistir, não falha -- e a janela não
+    pode cuspir um aviso vermelho por isso."""
+    monkeypatch.setattr(web_lixo, "_dialogo", lambda salvar, sugestao="": "")
+    r = (web_lixo.exportar(conta, "app", []) if funcao == "exportar"
+         else web_lixo.importar(conta, "app"))
+    assert r["cancelado"] is True and r["erro"] == ""

@@ -1667,5 +1667,45 @@
     "pt-br": "Você mexeu na seleção e não salvou. Descartar as alterações?",
     "en": "You changed the selection and did not save. Discard the changes?",
     "es": "Cambiaste la selección y no la guardaste. ¿Descartar los cambios?"
+  },
+  "btn_lixo_exportar": {
+    "pt-br": "Exportar…",
+    "en": "Export…",
+    "es": "Exportar…"
+  },
+  "btn_lixo_importar": {
+    "pt-br": "Importar…",
+    "en": "Import…",
+    "es": "Importar…"
+  },
+  "lixo_exportado": {
+    "pt-br": "Seleção exportada ({quantos} itens).",
+    "en": "Selection exported ({quantos} items).",
+    "es": "Selección exportada ({quantos} ítems)."
+  },
+  "lixo_importado": {
+    "pt-br": "Seleção importada ({quantos} itens). Salve para valer.",
+    "en": "Selection imported ({quantos} items). Save to apply.",
+    "es": "Selección importada ({quantos} ítems). Guarda para aplicar."
+  },
+  "lixo_confirmar_import": {
+    "pt-br": "O arquivo tem {arquivo} itens preservados e esta conta tem {atual}. A importação SUBSTITUI a seleção atual. Continuar?",
+    "en": "The file has {arquivo} kept items and this account has {atual}. Importing REPLACES the current selection. Continue?",
+    "es": "El archivo tiene {arquivo} ítems conservados y esta cuenta tiene {atual}. La importación SUSTITUYE la selección actual. ¿Continuar?"
+  },
+  "lixo_ausentes": {
+    "pt-br": "não existem nesta instalação",
+    "en": "are not in this installation",
+    "es": "no existen en esta instalación"
+  },
+  "lixo_nao_exportou": {
+    "pt-br": "Não consegui exportar.",
+    "en": "Could not export.",
+    "es": "No pude exportar."
+  },
+  "lixo_nao_importou": {
+    "pt-br": "Não consegui importar.",
+    "en": "Could not import.",
+    "es": "No pude importar."
   }
 }

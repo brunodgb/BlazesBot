@@ -34,6 +34,8 @@ e por isso cada uma tem a sua lista de exceções na conta.
 from __future__ import annotations
 
 import base64
+import json
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -108,3 +110,105 @@ def guardar(conta: Account, lista: str, desativados: Any) -> dict[str, Any]:
     _pasta, bloco = _bloco(conta, lista)
     bloco.desativados = normalizar_desativados(desativados)
     return {"ok": True, "erro": "", "desativados": list(bloco.desativados)}
+
+
+# ===========================================================================
+# LEVAR A SELEÇÃO PARA OUTRA CONTA — ou para outra máquina
+# ===========================================================================
+#
+# *"Quero que gere um arquivo json de export, pois às vezes o usuário pode
+# querer compartilhar com o amigo, ou deixar salvo, então é bom conseguir
+# exportar e depois ele pode importar esse arquivo em outra conta."*
+#
+# O ARQUIVO DIZ DE QUAL LISTA ELE É. Sem isso, importar um arquivo do APP na
+# janela da HH passaria despercebido: os nomes não casariam com nada e a pessoa
+# ficaria com uma seleção vazia achando que importou.
+MARCA_DO_ARQUIVO = "blazesbot-itens-do-deletador"
+VERSAO_DO_ARQUIVO = 1
+
+
+def _dialogo(salvar: bool, sugestao: str = "") -> str:
+    """Diálogo nativo de arquivo, feito no Python.
+
+    Mesmo motivo do `procurar_client_bat`: o WebView2 não devolve o caminho
+    real de um `<input type=file>`. Tkinter entra só aqui dentro -- se faltar,
+    devolve vazio e quem chama avisa na tela.
+    """
+    try:
+        import tkinter as tk
+        from tkinter import filedialog
+
+        raiz = tk.Tk()
+        raiz.withdraw()
+        raiz.attributes("-topmost", True)
+        tipos = [("Itens do deletador", "*.json"), ("Todos os arquivos", "*.*")]
+        if salvar:
+            caminho = filedialog.asksaveasfilename(
+                title="Salvar a seleção de itens", defaultextension=".json",
+                initialfile=sugestao, filetypes=tipos, parent=raiz)
+        else:
+            caminho = filedialog.askopenfilename(
+                title="Abrir uma seleção de itens", filetypes=tipos, parent=raiz)
+        raiz.destroy()
+        return caminho or ""
+    except Exception:
+        return ""
+
+
+def exportar(conta: Account, lista: str, desativados: Any) -> dict[str, Any]:
+    """Grava a seleção num `.json` escolhido pelo usuário.
+
+    Exporta o que está NA TELA, não o que está no disco: é o que a pessoa vê e
+    o que ela espera que vá para o arquivo.
+    """
+    pasta, _ = _bloco(conta, lista)
+    nomes = normalizar_desativados(desativados)
+    caminho = _dialogo(True, f"itens-{pasta.name}.json")
+    if not caminho:
+        return {"ok": False, "erro": "", "cancelado": True}
+    conteudo = {
+        "blazesbot": MARCA_DO_ARQUIVO,
+        "versao": VERSAO_DO_ARQUIVO,
+        "lista": lista,
+        "pasta": pasta.name,
+        "conta": (conta.last_char_name or conta.login or "").strip(),
+        "gerado_em": datetime.now().isoformat(timespec="seconds"),
+        "desativados": nomes,
+    }
+    try:
+        Path(caminho).write_text(
+            json.dumps(conteudo, indent=2, ensure_ascii=False),
+            encoding="utf-8")
+    except OSError as exc:
+        return {"ok": False, "erro": f"Não consegui gravar: {exc}"}
+    return {"ok": True, "erro": "", "arquivo": caminho, "quantos": len(nomes)}
+
+
+def importar(conta: Account, lista: str) -> dict[str, Any]:
+    """Lê um `.json` e devolve a seleção dele. NÃO grava nada.
+
+    Quem aplica é a janela, no estado em edição -- então o Cancelar ainda
+    desfaz. E `ausentes` conta os nomes que não existem NESTA instalação: eles
+    são mantidos (o PNG pode voltar), mas a pessoa merece saber.
+    """
+    pasta, _ = _bloco(conta, lista)
+    caminho = _dialogo(False)
+    if not caminho:
+        return {"ok": False, "erro": "", "cancelado": True}
+    try:
+        bruto = json.loads(Path(caminho).read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        return {"ok": False, "erro": f"Não consegui ler o arquivo: {exc}"}
+    if not isinstance(bruto, dict) or bruto.get("blazesbot") != MARCA_DO_ARQUIVO:
+        return {"ok": False, "erro": (
+            "Esse arquivo não é uma seleção de itens do BlazesBot.")}
+    de_qual = str(bruto.get("lista") or "")
+    if de_qual and de_qual != lista:
+        return {"ok": False, "erro": (
+            f"Esse arquivo é da lista '{de_qual}' e esta janela é da '{lista}'. "
+            "Abra a janela da outra aba para importá-lo.")}
+    nomes = normalizar_desativados(bruto.get("desativados"))
+    na_pasta = {png.name for png in deletador.modelos_na_pasta(pasta)}
+    return {"ok": True, "erro": "", "desativados": nomes,
+            "quantos": len(nomes), "de": str(bruto.get("conta") or ""),
+            "ausentes": len([n for n in nomes if n not in na_pasta])}
