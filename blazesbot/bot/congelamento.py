@@ -99,13 +99,18 @@ class VigiaDoCongelamento:
     """Vê a coordenada travada e mexe na montaria. Desligado, não faz nada."""
 
     def __init__(self, ctx: BotContext,
-                 desmontar: Callable[[], bool]) -> None:
+                 desmontar: Callable[[], bool],
+                 maximo_sem_leitura: float) -> None:
         self.ctx = ctx
         # QUEM DESMONTA É O NAVIGATOR, injetado. Este módulo decide QUANDO, e
         # não sabe apertar tecla nenhuma -- é o que o mantém testável sem jogo.
         self._desmontar = desmontar
+        # O MAIOR INTERVALO LEGÍTIMO ENTRE DUAS LEITURAS. Injetado pelo
+        # `Navigator`, que sabe o número (o portão da montaria) -- ver `olhar`.
+        self._maximo_sem_leitura = maximo_sem_leitura
         self.ligado = False
         self._desde = 0.0
+        self._visto_em = 0.0
         self._posicao: tuple[int, int] | None = None
         self._cutucadas = 0
 
@@ -123,6 +128,7 @@ class VigiaDoCongelamento:
         propósito -- teleporte, revive, entrada de cave."""
         self._posicao = None
         self._desde = 0.0
+        self._visto_em = 0.0
         self._cutucadas = 0
 
     # -- o gesto -----------------------------------------------------------
@@ -137,17 +143,45 @@ class VigiaDoCongelamento:
             return False
 
         ctx = self.ctx
+        agora = time.time()
+
+        # =================================================================
+        # O RELÓGIO SÓ CORRE ENQUANTO O BOT TENTA ANDAR
+        # =================================================================
+        #
+        # `olhar` é chamado a cada volta do laço de deslocamento, ~4 vezes por
+        # segundo. Se a volta anterior foi há muito tempo, o bot NÃO ESTAVA
+        # tentando andar nesse intervalo -- ele estava vendendo, apagando lixo,
+        # falando com NPC. Parado de propósito não é congelado.
+        #
+        # SEM ISTO, TODO DESMONTE FORA DA CAVE ERA FALSO. Medido em 17-18/09:
+        # as 51 cutucadas fora da cave são o MESMO caso -- personagem no ponto
+        # de venda (-343,-294), mandado andar 6 unidades até a porta
+        # (-342,-288), com "congelado há 15-23 s" cravado no tempo da venda
+        # mais a limpeza da bolsa. Uma delas marcou **2034 s**, o ciclo inteiro
+        # de uma run. A primeira leitura depois da pausa via um relógio que
+        # nunca tinha sido zerado e cutucava na hora -- 1 ms depois de o
+        # trajeto começar.
+        #
+        # E NÃO DÁ PARA USAR O ALVO como discriminador: o destravamento chama
+        # `follow_path` de novo com OUTRO waypoint enquanto o personagem segue
+        # congelado no mesmo lugar, e zerar ali apagaria justamente os
+        # congelamentos verdadeiros de dentro da cave.
+        if self._visto_em and agora - self._visto_em > self._maximo_sem_leitura:
+            self._posicao = None
+        self._visto_em = agora
+
         # QUALQUER mudança de coordenada zera -- inclusive o rollback, que é
         # outro problema e tem outro remédio.
         if self._posicao is None or pos != self._posicao:
             self._posicao = pos
-            self._desde = time.time()
+            self._desde = agora
             self._cutucadas = 0
             return False
 
         if self._cutucadas >= CUTUCADAS:
             return False
-        parado = time.time() - self._desde
+        parado = agora - self._desde
         limite = SEGUNDOS_PARA_CUTUCAR if not self._cutucadas else SEGUNDOS_PARA_A_SEGUNDA
         if parado < limite:
             return False

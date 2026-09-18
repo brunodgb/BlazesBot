@@ -74,30 +74,30 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | `SEGUNDOS_POR_CLIQUE_CIRCULO` | 1 s | = | FIXO | [navegacao.py:271](blazesbot/bot/navegacao.py#L271) | `_clicar_offset_e_verificar` | Janela por ponto do círculo para saber se o clique fez o personagem andar. |
 | `INTERVALO_MANUTENCAO` | 0.6 s | = | FIXO | [navegacao.py:273](blazesbot/bot/navegacao.py#L273) | `follow_path` | Cadência da manutenção durante o deslocamento (poção). |
 | `INTERVALO_REMONTAR` | 3 s | = | FIXO | [navegacao.py:284](blazesbot/bot/navegacao.py#L284) | `_pode_tocar_na_montaria, _manter_montaria` | A MONTARIA É PRÉ-REQUISITO DE ANDAR, NÃO UMA OTIMIZAÇÃO -- tudo que este bot |
-| `TETO_DO_PORTAO` | 6 s | = | TETO | [navegacao.py:311](blazesbot/bot/navegacao.py#L311) | `garantir_montaria_para_andar` | A ORDEM DO PORTÃO: CONFERIR -> ATIVAR -> CONFIRMAR -> ANDAR |
+| `TETO_DO_PORTAO` | 6 s | = | TETO | [navegacao.py:311](blazesbot/bot/navegacao.py#L311) | `__init__, garantir_montaria_para_andar` | A ORDEM DO PORTÃO: CONFERIR -> ATIVAR -> CONFIRMAR -> ANDAR |
 | `SEGUNDOS_ANTES_DE_CUTUCAR` | 10 s | *novo* | FIXO | [navegacao.py:371](blazesbot/bot/navegacao.py#L371) | `destravar_ao_entrar, _passo_para_destravar_a_montaria` | Quanto esperar, desde a PRIMEIRA tentativa, antes de andar um passo. Numero do |
 | `PASSO_PARA_DESTRAVAR_A_MONTARIA` | 6 s | *novo* | PASSO | [navegacao.py:379](blazesbot/bot/navegacao.py#L379) | `_passo_para_destravar_a_montaria` | O tamanho do passo, em unidades de posicao. Numero do usuario ("6px"). |
 | `PASSO_AO_ENTRAR_NA_CAVE` | 3 s | *novo* | PASSO | [navegacao.py:381](blazesbot/bot/navegacao.py#L381) | `destravar_ao_entrar` | METADE dele ao ENTRAR na cave (16/09/2026, *"qualquer andada ja resolve"*). |
 | `INTERVALO_PARADA_POCAO` | 10 s | = | FIXO | [navegacao.py:441](blazesbot/bot/navegacao.py#L441) | `_manutencao_em_movimento` | Recarga da PARADA para tomar poção durante o trajeto. |
-| *literal em* `wait_until_still` | 0.25 s | = | FIXO | [navegacao.py:621](blazesbot/bot/navegacao.py#L621) | `wait_until_still` | Espera o personagem parar de andar. |
-| *literal em* `_abrir_mapa` | 0.5 s | = | FIXO | [navegacao.py:645](blazesbot/bot/navegacao.py#L645) | `_abrir_mapa` |  |
-| *literal em* `_fechar_mapa` | 0.3 s | = | FIXO | [navegacao.py:651](blazesbot/bot/navegacao.py#L651) | `_fechar_mapa` |  |
-| *literal em* `_mover_pelo_mapa` | 0.2 s | = | FIXO | [navegacao.py:689](blazesbot/bot/navegacao.py#L689) | `_mover_pelo_mapa` | Anda até `alvo` usando o mapa-múndi. |
-| *literal em* `_mover_pelo_mapa` | 1 s | = | FIXO | [navegacao.py:695](blazesbot/bot/navegacao.py#L695) | `_mover_pelo_mapa` | Anda até `alvo` usando o mapa-múndi. |
-| *literal em* `_clicar_offset_e_verificar` | 0.1 s | = | FIXO | [navegacao.py:1054](blazesbot/bot/navegacao.py#L1054) | `_clicar_offset_e_verificar` | Clique curto num offset e medição: o personagem andou? |
-| *literal em* `_parada_para_pocao` | 0.25 s | = | FIXO | [navegacao.py:1152](blazesbot/bot/navegacao.py#L1152) | `_parada_para_pocao` | Desmonta, toma poção e remonta. É a ÚNICA forma que funciona. |
-| *literal em* `_parada_para_pocao` | 0.2 s | = | FIXO | [navegacao.py:1163](blazesbot/bot/navegacao.py#L1163) | `_parada_para_pocao` | Desmonta, toma poção e remonta. É a ÚNICA forma que funciona. |
-| *literal em* `follow_path` | 0.25 s | = | FIXO | [navegacao.py:1451](blazesbot/bot/navegacao.py#L1451) | `follow_path` | Percorre waypoints em ordem, SEM parar entre eles. |
-| *literal em* `travel_via_surroundings` | 0.5 s | = | FIXO | [navegacao.py:1817](blazesbot/bot/navegacao.py#L1817) | `travel_via_surroundings` | Usa o painel Surroundings como teleporte por nome. |
-| *literal em* `travel_via_surroundings` | 0.2 s | = | FIXO | [navegacao.py:1819](blazesbot/bot/navegacao.py#L1819) | `travel_via_surroundings` | Usa o painel Surroundings como teleporte por nome. |
-| *literal em* `travel_via_surroundings` | 0.15 s | = | FIXO | [navegacao.py:1821](blazesbot/bot/navegacao.py#L1821) | `travel_via_surroundings` | Usa o painel Surroundings como teleporte por nome. |
-| *literal em* `travel_via_surroundings` | 0.4 s | = | FIXO | [navegacao.py:1823](blazesbot/bot/navegacao.py#L1823) | `travel_via_surroundings` | Usa o painel Surroundings como teleporte por nome. |
-| *literal em* `travel_via_surroundings` | 0.25 s | = | FIXO | [navegacao.py:1836](blazesbot/bot/navegacao.py#L1836) | `travel_via_surroundings` | Usa o painel Surroundings como teleporte por nome. |
-| *literal em* `travel_via_surroundings` | 0.5 s | = | FIXO | [navegacao.py:1842](blazesbot/bot/navegacao.py#L1842) | `travel_via_surroundings` | Usa o painel Surroundings como teleporte por nome. |
-| *literal em* `travel_via_surroundings` | 0.25 s | = | FIXO | [navegacao.py:1844](blazesbot/bot/navegacao.py#L1844) | `travel_via_surroundings` | Usa o painel Surroundings como teleporte por nome. |
-| *literal em* `ensure_mounted` | 1 s | = | FIXO | [navegacao.py:2318](blazesbot/bot/navegacao.py#L2318) | `ensure_mounted` |  |
-| *literal em* `ensure_mounted` | 1 s | = | FIXO | [navegacao.py:2329](blazesbot/bot/navegacao.py#L2329) | `ensure_mounted` |  |
-| *literal em* `ensure_dismounted` | 0.75 s | = | FIXO | [navegacao.py:2377](blazesbot/bot/navegacao.py#L2377) | `ensure_dismounted` |  |
+| *literal em* `wait_until_still` | 0.25 s | = | FIXO | [navegacao.py:622](blazesbot/bot/navegacao.py#L622) | `wait_until_still` | Espera o personagem parar de andar. |
+| *literal em* `_abrir_mapa` | 0.5 s | = | FIXO | [navegacao.py:646](blazesbot/bot/navegacao.py#L646) | `_abrir_mapa` |  |
+| *literal em* `_fechar_mapa` | 0.3 s | = | FIXO | [navegacao.py:652](blazesbot/bot/navegacao.py#L652) | `_fechar_mapa` |  |
+| *literal em* `_mover_pelo_mapa` | 0.2 s | = | FIXO | [navegacao.py:690](blazesbot/bot/navegacao.py#L690) | `_mover_pelo_mapa` | Anda até `alvo` usando o mapa-múndi. |
+| *literal em* `_mover_pelo_mapa` | 1 s | = | FIXO | [navegacao.py:696](blazesbot/bot/navegacao.py#L696) | `_mover_pelo_mapa` | Anda até `alvo` usando o mapa-múndi. |
+| *literal em* `_clicar_offset_e_verificar` | 0.1 s | = | FIXO | [navegacao.py:1055](blazesbot/bot/navegacao.py#L1055) | `_clicar_offset_e_verificar` | Clique curto num offset e medição: o personagem andou? |
+| *literal em* `_parada_para_pocao` | 0.25 s | = | FIXO | [navegacao.py:1153](blazesbot/bot/navegacao.py#L1153) | `_parada_para_pocao` | Desmonta, toma poção e remonta. É a ÚNICA forma que funciona. |
+| *literal em* `_parada_para_pocao` | 0.2 s | = | FIXO | [navegacao.py:1164](blazesbot/bot/navegacao.py#L1164) | `_parada_para_pocao` | Desmonta, toma poção e remonta. É a ÚNICA forma que funciona. |
+| *literal em* `follow_path` | 0.25 s | = | FIXO | [navegacao.py:1452](blazesbot/bot/navegacao.py#L1452) | `follow_path` | Percorre waypoints em ordem, SEM parar entre eles. |
+| *literal em* `travel_via_surroundings` | 0.5 s | = | FIXO | [navegacao.py:1818](blazesbot/bot/navegacao.py#L1818) | `travel_via_surroundings` | Usa o painel Surroundings como teleporte por nome. |
+| *literal em* `travel_via_surroundings` | 0.2 s | = | FIXO | [navegacao.py:1820](blazesbot/bot/navegacao.py#L1820) | `travel_via_surroundings` | Usa o painel Surroundings como teleporte por nome. |
+| *literal em* `travel_via_surroundings` | 0.15 s | = | FIXO | [navegacao.py:1822](blazesbot/bot/navegacao.py#L1822) | `travel_via_surroundings` | Usa o painel Surroundings como teleporte por nome. |
+| *literal em* `travel_via_surroundings` | 0.4 s | = | FIXO | [navegacao.py:1824](blazesbot/bot/navegacao.py#L1824) | `travel_via_surroundings` | Usa o painel Surroundings como teleporte por nome. |
+| *literal em* `travel_via_surroundings` | 0.25 s | = | FIXO | [navegacao.py:1837](blazesbot/bot/navegacao.py#L1837) | `travel_via_surroundings` | Usa o painel Surroundings como teleporte por nome. |
+| *literal em* `travel_via_surroundings` | 0.5 s | = | FIXO | [navegacao.py:1843](blazesbot/bot/navegacao.py#L1843) | `travel_via_surroundings` | Usa o painel Surroundings como teleporte por nome. |
+| *literal em* `travel_via_surroundings` | 0.25 s | = | FIXO | [navegacao.py:1845](blazesbot/bot/navegacao.py#L1845) | `travel_via_surroundings` | Usa o painel Surroundings como teleporte por nome. |
+| *literal em* `ensure_mounted` | 1 s | = | FIXO | [navegacao.py:2319](blazesbot/bot/navegacao.py#L2319) | `ensure_mounted` |  |
+| *literal em* `ensure_mounted` | 1 s | = | FIXO | [navegacao.py:2330](blazesbot/bot/navegacao.py#L2330) | `ensure_mounted` |  |
+| *literal em* `ensure_dismounted` | 0.75 s | = | FIXO | [navegacao.py:2378](blazesbot/bot/navegacao.py#L2378) | `ensure_dismounted` |  |
 
 
 ## FORA DA CAVE — pontos exatos

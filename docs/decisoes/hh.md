@@ -2346,3 +2346,89 @@ trechos. Não há rótulo de boss dentro da função, e o teste
 `test_a_validacao_NAO_DEPENDE_de_qual_boss_e` reprova se algum aparecer.
 
 Travado por `tests/test_ponto_do_boss.py` e `tests/test_rotina_da_hh.py`.
+
+
+## §36 — Parado de propósito não é congelado (18/09/2026)
+
+> *"fora de HH ainda tem acontecido de sair da montaria... as coisas que
+> precisam desmontar são feitos dentro da cave e não fora, então não faz sentido
+> acontecer casos do personagem desmontar estando fora da cave"*
+
+**Todos os desmontes fora da cave eram falso positivo do vigia de
+congelamento** — nenhum vinha do veto de `_preparar_para_agir`, que em 17-18/09
+não precisou disparar uma única vez.
+
+### O caso, medido
+
+As **51** cutucadas fora da cave são a MESMA cena, repetida:
+
+| de | para | "congelado há" | vezes |
+|---|---|---|---|
+| (-343,-294) | (-342,-288) | 15–23 s | 50 |
+| (-342,-288) | (-343,-294) | **2034 s** | 1 |
+
+(-343,-294) é o `PONTO_DA_VENDA`; (-342,-288) é a porta da cave. O trajeto entre
+os dois tem **6 unidades**. E o "congelado há 19 s" é cravado no tempo da venda
+mais a limpeza da bolsa:
+
+```
+00:01:16  Janela de venda aberta        ← o personagem para aqui, de propósito
+00:01:28  HH: 19 slot(s) vendido(s)
+00:01:31  HH: 4 item(ns) de lixo apagado(s)
+00:01:32.338  Percorrendo 1 waypoints (tolerância 1.5, teto 5s)
+00:01:32.339  CONGELADO em (-343,-294) há 19s ... (cutucada 1 de 2)
+```
+
+**Um milissegundo** depois de o trajeto começar. O personagem não estava
+congelado: estava vendendo, que é o que se pediu a ele.
+
+### A causa
+
+`VigiaDoCongelamento.olhar` é chamado a cada volta do laço de deslocamento,
+~4×/s, e mede `agora - self._desde`. O relógio vive no objeto e **atravessa as
+chamadas de `follow_path`** — decisão deliberada de §23, porque o congelamento
+medido acontece em trajetos curtos de 5 s e um relógio por chamada nunca
+chegaria aos 15 s.
+
+O que não estava previsto é que o relógio atravessa também os **intervalos em
+que não há trajeto nenhum**. Parado no vendedor por 19 s, a primeira leitura do
+trajeto seguinte via um relógio de 19 s e cutucava na hora. A de 2034 s é o
+ciclo inteiro de uma run.
+
+### O conserto, e por que NÃO é o alvo
+
+O relógio agora só corre **enquanto o bot tenta andar**: se a leitura anterior
+foi há mais que `maximo_sem_leitura`, o bot estava fora do laço de deslocamento
+e o relógio recomeça.
+
+**O destino NÃO serve como discriminador**, e isso foi verificado antes de
+escrever o conserto: a manobra de destravamento chama `follow_path` de novo com
+OUTRO waypoint enquanto o personagem segue congelado no mesmo lugar —
+
+```
+00:57:45  Destravando pelo waypoint 9/11 em (516, 212)
+00:57:47  sem progresso indo para (516, 212) (distância 67) — relançando (2)
+00:57:49  Destravando pelo waypoint 5/11 em (462, 170)
+00:57:50  CONGELADO em (449, 206) há 15s tentando andar até (462, 170)
+```
+
+— então zerar por troca de alvo apagaria justamente os congelamentos
+verdadeiros de dentro da cave. O que separa os dois casos é o **intervalo entre
+leituras**: no congelamento real elas chegam sem parar; na venda somem por 19 s.
+
+### O número é DERIVADO, e vem de quem anda
+
+`maximo_sem_leitura` é injetado pelo `Navigator` com `TETO_DO_PORTAO` (6 s) — o
+maior intervalo legítimo entre duas leituras dentro de um trajeto é o portão da
+montaria, que pode segurar até esse teto antes de liberar o movimento. Injetado,
+e não importado, porque `navegacao.py` é que importa `congelamento.py`; mexer no
+teto do portão reajusta este sozinho.
+
+### O que NÃO foi mexido
+
+O veto de desmontar fora da cave (`_preparar_para_agir`) continua como está, com
+a exceção do pet que o usuário definiu em 25/08. Ele não era o problema: em dois
+dias de log não houve uma única ação de buff, poção ou comida tentando desmontar
+fora da cave.
+
+Travado por `tests/test_congelamento_do_personagem.py`.

@@ -61,10 +61,16 @@ class _Ctx:
         self.account_login = "conta"
 
 
+# O maior intervalo legítimo entre duas leituras. Em produção quem passa é o
+# `Navigator`, com o teto do portão da montaria.
+MAXIMO_SEM_LEITURA = 6.0
+
+
 def _vigia(montado: bool | None = True, ligado: bool = True):
     """Um vigia com o relógio sob controle do teste, sem esperar de verdade."""
     desmontes = []
-    v = VigiaDoCongelamento(_Ctx(montado), lambda: desmontes.append(1) or True)
+    v = VigiaDoCongelamento(_Ctx(montado), lambda: desmontes.append(1) or True,
+                            MAXIMO_SEM_LEITURA)
     v.ligado = ligado
     v.desmontes = desmontes
     return v
@@ -331,3 +337,80 @@ def test_o_evento_do_diario_e_PROPRIO():
     assert "travado" not in eventos, (
         "o congelamento passou a gravar no mesmo evento do teto de "
         "insistência, e as duas medidas viraram uma")
+
+
+# ===========================================================================
+# PARADO DE PROPÓSITO NÃO É CONGELADO -- 18/09/2026
+# ===========================================================================
+#
+# Relato do usuário: *"fora de HH ainda tem acontecido de sair da montaria...
+# as coisas que precisam desmontar são feitos dentro da cave e não fora, então
+# não faz sentido acontecer casos do personagem desmontar estando fora da
+# cave"*.
+#
+# ERAM TODAS FALSAS. As 51 cutucadas fora da cave medidas em 17-18/09 são o
+# MESMO caso: o personagem parado no ponto de venda (-343,-294) enquanto vende e
+# apaga lixo, mandado depois a andar 6 unidades até a porta (-342,-288). O
+# relógio do vigia nunca tinha sido zerado, então a PRIMEIRA leitura do trajeto
+# novo já trazia "congelado há 15-23 s" -- uma delas marcou 2034 s, o ciclo
+# inteiro de uma run.
+
+
+def test_a_pausa_para_VENDER_nao_conta_como_congelamento():
+    """O caso medido, ponto por ponto: mesma coordenada, mas o bot passou o
+    intervalo inteiro fora do laço de andar."""
+    v = _vigia()
+    v.olhar((-343, -294), "andar até (-343, -294)")
+
+    # a venda: nenhuma leitura por 19 s
+    v._visto_em -= 19.0
+    v._desde -= 19.0
+
+    assert v.olhar((-343, -294), "andar até (-342, -288)") is False
+    assert v.desmontes == [], "cutucou por causa de uma pausa de propósito"
+    assert v.segundos_congelado < 1.0, (
+        "o relógio manteve o tempo da venda em vez de recomeçar")
+
+
+def test_o_congelamento_de_VERDADE_continua_pego():
+    """O conserto não pode ter desligado a detecção.
+
+    Aqui as leituras chegam sem parar -- é o laço de andar rodando contra um
+    personagem que não sai do lugar.
+    """
+    v = _vigia()
+    v.olhar((300, 140), "andar até (318, 140)")
+    _envelhecer(v, 16.0)
+
+    assert v.olhar((300, 140), "andar até (318, 140)") is True
+    assert v.desmontes == [1]
+
+
+def test_o_destravamento_troca_o_ALVO_e_isso_NAO_zera():
+    """A manobra de destravar chama o trajeto de novo com OUTRO waypoint
+    enquanto o personagem segue congelado no mesmo lugar.
+
+    Zerar por troca de alvo apagaria justamente os congelamentos verdadeiros de
+    dentro da cave -- foi por isso que o discriminador é o INTERVALO ENTRE
+    LEITURAS, e não o destino.
+    """
+    v = _vigia()
+    v.olhar((449, 206), "andar até (516, 212)")
+    _envelhecer(v, 16.0)
+
+    assert v.olhar((449, 206), "andar até (462, 170)") is True, (
+        "trocar o waypoint durante o destravamento apagou o congelamento")
+
+
+def test_o_intervalo_maximo_vem_de_QUEM_ANDA():
+    """`congelamento.py` não pode importar de `navegacao.py` (a navegação é que
+    importa dele), então o número é injetado -- e é o teto do portão da
+    montaria, o maior intervalo legítimo entre duas leituras do trajeto."""
+    import inspect
+
+    from blazesbot.bot import navegacao
+
+    fonte = inspect.getsource(navegacao.Navigator.__init__)
+    assert "TETO_DO_PORTAO)" in fonte, (
+        "o vigia deixou de receber o intervalo máximo do portão da montaria")
+    assert navegacao.TETO_DO_PORTAO == MAXIMO_SEM_LEITURA

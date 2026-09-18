@@ -562,10 +562,10 @@ class Navigator:
         # "NAO DESTRAVEI em 60s: 9 morte(s), 8 TAB, 176 golpes".
         self.destravar_o_combate: Callable[[str], bool] | None = None
         self.matar_quando_o_trajeto_trava: Callable[[str], bool] | None = None
-        # CONGELAMENTO DO PERSONAGEM: vigia próprio, em `bot/congelamento.py`.
-        # NASCE DESLIGADO -- só a HH liga. Ver `docs/decisoes/hh.md` §23.
+        # CONGELAMENTO: vigia próprio, NASCE DESLIGADO -- só a HH liga. §23/§36.
         self.congelamento = VigiaDoCongelamento(
-            ctx, lambda: self.ensure_dismounted(permitir_em_batalha=True))
+            ctx, lambda: self.ensure_dismounted(permitir_em_batalha=True),
+            TETO_DO_PORTAO)
         # Desde quando está a pé, e quanto tempo do trajeto atual foi a pé. É o
         # número que diz se a exigência de andar montado está sendo cumprida de
         # verdade -- sem ele, "andou a pé metade da cave" não aparece em log nenhum.
