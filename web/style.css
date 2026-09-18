@@ -1655,7 +1655,10 @@ kbd {
   min-height: 0;
   overflow-y: auto;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
+  /* 96 px, E NÃO 118: com o ícone pela metade, a coluna larga só deixava
+     espaço vazio. Assim cabem ~10 por linha em vez de 8 -- o ganho que o
+     usuário pediu, *"assim também vai aparecer bem mais png cada vez"*. */
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
   gap: 10px;
   padding: 14px 18px;
 }
@@ -1664,8 +1667,12 @@ kbd {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  padding: 10px 6px 8px;
+  gap: 4px;
+  padding: 8px 6px 6px;
+  /* SEM ISTO A COLUNA NÃO ENCOLHE. Item de grade nasce com `min-width: auto`,
+     e aí o nome do arquivo em `nowrap` vira o piso da largura -- as reticências
+     nunca apareceriam e `minmax(96px, …)` seria letra morta. */
+  min-width: 0;
   border: 1px solid var(--color-line);
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.02);
@@ -1680,13 +1687,23 @@ kbd {
 }
 
 /* A caixa tem tamanho fixo e a imagem se estica para caber: os modelos vão de
-   14 px a 30 px, e cartão de tamanho variável faz a grade tremer. */
+   14 px a 30 px, e cartão de tamanho variável faz a grade tremer.
+
+   37 px, E NÃO 74 -- medido na tela pelo usuário em 18/09/2026: *"os ícones são
+   naturalmente pequenos, então fica bem desfocado com o tamanho que foi
+   colocado"*. Ampliar um ícone de 14 px para 74 é multiplicar por cinco, e
+   `pixelated` mantém a borda dura mas não inventa detalhe nenhum -- o que
+   chega ao olho é um borrão de blocos. Pela metade, o maior fator de ampliação
+   cai para ~2,6x e o desenho volta a ser reconhecível.
+
+   A LARGURA DA COLUNA NÃO ACOMPANHOU: quem manda nela é o nome do arquivo
+   (`Black_Shadow_stone.png`), não o ícone. */
 .lixo-thumb-caixa {
   display: flex;
   align-items: center;
   justify-content: center;
   width: 100%;
-  height: 74px;
+  height: 37px;
 }
 
 .lixo-thumb {
@@ -1697,9 +1714,13 @@ kbd {
   transition: transform 0.12s;
 }
 
-/* A lupa do hover: o mesmo gesto das quedas, sem clique e sem tela nova. */
+/* A lupa do hover: o mesmo gesto das quedas, sem clique e sem tela nova.
+
+   2x É O TAMANHO DE ANTES (37 x 2 = 74). Com a caixa pela metade, a lupa passa
+   a ser a única forma de ver o ícone grande -- e ela mostra exatamente o que a
+   grade mostrava antes, para quem precisar olhar de perto. */
 .lixo-card:hover .lixo-thumb {
-  transform: scale(1.35);
+  transform: scale(2);
 }
 
 .lixo-nome {
@@ -1710,11 +1731,18 @@ kbd {
   overflow-wrap: anywhere;
 }
 
+/* O NOME DO ARQUIVO CABE EM UMA LINHA, com reticências. Ele é a informação
+   secundária -- serve para editar o dicionário de rótulos --, e deixá-lo
+   quebrar em três linhas numa coluna de 96 px faria cada cartão ter uma altura
+   diferente. O nome inteiro continua no `title` do cartão. */
 .lixo-arquivo {
+  max-width: 100%;
   font-size: 10px;
   color: var(--color-ink-dim);
   opacity: 0.75;
-  overflow-wrap: anywhere;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* IGNORADO SE LÊ DE LONGE: cinza e apagado, com o selo dizendo a palavra.
