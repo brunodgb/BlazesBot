@@ -541,3 +541,69 @@ preservados.**
 e `_carregar` respeita a lista. Mais `test_config_ida_e_volta.py` (o campo
 sobrevive ao disco) e `test_app_config_campo_por_campo.py` (a ponte leva nos
 dois sentidos).
+
+## A janela de seleção: 208 miniaturas — 18/09/2026
+
+### Só na web, e por decisão escrita
+
+A PyQt6 está descontinuada (decisão do usuário) e isto não é um campo — é uma
+janela com 208 miniaturas, busca, filtro e ação em massa. A GUI antiga não tem
+**um único `QPixmap`** nem um único diálogo aberto de dentro do editor. O campo
+entrou em `CAMPOS_SO_DA_WEB`, com o porquê em `docs/decisoes/interface.md`.
+
+### Duas janelas irmãs, não uma com abas
+
+APP abre da aba APP, HH abre da aba HH. Mesma estrutura, muda a pasta e o
+campo. *"Acho que é melhor 2 janelas para o usuário não se confundir."*
+
+### O desenho decide, então o desenho é o cartão
+
+`AlmOre`, `bag3` e `Amuleto39` não dizem nada. O ícone vai ampliado com
+`image-rendering: pixelated` — suavizar 20 px vira borrão, e borrão não se
+reconhece. O rótulo em cima, o nome do arquivo embaixo em cinza (é por ele que
+o dicionário de nomes é editado).
+
+O cartão INTEIRO é o alvo do clique: caixinha de 12 px em grade de 208 itens é
+erro de pontaria garantido. E o estado se lê de longe — cinza, borda tracejada,
+nome riscado e o selo MANTÉM —, porque cor sozinha não informa quem não
+distingue verde de vermelho.
+
+### O escopo da ação em massa vai escrito no botão
+
+"Manter os visíveis (14)". Um botão que diz "todos" e mexe em 208 com um filtro
+ligado é armadilha: a pessoa vê catorze na tela.
+
+### Nada fecha a janela além de Salvar e Cancelar
+
+Sem Esc, sem X e sem clique no fundo — os três fecham sem querer, e depois de
+marcar trinta itens isso custa os trinta. Cancelar com alteração pendente
+pergunta antes. Pedido do usuário, com o motivo dele: *"se ele apertar sem
+querer e fechar, depois de ter editado várias imagens, o usuário vai ficar bem
+frustrado"*.
+
+### A miniatura viaja embutida, e isso é medido
+
+A página roda em `file://` e o WebView2 recusa `<img src>` para arquivo local.
+As 208 do APP dão **349 KB e 15,6 ms** para ler e codificar tudo — então a
+grade vai num payload só, sem cache, sem carga sob demanda e sem paginação.
+
+**WebP foi recusado**, e não pelo tamanho: a miniatura é a PROVA do que o bot
+vai apagar. Reencodar faria o usuário decidir olhando um arquivo e o bot decidir
+comparando outro — e num ícone de 20 px qualquer diferença de encodagem é a
+diferença entre reconhecer e não reconhecer.
+
+### Exportar/importar: o arquivo diz de qual lista ele é
+
+Sem isso, importar um arquivo do APP na janela da HH passaria despercebido: os
+nomes não casariam com nada e a pessoa ficaria com a seleção vazia achando que
+importou. Importar SUBSTITUI e diz o que muda antes; e não grava nada — devolve
+a lista, quem aplica é a janela, e por isso o Cancelar ainda desfaz.
+
+### Conferido no navegador
+
+Não só em teste: 208 cartões desenhados, contador "208 itens · 3 mantidos",
+filtro Inativos deixando 3, busca "bag" deixando 5 com o botão de massa
+acompanhando o número, e o Cancelar com alteração pendente abrindo a pergunta.
+A receita do harness: Chrome com CDP pelo `test-web.ps1`, o dev server do Vite
+(no `file://` o erro de módulo vem opaco), e o stub da ponte injetado por
+`<script>` depois do load, seguido de um `pywebviewready` disparado à mão.
