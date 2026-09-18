@@ -356,8 +356,20 @@ e `docs/decisoes/deletador.md`.
 - Gatilho `AppConfig.apagar_lixo_a_cada` (padrão 10, `0` = nunca). **CAMPO NOVO
   EM `AppConfig`/`AccountSettings` PRECISA ENTRAR NO `_app_from_dict` /
   `_settings_from_dict`** (travado por `tests/test_config_ida_e_volta.py`).
-- **AFERIÇÃO ANTES DE CONFIAR** (`bot/app/afericao.py`): fotografa o que seria
-  apagado sem clicar. Deletar não tem desfazer.
+- **AFERIÇÃO ANTES DE CONFIAR** (`bot/app/afericao.py`, desenho em
+  `bot/afericao_do_lixo.py`): fotografa o que seria apagado sem clicar. Deletar
+  não tem desfazer.
+- **CADA CONTA GUARDA AS EXCEÇÕES, NUNCA A LISTA INTEIRA** (`desativados`, em
+  `AppConfig` e `HHConfig`). A pasta continua dizendo o que PODE ser apagado, e
+  PNG novo nela vale em todas as contas sem ninguém ligar nada. Guardar os
+  ATIVOS mataria esse invariante e poria 208 nomes por conta no `config.json`.
+- **A LISTA É LIDA NO MOMENTO DA LIMPEZA** (`deletador.modelos_ativos`), nunca
+  capturada na montagem do executor: a interface e a thread da conta
+  compartilham o mesmo objeto de configuração, então salvar vale na limpeza
+  seguinte, sem religar o bot.
+- **QUEM APAGA E QUEM CONFERE CARREGAM PELA MESMA PORTA** (`_carregar`). Uma
+  aferição que enxergasse mais que a exclusão desenharia retângulo em item que
+  aquela conta não apaga.
 
 ## Time do APP
 

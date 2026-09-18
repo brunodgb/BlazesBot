@@ -67,7 +67,12 @@ def _ler(caminho: str) -> str:
 # `_app_from_dict`, então a GUI não os apaga -- ela apenas não os mostra e não
 # os edita. Ver `docs/decisoes/interface.md`.
 CAMPOS_SO_DA_WEB = {"time_logins", "time_modo",
-                    "fada", "cura_pedir_pct", "cura_parar_pct"}
+                    "fada", "cura_pedir_pct", "cura_parar_pct",
+                    # A seleção de itens do deletador (18/09/2026): ela é
+                    # uma JANELA de 208 miniaturas, não um campo. A PyQt6
+                    # não tem um único `QPixmap` e está descontinuada por
+                    # decisão do usuário -- ver docs/decisoes/interface.md.
+                    "desativados"}
 
 
 def test_a_excecao_da_gui_congelada_nao_cresce_sozinha() -> None:
@@ -78,7 +83,8 @@ def test_a_excecao_da_gui_congelada_nao_cresce_sozinha() -> None:
     acúmulo, sem ninguém decidir isso.
     """
     assert CAMPOS_SO_DA_WEB == {"time_logins", "time_modo",
-                                "fada", "cura_pedir_pct", "cura_parar_pct"}, (
+                                "fada", "cura_pedir_pct", "cura_parar_pct",
+                                "desativados"}, (
         "para acrescentar um campo aqui é preciso decidir (e escrever em "
         "docs/decisoes/interface.md) que ele não existe na PyQt6."
     )

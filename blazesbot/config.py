@@ -602,6 +602,19 @@ MODOS_DO_TIME = ("copiar", "largada", "mesmo_alvo")
 MODO_PADRAO_DO_TIME = "largada"
 
 
+def normalizar_desativados(bruto: object) -> list[str]:
+    """Nomes de arquivo de modelo, limpos: sem vazio, sem repetido, em ordem.
+
+    Mesma defesa dupla dos outros normalizadores -- o `config.json` pode ter
+    sido editado à mão e o payload vem de JavaScript. Nome sujo aqui não
+    levanta nada: ele vira um item que não casa com arquivo nenhum e some da
+    janela. Ordenar deixa o `config.json` com diff estável.
+    """
+    if not isinstance(bruto, (list, tuple, set)):
+        return []
+    return sorted({n for n in (str(x or "").strip() for x in bruto) if n})
+
+
 def normalizar_time_logins(bruto: object) -> list[str]:
     """A lista de seguidores, sempre limpa: texto, sem vazio, sem repetido, no teto.
 
@@ -692,6 +705,18 @@ class AppConfig:
     #
     # Só o ecossistema APP usa isto -- o BC resolve bolsa cheia vendendo.
     apagar_lixo_a_cada: int = 10
+    # OS MODELOS QUE ESTA CONTA NÃO APAGA (nomes de arquivo, `Bag.png`).
+    #
+    # A pasta continua dizendo o que PODE ser apagado, e é uma só para o bot
+    # inteiro; isto aqui são as EXCEÇÕES desta conta. Guardar a exceção, e não
+    # a lista inteira, é o que faz PNG novo valer em todas as contas sem
+    # ninguém ligar nada -- e deixa `[]` em quem não mexeu, em vez de 208 nomes
+    # repetidos conta a conta.
+    #
+    # Lido NO MOMENTO DA LIMPEZA (`deletador.modelos_ativos`): mexer na janela
+    # vale na limpeza seguinte, sem religar o bot. Porquê e medição:
+    # `docs/decisoes/deletador.md`.
+    desativados: list[str] = field(default_factory=list)
     # ==================================================================
     # A LINHA 0 DA MACRO: o TAB, e o tempo depois dele
     # ==================================================================
@@ -1007,6 +1032,9 @@ class HHConfig:
     # é lixo numa cave é mercadoria na outra, e uma lista só apagaria em todo
     # lugar. Ver `bot/deletador.PASTA_DO_LIXO_DA_HH`.
     deletar_lixo: bool = False
+    # As exceções DESTA conta na lista da HH -- mesma ideia do `AppConfig`,
+    # outra pasta (`deletar_hh/`). Ver o comentário de lá.
+    desativados: list[str] = field(default_factory=list)
     # Intervalo entre duas teclas da rotação de ataque.
     attack_delay: float = 0.5
     # Rede de segurança contra a flag de combate presa em ligado.
@@ -1839,6 +1867,7 @@ class BotConfig:
             # e a configuração sumia. Todo campo novo do `AppConfig` precisa
             # entrar nesta linha; o dataclass sozinho não basta.
             apagar_lixo_a_cada=max(0, int(dados.get("apagar_lixo_a_cada", 10) or 0)),
+            desativados=normalizar_desativados(dados.get("desativados")),
             espera_depois_do_tab_ms=max(
                 MINIMO_DE_ESPERA_DO_APP_MS,
                 int(dados.get("espera_depois_do_tab_ms", 1000) or 0)),

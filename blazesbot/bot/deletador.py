@@ -321,6 +321,34 @@ def modelos_na_pasta(pasta: Path | None = None) -> list[Path]:
     return sorted((pasta or PASTA_DO_LIXO).glob("*.png"))
 
 
+def desativados_da_conta(ctx: BotContext, pasta: Path) -> set[str]:
+    """Os modelos que ESTA conta não apaga, na lista daquela pasta.
+
+    A pasta diz o que PODE ser apagado e é uma só para o bot inteiro; a conta
+    guarda as exceções dela (`AppConfig.desativados` / `HHConfig.desativados`).
+
+    LIDO AGORA, a cada limpeza. Não é detalhe: a interface e a thread da conta
+    compartilham o mesmo objeto de configuração, então ler aqui é o que faz a
+    escolha da janela valer na limpeza seguinte, SEM religar o bot. Capturar
+    isto na montagem do executor seria o erro que `travar_posicao` comete.
+    """
+    st = ctx.settings
+    fonte = st.hh if pasta.name == PASTA_DO_LIXO_DA_HH.name else st.app
+    return {n for n in (str(x or "").strip() for x in fonte.desativados) if n}
+
+
+def modelos_ativos(ctx: BotContext, pasta: Path | None = None) -> list[Path]:
+    """Os modelos que esta conta apaga: a pasta MENOS as exceções dela.
+
+    Nome que não existe mais na pasta simplesmente não casa com ninguém -- o
+    usuário marcou um item para preservar, o PNG sumiu, e a escolha fica
+    guardada esperando ele voltar.
+    """
+    pasta = pasta or PASTA_DO_LIXO
+    ignorados = desativados_da_conta(ctx, pasta)
+    return [p for p in modelos_na_pasta(pasta) if p.name not in ignorados]
+
+
 def _carregar(ctx: BotContext, pasta: Path | None = None) -> dict[str, Any]:
     """Templates EM COR. Em cinza não se pode deletar (ver o cabeçalho).
 
@@ -332,7 +360,9 @@ def _carregar(ctx: BotContext, pasta: Path | None = None) -> dict[str, Any]:
     """
     pasta = pasta or PASTA_DO_LIXO
     saida: dict[str, Any] = {}
-    for arquivo in modelos_na_pasta(pasta):
+    # `modelos_ativos`, e não `modelos_na_pasta`: quem carrega é quem apaga E
+    # quem confere (`afericao_do_lixo`), então as duas enxergam a mesma lista.
+    for arquivo in modelos_ativos(ctx, pasta):
         img = ctx.templates.load_color(f"{pasta.name}/{arquivo.name}")
         if img is not None:
             saida[arquivo.stem] = img

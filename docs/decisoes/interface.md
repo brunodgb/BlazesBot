@@ -1467,3 +1467,29 @@ o viewport do Chrome de preview voltou em **1184×649** depois de um reinício, 
 `#balao-ajuda`, não `.balao-ajuda`: procurei pela classe errada e li "SEM BALÃO"
 num balão que estava lá. **Medição de tela precisa conferir o tamanho da janela
 antes de acusar layout.**
+
+## A seleção de itens do deletador nasce SÓ NA WEB (18/09/2026)
+
+`AppConfig.desativados` — os itens que cada conta não apaga — entra em
+`CAMPOS_SO_DA_WEB`, a lista fechada de campos que a PyQt6 não carrega. É a
+primeira adição àquela lista desde 27/08/2026, e ela exige decisão escrita.
+Aqui está.
+
+**Por que:**
+
+1. **O usuário está descontinuando a PyQt6** (18/09/2026, com estas palavras:
+   *"vai ser alterado apenas no web isso, a versão PyQt6 eu estou
+   descontinuando"*). A interface antiga está congelada desde 27/08.
+2. **Não é um campo, é uma JANELA.** A seleção são 208 miniaturas com busca,
+   filtro e ação em massa. Na PyQt6 isso seria a primeira imagem da interface
+   inteira: **não existe um único `QPixmap` em `blazesbot/gui/`**, e não existe
+   um único diálogo aberto de dentro do editor — o único padrão é
+   `MainWindow` → `AccountDialog.exec()`.
+3. **O campo não se perde.** Como os outros da lista, ele é gravado por
+   `asdict` e lido por `_app_from_dict`: a PyQt6 não o mostra e não o edita,
+   mas também não o apaga. Quem abrir o editor antigo e salvar não perde a
+   seleção feita na web.
+
+**O que a exceção NÃO afrouxa:** os dois testes da ponte continuam valendo. O
+campo tem de ser lido do payload em `salvar_personagem` e enviado para a tela
+em `conta_editor`, senão `test_app_config_campo_por_campo` reprova.

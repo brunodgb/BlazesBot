@@ -60,6 +60,7 @@ from .config import (
     Account,
     BotConfig,
     mount_multiplier,
+    normalizar_desativados,
     normalizar_modo_do_reset,
     normalizar_pct,
     normalizar_time_logins,
@@ -433,6 +434,7 @@ class _App:
             "app": {
                 "enabled": st.app.enabled,
                 "apagar_lixo_a_cada": st.app.apagar_lixo_a_cada,
+                "desativados": st.app.desativados,
                 "travar_posicao": st.app.travar_posicao,
                 "shuffle_apos_n_voltas": st.app.shuffle_apos_n_voltas,
                 # A LINHA 0 da macro: o tempo depois do TAB.
@@ -491,6 +493,7 @@ class _App:
                 "aoe_until_mana_pct": st.hh.aoe_until_mana_pct,
                 "limpar_mobs_a_cada": st.hh.limpar_mobs_a_cada,
                 "deletar_lixo": st.hh.deletar_lixo,
+                "desativados": st.hh.desativados,
                 "vendor": {
                     "sell_start_slot": st.hh.vendor.sell_start_slot,
                     "runs_before_selling": st.hh.vendor.runs_before_selling,
@@ -725,6 +728,11 @@ class _App:
         st.app.enabled = bool(app.get("enabled", False))
         st.app.apagar_lixo_a_cada = max(
             0, int(app.get("apagar_lixo_a_cada", 10) or 0))
+        # A LISTA DE ITENS QUE ESTA CONTA NÃO APAGA. O padrão do `get` é O
+        # VALOR ATUAL: a janela dos itens é outra tela, e um payload do editor
+        # sem a chave APAGARIA a seleção inteira, em silêncio.
+        st.app.desativados = normalizar_desativados(
+            app.get("desativados", st.app.desativados))
         st.app.travar_posicao = bool(app.get("travar_posicao", True))
         st.app.shuffle_apos_n_voltas = max(
             1, int(app.get("shuffle_apos_n_voltas") or 30) or 30)
@@ -807,6 +815,8 @@ class _App:
         st.hh.limpar_mobs_a_cada = int(hh.get("limpar_mobs_a_cada", 3))
         # PADRÃO FALSE, e o padrão é a decisão: apagar é irreversível.
         st.hh.deletar_lixo = bool(hh.get("deletar_lixo", False))
+        st.hh.desativados = normalizar_desativados(
+            hh.get("desativados", st.hh.desativados))
         VH = hh.get("vendor", {})
         st.hh.vendor.sell_start_slot = int(VH.get("sell_start_slot", 3))
         st.hh.vendor.runs_before_selling = int(

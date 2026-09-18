@@ -476,3 +476,68 @@ internas do deletador (`_carregar`, `regioes_visiveis`, `_casamentos_nas_regioes
 `_achar_icone`) de propósito — a conferência tem de enxergar EXATAMENTE o que a
 exclusão enxerga. Duas leituras diferentes fariam a aferição mentir, e não
 confiar nos modelos sem olhar é o motivo de ela existir.
+
+## Cada conta escolhe o que NÃO apaga — 18/09/2026
+
+### O pedido
+
+*"Quero que dentro da aba APP na edição tenha uma opção que abra uma nova
+janela para o usuário escolher de forma simples quais itens ele pode deletar."*
+E, sobre o estado: *"o bot vai ignorar aquele png em específico para aquela
+conta em questão, pois daí ele quer que mantenha aquele item, sem deletar."*
+
+### A escolha é POR CONTA, e a pasta não muda
+
+A pasta é uma só para o bot inteiro, então a escolha por conta não cabe nela —
+ela vive na configuração da conta. A pasta continua sendo a lista de quem
+**pode** ser apagado; a conta guarda as **exceções**.
+
+### Exceção, e não a lista inteira
+
+`AppConfig.desativados` / `HHConfig.desativados` guardam os nomes que a conta
+**não** apaga. A alternativa — guardar os ATIVOS — foi recusada por duas
+medições:
+
+* **O invariante "PNG autoriza" morreria.** Um modelo novo na pasta nasceria
+  inerte até alguém ligá-lo em cada conta, uma por uma. Hoje ele passa a valer
+  sozinho, e é assim que a pasta funciona desde que o deletador existe.
+* **O `config.json` engordaria 208 nomes por conta.** Com a exceção, quem nunca
+  abriu a janela guarda `[]`.
+
+### A leitura é AGORA, e isso é o recurso
+
+`deletador.modelos_ativos(ctx, pasta)` lê `ctx.settings` **no momento da
+limpeza**. A interface e a thread da conta compartilham o mesmo objeto de
+configuração (`salvar_personagem` muta `AccountSettings` vivo; `config.save()` é
+só o backup em disco), então salvar na janela vale na **limpeza seguinte**, sem
+religar o bot.
+
+O erro que isso evita tem nome no próprio código: `travar_posicao` e
+`shuffle_apos_n_voltas` são lidos uma vez na montagem do executor e só valem ao
+religar. O contrário — `voltas_por_limpeza`, `fonte_dos_passos`,
+`espera_depois_do_tab_ms` — é passado como função, com o comentário explicando
+por quê. Este campo segue o segundo grupo.
+
+### Quem apaga e quem confere carregam pela MESMA porta
+
+O filtro entra em `_carregar`, que serve tanto `deletar_lixo` quanto a aferição
+(`bot/afericao_do_lixo.conferir`). Se a conferência carregasse por outro
+caminho, ela desenharia um retângulo vermelho sobre um item que aquela conta
+não apaga — e o usuário preservaria o item errado por causa do desenho.
+
+### O preço de renomear um PNG
+
+Tanto a lista da conta quanto o dicionário de rótulos são chaveados pelo **nome
+do arquivo**. Renomear um PNG faz a conta esquecer que aquele item era
+preservado, e ele volta a ser apagado — em silêncio. Chavear por conteúdo
+resolveria e é complexidade que não se paga numa pasta que só o desenvolvedor
+mexe. Fica escrito aqui e no `LEIA-ME.md` da pasta: **renomeou, reveja os
+preservados.**
+
+### Travado por
+
+`tests/test_lixo_desativado.py` — a pasta escolhe o campo, a leitura é agora
+(e não na montagem), nome órfão não atrapalha, lista suja não derruba a macro,
+e `_carregar` respeita a lista. Mais `test_config_ida_e_volta.py` (o campo
+sobrevive ao disco) e `test_app_config_campo_por_campo.py` (a ponte leva nos
+dois sentidos).

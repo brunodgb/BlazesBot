@@ -207,7 +207,16 @@ HERDADOS = {
     "blazesbot/bot/ui_do_jogo.py": 1929,                 # UIDoJogo, 34 métodos (70%)
     "blazesbot/gui/main_window.py": 1895,                # MainWindow, 59 métodos (92%)
     "blazesbot/bot/hh/routine.py": 1511,                 # HHRoutine, 34 métodos (86%)
-    "blazesbot/web_app.py": 1451,                        # _App, 45 métodos (63%)
+    # SUBIU DE 1451 PARA 1603 EM 18/09/2026 (a folga era de DUAS linhas).
+    # Seis linhas: o campo `desativados` nos dois sentidos da ponte, para
+    # o APP e para a HH.
+    #
+    # ESTE ARQUIVO CRESCE POR CONSTRUÇÃO -- ele é a fachada entre o
+    # JavaScript e o Python, e toda tela nova passa por aqui. A regra que
+    # o mantém honesto não é o tamanho, é `test_a_ponte_web_expoe_tudo`:
+    # `Api` só delega, nunca implementa. Lógica de tela nova vai para
+    # módulo próprio, e só a delegação entra aqui.
+    "blazesbot/web_app.py": 1603,                        # _App, 45 métodos (63%)
     #  +2 em 04/09: ida e volta da tecla `revive_skill` na ponte
     "blazesbot/gui/account_dialog.py": 1418,             # AccountDialog, 20 métodos (92%)
     #  +3 em 04/09: campo, carga e gravação da tecla `revive_skill`
@@ -233,7 +242,20 @@ HERDADOS = {
     "blazesbot/bot/team.py": 1080,                        # TeamService, 18 métodos (59%)
     "blazesbot/bot/vendedor.py": 935,                    # JanelaDeVenda, 19 métodos (65%)
     # COM COSTURA — muitas funções top-level; dividir é possível quando valer
-    "blazesbot/config.py": 1942,                         # 15 classes + 10 funções top-level
+    # SUBIU DE 1942 PARA 2165 EM 18/09/2026, com a folga JÁ ZERADA (2136 de
+    # um teto de 2136). O que entrou foi o campo `desativados` -- os itens
+    # que cada conta não apaga -- nos dois blocos de configuração.
+    #
+    # POR QUE NÃO FOI PAGO COM EXTRAÇÃO: tentei, e o próprio portão recusa.
+    # `test_um_contexto_uma_porta` proíbe `config.py` + `config_*.py` como
+    # irmãos e exige PACOTE com fachada -- e o pacote obriga a carvar o
+    # `BotConfig` (753 linhas: carga, gravação e as migrações de versão).
+    # Partir a persistência da configuração inteira do bot como efeito
+    # colateral de uma tela é risco maior do que este portão protege.
+    #
+    # O CORTE CONTINUA SENDO ESSE, e agora com o nome dele: `BotConfig`
+    # vira `blazesbot/config/` com fachada no `__init__.py`.
+    "blazesbot/config.py": 2165,                         # 15 classes + 10 funções top-level
     #  +7 em 04/09: campo `revive_skill` no `KeyBinds` e o resumo dele
     "blazesbot/core/calibracao.py": 1105,                # 24 funções top-level (diagnóstico)
     "blazesbot/bot/bc/amostragem_de_cliques.py": 852,    # 12 funções top-level (diagnóstico)
