@@ -455,3 +455,24 @@ O processo que já está rodando. Um bot no ar desde antes de uma alteração ro
 código de antes dela — vale para esta e para qualquer outra. A cada mudança de
 código **ou de arquivo de dados**, o que passa a valer só vale no próximo
 arranque.
+
+## A aferição saiu do deletador — 18/09/2026
+
+`conferir()` mudou de casa: de `bot/deletador.py` para **`bot/afericao_do_lixo.py`**,
+linha por linha, sem uma alteração de comportamento. O motivo é a catraca de
+tamanho — o `deletador.py` bateu em **799 linhas de um teto de 800**, e a regra
+do projeto é que a próxima linha paga a extração.
+
+O corte é o natural, e não um pedaço arrancado para caber: **o deletador apaga;
+a aferição só desenha.** Ela não clica em item, não manda tecla e não muda
+estado nenhum.
+
+Ela ficou em `bot/` e não em `bot/app/` porque a pergunta que responde — *o que
+seria apagado se eu ligasse isso agora?* — vale para qualquer ecossistema que
+apague lixo, e `bot/hh/` não pode importar de `bot/app/`.
+
+**Dependência cruzada, escrita no cabeçalho do módulo novo:** ela usa as peças
+internas do deletador (`_carregar`, `regioes_visiveis`, `_casamentos_nas_regioes`,
+`_achar_icone`) de propósito — a conferência tem de enxergar EXATAMENTE o que a
+exclusão enxerga. Duas leituras diferentes fariam a aferição mentir, e não
+confiar nos modelos sem olhar é o motivo de ela existir.

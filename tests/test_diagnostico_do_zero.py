@@ -48,7 +48,7 @@ import textwrap
 
 import numpy as np
 
-from blazesbot.bot import deletador
+from blazesbot.bot import afericao_do_lixo, deletador
 from blazesbot.core import vision
 
 # ===========================================================================
@@ -253,5 +253,10 @@ def test_a_margem_para_o_distrator_e_maior_que_para_o_verdadeiro():
 
 
 def test_a_conferencia_sem_apagar_continua_existindo():
-    """A única proteção que não depende de palpite."""
-    assert callable(deletador.conferir)
+    """A única proteção que não depende de palpite.
+
+    MUDOU DE CASA em 18/09/2026, não de existência: o `deletador.py` bateu em
+    799 linhas de um teto de 800, e a aferição — que só desenha — saiu inteira
+    para `bot/afericao_do_lixo.py`. O que este teste protege é ela EXISTIR.
+    """
+    assert callable(afericao_do_lixo.conferir)

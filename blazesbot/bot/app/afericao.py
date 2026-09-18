@@ -32,6 +32,7 @@ from collections.abc import Callable
 from typing import Any
 
 from ...config import Account, BotConfig
+from .. import afericao_do_lixo
 from ..context import BotContext, StopRequested
 from ..supervisor import AccountSupervisor
 from . import deletador
@@ -100,7 +101,7 @@ def rodar(
             eu_abri = True
             ctx.tick(deletador.ESPERA_DA_BOLSA_ABRIR)
 
-        resultado = deletador.conferir(ctx)
+        resultado = afericao_do_lixo.conferir(ctx)
 
         if eu_abri:
             try:
