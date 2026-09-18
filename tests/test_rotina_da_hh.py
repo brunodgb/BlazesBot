@@ -845,8 +845,8 @@ def test_a_retomada_respeita_o_trecho_em_ANDAMENTO():
 def test_o_mapa_declara_onde_a_passagem_e_bloqueada():
     from blazesbot.bot.hh import mapa_hh
 
-    assert mapa_hh.WAYPOINTS_QUE_BLOQUEIAM == ((232, 188),)
-    assert mapa_hh.bloqueia_a_passagem((232, 188))
+    assert mapa_hh.WAYPOINTS_QUE_BLOQUEIAM == ((232, 190),)
+    assert mapa_hh.bloqueia_a_passagem((232, 190))
     assert not mapa_hh.bloqueia_a_passagem((209, 182))
 
 
@@ -865,8 +865,14 @@ def test_e_um_conceito_DIFERENTE_de_waypoint_problematico():
     # chega a compartilhar a tupla, porque o conteúdo é idêntico. O que o teste
     # trava não é a identidade do objeto, e sim que as duas PERGUNTAS são
     # respondidas por listas separadas.
-    assert mapa_hh.WAYPOINTS_QUE_BLOQUEIAM == ((232, 188),)
-    assert mapa_hh.WAYPOINTS_PROBLEMATICOS == ((232, 188),)
+    # O PONTO ANDA COM A ROTA: (232,188) virou (232,190) em 18/09/2026, e as
+    # duas listas tiveram de acompanhar -- as duas comparam por igualdade
+    # EXATA, então duas unidades bastam para desligarem em silêncio.
+    ponto = (232, 190)
+    assert ponto in [w.pos for w in mapa_hh.CAMINHO_ATE_O_BOSS_1], (
+        "o ponto saiu da rota; as duas listas ficaram apontando para o vazio")
+    assert mapa_hh.WAYPOINTS_QUE_BLOQUEIAM == (ponto,)
+    assert mapa_hh.WAYPOINTS_PROBLEMATICOS == (ponto,)
     corpo = inspect.getsource(mapa_hh.bloqueia_a_passagem)
     assert "WAYPOINTS_PROBLEMATICOS" not in corpo, (
         "quem responde 'tem mob barrando?' não pode consultar a lista de "

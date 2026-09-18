@@ -992,7 +992,7 @@ class HHRoutine:
         O PONTO É UM SÓ, E ELE VEM DO BOT EM LUA
         =================================================================
 
-        O (232,188) aparece em dois arquivos do bot original com a mesma
+        O ponto de `WAYPOINTS_PROBLEMATICOS` aparece em dois arquivos do
         instrução: matar os mobs que bloqueiam antes de continuar. É uma
         passagem estreita, e um mob parado nela faz a navegação bater na
         geometria e chamar o destravamento em círculo.

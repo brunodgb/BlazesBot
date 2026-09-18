@@ -107,7 +107,12 @@ def test_o_total_da_rota_oficial():
 # personagem para a parede justamente na passagem estreita onde o cálculo falha.
 #
 # NADA MUDOU DE COMPORTAMENTO: nenhuma linha de `blazesbot/` lê `.via` hoje.
-NUM_COM_VIA_CALIBRADO = 18
+#
+# Em 18/09/2026 caiu mais um: o usuário passou (232, 188) para (232, 190), e o
+# `via` (941, 109) daquele ponto veio junto na linha. Duas unidades bastam --
+# a regra é a mesma, e vale menos pela distância que pela consistência: `via`
+# só pertence à coordenada em que foi medido.
+NUM_COM_VIA_CALIBRADO = 17
 
 
 def test_o_inventario_de_cliques_calibrados():
@@ -582,7 +587,7 @@ def test_rollback_DE_VERDADE_continua_sendo_pego():
     coisas, que é o que o teleporte tem e o andar normal não.
     """
     caminho = m.TRECHOS_DOS_BOSSES[0][1]
-    i_alvo = _indice_do(caminho, (232, 188))
+    i_alvo = _indice_do(caminho, m.WAYPOINTS_PROBLEMATICOS[0])
     atras = caminho[i_alvo - 4].pos
     assert houve_rollback(i_alvo, atras, caminho) == i_alvo - 4
 

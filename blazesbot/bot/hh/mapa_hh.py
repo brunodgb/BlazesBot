@@ -251,7 +251,10 @@ PONTOS_SEM_AOE: frozenset[str] = frozenset({BOSS_1, BOSS_3})
 # porque não lê a flag de combate. Nós lemos -- então só paramos se o combate
 # JÁ começou, e o ponto não custa nada na volta em que está limpo, que é a
 # maioria delas.
-WAYPOINTS_QUE_BLOQUEIAM: tuple[tuple[int, int], ...] = ((232, 188),)
+#
+# ANDA JUNTO COM A ROTA (comparação EXATA, em `bloqueia_a_passagem`): era
+# (232,188) até o usuário passar o waypoint para (232,190) em 18/09/2026.
+WAYPOINTS_QUE_BLOQUEIAM: tuple[tuple[int, int], ...] = ((232, 190),)
 
 
 def bloqueia_a_passagem(pos: tuple[int, int]) -> bool:
@@ -399,8 +402,8 @@ CAMINHO_ATE_O_BOSS_1: tuple[Waypoint, ...] = _wp([
     (188, 140, _A),
     (188, 176, _A),
     (216, 186, _A),
-    (250, 192, _A),
-    (232, 188, _A, (941, 109)),
+    (232, 190, _A),
+    (250, 190, _A),
     (274, 190, _A),
     (280, 172, _A),
     (300, 176, _A),
@@ -579,11 +582,15 @@ VIA_FORA_DOS_LIMITES: tuple[tuple[int, int], ...] = ()
 
 # Waypoints onde o caminho fica bloqueado por mob, medidos na prática.
 #
-# (232, 188) é tratado como caso especial em DOIS lugares do bot Lua
+# O ponto é tratado como caso especial em DOIS lugares do bot Lua
 # (`hh.lua:280` e `travel.lua:91`): é onde os mobs seguram o personagem e ele
 # fica parado sem conseguir andar. O Lua resolve matando o que estiver ali.
+#
+# ELE ANDA JUNTO COM A ROTA, e a comparação é EXATA (`w in problematicos`, em
+# `navegacao.follow_path`): duas unidades bastam para a tolerância larga deste
+# ponto deixar de ser aplicada, em silêncio e sem erro nenhum.
 WAYPOINTS_PROBLEMATICOS: tuple[tuple[int, int], ...] = (
-    (232, 188),
+    (232, 190),
 )
 
 
@@ -813,8 +820,9 @@ def houve_rollback(
 def tolerancia_do_waypoint(wp: Waypoint, base: int, apertada: int) -> int:
     """Tolerância de chegada, maior nos waypoints onde os mobs seguram o char.
 
-    A HH não tem área apertada declarada -- tem o ponto (232, 188), onde o bot
-    Lua trata bloqueio de mob em dois lugares distintos.
+    A HH não tem área apertada declarada -- tem o ponto de
+    `WAYPOINTS_PROBLEMATICOS`, onde o bot Lua trata bloqueio de mob em dois
+    lugares distintos.
     """
     return rota.tolerancia_do_waypoint(
         wp, base, apertada, problematicos=WAYPOINTS_PROBLEMATICOS)
