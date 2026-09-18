@@ -42,6 +42,8 @@ from typing import Any
 
 import webview
 
+from . import web_lixo
+
 # TEMPORÁRIO: botões "Testar Venda" e "Amostrar Cliques"
 from .bot.app import afericao
 from .bot.bc import amostragem_de_cliques, teste_venda
@@ -917,6 +919,32 @@ class _App:
             return {"ok": False, "erro": str(exc)}
         return afericao.rodar(self.config, conta, on_status=self._status)
 
+    def lixo_da_conta(self, uid: str, lista: Any = "app") -> dict[str, Any]:
+        """Os modelos daquela lista, com miniatura, nome e o estado da conta."""
+        try:
+            conta = self._conta(uid)
+        except ValueError as exc:
+            return {"ok": False, "erro": str(exc), "itens": []}
+        try:
+            return web_lixo.itens(conta, str(lista))
+        except ValueError as exc:
+            return {"ok": False, "erro": str(exc), "itens": []}
+
+    def salvar_lixo_da_conta(self, uid: str, lista: Any,
+                             desativados: Any) -> dict[str, Any]:
+        """Grava a seleção. Vale na limpeza SEGUINTE, sem religar o bot.
+
+        Não é promessa: a thread da conta lê `settings` no momento da limpeza, e
+        é o mesmo objeto que esta linha muta. Ver `deletador.modelos_ativos`.
+        """
+        try:
+            conta = self._conta(uid)
+            resposta = web_lixo.guardar(conta, str(lista), desativados)
+        except ValueError as exc:
+            return {"ok": False, "erro": str(exc)}
+        self._aplicar()
+        return resposta
+
     def abrir_imagem_da_afericao(self, caminho: Any) -> dict[str, Any]:
         try:
             import os
@@ -1374,6 +1402,13 @@ class Api:
 
     def conferir_modelos_de_exclusao(self, uid: Any) -> dict[str, Any]:
         return self._app.conferir_modelos_de_exclusao(uid)
+
+    def lixo_da_conta(self, uid: Any, lista: Any = "app") -> dict[str, Any]:
+        return self._app.lixo_da_conta(uid, lista)
+
+    def salvar_lixo_da_conta(self, uid: Any, lista: Any,
+                             desativados: Any) -> dict[str, Any]:
+        return self._app.salvar_lixo_da_conta(uid, lista, desativados)
 
     def abrir_imagem_da_afericao(self, caminho: Any) -> dict[str, Any]:
         return self._app.abrir_imagem_da_afericao(caminho)
