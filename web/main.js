@@ -3022,10 +3022,13 @@ function lixoCasaNaFaixa(rotulo, termo) {
   // `\d*` e não `\d+`: "lvl0" é a faixa 0–9, onde mora o tier baixo (lvl3..lvl9).
   const faixa = termo.match(/^lvl(\d*)0$/);
   if (!faixa) return false;
-  const nivel = Number((rotulo.match(/lvl(\d+)/) || [])[1]);
-  if (!Number.isFinite(nivel)) return false;
+  // TODOS os níveis do rótulo, não só o primeiro: "Cuff lvl52/62" tem dois,
+  // porque o jogo desenhou UMA arte para os dois tiers. Ler só o 52 escondia o
+  // item da faixa 60–69, onde ele também mora.
+  const niveis = [...rotulo.matchAll(/lvl(\d+(?:\/\d+)*)/g)]
+    .flatMap((casa) => casa[1].split("/").map(Number));
   const base = Number(faixa[1] + "0");
-  return nivel >= base && nivel <= base + 9;
+  return niveis.some((nivel) => nivel >= base && nivel <= base + 9);
 }
 
 function lixoVisiveis() {

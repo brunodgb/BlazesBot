@@ -24,6 +24,7 @@ import json
 import re
 from pathlib import Path
 
+from blazesbot.bot import nomes_do_lixo
 from blazesbot.config import Account, BotConfig
 
 RAIZ = Path(__file__).resolve().parents[1]
@@ -395,3 +396,25 @@ def test_lvl60_na_busca_traz_a_FAIXA_60_a_69():
     assert "base + 9" in bloco, "a faixa deixou de ser a dezena inteira"
     assert "lixoCasaNaFaixa(alvo, termo)" in JS, (
         "a busca parou de consultar a faixa")
+
+
+def test_rotulo_com_DOIS_niveis_entra_nas_DUAS_faixas():
+    """*"O jogo usou a mesma imagem para os 2"* (usuário, 19/09/2026).
+
+    Três modelos servem dois tiers -- `cuff52.png` é o Cuff 52 E o 62 -- e o
+    usuário marcou isso no rótulo: "Cuff lvl52/62". Ler só o primeiro número
+    escondia o item da faixa 60–69, que é justamente onde ele também mora.
+    """
+    bloco = JS.split("function lixoCasaNaFaixa(")[1].split("\n}")[0]
+
+    assert r"/lvl(\d+(?:\/\d+)*)/g" in bloco, (
+        "a leitura do nível voltou a ser de um número só; "
+        '"Cuff lvl52/62" some da faixa 60–69')
+    assert 'split("/")' in bloco, "o segundo nível do rótulo deixou de contar"
+    assert ".some((nivel)" in bloco, (
+        "a faixa voltou a comparar um nível só, não todos os do rótulo")
+
+    duplos = [n for n in nomes_do_lixo.NOMES.values() if "/" in n]
+    assert duplos, (
+        "sumiu o rótulo de dois níveis do dicionário -- se foi de propósito, "
+        "este teste é que está velho")
