@@ -70,12 +70,12 @@ from .config import (
     pet_feed_na_faixa,
 )
 from .core import i18n, logmodo, quedas, secrets, stats_diarias
-from .core.raiz import raiz_do_bot
 from .core.coords import (
     SUPPORTED_RESOLUTIONS,
     VALIDATED_RESOLUTION,
     get_coords,
 )
+from .core.raiz import raiz_do_bot
 
 POSITIONS = ["Left", "Center", "Right"]
 
