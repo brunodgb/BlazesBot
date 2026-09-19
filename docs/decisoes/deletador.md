@@ -766,3 +766,75 @@ permite ajustar a seleção com o resto do bot no ar.
 conta sem uid (e, com a regra do time, desligaria a função do bot inteiro de uma
 vez); e a mensagem da confirmação colapsava as quebras de linha, transformando a
 lista de contas num blocão — `white-space: pre-line`.
+
+## A LISTA DE OUTRO BOT — 19/09/2026
+
+O usuário trouxe a lista de itens de outro bot (313 nomes, sem contagem nem
+duplicata) e pediu duas coisas: usá-la para higienizar os rótulos que sobraram
+e descobrir o que falta na pasta.
+
+### O que ela resolveu: 31 abreviações
+
+O site oficial tinha resolvido dez nomes, todos da receita do Magicstone. As
+abreviações que sobravam não estão em lugar nenhum da internet — eram nome de
+arquivo do próprio usuário — e a lista do outro bot bateu com quase todas:
+
+    AlmOre     -> Aluminum Ore         GrosM      -> Grosvenor Mormodica
+    AnFur      -> Animal Fur           HoneW      -> Honewort
+    BambShoot  -> Bamboo Shoot         HoneyS     -> Honeysuckle
+    brtpil     -> Breath Pill          LascToken  -> Lascivious Token
+    CIronShot  -> Cursed Iron Shot     MagOre     -> Magnesium Ore
+    Cowb       -> Cowbane              MysSkel    -> Mystic Skeleton
+    Crista_Bot -> Crystal Bottle       Myth_Wood  -> Myth Sea Wood
+    DfrmtJos   -> Deformity Joss       Nimbuz     -> Nimbus Quartz
+    dip        -> Dipterocarp          PechOil    -> Peach Oil
+    Durmarst   -> Durmast              PhMet      -> Ph Meat
+    FrMush     -> Fresh Mushroom       StonOr     -> Stone Orchid
+    FTMC       -> Far Temple Map Chip  TigrMet    -> Tiger Meat
+    GlosBead   -> Glossy Bead          Gold_T     -> Gold Thread
+
+Mais as correções de grafia e de forma: `FireSneakMeat` era *Snake*, não
+"Sneak"; `Black_Evil` é *Black Evil Crystal*; `Secret_silver` é *Secret Silver
+Necklace*; os cinco sinos coloridos são uma família (*Blue/Golden/Purple/Red/
+Silver Bell*), e `PetFood1` é *Pet Food* — o "1" era a quantidade.
+
+**ONDE AS DUAS FONTES DISCORDAM, O SITE VENCE.** `RottedSeed` fica "Rotted
+Seed", que é como a página do Magicstone escreve, e não "Rotten Seed" da lista:
+um é a fonte do jogo, o outro é outro bot.
+
+### O que continua sem nome, e não vai sair daí
+
+`SF`, `charm`, `Bife`, `DarkSM`, `Purple_Beast`, `Lion_Meat`, `VultureMeat`,
+`Blue_Wolf_Meat`. A lista tem candidatos plausíveis para três deles — *Sacking
+Frock* para `SF`, *Return Charm* para `charm`, *Red Bull Steak* para `Bife` --
+mas nenhum é certo, e rótulo errado é pior que rótulo cru: quem decide olhando
+a miniatura confia no nome que está do lado. Ficam como estão até alguém ver o
+item no jogo. Curiosamente `DarkSM` também é "Dark Sm" na lista do outro bot --
+os dois herdaram a mesma abreviação de algum lugar.
+
+### O que FALTA na pasta
+
+A lista tem 313 itens; a pasta tem 234 modelos. Descontando o que já existe com
+outro nome, sobram **cinco famílias inteiras** que o deletador nunca vai
+reconhecer:
+
+| família | o que falta | quantos |
+|---|---|---|
+| **Armas** | Blade, Bow, Dagger, Pearl, Shovel, Simitar, Staff, Sword, Wheel, Xbow — tiers 20/30/40/50 | ~31 |
+| **Talismã assistente numerado** | `<Classe> Assistant` 05/10/20/30, nas cinco classes | 20 |
+| **Equipamento 7x/8x** | Amulet 79, Armguard 73 e 81, Armor 78, Belt 76, Boots 75, Cuff 72 e 80, Kneepad 74, Ring 77 | 10 |
+| **Peça de classe** | 05 e 25 em Wizard, Monk, Assassin e Tamer; 25 e 28 na Fairy | 10 |
+| **Joia grande** | Bright Emerald (e Chip), Bright Ruby (e Chip), Large Emerald, Large Ruby | 6 |
+
+E os soltos: Blueness Stone, Titanium Stone, Teleport Stone, Pith of Energy
+Stone, Cold Jade, Cuttle Bone, Lygodium, Polypody, Lizard Meat, Demon Medal,
+Devil Token, Return Charm, Soul Bell, Jackstraw, Treasure Box, Grinderstone of
+Phoenix, Package of Courage Badge, Sacking Frock, Golden Identify Gem, Occult
+Berry, Ganoderma, Red Bull Steak, Fighting Healing Potion, Fighting Mana
+Potion, Level 7 Gem Bag.
+
+**Nada disso foi criado aqui**, e não por preguiça: modelo é RECORTE DE TELA
+daquele ícone, feito da bolsa do jogo na resolução em que o bot roda. Nome numa
+lista não vira PNG. A tabela serve para o usuário decidir o que vale recortar
+-- e, depois da inversão de 19/09, um modelo a mais na pasta não custa
+desempenho nenhum enquanto ninguém o marcar.
