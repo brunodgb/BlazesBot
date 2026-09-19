@@ -199,11 +199,19 @@ def _convidar(team: TeamService, sup, login: str, nick: str, remetente: str,
     que o BC usa desde que o convite deixou de ser por texto.
     """
     mural.consumir_aceite(remetente)      # descarta aceite de rodada anterior
-    mural.anunciar_convite(nick, remetente)
     if not team._enviar_convite(nick):
         sup.log.warning("Time do APP: não consegui enviar o convite para '%s'.",
                         nick)
         return False
+    # O ANÚNCIO SAI DEPOIS DO CLIQUE -- 19/09/2026.
+    #
+    # Antes ele saía antes, e `_enviar_convite` leva de 4 a 5 s (limpa a Block
+    # list, registra o nick, abre o menu de contexto, clica em 'Team up').
+    # Nesse intervalo o convidado já estava procurando uma caixa que ainda não
+    # existia -- e o aceitador, que exige prova, recusava com razão. Medido:
+    # anúncio às 13:11:57.7, "sem prova de caixa na tela" 58 ms depois, clique
+    # no 'Team up' só às 13:12:02.3.
+    mural.anunciar_convite(nick, remetente)
 
     limite = time.time() + ESPERA_PELA_RESPOSTA
     while time.time() < limite:
@@ -230,6 +238,21 @@ def _convidar(team: TeamService, sup, login: str, nick: str, remetente: str,
     return False
 
 
+def _fila_de_convite(sup, faltam, avisados: set[str]) -> list[str]:
+    """Dos que faltam, quem dá para convidar AGORA (tem sinal de vida).
+
+    `avisados` guarda quem já foi registrado como ausente NESTA montagem: a fila
+    é refeita a cada passada, e sem isso a mesma linha sairia quatro vezes.
+    """
+    fila = [x for x in (faltam or []) if _esta_de_pe(x)]
+    fora = [x for x in (faltam or []) if x not in fila and x not in avisados]
+    if fora:
+        avisados.update(fora)
+        sup.log.info("Time do APP: %s sem sinal de vida agora; fica para o "
+                     "próximo ciclo.", ", ".join(fora))
+    return fila
+
+
 def montar_o_time(sup, memoria) -> bool:
     """O líder convida quem falta. `True` = mexeu em alguma coisa.
 
@@ -248,11 +271,8 @@ def montar_o_time(sup, memoria) -> bool:
     if not faltam:
         return False
 
-    fila = [x for x in faltam if _esta_de_pe(x)]
-    fora = [x for x in faltam if x not in fila]
-    if fora:
-        sup.log.info("Time do APP: %s sem sinal de vida agora; fica para o "
-                     "próximo ciclo.", ", ".join(fora))
+    avisados: set[str] = set()        # quem já foi registrado como ausente
+    fila = _fila_de_convite(sup, faltam, avisados)
     if not fila:
         return False
 
@@ -265,6 +285,10 @@ def montar_o_time(sup, memoria) -> bool:
         pid=sup.pid, hwnd=sup.hwnd,
         stop_event=sup.stop_event, pause_event=sup.pause_event)
     entrou_alguem = False
+    # Quem ACEITOU nesta montagem. Fica de fora da fila refeita: o aceite pode
+    # chegar pelo anúncio da outra ponta antes de o jogo mostrar o time, e sem
+    # isto o líder mandaria um segundo convite para quem já entrou.
+    entraram: set[str] = set()
     try:
         team = TeamService(ctx)
         for _ in range(TENTATIVAS_POR_MEMBRO):
@@ -273,16 +297,27 @@ def montar_o_time(sup, memoria) -> bool:
             # ROTAÇÃO: quem não aceita volta para o fim, e o próximo é tentado
             # antes de insistir no mesmo. Com um só na fila, isso vira a
             # insistência que o usuário pediu.
-            restantes: list[str] = []
             for login in fila:
                 if sup.stop_event.is_set():
                     break
                 nick = (sup._nick_do_login(login) or "").strip()
                 if _convidar(team, sup, login, nick, remetente, memoria):
                     entrou_alguem = True
-                else:
-                    restantes.append(login)
-            fila = restantes
+                    entraram.add(login)
+            # A FILA É REFEITA A CADA PASSADA -- 19/09/2026.
+            #
+            # Antes ela era calculada UMA vez, e quem não tinha sinal de vida
+            # naquele instante ficava de fora da montagem inteira. Medido: no
+            # arranque, o líder conferiu às 13:10:37.295 e o seguidor só
+            # publicou 150 ms depois -- resultado, o time começou a macro com 2
+            # de 3, e o terceiro só seria convidado 60 s depois.
+            #
+            # Refazendo, quem entrou sai sozinho (não está mais faltando) e quem
+            # subiu no meio entra. É o que o usuário pediu: *"tem que enviar a
+            # todos do time, que é entre 1 e 4 convites"*.
+            faltam = [x for x in (falta_alguem(sup, memoria) or [])
+                      if x not in entraram]
+            fila = _fila_de_convite(sup, faltam, avisados)
         if fila:
             sup.log.warning(
                 "Time do APP: %s não entraram em %s passada(s). Volto a tentar "

@@ -210,6 +210,39 @@ def _team_falso(convidados, aceita=(), memoria=None):
     return _Team
 
 
+def test_o_anuncio_sai_DEPOIS_do_clique_no_Team_up(monkeypatch):
+    """Antes ele saía antes, e enviar o convite leva de 4 a 5 s.
+
+    Medido em 19/09/2026: anúncio às 13:11:57.7, o convidado registrando *"sem
+    prova de caixa na tela"* 58 ms depois, e o clique em 'Team up' só às
+    13:12:02.3. Ele procurava uma caixa que ainda não existia -- e recusava com
+    razão, queimando uma das quatro tentativas.
+    """
+    sup = _Sup()
+    _de_pe("s1")
+    anunciado_no_clique = []
+
+    class _Team:
+        def __init__(self, ctx):
+            self.ctx = ctx
+
+        def _enviar_convite(self, nick):
+            anunciado_no_clique.append(mural.convite_pendente(nick))
+            return True
+
+    monkeypatch.setattr(mod, "BotContext", _ctx_falso)
+    monkeypatch.setattr(mod, "TeamService", _Team)
+
+    mod.montar_o_time(sup, _Memoria(["Lider"]))
+
+    assert anunciado_no_clique, "não chegou a enviar convite nenhum"
+    assert anunciado_no_clique[0] is None, (
+        "o anúncio saiu ANTES do clique -- o convidado procura uma caixa que "
+        "ainda não existe")
+    assert mural.convite_pendente("Um") == "Lider", (
+        "depois do clique o anúncio tem que estar de pé")
+
+
 def test_convida_UM_POR_VEZ_e_para_quando_todos_entram(monkeypatch):
     sup = _Sup()
     _de_pe("s1", "s2")
@@ -220,6 +253,39 @@ def test_convida_UM_POR_VEZ_e_para_quando_todos_entram(monkeypatch):
 
     assert mod.montar_o_time(sup, _Memoria(["Lider"])) is True
     assert convidados == ["Um", "Dois"], convidados
+
+
+def test_quem_SOBE_no_meio_da_montagem_ainda_recebe_convite(monkeypatch):
+    """A fila era calculada UMA vez, e quem estava 150 ms atrasado ficava fora.
+
+    Medido em 19/09/2026: no arranque o líder conferiu às 13:10:37.295 e o
+    seguidor publicou o sinal de vida logo depois -- o time começou a macro com
+    2 de 3, e o terceiro só seria convidado 60 s adiante. *"Tem que enviar a
+    todos do time, que é entre 1 e 4 convites."*
+    """
+    sup = _Sup()
+    _de_pe("s1")                               # 's2' ainda não subiu
+    convidados = []
+
+    class _Team:
+        def __init__(self, ctx):
+            self.ctx = ctx
+
+        def _enviar_convite(self, nick):
+            convidados.append(nick)
+            mural.anunciar_aceite("Lider", nick)      # sempre aceitam
+            if len(convidados) == 1:
+                _de_pe("s2")                   # ele sobe DURANTE o 1º convite
+            return True
+
+    monkeypatch.setattr(mod, "BotContext", _ctx_falso)
+    monkeypatch.setattr(mod, "TeamService", _Team)
+
+    mod.montar_o_time(sup, _Memoria(["Lider"]))
+
+    assert convidados == ["Um", "Dois"], (
+        "quem subiu depois da primeira passada ficou sem convite: %s"
+        % convidados)
 
 
 def test_quem_NAO_aceita_volta_para_o_fim_da_fila(monkeypatch):
