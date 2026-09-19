@@ -485,3 +485,102 @@ Se `memory.modal_open()` acende para a caixa de convite de time. É a via que
 responde com o cliente fora de primeiro plano, e sem ela o seguidor continuará
 recusando quando a captura vier preta — só que agora **dizendo isso no log**. A
 próxima run responde.
+
+## CINCO CAUSAS PARA UM SINTOMA SÓ — 19/09/2026
+
+O usuário relatou três coisas no mesmo dia, e por trás delas havia **cinco**
+defeitos independentes. Todos silenciosos, todos no mesmo caminho: o time do
+APP não se montava.
+
+O relato: *"quando eu paro a função APP do líder e recomeço, ele não está
+verificando se ele está em team — eu removi todos do team e não fez o envio"*;
+*"o seguidor está demorando muito para aceitar, vi o líder enviando team 3 ou 4
+vezes"*; *"os 2 damage estão em team, mas a fada não está, e os dois estão
+atacando normalmente, sem enviar o team para a terceira integrante"*.
+
+### O que o log mostrou (todas as medições são de `blazes-dev.jsonl` do dia)
+
+| # | Sintoma | Causa |
+|---|---|---|
+| 1 | religar não confere o time | o relógio da cadência é do SUPERVISOR, que sobrevive ao ligar/desligar do modo APP |
+| 2 | a Fada nunca é convidada | `_esta_de_pe` olhava só o canal que a macro publica; a Fada bate em OUTRO |
+| 3 | o seguidor demora a aceitar | no modo `copiar` toda volta é cega, e a volta cega não passava pelo `_esperar` |
+| 4 | a Fada não aceitaria nem se recebesse | o laço dela nunca teve aceitador — como o modo APP até 16/09 |
+| 5 | o seguidor larga antes do time | as threads arrancam juntas; ninguém esperava ninguém |
+
+**1. A cadência velha.** Religado 13 s depois de parar (11:42:10), nenhuma
+conferência. Religado 2min35 depois (11:45:20), conferência 1,6 s após o
+arranque. `_proxima_conferencia_do_time` é atributo do supervisor, e o modo APP
+é reiniciado dentro dele: o comentário que dizia *"a cadência começa zerada"*
+valia para um supervisor recém-criado, não para o religar — que é exatamente
+quando o usuário acabou de mexer no time. A chamada do arranque passou a furar
+a cadência (`no_arranque=True`); a regra de batalha continua valendo.
+
+**2. Dois canais de sinal de vida.** Quatro ciclos seguidos de *"mfaustoapp069
+sem sinal de vida agora; fica para o próximo ciclo"* (11:45:21, 11:46:50,
+11:48:27, 11:49:28) com a Fada rodando — e, do lado dela, *"WizzOfBlazes5 não
+está no meu painel de time — esperando ele aparecer"*. As duas se esperando
+para sempre. A macro do APP publica em `publicar_estado` a cada volta; a Fada
+nunca passa por lá, ela bate em `bater_fada` de dentro do laço de cura.
+`_esta_de_pe` agora aceita os dois.
+
+**3. A volta cega era surda.** O gancho do aceite morava só em
+`executor._esperar`, e `sincronia.volta_cega()` é verdadeira em todo modo que
+não seja `mesmo_alvo` — o padrão é `copiar`. Medido: convites às 11:45:21,
+11:45:28 e 11:45:35, e o aceite saindo às **11:45:42.867, 16 ms depois de
+"Modo APP encerrado"** — quem clicou foi o aceitador do supervisor, com a macro
+já parada. O `_dormir` (a espera cega) passou a perguntar também.
+
+Para isso caber dentro da linha, `check_and_accept` deixou de **capturar a tela
+antes de saber se há convite**: eram ~15 ms a cada meio segundo gastos para
+descobrir que não havia nada a fazer, e dentro da linha esse tempo entraria em
+UMA conta e desalinharia o time — que é justamente o que a volta cega existe
+para evitar. Agora a captura só acontece com convite anunciado (no aceitador do
+APP; o da conta de reset continua olhando a tela, é por lá que ele reconhece
+convite de estranho).
+
+**4. A Fada sem aceitador.** `fada_montagem.py` não tinha uma linha sobre
+convite. É o mesmo defeito que o modo APP teve até 16/09/2026, pelo mesmo
+motivo: `rodar()` fica horas dentro do laço e o aceitador do supervisor só volta
+a rodar quando ele termina. Ela reusa a MESMA peça do APP
+(`time_do_app.aceitador_do_seguidor`), que não sabe o que é macro.
+
+**5. Ninguém esperava ninguém.** *"Quando eu starto a função APP por um líder, a
+primeira coisa que deve ser vista, antes de executar qualquer outra coisa, de
+qualquer um se mexer, é verificar e montar o team."* No log, a macro do seguidor
+começou às 11:45:20.972 e a conferência do líder às 11:45:21.853 — **0,9 s de
+diferença**, e o seguidor já batendo. O seguidor agora espera entrar no time
+antes de `executor.rodar()`.
+
+A espera precisou de três coisas, e a primeira não é detalhe:
+
+- **publicar sinal de vida enquanto espera.** O líder só convida quem está de pé
+  (regra 2 acima), e quem está parado ali ainda não rodou uma volta — sem
+  publicar, os dois se esperariam. Foi o que transformou a publicação numa peça
+  com nome (`publicar_que_estou_de_pe`), usada pelos dois chamadores.
+- **aceitar o convite enquanto espera.** A macro ainda não começou, então o
+  gancho de dentro dela não existe.
+- **ter TETO DERIVADO**, não inventado: `ESPERA_PELA_RESPOSTA ×
+  TENTATIVAS_POR_MEMBRO × membros`, que é o pior caso da montagem do líder.
+  Estourado, a macro começa assim mesmo — ficar parado esperando um líder que
+  não vem é pior que farmar sozinho, e o convite continua sendo aceito lá
+  dentro.
+
+Não espera por líder desligado, por líder que não está no APP, nem com mob
+batendo.
+
+### O que este dia ensinou sobre o log
+
+As cinco causas eram **silenciosas**: `montar_o_time` volta calado quando a
+cadência segura, quando não há ninguém faltando e quando a leitura do time não
+responde. O que quebrou o caso foi a única linha que alguém teve o cuidado de
+escrever — *"sem sinal de vida agora"* — e a comparação de dois religares com
+tempos diferentes. Decisão herdada de 16/09 e confirmada: **recusa sem rastro
+esconde defeito por dias.**
+
+### O Pick Mode: Free funcionou
+
+Confirmado pelo usuário no mesmo dia (*"sem eu ter feito nada manualmente,
+percebi que está no Free"*) e pelo log: `Pick Mode: submenu aberto; clicando em
+'Free' em (232, 121)`. O hover sintético abre o submenu neste cliente — a dúvida
+de 15/09 está respondida.

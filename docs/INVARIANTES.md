@@ -398,6 +398,10 @@ e `docs/decisoes/deletador.md`.
 - **NÃO SE CONVIDA ÀS CEGAS.** Só entra na fila quem publicou sinal de vida nos
   últimos `mural.ESTADO_VALIDO_SEGUNDOS` — conta deslogada não recebe convite e
   não gasta ciclo.
+- **SINAL DE VIDA TEM DOIS CANAIS, e quem pergunta olha os DOIS** (19/09/2026).
+  A macro do APP publica em `publicar_estado` a cada volta; a FADA nunca passa
+  por lá — ela bate em `bater_fada`, de dentro do laço de cura. Olhar só o
+  primeiro fazia a Fada ser pulada para sempre.
 - **UM CONVITE POR VEZ.** A Block list é LIMPA antes de cada registro, então o
   alvo do clique direito é sempre a primeira linha. Não existe código que
   distinga linhas, e reconhecer qual é de quem convidaria a pessoa errada
@@ -409,12 +413,28 @@ e `docs/decisoes/deletador.md`.
   personagem parado apanhando. Mesma regra do pet, da comida e da bolsa.
 - **O ARRANQUE DO APP CONFERE O TIME**, antes da primeira volta: o usuário abre
   o BlazesBot com as contas já logadas, e sem essa conferência o bot ia direto
-  para a macro com o time desfeito.
+  para a macro com o time desfeito. **A CADÊNCIA NÃO VALE NO ARRANQUE**
+  (`no_arranque=True`, 19/09/2026): o relógio dela é do supervisor, que
+  sobrevive ao ligar/desligar do modo APP — e religar é justamente quando o
+  usuário acabou de mexer no time.
+- **NINGUÉM SE MEXE ANTES DO TIME** (19/09/2026). O seguidor espera entrar no
+  time antes de começar a macro (`time_do_app.esperar_o_lider_montar`), e
+  enquanto espera ele **publica sinal de vida** (senão o líder não o convida) e
+  **aceita convite** (o gancho de dentro da macro ainda não existe). O teto é
+  DERIVADO do pior caso da montagem; estourado, farma sozinho. Não espera por
+  líder desligado, líder fora do APP, nem com mob batendo.
 
 - **O SEGUIDOR ACEITA DENTRO DA MACRO**, na espera fatiada da linha — não entre
   as voltas. O líder espera poucos segundos por cada convite, e uma volta de
   macro passa disso sozinha. O `InviteAcceptor` vive num ramo do laço do
-  supervisor que o modo APP nunca alcança.
+  supervisor que o modo APP nunca alcança. **NAS DUAS ESPERAS, inclusive na
+  CEGA** (19/09/2026): no modo `copiar` toda volta é cega, e com o gancho só no
+  `_esperar` o seguidor passava a macro inteira surdo. Para caber ali, o aceite
+  só CAPTURA A TELA quando há convite anunciado — a captura entraria numa conta
+  só e desalinharia o time.
+- **A FADA TAMBÉM ACEITA, de dentro do laço dela** (19/09/2026), pelo mesmo
+  motivo: `fada.rodar()` fica horas ali e o aceitador do supervisor só volta a
+  rodar quando ele termina. Reusa a peça do APP, `aceitador_do_seguidor`.
 - **NENHUM CLIQUE ESQUERDO SAI SEM PROVA DE QUE A CAIXA EXISTE**
   (`InviteAcceptor(exigir_caixa=True)`). O Ok é clique esquerdo, o mesmo que faz
   o personagem andar. Imagem primeiro; `memory.modal_open()` é a via que
