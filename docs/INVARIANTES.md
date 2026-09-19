@@ -398,6 +398,12 @@ e `docs/decisoes/deletador.md`.
 - **NÃO SE CONVIDA ÀS CEGAS.** Só entra na fila quem publicou sinal de vida nos
   últimos `mural.ESTADO_VALIDO_SEGUNDOS` — conta deslogada não recebe convite e
   não gasta ciclo.
+- **O PULSO DO TIME BATE EM TODA ESPERA FATIADA** (19/09/2026) — `_esperar`,
+  `_dormir` e as quatro esperas da cura (`cura._passo`). Ele publica o sinal de
+  vida E atende convite, porque as duas coisas falhavam pela mesma razão: o que
+  roda uma vez por volta não serve para nenhuma. Medido: 75 s presos no laço da
+  poção, com a conta dada por offline (o sinal vale 30 s) e quatro convites sem
+  resposta, a caixa na tela engolindo as teclas dela.
 - **SINAL DE VIDA TEM DOIS CANAIS, e quem pergunta olha os DOIS** (19/09/2026).
   A macro do APP publica em `publicar_estado` a cada volta; a FADA nunca passa
   por lá — ela bate em `bater_fada`, de dentro do laço de cura. Olhar só o
@@ -409,6 +415,14 @@ e `docs/decisoes/deletador.md`.
 - **ROTAÇÃO COM TETO:** quem não aceita volta para o fim da fila; ao fim de
   `time_do_app.TENTATIVAS_POR_MEMBRO` passadas a montagem encerra e o resto fica
   para o ciclo seguinte. O líder não fica parado por causa de uma conta fora.
+- **A FILA É REFEITA A CADA PASSADA** (19/09/2026), sem quem já aceitou. Ela era
+  calculada uma vez, e quem publicou o sinal de vida 150 ms depois ficava fora
+  da montagem inteira — o time começava a macro incompleto e o que faltava só
+  seria convidado 60 s adiante.
+- **O ANÚNCIO SAI DEPOIS DO CLIQUE EM "Team up"** (19/09/2026). Enviar o convite
+  leva de 4 a 5 s (Block list, nick, menu de contexto), e anunciar antes fazia o
+  convidado procurar uma caixa que ainda não existia — recusa correta, tentativa
+  queimada.
 - **EM BATALHA NÃO SE MONTA TIME** — abrir a Block list com mob batendo é o
   personagem parado apanhando. Mesma regra do pet, da comida e da bolsa.
 - **O ARRANQUE DO APP CONFERE O TIME**, antes da primeira volta: o usuário abre

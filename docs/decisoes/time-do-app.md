@@ -584,3 +584,82 @@ Confirmado pelo usuário no mesmo dia (*"sem eu ter feito nada manualmente,
 percebi que está no Free"*) e pelo log: `Pick Mode: submenu aberto; clicando em
 'Free' em (232, 121)`. O hover sintético abre o submenu neste cliente — a dúvida
 de 15/09 está respondida.
+
+## A SEGUNDA RODADA DO MESMO DIA — 19/09/2026, tarde
+
+Com as cinco causas da manhã corrigidas, o usuário testou de novo e viu duas
+coisas: *"o líder enviou o convite para a fada, ela aceitou e ele começou a
+rodar a macro — tem que enviar a todos do time"*; e *"depois de um tempo do
+líder rodando a macro, ele enviou o team para o outro integrante, mas ele não
+aceitou e voltou a ficar parado sem fazer absolutamente nada"*.
+
+Mais três causas, todas no log do teste.
+
+### 1. A fila era calculada UMA vez (e por 150 ms)
+
+    13:10:37.295  gamerblazes sem sinal de vida agora; fica para o próximo ciclo
+    13:10:37.295  faltam mfaustoapp069 no time. Convidando um por vez
+    13:10:43.400  'Tsuki69' entrou (time com 2)
+    13:10:44.182  Modo APP iniciado
+
+O seguidor publicou o sinal de vida **logo depois** daquela leitura — ele
+estava, naquele instante, entrando no `esperar_o_lider_montar`. Como a fila era
+montada uma vez, ele ficou de fora da montagem inteira: o time começou a macro
+com 2 de 3, e o terceiro só seria convidado 60 s adiante.
+
+**A fila passou a ser refeita a cada passada**, sem quem já aceitou (o aceite
+chega pelo anúncio da outra ponta antes de o jogo mostrar o time) e sem repetir
+o aviso de quem está ausente. Com quatro passadas, quem sobe no meio entra.
+
+### 2. O anúncio saía ANTES do clique
+
+    13:11:57.714  faltam gamerblazes no time. Convidando um por vez
+    13:11:57.772  Convite de 'BlazesAPP1' anunciado, mas sem prova de caixa na tela
+    13:12:02.289  Clicando em 'Team up' em (575, 396)
+
+`_enviar_convite` leva de 4 a 5 s — limpa a Block list, registra o nick, abre o
+menu de contexto e só então clica. O anúncio saía no começo disso, e o
+convidado, que exige prova, procurava uma caixa que **ainda não existia**. A
+recusa estava certa; o anúncio é que estava cedo. Ele passou para depois do
+clique.
+
+Vale registrar que o mecanismo funciona quando as duas pontas se encontram: a
+Fada recusou às 13:10:37.711 pelo mesmo motivo e, 4,7 s depois, casou o template
+(`state_team_invite_texto.png` em (544,199)) e aceitou. **A prova por imagem
+responde** — ela só precisa que a caixa esteja lá.
+
+### 3. Setenta e cinco segundos parado, surdo e mudo
+
+    13:12:08.335  vida em 80%; curando com poção (tecla 9)
+    13:13:23.962  gastei 5 poção(ões) e a vida parou em 99%, abaixo dos 100%
+
+Entre essas duas linhas não há mais nada dessa conta. `_curar_com_pocao` bebe
+até cinco poções esperando 15 s por cada uma, e nesse intervalo:
+
+- **o mural a dá por offline** — o sinal de vida vale 30 s e quem o publicava
+  era o gancho por volta, que não roda aqui. Foi por isso que às 13:13:09 o
+  líder registrou *"gamerblazes sem sinal de vida agora"* com ele rodando.
+- **ela não atende convite** — o gancho do aceite mora nas esperas do executor,
+  e a cura tem as esperas dela.
+
+Os quatro convites do líder caíram nesse buraco, e a caixa ficou na tela
+**engolindo as teclas**: *"a bolsa não apareceu em 2.0s depois da tecla 'I'"*,
+*"1 TAB(s) sem resposta"*. É o "parado sem fazer absolutamente nada".
+
+As duas faltas têm a mesma causa — o que roda uma vez por volta não serve para
+nenhuma delas — então viraram **uma peça só: o pulso do time** ("estou de pé" +
+"aceito convite"), chamado na cadência das esperas fatiadas: `_esperar`,
+`_dormir` e as quatro esperas da cura (`cura._passo`). O gancho
+`aceitar_convite` do executor passou a se chamar `pulso_do_time`, que é o que
+ele faz.
+
+**Custo**: duas escritas em dicionário a cada 0,16 s. A captura de tela só
+acontece quando há convite anunciado — foi o que tornou possível chamar isso de
+dentro da linha sem desalinhar o time.
+
+### Um número que o usuário vai querer olhar
+
+A poção gastou cinco unidades para ir de 80% a 99% e parou *abaixo* do alvo,
+porque `cura_parar_pct` está em 100%. Alvo em 100% com poção fraca é receita
+para o personagem passar mais de um minuto parado bebendo — o log já avisa
+(*"poção provavelmente fraca demais"*), mas quem decide o número é ele.
