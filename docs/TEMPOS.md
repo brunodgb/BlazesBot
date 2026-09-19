@@ -330,17 +330,17 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | `SEGUNDOS_DE_MORTO_PARA_FURAR_A_FILA` | 40 s | *novo* | FIXO | [mural_da_morte.py:42](blazesbot/bot/mural_da_morte.py#L42) | `morto_ha_muito_tempo` | A partir de quantos segundos de morto a vítima FURA a fila dos feridos. |
 | `PASSO_VERTICAL` | 4 s | = | PASSO | [recorte_do_time.py:90](blazesbot/bot/recorte_do_time.py#L90) | `_candidatos` |  |
 | `CADENCIA_DO_VIGIA` | 6 s | *novo* | PASSO | [sentinela.py:129](blazesbot/bot/sentinela.py#L129) | `__init__` | O ORÇAMENTO DE 20 SEGUNDOS, repartido |
-| `TETO_DA_FATIA_DE_ESPERA` | 0.25 s | = | TETO | [supervisor.py:78](blazesbot/bot/supervisor.py#L78) | `wait` | Teto de uma fatia dentro de `_AnyEvent.wait`. É REDE, não o caminho normal -- |
-| `TETO_DA_ESPERA_PELA_FADA` | 60 s (1 min) | *novo* | TETO | [supervisor.py:87](blazesbot/bot/supervisor.py#L87) | `_rodar_modo_app, chamar_a_fada` | Quanto uma vítima espera pela Fada antes de voltar para a poção. |
-| *literal em* `_sleep_interruptible` | 0.125 s | = | FIXO | [supervisor.py:351](blazesbot/bot/supervisor.py#L351) | `_sleep_interruptible` | Espera até `seconds`, acordando se o usuário mandar parar. |
-| *literal em* `_launch_client` | 1 s | = | FIXO | [supervisor.py:439](blazesbot/bot/supervisor.py#L439) | `_launch_client` | Lança o Client.bat e devolve o PID da nova instância. |
-| *literal em* `_find_window` | 1 s | = | FIXO | [supervisor.py:456](blazesbot/bot/supervisor.py#L456) | `_find_window` | Localiza a janela de nível superior pertencente ao PID. |
-| *literal em* `_run_session` | 1.5 s | = | FIXO | [supervisor.py:1060](blazesbot/bot/supervisor.py#L1060) | `_run_session` | Uma sessão: obter uma janela, logar se preciso, e operar. |
-| *literal em* `_operate` | 2.5 s | *novo* | FIXO | [supervisor.py:1355](blazesbot/bot/supervisor.py#L1355) | `_operate` | Opera a conta logada, respeitando o farm ligado/desligado ao vivo. |
-| *literal em* `_operate` | 2.5 s | *novo* | FIXO | [supervisor.py:1376](blazesbot/bot/supervisor.py#L1376) | `_operate` | Opera a conta logada, respeitando o farm ligado/desligado ao vivo. |
-| *literal em* `_operate` | 0.5 s | = | FIXO | [supervisor.py:1475](blazesbot/bot/supervisor.py#L1475) | `_operate` | Opera a conta logada, respeitando o farm ligado/desligado ao vivo. |
-| *literal em* `_publicar_o_proprio_id` | 0.3 s | *novo* | FIXO | [supervisor.py:1720](blazesbot/bot/supervisor.py#L1720) | `_publicar_o_proprio_id` | o alvo leva ~0,1 s para virar |
-| *literal em* `chamar_a_fada` | 0.2 s | *novo* | FIXO | [supervisor.py:2158](blazesbot/bot/supervisor.py#L2158) | `chamar_a_fada` | Pede cura à Fada do time e espera. `False` = não há Fada, beba poção. |
+| `TETO_DA_FATIA_DE_ESPERA` | 0.25 s | = | TETO | [supervisor.py:84](blazesbot/bot/supervisor.py#L84) | `wait` | Teto de uma fatia dentro de `_AnyEvent.wait`. É REDE, não o caminho normal -- |
+| `TETO_DA_ESPERA_PELA_FADA` | 60 s (1 min) | *novo* | TETO | [supervisor.py:93](blazesbot/bot/supervisor.py#L93) | `_rodar_modo_app, chamar_a_fada` | Quanto uma vítima espera pela Fada antes de voltar para a poção. |
+| *literal em* `_sleep_interruptible` | 0.125 s | = | FIXO | [supervisor.py:357](blazesbot/bot/supervisor.py#L357) | `_sleep_interruptible` | Espera até `seconds`, acordando se o usuário mandar parar. |
+| *literal em* `_launch_client` | 1 s | = | FIXO | [supervisor.py:445](blazesbot/bot/supervisor.py#L445) | `_launch_client` | Lança o Client.bat e devolve o PID da nova instância. |
+| *literal em* `_find_window` | 1 s | = | FIXO | [supervisor.py:462](blazesbot/bot/supervisor.py#L462) | `_find_window` | Localiza a janela de nível superior pertencente ao PID. |
+| *literal em* `_run_session` | 1.5 s | = | FIXO | [supervisor.py:1066](blazesbot/bot/supervisor.py#L1066) | `_run_session` | Uma sessão: obter uma janela, logar se preciso, e operar. |
+| *literal em* `_operate` | 2.5 s | *novo* | FIXO | [supervisor.py:1361](blazesbot/bot/supervisor.py#L1361) | `_operate` | Opera a conta logada, respeitando o farm ligado/desligado ao vivo. |
+| *literal em* `_operate` | 2.5 s | *novo* | FIXO | [supervisor.py:1382](blazesbot/bot/supervisor.py#L1382) | `_operate` | Opera a conta logada, respeitando o farm ligado/desligado ao vivo. |
+| *literal em* `_operate` | 0.5 s | = | FIXO | [supervisor.py:1481](blazesbot/bot/supervisor.py#L1481) | `_operate` | Opera a conta logada, respeitando o farm ligado/desligado ao vivo. |
+| *literal em* `_publicar_o_proprio_id` | 0.3 s | *novo* | FIXO | [supervisor.py:1726](blazesbot/bot/supervisor.py#L1726) | `_publicar_o_proprio_id` | o alvo leva ~0,1 s para virar |
+| *literal em* `chamar_a_fada` | 0.2 s | *novo* | FIXO | [supervisor.py:2164](blazesbot/bot/supervisor.py#L2164) | `chamar_a_fada` | Pede cura à Fada do time e espera. `False` = não há Fada, beba poção. |
 | `ESPERA_DO_MENU` | 0.35 s | = | FIXO | [team.py:156](blazesbot/bot/team.py#L156) | `_enviar_convite` | Tempo para o menu de contexto aparecer depois do clique direito. |
 | `ESPERA_PELA_RESPOSTA` | 4 s | = | FIXO | [team.py:161](blazesbot/bot/team.py#L161) | `montar_time` | Quanto esperar a outra conta aceitar. Ela recebe o anúncio interno e clica no |
 | `PASSO_DA_ESPERA_DO_TIME` | 0.1 s | = | PASSO | [team.py:169](blazesbot/bot/team.py#L169) | `montar_time` | De quanto em quanto tempo conferir se o time já formou. |
@@ -364,9 +364,9 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | *literal em* `_recusar` | 0.5 s | = | FIXO | [team.py:1086](blazesbot/bot/team.py#L1086) | `_recusar` |  |
 | `ESPERA_DEPOIS_DO_CLIQUE` | 0.35 s | = | FIXO | [teste_do_cursor.py:100](blazesbot/bot/teste_do_cursor.py#L100) | `_uma_fase` |  |
 | *literal em* `main` | 8 s | = | FIXO | [teste_do_cursor.py:476](blazesbot/bot/teste_do_cursor.py#L476) | `main` |  |
-| `CADENCIA_DAS_CONFERENCIAS` | 60 s (1 min) | *novo* | PASSO | [time_do_app.py:112](blazesbot/bot/time_do_app.py#L112) | `montar_se_for_a_hora` | De quanto em quanto tempo o líder confere se o time está completo. |
-| `TETO_DO_MENU` | 0.8 s | *novo* | TETO | [time_do_app.py:422](blazesbot/bot/time_do_app.py#L422) | `pick_mode_free` | TETO da espera pelo menu e pelo submenu aparecerem. TETO, não gasto: quem |
-| `PASSO_DO_MENU` | 0.06 s | *novo* | PASSO | [time_do_app.py:423](blazesbot/bot/time_do_app.py#L423) | `pick_mode_free` |  |
+| `CADENCIA_DAS_CONFERENCIAS` | 60 s (1 min) | *novo* | PASSO | [time_do_app.py:114](blazesbot/bot/time_do_app.py#L114) | `montar_se_for_a_hora` | De quanto em quanto tempo o líder confere se o time está completo. |
+| `TETO_DO_MENU` | 0.8 s | *novo* | TETO | [time_do_app.py:514](blazesbot/bot/time_do_app.py#L514) | `pick_mode_free` | TETO da espera pelo menu e pelo submenu aparecerem. TETO, não gasto: quem |
+| `PASSO_DO_MENU` | 0.06 s | *novo* | PASSO | [time_do_app.py:515](blazesbot/bot/time_do_app.py#L515) | `pick_mode_free` |  |
 | `PASSO_DA_ESPERA_DO_DIALOGO` | 0.08 s | = | PASSO | [ui_do_jogo.py:150](blazesbot/bot/ui_do_jogo.py#L150) | `_esperar_o_dialogo` | Diálogo do NPC aparecer. Era 0,30 s fixos, gastos inteiros mesmo quando o |
 | `LIMITE_INICIAL_DA_ESPERA_DO_DIALOGO` | 0.65 s | = | TETO | [ui_do_jogo.py:189](blazesbot/bot/ui_do_jogo.py#L189) | `limite_da_espera_do_dialogo` | TETO DA ESPERA DO DIÁLOGO -- ajustado pelo que foi MEDIDO, não chutado |
 | `LIMITE_MINIMO_DA_ESPERA_DO_DIALOGO` | 0.18 s | = | TETO | [ui_do_jogo.py:193](blazesbot/bot/ui_do_jogo.py#L193) | `limite_da_espera_do_dialogo` | Piso: o valor que valia antes. Abaixo disto não se aperta nem com evidência -- |

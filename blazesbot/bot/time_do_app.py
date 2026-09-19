@@ -79,10 +79,12 @@ __all__ = [
     "CADENCIA_DAS_CONFERENCIAS",
     "TENTATIVAS_POR_MEMBRO",
     "aceitador_do_seguidor",
+    "esperar_o_lider_montar",
     "falta_alguem",
     "montar_o_time",
     "montar_se_for_a_hora",
     "pick_mode_free",
+    "publicar_que_estou_de_pe",
 ]
 
 # ===========================================================================
@@ -170,6 +172,21 @@ def _esta_de_pe(login: str) -> bool:
     """
     return (mural.estado_da_conta(login) is not None
             or mural.fada_de_pe(login))
+
+
+def publicar_que_estou_de_pe(sup, memoria) -> None:
+    """O sinal de vida desta conta, com o máximo de vida junto.
+
+    O MÁXIMO VAI SEMPRE, porque `publicar_estado` SUBSTITUI o estado inteiro e
+    a Fada lê a porcentagem dele -- publicar só o nick apagaria o número que ela
+    precisa. Travas em `tests/test_sinal_de_vida_do_app.py`.
+    """
+    try:
+        max_hp = memoria.max_hp() if memoria is not None else None
+    except Exception:
+        max_hp = None
+    mural.publicar_estado(sup.account.login, max_hp=max_hp,
+                          nick=(sup.account.last_char_name or "").strip())
 
 
 def _convidar(team: TeamService, sup, login: str, nick: str, remetente: str,
@@ -308,6 +325,81 @@ def montar_se_for_a_hora(sup, memoria, em_batalha: bool | None,
         return False
     sup._proxima_conferencia_do_time = agora + CADENCIA_DAS_CONFERENCIAS
     return montar_o_time(sup, memoria)
+
+
+def _o_lider_vai_rodar(sup, lider) -> bool:
+    """O líder está ligado E com o APP como função ativa?
+
+    Esperar por um líder que não vai rodar é ficar parado para sempre -- e é o
+    caso normal de quem liga uma conta sozinha para testar.
+    """
+    try:
+        return (bool(getattr(lider, "enabled", False))
+                and sup.config.funcao_ativa_da_conta(lider) == "app")
+    except Exception:
+        return False
+
+
+def esperar_o_lider_montar(sup, memoria, aceitar=None,
+                           em_batalha: bool | None = None) -> bool:
+    """O seguidor NÃO se mexe antes de o time estar de pé. `True` = entrou.
+
+    *"Quando eu starto a função APP por um líder, a primeira coisa que deve ser
+    vista, antes de executar qualquer outra coisa, de qualquer um se mexer, é
+    verificar e montar o team"* -- usuário, 19/09/2026.
+
+    Sem isto o seguidor larga na frente, e não por acaso: cada conta tem o seu
+    supervisor, e as threads arrancam juntas. No log daquele dia a macro do
+    seguidor começou 0,9 s ANTES de o líder sequer conferir o time.
+
+    ELE SE PUBLICA ENQUANTO ESPERA, e essa linha não é enfeite: o líder só
+    convida quem tem sinal de vida (`_esta_de_pe`), e quem está parado aqui
+    ainda não rodou uma volta -- sem publicar, os dois se esperariam.
+
+    O TETO É DERIVADO, não inventado: é o pior caso da montagem do líder
+    (`ESPERA_PELA_RESPOSTA` × `TENTATIVAS_POR_MEMBRO` × membros). Estourado, a
+    macro começa assim mesmo -- o convite continua sendo aceito lá dentro
+    (`aceitador_do_seguidor`), e ficar parado esperando um líder que não vem é
+    pior do que farmar sozinho.
+    """
+    if not ATIVADO or memoria is None:
+        return False
+    lider = sup._dono_da_macro()
+    if lider.login == sup.account.login:
+        return False                      # o líder não espera por si mesmo
+    if em_batalha is True:
+        # APANHANDO, NÃO. Ficar parado sob ataque é a única coisa pior que
+        # começar antes do time -- e lá dentro o convite continua sendo aceito.
+        return False
+    if not _o_lider_vai_rodar(sup, lider):
+        return False
+    nick_do_lider = (sup._nick_do_login(lider.login) or "").strip().lower()
+    if not nick_do_lider:
+        return False
+
+    membros = [x for x in sup._membros_do_time() if x != lider.login]
+    teto = ESPERA_PELA_RESPOSTA * TENTATIVAS_POR_MEMBRO * max(1, len(membros))
+    sup.log.info("Time do APP: espero o líder '%s' montar o time antes de "
+                 "começar a macro (teto de %.0fs).", lider.login, teto)
+
+    limite = time.monotonic() + teto
+    while time.monotonic() < limite:
+        if sup.stop_event.is_set():
+            return False
+        publicar_que_estou_de_pe(sup, memoria)
+        presentes = _nicks_no_time(memoria)
+        if presentes is not None and nick_do_lider in presentes:
+            sup.log.info("Time do APP: estou no time do '%s' — começando a "
+                         "macro.", lider.login)
+            return True
+        if aceitar is not None:
+            aceitar()
+        time.sleep(PASSO_DA_ESPERA_DO_TIME)
+
+    sup.log.warning("Time do APP: o líder '%s' não me pôs no time em %.0fs — "
+                    "começo a macro assim mesmo e sigo aceitando convite lá "
+                    "dentro.", lider.login, teto)
+    return False
 
 
 def aceitador_do_seguidor(sup):

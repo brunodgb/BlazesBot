@@ -38,10 +38,15 @@ class _Sup:
     """O supervisor cru, com só o que a montagem toca."""
 
     def __init__(self, lider="lider", membros=("lider", "s1", "s2"),
-                 nicks=None, sou_o_lider=True):
+                 nicks=None, sou_o_lider=True, funcao_do_lider="app",
+                 lider_ligado=True):
         self.account = SimpleNamespace(login="lider" if sou_o_lider else "s1",
-                                       last_char_name="Lider")
-        self.config = SimpleNamespace(accounts=[])
+                                       last_char_name="Lider" if sou_o_lider
+                                       else "Um")
+        self.config = SimpleNamespace(
+            accounts=[],
+            funcao_ativa_da_conta=lambda conta: funcao_do_lider)
+        self._lider_ligado = lider_ligado
         self.pid = 1
         self.hwnd = 1
         self.stop_event = SimpleNamespace(is_set=lambda: False)
@@ -62,7 +67,7 @@ class _Sup:
         return self._nicks.get(login, "")
 
     def _dono_da_macro(self):
-        return SimpleNamespace(login=self._lider)
+        return SimpleNamespace(login=self._lider, enabled=self._lider_ligado)
 
 
 @pytest.fixture(autouse=True)
@@ -343,6 +348,104 @@ def test_o_interruptor_DESLIGA_a_montagem(monkeypatch):
     monkeypatch.setattr(mod, "BotContext", lambda **k: abriu.append(1))
     assert mod.montar_o_time(sup, _Memoria(["Lider"])) is False
     assert abriu == []
+
+
+# ---------------------------------------------------------------------------
+# NINGUÉM SE MEXE ANTES DO TIME
+# ---------------------------------------------------------------------------
+
+def test_o_SEGUIDOR_espera_entrar_no_time_antes_de_comecar():
+    """*"A primeira coisa, antes de qualquer um se mexer, é montar o team."*
+
+    Cada conta tem o seu supervisor e as threads arrancam juntas -- no log de
+    19/09/2026 a macro do seguidor começou 0,9 s ANTES de o líder sequer
+    conferir o time.
+    """
+    sup = _Sup(sou_o_lider=False)
+    entrou = {"n": 0}
+
+    class _MemoriaQueEntra:
+        def time_do_jogo(self):
+            entrou["n"] += 1
+            return ["Um"] if entrou["n"] < 3 else ["Um", "Lider"]
+
+        def tamanho_do_time(self):
+            return 2
+
+    assert mod.esperar_o_lider_montar(sup, _MemoriaQueEntra()) is True
+    assert entrou["n"] >= 3, "voltou antes de conferir o time de novo"
+
+
+def test_o_LIDER_nao_espera_por_si_mesmo():
+    sup = _Sup(sou_o_lider=True)
+    assert mod.esperar_o_lider_montar(sup, _Memoria(["Lider"])) is False
+
+
+def test_nao_espera_um_lider_DESLIGADO():
+    """Ficar parado esperando quem não vai rodar é o caso de quem liga uma
+    conta sozinha para testar."""
+    sup = _Sup(sou_o_lider=False, lider_ligado=False)
+    assert mod.esperar_o_lider_montar(sup, _Memoria(["Um"])) is False
+
+
+def test_nao_espera_um_lider_que_nao_esta_no_APP():
+    sup = _Sup(sou_o_lider=False, funcao_do_lider="bc")
+    assert mod.esperar_o_lider_montar(sup, _Memoria(["Um"])) is False
+
+
+def test_APANHANDO_nao_espera():
+    """Parado sob ataque é a única coisa pior que começar antes do time."""
+    sup = _Sup(sou_o_lider=False)
+    assert mod.esperar_o_lider_montar(sup, _Memoria(["Um"]),
+                                      em_batalha=True) is False
+
+
+def test_quem_espera_PUBLICA_sinal_de_vida(monkeypatch):
+    """Sem isto os dois se esperam: o líder só convida quem está de pé, e quem
+    está parado aqui ainda não rodou uma volta."""
+    monkeypatch.setattr(mod, "TENTATIVAS_POR_MEMBRO", 1)
+    sup = _Sup(sou_o_lider=False)
+    assert mural.estado_da_conta("s1") is None
+
+    mod.esperar_o_lider_montar(sup, _Memoria(["Um"]))   # nunca entra; estoura
+
+    assert mural.estado_da_conta("s1") is not None, (
+        "o seguidor esperou calado -- o líder nunca saberia que ele existe")
+
+
+def test_o_TETO_solta_a_macro_e_avisa(monkeypatch):
+    """Estourado, farmar sozinho é melhor que ficar parado -- e o convite
+    continua sendo aceito dentro da macro."""
+    monkeypatch.setattr(mod, "TENTATIVAS_POR_MEMBRO", 1)
+    sup = _Sup(sou_o_lider=False)
+
+    assert mod.esperar_o_lider_montar(sup, _Memoria(["Um"])) is False
+    assert any("não me pôs no time" in t for _n, t in sup.linhas), sup.linhas
+
+
+def test_enquanto_espera_ele_ACEITA_o_convite(monkeypatch):
+    """A macro ainda não começou, então o gancho de dentro dela não existe:
+    quem clica no Ok neste intervalo é esta chamada."""
+    monkeypatch.setattr(mod, "TENTATIVAS_POR_MEMBRO", 1)
+    sup = _Sup(sou_o_lider=False)
+    aceites = []
+
+    mod.esperar_o_lider_montar(sup, _Memoria(["Um"]),
+                               lambda: aceites.append(1))
+
+    assert aceites, "esperou o convite sem nunca clicar no Ok"
+
+
+def test_o_supervisor_ESPERA_o_time_antes_da_macro():
+    import inspect
+
+    from blazesbot.bot import supervisor
+
+    fonte = inspect.getsource(supervisor.AccountSupervisor._rodar_modo_app)
+    assert "_esperar_o_lider_montar(" in fonte, (
+        "o seguidor voltou a largar antes do time")
+    assert fonte.index("_esperar_o_lider_montar(") < fonte.rindex(
+        "executor.rodar()"), "a espera tem que vir ANTES da macro"
 
 
 def test_o_supervisor_LIGA_a_montagem_nos_DOIS_pontos():

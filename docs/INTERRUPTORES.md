@@ -52,7 +52,7 @@ ligar código não testado.
 | `PERGUNTAR_ENTRE_OS_CLIQUES` | `True` | [blazesbot/bot/rajada_de_npc.py:85](blazesbot/bot/rajada_de_npc.py#L85) | — | INTERRUPTOR -- desligar devolve a rajada cega de sempre. |
 | `MATAR_JANELA_TRAVADA` | `True` | [blazesbot/bot/sentinela.py:166](blazesbot/bot/sentinela.py#L166) | — | INTERRUPTOR (a convenção do projeto: caminho fora de uso não vira comentário) |
 | `OLHAR_A_TELA` | `True` | [blazesbot/bot/sentinela.py:202](blazesbot/bot/sentinela.py#L202) | — | O VIGIA LÊ A TELA -- religado em 11/09/2026, e o porquê do vaivém importa |
-| `ATIVADO` | `True` | [blazesbot/bot/time_do_app.py:94](blazesbot/bot/time_do_app.py#L94) | diagnostico_do_link.py, deletador.py, supervisor.py, patch_do_cliente.py, petbug.py | INTERRUPTOR |
+| `ATIVADO` | `True` | [blazesbot/bot/time_do_app.py:96](blazesbot/bot/time_do_app.py#L96) | diagnostico_do_link.py, deletador.py, supervisor.py, patch_do_cliente.py, petbug.py | INTERRUPTOR |
 | `CONFIRMAR_CHEGADA_POR_COORDENADA` | `False` | [blazesbot/bot/ui_do_jogo.py:523](blazesbot/bot/ui_do_jogo.py#L523) | — | INTERRUPTOR: a coordenada do painel CONFIRMA a chegada? |
 | `CONFERIR_SLOT_VAZIO` | `False` | [blazesbot/bot/vendedor.py:236](blazesbot/bot/vendedor.py#L236) | — | INTERRUPTOR -- A CONFERÊNCIA DE SLOT VAZIO ESTÁ DESLIGADA (decisão do usuário, |
 | `MODO_FADA_DA_HH` | `'fada'` | [blazesbot/config.py:951](blazesbot/config.py#L951) | routine.py, supervisor.py, account_dialog.py | — |
@@ -410,9 +410,9 @@ ligar código não testado.
 | `CADENCIA_DO_VIGIA` | `6.0` | [blazesbot/bot/sentinela.py:129](blazesbot/bot/sentinela.py#L129) | — | O ORÇAMENTO DE 20 SEGUNDOS, repartido |
 | `STRIKES_PARA_JANELA_SUMIDA` | `2` | [blazesbot/bot/sentinela.py:146](blazesbot/bot/sentinela.py#L146) | — | AS CONFIRMAÇÕES -- a defesa contra derrubar conta boa por causa de lag |
 | `STRIKES_PARA_JANELA_TRAVADA` | `3` | [blazesbot/bot/sentinela.py:155](blazesbot/bot/sentinela.py#L155) | — | JANELA TRAVADA é o sinal ruidoso, e é o único que precisa de defesa de |
-| `LIMIAR_DO_CONVITE` | `0.9` | [blazesbot/bot/supervisor.py:100](blazesbot/bot/supervisor.py#L100) | — | Limiar do casamento do convite. Mais exigente que o limiar geral de telas |
-| `TETO_DA_ESPERA_PELA_FADA` | `60.0` | [blazesbot/bot/supervisor.py:87](blazesbot/bot/supervisor.py#L87) | — | Quanto uma vítima espera pela Fada antes de voltar para a poção. |
-| `TETO_DA_FATIA_DE_ESPERA` | `0.25` | [blazesbot/bot/supervisor.py:78](blazesbot/bot/supervisor.py#L78) | — | Teto de uma fatia dentro de `_AnyEvent.wait`. É REDE, não o caminho normal -- |
+| `LIMIAR_DO_CONVITE` | `0.9` | [blazesbot/bot/supervisor.py:106](blazesbot/bot/supervisor.py#L106) | — | Limiar do casamento do convite. Mais exigente que o limiar geral de telas |
+| `TETO_DA_ESPERA_PELA_FADA` | `60.0` | [blazesbot/bot/supervisor.py:93](blazesbot/bot/supervisor.py#L93) | — | Quanto uma vítima espera pela Fada antes de voltar para a poção. |
+| `TETO_DA_FATIA_DE_ESPERA` | `0.25` | [blazesbot/bot/supervisor.py:84](blazesbot/bot/supervisor.py#L84) | — | Teto de uma fatia dentro de `_AnyEvent.wait`. É REDE, não o caminho normal -- |
 | `ALTURA_DA_LINHA_DO_MENU` | `21` | [blazesbot/bot/team.py:149](blazesbot/bot/team.py#L149) | — | — |
 | `ALTURA_DO_MENU_LONGO` | `200` | [blazesbot/bot/team.py:153](blazesbot/bot/team.py#L153) | — | — |
 | `ALTURA_MAXIMA_DO_MENU` | `300` | [blazesbot/bot/team.py:152](blazesbot/bot/team.py#L152) | — | — |
@@ -436,11 +436,11 @@ ligar código não testado.
 | `DIFERENCA_QUE_E_EFEITO` | `3.0` | [blazesbot/bot/teste_do_cursor.py:95](blazesbot/bot/teste_do_cursor.py#L95) | instrumentar_clique.py | Quanto o minimapa precisa mudar para o clique contar como surtido efeito. O |
 | `DISTANCIA_MINIMA_DO_ALVO` | `120` | [blazesbot/bot/teste_do_cursor.py:98](blazesbot/bot/teste_do_cursor.py#L98) | instrumentar_clique.py | Distância mínima entre o cursor físico e o alvo, em pixels do cliente. |
 | `ESPERA_DEPOIS_DO_CLIQUE` | `0.35` | [blazesbot/bot/teste_do_cursor.py:100](blazesbot/bot/teste_do_cursor.py#L100) | — | — |
-| `CADENCIA_DAS_CONFERENCIAS` | `60.0` | [blazesbot/bot/time_do_app.py:112](blazesbot/bot/time_do_app.py#L112) | — | De quanto em quanto tempo o líder confere se o time está completo. |
-| `PASSO_DO_MENU` | `0.06` | [blazesbot/bot/time_do_app.py:423](blazesbot/bot/time_do_app.py#L423) | — | — |
-| `TENTATIVAS_DO_PICK_MODE` | `2` | [blazesbot/bot/time_do_app.py:426](blazesbot/bot/time_do_app.py#L426) | — | Tentativas de abrir o submenu antes de desistir nesta montagem. |
-| `TENTATIVAS_POR_MEMBRO` | `4` | [blazesbot/bot/time_do_app.py:101](blazesbot/bot/time_do_app.py#L101) | — | Passadas pela fila antes de desistir NESTA montagem. |
-| `TETO_DO_MENU` | `0.8` | [blazesbot/bot/time_do_app.py:422](blazesbot/bot/time_do_app.py#L422) | — | TETO da espera pelo menu e pelo submenu aparecerem. TETO, não gasto: quem |
+| `CADENCIA_DAS_CONFERENCIAS` | `60.0` | [blazesbot/bot/time_do_app.py:114](blazesbot/bot/time_do_app.py#L114) | — | De quanto em quanto tempo o líder confere se o time está completo. |
+| `PASSO_DO_MENU` | `0.06` | [blazesbot/bot/time_do_app.py:515](blazesbot/bot/time_do_app.py#L515) | — | — |
+| `TENTATIVAS_DO_PICK_MODE` | `2` | [blazesbot/bot/time_do_app.py:518](blazesbot/bot/time_do_app.py#L518) | — | Tentativas de abrir o submenu antes de desistir nesta montagem. |
+| `TENTATIVAS_POR_MEMBRO` | `4` | [blazesbot/bot/time_do_app.py:103](blazesbot/bot/time_do_app.py#L103) | — | Passadas pela fila antes de desistir NESTA montagem. |
+| `TETO_DO_MENU` | `0.8` | [blazesbot/bot/time_do_app.py:514](blazesbot/bot/time_do_app.py#L514) | — | TETO da espera pelo menu e pelo submenu aparecerem. TETO, não gasto: quem |
 | `ABERTURAS_POR_TRAJETO` | `4` | [blazesbot/bot/ui_do_jogo.py:567](blazesbot/bot/ui_do_jogo.py#L567) | — | Teto de aberturas do painel por TRAJETO. |
 | `ANCHOR_THRESHOLD` | `0.8` | [blazesbot/bot/ui_do_jogo.py:103](blazesbot/bot/ui_do_jogo.py#L103) | vendedor.py, team.py, janelas_abertas.py | — |
 | `BUSCAS_ANTES_DE_DESISTIR_DA_LEITURA` | `3` | [blazesbot/bot/ui_do_jogo.py:427](blazesbot/bot/ui_do_jogo.py#L427) | — | Quantas buscas seguidas sem a memória responder antes de desistir dela. Duas, e |

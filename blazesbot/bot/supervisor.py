@@ -52,7 +52,13 @@ from .time_do_app import (
     aceitador_do_seguidor as _aceitador_do_seguidor,
 )
 from .time_do_app import (
+    esperar_o_lider_montar as _esperar_o_lider_montar,
+)
+from .time_do_app import (
     montar_se_for_a_hora as _montar_time_do_app,
+)
+from .time_do_app import (
+    publicar_que_estou_de_pe as _publicar_que_estou_de_pe,
 )
 from .watchdog import (
     VISUAL_CHECK_SECONDS,
@@ -2179,9 +2185,7 @@ class AccountSupervisor(threading.Thread):
             `publicar_estado` SUBSTITUI o estado e a Fada lê dele -- porquê e
             travas em `tests/test_sinal_de_vida_do_app.py`.
             """
-            mural.publicar_estado(
-                self.account.login, max_hp=_seguro_max_hp(),
-                nick=(self.account.last_char_name or "").strip())
+            _publicar_que_estou_de_pe(self, memoria_do_pet)
             if garantir_barra is not None:
                 garantir_barra()
             _montar_time_do_app(self, memoria_do_pet, em_batalha())
@@ -2540,6 +2544,14 @@ class AccountSupervisor(threading.Thread):
         # justo quando o usuário acabou de mexer nele (medido em 19/09/2026).
         _montar_time_do_app(self, memoria_do_pet, em_batalha(),
                             no_arranque=True)
+
+        # E O SEGUIDOR NÃO SE MEXE ANTES DE ESTAR NO TIME -- 19/09/2026.
+        # *"Quando eu starto a função APP por um líder, a primeira coisa que
+        # deve ser vista, antes de qualquer um se mexer, é verificar e montar o
+        # team."* Cada conta tem o seu supervisor e as threads arrancam juntas:
+        # sem esta espera o seguidor larga na frente. O líder passa direto.
+        _esperar_o_lider_montar(self, memoria_do_pet, _aceitar_convite,
+                                em_batalha())
 
         try:
             executor.rodar()

@@ -31,12 +31,23 @@ def test_o_gancho_leva_o_MAX_HP_junto():
 
     A Fada lê `max_hp` daqui para calcular a porcentagem da vítima. Publicar sem
     ele apagaria, uma vez por volta, a informação que ela usa para curar.
+
+    A PUBLICAÇÃO MUDOU DE CASA em 19/09/2026 (`time_do_app.publicar_que_estou_de
+    _pe`): ela passou a ter DOIS chamadores -- o gancho por volta e o seguidor
+    que espera o time antes de começar a macro. A garantia é a mesma, e agora
+    vale para os dois de uma vez.
     """
+    from blazesbot.bot import time_do_app
+
     fonte = inspect.getsource(supervisor.AccountSupervisor._rodar_modo_app)
     trecho = fonte[fonte.index("def antes_de_cada_volta()"):]
     trecho = trecho[:trecho.index("def montar_cura")]
-    assert "max_hp=" in trecho, "a Fada perderia o máximo da vítima"
-    assert "nick=" in trecho, "o líder casa o time do jogo por NICK"
+    assert "_publicar_que_estou_de_pe(" in trecho, (
+        "o gancho por volta parou de publicar o sinal de vida")
+
+    publicacao = inspect.getsource(time_do_app.publicar_que_estou_de_pe)
+    assert "max_hp=" in publicacao, "a Fada perderia o máximo da vítima"
+    assert "nick=" in publicacao, "o líder casa o time do jogo por NICK"
 
 
 def test_o_gancho_NAO_abandonou_a_barra_de_atalhos():
