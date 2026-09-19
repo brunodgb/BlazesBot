@@ -437,10 +437,10 @@ ligar código não testado.
 | `DISTANCIA_MINIMA_DO_ALVO` | `120` | [blazesbot/bot/teste_do_cursor.py:98](blazesbot/bot/teste_do_cursor.py#L98) | instrumentar_clique.py | Distância mínima entre o cursor físico e o alvo, em pixels do cliente. |
 | `ESPERA_DEPOIS_DO_CLIQUE` | `0.35` | [blazesbot/bot/teste_do_cursor.py:100](blazesbot/bot/teste_do_cursor.py#L100) | — | — |
 | `CADENCIA_DAS_CONFERENCIAS` | `60.0` | [blazesbot/bot/time_do_app.py:112](blazesbot/bot/time_do_app.py#L112) | — | De quanto em quanto tempo o líder confere se o time está completo. |
-| `PASSO_DO_MENU` | `0.06` | [blazesbot/bot/time_do_app.py:406](blazesbot/bot/time_do_app.py#L406) | — | — |
-| `TENTATIVAS_DO_PICK_MODE` | `2` | [blazesbot/bot/time_do_app.py:409](blazesbot/bot/time_do_app.py#L409) | — | Tentativas de abrir o submenu antes de desistir nesta montagem. |
+| `PASSO_DO_MENU` | `0.06` | [blazesbot/bot/time_do_app.py:411](blazesbot/bot/time_do_app.py#L411) | — | — |
+| `TENTATIVAS_DO_PICK_MODE` | `2` | [blazesbot/bot/time_do_app.py:414](blazesbot/bot/time_do_app.py#L414) | — | Tentativas de abrir o submenu antes de desistir nesta montagem. |
 | `TENTATIVAS_POR_MEMBRO` | `4` | [blazesbot/bot/time_do_app.py:101](blazesbot/bot/time_do_app.py#L101) | — | Passadas pela fila antes de desistir NESTA montagem. |
-| `TETO_DO_MENU` | `0.8` | [blazesbot/bot/time_do_app.py:405](blazesbot/bot/time_do_app.py#L405) | — | TETO da espera pelo menu e pelo submenu aparecerem. TETO, não gasto: quem |
+| `TETO_DO_MENU` | `0.8` | [blazesbot/bot/time_do_app.py:410](blazesbot/bot/time_do_app.py#L410) | — | TETO da espera pelo menu e pelo submenu aparecerem. TETO, não gasto: quem |
 | `ABERTURAS_POR_TRAJETO` | `4` | [blazesbot/bot/ui_do_jogo.py:567](blazesbot/bot/ui_do_jogo.py#L567) | — | Teto de aberturas do painel por TRAJETO. |
 | `ANCHOR_THRESHOLD` | `0.8` | [blazesbot/bot/ui_do_jogo.py:103](blazesbot/bot/ui_do_jogo.py#L103) | vendedor.py, team.py, janelas_abertas.py | — |
 | `BUSCAS_ANTES_DE_DESISTIR_DA_LEITURA` | `3` | [blazesbot/bot/ui_do_jogo.py:427](blazesbot/bot/ui_do_jogo.py#L427) | — | Quantas buscas seguidas sem a memória responder antes de desistir dela. Duas, e |

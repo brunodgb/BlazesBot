@@ -273,6 +273,38 @@ def test_NO_ARRANQUE_a_cadencia_ja_esta_aberta(monkeypatch):
     assert chamou == [1], "o arranque não conferiu o time"
 
 
+def test_RELIGAR_o_APP_confere_o_time_mesmo_dentro_da_cadencia(monkeypatch):
+    """O relógio da cadência é do SUPERVISOR, e ele sobrevive ao desligar.
+
+    Medido no log de 19/09/2026: o usuário desligou o APP do líder, esvaziou o
+    time e religou 13 s depois -- nenhuma conferência, a macro começou sozinha.
+    Religando 2min35 depois (cadência já vencida), a conferência saiu 1,6 s
+    depois do arranque. Era o relógio velho segurando justo o momento em que
+    conferir mais importa: quem mexeu no time religa em segundos.
+    """
+    sup = _Sup()
+    chamou = []
+    monkeypatch.setattr(mod, "montar_o_time",
+                        lambda s, m: chamou.append(1) or True)
+
+    mod.montar_se_for_a_hora(sup, _Memoria([]), em_batalha=False)   # sessão anterior
+    mod.montar_se_for_a_hora(sup, _Memoria([]), em_batalha=False,
+                             no_arranque=True)                     # religou agora
+
+    assert chamou == [1, 1], "o arranque respeitou a cadência da sessão passada"
+
+
+def test_no_arranque_EM_BATALHA_continua_valendo(monkeypatch):
+    """O arranque fura a cadência, não a regra de batalha: abrir a Block list
+    com mob batendo é o personagem parado apanhando."""
+    sup = _Sup()
+    chamou = []
+    monkeypatch.setattr(mod, "montar_o_time", lambda s, m: chamou.append(1))
+    assert mod.montar_se_for_a_hora(sup, _Memoria([]), em_batalha=True,
+                                    no_arranque=True) is False
+    assert chamou == []
+
+
 def test_a_CADENCIA_segura_a_segunda_chamada(monkeypatch):
     sup = _Sup()
     chamou = []
@@ -307,6 +339,12 @@ def test_o_supervisor_LIGA_a_montagem_nos_DOIS_pontos():
     arranque = fonte.index("_montar_time_do_app(", fonte.index("def antes_de_cada_volta"))
     assert arranque < fonte.index("executor.rodar()"), \
         "a montagem do arranque tem que vir ANTES da macro"
+    # A DO ARRANQUE é a ÚLTIMA das duas no arquivo -- a outra mora dentro de
+    # `antes_de_cada_volta`, que é definida antes e chamada a cada volta.
+    ultima = fonte.rindex("_montar_time_do_app(")
+    assert "no_arranque=True" in fonte[ultima:ultima + 200], (
+        "o arranque voltou a respeitar a cadência da sessão anterior -- "
+        "religar dentro de 60 s não confere o time")
 
 
 # ---------------------------------------------------------------------------

@@ -2533,8 +2533,13 @@ class AccountSupervisor(threading.Thread):
         # O TIME ANTES DA MACRO -- 16/09/2026. *"Quando eu iniciar o APP e for
         # um líder, tem que verificar também se está em time, pois às vezes eu
         # posso abrir o BlazesBot depois de estar com as contas logadas."*
-        # A cadência começa zerada, então esta chamada passa direto.
-        _montar_time_do_app(self, memoria_do_pet, em_batalha())
+        #
+        # `no_arranque=True` porque a cadência NÃO começa zerada: o relógio dela
+        # é deste supervisor, que sobrevive ao ligar/desligar do modo APP. Sem
+        # isso, religar dentro de 60 s entra na macro sem conferir o time --
+        # justo quando o usuário acabou de mexer nele (medido em 19/09/2026).
+        _montar_time_do_app(self, memoria_do_pet, em_batalha(),
+                            no_arranque=True)
 
         try:
             executor.rodar()

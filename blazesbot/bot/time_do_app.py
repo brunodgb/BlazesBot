@@ -271,7 +271,8 @@ def montar_o_time(sup, memoria) -> bool:
     return entrou_alguem
 
 
-def montar_se_for_a_hora(sup, memoria, em_batalha: bool | None) -> bool:
+def montar_se_for_a_hora(sup, memoria, em_batalha: bool | None,
+                         *, no_arranque: bool = False) -> bool:
     """A porta do laço: cadência + fora de batalha. `True` = mexeu em algo.
 
     EM BATALHA NÃO SE MONTA TIME. Abrir a Block list com mob batendo é o
@@ -279,15 +280,19 @@ def montar_se_for_a_hora(sup, memoria, em_batalha: bool | None) -> bool:
     caminhada e bolsa. "Não sei" (`None`) conta como fora: sem leitura, o
     comportamento cego é o de sempre.
 
-    NO ARRANQUE DO APP a cadência está zerada, então a primeira chamada passa
-    direto. Foi o que o usuário pediu em 16/09/2026: *"quando eu iniciar o APP e
-    for um líder, tem que verificar também se está em time, pois às vezes eu
-    posso abrir o BlazesBot depois de estar com as contas logadas"*.
+    NO ARRANQUE DO APP A CADÊNCIA NÃO VALE (`no_arranque=True`). Foi o que o
+    usuário pediu em 16/09/2026: *"quando eu iniciar o APP e for um líder, tem
+    que verificar também se está em time"* -- e em 19/09 ele mostrou que não
+    acontecia, porque o relógio da cadência é do SUPERVISOR e ele sobrevive ao
+    ligar/desligar do modo APP. Medido no log do dia: religado 13 s depois de
+    parar, nenhuma conferência; religado 2min35 depois, conferência 1,6 s
+    após o arranque. Quem acabou de mexer no time religa em segundos.
     """
     if em_batalha is True:
         return False
     agora = time.monotonic()
-    if agora < getattr(sup, "_proxima_conferencia_do_time", 0.0):
+    if not no_arranque and agora < getattr(sup, "_proxima_conferencia_do_time",
+                                           0.0):
         return False
     sup._proxima_conferencia_do_time = agora + CADENCIA_DAS_CONFERENCIAS
     return montar_o_time(sup, memoria)
