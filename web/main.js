@@ -2960,14 +2960,19 @@ function lixoSujo() {
 }
 
 function lixoVisiveis() {
-  const busca = lixo.busca.trim().toLowerCase();
+  // CADA TERMO, EM QUALQUER ORDEM. Comparar a frase inteira fazia "robe 68"
+  // não achar "Robe Wizz lvl68" -- e são seis, um por classe. Quem busca não
+  // sabe (nem tem de saber) que a classe vem no meio.
+  const termos = lixo.busca.trim().toLowerCase().split(/\s+/).filter(Boolean);
   return lixo.itens.filter((item) => {
     const ignorado = lixo.ignorados.has(item.arquivo);
     if (lixo.filtro === "ativos" && ignorado) return false;
     if (lixo.filtro === "inativos" && !ignorado) return false;
-    if (!busca) return true;
-    return (item.rotulo || "").toLowerCase().includes(busca)
-        || (item.arquivo || "").toLowerCase().includes(busca);
+    if (!termos.length) return true;
+    // O nome do arquivo entra junto: ele saiu do cartão, mas continua sendo
+    // por onde o dicionário de rótulos é editado.
+    const alvo = `${item.rotulo || ""} ${item.arquivo || ""}`.toLowerCase();
+    return termos.every((termo) => alvo.includes(termo));
   });
 }
 

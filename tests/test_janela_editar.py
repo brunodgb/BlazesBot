@@ -356,3 +356,21 @@ def test_a_confirmacao_fica_POR_CIMA_de_qualquer_outra_camada():
     assert todos.count(da_confirmacao) == 1, (
         "outra camada empatou com a confirmação; no empate quem vence é quem "
         "vem depois no HTML, que é exatamente o defeito de 19/09/2026")
+
+
+def test_a_busca_dos_itens_casa_TERMO_A_TERMO():
+    """"robe 68" tem de achar "Robe Wizz lvl68" -- e são seis, um por classe.
+
+    MEDIDO em 19/09/2026: a busca comparava a FRASE inteira, então quem
+    digitava "robe 68" via "Nenhum item com esse filtro" e concluía que os
+    itens não existiam. A classe vem no meio do rótulo, e quem busca não tem
+    como saber disso.
+
+    O nome do arquivo entra no alvo junto com o rótulo: ele saiu do cartão, mas
+    continua sendo por onde o dicionário de rótulos é editado.
+    """
+    bloco = JS.split("function lixoVisiveis()")[1].split("\n}")[0]
+
+    assert r"split(/\s+/)" in bloco, "a busca voltou a comparar a frase inteira"
+    assert ".every(" in bloco, "algum termo deixou de ser obrigatório"
+    assert "item.arquivo" in bloco, "a busca parou de olhar o nome do arquivo"
