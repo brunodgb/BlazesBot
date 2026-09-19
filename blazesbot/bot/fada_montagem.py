@@ -50,6 +50,7 @@ def rodar_a_fada(sup, so_montar: bool = False):
     from ..core.inputs import Input as _Input
     from . import mural
     from .fada import FadaDoTime
+    from .time_do_app import aceitador_do_seguidor
 
     log = logging.getLogger(f"blazes.{sup.account.login}")
     teclas = sup.account.settings.keys
@@ -185,6 +186,20 @@ def rodar_a_fada(sup, so_montar: bool = False):
         log.info("FADA: sem tecla de pet configurada — não cuido de pet nem "
                  "de bolsa (sem pet ela não cata item).")
 
+    # O CONVITE DE TIME, A MESMA PEÇA DO MODO APP -- 19/09/2026.
+    #
+    # `aceitador_do_seguidor` não sabe o que é macro: monta um `InviteAcceptor`
+    # com `exigir_caixa=True` para esta conta e devolve (aceitar, fechar). Aqui
+    # ela vale pelo mesmo motivo que lá: `rodar()` fica horas dentro do laço, e
+    # o aceitador do supervisor só roda quando esse laço termina -- a Fada
+    # esperava para sempre por um convite que nunca clicaria.
+    #
+    # SÓ NO LAÇO PRÓPRIO. Com `so_montar` quem gira é o laço da HH, que já
+    # aceita convite por conta dele -- e é ele o dono do que for aberto aqui.
+    atender_convite = fechar_o_aceitador = None
+    if not so_montar:
+        atender_convite, fechar_o_aceitador = aceitador_do_seguidor(sup)
+
     fada = FadaDoTime(
         log=log,
         meu_login=sup.account.login,
@@ -220,6 +235,7 @@ def rodar_a_fada(sup, so_montar: bool = False):
         cuidar_do_pet=cuidar_do_pet,
         limpar_a_bolsa=limpar_a_bolsa_da_fada,
         voltar_ao_ponto=voltar_ao_ponto,
+        atender_convite=atender_convite,
     )
 
     # O PRÓPRIO ID, PUBLICADO ANTES DE COMEÇAR. É o que permite a QUALQUER
@@ -236,6 +252,11 @@ def rodar_a_fada(sup, so_montar: bool = False):
     try:
         fada.rodar()
     finally:
+        if fechar_o_aceitador is not None:
+            try:
+                fechar_o_aceitador()
+            except Exception:
+                pass
         try:
             memoria.close()
         except Exception:

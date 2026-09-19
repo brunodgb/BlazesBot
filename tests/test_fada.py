@@ -131,7 +131,7 @@ class _Jogo:
 
 def _fada(jogo, *, membros=("lider", "aliado"), nicks=None, parar=90.0,
           pedir=30.0, continuar=None, cuidar_do_pet=None,
-          limpar_a_bolsa=None, tem_reviver=True):
+          limpar_a_bolsa=None, tem_reviver=True, atender_convite=None):
     nicks = nicks or {"aliado": "Aliado", "outro": "Outro", "fada": "Fada"}
     return mod.FadaDoTime(
         log=logging.getLogger("teste.fada"),
@@ -158,6 +158,7 @@ def _fada(jogo, *, membros=("lider", "aliado"), nicks=None, parar=90.0,
         parar_pct=lambda: parar,
         cuidar_do_pet=cuidar_do_pet,
         limpar_a_bolsa=limpar_a_bolsa,
+        atender_convite=atender_convite,
     )
 
 
@@ -459,6 +460,56 @@ def test_a_batida_sai_de_dentro_do_laco():
     f.rodar()
     # Terminou: o `finally` limpa a batida, e sem batida a vítima bebe poção.
     assert mural.fada_de_pe("fada") is False
+
+
+def test_o_CONVITE_e_atendido_de_dentro_do_laco():
+    """Pelo mesmo motivo da batida: `rodar()` fica horas aqui dentro.
+
+    O aceitador do supervisor só volta a rodar quando este laço termina, então
+    a Fada esperava para sempre por um convite que nunca clicaria. Medido em
+    19/09/2026: o líder convidando os outros dois e ela repetindo *"não está no
+    meu painel de time -- esperando ele aparecer"*.
+    """
+    jogo = _Jogo()
+    passos = {"n": 0}
+    atendeu = []
+
+    def continuar():
+        passos["n"] += 1
+        return passos["n"] <= 2
+
+    f = _fada(jogo, continuar=continuar,
+              atender_convite=lambda: atendeu.append(1))
+    f.rodar()
+
+    assert atendeu, "a Fada girou o laço inteiro sem olhar convite nenhum"
+
+
+def test_sem_aceitador_a_fada_gira_igual():
+    """`None` é o caso da Fada da HH, que já aceita convite por outro caminho."""
+    jogo = _Jogo()
+    passos = {"n": 0}
+
+    def continuar():
+        passos["n"] += 1
+        return passos["n"] <= 2
+
+    _fada(jogo, continuar=continuar).rodar()          # não levanta
+
+
+def test_a_montagem_LIGA_e_FECHA_o_aceitador_da_fada():
+    """Ele abre um `BotContext` -- sem o fechamento, cada sessão vaza um."""
+    import inspect
+
+    from blazesbot.bot import fada_montagem
+
+    fonte = inspect.getsource(fada_montagem.rodar_a_fada)
+    assert "aceitador_do_seguidor(sup)" in fonte, (
+        "a Fada voltou a rodar sem quem clique no Ok do convite")
+    assert "atender_convite=atender_convite" in fonte
+    assert "fechar_o_aceitador()" in fonte, "o contexto do aceitador vazou"
+    assert fonte.index("if so_montar:") < fonte.index("fada.rodar()"), \
+        "o `so_montar` tem que continuar saindo antes do laço próprio"
 
 
 def test_a_batida_existe_enquanto_ela_gira():

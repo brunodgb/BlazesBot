@@ -168,6 +168,8 @@ class FadaDoTime:
         # -- cuidados de ociosa. `None` = não faz.
         cuidar_do_pet: Callable[[], None] | None = None,
         limpar_a_bolsa: Callable[[], None] | None = None,
+        # -- o convite de time, atendido de DENTRO do laço. `None` = não atende.
+        atender_convite: Callable[[], None] | None = None,
     ) -> None:
         self.log = log
         self.meu_login = (meu_login or "").strip().lower()
@@ -213,6 +215,7 @@ class FadaDoTime:
         self.mana_para_voltar = mana_para_voltar
         self._cuidar_do_pet = cuidar_do_pet
         self._limpar_a_bolsa = limpar_a_bolsa
+        self._atender_convite = atender_convite
         # Começa DEVENDO os cuidados: assim que ficar ociosa, faz a primeira
         # rodada e só então entra na cadência.
         self._proximo_cuidado = 0.0
@@ -260,6 +263,20 @@ class FadaDoTime:
                 # capacidade, ela a prova.
                 self.mural.bater_fada(self.meu_login,
                                       em_batalha=self._em_briga)
+
+                # O CONVITE DE TIME, ATENDIDO AQUI DENTRO -- 19/09/2026.
+                #
+                # Pelo mesmo motivo que a batida sai daqui: o laço que cura é
+                # longo, e o aceitador do supervisor só roda quando ele termina.
+                # A Fada ficava esperando eternamente entrar no time -- *"não
+                # está no meu painel de time, esperando ele aparecer"* -- de um
+                # convite que ela nunca clicaria. É o irmão do gancho que o modo
+                # APP ganhou em 16/09 (`time_do_app.aceitador_do_seguidor`).
+                #
+                # Custa uma consulta ao mural: só vira clique (e captura de
+                # tela) quando há convite anunciado.
+                if self._atender_convite is not None:
+                    self._atender_convite()
 
                 if not self._uma_volta():
                     return
