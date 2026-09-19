@@ -109,7 +109,12 @@ def test_TODO_modelo_de_verdade_tem_um_nome(pasta):
     ("SpinelOre.png", "Spinel Ore"),
     ("Amuleto29.png", "Amuleto lvl29"),
     ("Blue_Wolf_Meat.png", "Blue Wolf Meat"),
-    ("bag3.png", "bag lvl3"),
+    # O NOME DO JOGO VENCE A REGRA DO DÍGITO. A caixa de informação do cliente
+    # diz "Level 7 Primary Gem Bag"; sem esta exceção, `bag3` terminaria em 3 e
+    # sairia como "Armguard" -- uma bolsa rotulada como peça de armadura.
+    ("bag3.png", "Level 3 Primary Gem Bag"),
+    ("BAG7.png", "Level 7 Primary Gem Bag"),
+    ("bag12.png", "Level 12 Primary Gem Bag"),
 ])
 def test_o_rotulo_que_um_png_novo_ganha(arquivo, esperado):
     from blazesbot.tools.sincronizar_nomes_do_lixo import rotulo_padrao

@@ -61,6 +61,12 @@ CLASSES = {"sin": "Sin", "wizz": "Wizz", "monk": "Monk",
 # Nomes em que a PEÇA já está escrita e a classe não aparece.
 PECAS_NO_NOME = {"cuff", "belt", "knee", "ring"}
 
+# Nome que o JOGO dá ao item, com o nível no meio. `bag7` não é "BAG lvl7": a
+# caixa de informação do cliente diz **"Level 7 Primary Gem Bag"**, e é esse o
+# nome que o usuário reconhece na bolsa (print de 19/09/2026). O `{}` recebe o
+# número.
+NOMES_DO_JOGO = {"bag": "Level {} Primary Gem Bag"}
+
 
 def rotulo_padrao(arquivo: str) -> str:
     """O rótulo que um PNG novo ganha. Nunca devolve vazio."""
@@ -69,6 +75,10 @@ def rotulo_padrao(arquivo: str) -> str:
     if achado:
         palavra, numero = achado.group(1).lower(), achado.group(2)
         peca = PECA_POR_FINAL.get(numero[-1])
+        # O NOME DO JOGO VENCE TODO O RESTO -- inclusive a regra do dígito
+        # final, que aqui leria `bag3` como Armguard.
+        if palavra in NOMES_DO_JOGO:
+            return NOMES_DO_JOGO[palavra].format(numero)
         if palavra in CLASSES and peca:
             base = f"{peca} {CLASSES[palavra]} {numero}"
         elif palavra in PECAS_NO_NOME:
