@@ -55,7 +55,15 @@ TETO_DE_ESPERAS_CEGAS = {
 }
 
 # O TOTAL do projeto inteiro, incluindo o que não está na tabela acima.
-TETO_GERAL = 250
+#
+# 250 -> 251 em 19/09/2026, e a subida tem nome: `tools/empacotar.py` espera 3 s
+# entre as tentativas de apagar a pasta da entrega anterior. Ela é cega só para
+# o extrator, que enxerga o `time.sleep` e não o laço em volta: a PERGUNTA é o
+# próprio `shutil.rmtree` da volta seguinte, e o que se espera é o Windows
+# soltar o handle do `.exe` de 9 MB que o antivírus está varrendo -- evento sem
+# observável nenhum do lado de cá. E é ferramenta de empacotar, não caminho
+# quente: ali o relógio não disputa com o jogo.
+TETO_GERAL = 251
 
 
 def _por_arquivo() -> Counter:

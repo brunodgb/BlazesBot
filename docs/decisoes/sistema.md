@@ -566,3 +566,41 @@ para a pasta do `.exe`, `dist/index.html` encontrado, um template resolvido pelo
 nome através da biblioteca, 257 modelos na pasta de deletar e `BotConfig.load()`
 sem arquivo devolvendo 0 contas. O executável de teste foi apagado depois, e o
 ZIP conferido: 1593 arquivos, um `.exe`, nenhum `config.json`.
+
+### SEM CONSOLE — e as duas coisas que isso obrigou (19/09/2026)
+
+*"É possível fazer não abrir um terminal de fundo? Preferia que fosse só o bot
+aberto."* O pacote passou a ser `--windowed`. O terminal era a rede de
+segurança, e tirá-lo sem substituí-la seria voltar ao "não abre e não diz nada":
+
+- **`sys.stdout` e `sys.stderr` viram `None`** num programa empacotado sem
+  console. O `StreamHandler(sys.stdout)` que o `setup_logging` cria falharia em
+  toda linha. O ponto de partida aponta os dois para **`logs/console.txt`**
+  ANTES de qualquer import do bot — depois não adiantaria, porque o handler já
+  teria guardado o `None`. O que aparecia no terminal agora é um arquivo que dá
+  para mandar.
+- **Queda vira CAIXA DE MENSAGEM** (`user32.MessageBoxW`). Sem console não há
+  onde piscar um traceback. Vale também para o `SystemExit` do `require_admin`:
+  sem elevação o clique não faria nada visível.
+
+Medido: lançado de um shell (que tem console), o processo HERDA o console e
+`stdout` funciona — foi assim que o primeiro teste passou sem exercitar nada. A
+prova real precisou de `Start-Process` (destacado, como o duplo-clique): aí sim
+`logs/console.txt` nasceu, com a saída completa e acentuação certa. E a caixa
+foi confirmada pelo processo ficar VIVO esperando o OK.
+
+### O build falhava uma vez sim, uma não
+
+A primeira execução depois de mexer na pasta de entrega falhava; a segunda
+passava, sempre. O PyInstaller escreve por cima do que está lá, e o `.exe` de
+9 MB recém-gravado costuma estar com um handle aberto — antivírus varrendo,
+Explorer gerando miniatura, um terminal parado dentro da pasta. Agora a pasta
+anterior é APAGADA antes, com três tentativas e 3 s entre elas, e a falha que
+sobra diz o que fechar. (Essa espera subiu o teto geral da catraca de espera
+cega para 251, com o porquê no próprio teste: ferramenta de empacotar não é
+caminho quente, e o que se espera — o Windows soltar um handle — não tem
+observável deste lado.)
+
+O erro do PyInstaller também parou de ser engolido: era `check=True`, e o
+traceback do `CalledProcessError` enterrava a única mensagem que dizia o que
+houve.

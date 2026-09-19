@@ -41,6 +41,7 @@ import datetime as _dt
 import shutil
 import subprocess
 import sys
+import time
 import zipfile
 from pathlib import Path
 
@@ -86,8 +87,37 @@ def _conferir() -> None:
             f"  {sys.executable} -m pip install pyinstaller") from None
 
 
+def _limpar_a_saida_anterior() -> None:
+    """A pasta da entrega anterior sai ANTES de o PyInstaller começar.
+
+    MEDIDO em 19/09/2026: a primeira execução depois de mexer na pasta falhava
+    e a segunda passava, sempre. O PyInstaller escreve por cima do que está lá,
+    e o `.exe` de 9 MB recém-gravado costuma estar com um handle aberto --
+    antivírus varrendo, Explorer gerando miniatura, um shell parado dentro da
+    pasta. Apagar primeiro, com espera, troca "falha misteriosa uma vez sim,
+    uma não" por uma mensagem que diz o que fazer.
+    """
+    pasta = SAIDA / NOME
+    for tentativa in range(3):
+        if not pasta.exists():
+            return
+        try:
+            shutil.rmtree(pasta)
+            return
+        except OSError as erro:
+            if tentativa == 2:
+                raise SystemExit(
+                    f"Não consegui apagar a entrega anterior:\n  {pasta}\n"
+                    f"  {erro}\n\nFeche o que estiver usando a pasta (Explorer,"
+                    " terminal, o próprio .exe) e rode de novo.") from None
+            print(f"  ... a pasta anterior está presa, tentando de novo "
+                  f"({tentativa + 1}/2)")
+            time.sleep(3)
+
+
 def _construir() -> Path:
     """Roda o PyInstaller. Devolve a pasta com o `.exe` dentro."""
+    _limpar_a_saida_anterior()
     trabalho = RAIZ / "build" / "empacotar"
     comando = [
         *_pyinstaller(), "--noconfirm", "--clean",
@@ -95,9 +125,14 @@ def _construir() -> Path:
         "--distpath", str(SAIDA),
         "--workpath", str(trabalho),
         "--specpath", str(trabalho),
-        # CONSOLE LIGADO de propósito: é onde o bot escreve o que está fazendo,
-        # e é a única coisa que quem está testando tem para relatar um defeito.
-        "--console",
+        # SEM CONSOLE -- *"preferia que fosse só o bot aberto"* (19/09/2026).
+        #
+        # O terminal era a rede de segurança: sem ele, `sys.stdout` é `None` e o
+        # log do bot não tem para onde ir. Quem assumiu esse papel foi o ponto
+        # de partida (`tools/iniciar_exe.py`), que manda a saída para
+        # `logs/console.txt` e transforma queda em CAIXA DE MENSAGEM. Tirar o
+        # console sem isso é voltar ao "não abre e não diz nada".
+        "--windowed",
         # ADMINISTRADOR. O bot lê a memória do cliente do jogo; sem elevação,
         # `Memory` falha na primeira conta e o resto não acontece.
         "--uac-admin",
@@ -120,7 +155,12 @@ def _construir() -> Path:
     comando.append(str(RAIZ / "blazesbot" / "tools" / "iniciar_exe.py"))
 
     print("  PyInstaller:", " ".join(comando[2:6]), "...")
-    subprocess.run(comando, check=True)
+    # SEM `check=True`: ele levanta `CalledProcessError`, e o traceback dele
+    # enterra a mensagem que o PyInstaller acabou de escrever -- que é a única
+    # que diz o que houve.
+    if subprocess.run(comando).returncode != 0:
+        raise SystemExit(
+            "\nO PyInstaller falhou. O motivo está nas linhas acima.")
     return SAIDA / NOME
 
 

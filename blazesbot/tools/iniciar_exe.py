@@ -23,17 +23,24 @@ log ANTES de abrir a janela. São as duas coisas que fazem a diferença entre
 "não funcionou" e "diz por que não funcionou".
 
 =========================================================================
-3. O ERRO PRECISA SOBREVIVER À JANELA QUE FECHA
+3. SEM CONSOLE — e o que isso obriga
 =========================================================================
 
-Aconteceu em 19/09/2026, na primeira entrega: este arquivo chamava um
-`main` que não existe em `web_app` (o nome certo é `_main`), e o usuário viu
-só *"ao executar o .exe não está abrindo"*. Elevado, o console é uma janela
-NOVA: ela nasce com o processo e morre com ele, então o traceback pisca e some.
+*"Preferia que fosse só o bot aberto"* (usuário, 19/09/2026). O pacote é
+`--windowed`, então **não existe terminal**. E num programa empacotado sem
+console o Python põe `sys.stdout` e `sys.stderr` em `None`: o
+`StreamHandler(sys.stdout)` que o `setup_logging` cria passaria a falhar em
+toda linha de log, e o traceback de uma queda não teria para onde ir.
 
-Por isso o `except` daqui grava `logs/erro-ao-abrir.txt` e ainda espera uma
-tecla. Quem estiver testando consegue mandar o arquivo; sem isso, a única
-informação que volta é "não abre".
+As duas coisas que isso obriga, e que estão aqui embaixo:
+
+* **A saída vai para `logs/console.txt`.** Não é só evitar o erro: é o mesmo
+  texto que aparecia no terminal, agora num arquivo que dá para mandar.
+* **A queda vira uma CAIXA DE MENSAGEM.** Sem console não há onde piscar um
+  traceback, e "não abriu" sem mais nada foi exatamente o que aconteceu na
+  primeira entrega -- este arquivo chamava um `main` que não existe em
+  `web_app` (o nome certo é `_main`), e o ImportError morreu antes de qualquer
+  log. A caixa diz onde está o arquivo com o detalhe.
 """
 from __future__ import annotations
 
@@ -42,6 +49,36 @@ import sys
 import traceback
 from datetime import datetime
 from pathlib import Path
+
+
+def _redirecionar_a_saida() -> None:
+    """Sem console, `sys.stdout` é `None`. Aponta os dois para um arquivo.
+
+    ANTES DE QUALQUER IMPORT DO BOT: `setup_logging` guarda `sys.stdout` no
+    handler, então trocar depois não teria efeito nenhum.
+    """
+    if sys.stdout is not None and sys.stderr is not None:
+        return
+    try:
+        pasta = Path.cwd() / "logs"
+        pasta.mkdir(exist_ok=True)
+        saida = (pasta / "console.txt").open("a", encoding="utf-8",
+                                             buffering=1)
+        saida.write(f"\n{'=' * 70}\n{datetime.now():%d/%m/%Y %H:%M:%S}  "
+                    f"BlazesBot iniciando\n")
+        sys.stdout = sys.stderr = saida
+    except Exception:
+        pass                     # sem log é ruim; não abrir por causa disso é pior
+
+
+def _avisar_na_tela(texto: str) -> None:
+    """Uma caixa do Windows. É o que sobra quando não há console."""
+    try:
+        import ctypes
+
+        ctypes.windll.user32.MessageBoxW(None, texto, "BlazesBot", 0x10)
+    except Exception:
+        pass
 
 
 def _registrar_a_queda(erro: BaseException) -> Path | None:
@@ -62,31 +99,40 @@ def _registrar_a_queda(erro: BaseException) -> Path | None:
 
 
 def main() -> int:
-    if getattr(sys, "frozen", False):
+    empacotado = getattr(sys, "frozen", False)
+    if empacotado:
         os.chdir(Path(sys.executable).resolve().parent)
+        _redirecionar_a_saida()
     try:
         from blazesbot.web_app import _main as abrir_a_interface
 
         abrir_a_interface()
         return 0
-    except BaseException as erro:            # inclui SystemExit do require_admin
-        if isinstance(erro, SystemExit):
-            raise
+    except SystemExit as saida:
+        # `require_admin` sai por aqui quando falta elevação. Empacotado isso
+        # seria um clique sem NADA na tela -- o `.exe` traz o manifesto de
+        # administrador, então só acontece se alguém tirar o manifesto.
+        if empacotado and (saida.code or 0) != 0:
+            _avisar_na_tela(
+                "O BlazesBot fechou logo ao abrir.\n\n"
+                "Quase sempre é falta de permissão: clique com o botão "
+                "direito e escolha 'Executar como administrador'.\n\n"
+                f"O detalhe fica em:\n{Path.cwd() / 'logs' / 'console.txt'}")
+        raise
+    except BaseException as erro:
         traceback.print_exc()
         arquivo = _registrar_a_queda(erro)
-        print()
-        print("=" * 70)
+        print("\n" + "=" * 70)
         print("  O BlazesBot não conseguiu abrir.")
         if arquivo is not None:
             print(f"  O que aconteceu está em: {arquivo}")
         print("=" * 70)
-        if getattr(sys, "frozen", False):
-            # A JANELA NÃO PODE FECHAR ANTES DE SER LIDA. Elevado, este console
-            # é uma janela nova que morre junto com o processo.
-            try:
-                input("\nEnter para fechar. ")
-            except Exception:
-                pass
+        if empacotado:
+            _avisar_na_tela(
+                "O BlazesBot não conseguiu abrir.\n\n"
+                f"{type(erro).__name__}: {erro}\n\n"
+                "O detalhe completo (com o traceback) está em:\n"
+                f"{arquivo or (Path.cwd() / 'logs')}")
         return 1
 
 
