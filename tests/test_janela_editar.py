@@ -374,3 +374,24 @@ def test_a_busca_dos_itens_casa_TERMO_A_TERMO():
     assert r"split(/\s+/)" in bloco, "a busca voltou a comparar a frase inteira"
     assert ".every(" in bloco, "algum termo deixou de ser obrigatório"
     assert "item.arquivo" in bloco, "a busca parou de olhar o nome do arquivo"
+
+
+def test_lvl60_na_busca_traz_a_FAIXA_60_a_69():
+    """Nenhum item se chama "lvl60": eles são lvl63, lvl65, lvl68.
+
+    O nível destes modelos é dezena + unidade, com a DEZENA valendo o tier e a
+    unidade valendo a peça (`Sin63` = tier 6, armguard). Por isso "todos os do
+    60" é a busca natural do usuário -- e era impossível por texto.
+
+    `lvl6` NÃO vira faixa de propósito: ele continua sendo busca de texto, que
+    casa com "Belt lvl6" e com "lvl63". Adivinhar ali tiraria do usuário a
+    busca exata que ele já tinha.
+    """
+    assert "function lixoCasaNaFaixa(" in JS
+    bloco = JS.split("function lixoCasaNaFaixa(")[1].split("\n}")[0]
+
+    assert r"/^lvl(\d*)0$/" in bloco, (
+        "a forma da faixa mudou; `lvl0` (tier baixo) depende do `*`")
+    assert "base + 9" in bloco, "a faixa deixou de ser a dezena inteira"
+    assert "lixoCasaNaFaixa(alvo, termo)" in JS, (
+        "a busca parou de consultar a faixa")

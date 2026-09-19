@@ -1574,9 +1574,9 @@
     "es": "Elige ítem por ítem lo que esta cuenta borra. La carpeta sigue valiendo para todas las cuentas; aquí quedan las excepciones de ESTA."
   },
   "ph_lixo_busca": {
-    "pt-br": "Buscar por nome ou arquivo…",
-    "en": "Search by name or file…",
-    "es": "Buscar por nombre o archivo…"
+    "pt-br": "Buscar por nome, arquivo ou lvl60…",
+    "en": "Search by name, file or lvl60…",
+    "es": "Buscar por nombre, archivo o lvl60…"
   },
   "filtro_lixo_todos": {
     "pt-br": "Todos",
@@ -1742,5 +1742,10 @@
     "pt-br": "Sem farmar até você escolher os itens: {contas}",
     "en": "Not farming until you pick the items: {contas}",
     "es": "Sin farmear hasta que elijas los ítems: {contas}"
+  },
+  "ph_lixo_busca_title": {
+    "pt-br": "Cada palavra conta, em qualquer ordem: \"robe 68\" acha os robes lvl68. E lvl60 traz a faixa inteira, do 60 ao 69.",
+    "en": "Every word counts, in any order: \"robe 68\" finds the lvl68 robes. And lvl60 brings the whole 60-69 range.",
+    "es": "Cada palabra cuenta, en cualquier orden: \"robe 68\" encuentra las robes lvl68. Y lvl60 trae todo el rango 60-69."
   }
 }

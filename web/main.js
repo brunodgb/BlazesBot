@@ -3007,6 +3007,27 @@ function lixoSujo() {
   return false;
 }
 
+/* `lvl60` PEDE A FAIXA 60–69, e não um item chamado "lvl60".
+ *
+ * O nível destes modelos é dezena + unidade, onde a DEZENA é o tier e a
+ * unidade é a peça: `Sin63` é tier 6, armguard. Por isso "todos os do 60" é uma
+ * busca natural -- e era impossível, porque nenhum item se chama lvl60: eles
+ * são lvl63, lvl65, lvl68.
+ *
+ * Só a forma `lvl<n>0` vira faixa. `lvl6` continua sendo busca de texto (e
+ * casa com "Belt lvl6" e com "lvl63"), porque adivinhar aí seria tirar do
+ * usuário a busca exata que ele já tinha.
+ */
+function lixoCasaNaFaixa(rotulo, termo) {
+  // `\d*` e não `\d+`: "lvl0" é a faixa 0–9, onde mora o tier baixo (lvl3..lvl9).
+  const faixa = termo.match(/^lvl(\d*)0$/);
+  if (!faixa) return false;
+  const nivel = Number((rotulo.match(/lvl(\d+)/) || [])[1]);
+  if (!Number.isFinite(nivel)) return false;
+  const base = Number(faixa[1] + "0");
+  return nivel >= base && nivel <= base + 9;
+}
+
 function lixoVisiveis() {
   // CADA TERMO, EM QUALQUER ORDEM. Comparar a frase inteira fazia "robe 68"
   // não achar "Robe Wizz lvl68" -- e são seis, um por classe. Quem busca não
@@ -3020,7 +3041,8 @@ function lixoVisiveis() {
     // O nome do arquivo entra junto: ele saiu do cartão, mas continua sendo
     // por onde o dicionário de rótulos é editado.
     const alvo = `${item.rotulo || ""} ${item.arquivo || ""}`.toLowerCase();
-    return termos.every((termo) => alvo.includes(termo));
+    return termos.every((termo) => alvo.includes(termo)
+                                || lixoCasaNaFaixa(alvo, termo));
   });
 }
 
