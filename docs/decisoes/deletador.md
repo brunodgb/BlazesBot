@@ -631,6 +631,12 @@ acontece só entre MINÚSCULA e MAIÚSCULA, fronteira que não existe nesses doi
 classe porque o arquivo não diz qual é. Rótulo errado num item que o usuário
 decide apagar OLHANDO é pior que rótulo genérico.
 
+**Dez rótulos deixaram de ser chute em 19/09/2026** — vieram do site oficial,
+que enumera os materiais de Magicstone com o nome exato: `Bjewel` é *Bandit
+Jewel*, `CrackBB` é *Cracked Buddha Bone*, e `DarkBed` era *Dark Bead* (o
+arquivo é que tem erro de digitação). O que foi conferido, o que continua sem
+nome e onde procurar o resto: **`docs/referencia-do-site-oficial.md`**.
+
 **O dígito da frente é o TIER, não a classe** — medido no próprio dado: a
 maioria dos arquivos já traz a classe (`Sin`, `Wizz`, `Monk`, `Tamer`,
 `Fairy`), e o dígito varia de 1 a 6 para a MESMA classe (`Sin3`, `Sin13`,

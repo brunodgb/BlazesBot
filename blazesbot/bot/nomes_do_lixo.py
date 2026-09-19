@@ -57,6 +57,13 @@ from pathlib import Path
 #
 # APAGAR UMA LINHA NÃO QUEBRA NADA: sem entrada, o nome do arquivo normalizado
 # volta a valer. E PNG novo na pasta também aparece sem passar por aqui.
+#
+# DEZ RÓTULOS VIERAM DO SITE OFICIAL, não do chute (19/09/2026): a página do
+# Magicstone lista os dez materiais que caem de monstro com o nome exato, e é
+# de lá que saem "Bandit Jewel" (`Bjewel`), "Cracked Buddha Bone" (`CrackBB`) e
+# "Dark Bead" (`DarkBed` -- o arquivo é que está com erro de digitação). O que
+# foi conferido, o que continua sem nome e o resto do que o site tem:
+# `docs/referencia-do-site-oficial.md`.
 NOMES: dict[str, str] = {
     # ---------------------------------------------------------------
     # LISTA DO APP -- data/templates/deletar (213 modelos)
@@ -70,7 +77,7 @@ NOMES: dict[str, str] = {
     "Amuleto69.png": "Amuleto lvl69",
     "Amuleto9.png": "Amuleto lvl9",
     "AnFur.png": "An Fur",
-    "ApoCharm.png": "Apo Charm",
+    "ApoCharm.png": "Apotropaion Charm",
     "Armor_Piece.png": "Armor Piece",
     "bag3.png": "Level 3 Gem Bag",
     "bag4.png": "Level 4 Gem Bag",
@@ -86,7 +93,7 @@ NOMES: dict[str, str] = {
     "belt56.png": "Belt lvl56/66",
     "Belt6.png": "Belt lvl6",
     "Bife.png": "Bife",
-    "Bjewel.png": "Bjewel",
+    "Bjewel.png": "Bandit Jewel",
     "Black_Evil.png": "Black Evil",
     "Black_Shadow_stone.png": "Black Shadow stone",
     "Blue-bell.png": "Blue bell",
@@ -96,21 +103,21 @@ NOMES: dict[str, str] = {
     "charm.png": "charm",
     "CIronShot.png": "CIron Shot",
     "Cowb.png": "Cowb",
-    "CrackBB.png": "Crack BB",
+    "CrackBB.png": "Cracked Buddha Bone",
     "Crista_Bot.png": "Crista Bot",
     "Cuff12.png": "Cuff lvl12",
     "Cuff22.png": "Cuff lvl22",
     "Cuff32.png": "Cuff lvl32",
     "Cuff42.png": "Cuff lvl42",
     "cuff52.png": "Cuff lvl52/62",
-    "DarkBed.png": "Dark Bed",
+    "DarkBed.png": "Dark Bead",
     "DarkSM.png": "Dark SM",
     "DfrmtJos.png": "Dfrmt Jos",
     "dip.png": "dip",
     "Durmarst.png": "Durmarst",
     "Echo_Stone.png": "Echo Stone",
     "EvilPith.png": "Evil Pith",
-    "ExoChip.png": "Exo Chip",
+    "ExoChip.png": "Exorcism Chip",
     "Fairy13.png": "Armguard Fairy lvl13",
     "Fairy15.png": "Boots Fairy lvl15",
     "Fairy18.png": "Robe Fairy lvl18",
@@ -139,7 +146,7 @@ NOMES: dict[str, str] = {
     "GlosBead.png": "Glos Bead",
     "Gold_T.png": "Gold T",
     "Golden-bell.png": "Golden bell",
-    "greenid.png": "greenid",
+    "greenid.png": "Green Identify Gem",
     "GrosM.png": "Gros M",
     "Hex_Necklace.png": "Hex Necklace",
     "HoneW.png": "Hone W",
@@ -155,7 +162,7 @@ NOMES: dict[str, str] = {
     "LascToken.png": "Lasc Token",
     "Lion_Meat.png": "Lion Meat",
     "MagOre.png": "Mag Ore",
-    "MDeearMeat.png": "MDeear Meat",
+    "MDeearMeat.png": "Musk Deer Meat",
     "Monk13.png": "Armguard Monk lvl13",
     "Monk15.png": "Boots Monk lvl15",
     "Monk18.png": "Robe Monk lvl18",
@@ -189,7 +196,7 @@ NOMES: dict[str, str] = {
     "PurBeastMeat.png": "Pur Beast Meat",
     "Purple-bell.png": "Purple bell",
     "Purple_Beast.png": "Purple Beast",
-    "Rainnbow_Stone.png": "Rainnbow Stone",
+    "Rainnbow_Stone.png": "Rainbow Stone",
     "Red-bell.png": "Red bell",
     "Ring17.png": "Ring lvl17",
     "Ring27.png": "Ring lvl27",
@@ -199,7 +206,7 @@ NOMES: dict[str, str] = {
     "Ring67.png": "Ring lvl67",
     "Ring7.png": "Ring lvl7",
     "RottedSeed.png": "Rotted Seed",
-    "ScarpPill.png": "Scarp Pill",
+    "ScarpPill.png": "Green Scarp Pill",
     "Secret_silver.png": "Secret silver",
     "SF.png": "SF",
     "Silver-bell.png": "Silver bell",
@@ -277,7 +284,7 @@ NOMES: dict[str, str] = {
     # ---------------------------------------------------------------
     # LISTA DA HH -- data/templates/deletar_hh (16 modelos)
     # ---------------------------------------------------------------
-    "Biddha-Bone.png": "Biddha Bone",
+    "Biddha-Bone.png": "Buddha Bone",
     "Diamond-Sutra.png": "Diamond Sutra",
     "Dragon-Roc.png": "Dragon Roc",
     "Hasty-Shoes.png": "Hasty Shoes",

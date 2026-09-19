@@ -1,0 +1,2422 @@
+[
+ {
+  "nome": "Flower-Eating Monster",
+  "nivel": 1,
+  "area": "Piedmont of Flowers Mountain"
+ },
+ {
+  "nome": "Golden Leopard",
+  "nivel": 3,
+  "area": "Piedmont of Flowers Mountain"
+ },
+ {
+  "nome": "Thunder Rattan",
+  "nivel": 3,
+  "area": "Piedmont of Flowers Mountain"
+ },
+ {
+  "nome": "Water Eidolon",
+  "nivel": 4,
+  "area": "Maple Slope"
+ },
+ {
+  "nome": "Little Tree Sprit",
+  "nivel": 1,
+  "area": "Avenue"
+ },
+ {
+  "nome": "Aberrance Wolfman",
+  "nivel": 3,
+  "area": "Avenue"
+ },
+ {
+  "nome": "Big Sprite",
+  "nivel": 4,
+  "area": "Avenue"
+ },
+ {
+  "nome": "Parrot",
+  "nivel": 4,
+  "area": "Animals Zone"
+ },
+ {
+  "nome": "Red Sprite",
+  "nivel": 4,
+  "area": "Cave of Back Mountain"
+ },
+ {
+  "nome": "Mountain Sprite",
+  "nivel": 4,
+  "area": "Cave of Back Mountain"
+ },
+ {
+  "nome": "Bobtail Monkey",
+  "nivel": 1,
+  "area": "Elephant Washing Pool"
+ },
+ {
+  "nome": "Pangolin",
+  "nivel": 3,
+  "area": "Stalagmite Ravine"
+ },
+ {
+  "nome": "Meat Ganoderma",
+  "nivel": 4,
+  "area": "Stalagmite Ravine"
+ },
+ {
+  "nome": "Millenary Meat Ganoderma",
+  "nivel": 5,
+  "area": "Stalagmite Ravine"
+ },
+ {
+  "nome": "Little ape",
+  "nivel": 1,
+  "area": "Master's Cave"
+ },
+ {
+  "nome": "Little Wild Boar",
+  "nivel": 1,
+  "area": "Pidemont of Blue Mountain"
+ },
+ {
+  "nome": "Wild Boar",
+  "nivel": 2,
+  "area": "Pidemont of Blue Mountain"
+ },
+ {
+  "nome": "Wild Ape",
+  "nivel": 2,
+  "area": "Master's Cave"
+ },
+ {
+  "nome": "Giant Wild Ape",
+  "nivel": 3,
+  "area": "Master's Cave"
+ },
+ {
+  "nome": "stone man",
+  "nivel": 4,
+  "area": "Master's Cave"
+ },
+ {
+  "nome": "Little Wild Boar",
+  "nivel": 1,
+  "area": "Green Scarp"
+ },
+ {
+  "nome": "Wild Boar",
+  "nivel": 2,
+  "area": "Green Scarp"
+ },
+ {
+  "nome": "Ape",
+  "nivel": 2,
+  "area": "Back Mountain of Green Scarp"
+ },
+ {
+  "nome": "Blood Eidolon",
+  "nivel": 4,
+  "area": "Secret Cave of Green Scarp"
+ },
+ {
+  "nome": "Big Blood Eidolon",
+  "nivel": 5,
+  "area": "Secret Cave of Green Scarp"
+ },
+ {
+  "nome": "Wild Rabbit Son",
+  "nivel": 3,
+  "area": "North Suburb of SkyVillage"
+ },
+ {
+  "nome": "Small Wolf",
+  "nivel": 4,
+  "area": "North Suburb of SkyVillage"
+ },
+ {
+  "nome": "Adult Wolf",
+  "nivel": 4,
+  "area": "North Suburb of SkyVillage"
+ },
+ {
+  "nome": "Small Mushroom",
+  "nivel": 5,
+  "area": "North Suburb of SkyVillage"
+ },
+ {
+  "nome": "Big mushroom",
+  "nivel": 5,
+  "area": "SkyVillage South West"
+ },
+ {
+  "nome": "Guard of Wolf Head",
+  "nivel": 6,
+  "area": "SkyVillage North East"
+ },
+ {
+  "nome": "Elite wolf king",
+  "nivel": 6,
+  "area": "SkyVillage North East"
+ },
+ {
+  "nome": "Little Leopard",
+  "nivel": 6,
+  "area": "East Suburb of SkyVillage"
+ },
+ {
+  "nome": "Little Panther",
+  "nivel": 6,
+  "area": "East Suburb of SkyVillage"
+ },
+ {
+  "nome": "Little Dicephalous Snake",
+  "nivel": 7,
+  "area": "Snake Swamp"
+ },
+ {
+  "nome": "Apparition",
+  "nivel": 7,
+  "area": "Black Campo"
+ },
+ {
+  "nome": "Roving Bandit",
+  "nivel": 7,
+  "area": "South Suburb of SkyVillage"
+ },
+ {
+  "nome": "Jackal wolf",
+  "nivel": 8,
+  "area": "Black Campo"
+ },
+ {
+  "nome": "Golden Horn Boa",
+  "nivel": 8,
+  "area": "Snake Swamp"
+ },
+ {
+  "nome": "Bandit",
+  "nivel": 8,
+  "area": "SkyVillage Field"
+ },
+ {
+  "nome": "Gemination Snake",
+  "nivel": 9,
+  "area": "Snake Swamp"
+ },
+ {
+  "nome": "Flying Snake",
+  "nivel": 9,
+  "area": "Snake Swamp"
+ },
+ {
+  "nome": "Brigand",
+  "nivel": 9,
+  "area": "Southern Wasteland"
+ },
+ {
+  "nome": "Panther",
+  "nivel": 10,
+  "area": "Snake Swamp"
+ },
+ {
+  "nome": "Bandit Soldier",
+  "nivel": 10,
+  "area": "Southern Wasteland"
+ },
+ {
+  "nome": "Elite Wolf King",
+  "nivel": 4,
+  "area": "SkyVillage North East"
+ },
+ {
+  "nome": "Horrible Demon Ghost",
+  "nivel": 10,
+  "area": "Black Campo"
+ },
+ {
+  "nome": "Brigand Head",
+  "nivel": 10,
+  "area": "Southern Wasteland"
+ },
+ {
+  "nome": "Little pangolin",
+  "nivel": 2,
+  "area": "Sand Village South"
+ },
+ {
+  "nome": "Yellow Wolf",
+  "nivel": 3,
+  "area": "Sand Village South"
+ },
+ {
+  "nome": "Feral Ghost",
+  "nivel": 4,
+  "area": "Sand Village South"
+ },
+ {
+  "nome": "Battle Horse",
+  "nivel": 6,
+  "area": "Sand Village North"
+ },
+ {
+  "nome": "Roving Bandit",
+  "nivel": 6,
+  "area": "Sand Village North"
+ },
+ {
+  "nome": "Elite Roving Bandit",
+  "nivel": 6,
+  "area": "Sand Village North"
+ },
+ {
+  "nome": "War Wolf",
+  "nivel": 7,
+  "area": "Bandit's Lair"
+ },
+ {
+  "nome": "Elite Mounted Brigand",
+  "nivel": 7,
+  "area": "Bandit's Lair"
+ },
+ {
+  "nome": "Mounted Brigand",
+  "nivel": 8,
+  "area": "Bandit's Lair"
+ },
+ {
+  "nome": "Herald with No Eyebrow",
+  "nivel": 8,
+  "area": "Bandit's Lair"
+ },
+ {
+  "nome": "Bitter Elf",
+  "nivel": 9,
+  "area": "Bitter Elf Ruins"
+ },
+ {
+  "nome": "Syren Without Eyebrow",
+  "nivel": 9,
+  "area": "Bandit's Lair"
+ },
+ {
+  "nome": "Tempted Man",
+  "nivel": 9,
+  "area": "Sand Village North"
+ },
+ {
+  "nome": "Undeserved Ghost",
+  "nivel": 10,
+  "area": "Bitter Elf Ruins"
+ },
+ {
+  "nome": "Wildfire",
+  "nivel": 10,
+  "area": "Bitter Elf Ruins"
+ },
+ {
+  "nome": "Roving Bandit Head",
+  "nivel": 6,
+  "area": "Sand Village South"
+ },
+ {
+  "nome": "Mounted Brigand Head",
+  "nivel": 8,
+  "area": "Bandit's Lair"
+ },
+ {
+  "nome": "Fire Tao",
+  "nivel": 10,
+  "area": "Bitter Elf Ruins"
+ },
+ {
+  "nome": "Boa",
+  "nivel": 11,
+  "area": "Bramble Hill"
+ },
+ {
+  "nome": "Male Aborigine",
+  "nivel": 12,
+  "area": "Bramble Hill"
+ },
+ {
+  "nome": "Poison Fly",
+  "nivel": 12,
+  "area": "Bramble Hill"
+ },
+ {
+  "nome": "Sturdy Aborigine",
+  "nivel": 13,
+  "area": "Crow Forest"
+ },
+ {
+  "nome": "Little Wild Mule",
+  "nivel": 14,
+  "area": "Mule Slope"
+ },
+ {
+  "nome": "Timber Wild Wolf",
+  "nivel": 15,
+  "area": "Crow Forest"
+ },
+ {
+  "nome": "Little Golden Macaque",
+  "nivel": 16,
+  "area": "Den"
+ },
+ {
+  "nome": "Jungle Crocodile",
+  "nivel": 17,
+  "area": "Mule Slope"
+ },
+ {
+  "nome": "Wild Mule",
+  "nivel": 18,
+  "area": "Tiger Mountain"
+ },
+ {
+  "nome": "Black Ghost Guard",
+  "nivel": 18,
+  "area": "Tiger Mountain"
+ },
+ {
+  "nome": "Little Tiger",
+  "nivel": 19,
+  "area": "Wild Mule Slope"
+ },
+ {
+  "nome": "Forest Tree Man",
+  "nivel": 20,
+  "area": "Forest Altar"
+ },
+ {
+  "nome": "Evil Tao He",
+  "nivel": 14,
+  "area": "Crow Forest"
+ },
+ {
+  "nome": "Wild Mule King",
+  "nivel": 18,
+  "area": "Tiger Mountain"
+ },
+ {
+  "nome": "Sagamore Black Ghost",
+  "nivel": 18,
+  "area": "Crow Forest"
+ },
+ {
+  "nome": "Aberrance Bamboo Snake",
+  "nivel": 11,
+  "area": "Bamboo Forest"
+ },
+ {
+  "nome": "Snake King Guard",
+  "nivel": 11,
+  "area": "Bamboo Forest"
+ },
+ {
+  "nome": "Green Bamboo Snake",
+  "nivel": 12,
+  "area": "Bamboo Forest"
+ },
+ {
+  "nome": "Flying Centipede",
+  "nivel": 13,
+  "area": "Centipede Mountain"
+ },
+ {
+  "nome": "Fatal Centipede",
+  "nivel": 13,
+  "area": "Centipede Mountain"
+ },
+ {
+  "nome": "Servant of Snake Head",
+  "nivel": 14,
+  "area": "Serene Village"
+ },
+ {
+  "nome": "Snake Captor",
+  "nivel": 14,
+  "area": "Serene Village"
+ },
+ {
+  "nome": "Snake Head",
+  "nivel": 16,
+  "area": "Serene Village"
+ },
+ {
+  "nome": "Snakeman Guard",
+  "nivel": 16,
+  "area": "Serene Village"
+ },
+ {
+  "nome": "Ghost Fire",
+  "nivel": 17,
+  "area": "Cacodaemon stockade"
+ },
+ {
+  "nome": "Vampire Ghost",
+  "nivel": 18,
+  "area": "Cacodaemon stockade"
+ },
+ {
+  "nome": "Bitter Elf",
+  "nivel": 19,
+  "area": "Cacodaemon stockade"
+ },
+ {
+  "nome": "Cacodaemon",
+  "nivel": 20,
+  "area": "Cacodaemon stockade"
+ },
+ {
+  "nome": "Green Bamboo Sanke Head",
+  "nivel": 12,
+  "area": "Bamboo Forest"
+ },
+ {
+  "nome": "Immortal Centipede",
+  "nivel": 14,
+  "area": "Centipede Mountain"
+ },
+ {
+  "nome": "Snake Bandit General",
+  "nivel": 16,
+  "area": "Serene Village"
+ },
+ {
+  "nome": "Ghost Wind Tao",
+  "nivel": 18,
+  "area": "Cacodaemon stockade"
+ },
+ {
+  "nome": "Bandit",
+  "nivel": 21,
+  "area": "Mushroom Village"
+ },
+ {
+  "nome": "Wild Rabbit",
+  "nivel": 21,
+  "area": "Stone City North"
+ },
+ {
+  "nome": "Mountain Demon",
+  "nivel": 21,
+  "area": "Mushroom Village"
+ },
+ {
+  "nome": "Poison Mushroom",
+  "nivel": 22,
+  "area": "Mushroom Village"
+ },
+ {
+  "nome": "Blackshirt Bandit",
+  "nivel": 23,
+  "area": "Green Bamboo Road"
+ },
+ {
+  "nome": "Play Boy",
+  "nivel": 23,
+  "area": "Leud Temple"
+ },
+ {
+  "nome": "Strange Pilgrim",
+  "nivel": 23,
+  "area": "Leud Temple"
+ },
+ {
+  "nome": "Jing Guang-ding",
+  "nivel": 22,
+  "area": "Mushroom Village"
+ },
+ {
+  "nome": "Gangster Zhang",
+  "nivel": 23,
+  "area": "Gangster Alley"
+ },
+ {
+  "nome": "Phony Muscle Wei",
+  "nivel": 24,
+  "area": "west Suburb of Stone City"
+ },
+ {
+  "nome": "Green Robe Master",
+  "nivel": 26,
+  "area": "west Suburb of Stone City"
+ },
+ {
+  "nome": "Long Fei",
+  "nivel": 26,
+  "area": "west Suburb of Stone City"
+ },
+ {
+  "nome": "Poison Golden Silkworm",
+  "nivel": 26,
+  "area": "west Suburb of Stone City"
+ },
+ {
+  "nome": "Monk Mao Tai",
+  "nivel": 27,
+  "area": "Arms Bear Residence"
+ },
+ {
+  "nome": "Monk Yu De",
+  "nivel": 28,
+  "area": "Black Wind Camp"
+ },
+ {
+  "nome": "Callet Head Young",
+  "nivel": 28,
+  "area": "Black Wind Camp"
+ },
+ {
+  "nome": "Flame Tao",
+  "nivel": 28,
+  "area": "Wei's Village"
+ },
+ {
+  "nome": "Cortege Xue",
+  "nivel": 28,
+  "area": "Wei's Village"
+ },
+ {
+  "nome": "Cortege Qin",
+  "nivel": 28,
+  "area": "Wei's Village"
+ },
+ {
+  "nome": "Zhi Fei Buddhist Monk",
+  "nivel": 30,
+  "area": "Wei's Village"
+ },
+ {
+  "nome": "Strange Scorpion",
+  "nivel": 26,
+  "area": "Fir Woods"
+ },
+ {
+  "nome": "Fir Woods Devil",
+  "nivel": 27,
+  "area": "Fir Woods"
+ },
+ {
+  "nome": "Trembling Beetle",
+  "nivel": 27,
+  "area": "Beauty Village Orchard"
+ },
+ {
+  "nome": "Black Rock Man",
+  "nivel": 28,
+  "area": "Outer Ease Cloud     Cave"
+ },
+ {
+  "nome": "Sword Soul Guard",
+  "nivel": 28,
+  "area": "Seven Swords Tomb"
+ },
+ {
+  "nome": "Mad Python",
+  "nivel": 28,
+  "area": "Beauty Lake"
+ },
+ {
+  "nome": "Bloody Worm",
+  "nivel": 29,
+  "area": "Outer Ease Cloud     Cave"
+ },
+ {
+  "nome": "Gloomy Sword Taoist",
+  "nivel": 30,
+  "area": "Outer Ease Cloud     Cave"
+ },
+ {
+  "nome": "Childe Tangz",
+  "nivel": 29,
+  "area": "Fir Woods"
+ },
+ {
+  "nome": "Ice Fox Lady",
+  "nivel": 30,
+  "area": "Outer Ease Cloud Cave"
+ },
+ {
+  "nome": "Peach Spirit",
+  "nivel": 31,
+  "area": "Green Spring Gully"
+ },
+ {
+  "nome": "Peach Monster",
+  "nivel": 31,
+  "area": "Laurel Woods"
+ },
+ {
+  "nome": "Machine Monster",
+  "nivel": 31,
+  "area": "Ancient Lauren Grounds"
+ },
+ {
+  "nome": "Fierce Tiger",
+  "nivel": 32,
+  "area": "Green Spring Gully"
+ },
+ {
+  "nome": "Polluted Peach Tree",
+  "nivel": 32,
+  "area": "Spring of Fortune Pond"
+ },
+ {
+  "nome": "Golden Camel Guard",
+  "nivel": 32,
+  "area": "Fountain Plain"
+ },
+ {
+  "nome": "Machine Man",
+  "nivel": 33,
+  "area": "Red Flower Cave"
+ },
+ {
+  "nome": "Machine Guard",
+  "nivel": 33,
+  "area": "Red Flower Cave"
+ },
+ {
+  "nome": "Red Flower Guard",
+  "nivel": 34,
+  "area": "Red Flower Cave"
+ },
+ {
+  "nome": "Crocodile",
+  "nivel": 34,
+  "area": "Red Flower Cave"
+ },
+ {
+  "nome": "Pangolin",
+  "nivel": 34,
+  "area": "Fire Rock Cave"
+ },
+ {
+  "nome": "Black Stone Guard",
+  "nivel": 35,
+  "area": "Fortune Pond"
+ },
+ {
+  "nome": "Fire Stone Monster",
+  "nivel": 35,
+  "area": "Fire Rock Cave"
+ },
+ {
+  "nome": "Golden Camel",
+  "nivel": 32,
+  "area": "Forest Plain"
+ },
+ {
+  "nome": "Red Flower Grandma",
+  "nivel": 35,
+  "area": "Fencing Room"
+ },
+ {
+  "nome": "Black Stone Demon",
+  "nivel": 35,
+  "area": "Fortune Pond"
+ },
+ {
+  "nome": "Golden Camel",
+  "nivel": 35,
+  "area": "Alchemical Room"
+ },
+ {
+  "nome": "Nun Fly Dragon",
+  "nivel": 35,
+  "area": "Alchemical Room"
+ },
+ {
+  "nome": "Dead Insect",
+  "nivel": 31,
+  "area": "Rock Valley Camp"
+ },
+ {
+  "nome": "Yae Soldier",
+  "nivel": 32,
+  "area": "Yae Camp"
+ },
+ {
+  "nome": "Yae Ranger",
+  "nivel": 32,
+  "area": "Yae Camp"
+ },
+ {
+  "nome": "Evil Statue",
+  "nivel": 33,
+  "area": "Stone Pit"
+ },
+ {
+  "nome": "Yae Priest",
+  "nivel": 33,
+  "area": "Yae Camp"
+ },
+ {
+  "nome": "Yae Priest",
+  "nivel": 34,
+  "area": "Yae Camp"
+ },
+ {
+  "nome": "Evil Skeleton",
+  "nivel": 34,
+  "area": "Purple Bamboo Grove"
+ },
+ {
+  "nome": "Ghost Soldier",
+  "nivel": 35,
+  "area": "Villa Ruins"
+ },
+ {
+  "nome": "Deadly Ghost",
+  "nivel": 35,
+  "area": "Villa Ruins"
+ },
+ {
+  "nome": "Blade Soul",
+  "nivel": 36,
+  "area": "Thunder Ridge"
+ },
+ {
+  "nome": "Erratic    Soul",
+  "nivel": 37,
+  "area": "Thunder Ridge"
+ },
+ {
+  "nome": "Fierce Luo's Soldier",
+  "nivel": 38,
+  "area": "Thunder Ridge"
+ },
+ {
+  "nome": "Scavenge Lizard",
+  "nivel": 38,
+  "area": "Purple Bamboo Grove"
+ },
+ {
+  "nome": "Fierce Luo",
+  "nivel": 40,
+  "area": "Thunder Ridge"
+ },
+ {
+  "nome": "Dark    Ranger",
+  "nivel": 39,
+  "area": "Purple Bamboo Grove"
+ },
+ {
+  "nome": "Bone    Devil",
+  "nivel": 39,
+  "area": "Thunder Ridge"
+ },
+ {
+  "nome": "Iron Mask Buddha",
+  "nivel": 40,
+  "area": "Purple Bamboo Grove"
+ },
+ {
+  "nome": "Ruthless Old Devil",
+  "nivel": 40,
+  "area": "Thunder Ridge"
+ },
+ {
+  "nome": "Strong    Guard",
+  "nivel": 40,
+  "area": "Purple Bamboo Grove"
+ },
+ {
+  "nome": "Fierce Luo",
+  "nivel": 40,
+  "area": "Thunder  Ridge"
+ },
+ {
+  "nome": "Iron Mask Buddha",
+  "nivel": 40,
+  "area": "Purple  Bamboo Grove"
+ },
+ {
+  "nome": "Strong Guard",
+  "nivel": 40,
+  "area": "Purple  Bamboo Grove"
+ },
+ {
+  "nome": "Western Regions Enchanter",
+  "nivel": 35,
+  "area": "White Shrubberies"
+ },
+ {
+  "nome": "Western Regions Gundog",
+  "nivel": 35,
+  "area": "White Shrubberies"
+ },
+ {
+  "nome": "Western Regions Evil Monk",
+  "nivel": 35,
+  "area": "White Shrubberies"
+ },
+ {
+  "nome": "Bald Vulture Guard",
+  "nivel": 36,
+  "area": "Ghost Shadow Swamp"
+ },
+ {
+  "nome": "Red Head Vulture",
+  "nivel": 36,
+  "area": "Ghost Shadow Swamp"
+ },
+ {
+  "nome": "Rotten-Eat Crocodile",
+  "nivel": 36,
+  "area": "Ghost Shadow Swamp"
+ },
+ {
+  "nome": "Black Bear",
+  "nivel": 37,
+  "area": "Ghost Wind Valley"
+ },
+ {
+  "nome": "Jokul Flying Snake",
+  "nivel": 37,
+  "area": "Snow Forest"
+ },
+ {
+  "nome": "Bine Monster",
+  "nivel": 37,
+  "area": "Ghost Wind Valley"
+ },
+ {
+  "nome": "Ore Giant",
+  "nivel": 38,
+  "area": "Riprap Hillock"
+ },
+ {
+  "nome": "Mountain Wild Wolf",
+  "nivel": 38,
+  "area": "Jokul Hunting Ground"
+ },
+ {
+  "nome": "Guard of West Reigion Demon",
+  "nivel": 38,
+  "area": "Ghost Wind Valley"
+ },
+ {
+  "nome": "Snow Leopard",
+  "nivel": 39,
+  "area": "Outer Fast Temple"
+ },
+ {
+  "nome": "Snow Eagle",
+  "nivel": 39,
+  "area": "Outer Fast Temple"
+ },
+ {
+  "nome": "Ancient Snow Man",
+  "nivel": 39,
+  "area": "Riprap Hillock"
+ },
+ {
+  "nome": "Ancient Snow Man",
+  "nivel": 40,
+  "area": "Floating Ice Area"
+ },
+ {
+  "nome": "Evil Monk Guard",
+  "nivel": 40,
+  "area": "Far temple"
+ },
+ {
+  "nome": "Evil Monk in Far Temple",
+  "nivel": 40,
+  "area": "Far temple"
+ },
+ {
+  "nome": "Bald Vulture Head",
+  "nivel": 36,
+  "area": "Ghost Shadow Swamp"
+ },
+ {
+  "nome": "Demon of West Reigion",
+  "nivel": 38,
+  "area": "Ghost Wind Valley"
+ },
+ {
+  "nome": "Demon of Sanskrit Sound",
+  "nivel": 40,
+  "area": "Far Temple"
+ },
+ {
+  "nome": "Blade Ranger",
+  "nivel": 41,
+  "area": "Live Diagram Zone"
+ },
+ {
+  "nome": "Claw Beast",
+  "nivel": 41,
+  "area": "Live Diagram Zone"
+ },
+ {
+  "nome": "Snow Man",
+  "nivel": 41,
+  "area": "Live Diagram Zone"
+ },
+ {
+  "nome": "Snow Beast",
+  "nivel": 42,
+  "area": "Ice Prick Forest"
+ },
+ {
+  "nome": "Masked Heister",
+  "nivel": 42,
+  "area": "Ice Prick Forest"
+ },
+ {
+  "nome": "Evil Snow Giant",
+  "nivel": 43,
+  "area": "Hotspring Valley"
+ },
+ {
+  "nome": "Water Monster",
+  "nivel": 43,
+  "area": "Hotspring Valley"
+ },
+ {
+  "nome": "Mire Monster",
+  "nivel": 43,
+  "area": "Hotspring Valley"
+ },
+ {
+  "nome": "Hell Snow Giant",
+  "nivel": 44,
+  "area": "Ice Prick Hill"
+ },
+ {
+  "nome": "Hollow Masked Heister",
+  "nivel": 44,
+  "area": "Death Diagram Zone"
+ },
+ {
+  "nome": "Frost Skull",
+  "nivel": 44,
+  "area": "Throat Rift Stage"
+ },
+ {
+  "nome": "Throat Rift Orc",
+  "nivel": 45,
+  "area": "Throat Rift Stage"
+ },
+ {
+  "nome": "Orc Watcher",
+  "nivel": 45,
+  "area": "Arm Broken Bluff"
+ },
+ {
+  "nome": "Phantom Corpse",
+  "nivel": 45,
+  "area": "Arm Broken Bluff"
+ },
+ {
+  "nome": "Plum Blossom Tree",
+  "nivel": 45,
+  "area": "Zhao's Palace"
+ },
+ {
+  "nome": "Purple Wing Bat",
+  "nivel": 45,
+  "area": "Zhao's Palace"
+ },
+ {
+  "nome": "Cursed Zombie",
+  "nivel": 45,
+  "area": "Zhao's Palace"
+ },
+ {
+  "nome": "Green Snipe",
+  "nivel": 45,
+  "area": "Zhao's Palace"
+ },
+ {
+  "nome": "Aberrance Horse-head Bear",
+  "nivel": 46,
+  "area": "Black Bear Cave"
+ },
+ {
+  "nome": "Soul Lost Horse-head Bear",
+  "nivel": 46,
+  "area": "Black Bear Cave"
+ },
+ {
+  "nome": "Horse-head Bear Patrol",
+  "nivel": 46,
+  "area": "Black Bear Cave"
+ },
+ {
+  "nome": "Horse-head Bear Guard",
+  "nivel": 46,
+  "area": "Black Bear Cave"
+ },
+ {
+  "nome": "Crystal Rockman",
+  "nivel": 47,
+  "area": "White Bear Village"
+ },
+ {
+  "nome": "Small Crystal Rockman",
+  "nivel": 47,
+  "area": "White Bear Village"
+ },
+ {
+  "nome": "Tusk Ogre",
+  "nivel": 47,
+  "area": "Tusk Ogre Lair"
+ },
+ {
+  "nome": "Tusk Ogre Warrior",
+  "nivel": 47,
+  "area": "Tusk Ogre Lair"
+ },
+ {
+  "nome": "Tusk Ogre Sorcerer",
+  "nivel": 47,
+  "area": "Tusk Ogre Lair"
+ },
+ {
+  "nome": "Blowgun Tusk Ogre",
+  "nivel": 47,
+  "area": "Tusk Ogre Lair"
+ },
+ {
+  "nome": "Small Wood Demon",
+  "nivel": 48,
+  "area": "Wood Demon Cave"
+ },
+ {
+  "nome": "Wood Demon",
+  "nivel": 48,
+  "area": "Wood Demon Cave"
+ },
+ {
+  "nome": "Mace Wood Demon",
+  "nivel": 48,
+  "area": "Wood Demon Cave"
+ },
+ {
+  "nome": "Eyes Wood Beast",
+  "nivel": 48,
+  "area": "Wood Demon Cave"
+ },
+ {
+  "nome": "Cub Tiger",
+  "nivel": 48,
+  "area": "Ghost Din Woods"
+ },
+ {
+  "nome": "Tiger Major",
+  "nivel": 48,
+  "area": "Ghost Din Woods"
+ },
+ {
+  "nome": "Fire Serpent",
+  "nivel": 49,
+  "area": "Ghost Din Woods"
+ },
+ {
+  "nome": "Dicephalous Fire Serpent",
+  "nivel": 49,
+  "area": "Ghost Din Woods"
+ },
+ {
+  "nome": "Callet Ghost",
+  "nivel": 49,
+  "area": "Ghost Din Woods"
+ },
+ {
+  "nome": "Callet Ghost Major",
+  "nivel": 49,
+  "area": "Ghost Din Woods"
+ },
+ {
+  "nome": "Green Tree Ghost",
+  "nivel": 49,
+  "area": "Ghost Din Woods"
+ },
+ {
+  "nome": "Voodoo Spider",
+  "nivel": 49,
+  "area": "Ghost Din Woods"
+ },
+ {
+  "nome": "Horse-head Bear Captain",
+  "nivel": 46,
+  "area": "Black Bear Cave"
+ },
+ {
+  "nome": "Tri-arm Swordman",
+  "nivel": 47,
+  "area": "Tusk Ogre Lair"
+ },
+ {
+  "nome": "Fire Fan Childe",
+  "nivel": 47,
+  "area": "Tusk Ogre Lair"
+ },
+ {
+  "nome": "Snake Sword Tao",
+  "nivel": 48,
+  "area": "Wood Demon Cave"
+ },
+ {
+  "nome": "White Tiger King",
+  "nivel": 49,
+  "area": "Ghost Din Woods"
+ },
+ {
+  "nome": "Elite Blade Ranger",
+  "nivel": 50,
+  "area": "Yue Mansion"
+ },
+ {
+  "nome": "Elite Masked Heister",
+  "nivel": 50,
+  "area": "Yue Mansion"
+ },
+ {
+  "nome": "Ninja Stabber",
+  "nivel": 50,
+  "area": "Yue Mansion"
+ },
+ {
+  "nome": "Elite Bine Monster",
+  "nivel": 51,
+  "area": "Yue Mansion"
+ },
+ {
+  "nome": "Brier Beast",
+  "nivel": 51,
+  "area": "Yue Mansion"
+ },
+ {
+  "nome": "Immortal Turtle Beast",
+  "nivel": 51,
+  "area": "Yue Mansion"
+ },
+ {
+  "nome": "Green Viper",
+  "nivel": 51,
+  "area": "Yue Mansion"
+ },
+ {
+  "nome": "Fisherman",
+  "nivel": 52,
+  "area": "Star Town"
+ },
+ {
+  "nome": "Spalpeen",
+  "nivel": 52,
+  "area": "Star Town"
+ },
+ {
+  "nome": "Wicked Moocher",
+  "nivel": 52,
+  "area": "Star Town"
+ },
+ {
+  "nome": "River Bandit",
+  "nivel": 52,
+  "area": "Star Town"
+ },
+ {
+  "nome": "Cateran",
+  "nivel": 52,
+  "area": "Ling Mansion"
+ },
+ {
+  "nome": "Guard of Chen's Manor",
+  "nivel": 53,
+  "area": "Ling Mansion"
+ },
+ {
+  "nome": "Soldier of Chen's Manor",
+  "nivel": 53,
+  "area": "Ling Mansion"
+ },
+ {
+  "nome": "Club Servitor",
+  "nivel": 53,
+  "area": "Chen's Manor"
+ },
+ {
+  "nome": "Sentinel of Chen's Manor",
+  "nivel": 54,
+  "area": "Dai's Field"
+ },
+ {
+  "nome": "Watcher of Chen's Manor",
+  "nivel": 54,
+  "area": "Dai's Field"
+ },
+ {
+  "nome": "Pawn of Chen's Manor",
+  "nivel": 54,
+  "area": "Dai's Field"
+ },
+ {
+  "nome": "Nark of Loo's Village",
+  "nivel": 55,
+  "area": "Dai's Field"
+ },
+ {
+  "nome": "Blademan of Loo's Village",
+  "nivel": 55,
+  "area": "Dai's Field"
+ },
+ {
+  "nome": "Iron Tail Tiger",
+  "nivel": 55,
+  "area": "Mazy Woods"
+ },
+ {
+  "nome": "Steel Teeth Crocodile",
+  "nivel": 55,
+  "area": "Mazy Woods"
+ },
+ {
+  "nome": "Jade Robe Heister",
+  "nivel": 56,
+  "area": "Mazy Woods"
+ },
+ {
+  "nome": "Brawny Soldier",
+  "nivel": 56,
+  "area": "Mazy Woods"
+ },
+ {
+  "nome": "Guard of Heister Head",
+  "nivel": 56,
+  "area": "Mazy Woods"
+ },
+ {
+  "nome": "Solder of Loo's Village",
+  "nivel": 57,
+  "area": "Loo's Village"
+ },
+ {
+  "nome": "Guard of Loo's Village",
+  "nivel": 57,
+  "area": "Loo's Village"
+ },
+ {
+  "nome": "Posseman of Loo's Village",
+  "nivel": 57,
+  "area": "Loo's Village"
+ },
+ {
+  "nome": "Guard of Screw Bay",
+  "nivel": 58,
+  "area": "Loo's Village"
+ },
+ {
+  "nome": "Jailor of Screw Bay",
+  "nivel": 58,
+  "area": "Jail of Screw Bay"
+ },
+ {
+  "nome": "Head of Screw Bay",
+  "nivel": 58,
+  "area": "Jail of Screw Bay"
+ },
+ {
+  "nome": "Cursed Villager",
+  "nivel": 59,
+  "area": "Ichthyoid Cave"
+ },
+ {
+  "nome": "One-eyed Necromancer",
+  "nivel": 59,
+  "area": "Ichthyoid Cave"
+ },
+ {
+  "nome": "Apprentice of Blaze Skull",
+  "nivel": 59,
+  "area": "Ichthyoid Cave"
+ },
+ {
+  "nome": "Xuyu",
+  "nivel": 50,
+  "area": "Yue Mansion"
+ },
+ {
+  "nome": "Firebolt Wei-Chiyuan",
+  "nivel": 53,
+  "area": "Ling Mansion"
+ },
+ {
+  "nome": "Wheel Blade Cui-Tianshou",
+  "nivel": 54,
+  "area": "Dao's Field"
+ },
+ {
+  "nome": "Vice Leader Chen-Changgu",
+  "nivel": 55,
+  "area": "Chen's Manor"
+ },
+ {
+  "nome": "Heister Head",
+  "nivel": 56,
+  "area": "Mazy Woods"
+ },
+ {
+  "nome": "Racoon Loosi",
+  "nivel": 57,
+  "area": "Loo's Village"
+ },
+ {
+  "nome": "Fire Chainball Loosan",
+  "nivel": 58,
+  "area": "Jail of Screw Bay"
+ },
+ {
+  "nome": "Ruffian",
+  "nivel": 61,
+  "area": "Bandit    Lair"
+ },
+ {
+  "nome": "Rowdy    Bandit",
+  "nivel": 61,
+  "area": "Bandit    Lair"
+ },
+ {
+  "nome": "Rose    Snake",
+  "nivel": 61,
+  "area": "Bandit    Lair"
+ },
+ {
+  "nome": "Musk    Deer",
+  "nivel": 61,
+  "area": "Bandit    Lair"
+ },
+ {
+  "nome": "Fighting    Disciple",
+  "nivel": 62,
+  "area": "Bandit    Lair"
+ },
+ {
+  "nome": "Fat    Badmash",
+  "nivel": 63,
+  "area": "South    of Simen Mountain"
+ },
+ {
+  "nome": "Odd    Shaman",
+  "nivel": 63,
+  "area": "South    of Simen Mountain"
+ },
+ {
+  "nome": "Moon    Dragon Betrayer",
+  "nivel": 63,
+  "area": "Outskirt    of Village"
+ },
+ {
+  "nome": "Mountain    Ghost",
+  "nivel": 63,
+  "area": "Dry    Woods"
+ },
+ {
+  "nome": "Burning    Deadwood",
+  "nivel": 63,
+  "area": "Dry    Woods"
+ },
+ {
+  "nome": "Evil    Ganoderma",
+  "nivel": 63,
+  "area": "Dry    Woods"
+ },
+ {
+  "nome": "Nine    Color Deer",
+  "nivel": 63,
+  "area": "Outskirt    of Village"
+ },
+ {
+  "nome": "Old    Site of Village",
+  "nivel": 64,
+  "area": "Old    Site of Village"
+ },
+ {
+  "nome": "Veins    Silver Fox",
+  "nivel": 64,
+  "area": "Old    Site of Village"
+ },
+ {
+  "nome": "Bloodthirsty    Bat",
+  "nivel": 64,
+  "area": "Old    Site of Village"
+ },
+ {
+  "nome": "Crimson    Scorpion",
+  "nivel": 64,
+  "area": "Old    Site of Village"
+ },
+ {
+  "nome": "Muscle    Clawman",
+  "nivel": 64,
+  "area": "East    of Simen Mountain"
+ },
+ {
+  "nome": "Evil    Apprentice",
+  "nivel": 65,
+  "area": "East    of Simen Mountain"
+ },
+ {
+  "nome": "Guly    Horn Horse",
+  "nivel": 65,
+  "area": "East    of Simen Mountain"
+ },
+ {
+  "nome": "Floating    Fire Pearl",
+  "nivel": 65,
+  "area": "The    West of Simen Mountain"
+ },
+ {
+  "nome": "Tree    Warrior",
+  "nivel": 65,
+  "area": "The    West of Simen Mountain"
+ },
+ {
+  "nome": "Flaming    Lion",
+  "nivel": 65,
+  "area": "The    West of Simen Mountain"
+ },
+ {
+  "nome": "Buddha    Jade Lion",
+  "nivel": 65,
+  "area": "The    West of Simen Mountain"
+ },
+ {
+  "nome": "Golden    Horn Voolarb",
+  "nivel": 61,
+  "area": "Bandit    Lair"
+ },
+ {
+  "nome": "Silver    Horn Hylarb",
+  "nivel": 62,
+  "area": "Bandit    Lair"
+ },
+ {
+  "nome": "Enchanter    Tagel",
+  "nivel": 63,
+  "area": "Dry    Woods"
+ },
+ {
+  "nome": "Dark    Skull Demon",
+  "nivel": 64,
+  "area": "Old    Site of Village"
+ },
+ {
+  "nome": "Malefic    Hong",
+  "nivel": 65,
+  "area": "East    of Simen Mountain"
+ },
+ {
+  "nome": "Lion    Captain Loongwa",
+  "nivel": 65,
+  "area": "East    of Simen Mountain"
+ },
+ {
+  "nome": "Stab Soldier",
+  "nivel": 66,
+  "area": "Devil  Gorge"
+ },
+ {
+  "nome": "Blue Feather Archer",
+  "nivel": 66,
+  "area": "Devil  Gorge"
+ },
+ {
+  "nome": "Fire Eye Beast",
+  "nivel": 66,
+  "area": "Devil  Gorge"
+ },
+ {
+  "nome": "Rhino Panther",
+  "nivel": 66,
+  "area": "Sky    Curtain Altar"
+ },
+ {
+  "nome": "Stab Blademan",
+  "nivel": 66,
+  "area": "Sky    Curtain Altar"
+ },
+ {
+  "nome": "Dragon Servant",
+  "nivel": 66,
+  "area": "Sky    Curtain Altar"
+ },
+ {
+  "nome": "Dragon Fighter",
+  "nivel": 66,
+  "area": "Sky    Curtain Altar"
+ },
+ {
+  "nome": "Wing Witch",
+  "nivel": 67,
+  "area": "Wind    Stage"
+ },
+ {
+  "nome": "Wing Devil",
+  "nivel": 67,
+  "area": "Wind    Stage"
+ },
+ {
+  "nome": "Wind Sdivrite",
+  "nivel": 67,
+  "area": "Wind    Stage"
+ },
+ {
+  "nome": "Ghost Wind Sprite",
+  "nivel": 67,
+  "area": "Wind    Stage"
+ },
+ {
+  "nome": "Ghost Charm Taoist",
+  "nivel": 67,
+  "area": "Peacecock River"
+ },
+ {
+  "nome": "Hell Dog",
+  "nivel": 67,
+  "area": "Peacecock River"
+ },
+ {
+  "nome": "Dark Cursed Taoist",
+  "nivel": 67,
+  "area": "Peacecock River"
+ },
+ {
+  "nome": "Hell Fire Demon",
+  "nivel": 67,
+  "area": "Peacecock River"
+ },
+ {
+  "nome": "Hell Glum Demon",
+  "nivel": 67,
+  "area": "Peacecock River"
+ },
+ {
+  "nome": "Purple Crystal Demon",
+  "nivel": 67,
+  "area": "Peacecock River"
+ },
+ {
+  "nome": "Sky Poison Insect",
+  "nivel": 68,
+  "area": "Four    Standing Cliff"
+ },
+ {
+  "nome": "Small Long Arm Beast",
+  "nivel": 68,
+  "area": "Black    Iron Mine"
+ },
+ {
+  "nome": "Earth Centipede",
+  "nivel": 68,
+  "area": "Black    Iron Mine"
+ },
+ {
+  "nome": "Giant Earth Centipede",
+  "nivel": 68,
+  "area": "Black    Iron Mine"
+ },
+ {
+  "nome": "Long Arm Beast",
+  "nivel": 68,
+  "area": "Black    Iron Mine"
+ },
+ {
+  "nome": "Witchcraft Slave",
+  "nivel": 68,
+  "area": "Candor Cave"
+ },
+ {
+  "nome": "Scarlet Toad",
+  "nivel": 68,
+  "area": "Candor Cave"
+ },
+ {
+  "nome": "Red Spider",
+  "nivel": 68,
+  "area": "Candor Cave"
+ },
+ {
+  "nome": "Blue Hair Blademan",
+  "nivel": 69,
+  "area": "Stone Wood"
+ },
+ {
+  "nome": "Blood Horn Bull",
+  "nivel": 69,
+  "area": "Stone Wood"
+ },
+ {
+  "nome": "Wicked Ice Baby",
+  "nivel": 69,
+  "area": "Stone Wood"
+ },
+ {
+  "nome": "Evil Necromancer",
+  "nivel": 69,
+  "area": "Stone Wood"
+ },
+ {
+  "nome": "Evil    Whipper",
+  "nivel": 69,
+  "area": "Ghost    Town"
+ },
+ {
+  "nome": "Night    Ghost",
+  "nivel": 70,
+  "area": "Ghost    Town"
+ },
+ {
+  "nome": "Burma Poison Fly",
+  "nivel": 70,
+  "area": "Barbarian Mountain"
+ },
+ {
+  "nome": "Odd    Evocator",
+  "nivel": 70,
+  "area": "Four    Standing Cliff"
+ },
+ {
+  "nome": "Xindzi    Guard",
+  "nivel": 70,
+  "area": "Four    Standing Cliff"
+ },
+ {
+  "nome": "Tang's    Guard",
+  "nivel": 70,
+  "area": "Barbarian Mountain"
+ },
+ {
+  "nome": "Iron    Mask Guardsman",
+  "nivel": 70,
+  "area": "Barbarian Mountain"
+ },
+ {
+  "nome": "Blood    Demon",
+  "nivel": 70,
+  "area": "Barbarian Mountain"
+ },
+ {
+  "nome": "Twin    Wheel Peggy",
+  "nivel": 66,
+  "area": "Devil    Gorge"
+ },
+ {
+  "nome": "Halberd    Shadow Xuan",
+  "nivel": 66,
+  "area": "Sky    Curtain Altar"
+ },
+ {
+  "nome": "Deadwood    Dragon Li",
+  "nivel": 67,
+  "area": "Wind    Stage"
+ },
+ {
+  "nome": "Sad    Fire Shi",
+  "nivel": 67,
+  "area": "Peacecock River"
+ },
+ {
+  "nome": "Magic    Bowl Zheng",
+  "nivel": 68,
+  "area": "Black    Iron Mine"
+ },
+ {
+  "nome": "Cave    Witch",
+  "nivel": 68,
+  "area": "Candor Cave"
+ },
+ {
+  "nome": "Huge    Blade Bao",
+  "nivel": 69,
+  "area": "Stone    Wood"
+ },
+ {
+  "nome": "Thunder    Pearl Man",
+  "nivel": 69,
+  "area": "Stone    Wood"
+ },
+ {
+  "nome": "Scorpion    Deer Man",
+  "nivel": 70,
+  "area": "Four    Standing Cliff"
+ },
+ {
+  "nome": "Blade    Master Sui",
+  "nivel": 70,
+  "area": "Barbarian Mountain"
+ },
+ {
+  "nome": "Bloodthirsty    Mummy Shou",
+  "nivel": 70,
+  "area": "Barbarian Mountain"
+ },
+ {
+  "nome": "Huge Pincers Carb",
+  "nivel": 71,
+  "area": "Peace    Island"
+ },
+ {
+  "nome": "Mysterious Swordman",
+  "nivel": 71,
+  "area": "Peace    Island"
+ },
+ {
+  "nome": "Sea God Guard",
+  "nivel": 71,
+  "area": "Peace    Island"
+ },
+ {
+  "nome": "Iron Turtle",
+  "nivel": 71,
+  "area": "Peace    Island"
+ },
+ {
+  "nome": "Island Wild Boar",
+  "nivel": 71,
+  "area": "Peace    Island"
+ },
+ {
+  "nome": "Coconut Mouse",
+  "nivel": 71,
+  "area": "Peace    Island"
+ },
+ {
+  "nome": "Rampage man",
+  "nivel": 75,
+  "area": "Peace    Island"
+ },
+ {
+  "nome": "Coconut Palace Apprentice",
+  "nivel": 72,
+  "area": "Coconut  Island"
+ },
+ {
+  "nome": "Coconut Island Apprentice",
+  "nivel": 72,
+  "area": "Coconut  Island"
+ },
+ {
+  "nome": "Coconut Asura Herald",
+  "nivel": 72,
+  "area": "Coconut  Island"
+ },
+ {
+  "nome": "Drug Dick Coconut Island Apprentice",
+  "nivel": 72,
+  "area": "Coconut  Island"
+ },
+ {
+  "nome": "Asura Military Headman",
+  "nivel": 71,
+  "area": "Coconut  Island"
+ },
+ {
+  "nome": "Coconut Island Coach",
+  "nivel": 71,
+  "area": "Coconut  Island"
+ },
+ {
+  "nome": "Blue Back Shark",
+  "nivel": 72,
+  "area": "Coconut  Island"
+ },
+ {
+  "nome": "Shark Tamer",
+  "nivel": 72,
+  "area": "Coconut  Island"
+ },
+ {
+  "nome": "Shark",
+  "nivel": 71,
+  "area": "South    Sea"
+ },
+ {
+  "nome": "Ovula Ovum",
+  "nivel": 71,
+  "area": "South    Sea"
+ },
+ {
+  "nome": "Dragon Fish",
+  "nivel": 71,
+  "area": "South    Sea"
+ },
+ {
+  "nome": "Blue Light    Numbfish",
+  "nivel": 71,
+  "area": "South    Sea"
+ },
+ {
+  "nome": "Little Sea    Dragon",
+  "nivel": 71,
+  "area": "South    Sea"
+ },
+ {
+  "nome": "Iron Fin Shark",
+  "nivel": 71,
+  "area": "South    Sea"
+ },
+ {
+  "nome": "Tiger Shark",
+  "nivel": 73,
+  "area": "South    Sea"
+ },
+ {
+  "nome": "Pirate Ambusher",
+  "nivel": 73,
+  "area": "Birdie    Island"
+ },
+ {
+  "nome": "Black Head    Octopus",
+  "nivel": 73,
+  "area": "Birdie    Island"
+ },
+ {
+  "nome": "Ship Gun Crew",
+  "nivel": 73,
+  "area": "Birdie    Island"
+ },
+ {
+  "nome": "White Shark    Gangsters",
+  "nivel": 73,
+  "area": "Birdie    Island"
+ },
+ {
+  "nome": "White Shark    Ranger",
+  "nivel": 73,
+  "area": "Birdie    Island"
+ },
+ {
+  "nome": "Aberrance    Boatswain",
+  "nivel": 73,
+  "area": "Birdie    Island"
+ },
+ {
+  "nome": "Birdie Island    Asura Herald",
+  "nivel": 73,
+  "area": "Birdie    Island"
+ },
+ {
+  "nome": "Asura FengShui    Master",
+  "nivel": 73,
+  "area": "Birdie    Island"
+ },
+ {
+  "nome": "White Shark    Sentry Leader",
+  "nivel": 73,
+  "area": "Birdie    Island"
+ },
+ {
+  "nome": "Flame Shogun",
+  "nivel": 72,
+  "area": "Asura Palace"
+ },
+ {
+  "nome": "Flame Watcher",
+  "nivel": 71,
+  "area": "Asura Palace"
+ },
+ {
+  "nome": "Asura Herald",
+  "nivel": 72,
+  "area": "Asura Palace"
+ },
+ {
+  "nome": "Swordfish",
+  "nivel": 72,
+  "area": "Bull Island"
+ },
+ {
+  "nome": "Puppet    Apprentice",
+  "nivel": 72,
+  "area": "Bull Island"
+ },
+ {
+  "nome": "Bloody Guard",
+  "nivel": 73,
+  "area": "Bull Island"
+ },
+ {
+  "nome": "Crystal Palace    Monitor",
+  "nivel": 73,
+  "area": "Bull Island"
+ },
+ {
+  "nome": "Iron Brolly    Apprentice",
+  "nivel": 72,
+  "area": "Bull Island"
+ },
+ {
+  "nome": "Bull Island    Pirate",
+  "nivel": 72,
+  "area": "Bull Island"
+ },
+ {
+  "nome": "Iron Squama    Mermaid",
+  "nivel": 71,
+  "area": "South Rock"
+ },
+ {
+  "nome": "Blond Hair    Mermaid",
+  "nivel": 71,
+  "area": "South Rock"
+ },
+ {
+  "nome": "Red-crowed    Head Guard",
+  "nivel": 71,
+  "area": "South Rock"
+ },
+ {
+  "nome": "Evil Mermaid    Captain",
+  "nivel": 71,
+  "area": "South Rock"
+ },
+ {
+  "nome": "Dark Shadow    Archer",
+  "nivel": 71,
+  "area": "South Rock"
+ },
+ {
+  "nome": "Water Bogey",
+  "nivel": 72,
+  "area": "Xiji Relics"
+ },
+ {
+  "nome": "Poison Water    Demon",
+  "nivel": 73,
+  "area": "Xiji Relics"
+ },
+ {
+  "nome": "Frenzy Mermaid",
+  "nivel": 71,
+  "area": "Xiji Relics"
+ },
+ {
+  "nome": "Weak Mermaid",
+  "nivel": 71,
+  "area": "Xiji Relics"
+ },
+ {
+  "nome": "LouCangZhou",
+  "nivel": 73,
+  "area": "Coconut  Island"
+ },
+ {
+  "nome": "JingGongWang",
+  "nivel": 72,
+  "area": "Coconut  Island"
+ },
+ {
+  "nome": "Ghost Wolf",
+  "nivel": 73,
+  "area": "Coconut  Island"
+ },
+ {
+  "nome": "Flame Asura Captain",
+  "nivel": 72,
+  "area": "Coconut  Island"
+ },
+ {
+  "nome": "Octopus King of Stars",
+  "nivel": 73,
+  "area": "Birdie    Island"
+ },
+ {
+  "nome": "Red Arm Master    LianDeng",
+  "nivel": 73,
+  "area": "Birdie    Island"
+ },
+ {
+  "nome": "YanShao",
+  "nivel": 72,
+  "area": "Asura Palace"
+ },
+ {
+  "nome": "Iron Brolly Master",
+  "nivel": 72,
+  "area": "Bull Island"
+ },
+ {
+  "nome": "FanLiang",
+  "nivel": 72,
+  "area": "Bull Island"
+ },
+ {
+  "nome": "Red-crowned Head",
+  "nivel": 72,
+  "area": "South Rock"
+ },
+ {
+  "nome": "Sea Bogey",
+  "nivel": 73,
+  "area": "Xiji Relics"
+ },
+ {
+  "nome": "Yellow Robe Monster",
+  "nivel": 73,
+  "area": "Cloud    Island"
+ },
+ {
+  "nome": "Wutai Guardian",
+  "nivel": 73,
+  "area": "Cloud    Island"
+ },
+ {
+  "nome": "Psychic",
+  "nivel": 74,
+  "area": "Cloud    Island"
+ },
+ {
+  "nome": "Bloom Tao Priest",
+  "nivel": 74,
+  "area": "Cloud    Island"
+ },
+ {
+  "nome": "Color Spider",
+  "nivel": 74,
+  "area": "Cloud    Island"
+ },
+ {
+  "nome": "Blossom Enchantress",
+  "nivel": 74,
+  "area": "Cloud    Island"
+ },
+ {
+  "nome": "Coconut Island Betrayer",
+  "nivel": 73,
+  "area": "Cloud    Island"
+ },
+ {
+  "nome": "Animal Hanlder",
+  "nivel": 73,
+  "area": "Cloud    Island"
+ },
+ {
+  "nome": "Animal Hanlder Assistant",
+  "nivel": 73,
+  "area": "Cloud    Island"
+ },
+ {
+  "nome": "Centaur",
+  "nivel": 73,
+  "area": "Cloud    Island"
+ },
+ {
+  "nome": "Angry Ratfish",
+  "nivel": 75,
+  "area": "Cloud    Palace"
+ },
+ {
+  "nome": "Triple Ghosts    Apprentice",
+  "nivel": 75,
+  "area": "Cloud    Palace"
+ },
+ {
+  "nome": "Dark Claw    Octopus",
+  "nivel": 75,
+  "area": "Cloud    Palace"
+ },
+ {
+  "nome": "Bloom    Apprentice",
+  "nivel": 75,
+  "area": "Cloud    Palace"
+ },
+ {
+  "nome": "Arrow Mouth    Merino",
+  "nivel": 75,
+  "area": "Cloud    Palace"
+ },
+ {
+  "nome": "Mysterious Merino",
+  "nivel": 75,
+  "area": "Cloud    Palace"
+ },
+ {
+  "nome": "Sky Faith    Apprentice",
+  "nivel": 75,
+  "area": "Cloud    Palace"
+ },
+ {
+  "nome": "Asura Sentry    Leader",
+  "nivel": 74,
+  "area": "Cloud    Palace"
+ },
+ {
+  "nome": "HaiLing",
+  "nivel": 75,
+  "area": "Cloud    Palace"
+ },
+ {
+  "nome": "Spear Tongue    Merino",
+  "nivel": 75,
+  "area": "Cloud    Palace"
+ },
+ {
+  "nome": "Sky Senior    Herald",
+  "nivel": 75,
+  "area": "Cloud    Palace"
+ },
+ {
+  "nome": "Yuzhu",
+  "nivel": 75,
+  "area": "Cloud    Palace"
+ },
+ {
+  "nome": "SiKongZhan",
+  "nivel": 73,
+  "area": "Cloud    Island"
+ },
+ {
+  "nome": "Huge Peach Monster",
+  "nivel": 74,
+  "area": "Cloud    Island"
+ },
+ {
+  "nome": "Thunder Centaur",
+  "nivel": 73,
+  "area": "Cloud    Island"
+ },
+ {
+  "nome": "RuanSanYuan",
+  "nivel": 75,
+  "area": "Cloud    Palace"
+ },
+ {
+  "nome": "SanFeng",
+  "nivel": 75,
+  "area": "Cloud    Palace"
+ },
+ {
+  "nome": "LiJinLian",
+  "nivel": 75,
+  "area": "Cloud    Palace"
+ },
+ {
+  "nome": "YanKong's Sword",
+  "nivel": 75,
+  "area": "Cloud    Palace"
+ },
+ {
+  "nome": "ZhengMing",
+  "nivel": 75,
+  "area": "Cloud    Palace"
+ },
+ {
+  "nome": "Merino Deserter",
+  "nivel": 76,
+  "area": "Jade    City"
+ },
+ {
+  "nome": "Ya Li's Follower",
+  "nivel": 76,
+  "area": "Jade    City"
+ },
+ {
+  "nome": "Cha Hui's Follow",
+  "nivel": 76,
+  "area": "Jade    City"
+ },
+ {
+  "nome": "Patrol Elephant Soldier",
+  "nivel": 77,
+  "area": "Jia    Tribe an Lu Tribe"
+ },
+ {
+  "nome": "Jungle Little Elephant",
+  "nivel": 77,
+  "area": "Jia    Tribe an Lu Tribe"
+ },
+ {
+  "nome": "Jungle Charm Fox",
+  "nivel": 77,
+  "area": "Jia    Tribe an Lu Tribe"
+ },
+ {
+  "nome": "Mo Ke's Follower",
+  "nivel": 77,
+  "area": "Jia    Tribe an Lu Tribe"
+ },
+ {
+  "nome": "Fury Beast",
+  "nivel": 79,
+  "area": "Jia    Tribe an Lu Tribe"
+ },
+ {
+  "nome": "Wild Dog",
+  "nivel": 79,
+  "area": "Lu    Tribe Village"
+ },
+ {
+  "nome": "Ge Song's Rruster Guard",
+  "nivel": 77,
+  "area": "Jia    Tribe an Lu Tribe"
+ },
+ {
+  "nome": "Rattan Beast",
+  "nivel": 79,
+  "area": "Jia    Tribe an Lu Tribe"
+ },
+ {
+  "nome": "Xiao Cha's Guard",
+  "nivel": 77,
+  "area": "Jia    Tribe Village"
+ },
+ {
+  "nome": "Patrol Elephant Soldier Leader",
+  "nivel": 77,
+  "area": "Jia    Tribe an Lu Tribe"
+ },
+ {
+  "nome": "Merino Ambush",
+  "nivel": 78,
+  "area": "Merino    Coast"
+ },
+ {
+  "nome": "Sun Lai's Follow",
+  "nivel": 78,
+  "area": "Merino    Coast"
+ },
+ {
+  "nome": "Merino Deserter",
+  "nivel": 78,
+  "area": "Merino    Coast"
+ },
+ {
+  "nome": "Li Tribe Elite Guard",
+  "nivel": 80,
+  "area": "Entrance of Li Tribe"
+ },
+ {
+  "nome": "Li Tribe Soldier",
+  "nivel": 80,
+  "area": "Entrance of Li Tribe"
+ },
+ {
+  "nome": "Mine Insect",
+  "nivel": 80,
+  "area": "Li Tribe Pit"
+ },
+ {
+  "nome": "Li Tribe Soldier A",
+  "nivel": 80,
+  "area": "Li Tribe Pit"
+ },
+ {
+  "nome": "Li Tribe Soldier B",
+  "nivel": 80,
+  "area": "Li Tribe Pit"
+ },
+ {
+  "nome": "Cha Pin's Guard",
+  "nivel": 80,
+  "area": "Li Tribe Pit"
+ },
+ {
+  "nome": "Palace Patrol Leader",
+  "nivel": 80,
+  "area": "Li Tribe Palace"
+ },
+ {
+  "nome": "Palace Guard",
+  "nivel": 80,
+  "area": "Li Tribe Palace"
+ },
+ {
+  "nome": "Ya Li's Guard",
+  "nivel": 80,
+  "area": "Li Tribe Palace"
+ },
+ {
+  "nome": "Palace Patrol Soldier",
+  "nivel": 80,
+  "area": "Li Tribe Palace"
+ },
+ {
+  "nome": "Female Immortal Lady Fei",
+  "nivel": 76,
+  "area": "Jade    City"
+ },
+ {
+  "nome": "Cha Pin's Brother Cha Hui",
+  "nivel": 76,
+  "area": "Jade    City"
+ },
+ {
+  "nome": "Chao Demon Xiao Cha",
+  "nivel": 77,
+  "area": "Jia    Tribe Village"
+ },
+ {
+  "nome": "Mo Ke",
+  "nivel": 77,
+  "area": "Jia    Tribe an Lu Tribe"
+ },
+ {
+  "nome": "Lu Zhong Apprentice Wu Li",
+  "nivel": 79,
+  "area": "Lu    Tribe Village"
+ },
+ {
+  "nome": "Scout",
+  "nivel": 79,
+  "area": "Jia    Tribe an Lu Tribe"
+ },
+ {
+  "nome": "Jia Tribe Warrior Xuan Gan",
+  "nivel": 78,
+  "area": "Jia    Tribe Village"
+ },
+ {
+  "nome": "Skeleton Man",
+  "nivel": 76,
+  "area": "Jia    Tribe Village"
+ },
+ {
+  "nome": "SunLai",
+  "nivel": 76,
+  "area": "Jia    Tribe Village"
+ },
+ {
+  "nome": "Gentle Scholar",
+  "nivel": 76,
+  "area": "Jia    Tribe Village"
+ },
+ {
+  "nome": "Lady Fei",
+  "nivel": 76,
+  "area": "Jia    Tribe Village"
+ },
+ {
+  "nome": "Cha Hui",
+  "nivel": 76,
+  "area": "Jia    Tribe Village"
+ },
+ {
+  "nome": "Mo Xie",
+  "nivel": 76,
+  "area": "Jia    Tribe Village"
+ },
+ {
+  "nome": "Sun Lai",
+  "nivel": 78,
+  "area": "Merino    Coast"
+ },
+ {
+  "nome": "Li Tribe Chief Ya LI",
+  "nivel": 80,
+  "area": "Li Tribe Palace"
+ },
+ {
+  "nome": "Li Chun's Nephew Cha Pin",
+  "nivel": 80,
+  "area": "Li Tribe Pit"
+ }
+]
