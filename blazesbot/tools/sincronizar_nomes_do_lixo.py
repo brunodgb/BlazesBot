@@ -48,7 +48,7 @@ ARQUIVO = Path("blazesbot") / "bot" / "nomes_do_lixo.py"
 
 # O dígito FINAL do nome diz a peça do equipamento (medido pelo usuário em
 # 19/09/2026, item por item na tela).
-PECA_POR_FINAL = {"2": "Cuff", "3": "Armguard", "4": "Kneedpad",
+PECA_POR_FINAL = {"2": "Cuff", "3": "Armguard", "4": "Kneepad",
                   "5": "Boots", "6": "Belt", "8": "Robe"}
 
 # As cinco classes do jogo, como aparecem nos nomes de arquivo.
@@ -100,16 +100,21 @@ def rotulo_padrao(arquivo: str) -> str:
 
 
 def converter_para_png(pasta: Path) -> tuple[list[str], list[str]]:
-    """Todo JPG da pasta vira PNG, e o JPG sai. Devolve (convertidos, recusados).
+    """Todo JPG e BMP da pasta vira PNG, e o original sai.
 
-    POR QUE ISTO MORA AQUI. O deletador varre `*.png` -- um JPG naquela pasta é
-    um arquivo que o bot NUNCA enxerga. Não dá erro, não entra na janela, não
-    apaga item nenhum: é uma falha muda, do mesmo feitio da que custou sete
-    horas em 16/09/2026.
+    Devolve (convertidos, recusados).
 
-    A conversão é do que o decodificador entregou: o JPEG já perdeu o que tinha
-    de perder quando foi salvo, e o PNG guarda exatamente os pixels que o
-    `matchTemplate` vai comparar.
+    POR QUE ISTO MORA AQUI. O deletador varre `*.png` -- um JPG ou um BMP
+    naquela pasta é um arquivo que o bot NUNCA enxerga. Não dá erro, não entra
+    na janela, não apaga item nenhum: é uma falha muda, do mesmo feitio da que
+    custou sete horas em 16/09/2026.
+
+    A conversão é do que o decodificador entregou, e os dois formatos chegam
+    aqui por motivos opostos: o JPEG já perdeu o que tinha de perder quando foi
+    salvo, e o PNG guarda o que sobrou; o **BMP não perdeu nada** -- ele e o PNG
+    são os dois sem perda, então a imagem sai bit a bit a mesma, só que oito
+    vezes menor. O BMP entrou em 19/09/2026, quando o usuário trouxe 14
+    templates novos: *"boa parte foi em bmp pois era assim que encontrei"*.
 
     NÃO SOBRESCREVE. PNG de mesmo nome já existente é motivo para RECUSAR e
     avisar -- apagar template é irreversível e `data/` não é versionado.
@@ -118,7 +123,10 @@ def converter_para_png(pasta: Path) -> tuple[list[str], list[str]]:
 
     convertidos: list[str] = []
     recusados: list[str] = []
-    for jpg in sorted(pasta.glob("*.jp*g"), key=lambda p: p.name.casefold()):
+    originais = sorted((p for padrao in ("*.jp*g", "*.bmp")
+                        for p in pasta.glob(padrao)),
+                       key=lambda p: p.name.casefold())
+    for jpg in originais:
         destino = jpg.with_suffix(".png")
         if destino.exists():
             recusados.append(f"{jpg.name} (já existe {destino.name})")
@@ -182,7 +190,6 @@ def planejar(atuais: dict[str, str] | None = None) -> dict:
 # (`humanizar(arquivo) == rotulo`). Escreveu o nome de verdade, o item sai do
 # grupo sozinho -- a linha aqui pode ficar, que ela não faz mais efeito.
 SEM_NOME_AINDA = {
-    "SF.png",            # "Sacking Frock"? a lista de outro bot tem o item
     "charm.png",         # "Return Charm"? há três "Charm" diferentes no jogo
     "Bife.png",          # "Red Bull Steak"? "bife" é bife em português
     "DarkSM.png",        # "Dark Sm" também no outro bot -- os dois herdaram
@@ -190,12 +197,16 @@ SEM_NOME_AINDA = {
 }
 GRUPOS = {
     1: ("EQUIPAMENTO, POR CLASSE",
-        "A unidade do número é a PEÇA (2 Cuff, 3 Armguard, 4 Kneedpad, "
+        "A unidade do número é a PEÇA (2 Cuff, 3 Armguard, 4 Kneepad, "
         "5 Boots,\n    # 6 Belt, 8 Robe) e a dezena é o TIER. Não há o que "
         "ajustar aqui:\n    # a sincronia gera todos, e o padrão nunca "
         "falha."),
     2: ("PEÇA SEM CLASSE E BOLSA",
-        "O arquivo não diz a classe, então o rótulo não inventa uma."),
+        "O arquivo não diz a classe, então o rótulo não inventa uma.\n"
+        "    # E do tier 7 em diante ela NÃO EXISTE: o set do 70/79 e o do 80\n"
+        "    # são padrão nas cinco classes, com o ÍCONE exatamente igual, então\n"
+        "    # há um modelo só para cada peça (usuário, 19/09/2026). Não há\n"
+        "    # família para completar aqui."),
     3: ("ITEM COM NOME",
         "Nome conferido no site oficial, na lista de outro bot ou no jogo.\n"
         "    # É aqui que se corrige um nome errado."),

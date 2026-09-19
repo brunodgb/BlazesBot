@@ -109,7 +109,10 @@ def test_TODO_modelo_de_verdade_tem_um_nome(pasta):
     # A peça já está no nome e a classe NÃO aparece: não se inventa.
     ("Cuff12.png", "Cuff lvl12"),
     ("Belt6.png", "Belt lvl6"),
-    ("Knee4.png", "Kneedpad lvl4"),
+    # KNEEPAD, e não "Kneedpad": é como o site oficial escreve, conferido em
+    # 19/09/2026 na tabela de equipamento básico das cinco classes. A grafia
+    # antiga sobreviveu meses porque ninguém tinha com o que comparar.
+    ("Knee4.png", "Kneepad lvl4"),
     # Fora do esquema de equipamento: só a normalização e o nível.
     ("SpinelOre.png", "Spinel Ore"),
     ("Amuleto29.png", "Amuleto lvl29"),

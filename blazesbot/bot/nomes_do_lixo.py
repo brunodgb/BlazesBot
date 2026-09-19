@@ -92,7 +92,7 @@ NOMES: dict[str, str] = {
     # ----------------------------------------------------------------------
     # APP / EQUIPAMENTO, POR CLASSE -- 105 modelos
     # ----------------------------------------------------------------------
-    # A unidade do número é a PEÇA (2 Cuff, 3 Armguard, 4 Kneedpad, 5 Boots,
+    # A unidade do número é a PEÇA (2 Cuff, 3 Armguard, 4 Kneepad, 5 Boots,
     # 6 Belt, 8 Robe) e a dezena é o TIER. Não há o que ajustar aqui:
     # a sincronia gera todos, e o padrão nunca falha.
     "Fairy3.png": "Armguard Fairy lvl3",
@@ -202,9 +202,13 @@ NOMES: dict[str, str] = {
     "Wizz68.png": "Robe Wizz lvl68",
 
     # ----------------------------------------------------------------------
-    # APP / PEÇA SEM CLASSE E BOLSA -- 35 modelos
+    # APP / PEÇA SEM CLASSE E BOLSA -- 40 modelos
     # ----------------------------------------------------------------------
     # O arquivo não diz a classe, então o rótulo não inventa uma.
+    # E do tier 7 em diante ela NÃO EXISTE: o set do 70/79 e o do 80
+    # são padrão nas cinco classes, com o ÍCONE exatamente igual, então
+    # há um modelo só para cada peça (usuário, 19/09/2026). Não há
+    # família para completar aqui.
     "Amuleto9.png": "Amuleto lvl9",
     "Amuleto19.png": "Amuleto lvl19",
     "Amuleto29.png": "Amuleto lvl29",
@@ -212,6 +216,7 @@ NOMES: dict[str, str] = {
     "Amuleto49.png": "Amuleto lvl49",
     "Amuleto59.png": "Amuleto lvl59",
     "Amuleto69.png": "Amuleto lvl69",
+    "Amuleto79.png": "Amuleto lvl79",
     "bag3.png": "Level 3 Gem Bag",
     "bag4.png": "Level 4 Gem Bag",
     "bag5.png": "Level 5 Gem Bag",
@@ -222,17 +227,20 @@ NOMES: dict[str, str] = {
     "Belt36.png": "Belt lvl36",
     "belt46.png": "Belt lvl46",
     "belt56.png": "Belt lvl56/66",
+    "Belt76.png": "Belt lvl76",
     "Cuff12.png": "Cuff lvl12",
     "Cuff22.png": "Cuff lvl22",
     "Cuff32.png": "Cuff lvl32",
     "Cuff42.png": "Cuff lvl42",
     "cuff52.png": "Cuff lvl52/62",
-    "Knee4.png": "Kneedpad lvl4",
-    "Knee14.png": "Kneedpad lvl14",
-    "Knee24.png": "Kneedpad lvl24",
-    "Knee34.png": "Kneedpad lvl34",
-    "Knee44.png": "Kneedpad lvl44",
-    "Knee54.png": "Kneedpad lvl54/64",
+    "Cuff72.png": "Cuff lvl72",
+    "Cuff80.png": "Cuff lvl80",
+    "Knee4.png": "Kneepad lvl4",
+    "Knee14.png": "Kneepad lvl14",
+    "Knee24.png": "Kneepad lvl24",
+    "Knee34.png": "Kneepad lvl34",
+    "Knee44.png": "Kneepad lvl44",
+    "Knee54.png": "Kneepad lvl54/64",
     "Ring7.png": "Ring lvl7",
     "Ring17.png": "Ring lvl17",
     "Ring27.png": "Ring lvl27",
@@ -240,9 +248,10 @@ NOMES: dict[str, str] = {
     "Ring47.png": "Ring lvl47",
     "Ring57.png": "Ring lvl57",
     "Ring67.png": "Ring lvl67",
+    "Ring77.png": "Ring lvl77",
 
     # ----------------------------------------------------------------------
-    # APP / ITEM COM NOME -- 84 modelos
+    # APP / ITEM COM NOME -- 95 modelos
     # ----------------------------------------------------------------------
     # Nome conferido no site oficial, na lista de outro bot ou no jogo.
     # É aqui que se corrige um nome errado.
@@ -250,6 +259,9 @@ NOMES: dict[str, str] = {
     "AnFur.png": "Animal Fur",
     "Aphothecary-Pill.png": "Apothecary Pill",
     "ApoCharm.png": "Apotropaion Charm",
+    "Armguard73.png": "Armguard lvl73",
+    "Armguard81.png": "Armguard lvl81",
+    "Armor78.png": "Armor lvl78",
     "Armor_Piece.png": "Armor Piece",
     "BambShoot.png": "Bamboo Shoot",
     "Bjewel.png": "Bandit Jewel",
@@ -261,12 +273,15 @@ NOMES: dict[str, str] = {
     "Blue-bell.png": "Blue Bell",
     "Blue-Id-Gem.png": "Blue Id Gem",
     "Blue_Wolf_Meat.png": "Blue Wolf Meat",
+    "Blueness-Stone.png": "Blueness Stone",
+    "Boots75.png": "Boots lvl75",
     "brtpil.png": "Breath Pill",
     "Bronze_Bell.png": "Bronze Bell",
     "Cowb.png": "Cowbane",
     "CrackBB.png": "Cracked Buddha Bone",
     "Crista_Bot.png": "Crystal Bottle",
     "CIronShot.png": "Cursed Iron Shot",
+    "Cuttle-Bone.png": "Cuttle Bone",
     "DarkBed.png": "Dark Bead",
     "DfrmtJos.png": "Deformity Joss",
     "dip.png": "Dipterocarp",
@@ -292,8 +307,11 @@ NOMES: dict[str, str] = {
     "HoneyS.png": "Honeysuckle",
     "Hot_Stone.png": "Hot Stone",
     "IceRime.png": "Ice Rime",
+    "Kneepad74.png": "Kneepad lvl74",
     "LascToken.png": "Lascivious Token",
     "Lion_Meat.png": "Lion Meat",
+    "Lizard-Meat.png": "Lizard Meat",
+    "Lygodium.png": "Lygodium",
     "MagOre.png": "Magnesium Ore",
     "Medium-Emerald.png": "Medium Emerald",
     "Medium-Ruby.png": "Medium Ruby",
@@ -308,12 +326,14 @@ NOMES: dict[str, str] = {
     "PhMet.png": "Ph Meat",
     "PoisonCup.png": "Poison Cup",
     "Polygonum.png": "Polygonum",
+    "Polypody.png": "Polypody",
     "Pork.png": "Pork",
     "PurBeastMeat.png": "Purple Beast Meat",
     "Purple-bell.png": "Purple Bell",
     "Rainnbow_Stone.png": "Rainbow Stone",
     "Red-bell.png": "Red Bell",
     "RottedSeed.png": "Rotted Seed",
+    "Sacking-Frock.png": "Sacking Frock",
     "Secret_silver.png": "Secret Silver Necklace",
     "Silver-bell.png": "Silver Bell",
     "Silver_Ore.png": "Silver Ore",
@@ -332,7 +352,7 @@ NOMES: dict[str, str] = {
     "Wood_Demon_Head.png": "Wood Demon Head",
 
     # ----------------------------------------------------------------------
-    # APP / AINDA SEM NOME -- É AQUI QUE VOCÊ ENTRA -- 5 modelos
+    # APP / AINDA SEM NOME -- É AQUI QUE VOCÊ ENTRA -- 4 modelos
     # ----------------------------------------------------------------------
     # O rótulo é o próprio nome do arquivo, porque ninguém sabe o nome de
     # verdade ainda. Viu o item no jogo? Escreva o nome aqui e ele sai
@@ -341,7 +361,6 @@ NOMES: dict[str, str] = {
     "charm.png": "charm",
     "DarkSM.png": "Dark SM",
     "Purple_Beast.png": "Purple Beast",
-    "SF.png": "SF",
 
     # ----------------------------------------------------------------------
     # LISTA DA HH -- data/templates/deletar_hh (16 modelos)

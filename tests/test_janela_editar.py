@@ -403,13 +403,13 @@ def test_rotulo_com_DOIS_niveis_entra_nas_DUAS_faixas():
 
     Três modelos servem dois tiers -- `cuff52.png` é o Cuff 52 E o 62 -- e o
     usuário marcou isso no rótulo: "Cuff lvl52/62". Ler só o primeiro número
-    escondia o item da faixa 60–69, que é justamente onde ele também mora.
+    escondia o item da faixa 60-69, que é justamente onde ele também mora.
     """
     bloco = JS.split("function lixoCasaNaFaixa(")[1].split("\n}")[0]
 
     assert r"/lvl(\d+(?:\/\d+)*)/g" in bloco, (
         "a leitura do nível voltou a ser de um número só; "
-        '"Cuff lvl52/62" some da faixa 60–69')
+        '"Cuff lvl52/62" some da faixa 60-69')
     assert 'split("/")' in bloco, "o segundo nível do rótulo deixou de contar"
     assert ".some((nivel)" in bloco, (
         "a faixa voltou a comparar um nível só, não todos os do rótulo")
