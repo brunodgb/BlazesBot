@@ -139,3 +139,57 @@ def test_a_sincronia_LIMPA_chave_sem_arquivo():
 
     assert "NaoExisteMaisNaPasta.png" in plano["orfaos"]
     assert "NaoExisteMaisNaPasta.png" not in sinc.bloco_do_dicionario(plano, {})
+
+
+# ===========================================================================
+# JPG NA PASTA É UM ARQUIVO QUE O BOT NUNCA ENXERGA
+# ===========================================================================
+
+def _jpg(caminho, cor=(20, 180, 90)):
+    import cv2
+    import numpy
+
+    quadro = numpy.full((8, 8, 3), cor, dtype=numpy.uint8)
+    assert cv2.imwrite(str(caminho), quadro)
+    return caminho
+
+
+def test_jpg_vira_png_e_o_jpg_SAI(tmp_path):
+    """O deletador varre `*.png`. JPG ali não da erro, não entra na janela e
+    não apaga nada -- some calado, que é o pior feitio de defeito."""
+    import cv2
+
+    from blazesbot.tools.sincronizar_nomes_do_lixo import converter_para_png
+
+    _jpg(tmp_path / "Ring7.jpg")
+    convertidos, recusados = converter_para_png(tmp_path)
+
+    assert convertidos == ["Ring7.jpg -> Ring7.png"] and not recusados
+    assert not (tmp_path / "Ring7.jpg").exists()
+    assert cv2.imread(str(tmp_path / "Ring7.png")) is not None
+
+
+def test_NUNCA_sobrescreve_um_png_que_ja_existe(tmp_path):
+    """Apagar template é irreversível e `data/` não é versionado: no conflito,
+    a ferramenta recusa e conta -- nunca decide sozinha qual dos dois fica."""
+    from blazesbot.tools.sincronizar_nomes_do_lixo import converter_para_png
+
+    _jpg(tmp_path / "Ring7.jpg")
+    (tmp_path / "Ring7.png").write_bytes(b"o png de antes")
+
+    convertidos, recusados = converter_para_png(tmp_path)
+
+    assert not convertidos and "já existe" in recusados[0]
+    assert (tmp_path / "Ring7.jpg").exists(), "apagou o jpg sem converter"
+    assert (tmp_path / "Ring7.png").read_bytes() == b"o png de antes"
+
+
+def test_arquivo_ilegivel_nao_some(tmp_path):
+    from blazesbot.tools.sincronizar_nomes_do_lixo import converter_para_png
+
+    (tmp_path / "Quebrado.jpg").write_bytes(b"isto nao e uma imagem")
+
+    convertidos, recusados = converter_para_png(tmp_path)
+
+    assert not convertidos and "não consegui ler" in recusados[0]
+    assert (tmp_path / "Quebrado.jpg").exists()

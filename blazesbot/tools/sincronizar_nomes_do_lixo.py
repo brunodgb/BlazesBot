@@ -77,6 +77,42 @@ def rotulo_padrao(arquivo: str) -> str:
     return re.sub(r"\s*(\d+)$", r" lvl\1", base)
 
 
+def converter_para_png(pasta: Path) -> tuple[list[str], list[str]]:
+    """Todo JPG da pasta vira PNG, e o JPG sai. Devolve (convertidos, recusados).
+
+    POR QUE ISTO MORA AQUI. O deletador varre `*.png` -- um JPG naquela pasta é
+    um arquivo que o bot NUNCA enxerga. Não dá erro, não entra na janela, não
+    apaga item nenhum: é uma falha muda, do mesmo feitio da que custou sete
+    horas em 16/09/2026.
+
+    A conversão é do que o decodificador entregou: o JPEG já perdeu o que tinha
+    de perder quando foi salvo, e o PNG guarda exatamente os pixels que o
+    `matchTemplate` vai comparar.
+
+    NÃO SOBRESCREVE. PNG de mesmo nome já existente é motivo para RECUSAR e
+    avisar -- apagar template é irreversível e `data/` não é versionado.
+    """
+    import cv2
+
+    convertidos: list[str] = []
+    recusados: list[str] = []
+    for jpg in sorted(pasta.glob("*.jp*g"), key=lambda p: p.name.casefold()):
+        destino = jpg.with_suffix(".png")
+        if destino.exists():
+            recusados.append(f"{jpg.name} (já existe {destino.name})")
+            continue
+        imagem = cv2.imread(str(jpg), cv2.IMREAD_UNCHANGED)
+        if imagem is None:
+            recusados.append(f"{jpg.name} (não consegui ler)")
+            continue
+        if not cv2.imwrite(str(destino), imagem):
+            recusados.append(f"{jpg.name} (não consegui gravar o PNG)")
+            continue
+        jpg.unlink()
+        convertidos.append(f"{jpg.name} -> {destino.name}")
+    return convertidos, recusados
+
+
 def _pngs(pasta: Path) -> list[str]:
     return sorted((p.name for p in pasta.glob("*.png")), key=str.casefold)
 
@@ -122,6 +158,15 @@ def bloco_do_dicionario(plano: dict, atuais: dict[str, str]) -> str:
 
 
 def main() -> int:
+    # O FORMATO VEM ANTES DA LISTA: o JPG convertido é uma chave nova, e o
+    # plano precisa enxergá-lo já como PNG.
+    for pasta in (deletador.PASTA_DO_LIXO, deletador.PASTA_DO_LIXO_DA_HH):
+        convertidos, recusados = converter_para_png(pasta)
+        for linha in convertidos:
+            print(f"  ~ {linha}")
+        for linha in recusados:
+            print(f"  ! NÃO convertido: {linha}")
+
     plano = planejar()
     if not plano["novos"] and not plano["orfaos"]:
         print("Dicionário e pasta já estão em sincronia.")

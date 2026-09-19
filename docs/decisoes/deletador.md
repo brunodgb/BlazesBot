@@ -654,3 +654,15 @@ Ela acrescenta chave nova com o rótulo padrão, remove a órfã e **não toca e
 rótulo já escrito à mão**. Não há teste exigindo sincronia: ele reprovaria na
 máquina de quem tem outros PNG, e `data/` não é versionado — a sincronia é uma
 AÇÃO, não uma trava.
+
+### JPG na pasta é um arquivo que o bot nunca enxerga
+
+`modelos_na_pasta` varre `*.png`. Um JPG ali dentro **não dá erro, não entra na
+janela e não apaga item nenhum** — some calado, do mesmo feitio da falha que
+custou sete horas em 16/09/2026.
+
+Por isso a sincronia converte antes de listar: o JPEG já perdeu o que tinha de
+perder quando foi salvo, e o PNG guarda exatamente os pixels que o
+`matchTemplate` vai comparar. **Ela nunca sobrescreve** — PNG de mesmo nome já
+existente faz a conversão ser recusada e contada, porque apagar template é
+irreversível e `data/` não é versionado.

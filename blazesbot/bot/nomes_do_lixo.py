@@ -59,13 +59,16 @@ from pathlib import Path
 # volta a valer. E PNG novo na pasta também aparece sem passar por aqui.
 NOMES: dict[str, str] = {
     # ---------------------------------------------------------------
-    # LISTA DO APP -- data/templates/deletar (209 modelos)
+    # LISTA DO APP -- data/templates/deletar (214 modelos)
     # ---------------------------------------------------------------
     "AlmOre.png": "Alm Ore",
+    "Amuleto19.png": "Amuleto lvl19",
     "Amuleto29.png": "Amuleto lvl29",
     "Amuleto39.png": "Amuleto lvl39",
     "Amuleto49.png": "Amuleto lvl49",
     "Amuleto59.png": "Amuleto lvl59",
+    "Amuleto69.png": "Amuleto lvl69",
+    "Amuleto9.png": "Amuleto lvl9",
     "AnFur.png": "An Fur",
     "ApoCharm.png": "Apo Charm",
     "Armor_Piece.png": "Armor Piece",
@@ -193,8 +196,10 @@ NOMES: dict[str, str] = {
     "Ring17.png": "Ring lvl17",
     "Ring27.png": "Ring lvl27",
     "Ring37.png": "Ring lvl37",
-    "ring47.png": "Ring lvl47",
+    "Ring47.png": "Ring lvl47",
+    "Ring57.png": "Ring lvl57",
     "Ring67.png": "Ring lvl67",
+    "Ring7.png": "Ring lvl7",
     "RottedSeed.png": "Rotted Seed",
     "ScarpPill.png": "Scarp Pill",
     "Secret_silver.png": "Secret silver",
