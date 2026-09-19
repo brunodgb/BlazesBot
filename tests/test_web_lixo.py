@@ -199,3 +199,48 @@ def test_fechar_o_dialogo_nao_e_erro(conta, monkeypatch, funcao):
     r = (web_lixo.exportar(conta, "app", []) if funcao == "exportar"
          else web_lixo.importar(conta, "app"))
     assert r["cancelado"] is True and r["erro"] == ""
+
+
+# ===========================================================================
+# A ORDEM DA GRADE — pelo que está ESCRITO, com nível lido como número
+# ===========================================================================
+
+@pytest.mark.parametrize("bagunca, esperado", [
+    # A queixa exata do usuário: o menor caía no fim da fila.
+    (["Belt lvl16", "Belt lvl6", "Belt lvl56"],
+     ["Belt lvl6", "Belt lvl16", "Belt lvl56"]),
+    # A família inteira junta, e em sequência de nível.
+    (["Robe Fada lvl8", "Armguard Fada lvl15", "Armguard Fada lvl8"],
+     ["Armguard Fada lvl8", "Armguard Fada lvl15", "Robe Fada lvl8"]),
+    # Sem número, é alfabética pura e ignora caixa.
+    (["Zinc Ore", "alm Ore", "Bag"], ["alm Ore", "Bag", "Zinc Ore"]),
+])
+def test_a_ordem_le_o_nivel_como_NUMERO(bagunca, esperado):
+    assert sorted(bagunca, key=web_lixo.ordem_da_tela) == esperado
+
+
+def test_texto_e_numero_nunca_se_comparam(conta):
+    """A chave alterna texto e número, então onde os textos empatam o próximo
+    pedaço é número dos DOIS lados. Um `TypeError` aqui derrubaria a janela
+    inteira -- e só para um par de nomes específico, o que é o pior tipo de
+    defeito para achar."""
+    nomes = ["Bag", "Bag2", "bag lvl3", "Belt lvl6", "Belt lvl16", "b", "",
+             "12", "lvl9 Coisa", "Coisa 9 lvl9"]
+    sorted(nomes, key=web_lixo.ordem_da_tela)      # não levanta
+
+
+def test_a_grade_ja_chega_ordenada(conta, tmp_path, monkeypatch):
+    """Ponta a ponta: o `itens` entrega na ordem da tela, e não na do disco.
+
+    `sorted()` por nome de arquivo poria `Belt6.png` DEPOIS de `Belt16.png`.
+    """
+    pasta = tmp_path / "deletar"
+    for nome in ("Belt16.png", "Belt6.png", "AlmOre.png"):
+        (pasta / nome).write_bytes(b"png-de-mentira")
+    monkeypatch.setitem(web_lixo.LISTAS, "app", (pasta, "app"))
+
+    rotulos = [i["rotulo"] for i in web_lixo.itens(conta, "app")["itens"]]
+
+    # "Bag" e "Blue Wolf Meat" vêm da fixture e entram na mesma ordenação.
+    assert rotulos == ["Alm Ore", "Bag", "Belt lvl6", "Belt lvl16",
+                       "Blue Wolf Meat"], rotulos

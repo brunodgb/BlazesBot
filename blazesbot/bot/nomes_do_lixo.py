@@ -59,11 +59,13 @@ from pathlib import Path
 # volta a valer. E PNG novo na pasta também aparece sem passar por aqui.
 NOMES: dict[str, str] = {
     # ---------------------------------------------------------------
-    # LISTA DO APP -- data/templates/deletar (208 modelos)
+    # LISTA DO APP -- data/templates/deletar (209 modelos)
     # ---------------------------------------------------------------
     "AlmOre.png": "Alm Ore",
+    "Amuleto29.png": "Amuleto lvl29",
     "Amuleto39.png": "Amuleto lvl39",
     "Amuleto49.png": "Amuleto lvl49",
+    "Amuleto59.png": "Amuleto lvl59",
     "AnFur.png": "An Fur",
     "ApoCharm.png": "Apo Charm",
     "Armor_Piece.png": "Armor Piece",
@@ -131,7 +133,6 @@ NOMES: dict[str, str] = {
     "FireSneakMeat.png": "Fire Sneak Meat",
     "FlameOre.png": "Flame Ore",
     "FlyingSnake.png": "Flying Snake",
-    "Fog-Amu.png": "Fog Amu",
     "FrMush.png": "Fr Mush",
     "FTMC.png": "FTMC",
     "GlosBead.png": "Glos Bead",
@@ -189,6 +190,7 @@ NOMES: dict[str, str] = {
     "Purple_Beast.png": "Purple Beast",
     "Rainnbow_Stone.png": "Rainnbow Stone",
     "Red-bell.png": "Red bell",
+    "Ring17.png": "Ring lvl17",
     "Ring27.png": "Ring lvl27",
     "Ring37.png": "Ring lvl37",
     "ring47.png": "Ring lvl47",
@@ -247,7 +249,6 @@ NOMES: dict[str, str] = {
     "ToughTusk.png": "Tough Tusk",
     "VultureMeat.png": "Vulture Meat",
     "WDHead.png": "WDHead",
-    "Wind_Amulet.png": "Wind Amulet",
     "Wizz13.png": "Armguard Wizz lvl13",
     "Wizz15.png": "Boots Wizz lvl15",
     "Wizz18.png": "Robe Wizz lvl18",

@@ -724,5 +724,5 @@ ligar código não testado.
 | `SEGUNDOS_ENTRE_ECOS` | `5.0` | [blazesbot/tools/vigiar_combate.py:58](blazesbot/tools/vigiar_combate.py#L58) | — | De quanto em quanto tempo repetir uma linha que NÃO mudou. |
 | `SEGUNDOS_PADRAO` | `900.0` | [blazesbot/tools/vigiar_combate.py:51](blazesbot/tools/vigiar_combate.py#L51) | ler_camera.py | Teto padrão, para a ferramenta fechar sozinha se você esquecer dela aberta. |
 | `MAX_LINHAS_GUARDADAS` | `12000` | [blazesbot/web_app.py:87](blazesbot/web_app.py#L87) | main_window.py | Linhas guardadas em memória para permitir refiltrar por conta, espelho do |
-| `MARCA_DO_ARQUIVO` | `'blazesbot-itens-do-deletador'` | [blazesbot/web_lixo.py:126](blazesbot/web_lixo.py#L126) | — | LEVAR A SELEÇÃO PARA OUTRA CONTA — ou para outra máquina |
-| `VERSAO_DO_ARQUIVO` | `1` | [blazesbot/web_lixo.py:127](blazesbot/web_lixo.py#L127) | — | — |
+| `MARCA_DO_ARQUIVO` | `'blazesbot-itens-do-deletador'` | [blazesbot/web_lixo.py:151](blazesbot/web_lixo.py#L151) | — | LEVAR A SELEÇÃO PARA OUTRA CONTA — ou para outra máquina |
+| `VERSAO_DO_ARQUIVO` | `1` | [blazesbot/web_lixo.py:152](blazesbot/web_lixo.py#L152) | — | — |

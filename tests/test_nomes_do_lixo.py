@@ -88,3 +88,54 @@ def test_TODO_modelo_de_verdade_tem_um_nome(pasta):
         pytest.skip(f"{pasta} não existe nesta instalação")
     for png in caminho.glob("*.png"):
         assert n.rotulo(png.name).strip(), png.name
+
+
+# ===========================================================================
+# O RÓTULO PADRÃO — o que um PNG novo ganha ao entrar na pasta
+# ===========================================================================
+
+@pytest.mark.parametrize("arquivo, esperado", [
+    # O dígito final diz a peça, e a classe sai do próprio nome.
+    ("Sin13.png", "Armguard Sin lvl13"),
+    ("Wizz68.png", "Robe Wizz lvl68"),
+    ("MONK65.png", "Boots Monk lvl65"),
+    ("Fada38.png", "Robe Fada lvl38"),
+    ("Fairy5.png", "Boots Fairy lvl5"),
+    # A peça já está no nome e a classe NÃO aparece: não se inventa.
+    ("Cuff12.png", "Cuff lvl12"),
+    ("Belt6.png", "Belt lvl6"),
+    ("Knee4.png", "Kneedpad lvl4"),
+    # Fora do esquema de equipamento: só a normalização e o nível.
+    ("SpinelOre.png", "Spinel Ore"),
+    ("Amuleto29.png", "Amuleto lvl29"),
+    ("Blue_Wolf_Meat.png", "Blue Wolf Meat"),
+    ("bag3.png", "bag lvl3"),
+])
+def test_o_rotulo_que_um_png_novo_ganha(arquivo, esperado):
+    from blazesbot.tools.sincronizar_nomes_do_lixo import rotulo_padrao
+
+    assert rotulo_padrao(arquivo) == esperado
+
+
+def test_a_sincronia_PRESERVA_o_que_foi_escrito_a_mao():
+    """O ganho inteiro da ferramenta é poder rodá-la sem medo: quem escreveu
+    "Carne de Lobo Azul" não perde isso porque um vizinho mudou de nome."""
+    from blazesbot.tools import sincronizar_nomes_do_lixo as sinc
+
+    atuais = {"Blue_Wolf_Meat.png": "Carne de Lobo Azul"}
+    plano = sinc.planejar(atuais)
+    bloco = sinc.bloco_do_dicionario(plano, atuais)
+
+    assert '"Blue_Wolf_Meat.png": "Carne de Lobo Azul",' in bloco
+    # E o que não tinha rótulo ganha o padrão, na mesma passada.
+    assert '"Sin13.png": "Armguard Sin lvl13",' in bloco
+
+
+def test_a_sincronia_LIMPA_chave_sem_arquivo():
+    """Entrada órfã não descreve nada -- e some da janela sem avisar."""
+    from blazesbot.tools import sincronizar_nomes_do_lixo as sinc
+
+    plano = sinc.planejar({"NaoExisteMaisNaPasta.png": "Fantasma"})
+
+    assert "NaoExisteMaisNaPasta.png" in plano["orfaos"]
+    assert "NaoExisteMaisNaPasta.png" not in sinc.bloco_do_dicionario(plano, {})

@@ -35,6 +35,7 @@ from __future__ import annotations
 
 import base64
 import json
+import re
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -55,6 +56,26 @@ def _bloco(conta: Account, lista: str):
         raise ValueError(f"lista desconhecida: {lista!r}")
     pasta, atributo = LISTAS[lista]
     return pasta, getattr(conta.settings, atributo)
+
+
+def ordem_da_tela(rotulo: str) -> list:
+    """A chave de ordenação da grade: alfabética, mas com NÚMERO como número.
+
+    A ordem vinha do nome do ARQUIVO, e por isso `Belt6.png` caía depois de
+    `belt56.png` -- o usuário via "Belt lvl16, lvl26, lvl36, lvl46, lvl56,
+    lvl6" e tinha de procurar o menor no fim da fila.
+
+    Ordenar pelo RÓTULO resolve as duas coisas de uma vez: itens iguais ficam
+    colados (o prefixo "Armguard Fada lvl" é idêntico entre eles) e a família
+    inteira aparece em sequência de nível, do menor para o maior.
+
+    `"Belt lvl6"` vira `["belt lvl", 6, ""]`. Quebrar em pedaços alternados de
+    texto e número garante que a comparação sempre encontre o mesmo tipo na
+    mesma posição: onde os textos empatam, o próximo pedaço é número dos dois
+    lados.
+    """
+    return [int(p) if p.isdigit() else p.casefold()
+            for p in re.split(r"(\d+)", rotulo)]
 
 
 def _embutir(png: Path) -> str:
@@ -86,6 +107,10 @@ def itens(conta: Account, lista: str) -> dict[str, Any]:
         "imagem": _embutir(png),
         "ativo": png.name not in guardados,
     } for png in achados]
+    # A ORDEM É A DO QUE ESTÁ ESCRITO, não a do nome do arquivo -- ver
+    # `ordem_da_tela`. O nome do arquivo entra só como desempate, para dois
+    # rótulos iguais não trocarem de lugar entre uma abertura e outra.
+    itens_da_tela.sort(key=lambda i: (ordem_da_tela(i["rotulo"]), i["arquivo"]))
     na_pasta = {png.name for png in achados}
     return {
         "ok": True,

@@ -607,3 +607,50 @@ acompanhando o número, e o Cancelar com alteração pendente abrindo a pergunta
 A receita do harness: Chrome com CDP pelo `test-web.ps1`, o dev server do Vite
 (no `file://` o erro de módulo vem opaco), e o stub da ponte injetado por
 `<script>` depois do load, seguido de um `pywebviewready` disparado à mão.
+
+## Como cada modelo se chama, e a ordem da grade — 19/09/2026
+
+### A convenção dos nomes
+
+Os modelos de equipamento seguem um esquema que o usuário leu na tela, item por
+item, e que agora está executável em `tools/sincronizar_nomes_do_lixo.py`:
+
+| no arquivo | vira | regra |
+|---|---|---|
+| `SpinelOre` | Spinel Ore | separador **e maiúscula no meio** viram espaço |
+| `Sin13` | Armguard Sin lvl13 | o **dígito final** diz a peça; a classe está no nome |
+| `Wizz68` | Robe Wizz lvl68 | 2 Cuff · 3 Armguard · 4 Kneedpad · 5 Boots · 6 Belt · 8 Robe |
+| `Cuff12` | Cuff lvl12 | a peça já está escrita e a classe **não aparece** |
+| `Amuleto39` | Amuleto lvl39 | fora do esquema: só normalização e nível |
+
+**O corte do camelCase reverteu uma decisão de 18/09.** Ela se recusava a
+separar "para não estragar `BAG7` e `bag3`", e o medo era infundado: o corte
+acontece só entre MINÚSCULA e MAIÚSCULA, fronteira que não existe nesses dois.
+
+**Classe não se inventa.** `Cuff12`, `Belt16`, `Knee4` e `Ring27` ficam sem
+classe porque o arquivo não diz qual é. Rótulo errado num item que o usuário
+decide apagar OLHANDO é pior que rótulo genérico.
+
+**O dígito da frente é o TIER, não a classe** — medido no próprio dado: a
+maioria dos arquivos já traz a classe (`Sin`, `Wizz`, `Monk`, `Tamer`, `Fada`,
+`Fairy`), e o dígito varia de 1 a 6 para a MESMA classe (`Sin3`, `Sin13`,
+`Sin23`, ... `Sin63`).
+
+### A ordem da grade é a do RÓTULO, com nível lido como número
+
+Ela vinha do nome do ARQUIVO, e por isso `Belt6.png` caía depois de
+`belt56.png`: o usuário via "lvl16, lvl26, lvl36, lvl46, lvl56, lvl6" e
+precisava caçar o menor no fim da fila.
+
+Ordenar pelo rótulo com chave natural (`web_lixo.ordem_da_tela`) resolve as duas
+coisas de uma vez: itens iguais ficam colados — o prefixo "Armguard Fada lvl" é
+idêntico entre eles — e a família inteira aparece em sequência de nível.
+
+### Renomeou um PNG? Rode a sincronia
+
+    python -m blazesbot.tools.sincronizar_nomes_do_lixo
+
+Ela acrescenta chave nova com o rótulo padrão, remove a órfã e **não toca em
+rótulo já escrito à mão**. Não há teste exigindo sincronia: ele reprovaria na
+máquina de quem tem outros PNG, e `data/` não é versionado — a sincronia é uma
+AÇÃO, não uma trava.
