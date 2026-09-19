@@ -155,24 +155,103 @@ def planejar(atuais: dict[str, str] | None = None) -> dict:
     }
 
 
-def bloco_do_dicionario(plano: dict, atuais: dict[str, str]) -> str:
-    """O texto do `NOMES` inteiro, na ordem da pasta."""
-    def linhas(nomes: list[str]) -> list[str]:
-        return [f'    "{n}": "{atuais.get(n) or plano["novos"][n]}",'
-                for n in nomes]
+# ===========================================================================
+# EM QUE GRUPO CADA LINHA CAI -- e por que o arquivo não é mais alfabético
+# ===========================================================================
+#
+# A ordem era a da pasta (alfabética), e isso era bom para CONFERIR: a mesma
+# sequência da tela. Mas quem edita este arquivo não confere, ele ACERTA UM
+# NOME -- e nessa tarefa o alfabeto espalha: "Fairy25" longe de "Fairy28",
+# os 105 equipamentos (que ninguém precisa tocar) misturados com os dez itens
+# que estão esperando alguém descobrir como se chamam.
+#
+# Pedido do usuário em 19/09/2026: *"deixe melhor organizado para ser de fácil
+# entendimento para eu como desenvolvedor ajustar"*.
+#
+# Os grupos 1, 2 e 3 saem do NOME DO ARQUIVO, nunca de lista escrita à mão --
+# uma lista dessas precisaria de manutenção a cada PNG novo e envelheceria
+# calada.
+#
+# O GRUPO 4 PRECISOU DE UMA LISTA, e a tentativa de deduzi-lo é que mostrou por
+# quê: "rótulo igual ao nome do arquivo" parecia significar "ninguém deu nome",
+# e pegou 42 modelos -- porque `Hot_Stone.png` se chama "Hot Stone" mesmo. O
+# que separa `SF` de `Hot Stone` não está no texto: é saber que um deles não é
+# nome de nada. Isso se descobre olhando o item, então mora numa lista.
+#
+# A lista só MARCA o suspeito; quem confirma é a regra derivada ao lado dela
+# (`humanizar(arquivo) == rotulo`). Escreveu o nome de verdade, o item sai do
+# grupo sozinho -- a linha aqui pode ficar, que ela não faz mais efeito.
+SEM_NOME_AINDA = {
+    "SF.png",            # "Sacking Frock"? a lista de outro bot tem o item
+    "charm.png",         # "Return Charm"? há três "Charm" diferentes no jogo
+    "Bife.png",          # "Red Bull Steak"? "bife" é bife em português
+    "DarkSM.png",        # "Dark Sm" também no outro bot -- os dois herdaram
+    "Purple_Beast.png",  # é a fera ou o "Purple Beast Meat", que já existe?
+}
+GRUPOS = {
+    1: ("EQUIPAMENTO, POR CLASSE",
+        "A unidade do número é a PEÇA (2 Cuff, 3 Armguard, 4 Kneedpad, "
+        "5 Boots,\n    # 6 Belt, 8 Robe) e a dezena é o TIER. Não há o que "
+        "ajustar aqui:\n    # a sincronia gera todos, e o padrão nunca "
+        "falha."),
+    2: ("PEÇA SEM CLASSE E BOLSA",
+        "O arquivo não diz a classe, então o rótulo não inventa uma."),
+    3: ("ITEM COM NOME",
+        "Nome conferido no site oficial, na lista de outro bot ou no jogo.\n"
+        "    # É aqui que se corrige um nome errado."),
+    4: ("AINDA SEM NOME -- É AQUI QUE VOCÊ ENTRA",
+        "O rótulo é o próprio nome do arquivo, porque ninguém sabe o nome de\n"
+        "    # verdade ainda. Viu o item no jogo? Escreva o nome aqui e ele "
+        "sai\n    # desta seção sozinho na próxima sincronia."),
+}
 
-    risca = "    # ---------------------------------------------------------------"
-    partes = [
-        "NOMES: dict[str, str] = {",
-        risca,
-        f"    # LISTA DO APP -- data/templates/deletar ({len(plano['app'])} modelos)",
-        risca,
-        *linhas(plano["app"]),
-        "",
+
+def familia(arquivo: str, rotulo: str) -> tuple[int, str, int]:
+    """(grupo, chave, nível) de uma linha. Ver `GRUPOS`."""
+    base = Path(arquivo).stem
+    achado = re.match(r"^([A-Za-z]+?)[\s_-]*(\d+)$", base)
+    if achado:
+        prefixo, nivel = achado.group(1).lower(), int(achado.group(2))
+        if prefixo in CLASSES:
+            return (1, CLASSES[prefixo], nivel)
+        if prefixo in PECAS_NO_NOME | set(NOMES_DO_JOGO) | {"amuleto"}:
+            return (2, prefixo, nivel)
+    if arquivo in SEM_NOME_AINDA and humanizar(arquivo) == rotulo:
+        return (4, base.casefold(), 0)
+    return (3, (rotulo or base).casefold(), 0)
+
+
+def bloco_do_dicionario(plano: dict, atuais: dict[str, str]) -> str:
+    """O texto do `NOMES` inteiro, em grupos. Ver `GRUPOS`."""
+    def rotulo_de(arquivo: str) -> str:
+        return atuais.get(arquivo) or plano["novos"][arquivo]
+
+    risca = "    # " + "-" * 70
+    partes = ["NOMES: dict[str, str] = {"]
+
+    for numero in sorted(GRUPOS):
+        titulo, explicacao = GRUPOS[numero]
+        nomes = [n for n in plano["app"]
+                 if familia(n, rotulo_de(n))[0] == numero]
+        if not nomes:
+            continue
+        nomes.sort(key=lambda n: familia(n, rotulo_de(n))[1:])
+        partes += [
+            risca,
+            f"    # APP / {titulo} -- {len(nomes)} modelos",
+            risca,
+            f"    # {explicacao}",
+            *[f'    "{n}": "{rotulo_de(n)}",' for n in nomes],
+            "",
+        ]
+
+    partes += [
         risca,
         f"    # LISTA DA HH -- data/templates/deletar_hh ({len(plano['hh'])} modelos)",
         risca,
-        *linhas(plano["hh"]),
+        "    # Os talismãs assistentes que caem na Happiness Hall. Lista à "
+        "parte porque\n    # o que é lixo numa cave é mercadoria na outra.",
+        *[f'    "{n}": "{rotulo_de(n)}",' for n in plano["hh"]],
         "}",
         "",
     ]
@@ -190,7 +269,16 @@ def main() -> int:
             print(f"  ! NÃO convertido: {linha}")
 
     plano = planejar()
-    if not plano["novos"] and not plano["orfaos"]:
+    fonte = open(ARQUIVO, encoding="utf-8", newline="").read()
+    inicio = fonte.index("NOMES: dict[str, str] = {")
+    fim = fonte.index("\n}\n", inicio) + 3
+    bloco = bloco_do_dicionario(plano, NOMES)
+
+    # A COMPARAÇÃO É COM O TEXTO GERADO, e não só com a lista de chaves. As
+    # duas coisas saem de sincronia por caminhos diferentes: a chave, quando um
+    # PNG entra ou sai; a ORGANIZAÇÃO, quando alguém muda um grupo aqui neste
+    # arquivo. Olhando só as chaves, a segunda nunca chegava ao dicionário.
+    if not plano["novos"] and not plano["orfaos"] and fonte[inicio:fim] == bloco:
         print("Dicionário e pasta já estão em sincronia.")
         return 0
 
@@ -199,13 +287,13 @@ def main() -> int:
     for nome, rotulo in plano["orfaos"].items():
         print(f"  - {nome:<28} {rotulo}   (PNG não existe mais)")
 
-    fonte = open(ARQUIVO, encoding="utf-8", newline="").read()
-    inicio = fonte.index("NOMES: dict[str, str] = {")
-    fim = fonte.index("\n}\n", inicio) + 3
-    novo = fonte[:inicio] + bloco_do_dicionario(plano, NOMES) + fonte[fim:]
-    open(ARQUIVO, "w", encoding="utf-8", newline="").write(novo)
-    print(f"\n{ARQUIVO}: {len(plano['novos'])} entrada(s) nova(s), "
-          f"{len(plano['orfaos'])} removida(s).")
+    open(ARQUIVO, "w", encoding="utf-8", newline="").write(
+        fonte[:inicio] + bloco + fonte[fim:])
+    if plano["novos"] or plano["orfaos"]:
+        print(f"\n{ARQUIVO}: {len(plano['novos'])} entrada(s) nova(s), "
+              f"{len(plano['orfaos'])} removida(s).")
+    else:
+        print(f"\n{ARQUIVO}: mesmas chaves, organização regravada.")
     return 0
 
 
