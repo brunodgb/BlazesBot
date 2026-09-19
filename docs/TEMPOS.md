@@ -155,7 +155,7 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | `SEGUNDOS_SENTADO` | 30 s | = | TETO | [cura.py:175](blazesbot/bot/app/cura.py#L175) | `_curar_sentado` | Teto sentado, para quem não tem tecla de poção configurada. |
 | `SEGUNDOS_ESPERANDO_SAIR_DE_BATALHA` | 2 s | = | FIXO | [cura.py:182](blazesbot/bot/app/cura.py#L182) | `_esperar_sair_de_batalha` | Quanto esperar a flag de batalha baixar depois que a macro termina. |
 | `SEGUNDOS_PARA_SENTAR_COM_A_POCAO` | 1 s | *novo* | FIXO | [cura.py:193](blazesbot/bot/app/cura.py#L193) | `_a_pocao_saiu` | Quanto esperar o personagem SENTAR depois de apertar a tecla de poção. |
-| `PASSO_DA_PERGUNTA` | 0.1 s | = | PASSO | [cura.py:198](blazesbot/bot/app/cura.py#L198) | `_esperar_sair_de_batalha, _voltar_ao_ponto (+2)` | Cadência de toda pergunta deste módulo. Leitura de memória é ~1 µs; o custo é |
+| `PASSO_DA_PERGUNTA` | 0.1 s | = | PASSO | [cura.py:198](blazesbot/bot/app/cura.py#L198) | `_passo` | Cadência de toda pergunta deste módulo. Leitura de memória é ~1 µs; o custo é |
 | `FATIA_DE_ESPERA` | 0.08 s | **0.05 s** ⚠ | PASSO | [executor.py:104](blazesbot/bot/app/executor.py#L104) | `_esperar, _dormir (+1)` | Fatia máxima de espera antes de conferir se é para continuar. 0,05 s dá parada |
 | `CADENCIA_DO_AVISO_DE_COMIDA` | 300 s (5 min) | *novo* | PASSO | [executor.py:163](blazesbot/bot/app/executor.py#L163) | `_avisar_se_a_comida_esta_presa` | Entre dois avisos de "a comida venceu e a batalha não deixa alimentar". |
 | `INTERVALO_ENTRE_INVOCACOES` | 6 s | **10 s** ⚠ | FIXO | [executor.py:172](blazesbot/bot/app/executor.py#L172) | `garantir_pet` | Intervalo mínimo entre dois toques na tecla do pet. |
@@ -177,7 +177,7 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | `ESPERA_ENTRE_TABS` | 0.6 s | *novo* | FIXO | [executor.py:769](blazesbot/bot/app/executor.py#L769) | `_garantir_alvo` | Espaçamento entre um salto da roda do TAB e o seguinte. |
 | `PASSO_DA_ESPERA_DA_BASE` | 0.1 s | = | PASSO | [executor.py:784](blazesbot/bot/app/executor.py#L784) | `_esperar_chegar_na_base` | Cadência da pergunta "já cheguei?". Leitura de posição é de microssegundos; o |
 | `SEGUNDOS_DO_PASSO_DO_SHUFFLE` | 3 s | *novo* | PASSO | [executor.py:820](blazesbot/bot/app/executor.py#L820) | `_fazer_shuffle_anti_afk` | Cada perna do shuffle anti-AFK (ida e volta). Era `time.sleep(1.0)` cego duas |
-| *literal em* `rodar` | 0.25 s | = | FIXO | [executor.py:3483](blazesbot/bot/app/executor.py#L3483) | `rodar` | Laço contínuo: volta após volta, até `continuar()` devolver False. |
+| *literal em* `rodar` | 0.25 s | = | FIXO | [executor.py:3489](blazesbot/bot/app/executor.py#L3489) | `rodar` | Laço contínuo: volta após volta, até `continuar()` devolver False. |
 | `ESPERA_ENTRE_TABS_DO_ALINHAMENTO` | 0.5 s | *novo* | FIXO | [sincronia.py:97](blazesbot/bot/app/sincronia.py#L97) |  | Cadência do TAB durante o alinhamento. |
 | `PASSO_DA_ESPERA_DA_LARGADA` | 0.04 s | *novo* | PASSO | [sincronia.py:100](blazesbot/bot/app/sincronia.py#L100) | `_esperar_os_seguidores, _entrar_na_largada` | De quanto em quanto tempo o seguidor confere se a largada saiu. |
 | `SEGUNDOS_SEM_MUDANCA_PARA_TAB` | 3 s | *novo* | FIXO | [sincronia.py:108](blazesbot/bot/app/sincronia.py#L108) | `conferir_a_parada` | Sem trocar de estado de batalha por este tempo, dá TAB. |

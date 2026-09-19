@@ -2178,6 +2178,21 @@ class AccountSupervisor(threading.Thread):
         # convite sem sair dela.
         _aceitar_convite, _fechar_o_aceitador = _aceitador_do_seguidor(self)
 
+        def pulso_do_time() -> None:
+            """ESTOU DE PÉ + ACEITO CONVITE, na cadência das esperas fatiadas.
+
+            As duas coisas juntas porque o problema era o mesmo: o que roda uma
+            vez por volta não serve para nenhuma das duas. O sinal de vida vale
+            30 s e uma volta passa disso (75 s presos no laço da poção, medido
+            em 19/09/2026), e o líder espera poucos segundos por cada convite.
+
+            Custa duas escritas em dicionário; só vira clique quando há convite
+            anunciado.
+            """
+            _publicar_que_estou_de_pe(self, memoria_do_pet)
+            if _aceitar_convite is not None:
+                _aceitar_convite()
+
         def antes_de_cada_volta() -> None:
             """SINAL DE VIDA do seguidor + a barra de atalhos, por volta.
 
@@ -2225,6 +2240,10 @@ class AccountSupervisor(threading.Thread):
                 # o ecossistema, como o resto das teclas.
                 tecla_de_sentar=lambda: teclas.sit,
                 continuar=lambda: not self.stop_event.is_set(),
+                # A CURA É O TRECHO MAIS LONGO DO APP: cinco poções de 15 s são
+                # 75 s sem uma volta de macro, e nesses 75 s a conta sumia do
+                # mural e não atendia convite. Ver `cura._passo`.
+                pulso_do_time=pulso_do_time,
             )
 
         self._status("Modo APP LIGADO (macro de teclado)")
@@ -2441,7 +2460,7 @@ class AccountSupervisor(threading.Thread):
             antes_da_volta=antes_de_cada_volta,
             conferir_saude=conferir_saude,
             declarar_queda=declarar_queda,
-            aceitar_convite=_aceitar_convite,
+            pulso_do_time=pulso_do_time,
             limpar_a_bolsa=limpar_a_bolsa,
             # FUNÇÃO, e não número: mudar o "a cada N voltas" na interface com o
             # bot rodando passa a valer na volta seguinte, sem religar nada.

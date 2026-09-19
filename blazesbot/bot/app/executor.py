@@ -843,7 +843,7 @@ class ExecutorDeMacro:
     # duas esperas o consultam a cada fatia, e quem monta um executor parcial
     # (teste, ou um modo que não tem time) não deveria precisar saber disso para
     # que a espera funcione. O `__init__` sobrescreve por instância.
-    _aceitar_convite: Callable[[], None] | None = None
+    _pulso_do_time: Callable[[], None] | None = None
 
     def __init__(
         self,
@@ -895,7 +895,7 @@ class ExecutorDeMacro:
         # ACEITAR CONVITE DE TIME, para o seguidor do APP. Chega como função
         # porque o aceitador mora em `bot/` e este executor importa só `core.*`.
         # `None` = a conta não aceita convite (é o comportamento de sempre).
-        aceitar_convite: Callable[[], None] | None = None,
+        pulso_do_time: Callable[[], None] | None = None,
         limpar_a_bolsa: Callable[[], None] | None = None,
         voltas_por_limpeza: Callable[[], int] | None = None,
         # Trava de posição: campos de configuração (salvos no config.json).
@@ -1060,7 +1060,7 @@ class ExecutorDeMacro:
         # `_abortar_a_volta` e `core/cadencia_da_bolsa.py`.
         self._ultimo_corte = "início"
         self._declarar_queda = declarar_queda
-        self._aceitar_convite = aceitar_convite
+        self._pulso_do_time = pulso_do_time
         # O PERÍMETRO: quantos recolhimentos seguidos falharam e até quando a
         # desistência vale. Ver `_recolher_ao_ponto`.
         self._recolhimentos_falhos = 0
@@ -1211,12 +1211,18 @@ class ExecutorDeMacro:
                 # quem mata quem está batendo é ela. Ver `cura.socorro`.
                 if self.cura is not None:
                     self.cura.socorro()
-                # CONVITE DE TIME -- 16/09/2026. Aqui e não entre as voltas: o
-                # líder espera poucos segundos por cada convite, e uma volta de
-                # macro passa disso sozinha. Só age quando há convite
-                # anunciado; sem isso é uma consulta a um dicionário.
-                if self._aceitar_convite is not None:
-                    self._aceitar_convite()
+                # O PULSO DO TIME: "estou de pé" + "aceito convite".
+                #
+                # Aqui e não entre as voltas, pelos dois motivos: o líder espera
+                # poucos segundos por cada convite, e o sinal de vida vale 30 s
+                # -- uma volta de macro passa dos dois sozinha. Medido em
+                # 19/09/2026: 75 s presos no laço da poção, com o líder dando a
+                # conta por offline e os quatro convites caindo no vazio.
+                #
+                # Custa duas escritas em dicionário; só vira clique (e captura
+                # de tela) quando há convite anunciado.
+                if self._pulso_do_time is not None:
+                    self._pulso_do_time()
                 # "ABORTA IMEDIATAMENTE QUALQUER ATAQUE, MACRO OU ESPERA" --
                 # e a espera é aqui. Sem isto, uma linha de 3 s continuaria
                 # correndo com o personagem já fora do perímetro.
@@ -1263,30 +1269,30 @@ class ExecutorDeMacro:
         cadáver que se está tentando largar -- `_cortar_a_volta` responderia
         `True` e o respiro devolveria "pare" no primeiro décimo de segundo.
 
-        Então este daqui fatia e pergunta DUAS coisas: é para continuar, e há
-        convite de time para aceitar?
+        Então este daqui fatia e pergunta DUAS coisas: é para continuar, e o
+        pulso do time (estou de pé, aceito convite).
 
-        O CONVITE ENTROU AQUI EM 19/09/2026, e não é exceção à regra acima. Ele
-        não olha alvo nenhum -- é uma consulta ao mural (`convite_pendente`), e
-        só vira captura de tela quando há convite anunciado. Sem isto o seguidor
-        ficava SURDO durante a volta inteira: no modo `copiar` todas as linhas
-        são cegas (`sincronia.volta_cega`), então o gancho do `_esperar` nunca
-        era alcançado. Medido no log do dia: o líder mandou quatro convites em
-        23 s e o seguidor só aceitou 16 ms depois de a macro ser desligada.
+        O PULSO ENTROU AQUI EM 19/09/2026, e não é exceção à regra acima: ele
+        não olha alvo nenhum, são duas escritas em dicionário. Sem ele o
+        seguidor ficava SURDO durante a volta inteira -- no modo `copiar` todas
+        as linhas são cegas (`sincronia.volta_cega`), então o gancho do
+        `_esperar` nunca era alcançado. Medido no log do dia: o líder mandou
+        quatro convites em 23 s e o seguidor só aceitou 16 ms depois de a macro
+        ser desligada.
         """
         restante = max(0.0, float(segundos))
-        desde_o_convite = 0.0
+        desde_o_pulso = 0.0
         while restante > 0:
             if not self._continuar():
                 return False
             fatia = min(FATIA_DE_ESPERA, restante)
             time.sleep(fatia)
             restante -= fatia
-            desde_o_convite += fatia
-            if desde_o_convite >= PASSO_DA_CONFERENCIA_DO_ALVO:
-                desde_o_convite = 0.0
-                if self._aceitar_convite is not None:
-                    self._aceitar_convite()
+            desde_o_pulso += fatia
+            if desde_o_pulso >= PASSO_DA_CONFERENCIA_DO_ALVO:
+                desde_o_pulso = 0.0
+                if self._pulso_do_time is not None:
+                    self._pulso_do_time()
         return True
 
     def _esperar_cego(self, milissegundos: int) -> bool:

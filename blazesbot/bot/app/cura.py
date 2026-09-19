@@ -259,6 +259,9 @@ class CuraDoApp:
         pedir_pct: Callable[[], float] | None = None,
         parar_pct: Callable[[], float] | None = None,
         continuar: Callable[[], bool] | None = None,
+        # O PULSO DO TIME -- "estou de pé" e "aceito convite", na cadência das
+        # esperas daqui. Ver `_passo`. `None` = conta fora de time.
+        pulso_do_time: Callable[[], None] | None = None,
     ) -> None:
         self.log = log
         self._vida_pct = vida_pct
@@ -284,6 +287,7 @@ class CuraDoApp:
         self._pedir_pct = pedir_pct or (lambda: VIDA_PARA_CURAR)
         self._parar_pct = parar_pct or (lambda: VIDA_ALVO_DA_CURA)
         self._continuar = continuar or (lambda: True)
+        self._pulso_do_time = pulso_do_time
 
         self.curas = 0
         self.pocoes_gastas = 0
@@ -469,7 +473,7 @@ class CuraDoApp:
                 self._preso_em_batalha(vida, alvo)
                 return False
 
-            time.sleep(PASSO_DA_PERGUNTA)
+            self._passo()
 
         if self._em_batalha() is False:
             return True
@@ -525,7 +529,7 @@ class CuraDoApp:
             if distancia is not None and distancia <= 1.0:
                 self.log.info("APP: cheguei no ponto inicial; vou me curar.")
                 return
-            time.sleep(PASSO_DA_PERGUNTA)
+            self._passo()
 
         distancia = self._distancia_da_base()
         self.log.info(
@@ -645,7 +649,7 @@ class CuraDoApp:
                 return True
             if sentado is None:
                 ilegivel = True
-            time.sleep(PASSO_DA_PERGUNTA)
+            self._passo()
         if self._esta_sentado() is True:
             return True
         return None if ilegivel else False
@@ -700,6 +704,21 @@ class CuraDoApp:
                           "%s%%.", "?" if vida is None else f"{vida:.0f}")
         return True
 
+    def _passo(self) -> None:
+        """Uma fatia de espera das daqui, com o PULSO DO TIME dentro.
+
+        TODA espera deste arquivo passa por aqui, e não é detalhe de estilo: a
+        cura é o trecho mais LONGO do modo APP -- cinco poções de 15 s são 75 s
+        sem uma volta de macro. Medido em 19/09/2026: nesses 75 s o líder deu a
+        conta por offline (o sinal de vida vale 30 s) e mandou quatro convites
+        que ninguém atendeu, porque o gancho da macro não roda aqui dentro.
+
+        Custa duas escritas em dicionário por décimo de segundo.
+        """
+        if self._pulso_do_time is not None:
+            self._pulso_do_time()
+        time.sleep(PASSO_DA_PERGUNTA)
+
     def _esperar_o_efeito(self, teto: float) -> tuple[float | None, str]:
         """Espera perguntando. Devolve `(vida, motivo_da_saida)`.
 
@@ -719,5 +738,5 @@ class CuraDoApp:
             vida = self._vida_pct()
             if vida is not None and vida >= self._parar_pct():
                 return vida, "alvo"
-            time.sleep(PASSO_DA_PERGUNTA)
+            self._passo()
         return self._vida_pct(), "teto"

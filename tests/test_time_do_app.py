@@ -719,7 +719,7 @@ def test_o_executor_CHAMA_o_aceite_na_espera_fatiada():
     from blazesbot.bot.app import executor
 
     fonte = inspect.getsource(executor.ExecutorDeMacro._esperar)
-    assert "self._aceitar_convite()" in fonte
+    assert "self._pulso_do_time()" in fonte
 
 
 def test_o_executor_chama_o_aceite_TAMBEM_na_espera_CEGA():
@@ -736,7 +736,7 @@ def test_o_executor_chama_o_aceite_TAMBEM_na_espera_CEGA():
     from blazesbot.bot.app import executor
 
     fonte = inspect.getsource(executor.ExecutorDeMacro._dormir)
-    assert "self._aceitar_convite()" in fonte, (
+    assert "self._pulso_do_time()" in fonte, (
         "a espera cega voltou a ser surda a convite de time")
     assert "_esperar_cego" in inspect.getsource(
         executor.ExecutorDeMacro._esperar_cego), "a espera cega mudou de nome"
@@ -789,7 +789,7 @@ def test_o_supervisor_INJETA_o_aceite_no_executor():
 
     fonte = inspect.getsource(supervisor.AccountSupervisor._rodar_modo_app)
     assert "_aceitador_do_seguidor(self)" in fonte
-    assert "aceitar_convite=_aceitar_convite" in fonte
+    assert "pulso_do_time=pulso_do_time" in fonte
 
 
 # ---------------------------------------------------------------------------

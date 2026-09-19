@@ -392,7 +392,7 @@ def esperar_o_lider_montar(sup, memoria, aceitar=None,
     ainda não rodou uma volta -- sem publicar, os dois se esperariam.
 
     O TETO É DERIVADO, não inventado: é o pior caso da montagem do líder
-    (`ESPERA_PELA_RESPOSTA` × `TENTATIVAS_POR_MEMBRO` × membros). Estourado, a
+    (`ESPERA_PELA_RESPOSTA` x `TENTATIVAS_POR_MEMBRO` x membros). Estourado, a
     macro começa assim mesmo -- o convite continua sendo aceito lá dentro
     (`aceitador_do_seguidor`), e ficar parado esperando um líder que não vem é
     pior do que farmar sozinho.
