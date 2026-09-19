@@ -321,11 +321,12 @@ def modelos_na_pasta(pasta: Path | None = None) -> list[Path]:
     return sorted((pasta or PASTA_DO_LIXO).glob("*.png"))
 
 
-def desativados_da_conta(ctx: BotContext, pasta: Path) -> set[str]:
-    """Os modelos que ESTA conta não apaga, na lista daquela pasta.
+def escolha_da_conta(ctx: BotContext, pasta: Path) -> set[str]:
+    """Os modelos que ESTA conta apaga, na lista daquela pasta.
 
     A pasta diz o que PODE ser apagado e é uma só para o bot inteiro; a conta
-    guarda as exceções dela (`AppConfig.desativados` / `HHConfig.desativados`).
+    escolhe o que apaga de fato (`AppConfig.apagaveis` / `HHConfig.apagaveis`).
+    **Vazio = não apaga nada.**
 
     LIDO AGORA, a cada limpeza. Não é detalhe: a interface e a thread da conta
     compartilham o mesmo objeto de configuração, então ler aqui é o que faz a
@@ -334,19 +335,22 @@ def desativados_da_conta(ctx: BotContext, pasta: Path) -> set[str]:
     """
     st = ctx.settings
     fonte = st.hh if pasta.name == PASTA_DO_LIXO_DA_HH.name else st.app
-    return {n for n in (str(x or "").strip() for x in fonte.desativados) if n}
+    return {n for n in (str(x or "").strip() for x in fonte.apagaveis) if n}
 
 
 def modelos_ativos(ctx: BotContext, pasta: Path | None = None) -> list[Path]:
-    """Os modelos que esta conta apaga: a pasta MENOS as exceções dela.
+    """Os modelos que esta conta apaga: SÓ os escolhidos.
 
-    Nome que não existe mais na pasta simplesmente não casa com ninguém -- o
-    usuário marcou um item para preservar, o PNG sumiu, e a escolha fica
-    guardada esperando ele voltar.
+    O GANHO É MEDIDO: comparar os 213 da pasta custa 1,68 s por limpeza; vinte
+    escolhidos custam 147 ms. Cada rota dropa coisas diferentes, então varrer a
+    lista inteira é pagar por 190 comparações que nunca vão casar.
+
+    Nome escolhido cujo PNG sumiu da pasta simplesmente não entra -- a escolha
+    fica guardada esperando o arquivo voltar.
     """
     pasta = pasta or PASTA_DO_LIXO
-    ignorados = desativados_da_conta(ctx, pasta)
-    return [p for p in modelos_na_pasta(pasta) if p.name not in ignorados]
+    escolhidos = escolha_da_conta(ctx, pasta)
+    return [p for p in modelos_na_pasta(pasta) if p.name in escolhidos]
 
 
 def _carregar(ctx: BotContext, pasta: Path | None = None) -> dict[str, Any]:
@@ -546,7 +550,13 @@ def deletar_lixo(ctx: BotContext,
 
     templates = _carregar(ctx, pasta)
     if not templates:
-        ctx.log.warning("Nenhum template em %s.", pasta)
+        # DUAS CAUSAS DIFERENTES, e confundi-las esconde a que importa: a pasta
+        # pode estar vazia (defeito de instalação) ou a conta pode não ter
+        # escolhido nada (o normal de quem ainda não configurou).
+        if not escolha_da_conta(ctx, pasta):
+            ctx.log.debug("Nenhum modelo escolhido nesta conta para %s.", pasta)
+        else:
+            ctx.log.warning("Nenhum dos modelos escolhidos existe em %s.", pasta)
         return 0
 
     # Busca a posição da fila específica desta conta
@@ -696,6 +706,14 @@ def limpar_a_bolsa(ctx: BotContext, tecla_do_inventario: str,
     aberto continua aberto, fechado volta a fechado.
     """
     if not ATIVADO or not tecla_do_inventario:
+        return 0
+    # NADA ESCOLHIDO, NADA A FAZER -- e nem a tecla sai. Abrir a bolsa para não
+    # apagar nada custa o personagem parado com o inventário na frente, e a
+    # tecla é interruptor: numa bolsa que o usuário deixou aberta, ela FECHA.
+    # Este é o estado NORMAL de conta recém-configurada (a seleção nasce
+    # vazia), então ele tem de ser barato e silencioso.
+    if not escolha_da_conta(ctx, pasta or PASTA_DO_LIXO):
+        ctx.log.debug("Nenhum modelo escolhido para apagar; pulo a limpeza.")
         return 0
 
     aberto_antes = inventario_esta_aberto(ctx)

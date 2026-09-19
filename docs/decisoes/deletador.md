@@ -680,3 +680,47 @@ a comunidade usa, e foi assim que o usuário nomeou os arquivos. Expandir para
 **A grafia antiga continua sendo entendida** (`"fada": "Fairy"` no mapa): uma
 pasta vinda de outra máquina, ou um PNG antigo que reapareça, não pode virar
 item sem rótulo por causa disso.
+
+## A inversão: a conta escolhe o que apaga — 19/09/2026
+
+### O pedido, e o número que o sustenta
+
+*"Hoje todos os itens entram direto para ser deletado, mas vamos inverter [...]
+em vez de o bot procurar por mais de 200 ícones, o usuário seleciona 10/20 que
+de fato vão ser deletados naquela rota, pois cada mob dropa itens diferentes."*
+
+Medido antes de mexer, com os modelos reais contra uma região do tamanho da que
+a bolsa ocupa:
+
+| modelos comparados | tempo por limpeza |
+|---|---|
+| 213 (a pasta inteira) | **1,68 s** |
+| 40 | 301 ms |
+| 20 | **147 ms** |
+| 10 | 72 ms |
+
+Onze vezes menos com vinte escolhidos — e o teto de 10 s por limpeza deixa de
+ser um risco.
+
+### O que mudou de semântica
+
+`AppConfig.desativados` (as exceções) deu lugar a `AppConfig.apagaveis` (a
+escolha). **Vazio = não apaga nada**, e esse é o padrão.
+
+**Campo NOVO, e não o mesmo com sentido trocado.** Um `config.json` lido por
+uma versão anterior apagaria exatamente os itens que o usuário quis preservar;
+e um nome que diz o contrário do que o campo faz é a armadilha exata para um
+sistema que apaga sem desfazer. As contas existentes começam vazias — o campo
+velho deixa de ser lido e some do arquivo no primeiro salvamento.
+
+### O atalho: não se abre a bolsa para não fazer nada
+
+Com a escolha vazia, `limpar_a_bolsa` devolve na primeira linha: **sem tecla e
+sem captura**. Não é economia de milissegundos — a tecla do inventário é
+interruptor, e apertá-la numa bolsa que o usuário deixou aberta a FECHA. Como
+seleção vazia passou a ser o estado normal de conta recém-configurada, esse
+caminho tinha de ser barato e silencioso.
+
+E a mensagem de "nenhum template" deixou de mentir: pasta vazia (defeito de
+instalação) e conta sem escolha (o normal) são causas diferentes, e confundi-las
+esconde a que importa.

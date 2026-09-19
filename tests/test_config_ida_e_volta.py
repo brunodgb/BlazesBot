@@ -85,10 +85,10 @@ def test_o_resto_do_APP_continua_indo_e_voltando(tmp_path):
     ("fada", True),
     ("cura_pedir_pct", 45),
     ("cura_parar_pct", 80),
-    # OS ITENS QUE ESTA CONTA NÃO APAGA (18/09/2026). Normalizado na
-    # leitura (sem vazio, sem repetido, ordenado), então o valor de ida
+    # OS ITENS QUE ESTA CONTA APAGA (invertido em 19/09/2026). Normalizado
+    # na leitura (sem vazio, sem repetido, ordenado), então o valor de ida
     # já vai na forma normalizada.
-    ("desativados", ["Bag.png", "Zinc_Ore.png"]),
+    ("apagaveis", ["Bag.png", "Zinc_Ore.png"]),
 ])
 def test_todo_campo_do_AppConfig_sobrevive(tmp_path, campo, valor):
     """LISTA VIVA: todo campo novo do `AppConfig` (fora `steps`) entra aqui.
@@ -117,8 +117,8 @@ def test_a_lista_acima_cobre_o_AppConfig_inteiro():
                 "time_logins", "time_modo",
                 # A Fada e as duas barras de cura.
                 "fada", "cura_pedir_pct", "cura_parar_pct",
-                # Os itens que esta conta não apaga.
-                "desativados"}
+                # Os itens que esta conta apaga.
+                "apagaveis"}
     faltando = {f.name for f in fields(AppConfig)} - cobertos
     assert not faltando, (
         f"campo(s) novo(s) no AppConfig sem teste de ida e volta: {faltando}")

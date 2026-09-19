@@ -359,10 +359,17 @@ e `docs/decisoes/deletador.md`.
 - **AFERIÇÃO ANTES DE CONFIAR** (`bot/app/afericao.py`, desenho em
   `bot/afericao_do_lixo.py`): fotografa o que seria apagado sem clicar. Deletar
   não tem desfazer.
-- **CADA CONTA GUARDA AS EXCEÇÕES, NUNCA A LISTA INTEIRA** (`desativados`, em
-  `AppConfig` e `HHConfig`). A pasta continua dizendo o que PODE ser apagado, e
-  PNG novo nela vale em todas as contas sem ninguém ligar nada. Guardar os
-  ATIVOS mataria esse invariante e poria 208 nomes por conta no `config.json`.
+- **CADA CONTA ESCOLHE O QUE APAGA, E VAZIO NÃO APAGA NADA** (`apagaveis`, em
+  `AppConfig` e `HHConfig`). A pasta diz o que PODE ser apagado; a conta diz o
+  que apaga de fato. Invertido em 19/09/2026 por MEDIÇÃO: comparar os 213
+  modelos custa 1,68 s por limpeza, contra 147 ms com vinte — e cada rota dropa
+  coisas diferentes, então varrer a lista inteira é pagar por 190 comparações
+  que nunca vão casar.
+- **SEM ESCOLHA, A LIMPEZA NEM COMEÇA.** `limpar_a_bolsa` devolve na primeira
+  linha — sem apertar a tecla do inventário e sem captura. Abrir a bolsa para
+  não apagar nada custa o personagem parado, e a tecla é interruptor: numa
+  bolsa que o usuário deixou aberta, ela FECHA. Seleção vazia é o estado NORMAL
+  de conta recém-configurada.
 - **A LISTA É LIDA NO MOMENTO DA LIMPEZA** (`deletador.modelos_ativos`), nunca
   capturada na montagem do executor: a interface e a thread da conta
   compartilham o mesmo objeto de configuração, então salvar vale na limpeza

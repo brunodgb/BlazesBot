@@ -43,8 +43,8 @@ def conta(tmp_path, monkeypatch):
         # seleção de um amigo merece saber de qual personagem ela veio.
         last_char_name="BlazesAPP1", login="conta-de-teste",
         settings=SimpleNamespace(
-            app=SimpleNamespace(desativados=[]),
-            hh=SimpleNamespace(desativados=[])))
+            app=SimpleNamespace(apagaveis=[]),
+            hh=SimpleNamespace(apagaveis=[])))
 
 
 def test_a_miniatura_vai_EMBUTIDA(conta):
@@ -62,26 +62,27 @@ def test_cada_item_leva_nome_de_arquivo_E_rotulo(conta):
 
 
 def test_o_estado_vem_da_CONTA(conta):
-    conta.settings.app.desativados = ["Zz_Bolsa.png"]
-    estados = {i["arquivo"]: i["ativo"] for i in web_lixo.itens(conta, "app")["itens"]}
-    assert estados == {"Zz_Bolsa.png": False, "Zz_Carne_de_Lobo.png": True}
+    conta.settings.app.apagaveis = ["Zz_Bolsa.png"]
+    estados = {i["arquivo"]: i["apaga"] for i in web_lixo.itens(conta, "app")["itens"]}
+    # Quem está na lista é quem VAI SER APAGADO -- invertido em 19/09/2026.
+    assert estados == {"Zz_Bolsa.png": True, "Zz_Carne_de_Lobo.png": False}
 
 
 def test_a_lista_escolhe_a_pasta_E_o_campo(conta):
-    conta.settings.hh.desativados = ["Zz_Armadilha.png"]
+    conta.settings.hh.apagaveis = ["Zz_Armadilha.png"]
     assert [i["arquivo"] for i in web_lixo.itens(conta, "hh")["itens"]] == ["Zz_Armadilha.png"]
-    assert web_lixo.itens(conta, "hh")["itens"][0]["ativo"] is False
+    assert web_lixo.itens(conta, "hh")["itens"][0]["apaga"] is True
     # A da HH não contamina a do APP.
-    assert all(i["ativo"] for i in web_lixo.itens(conta, "app")["itens"])
+    assert not any(i["apaga"] for i in web_lixo.itens(conta, "app")["itens"])
 
 
 def test_orfao_continua_guardado_e_e_contado(conta):
     """O PNG sumiu; a escolha fica esperando ele voltar."""
-    conta.settings.app.desativados = ["Zz_Bolsa.png", "SumiuDaPasta.png"]
+    conta.settings.app.apagaveis = ["Zz_Bolsa.png", "SumiuDaPasta.png"]
     saida = web_lixo.itens(conta, "app")
 
     assert saida["orfaos"] == 1
-    assert "SumiuDaPasta.png" in saida["desativados"]
+    assert "SumiuDaPasta.png" in saida["apagaveis"]
     assert "SumiuDaPasta.png" not in [i["arquivo"] for i in saida["itens"]]
 
 
@@ -97,18 +98,19 @@ def test_pasta_que_nao_existe_devolve_erro_legivel(conta, tmp_path, monkeypatch)
 
 
 def test_gravar_SUBSTITUI_e_normaliza(conta):
-    conta.settings.app.desativados = ["Velho.png"]
+    conta.settings.app.apagaveis = ["Velho.png"]
     web_lixo.guardar(conta, "app", ["Zz_Bolsa.png", "", "Zz_Bolsa.png", "  Outro.png  "])
     # `normalizar_desativados` ordena: o diff do config.json fica estável.
-    assert conta.settings.app.desativados == ["Outro.png", "Zz_Bolsa.png"]
+    assert conta.settings.app.apagaveis == ["Outro.png", "Zz_Bolsa.png"]
 
 
-def test_gravar_lista_vazia_reativa_tudo(conta):
-    """"Desmarcar todos" precisa chegar como lista vazia e valer."""
-    conta.settings.app.desativados = ["Zz_Bolsa.png"]
+def test_gravar_lista_vazia_faz_a_conta_NAO_APAGAR_NADA(conta):
+    """"Desmarcar todos" precisa chegar como lista vazia e valer -- e depois da
+    inversão isso significa o bot não apagar item nenhum naquela conta."""
+    conta.settings.app.apagaveis = ["Zz_Bolsa.png"]
     web_lixo.guardar(conta, "app", [])
-    assert conta.settings.app.desativados == []
-    assert all(i["ativo"] for i in web_lixo.itens(conta, "app")["itens"])
+    assert conta.settings.app.apagaveis == []
+    assert not any(i["apaga"] for i in web_lixo.itens(conta, "app")["itens"])
 
 
 # ===========================================================================
@@ -132,19 +134,19 @@ def test_exportar_grava_o_arquivo_com_a_LISTA_dentro(conta, tmp_path, monkeypatc
     gravado = json.loads(alvo.read_text(encoding="utf-8"))
     assert gravado["blazesbot"] == web_lixo.MARCA_DO_ARQUIVO
     assert gravado["lista"] == "app"
-    assert gravado["desativados"] == ["Zz_Bolsa.png"]
+    assert gravado["apagaveis"] == ["Zz_Bolsa.png"]
 
 
 def test_exportar_leva_o_que_esta_na_TELA(conta, tmp_path, monkeypatch):
     """A conta tem uma coisa guardada e a janela mostra outra: vai a da janela,
     que é o que a pessoa está vendo."""
-    conta.settings.app.desativados = ["Zz_Carne_de_Lobo.png"]
+    conta.settings.app.apagaveis = ["Zz_Carne_de_Lobo.png"]
     alvo = tmp_path / "selecao.json"
     _dialogo_fixo(monkeypatch, alvo)
 
     web_lixo.exportar(conta, "app", ["Zz_Bolsa.png"])
 
-    assert json.loads(alvo.read_text(encoding="utf-8"))["desativados"] == ["Zz_Bolsa.png"]
+    assert json.loads(alvo.read_text(encoding="utf-8"))["apagaveis"] == ["Zz_Bolsa.png"]
 
 
 def test_importar_devolve_a_selecao_e_NAO_grava(conta, tmp_path, monkeypatch):
@@ -153,20 +155,20 @@ def test_importar_devolve_a_selecao_e_NAO_grava(conta, tmp_path, monkeypatch):
     alvo = tmp_path / "selecao.json"
     alvo.write_text(json.dumps({
         "blazesbot": web_lixo.MARCA_DO_ARQUIVO, "versao": 1, "lista": "app",
-        "desativados": ["Zz_Bolsa.png"]}), encoding="utf-8")
+        "apagaveis": ["Zz_Bolsa.png"]}), encoding="utf-8")
     _dialogo_fixo(monkeypatch, alvo)
 
     r = web_lixo.importar(conta, "app")
 
-    assert r["ok"] and r["desativados"] == ["Zz_Bolsa.png"]
-    assert conta.settings.app.desativados == [], "importar gravou sozinho"
+    assert r["ok"] and r["apagaveis"] == ["Zz_Bolsa.png"]
+    assert conta.settings.app.apagaveis == [], "importar gravou sozinho"
 
 
 def test_importar_RECUSA_arquivo_da_outra_lista(conta, tmp_path, monkeypatch):
     alvo = tmp_path / "selecao.json"
     alvo.write_text(json.dumps({
         "blazesbot": web_lixo.MARCA_DO_ARQUIVO, "lista": "hh",
-        "desativados": ["Zz_Armadilha.png"]}), encoding="utf-8")
+        "apagaveis": ["Zz_Armadilha.png"]}), encoding="utf-8")
     _dialogo_fixo(monkeypatch, alvo)
 
     r = web_lixo.importar(conta, "app")
@@ -188,7 +190,7 @@ def test_importar_CONTA_os_nomes_que_nao_existem_aqui(conta, tmp_path, monkeypat
     alvo = tmp_path / "selecao.json"
     alvo.write_text(json.dumps({
         "blazesbot": web_lixo.MARCA_DO_ARQUIVO, "lista": "app",
-        "desativados": ["Zz_Bolsa.png", "SoNoPcDoAmigo.png"]}), encoding="utf-8")
+        "apagaveis": ["Zz_Bolsa.png", "SoNoPcDoAmigo.png"]}), encoding="utf-8")
     _dialogo_fixo(monkeypatch, alvo)
 
     r = web_lixo.importar(conta, "app")

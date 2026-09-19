@@ -62,7 +62,7 @@ from .config import (
     Account,
     BotConfig,
     mount_multiplier,
-    normalizar_desativados,
+    normalizar_modelos,
     normalizar_modo_do_reset,
     normalizar_pct,
     normalizar_time_logins,
@@ -436,7 +436,7 @@ class _App:
             "app": {
                 "enabled": st.app.enabled,
                 "apagar_lixo_a_cada": st.app.apagar_lixo_a_cada,
-                "desativados": st.app.desativados,
+                "apagaveis": st.app.apagaveis,
                 "travar_posicao": st.app.travar_posicao,
                 "shuffle_apos_n_voltas": st.app.shuffle_apos_n_voltas,
                 # A LINHA 0 da macro: o tempo depois do TAB.
@@ -495,7 +495,7 @@ class _App:
                 "aoe_until_mana_pct": st.hh.aoe_until_mana_pct,
                 "limpar_mobs_a_cada": st.hh.limpar_mobs_a_cada,
                 "deletar_lixo": st.hh.deletar_lixo,
-                "desativados": st.hh.desativados,
+                "apagaveis": st.hh.apagaveis,
                 "vendor": {
                     "sell_start_slot": st.hh.vendor.sell_start_slot,
                     "runs_before_selling": st.hh.vendor.runs_before_selling,
@@ -730,11 +730,11 @@ class _App:
         st.app.enabled = bool(app.get("enabled", False))
         st.app.apagar_lixo_a_cada = max(
             0, int(app.get("apagar_lixo_a_cada", 10) or 0))
-        # A LISTA DE ITENS QUE ESTA CONTA NÃO APAGA. O padrão do `get` é O
-        # VALOR ATUAL: a janela dos itens é outra tela, e um payload do editor
-        # sem a chave APAGARIA a seleção inteira, em silêncio.
-        st.app.desativados = normalizar_desativados(
-            app.get("desativados", st.app.desativados))
+        # A LISTA DE ITENS QUE ESTA CONTA APAGA. O padrão do `get` é O VALOR
+        # ATUAL: a janela dos itens é outra tela, e um payload do editor sem a
+        # chave APAGARIA a seleção inteira, em silêncio.
+        st.app.apagaveis = normalizar_modelos(
+            app.get("apagaveis", st.app.apagaveis))
         st.app.travar_posicao = bool(app.get("travar_posicao", True))
         st.app.shuffle_apos_n_voltas = max(
             1, int(app.get("shuffle_apos_n_voltas") or 30) or 30)
@@ -817,8 +817,8 @@ class _App:
         st.hh.limpar_mobs_a_cada = int(hh.get("limpar_mobs_a_cada", 3))
         # PADRÃO FALSE, e o padrão é a decisão: apagar é irreversível.
         st.hh.deletar_lixo = bool(hh.get("deletar_lixo", False))
-        st.hh.desativados = normalizar_desativados(
-            hh.get("desativados", st.hh.desativados))
+        st.hh.apagaveis = normalizar_modelos(
+            hh.get("apagaveis", st.hh.apagaveis))
         VH = hh.get("vendor", {})
         st.hh.vendor.sell_start_slot = int(VH.get("sell_start_slot", 3))
         st.hh.vendor.runs_before_selling = int(
@@ -931,7 +931,7 @@ class _App:
             return {"ok": False, "erro": str(exc), "itens": []}
 
     def salvar_lixo_da_conta(self, uid: str, lista: Any,
-                             desativados: Any) -> dict[str, Any]:
+                             apagaveis: Any) -> dict[str, Any]:
         """Grava a seleção. Vale na limpeza SEGUINTE, sem religar o bot.
 
         Não é promessa: a thread da conta lê `settings` no momento da limpeza, e
@@ -939,18 +939,18 @@ class _App:
         """
         try:
             conta = self._conta(uid)
-            resposta = web_lixo.guardar(conta, str(lista), desativados)
+            resposta = web_lixo.guardar(conta, str(lista), apagaveis)
         except ValueError as exc:
             return {"ok": False, "erro": str(exc)}
         self._aplicar()
         return resposta
 
     def exportar_lixo_da_conta(self, uid: str, lista: Any,
-                               desativados: Any) -> dict[str, Any]:
+                               apagaveis: Any) -> dict[str, Any]:
         """Grava a seleção num `.json` que o usuário escolhe onde salvar."""
         try:
             conta = self._conta(uid)
-            return web_lixo.exportar(conta, str(lista), desativados)
+            return web_lixo.exportar(conta, str(lista), apagaveis)
         except ValueError as exc:
             return {"ok": False, "erro": str(exc)}
 
@@ -1425,12 +1425,12 @@ class Api:
         return self._app.lixo_da_conta(uid, lista)
 
     def salvar_lixo_da_conta(self, uid: Any, lista: Any,
-                             desativados: Any) -> dict[str, Any]:
-        return self._app.salvar_lixo_da_conta(uid, lista, desativados)
+                             apagaveis: Any) -> dict[str, Any]:
+        return self._app.salvar_lixo_da_conta(uid, lista, apagaveis)
 
     def exportar_lixo_da_conta(self, uid: Any, lista: Any,
-                               desativados: Any) -> dict[str, Any]:
-        return self._app.exportar_lixo_da_conta(uid, lista, desativados)
+                               apagaveis: Any) -> dict[str, Any]:
+        return self._app.exportar_lixo_da_conta(uid, lista, apagaveis)
 
     def importar_lixo_da_conta(self, uid: Any, lista: Any) -> dict[str, Any]:
         return self._app.importar_lixo_da_conta(uid, lista)

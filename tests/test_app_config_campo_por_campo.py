@@ -69,10 +69,10 @@ def _ler(caminho: str) -> str:
 CAMPOS_SO_DA_WEB = {"time_logins", "time_modo",
                     "fada", "cura_pedir_pct", "cura_parar_pct",
                     # A seleção de itens do deletador (18/09/2026): ela é
-                    # uma JANELA de 208 miniaturas, não um campo. A PyQt6
+                    # uma JANELA de 213 miniaturas, não um campo. A PyQt6
                     # não tem um único `QPixmap` e está descontinuada por
                     # decisão do usuário -- ver docs/decisoes/interface.md.
-                    "desativados"}
+                    "apagaveis"}
 
 
 def test_a_excecao_da_gui_congelada_nao_cresce_sozinha() -> None:
@@ -84,7 +84,7 @@ def test_a_excecao_da_gui_congelada_nao_cresce_sozinha() -> None:
     """
     assert CAMPOS_SO_DA_WEB == {"time_logins", "time_modo",
                                 "fada", "cura_pedir_pct", "cura_parar_pct",
-                                "desativados"}, (
+                                "apagaveis"}, (
         "para acrescentar um campo aqui é preciso decidir (e escrever em "
         "docs/decisoes/interface.md) que ele não existe na PyQt6."
     )

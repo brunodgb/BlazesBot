@@ -41,7 +41,7 @@ from pathlib import Path
 from typing import Any
 
 from .bot import deletador, nomes_do_lixo
-from .config import Account, normalizar_desativados
+from .config import Account, normalizar_modelos
 
 # A lista pedida -> (pasta no disco, atributo em `AccountSettings`).
 LISTAS: dict[str, tuple[Path, str]] = {
@@ -90,22 +90,25 @@ def _embutir(png: Path) -> str:
 def itens(conta: Account, lista: str) -> dict[str, Any]:
     """Tudo que a janela precisa para desenhar a grade.
 
-    `desativados` volta junto porque a janela mostra o contador antes de o
-    usuário mexer em qualquer coisa, e porque um nome guardado cujo PNG já não
+    `apagaveis` volta junto porque a janela mostra o contador antes de o
+    usuário mexer em qualquer coisa, e porque um nome escolhido cujo PNG já não
     existe NÃO aparece na grade -- mas continua guardado.
     """
     pasta, bloco = _bloco(conta, lista)
-    guardados = {str(n).strip() for n in bloco.desativados if str(n).strip()}
+    guardados = {str(n).strip() for n in bloco.apagaveis if str(n).strip()}
     if not pasta.is_dir():
         return {"ok": False, "erro": f"A pasta {pasta} não existe.",
-                "itens": [], "desativados": sorted(guardados), "orfaos": 0}
+                "itens": [], "apagaveis": sorted(guardados), "orfaos": 0}
 
     achados = deletador.modelos_na_pasta(pasta)
     itens_da_tela = [{
         "arquivo": png.name,
         "rotulo": nomes_do_lixo.rotulo(png.name),
         "imagem": _embutir(png),
-        "ativo": png.name not in guardados,
+        # `apaga` e não `ativo`: depois da inversão de 19/09/2026 quem está na
+        # lista é quem VAI SER APAGADO, e um nome ambíguo aqui vira tela
+        # invertida lá.
+        "apaga": png.name in guardados,
     } for png in achados]
     # A ORDEM É A DO QUE ESTÁ ESCRITO, não a do nome do arquivo -- ver
     # `ordem_da_tela`. O nome do arquivo entra só como desempate, para dois
@@ -118,23 +121,22 @@ def itens(conta: Account, lista: str) -> dict[str, Any]:
         "lista": lista,
         "pasta": pasta.name,
         "itens": itens_da_tela,
-        "desativados": sorted(guardados),
-        # Nome guardado cujo PNG não está mais na pasta. Fica guardado de
-        # propósito: apagar a entrada faria o item voltar a ser deletado no dia
-        # em que o PNG voltasse -- justo o item que a pessoa quis preservar.
+        "apagaveis": sorted(guardados),
+        # Nome escolhido cujo PNG não está mais na pasta. Fica guardado de
+        # propósito: o arquivo pode voltar, e aí a escolha volta com ele.
         "orfaos": len(guardados - na_pasta),
     }
 
 
-def guardar(conta: Account, lista: str, desativados: Any) -> dict[str, Any]:
+def guardar(conta: Account, lista: str, apagaveis: Any) -> dict[str, Any]:
     """Grava a seleção da conta. Devolve o que ficou guardado.
 
     SUBSTITUI a lista inteira -- a janela manda o estado final dela, e é isso
     que faz "desmarcar tudo" funcionar. Quem chama é que persiste em disco.
     """
     _pasta, bloco = _bloco(conta, lista)
-    bloco.desativados = normalizar_desativados(desativados)
-    return {"ok": True, "erro": "", "desativados": list(bloco.desativados)}
+    bloco.apagaveis = normalizar_modelos(apagaveis)
+    return {"ok": True, "erro": "", "apagaveis": list(bloco.apagaveis)}
 
 
 # ===========================================================================
@@ -180,14 +182,14 @@ def _dialogo(salvar: bool, sugestao: str = "") -> str:
         return ""
 
 
-def exportar(conta: Account, lista: str, desativados: Any) -> dict[str, Any]:
+def exportar(conta: Account, lista: str, apagaveis: Any) -> dict[str, Any]:
     """Grava a seleção num `.json` escolhido pelo usuário.
 
     Exporta o que está NA TELA, não o que está no disco: é o que a pessoa vê e
     o que ela espera que vá para o arquivo.
     """
     pasta, _ = _bloco(conta, lista)
-    nomes = normalizar_desativados(desativados)
+    nomes = normalizar_modelos(apagaveis)
     caminho = _dialogo(True, f"itens-{pasta.name}.json")
     if not caminho:
         return {"ok": False, "erro": "", "cancelado": True}
@@ -198,7 +200,7 @@ def exportar(conta: Account, lista: str, desativados: Any) -> dict[str, Any]:
         "pasta": pasta.name,
         "conta": (conta.last_char_name or conta.login or "").strip(),
         "gerado_em": datetime.now().isoformat(timespec="seconds"),
-        "desativados": nomes,
+        "apagaveis": nomes,
     }
     try:
         Path(caminho).write_text(
@@ -232,8 +234,8 @@ def importar(conta: Account, lista: str) -> dict[str, Any]:
         return {"ok": False, "erro": (
             f"Esse arquivo é da lista '{de_qual}' e esta janela é da '{lista}'. "
             "Abra a janela da outra aba para importá-lo.")}
-    nomes = normalizar_desativados(bruto.get("desativados"))
+    nomes = normalizar_modelos(bruto.get("apagaveis"))
     na_pasta = {png.name for png in deletador.modelos_na_pasta(pasta)}
-    return {"ok": True, "erro": "", "desativados": nomes,
+    return {"ok": True, "erro": "", "apagaveis": nomes,
             "quantos": len(nomes), "de": str(bruto.get("conta") or ""),
             "ausentes": len([n for n in nomes if n not in na_pasta])}

@@ -152,6 +152,13 @@ class _Ctx:
         self.hwnd = 1
         self.account = _Conta()
         self._relogio = relogio
+        # A ESCOLHA DA CONTA (invertida em 19/09/2026). Estes testes são sobre a
+        # tecla, o fechamento e a exclusão em si; com a escolha VAZIA a limpeza
+        # devolve na primeira linha e nenhum deles teria o que exercitar. O
+        # caminho da escolha vazia tem teste próprio, em `test_lixo_escolhido`.
+        self.settings = types.SimpleNamespace(
+            app=types.SimpleNamespace(apagaveis=["Bag.png"]),
+            hh=types.SimpleNamespace(apagaveis=["Bag.png"]))
 
     def click(self, ponto):
         self.cliques.append(ponto)
