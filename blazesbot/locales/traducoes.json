@@ -1712,5 +1712,35 @@
     "pt-br": "nenhum selecionado — nada será apagado",
     "en": "none selected — nothing will be deleted",
     "es": "ninguno seleccionado — no se borrará nada"
+  },
+  "portao_lixo_titulo": {
+    "pt-br": "Estas contas vão abrir a bolsa e não apagar nada:",
+    "en": "These accounts will open the bag and delete nothing:",
+    "es": "Estas cuentas van a abrir la bolsa y no borrar nada:"
+  },
+  "portao_lixo_time": {
+    "pt-br": "desligar também para",
+    "en": "also turns off",
+    "es": "también apaga"
+  },
+  "portao_lixo_como_resolver": {
+    "pt-br": "Escolha os itens em Editar conta > APP (ou HH) > Escolher os itens.",
+    "en": "Pick the items in Edit account > APP (or HH) > Choose the items.",
+    "es": "Elige los ítems en Editar cuenta > APP (o HH) > Elegir los ítems."
+  },
+  "btn_iniciar_assim": {
+    "pt-br": "Iniciar assim",
+    "en": "Start anyway",
+    "es": "Iniciar así"
+  },
+  "btn_desligar_e_iniciar": {
+    "pt-br": "Desligar essas e iniciar",
+    "en": "Turn those off and start",
+    "es": "Apagar esas e iniciar"
+  },
+  "msg_funcoes_desligadas": {
+    "pt-br": "Sem farmar até você escolher os itens: {contas}",
+    "en": "Not farming until you pick the items: {contas}",
+    "es": "Sin farmear hasta que elijas los ítems: {contas}"
   }
 }

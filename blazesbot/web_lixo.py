@@ -239,3 +239,128 @@ def importar(conta: Account, lista: str) -> dict[str, Any]:
     return {"ok": True, "erro": "", "apagaveis": nomes,
             "quantos": len(nomes), "de": str(bruto.get("conta") or ""),
             "ausentes": len([n for n in nomes if n not in na_pasta])}
+
+# ===========================================================================
+# O PORTÃO DO INICIAR — quem vai abrir a bolsa e não apagar nada
+# ===========================================================================
+#
+# Depois da inversão, seleção vazia é o estado NORMAL de conta recém-criada. O
+# risco disso é silencioso: a conta farma a noite inteira, a bolsa enche, e o
+# usuário só descobre quando o inventário transborda -- exatamente a falha que
+# o deletador existe para evitar.
+#
+# Por isso a conferência acontece no INICIAR, com confirmação: *"quando ele
+# clicar em ok realmente começa o bot, se ele clicar em cancelar não vai
+# começar o bot para aquelas contas"* (usuário, 19/09/2026).
+#
+# O QUE NÃO ENTRA NA LISTA, e por quê:
+#
+#   limpeza desligada  -- `Apagar o lixo a cada = 0`, ou "jogar o lixo fora"
+#                         desmarcado na HH: o usuário já decidiu isso, e cobrar
+#                         de novo em todo Iniciar transforma o aviso em OK
+#                         automático.
+#   sem tecla de pet   -- sem auto-pick o personagem não cata item do chão, a
+#                         bolsa não enche e não há o que apagar. A regra é do
+#                         jogo e já vale na Fada (`bot/fada_montagem.py`).
+#   BC                 -- só APP e HH apagam item hoje.
+
+
+def lista_ociosa(config: Any, conta: Account) -> str:
+    """A lista que esta conta vai abrir e não usar: `"app"`, `"hh"` ou `""`."""
+    funcao = config.funcao_ativa_da_conta(conta)
+    if funcao not in LISTAS:
+        return ""
+    if not (getattr(conta.settings.keys, "pet_summon", "") or "").strip():
+        return ""
+    bloco = getattr(conta.settings, LISTAS[funcao][1])
+    ligada = (bloco.apagar_lixo_a_cada > 0 if funcao == "app"
+              else bool(bloco.deletar_lixo))
+    return funcao if ligada and not bloco.apagaveis else ""
+
+
+def time_do_app(config: Any, conta: Account) -> list[Account]:
+    """O time do APP a que esta conta pertence: líder e seguidores.
+
+    O TIME É ATÔMICO no desligamento, decisão do usuário: *"se o líder for
+    inativado, todos do time são inativados, e se algum do time for inativado o
+    contrário também deve acontecer"*. O motivo é mecânico -- o seguidor só roda
+    a macro enquanto o líder está com o APP ligado, então desligar um sem o
+    outro deixaria contas em estado indefinido.
+
+    Fora de time, devolve a própria conta.
+    """
+    seguidores = [str(x).strip().lower()
+                  for x in (conta.settings.app.time_logins or [])]
+    if seguidores:
+        lider = conta
+    else:
+        meu = (conta.login or "").strip().lower()
+        lider = next((c for c in config.accounts
+                      if meu in [str(x).strip().lower()
+                                 for x in (c.settings.app.time_logins or [])]),
+                     None)
+        if lider is None:
+            return [conta]
+        seguidores = [str(x).strip().lower()
+                      for x in (lider.settings.app.time_logins or [])]
+    por_login = {(c.login or "").strip().lower(): c for c in config.accounts}
+    time = [lider] + [por_login[n] for n in seguidores if n in por_login]
+    vistos, saida = set(), []
+    for c in time:
+        if id(c) not in vistos:
+            vistos.add(id(c))
+            saida.append(c)
+    return saida
+
+
+def contas_ociosas(config: Any) -> list[dict[str, Any]]:
+    """As contas ATIVAS que vão abrir a bolsa e não apagar nada."""
+    saida: list[dict[str, Any]] = []
+    for conta in config.enabled_accounts():
+        lista = lista_ociosa(config, conta)
+        if not lista:
+            continue
+        time = time_do_app(config, conta) if lista == "app" else [conta]
+        saida.append({
+            # `garantir_uid` e não `uid`: conta vinda de `config.json` editado à
+            # mão pode não ter um, e uid vazio no payload viraria um botão que
+            # não desliga nada -- ou, pior, que casa com todas.
+            "uid": conta.garantir_uid(),
+            "login": conta.login or "",
+            "nick": (conta.last_char_name or "").strip(),
+            "lista": lista,
+            # Quem cai junto se esta conta for desligada -- o usuário precisa
+            # ver isso ANTES de decidir, não descobrir depois.
+            "time": [(c.login or "") for c in time if c is not conta],
+        })
+    return saida
+
+
+def desligar_funcao(config: Any, uids: Any) -> list[str]:
+    """Desliga a função das contas pedidas E dos times delas.
+
+    Elas continuam ATIVAS -- logam e relogam normalmente, só não farmam. É o que
+    o usuário pediu para poder ajustar a seleção enquanto o resto roda.
+    """
+    # UID VAZIO NÃO CASA COM NINGUÉM. Sem este filtro, um `""` na lista (conta
+    # sem uid no arquivo) casaria com TODA conta sem uid -- e, com a regra do
+    # time, desligaria a função do bot inteiro de uma vez.
+    pedidos = {str(u).strip() for u in (uids or []) if str(u).strip()}
+    if not pedidos:
+        return []
+    alvos: list[Account] = []
+    for conta in config.accounts:
+        if str(conta.uid or "").strip() in pedidos:
+            alvos.extend(time_do_app(config, conta)
+                         if config.funcao_ativa_da_conta(conta) == "app"
+                         else [conta])
+    desligadas: list[str] = []
+    vistos: set[int] = set()
+    for conta in alvos:
+        if id(conta) in vistos:
+            continue
+        vistos.add(id(conta))
+        if config.funcao_ativa_da_conta(conta):
+            config.definir_funcao_da_conta(conta, "")
+            desligadas.append(conta.login or "")
+    return desligadas

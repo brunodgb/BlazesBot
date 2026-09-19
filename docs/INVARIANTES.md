@@ -365,6 +365,15 @@ e `docs/decisoes/deletador.md`.
   modelos custa 1,68 s por limpeza, contra 147 ms com vinte — e cada rota dropa
   coisas diferentes, então varrer a lista inteira é pagar por 190 comparações
   que nunca vão casar.
+- **O INICIAR PERGUNTA ANTES, QUANDO ALGUÉM VAI ABRIR A BOLSA À TOA.** Entra na
+  lista a conta ATIVA com função APP ou HH, limpeza LIGADA, seleção VAZIA e
+  tecla de pet configurada (sem auto-pick não cata item, logo a bolsa não
+  enche). Limpeza desligada NÃO entra: é decisão do usuário, e cobrá-la em todo
+  Iniciar transforma o aviso em OK automático.
+- **DESLIGAR A FUNÇÃO É ATÔMICO NO TIME DO APP.** Desligar um membro desliga o
+  time inteiro, líder e seguidores — o seguidor só roda enquanto o líder está
+  com o APP ligado, e meio time desligado é estado indefinido. As contas
+  continuam ATIVAS: logam e relogam, só não farmam.
 - **SEM ESCOLHA, A LIMPEZA NEM COMEÇA.** `limpar_a_bolsa` devolve na primeira
   linha — sem apertar a tecla do inventário e sem captura. Abrir a bolsa para
   não apagar nada custa o personagem parado, e a tecla é interruptor: numa

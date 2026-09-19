@@ -44,10 +44,15 @@ function toastCurto(msg, tipo = "info", ms = 1800) {
   toast._t = setTimeout(() => (el.className = "toast escondida"), ms);
 }
 
-function confirmar(msg) {
+function confirmar(msg, rotulos) {
+  // OS BOTOES DIZEM O QUE FAZEM quando quem chama pede. Um dialogo que decide
+  // se uma conta vai farmar a noite inteira nao pode depender de o usuario
+  // lembrar qual era o "Confirmar" -- ver o portao do Iniciar.
   return new Promise((resolve) => {
     confirmar._cb = resolve;
     $("#lbl-confirmar-msg").textContent = msg;
+    $("#btn-confirmar-ok").textContent = (rotulos && rotulos.ok) || t("btn_confirmar");
+    $("#btn-confirmar-nao").textContent = (rotulos && rotulos.nao) || t("btn_cancelar");
     $("#modal-confirmar").classList.remove("escondida");
   });
 }
@@ -72,13 +77,9 @@ $("#btn-confirmar-nao").addEventListener("click", () => {
  */
 function avisar(msg) {
   const nao = $("#btn-confirmar-nao");
-  const ok = $("#btn-confirmar-ok");
-  const rotulo = ok.textContent;
   nao.classList.add("escondida");
-  ok.textContent = t("btn_entendi");
-  return confirmar(msg).then((r) => {
+  return confirmar(msg, { ok: t("btn_entendi") }).then((r) => {
     nao.classList.remove("escondida");
-    ok.textContent = rotulo;
     return r;
   });
 }
@@ -1125,17 +1126,61 @@ $("#btn-remover-conta").addEventListener("click", () => {
 });
 
 /* ---------- controle do bot ---------- */
-$("#btn-iniciar").addEventListener("click", () => {
+
+/* O PORTAO DO INICIAR -- contas que vao abrir a bolsa e nao apagar nada.
+ *
+ * Depois da inversao de 19/09/2026, selecao vazia e o estado NORMAL de conta
+ * recem-criada, e o risco disso e silencioso: a conta farma a noite inteira, a
+ * bolsa enche e o usuario so descobre quando transborda. Por isso a pergunta e
+ * no Iniciar, com os dois caminhos escritos nos botoes.
+ *
+ * Quem decide o que entra na lista e o Python (`web_lixo.contas_ociosas`):
+ * so APP e HH, so com a limpeza ligada, e so com tecla de pet configurada.
+ */
+async function portaoDosItens() {
+  const pendentes = await chamar("contas_sem_itens_para_apagar");
+  if (!pendentes || !pendentes.length) return [];
+
+  const linhas = pendentes.map((c) => {
+    const quem = c.nick || c.login;
+    const time = (c.time || []).length
+      ? ` — ${t("portao_lixo_time")}: ${c.time.join(", ")}`
+      : "";
+    return `• ${quem} (${c.lista.toUpperCase()})${time}`;
+  });
+  const texto = [t("portao_lixo_titulo"), "", ...linhas, "",
+                 t("portao_lixo_como_resolver")].join("\n");
+
+  if (await confirmar(texto, { ok: t("btn_iniciar_assim"),
+                               nao: t("btn_desligar_e_iniciar") })) {
+    return [];                        // "Iniciar assim"
+  }
+  const r = await chamar("desligar_funcao_sem_itens",
+                         pendentes.map((c) => c.uid));
+  const desligadas = (r && r.desligadas) || [];
+  if (desligadas.length) carregarContas();
+  // NÃO dá o toast aqui: o "Bot iniciado" vem logo atrás e apagaria este. Quem
+  // avisa é quem inicia, numa mensagem só -- medido no navegador.
+  return desligadas;
+}
+
+$("#btn-iniciar").addEventListener("click", async () => {
   $("#btn-iniciar").disabled = true;
-  chamar("iniciar").then((r) => {
-    $("#btn-iniciar").disabled = false;
+  try {
+    const desligadas = await portaoDosItens();
+    const r = await chamar("iniciar");
     if (!r) { toast(t("erro_iniciar")); return; }
     if (r.ok) {
-      toast(t("msg_bot_iniciado"));
+      const aviso = desligadas.length
+        ? " " + t("msg_funcoes_desligadas", { contas: desligadas.join(", ") })
+        : "";
+      toast(t("msg_bot_iniciado") + aviso);
     } else {
       toast(t("erro_iniciar_detalhe") + ":\n" + (r.erros || []).join("\n"), "erro");
     }
-  });
+  } finally {
+    $("#btn-iniciar").disabled = false;
+  }
 });
 $("#btn-parar").addEventListener("click", () => chamar("parar").then(() => toast(t("msg_bot_parado"))));
 $("#btn-pausar").addEventListener("click", () => chamar("pausar").then(() => toast(t("msg_pausado"))));

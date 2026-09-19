@@ -945,6 +945,24 @@ class _App:
         self._aplicar()
         return resposta
 
+    def contas_sem_itens_para_apagar(self) -> list[dict[str, Any]]:
+        """As contas ativas que vão abrir a bolsa e não apagar nada.
+
+        Consultada pelo botão Iniciar. Lista vazia = ninguém para avisar.
+        """
+        return web_lixo.contas_ociosas(self.config)
+
+    def desligar_funcao_sem_itens(self, uids: Any) -> dict[str, Any]:
+        """Desliga a função dessas contas (e dos times delas) e grava.
+
+        Elas continuam ATIVAS: logam e relogam, só não farmam -- para o usuário
+        ajustar a seleção enquanto o resto do bot roda.
+        """
+        desligadas = web_lixo.desligar_funcao(self.config, uids)
+        if desligadas:
+            self._aplicar()
+        return {"ok": True, "erro": "", "desligadas": desligadas}
+
     def exportar_lixo_da_conta(self, uid: str, lista: Any,
                                apagaveis: Any) -> dict[str, Any]:
         """Grava a seleção num `.json` que o usuário escolhe onde salvar."""
@@ -1427,6 +1445,12 @@ class Api:
     def salvar_lixo_da_conta(self, uid: Any, lista: Any,
                              apagaveis: Any) -> dict[str, Any]:
         return self._app.salvar_lixo_da_conta(uid, lista, apagaveis)
+
+    def contas_sem_itens_para_apagar(self) -> list[dict[str, Any]]:
+        return self._app.contas_sem_itens_para_apagar()
+
+    def desligar_funcao_sem_itens(self, uids: Any) -> dict[str, Any]:
+        return self._app.desligar_funcao_sem_itens(uids)
 
     def exportar_lixo_da_conta(self, uid: Any, lista: Any,
                                apagaveis: Any) -> dict[str, Any]:

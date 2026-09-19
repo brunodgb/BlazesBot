@@ -1267,6 +1267,16 @@ body {
   display: none !important;
 }
 
+/* A MENSAGEM DA CONFIRMAÇÃO RESPEITA AS QUEBRAS DE LINHA.
+   Sem isto, uma lista de contas vira um blocão de texto corrido -- foi o que
+   aconteceu com o portão do Iniciar em 19/09/2026, e ler "• A • B • C" numa
+   linha só é pior que não listar. `pre-line` preserva o `
+` e continua
+   colapsando espaço, então mensagem de uma linha não muda em nada. */
+#lbl-confirmar-msg {
+  white-space: pre-line;
+}
+
 /* A CONFIRMAÇÃO É A ÚLTIMA PALAVRA, ENTÃO FICA POR CIMA DE TUDO.
    ===========================================================================
    `#modal-confirmar` e `#modal-lixo` dividiam a mesma `.modal-mascara`, com o

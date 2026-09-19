@@ -724,3 +724,39 @@ caminho tinha de ser barato e silencioso.
 E a mensagem de "nenhum template" deixou de mentir: pasta vazia (defeito de
 instalação) e conta sem escolha (o normal) são causas diferentes, e confundi-las
 esconde a que importa.
+
+### O portão do Iniciar
+
+Seleção vazia virou o estado NORMAL de conta recém-criada, e o risco disso é
+silencioso: a conta farma a noite inteira, a bolsa enche, e o usuário só
+descobre quando o inventário transborda — a falha que o deletador existe para
+evitar.
+
+Por isso a conferência acontece no **Iniciar**, com confirmação e com os dois
+caminhos escritos nos botões: **"Iniciar assim"** e **"Desligar essas e
+iniciar"**. Um diálogo que decide se uma conta vai farmar a noite inteira não
+pode depender de o usuário lembrar qual era o "Confirmar".
+
+**Quem entra na lista:** conta ativa, função APP ou HH, limpeza ligada, seleção
+vazia **e** tecla de pet configurada. As três exclusões têm motivo:
+
+* **limpeza desligada** é decisão do usuário — cobrá-la em todo Iniciar vira OK
+  automático, e aí, no dia em que o aviso estiver certo, ele é clicado sem ser
+  lido;
+* **sem tecla de pet** o personagem não cata item do chão, a bolsa não enche e
+  não há o que apagar (regra do jogo que a Fada já usa, em `fada_montagem.py`);
+* **BC** não apaga item hoje.
+
+**Desligar é atômico no time.** *"Se o líder for inativado, todos do time são
+inativados, e se algum do time for inativado o contrário também deve
+acontecer."* O motivo é mecânico: o seguidor só roda a macro enquanto o líder
+está com o APP ligado. O diálogo mostra quem cai junto ANTES de a decisão ser
+tomada.
+
+As contas desligadas continuam **Ativas** — logam e relogam normalmente. É o que
+permite ajustar a seleção com o resto do bot no ar.
+
+**Dois defeitos que o teste pegou no caminho:** `uid` vazio casava com toda
+conta sem uid (e, com a regra do time, desligaria a função do bot inteiro de uma
+vez); e a mensagem da confirmação colapsava as quebras de linha, transformando a
+lista de contas num blocão — `white-space: pre-line`.
