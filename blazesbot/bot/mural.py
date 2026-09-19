@@ -737,6 +737,13 @@ def zerar_o_time_para_teste() -> None:
     with _LOCK_TIME:
         _LARGADAS.clear()
         _ESTADOS.clear()
+    # CONVITE E ACEITE TAMBÉM -- ficaram de fora até 19/09/2026, e o sintoma foi
+    # o que esta função existe para evitar: um teste do anúncio passava sozinho
+    # e reprovava no arquivo inteiro, por causa de um convite anunciado pelo
+    # vizinho.
+    with _LOCK_CONVITES:
+        _CONVITES.clear()
+        _ACEITES.clear()
     with _COND_DO_PASSO:
         _PASSOS.clear()
     with _LOCK_FADA:
