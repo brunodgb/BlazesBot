@@ -1583,21 +1583,6 @@
     "en": "All",
     "es": "Todos"
   },
-  "filtro_lixo_ativos": {
-    "pt-br": "Ativos (apaga)",
-    "en": "Active (deletes)",
-    "es": "Activos (borra)"
-  },
-  "filtro_lixo_inativos": {
-    "pt-br": "Inativos (mantém)",
-    "en": "Inactive (keeps)",
-    "es": "Inactivos (conserva)"
-  },
-  "selo_lixo_mantem": {
-    "pt-br": "mantém",
-    "en": "keep",
-    "es": "conserva"
-  },
   "lixo_nada_no_filtro": {
     "pt-br": "Nenhum item com esse filtro.",
     "en": "No item matches this filter.",
@@ -1607,11 +1592,6 @@
     "pt-br": "itens",
     "en": "items",
     "es": "ítems"
-  },
-  "lixo_mantidos": {
-    "pt-br": "mantidos",
-    "en": "kept",
-    "es": "conservados"
   },
   "btn_lixo_manter": {
     "pt-br": "Manter os visíveis",
@@ -1707,5 +1687,30 @@
     "pt-br": "Não consegui importar.",
     "en": "Could not import.",
     "es": "No pude importar."
+  },
+  "selo_lixo_apaga": {
+    "pt-br": "apaga",
+    "en": "delete",
+    "es": "borra"
+  },
+  "filtro_lixo_apaga": {
+    "pt-br": "Apaga",
+    "en": "Deletes",
+    "es": "Borra"
+  },
+  "filtro_lixo_mantem": {
+    "pt-br": "Mantém",
+    "en": "Keeps",
+    "es": "Conserva"
+  },
+  "lixo_para_apagar": {
+    "pt-br": "selecionados para apagar",
+    "en": "selected for deletion",
+    "es": "seleccionados para borrar"
+  },
+  "lixo_nenhum_selecionado": {
+    "pt-br": "nenhum selecionado — nada será apagado",
+    "en": "none selected — nothing will be deleted",
+    "es": "ninguno seleccionado — no se borrará nada"
   }
 }

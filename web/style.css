@@ -1622,7 +1622,7 @@ kbd {
 .lixo-contador {
   font-size: 12px;
   font-weight: 600;
-  color: var(--color-ink-dim);
+  color: var(--color-dim);
   white-space: nowrap;
 }
 
@@ -1646,7 +1646,7 @@ kbd {
 .lixo-filtros button {
   padding: 5px 12px;
   font-size: 12px;
-  color: var(--color-ink-dim);
+  color: var(--color-dim);
   background: transparent;
   border: 0;
   cursor: pointer;
@@ -1662,7 +1662,7 @@ kbd {
 
 .lixo-filtros button.ativo {
   color: #fff;
-  background: var(--color-primary, #2563eb);
+  background: var(--color-accent);
 }
 
 .lixo-grade {
@@ -1700,8 +1700,8 @@ kbd {
 }
 
 .lixo-card:hover {
-  border-color: var(--color-primary, #2563eb);
-  background: rgba(37, 99, 235, 0.08);
+  border-color: var(--color-accent);
+  background: var(--color-accentsoft);
 }
 
 /* A caixa tem tamanho fixo e a imagem se estica para caber: os modelos vão de
@@ -1724,23 +1724,20 @@ kbd {
   height: 37px;
 }
 
-/* O QUE VAI SER APAGADO FICA EM SURDINA; o PRESERVADO fica vivo.
+/* O ÍCONE NASCE VIVO, e ESMAECE quando você o marca para apagar.
    ===========================================================================
-   A primeira versão fazia o contrário -- apagava era o normal e o preservado
-   ia a cinza. Está invertido desde 19/09/2026, e o pedido do usuário tem a
-   lógica do lado dele: o que ele escolheu guardar é o que ele quer achar na
-   tela, não o que vai virar pó.
+   A metáfora é do usuário e é a certa: esmaecido = vai sumir. Como a lista
+   agora é o que SERÁ apagado, o estado normal (a maioria dos 213) fica com cor
+   cheia e sem selo, e o punhado escolhido é que se apaga na tela antes de se
+   apagar na bolsa.
 
-   SURDINA NÃO É CINZA (`grayscale` foi recusado no mesmo pedido): a cor é o
-   que identifica o ícone de 30 px, e tirá-la de 200 itens deixaria a grade
-   ilegível. Menos saturação e menos brilho abafam sem apagar o desenho. */
+   SURDINA NÃO É CINZA (`grayscale` foi recusado): a cor é o que identifica um
+   ícone de 30 px. Menos saturação e menos brilho abafam sem apagar o desenho. */
 .lixo-thumb {
   width: 100%;
   height: 100%;
   object-fit: contain;
   image-rendering: pixelated;
-  filter: saturate(0.55) brightness(0.85);
-  opacity: 0.82;
   transition: transform 0.12s, filter 0.12s, opacity 0.12s;
 }
 
@@ -1763,29 +1760,29 @@ kbd {
   overflow-wrap: anywhere;
 }
 
-/* PRESERVADO SE LÊ DE LONGE: cor cheia, moldura acesa e o selo com a palavra.
-   Cor sozinha não serve -- quem não distingue verde de vermelho fica sem
-   informação nenhuma --, e por isso o selo MANTÉM continua ali. */
-.lixo-card.ignorado {
-  border-color: var(--color-primary, #2563eb);
-  background: rgba(37, 99, 235, 0.10);
+/* MARCADO PARA APAGAR: esmaecido, moldura tracejada e o selo com a palavra.
+   Cor sozinha não serve -- quem não distingue tom fica sem informação --, e é
+   por isso que o selo APAGA existe. */
+.lixo-card.apaga {
+  border-style: dashed;
+  border-color: var(--color-err);
+  background: rgba(239, 68, 68, 0.07);
 }
 
-.lixo-card.ignorado .lixo-thumb {
-  filter: none;
-  opacity: 1;
+.lixo-card.apaga .lixo-thumb {
+  filter: saturate(0.4) brightness(0.8);
+  opacity: 0.6;
 }
 
-/* SEM RISCO NO NOME (pedido de 19/09/2026): riscar é a marca de "cancelado", e
-   aqui o item é justamente o que sobrevive. */
-.lixo-card.ignorado .lixo-nome {
-  color: var(--color-ink);
-  font-weight: 600;
+/* SEM RISCO NO NOME: o risco é marca de "cancelado" e aqui não acrescenta
+   nada que o esmaecido e o selo já não digam. */
+.lixo-card.apaga .lixo-nome {
+  color: var(--color-dim);
 }
 
 .lixo-selo {
-  color: var(--color-primary, #2563eb);
-  border-color: var(--color-primary, #2563eb);
+  color: var(--color-err);
+  border-color: var(--color-err);
   font-size: 9px;
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -1793,7 +1790,7 @@ kbd {
   padding: 1px 6px;
   border-radius: 999px;
   border: 1px solid var(--color-line);
-  color: var(--color-ink-dim);
+  color: var(--color-dim);
 }
 
 .lixo-rodape {
@@ -1810,5 +1807,5 @@ kbd {
   padding: 28px 0;
   text-align: center;
   font-size: 13px;
-  color: var(--color-ink-dim);
+  color: var(--color-dim);
 }

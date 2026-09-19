@@ -1208,7 +1208,7 @@ function preencherEditor(d) {
   $("#ed-app-limpar").value = String(d.app.apagar_lixo_a_cada ?? 10);
   // O contador no botão: quantos itens esta conta preserva em cada
   // lista. Evita abrir a janela só para conferir.
-  marcarContadoresDoLixo(d.app.desativados, (d.hh || {}).desativados);
+  marcarContadoresDoLixo(d.app.apagaveis, (d.hh || {}).apagaveis);
   $("#ed-app-travar").checked = !!d.app.travar_posicao;
   $("#ed-app-shuffle").value = String(d.app.shuffle_apos_n_voltas ?? 30);
   $("#ed-app-time-modo").value = d.app.time_modo || "largada";
@@ -2938,7 +2938,7 @@ document.addEventListener("wheel", (e) => {
    A pasta `data/templates/deletar/` continua dizendo o que PODE ser apagado, e
    é uma só para o bot inteiro. Aqui o usuário marca as EXCEÇÕES daquela conta.
 
-   O ESTADO EM EDIÇÃO VIVE AQUI, não no disco: `ignorados` é o que está na
+   O ESTADO EM EDIÇÃO VIVE AQUI, não no disco: `apagaveis` é o que está na
    tela, `guardados` é o que estava salvo quando a janela abriu. A diferença
    entre os dois é a resposta para "tem alteração pendente?" -- e é ela que faz
    o Cancelar perguntar antes de jogar fora meia hora de trabalho. */
@@ -2946,7 +2946,10 @@ document.addEventListener("wheel", (e) => {
 const lixo = {
   lista: "app",
   itens: [],
-  ignorados: new Set(),
+  // O QUE SERA APAGADO. Invertido em 19/09/2026: antes esta lista era das
+  // excecoes (o que NAO apagar), e vazia significava "apaga tudo". Agora vazia
+  // significa "nao apaga nada", que e o padrao.
+  apagaveis: new Set(),
   guardados: new Set(),
   orfaos: 0,
   filtro: "todos",
@@ -2954,8 +2957,8 @@ const lixo = {
 };
 
 function lixoSujo() {
-  if (lixo.ignorados.size !== lixo.guardados.size) return true;
-  for (const nome of lixo.ignorados) if (!lixo.guardados.has(nome)) return true;
+  if (lixo.apagaveis.size !== lixo.guardados.size) return true;
+  for (const nome of lixo.apagaveis) if (!lixo.guardados.has(nome)) return true;
   return false;
 }
 
@@ -2965,9 +2968,9 @@ function lixoVisiveis() {
   // sabe (nem tem de saber) que a classe vem no meio.
   const termos = lixo.busca.trim().toLowerCase().split(/\s+/).filter(Boolean);
   return lixo.itens.filter((item) => {
-    const ignorado = lixo.ignorados.has(item.arquivo);
-    if (lixo.filtro === "ativos" && ignorado) return false;
-    if (lixo.filtro === "inativos" && !ignorado) return false;
+    const apaga = lixo.apagaveis.has(item.arquivo);
+    if (lixo.filtro === "apaga" && !apaga) return false;
+    if (lixo.filtro === "mantem" && apaga) return false;
     if (!termos.length) return true;
     // O nome do arquivo entra junto: ele saiu do cartão, mas continua sendo
     // por onde o dicionário de rótulos é editado.
@@ -2982,9 +2985,9 @@ function desenharLixo() {
   grade.textContent = "";
 
   for (const item of visiveis) {
-    const ignorado = lixo.ignorados.has(item.arquivo);
+    const apaga = lixo.apagaveis.has(item.arquivo);
     const card = document.createElement("div");
-    card.className = "lixo-card" + (ignorado ? " ignorado" : "");
+    card.className = "lixo-card" + (apaga ? " apaga" : "");
     card.title = item.arquivo;
 
     const caixa = document.createElement("div");
@@ -3004,17 +3007,19 @@ function desenharLixo() {
     // por onde o dicionário de rótulos é editado; na grade ele era a segunda
     // linha de texto em cada um dos 208 cartões.
     card.append(caixa, nome);
-    if (ignorado) {
+    // SELO SO NO MARCADO: o estado normal sao os 200 e poucos que ficam, e um
+    // selo em cada um viraria mural. O que salta e o conjunto pequeno.
+    if (apaga) {
       const selo = document.createElement("span");
       selo.className = "lixo-selo";
-      selo.textContent = t("selo_lixo_mantem");
+      selo.textContent = t("selo_lixo_apaga");
       card.appendChild(selo);
     }
     // O CARTÃO INTEIRO é o alvo: caixinha de 12 px em grade de 208 é erro de
     // pontaria garantido.
     card.addEventListener("click", () => {
-      if (ignorado) lixo.ignorados.delete(item.arquivo);
-      else lixo.ignorados.add(item.arquivo);
+      if (apaga) lixo.apagaveis.delete(item.arquivo);
+      else lixo.apagaveis.add(item.arquivo);
       desenharLixo();
     });
     grade.appendChild(card);
@@ -3028,15 +3033,18 @@ function desenharLixo() {
   }
 
   const total = lixo.itens.length;
-  const mantidos = lixo.itens.filter((i) => lixo.ignorados.has(i.arquivo)).length;
-  $("#lbl-lixo-contador").textContent =
-    `${total} ${t("lixo_itens")} · ${mantidos} ${t("lixo_mantidos")}`;
+  const marcados = lixo.itens.filter((i) => lixo.apagaveis.has(i.arquivo)).length;
+  // O VAZIO PRECISA DIZER O QUE SIGNIFICA. Ele e o estado normal de conta
+  // recem-configurada, e "0 selecionados" nao conta que nada sera apagado.
+  $("#lbl-lixo-contador").textContent = marcados
+    ? `${total} ${t("lixo_itens")} · ${marcados} ${t("lixo_para_apagar")}`
+    : `${total} ${t("lixo_itens")} · ${t("lixo_nenhum_selecionado")}`;
 
   // O ESCOPO VAI NO BOTÃO: com filtro ou busca ligados, "todos" mentiria.
-  $("#btn-lixo-ignorar").textContent = `${t("btn_lixo_manter")} (${visiveis.length})`;
-  $("#btn-lixo-reativar").textContent = `${t("btn_lixo_apagar")} (${visiveis.length})`;
-  $("#btn-lixo-ignorar").disabled = !visiveis.length;
-  $("#btn-lixo-reativar").disabled = !visiveis.length;
+  $("#btn-lixo-marcar").textContent = `${t("btn_lixo_apagar")} (${visiveis.length})`;
+  $("#btn-lixo-desmarcar").textContent = `${t("btn_lixo_manter")} (${visiveis.length})`;
+  $("#btn-lixo-marcar").disabled = !visiveis.length;
+  $("#btn-lixo-desmarcar").disabled = !visiveis.length;
 
   const notas = [t("lixo_nota_sem_religar")];
   if (lixo.orfaos) notas.push(`${lixo.orfaos} ${t("lixo_nota_orfaos")}`);
@@ -3046,7 +3054,7 @@ function desenharLixo() {
 function marcarContadoresDoLixo(app, hh) {
   const escrever = (id, quantos) => {
     const el = $(id);
-    if (el) el.textContent = quantos ? `(${quantos} ${t("lixo_mantidos")})` : "";
+    if (el) el.textContent = quantos ? `(${quantos} ${t("lixo_para_apagar")})` : "";
   };
   escrever("#lbl-lixo-app-conta", (app || []).length);
   escrever("#lbl-lixo-hh-conta", (hh || []).length);
@@ -3061,8 +3069,8 @@ async function abrirLixo(lista) {
   }
   lixo.lista = lista;
   lixo.itens = d.itens || [];
-  lixo.guardados = new Set(d.desativados || []);
-  lixo.ignorados = new Set(d.desativados || []);
+  lixo.guardados = new Set(d.apagaveis || []);
+  lixo.apagaveis = new Set(d.apagaveis || []);
   lixo.orfaos = d.orfaos || 0;
   lixo.filtro = "todos";
   lixo.busca = "";
@@ -3079,14 +3087,14 @@ async function abrirLixo(lista) {
 
 async function salvarLixo() {
   const r = await chamar("salvar_lixo_da_conta", contaUidEditando, lixo.lista,
-                         [...lixo.ignorados]);
+                         [...lixo.apagaveis]);
   if (!r || !r.ok) {
     avisar((r && r.erro) || t("lixo_nao_salvou"));
     return;
   }
-  lixo.guardados = new Set(r.desativados || []);
-  if (lixo.lista === "hh") marcarContadoresDoLixo(null, r.desativados);
-  else marcarContadoresDoLixo(r.desativados, null);
+  lixo.guardados = new Set(r.apagaveis || []);
+  if (lixo.lista === "hh") marcarContadoresDoLixo(null, r.apagaveis);
+  else marcarContadoresDoLixo(r.apagaveis, null);
   $("#modal-lixo").classList.add("escondida");
   toast(t("lixo_salvo"), "ok");
 }
@@ -3116,18 +3124,18 @@ $$("#modal-lixo .lixo-filtros button").forEach((b) => {
     desenharLixo();
   });
 });
-$("#btn-lixo-ignorar").addEventListener("click", () => {
-  lixoVisiveis().forEach((i) => lixo.ignorados.add(i.arquivo));
+$("#btn-lixo-marcar").addEventListener("click", () => {
+  lixoVisiveis().forEach((i) => lixo.apagaveis.add(i.arquivo));
   desenharLixo();
 });
-$("#btn-lixo-reativar").addEventListener("click", () => {
-  lixoVisiveis().forEach((i) => lixo.ignorados.delete(i.arquivo));
+$("#btn-lixo-desmarcar").addEventListener("click", () => {
+  lixoVisiveis().forEach((i) => lixo.apagaveis.delete(i.arquivo));
   desenharLixo();
 });
 
 $("#btn-lixo-exportar").addEventListener("click", async () => {
   const r = await chamar("exportar_lixo_da_conta", contaUidEditando, lixo.lista,
-                         [...lixo.ignorados]);
+                         [...lixo.apagaveis]);
   if (!r || r.cancelado) return;
   if (!r.ok) { avisar(r.erro || t("lixo_nao_exportou")); return; }
   toast(t("lixo_exportado", { quantos: r.quantos }), "ok");
@@ -3140,9 +3148,9 @@ $("#btn-lixo-importar").addEventListener("click", async () => {
   // O QUE MUDA, ANTES DE MUDAR. Importar SUBSTITUI, e substituir sem dizer
   // com o que a conta fica é a forma de perder seleção sem perceber.
   const pergunta = t("lixo_confirmar_import",
-                     { arquivo: r.quantos, atual: lixo.ignorados.size });
+                     { arquivo: r.quantos, atual: lixo.apagaveis.size });
   if (!(await confirmar(pergunta))) return;
-  lixo.ignorados = new Set(r.desativados || []);
+  lixo.apagaveis = new Set(r.apagaveis || []);
   desenharLixo();
   const aviso = r.ausentes
     ? ` · ${r.ausentes} ${t("lixo_ausentes")}`

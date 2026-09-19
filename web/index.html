@@ -874,14 +874,14 @@
                data-i18n-placeholder="ph_lixo_busca" placeholder="Buscar por nome ou arquivo…" />
         <div class="lixo-filtros" role="group">
           <button type="button" data-filtro="todos" class="ativo" data-i18n="filtro_lixo_todos">Todos</button>
-          <button type="button" data-filtro="ativos" data-i18n="filtro_lixo_ativos">Ativos (apaga)</button>
-          <button type="button" data-filtro="inativos" data-i18n="filtro_lixo_inativos">Inativos (mantém)</button>
+          <button type="button" data-filtro="apaga" data-i18n="filtro_lixo_apaga">Apaga</button>
+          <button type="button" data-filtro="mantem" data-i18n="filtro_lixo_mantem">Mantém</button>
         </div>
         <!-- O ESCOPO VAI ESCRITO NO BOTÃO: com 208 itens e um filtro ligado,
              "todos" seria a armadilha -- o usuário vê catorze e o botão mexe
              em duzentos. O texto é gerado com o número do que está na tela. -->
-        <button id="btn-lixo-ignorar" type="button" class="bt bt-secundario"></button>
-        <button id="btn-lixo-reativar" type="button" class="bt bt-secundario"></button>
+        <button id="btn-lixo-marcar" type="button" class="bt bt-secundario"></button>
+        <button id="btn-lixo-desmarcar" type="button" class="bt bt-secundario"></button>
       </div>
 
       <div id="lixo-grade" class="lixo-grade"></div>
