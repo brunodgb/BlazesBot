@@ -1267,6 +1267,21 @@ body {
   display: none !important;
 }
 
+/* A CONFIRMAÇÃO É A ÚLTIMA PALAVRA, ENTÃO FICA POR CIMA DE TUDO.
+   ===========================================================================
+   `#modal-confirmar` e `#modal-lixo` dividiam a mesma `.modal-mascara`, com o
+   mesmo `z-index: 100` -- e com empate quem pinta por cima é quem vem DEPOIS
+   no HTML. A janela dos itens entrou depois, então a pergunta "descartar as
+   alterações?" saía atrás dela: invisível e, pior, sem como responder. O botão
+   Cancelar da janela virava um beco sem saída.
+
+   300 põe a confirmação acima de qualquer outra camada -- máscara (100), toast
+   (150) e lupa (200) --, e é a posição certa por desenho: ela BLOQUEIA, existe
+   para ser respondida antes de qualquer outra coisa. */
+#modal-confirmar {
+  z-index: 300;
+}
+
 .toast {
   position: fixed;
   bottom: 20px;

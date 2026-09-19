@@ -330,3 +330,29 @@ def test_a_lista_do_time_NAO_remonta_a_regra():
     bloco = JS.split("function montarListaDoTime(")[1].split("\nfunction ")[0]
     assert "cx.disabled = true" not in bloco
     assert "cx.checked = false" not in bloco
+
+
+def test_a_confirmacao_fica_POR_CIMA_de_qualquer_outra_camada():
+    """Empate de `z-index` é decidido pela ordem no HTML — e isso é silencioso.
+
+    MEDIDO em 19/09/2026: `#modal-confirmar` e `#modal-lixo` tinham os dois
+    `z-index: 100` da `.modal-mascara`. A janela dos itens entrou depois no
+    `index.html`, então a pergunta "descartar as alterações?" aparecia ATRÁS
+    dela — invisível, e sem como ser respondida. O Cancelar da janela virava um
+    beco sem saída.
+
+    A confirmação BLOQUEIA: ela existe para ser respondida antes de qualquer
+    outra coisa, então tem de estar acima de toda camada declarada no arquivo.
+    """
+    import re
+
+    bloco = CSS.split("#modal-confirmar {")[1].split("}")[0]
+    da_confirmacao = int(re.search(r"z-index:\s*(\d+)", bloco).group(1))
+    todos = [int(n) for n in re.findall(r"z-index:\s*(\d+)", CSS)]
+
+    assert da_confirmacao == max(todos), (
+        f"a confirmação está em {da_confirmacao} e existe camada em "
+        f"{max(todos)} — ela pode ficar atrás e travar quem a abriu")
+    assert todos.count(da_confirmacao) == 1, (
+        "outra camada empatou com a confirmação; no empate quem vence é quem "
+        "vem depois no HTML, que é exatamente o defeito de 19/09/2026")
