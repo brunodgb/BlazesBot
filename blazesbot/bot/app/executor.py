@@ -839,6 +839,12 @@ class ExecutorDeMacro:
     teclas E dentro da espera.
     """
 
+    # SEM ACEITADOR, POR PADRÃO -- e como atributo de CLASSE de propósito. As
+    # duas esperas o consultam a cada fatia, e quem monta um executor parcial
+    # (teste, ou um modo que não tem time) não deveria precisar saber disso para
+    # que a espera funcione. O `__init__` sobrescreve por instância.
+    _aceitar_convite: Callable[[], None] | None = None
+
     def __init__(
         self,
         hwnd: int,
@@ -1257,15 +1263,30 @@ class ExecutorDeMacro:
         cadáver que se está tentando largar -- `_cortar_a_volta` responderia
         `True` e o respiro devolveria "pare" no primeiro décimo de segundo.
 
-        Então este daqui fatia e pergunta UMA coisa só: é para continuar?
+        Então este daqui fatia e pergunta DUAS coisas: é para continuar, e há
+        convite de time para aceitar?
+
+        O CONVITE ENTROU AQUI EM 19/09/2026, e não é exceção à regra acima. Ele
+        não olha alvo nenhum -- é uma consulta ao mural (`convite_pendente`), e
+        só vira captura de tela quando há convite anunciado. Sem isto o seguidor
+        ficava SURDO durante a volta inteira: no modo `copiar` todas as linhas
+        são cegas (`sincronia.volta_cega`), então o gancho do `_esperar` nunca
+        era alcançado. Medido no log do dia: o líder mandou quatro convites em
+        23 s e o seguidor só aceitou 16 ms depois de a macro ser desligada.
         """
         restante = max(0.0, float(segundos))
+        desde_o_convite = 0.0
         while restante > 0:
             if not self._continuar():
                 return False
             fatia = min(FATIA_DE_ESPERA, restante)
             time.sleep(fatia)
             restante -= fatia
+            desde_o_convite += fatia
+            if desde_o_convite >= PASSO_DA_CONFERENCIA_DO_ALVO:
+                desde_o_convite = 0.0
+                if self._aceitar_convite is not None:
+                    self._aceitar_convite()
         return True
 
     def _esperar_cego(self, milissegundos: int) -> bool:

@@ -15,6 +15,7 @@ se mudarem por acidente, quebram calado:
 from __future__ import annotations
 
 from types import SimpleNamespace
+from unittest import mock
 
 import pytest
 
@@ -550,6 +551,66 @@ def test_o_executor_CHAMA_o_aceite_na_espera_fatiada():
 
     fonte = inspect.getsource(executor.ExecutorDeMacro._esperar)
     assert "self._aceitar_convite()" in fonte
+
+
+def test_o_executor_chama_o_aceite_TAMBEM_na_espera_CEGA():
+    """A volta cega é a REGRA no time, não a exceção.
+
+    `sincronia.volta_cega` é verdadeira em todo modo que não seja `mesmo_alvo`
+    -- e o padrão é `copiar`. Com o gancho só no `_esperar`, o seguidor passava
+    a volta inteira surdo: medido em 19/09/2026, quatro convites em 23 s e o
+    aceite saindo 16 ms depois de a macro ser DESLIGADA, pelo aceitador do
+    supervisor.
+    """
+    import inspect
+
+    from blazesbot.bot.app import executor
+
+    fonte = inspect.getsource(executor.ExecutorDeMacro._dormir)
+    assert "self._aceitar_convite()" in fonte, (
+        "a espera cega voltou a ser surda a convite de time")
+    assert "_esperar_cego" in inspect.getsource(
+        executor.ExecutorDeMacro._esperar_cego), "a espera cega mudou de nome"
+    assert "self._dormir(" in inspect.getsource(
+        executor.ExecutorDeMacro._esperar_cego), (
+        "a espera cega parou de passar pelo `_dormir` -- o aceite ficou de fora")
+
+
+def test_sem_convite_anunciado_o_aceitador_do_APP_NAO_captura_a_tela():
+    """O que torna possível perguntar a cada fatia da espera.
+
+    A captura custa ~15 ms e vinha antes de qualquer pergunta. Chamada dentro
+    da linha, ela entraria só nesta conta e desalinharia o time -- que é
+    justamente o que a volta cega existe para evitar.
+    """
+    from blazesbot.bot import team as mod_team
+    from blazesbot.bot.team import InviteAcceptor
+
+    capturas = []
+    ctx = SimpleNamespace(
+        char_name="Um",
+        hwnd=1,
+        coords=SimpleNamespace(confirm_ok=(437, 335)),
+        config=SimpleNamespace(farming_accounts=lambda: []),
+        templates=SimpleNamespace(load=lambda nome: None),
+        memory=SimpleNamespace(modal_open=lambda: True, team_size=lambda: None,
+                               tamanho_do_time=lambda: 2),
+        click=lambda p: None,
+        tick=lambda s: None,
+        log=SimpleNamespace(info=lambda *a, **k: None,
+                            warning=lambda *a, **k: None,
+                            debug=lambda *a, **k: None),
+    )
+    aceitador = InviteAcceptor(ctx, cooldown=0.0, exigir_caixa=True)
+
+    with mock.patch.object(mod_team, "capture_window",
+                           lambda h: capturas.append(h)):
+        aceitador.check_and_accept()                   # sem convite nenhum
+        assert capturas == [], "capturou a tela sem ter convite para aceitar"
+
+        mural.anunciar_convite("Um", "Lider")
+        aceitador.check_and_accept()
+        assert capturas == [1], "com convite anunciado, a imagem volta a valer"
 
 
 def test_o_supervisor_INJETA_o_aceite_no_executor():

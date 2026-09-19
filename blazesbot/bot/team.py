@@ -915,7 +915,22 @@ class InviteAcceptor:
             return False
         self._last_check = agora
 
-        quadro = capture_window(ctx.hwnd)
+        # A CAPTURA SÓ QUANDO HÁ MOTIVO -- 19/09/2026.
+        #
+        # Ela vinha antes de qualquer pergunta, inclusive quando não havia
+        # convite nenhum: ~15 ms a cada meio segundo, gastos para descobrir que
+        # não havia nada a fazer. No modo APP isso é o que impedia perguntar
+        # dentro da espera da linha, porque o tempo entraria em UMA conta e
+        # desalinharia o time (ver `sincronia.volta_cega`).
+        #
+        # `exigir_caixa` é o que separa os dois usos: o aceitador do APP só
+        # aceita convite ANUNCIADO por uma conta deste bot, e sem anúncio não há
+        # imagem que interesse. O da conta de reset continua olhando a tela --
+        # é por lá que ele reconhece convite de estranho.
+        remetente_anunciado = convite_pendente(self._meu_nick)
+        quadro = (capture_window(ctx.hwnd)
+                  if (remetente_anunciado is not None or not self.exigir_caixa)
+                  else None)
         ponto = self._achar_caixa(quadro) if quadro is not None else None
 
         # CAMINHO PRINCIPAL: uma conta DESTE bot acabou de me convidar.
@@ -929,7 +944,6 @@ class InviteAcceptor:
         #
         # Isto importa porque era aqui que o reset falhava: sem captura, o
         # template do convite nunca casava e a conta de reset não clicava em nada.
-        remetente_anunciado = convite_pendente(self._meu_nick)
         if remetente_anunciado is not None:
             # O PORTÃO (só com `exigir_caixa`): sem prova de que a caixa está na
             # tela, não sai clique.

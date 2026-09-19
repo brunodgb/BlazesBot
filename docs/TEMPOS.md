@@ -165,7 +165,7 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | `SEGUNDOS_PARA_CONFIRMAR_A_SAIDA` | 2.5 s | *novo* | FIXO | [executor.py:236](blazesbot/bot/app/executor.py#L236) | `_confirmar_a_saida_de_batalha` | Quanto se espera a flag de combate BAIXAR depois de o alvo cair. |
 | `PASSO_DA_SAIDA_DE_BATALHA` | 0.1 s | *novo* | PASSO | [executor.py:240](blazesbot/bot/app/executor.py#L240) | `_confirmar_a_saida_de_batalha` | Passo da conferência ativa acima. É leitura de memória; 0,1 s dá 20 amostras |
 | `SEGUNDOS_PARA_O_ALVO_APARECER` | 0.35 s | *novo* | FIXO | [executor.py:273](blazesbot/bot/app/executor.py#L273) | `_esperar_o_alvo_trocar` | O TAB DEIXOU DE SER LINHA DA MACRO |
-| `PASSO_DA_CONFERENCIA_DO_ALVO` | 0.16 s | *novo* | PASSO | [executor.py:311](blazesbot/bot/app/executor.py#L311) | `_esperar, _observar_depois_da_morte` | De quanto em quanto tempo perguntar "o alvo morreu?" DENTRO da espera de uma |
+| `PASSO_DA_CONFERENCIA_DO_ALVO` | 0.16 s | *novo* | PASSO | [executor.py:311](blazesbot/bot/app/executor.py#L311) | `_esperar, _dormir (+1)` | De quanto em quanto tempo perguntar "o alvo morreu?" DENTRO da espera de uma |
 | `SEGUNDOS_PARA_A_RODA_REINICIAR` | 1.6 s | *novo* | FIXO | [executor.py:370](blazesbot/bot/app/executor.py#L370) | `_garantir_alvo` | Quanto esperar depois de uma aquisição FRACASSADA, antes da volta seguinte. |
 | `ESPERA_SEM_ALVO` | 0.4 s | *novo* | FIXO | [executor.py:550](blazesbot/bot/app/executor.py#L550) | `uma_volta, _uma_volta_simples (+1)` | Quanto esperar antes de tentar de novo quando NÃO HÁ alvo vivo. |
 | `ESPERA_ANTES_DO_TAB` | 0.4 s | *novo* | FIXO | [executor.py:577](blazesbot/bot/app/executor.py#L577) | `_tab_simples, _garantir_alvo` | PAGO UMA VEZ POR AQUISIÇÃO, NÃO UMA VEZ POR TECLA |
@@ -177,7 +177,7 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | `ESPERA_ENTRE_TABS` | 0.6 s | *novo* | FIXO | [executor.py:769](blazesbot/bot/app/executor.py#L769) | `_garantir_alvo` | Espaçamento entre um salto da roda do TAB e o seguinte. |
 | `PASSO_DA_ESPERA_DA_BASE` | 0.1 s | = | PASSO | [executor.py:784](blazesbot/bot/app/executor.py#L784) | `_esperar_chegar_na_base` | Cadência da pergunta "já cheguei?". Leitura de posição é de microssegundos; o |
 | `SEGUNDOS_DO_PASSO_DO_SHUFFLE` | 3 s | *novo* | PASSO | [executor.py:820](blazesbot/bot/app/executor.py#L820) | `_fazer_shuffle_anti_afk` | Cada perna do shuffle anti-AFK (ida e volta). Era `time.sleep(1.0)` cego duas |
-| *literal em* `rodar` | 0.25 s | = | FIXO | [executor.py:3462](blazesbot/bot/app/executor.py#L3462) | `rodar` | Laço contínuo: volta após volta, até `continuar()` devolver False. |
+| *literal em* `rodar` | 0.25 s | = | FIXO | [executor.py:3483](blazesbot/bot/app/executor.py#L3483) | `rodar` | Laço contínuo: volta após volta, até `continuar()` devolver False. |
 | `ESPERA_ENTRE_TABS_DO_ALINHAMENTO` | 0.5 s | *novo* | FIXO | [sincronia.py:97](blazesbot/bot/app/sincronia.py#L97) |  | Cadência do TAB durante o alinhamento. |
 | `PASSO_DA_ESPERA_DA_LARGADA` | 0.04 s | *novo* | PASSO | [sincronia.py:100](blazesbot/bot/app/sincronia.py#L100) | `_esperar_os_seguidores, _entrar_na_largada` | De quanto em quanto tempo o seguidor confere se a largada saiu. |
 | `SEGUNDOS_SEM_MUDANCA_PARA_TAB` | 3 s | *novo* | FIXO | [sincronia.py:108](blazesbot/bot/app/sincronia.py#L108) | `conferir_a_parada` | Sem trocar de estado de batalha por este tempo, dá TAB. |
@@ -360,8 +360,8 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | *literal em* `_enviar_convite` | 0.5 s | = | FIXO | [team.py:575](blazesbot/bot/team.py#L575) | `_enviar_convite` | Envia o convite pelo MENU DE CONTEXTO da entrada na Block list. |
 | *literal em* `sair_do_time` | 0.4 s | = | FIXO | [team.py:738](blazesbot/bot/team.py#L738) | `sair_do_time` | Sai do time por DOIS CLIQUES medidos no cliente. |
 | *literal em* `sair_do_time` | 0.5 s | = | FIXO | [team.py:753](blazesbot/bot/team.py#L753) | `sair_do_time` | Sai do time por DOIS CLIQUES medidos no cliente. |
-| *literal em* `_aceitar` | 0.5 s | = | FIXO | [team.py:1065](blazesbot/bot/team.py#L1065) | `_aceitar` |  |
-| *literal em* `_recusar` | 0.5 s | = | FIXO | [team.py:1072](blazesbot/bot/team.py#L1072) | `_recusar` |  |
+| *literal em* `_aceitar` | 0.5 s | = | FIXO | [team.py:1079](blazesbot/bot/team.py#L1079) | `_aceitar` |  |
+| *literal em* `_recusar` | 0.5 s | = | FIXO | [team.py:1086](blazesbot/bot/team.py#L1086) | `_recusar` |  |
 | `ESPERA_DEPOIS_DO_CLIQUE` | 0.35 s | = | FIXO | [teste_do_cursor.py:100](blazesbot/bot/teste_do_cursor.py#L100) | `_uma_fase` |  |
 | *literal em* `main` | 8 s | = | FIXO | [teste_do_cursor.py:476](blazesbot/bot/teste_do_cursor.py#L476) | `main` |  |
 | `CADENCIA_DAS_CONFERENCIAS` | 60 s (1 min) | *novo* | PASSO | [time_do_app.py:112](blazesbot/bot/time_do_app.py#L112) | `montar_se_for_a_hora` | De quanto em quanto tempo o líder confere se o time está completo. |
