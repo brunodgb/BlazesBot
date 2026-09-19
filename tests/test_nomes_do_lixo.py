@@ -100,7 +100,11 @@ def test_TODO_modelo_de_verdade_tem_um_nome(pasta):
     ("Wizz68.png", "Robe Wizz lvl68"),
     ("MONK65.png", "Boots Monk lvl65"),
     ("Fada38.png", "Robe Fada lvl38"),
-    ("Fairy5.png", "Boots Fairy lvl5"),
+    # FAIRY E FADA SÃO A MESMA CLASSE, e as duas caem em "Fada" -- senão a
+    # família fica partida na grade, com `Fairy3` e `Fairy13` longe dos
+    # `Fada23..63`. Foi o usuário quem viu, olhando a tela.
+    ("Fairy5.png", "Boots Fada lvl5"),
+    ("FAIRY65.png", "Boots Fada lvl65"),
     # A peça já está no nome e a classe NÃO aparece: não se inventa.
     ("Cuff12.png", "Cuff lvl12"),
     ("Belt6.png", "Belt lvl6"),
