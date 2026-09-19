@@ -101,6 +101,17 @@ def _construir() -> Path:
         # ADMINISTRADOR. O bot lê a memória do cliente do jogo; sem elevação,
         # `Memory` falha na primeira conta e o resto não acontece.
         "--uac-admin",
+        # O MESMO ÍCONE DO RESTO DO BOT. `web/public/favicon.ico` é o que a
+        # janela já usa (`config.ICONE_DO_APP`) e o que a aba do navegador
+        # mostra -- sem esta linha o Explorer mostraria o ícone genérico do
+        # PyInstaller, e o arquivo entregue não pareceria o programa.
+        #
+        # Ele tem os SETE tamanhos que o Windows pede (16, 20, 24, 32, 40, 48 e
+        # 64, todos 32 bits): a lista grande importa porque cada lugar puxa um
+        # -- 16 na barra de tarefas, 32 no Explorer em "Ícones médios", 48 em
+        # "Ícones grandes". Faltando o tamanho, o Windows reduz outro na mão e
+        # o resultado é o ícone borrado.
+        "--icon", str(RAIZ / "web" / "public" / "favicon.ico"),
     ]
     for origem, destino in EMBUTIDOS:
         comando += ["--add-data", f"{RAIZ / origem}{os_sep()}{destino}"]
