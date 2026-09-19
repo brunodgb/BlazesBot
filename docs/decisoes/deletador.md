@@ -838,3 +838,22 @@ daquele ícone, feito da bolsa do jogo na resolução em que o bot roda. Nome nu
 lista não vira PNG. A tabela serve para o usuário decidir o que vale recortar
 -- e, depois da inversão de 19/09, um modelo a mais na pasta não custa
 desempenho nenhum enquanto ninguém o marcar.
+
+### E ele decidiu, no mesmo dia: três famílias ficam FORA
+
+- **Armas** (Blade, Bow, Dagger, Pearl, Shovel, Simitar, Staff, Sword, Wheel,
+  Xbow — tiers 20 a 50): *"não vou adicionar para deletar"*.
+- **Talismã assistente numerado**: entram um a um, conforme a necessidade.
+- **JOIA GRANDE — e esta é regra, não preferência do dia.** Bright Emerald (e
+  Chip), Bright Ruby (e Chip), Large Emerald e Large Ruby **não podem sequer
+  aparecer como opção**: *"são itens caros, se remover sem querer pode ser
+  prejuízo"*. Sem PNG na pasta não há como marcar por engano — a pasta é a
+  lista branca, e o que não está nela nunca é apagado. Small e Medium já
+  estavam lá e ficam.
+
+O critério vale além das joias, e é ele que separa a seção 4 da lista de
+trabalho (`data/templates/deletar/FALTAM.md`, não versionada porque `data/`
+não é): **item com uso ou valor não é lixo óbvio** — Golden Identify Gem ativa
+equipamento dourado, Jackstraw revive sem perder exp, as Fighting Potions são
+poção de combate, e Package of Courage Badge é moeda de missão. Esses vão para
+uma seção "confira antes", não para a lista de recortar.
