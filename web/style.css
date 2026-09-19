@@ -1724,12 +1724,24 @@ kbd {
   height: 37px;
 }
 
+/* O QUE VAI SER APAGADO FICA EM SURDINA; o PRESERVADO fica vivo.
+   ===========================================================================
+   A primeira versão fazia o contrário -- apagava era o normal e o preservado
+   ia a cinza. Está invertido desde 19/09/2026, e o pedido do usuário tem a
+   lógica do lado dele: o que ele escolheu guardar é o que ele quer achar na
+   tela, não o que vai virar pó.
+
+   SURDINA NÃO É CINZA (`grayscale` foi recusado no mesmo pedido): a cor é o
+   que identifica o ícone de 30 px, e tirá-la de 200 itens deixaria a grade
+   ilegível. Menos saturação e menos brilho abafam sem apagar o desenho. */
 .lixo-thumb {
   width: 100%;
   height: 100%;
   object-fit: contain;
   image-rendering: pixelated;
-  transition: transform 0.12s;
+  filter: saturate(0.55) brightness(0.85);
+  opacity: 0.82;
+  transition: transform 0.12s, filter 0.12s, opacity 0.12s;
 }
 
 /* A lupa do hover: o mesmo gesto das quedas, sem clique e sem tela nova.
@@ -1751,25 +1763,29 @@ kbd {
   overflow-wrap: anywhere;
 }
 
-/* IGNORADO SE LÊ DE LONGE: cinza e apagado, com o selo dizendo a palavra.
+/* PRESERVADO SE LÊ DE LONGE: cor cheia, moldura acesa e o selo com a palavra.
    Cor sozinha não serve -- quem não distingue verde de vermelho fica sem
-   informação nenhuma. */
+   informação nenhuma --, e por isso o selo MANTÉM continua ali. */
 .lixo-card.ignorado {
-  background: transparent;
-  border-style: dashed;
+  border-color: var(--color-primary, #2563eb);
+  background: rgba(37, 99, 235, 0.10);
 }
 
 .lixo-card.ignorado .lixo-thumb {
-  filter: grayscale(1);
-  opacity: 0.35;
+  filter: none;
+  opacity: 1;
 }
 
+/* SEM RISCO NO NOME (pedido de 19/09/2026): riscar é a marca de "cancelado", e
+   aqui o item é justamente o que sobrevive. */
 .lixo-card.ignorado .lixo-nome {
-  color: var(--color-ink-dim);
-  text-decoration: line-through;
+  color: var(--color-ink);
+  font-weight: 600;
 }
 
 .lixo-selo {
+  color: var(--color-primary, #2563eb);
+  border-color: var(--color-primary, #2563eb);
   font-size: 9px;
   font-weight: 700;
   letter-spacing: 0.04em;
