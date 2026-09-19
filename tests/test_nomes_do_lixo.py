@@ -25,9 +25,16 @@ from blazesbot.bot import nomes_do_lixo as n
     ("Black_Shadow_stone.png", "Black Shadow stone"),
     ("Blue_Wolf_Meat.png", "Blue Wolf Meat"),
     ("Trap-Meshwork.png", "Trap Meshwork"),
-    # Onde NÃO existe, nada é inventado -- a regra que acertasse `AlmOre`
-    # erraria em `BAG7` e `bag3`.
-    ("AlmOre.png", "AlmOre"),
+    # A MAIÚSCULA NO MEIO TAMBÉM SEPARA -- reversão de 19/09/2026. A regra
+    # anterior se recusava a isso "para não estragar `BAG7` e `bag3`", e o medo
+    # era infundado: o corte é entre MINÚSCULA e MAIÚSCULA, fronteira que não
+    # existe nesses dois.
+    ("SpinelOre.png", "Spinel Ore"),
+    ("AlmOre.png", "Alm Ore"),
+    ("BambShoot.png", "Bamb Shoot"),
+    ("CrackBB.png", "Crack BB"),
+    ("DarkSM.png", "Dark SM"),
+    # E continua sem inventar quebra onde não há fronteira nenhuma.
     ("BAG7.png", "BAG7"),
     ("bag3.png", "bag3"),
     ("Amuleto39.png", "Amuleto39"),
@@ -35,7 +42,10 @@ from blazesbot.bot import nomes_do_lixo as n
     ("Bag.png", "Bag"),
 ])
 def test_o_nome_do_arquivo_virando_texto(arquivo, esperado):
-    assert n.rotulo(arquivo) == esperado
+    """Exercita `humanizar` DIRETO, e não `rotulo`: o dicionário hoje cobre a
+    pasta inteira, então por `rotulo` estes casos testariam a tabela, não a
+    regra que atende PNG novo."""
+    assert n.humanizar(arquivo) == esperado
 
 
 def test_separadores_repetidos_viram_UM_espaco():
