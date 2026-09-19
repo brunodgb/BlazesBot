@@ -632,7 +632,7 @@ classe porque o arquivo não diz qual é. Rótulo errado num item que o usuário
 decide apagar OLHANDO é pior que rótulo genérico.
 
 **O dígito da frente é o TIER, não a classe** — medido no próprio dado: a
-maioria dos arquivos já traz a classe (`Sin`, `Wizz`, `Monk`, `Tamer`, `Fada`,
+maioria dos arquivos já traz a classe (`Sin`, `Wizz`, `Monk`, `Tamer`,
 `Fairy`), e o dígito varia de 1 a 6 para a MESMA classe (`Sin3`, `Sin13`,
 `Sin23`, ... `Sin63`).
 
@@ -643,7 +643,7 @@ Ela vinha do nome do ARQUIVO, e por isso `Belt6.png` caía depois de
 precisava caçar o menor no fim da fila.
 
 Ordenar pelo rótulo com chave natural (`web_lixo.ordem_da_tela`) resolve as duas
-coisas de uma vez: itens iguais ficam colados — o prefixo "Armguard Fada lvl" é
+coisas de uma vez: itens iguais ficam colados — o prefixo "Armguard Fairy lvl" é
 idêntico entre eles — e a família inteira aparece em sequência de nível.
 
 ### Renomeou um PNG? Rode a sincronia
@@ -666,3 +666,17 @@ perder quando foi salvo, e o PNG guarda exatamente os pixels que o
 `matchTemplate` vai comparar. **Ela nunca sobrescreve** — PNG de mesmo nome já
 existente faz a conversão ser recusada e contada, porque apagar template é
 irreversível e `data/` não é versionado.
+
+### O nome da classe vai em inglês
+
+`Fada` e `Fairy` eram a mesma classe em dois idiomas, e a família saía partida
+na grade. Unificadas em **Fairy** — o nome da classe em inglês, como as outras
+quatro —, e os arquivos foram renomeados junto (`Fada23.png` → `Fairy23.png`).
+
+`Sin`, `Wizz`, `Monk` e `Tamer` ficam: já estão em inglês, são a abreviação que
+a comunidade usa, e foi assim que o usuário nomeou os arquivos. Expandir para
+"Assassin"/"Wizard" é trocar duas linhas em `CLASSES` e rodar a sincronia.
+
+**A grafia antiga continua sendo entendida** (`"fada": "Fairy"` no mapa): uma
+pasta vinda de outra máquina, ou um PNG antigo que reapareça, não pode virar
+item sem rótulo por causa disso.

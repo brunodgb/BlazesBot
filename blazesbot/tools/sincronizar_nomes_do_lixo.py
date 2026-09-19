@@ -53,18 +53,22 @@ PECA_POR_FINAL = {"2": "Cuff", "3": "Armguard", "4": "Kneedpad",
 
 # As cinco classes do jogo, como aparecem nos nomes de arquivo.
 #
-# `FAIRY` E `FADA` SÃO A MESMA CLASSE, e as duas caem em "Fada". Deixar cada
-# uma como estava escrita parecia respeito ao vocabulário do usuário e era, na
-# prática, uma família partida: "Armguard Fada lvl23..63" de um lado e
-# "Armguard Fairy lvl3, lvl13" do outro, longe na grade -- que é exatamente o
-# contrário de "itens iguais ficam perto". Reportado por ele em 19/09/2026
-# olhando a tela.
+# `FAIRY` E `FADA` SÃO A MESMA CLASSE, e as duas caem em "Fairy" -- o nome da
+# classe vai em INGLÊS, como as outras quatro (pedido do usuário em
+# 19/09/2026: *"padroniza os nomes em inglês... no caso só os nomes das
+# classes"*). Os ARQUIVOS também foram renomeados: `Fada23.png` virou
+# `Fairy23.png`.
 #
-# "Fada" e não "Fairy" porque é a palavra deste projeto: `bot/fada.py`, as
-# linhas `FADA:` do log e o rótulo da interface. Trocar as duas pontas é mudar
-# esta linha e rodar a sincronia.
+# A unificação em si veio antes, e por outro motivo: deixar cada grafia como
+# estava partia a família na grade -- "Armguard Fada lvl23..63" de um lado e
+# "Armguard Fairy lvl3, lvl13" do outro.
+#
+# `Sin`, `Wizz`, `Monk` e `Tamer` já estão em inglês e ficam como estão: são a
+# abreviação que a comunidade usa, e foi assim que o usuário nomeou os
+# arquivos. Expandir para "Assassin"/"Wizard" é trocar estas duas linhas e
+# rodar a sincronia.
 CLASSES = {"sin": "Sin", "wizz": "Wizz", "monk": "Monk",
-           "tamer": "Tamer", "fada": "Fada", "fairy": "Fada"}
+           "tamer": "Tamer", "fada": "Fairy", "fairy": "Fairy"}
 
 # Nomes em que a PEÇA já está escrita e a classe não aparece.
 PECAS_NO_NOME = {"cuff", "belt", "knee", "ring"}
