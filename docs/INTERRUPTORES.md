@@ -61,7 +61,7 @@ ligar código não testado.
 | `NAO_LIMPAR_DUAS_VEZES_NA_MESMA_VOLTA` | `True` | [blazesbot/core/cadencia_da_bolsa.py:43](blazesbot/core/cadencia_da_bolsa.py#L43) | — | Interruptor do piso do conserto -- 06/09/2026. |
 | `ATIVADA` | `True` | [blazesbot/core/calibracao.py:82](blazesbot/core/calibracao.py#L82) | routine.py, vendedor.py | INTERRUPTOR |
 | `TELEMETRIA_LIGADA` | `True` | [blazesbot/core/cronometro.py:85](blazesbot/core/cronometro.py#L85) | instrumentacao.py | O INTERRUPTOR |
-| `LIGADO` | `True` | [blazesbot/core/diagnostico_fino.py:28](blazesbot/core/diagnostico_fino.py#L28) | manutencao.py, instrumentar_clique.py, supervisor.py, team.py, config.py, log_limitado.py, account_dialog.py | — |
+| `LIGADO` | `True` | [blazesbot/core/diagnostico_fino.py:28](blazesbot/core/diagnostico_fino.py#L28) | manutencao.py, instrumentar_clique.py, supervisor.py, team.py, config.py, log_limitado.py, account_dialog.py, empacotar.py | — |
 | `PRENDER_A_TECLA` | `True` | [blazesbot/core/esconder_jogadores.py:68](blazesbot/core/esconder_jogadores.py#L68) | — | A TECLA PRESA PARA SEMPRE -- o caminho do patcher, trazido em 07/09/2026 |
 | `SEGURAR_ATIVADO` | `False` | [blazesbot/core/esconder_jogadores.py:86](blazesbot/core/esconder_jogadores.py#L86) | petbug.py | INTERRUPTOR DO F12 PRESO -- DESLIGADO EM 19/08/2026 |
 | `CONFERIR_A_JANELA_ANTES_DE_ENVIAR` | `True` | [blazesbot/core/inputs.py:310](blazesbot/core/inputs.py#L310) | — | INTERRUPTOR. Desligar volta ao comportamento anterior (mandar sem conferir), e |
@@ -83,7 +83,7 @@ ligar código não testado.
 
 ## Números medidos -- tolerância, limiar, teto, cadência
 
-639 constantes, agrupadas por arquivo.
+640 constantes, agrupadas por arquivo.
 
 | constante | valor | onde | quem lê | porquê (resumo) |
 |---|---|---|---|---|
@@ -677,7 +677,7 @@ ligar código não testado.
 | `LIMIAR_DA_FASE_2_DO_BOSS` | `0.92` | [blazesbot/core/vision/marcadores.py:233](blazesbot/core/vision/marcadores.py#L233) | combate.py, __init__.py | A SEGUNDA FASE DO BOSS, LIDA NA TELA. |
 | `LIMIAR_DO_MARCADOR_DE_MORTE` | `0.85` | [blazesbot/core/vision/marcadores.py:78](blazesbot/core/vision/marcadores.py#L78) | __init__.py | Limiar do marcador de inimigo morto. Sprite pequeno (26x22) num quadro de UI, |
 | `LINHAS_ENTRE_HP_E_MP` | `7` | [blazesbot/core/vision/marcadores.py:40](blazesbot/core/vision/marcadores.py#L40) | __init__.py, barra.py | Distância da barra vermelha para a azul, em linhas, e altura da faixa. |
-| `DEFAULT_THRESHOLD` | `0.87` | [blazesbot/core/vision/templates.py:24](blazesbot/core/vision/templates.py#L24) | __init__.py | — |
+| `DEFAULT_THRESHOLD` | `0.87` | [blazesbot/core/vision/templates.py:25](blazesbot/core/vision/templates.py#L25) | __init__.py | — |
 | `RAIO` | `40` | [blazesbot/core/vizinhanca.py:34](blazesbot/core/vizinhanca.py#L34) | — | Raio, em unidades de jogo, do que conta como "em volta". |
 | `SEGUNDOS_PARA_CHEGAR` | `5.0` | [blazesbot/core/volta_ao_ponto.py:44](blazesbot/core/volta_ao_ponto.py#L44) | cura.py, executor.py | Teto da caminhada de volta ao ponto. |
 | `TOLERANCIA` | `1` | [blazesbot/core/volta_ao_ponto.py:32](blazesbot/core/volta_ao_ponto.py#L32) | executor.py | Quanto o personagem pode estar fora do ponto e ainda contar como "chegou". |
@@ -716,6 +716,7 @@ ligar código não testado.
 | `COR_MP_BORDA` | `'#4A7BC4'` | [blazesbot/gui/widgets.py:28](blazesbot/gui/widgets.py#L28) | — | — |
 | `MAXIMO_DE_CANDIDATOS` | `4000` | [blazesbot/tools/achar_happy_do_pet.py:85](blazesbot/tools/achar_happy_do_pet.py#L85) | — | Quantos candidatos levar adiante na varredura larga. Felicidade é 0..100: |
 | `TAMANHO_DE_OBJETO` | `9216` | [blazesbot/tools/achar_happy_do_pet.py:77](blazesbot/tools/achar_happy_do_pet.py#L77) | — | Até onde procurar dentro de um objeto. Os objetos deste cliente que o projeto |
+| `NOME` | `'BlazesBot'` | [blazesbot/tools/empacotar.py:51](blazesbot/tools/empacotar.py#L51) | afericao_do_aliado.py, deletador.py, executor.py, combat.py, localizacao.py, routine.py, vendor.py, combate.py, deletador.py, bosses.py, mapa_hh.py, ponto_do_boss.py, routine.py, nomes_do_lixo.py, team.py, time_do_app.py, calibracao.py, cronometro.py, entidades.py, indice_de_tempos.py, injecao_de_texto.py, inputs.py, log_limitado.py, memory.py, petbug.py, registro_de_mortes.py, stone_city.py, target_hybrid.py, templates.py, achar_happy_do_pet.py, sincronizar_nomes_do_lixo.py, vigiar_combate.py, vigiar_local.py, web_lixo.py | — |
 | `CHUNK` | `1048576` | [blazesbot/tools/find_base.py:57](blazesbot/tools/find_base.py#L57) | — | — |
 | `MUDOU` | `0.0005` | [blazesbot/tools/ler_camera.py:57](blazesbot/tools/ler_camera.py#L57) | afericao_do_aliado.py, executor.py, localizacao.py, routine.py, combate.py, context.py, fada.py, time_do_app.py, config.py, calibracao.py, memory.py, target_hybrid.py | O que conta como "mudou". Menor que isto é ruído de interpolação -- andando, o |
 | `PASSO` | `0.25` | [blazesbot/tools/ler_camera.py:50](blazesbot/tools/ler_camera.py#L50) | routine.py, entrada.py, mapa_hh.py, supervisor.py, ui_do_jogo.py, espera.py, indice_de_tempos.py, relatorio_de_latencia.py, vigiar_combate.py | Cadência da leitura. Barata: são 8 leituras de 4 bytes por volta. |
@@ -723,6 +724,6 @@ ligar código não testado.
 | `PASSO` | `0.1` | [blazesbot/tools/vigiar_combate.py:48](blazesbot/tools/vigiar_combate.py#L48) | routine.py, entrada.py, mapa_hh.py, supervisor.py, ui_do_jogo.py, espera.py, indice_de_tempos.py, relatorio_de_latencia.py, ler_camera.py | Cadência da leitura. É memória pura -- algumas leituras de 4 bytes por volta, |
 | `SEGUNDOS_ENTRE_ECOS` | `5.0` | [blazesbot/tools/vigiar_combate.py:58](blazesbot/tools/vigiar_combate.py#L58) | — | De quanto em quanto tempo repetir uma linha que NÃO mudou. |
 | `SEGUNDOS_PADRAO` | `900.0` | [blazesbot/tools/vigiar_combate.py:51](blazesbot/tools/vigiar_combate.py#L51) | ler_camera.py | Teto padrão, para a ferramenta fechar sozinha se você esquecer dela aberta. |
-| `MAX_LINHAS_GUARDADAS` | `12000` | [blazesbot/web_app.py:87](blazesbot/web_app.py#L87) | main_window.py | Linhas guardadas em memória para permitir refiltrar por conta, espelho do |
+| `MAX_LINHAS_GUARDADAS` | `12000` | [blazesbot/web_app.py:88](blazesbot/web_app.py#L88) | main_window.py | Linhas guardadas em memória para permitir refiltrar por conta, espelho do |
 | `MARCA_DO_ARQUIVO` | `'blazesbot-itens-do-deletador'` | [blazesbot/web_lixo.py:153](blazesbot/web_lixo.py#L153) | — | LEVAR A SELEÇÃO PARA OUTRA CONTA — ou para outra máquina |
 | `VERSAO_DO_ARQUIVO` | `1` | [blazesbot/web_lixo.py:154](blazesbot/web_lixo.py#L154) | — | — |

@@ -70,6 +70,7 @@ from .config import (
     pet_feed_na_faixa,
 )
 from .core import i18n, logmodo, quedas, secrets, stats_diarias
+from .core.raiz import raiz_do_bot
 from .core.coords import (
     SUPPORTED_RESOLUTIONS,
     VALIDATED_RESOLUTION,
@@ -1601,7 +1602,9 @@ def run() -> None:
     # Frontend compilado pelo Vite (`npm run build`). A edição da UI acontece
     # na pasta web/, mas o Python só enxerga as mudanças após o build gerar o
     # dist/. Se o dist não existir, instrua a rodar `npm run build`.
-    index = Path(__file__).resolve().parent.parent / "dist" / "index.html"
+    # EMPACOTADO, `__file__` aponta para dentro do bundle temporário e o `dist/`
+    # fica ao lado do `.exe` -- ver `core/raiz.py`.
+    index = raiz_do_bot() / "dist" / "index.html"
     if not index.exists():
         raise FileNotFoundError(
             f"Não encontrei o frontend compilado:\n  {index}\n"

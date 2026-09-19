@@ -507,3 +507,62 @@ conhece `hwnd`, nem conta, nem `MODO_DE_TECLA`. É a mesma pergunta que
 `LPARAM(0)` malformado — as teclas que o próprio bot solta. O escopo deste
 hotfix foi fixado nas duas funções do vazamento de modificadores; o restante
 fica registrado aqui para não se perder.
+
+## O PACOTE PARA ENTREGAR — `.exe` para quem não tem Python (19/09/2026)
+
+Pedido do usuário: *"quero enviar para um amigo meu de confiança para ele
+testar, de forma simples e rápida, só baixar e executar"* — e, na mesma frase,
+a restrição que manda em tudo: *"toma cuidado para não impactar em nada que
+temos hoje"*.
+
+`python -m blazesbot.tools.empacotar` (ou `21-GERAR-EXE.bat`) devolve um
+`entrega/BlazesBot-<data>.zip` de ~93 MB. O detalhe de cada escolha está no
+cabeçalho da ferramenta; aqui fica o que não pode ser desfeito sem saber.
+
+### PASTA, e não arquivo único — não é gosto
+
+O PyInstaller sabe gerar um `.exe` sozinho, e seria melhor de mandar. Não serve:
+
+1. **O bot ESCREVE em `data/`** (o `config.json` com as contas, o placar, as
+   estatísticas). No modo arquivo-único isso vai para uma pasta temporária que o
+   Windows apaga ao fechar — a configuração sumiria a cada partida.
+2. **21 MB de template** seriam descompactados a cada partida, e o usuário não
+   poderia pôr um PNG novo na pasta de deletar.
+
+### O que NÃO vai junto
+
+**`data/config.json` nunca entra** — são os logins e as senhas cifradas de quem
+empacotou. `BotConfig.load` já trata arquivo ausente criando configuração vazia
+(conferido no pacote: 0 contas, sem exceção), então quem recebe começa limpo.
+Ficam de fora também `logs/`, `data/memory/` e as medições da máquina de origem.
+
+### As duas linhas de código que o empacotamento exigiu
+
+Nenhuma muda o comportamento de quem roda do fonte — as duas devolvem
+exatamente o que devolviam:
+
+- **`core/raiz.py`**: `data/` e `dist/` deixam de ser procurados a partir do
+  `__file__` e passam por `raiz_do_bot()`. Empacotado, `__file__` aponta para
+  dentro do bundle temporário, onde `data/` não está nem pode estar.
+- **`tools/iniciar_exe.py`**: um `chdir` para a pasta do `.exe` antes de subir a
+  interface. O Windows lança um programa com o diretório de QUEM lançou, e quase
+  todo caminho de dado aqui é relativo (`Path("data") / "templates"`): pelo
+  atalho ou pelo "Executar como administrador", o bot subiria em
+  `C:\Windows\System32`, não acharia template nenhum e **falharia calado**.
+
+### PyQt6 fora do pacote
+
+A interface antiga não é importada pela web, mas o PyInstaller varre o pacote
+inteiro e acharia `gui/main_window.py`. São ~120 MB de Qt para código que não
+roda — `--exclude-module PyQt6`, conferido: zero ocorrência de Qt no pacote.
+
+### Como isto foi verificado
+
+Não dá para rodar o `.exe` de dentro de um shell comum: ele traz o manifesto de
+ADMINISTRADOR (`--uac-admin`, sem o qual `Memory` falha na primeira conta), e o
+Windows recusa com "Permission denied". A prova foi um segundo executável, sem
+elevação, rodado DENTRO da pasta de entrega: `frozen=True`, diretório corrigido
+para a pasta do `.exe`, `dist/index.html` encontrado, um template resolvido pelo
+nome através da biblioteca, 257 modelos na pasta de deletar e `BotConfig.load()`
+sem arquivo devolvendo 0 contas. O executável de teste foi apagado depois, e o
+ZIP conferido: 1593 arquivos, um `.exe`, nenhum `config.json`.

@@ -17,6 +17,7 @@ from pathlib import Path
 import cv2
 import numpy as np
 
+from blazesbot.core.raiz import raiz_do_bot
 from blazesbot.core.vision.captura import capture_window
 
 _log = logging.getLogger(__name__)
@@ -59,7 +60,9 @@ HIGHLIGHT_BGR = (153, 68, 51)
 # caminho RELATIVO, que depende de onde o processo foi lançado. Um atalho, um
 # .bat com outro diretório de trabalho ou um serviço fariam TODO template sumir
 # de uma vez, e template que some não levanta exceção: ele só não casa.
-RAIZ_DO_PROJETO = Path(__file__).resolve().parents[3]
+# E EMPACOTADO ELA NÃO É A PASTA DESTE ARQUIVO. Dentro do `.exe`, este módulo
+# mora numa pasta temporária que não tem `data/` ao lado -- ver `core/raiz.py`.
+RAIZ_DO_PROJETO = raiz_do_bot()
 
 SUBPASTAS_DE_CATEGORIA = (
     "estado", "link", "botao", "janela", "npc", "combate", "item",

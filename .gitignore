@@ -44,3 +44,5 @@ multi-agentes/
 # O config estatico (claude-flow.config.json) continua versionado.
 .claude-flow/
 .claude/memory.db
+build/
+entrega/
