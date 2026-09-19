@@ -138,6 +138,25 @@ def test_SEGUIDOR_nao_monta_time(monkeypatch):
     assert chamou == [], "o seguidor abriu a montagem"
 
 
+def test_a_FADA_bate_no_canal_dela_e_conta_como_de_pe(monkeypatch):
+    """A Fada nunca passa por `publicar_estado`: o laço dela é outro.
+
+    MEDIDO em 19/09/2026 -- quatro ciclos de *"mfaustoapp069 sem sinal de vida
+    agora"* com a Fada rodando, enquanto ela reclamava que o líder não aparecia
+    no painel de time dela. As duas se esperando para sempre.
+    """
+    sup = _Sup()
+    _de_pe("s1")
+    mural.bater_fada("s2")                  # a Fada, viva, no canal dela
+    convidados = []
+    monkeypatch.setattr(mod, "BotContext", _ctx_falso)
+    monkeypatch.setattr(mod, "TeamService", _team_falso(convidados, aceita=()))
+
+    mod.montar_o_time(sup, _Memoria(["Lider"]))
+
+    assert "Dois" in convidados, "a Fada foi pulada como se estivesse offline"
+
+
 def test_quem_NAO_publica_sinal_de_vida_fica_fora_da_fila(monkeypatch):
     """*"Se algum seguidor estiver off não vai dar para enviar o convite."*"""
     sup = _Sup()

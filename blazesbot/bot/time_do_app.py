@@ -156,8 +156,20 @@ def falta_alguem(sup, memoria) -> list[str] | None:
 
 
 def _esta_de_pe(login: str) -> bool:
-    """A conta publicou sinal de vida nos últimos segundos?"""
-    return mural.estado_da_conta(login) is not None
+    """A conta publicou sinal de vida nos últimos segundos?
+
+    DOIS CANAIS, porque são DOIS LAÇOS. A macro do APP publica `estado` a cada
+    volta (`supervisor.antes_de_cada_volta`); a FADA nunca passa por lá -- ela
+    bate no canal dela (`mural.bater_fada`), de dentro do laço de cura. Olhar só
+    o primeiro fazia a Fada ser eternamente pulada.
+
+    MEDIDO em 19/09/2026: quatro ciclos seguidos de *"mfaustoapp069 sem sinal de
+    vida agora; fica para o próximo ciclo"* com ela rodando -- e, do lado dela,
+    *"WizzOfBlazes5 não está no meu painel de time -- esperando ele aparecer"*.
+    As duas contas se esperando, cada uma achando que a outra sumiu.
+    """
+    return (mural.estado_da_conta(login) is not None
+            or mural.fada_de_pe(login))
 
 
 def _convidar(team: TeamService, sup, login: str, nick: str, remetente: str,
