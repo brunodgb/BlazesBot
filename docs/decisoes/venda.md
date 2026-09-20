@@ -596,3 +596,103 @@ que apaga o tempo todo. Ele também é um recorte do miolo (o interior azul da
 pedra, sem contorno), mas a medida offline não basta para afirmar a causa — ela
 precisa do casamento contra um quadro que contenha o item, e é isso que o
 relatório novo passa a dar na próxima passada.
+
+
+## O SELL ERA UM COMMIT SEM RECIBO (20/09/2026)
+
+### O relato e o que o log respondeu
+
+O usuário descreveu *"o clique final no botão Sell falha de forma intermitente;
+o bot acha que vendeu, fecha/reabre a loja e os itens continuam lá"*.
+
+Meio certo. O bot **não** achava que vendeu — ele media e registrava. Sobre 129
+vendas do log:
+
+| | |
+|---|---|
+| vendas concluídas | 129 |
+| **com ZERO itens** | **7 (5,4%)** |
+| bolsa não baixou | as mesmas 7 |
+
+`55->55`, `57->57`, `32->32`, `28->28`, `31->31`, `33->33`, `55->55` — todas na
+conta `creubo`. A conferência `antes - depois` já existia; ela só chegava
+**tarde demais para agir**, no fim da venda inteira. Servia para registrar o
+prejuízo, não para evitá-lo.
+
+### A bimodalidade é o que aponta o culpado
+
+A distribuição é **tudo ou nada**: ou saem ~20 itens (58→36, 58→35, 55→35…), ou
+sai **nenhum**. Nunca 3 de 20.
+
+Isso não é compatível com "um clique entre 72 se perdeu". É compatível com
+perder o **commit**: os 24 cliques montam a lista e o Sell concretiza. Perder o
+Sell não perde metade da passada — perde a passada inteira.
+
+### Hipóteses reprovadas, todas por medição
+
+| hipótese | o que a mediu derrubou |
+|---|---|
+| **janela ausente ou deslocada** | em 6 dos 7 casos a âncora FOI casada por imagem (`janela localizada`), e `_ponto_do_slot` já devolve `None` sem âncora — o bot não clica no vazio |
+| **o guarda de janela fechando a venda** | disparou em **44 das 122 vendas BOAS** também; não separa os grupos |
+| **tempo** | `ESPERA_ANTES_DO_SELL = 0.40` já tinha sido adicionada por um defeito idêntico (*"um Sell engolido marca a passada como vendida sem ter vendido nada"*), e o defeito voltou em 5,4%. Tempo não fecha isso: fecha CONFERÊNCIA |
+
+O que sobrou: `ctx.click(botao_vender)` saía **uma vez, cego**.
+
+### Por que a BOLSA e não o botão renderizado
+
+O pedido original era validar que *"o botão Sell está clicável"*. Isso é
+**pré-condição**, e ela não prova nada: o botão pode estar desenhado e o
+`SendMessageW` ser ignorado assim mesmo — que é exatamente o defeito.
+`bag_count()` prova o **efeito**, custa microssegundos, funciona minimizado e é
+MEMÓRIA PRIMEIRO.
+
+### Por que reclicar é seguro
+
+Porque **nenhum clique novo no slot acontece entre as tentativas**: a lista já
+está montada, e o Sell repetido concretiza a MESMA venda. O risco invertido — o
+primeiro Sell ter sido aceito e a bolsa ainda não ter atualizado — é tratado
+pela ordem: o reclique só sai depois de a bolsa ser perguntada até o teto. Se
+ela baixar, não há segundo clique; e se sair mesmo assim, cai numa lista vazia,
+com `_dismiss_confirm` logo atrás.
+
+Travado por `tests/test_sell_conferido_pela_bolsa.py`.
+
+### DÍVIDA ABERTA: `vendedor.py` precisa ser dividido
+
+Este conserto levou o arquivo de 996 para **1068 linhas**, e o teto herdado da
+catraca de tamanho é **1028** (baseline 935 de 05/09/2026, +10% de margem).
+`tests/test_quality_gates_python.py::test_max_linhas_por_arquivo` está
+**vermelho de propósito** desde 20/09/2026.
+
+O número NÃO foi subido: a catraca existe justamente para impedir isso, e o
+texto dela manda dividir por RESPONSABILIDADE (2 a 7 módulos, 120 a 800 linhas).
+Decisão do usuário em 20/09: commitar o hotfix primeiro — a venda parada custa
+5,4% das idas — e dividir `JanelaDeVenda` no commit seguinte, como assunto
+próprio. Cuidado ao dividir: `bc/vendor.py` e `hh/vendedor.py` herdam desta
+classe.
+
+### O `break` foi TENTADO e REPROVADO no mesmo dia
+
+A primeira versão encerrava a venda quando o Sell falhava as três vezes
+("commit quebrado, não adianta seguir"). Parecia certo e
+`tests/test_venda_rearranjo.py` o derrubou na hora: com a grade vendendo
+normalmente e a bolsa do dublê parada, ele encerrava na primeira passada — **24
+itens de 66**.
+
+A lição: `bag_count` pode simplesmente atrasar além do teto, e aí parar mata uma
+venda que estava funcionando. O reclique fica; a decisão de abandonar a ida,
+não. Uma passada que não confirmou grita no log e no diário, e a seguinte tenta.
+
+### O respiro depois do Sell virou pergunta
+
+`ESPERA_DEPOIS_DO_SELL = 0.60` era gasto fixo em **toda passada, três por
+venda**. Virou o TETO de `_bolsa_depois_do_sell`, por `core/espera.ate` — sai no
+instante em que a bolsa baixa, e o teto só é pago quando a venda de fato não
+saiu, que é justamente quando vale esperar.
+
+### Alcance: BC e HH, sem injetar em dois lugares
+
+`sell_from_slot` é **uma só**, em `bot/vendedor.py`. `bc/vendor.py` e
+`hh/vendedor.py` herdam de `JanelaDeVenda` e já a chamavam — consertar ali
+conserta os dois. Injetar a rotina em cada ecossistema seria a duplicata que o
+`CLAUDE.md` proíbe. Travado por `test_os_DOIS_ecossistemas_herdam_o_mesmo_conserto`.

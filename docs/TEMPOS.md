@@ -31,7 +31,7 @@ desta lista é ou uma exceção justificada, ou dívida que ninguém converteu a
 mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 
 
-**365 tempos catalogados** — 251 FIXOS (espera cega), 114 entre TETO e PASSO.
+**366 tempos catalogados** — 251 FIXOS (espera cega), 115 entre TETO e PASSO.
 
 
 **3 estão diferentes do original:** `FATIA_DE_ESPERA`, `INTERVALO_ENTRE_INVOCACOES`, `PASSOS_DO_APP`
@@ -405,9 +405,10 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | `ESPERA_ENTRE_CLIQUES_DA_VENDA` | 0.065 s | = | FIXO | [vendedor.py:213](blazesbot/bot/vendedor.py#L213) | `_clicar_no_slot` | Espera entre um clique e o seguinte na grade. Era 200 ms. |
 | `ESPERA_PARA_CONFIRMAR_VAZIO` | 0.5 s | = | FIXO | [vendedor.py:284](blazesbot/bot/vendedor.py#L284) | `_confirmar_slot_vazio, sell_from_slot` | As leituras de confirmação são ESPAÇADAS, não coladas: veja |
 | `ESPERA_ANTES_DO_SELL` | 0.4 s | = | FIXO | [vendedor.py:316](blazesbot/bot/vendedor.py#L316) | `sell_from_slot` | O RESPIRO EM VOLTA DO BOTÃO "SELL" |
-| `ESPERA_DEPOIS_DO_SELL` | 0.6 s | = | FIXO | [vendedor.py:317](blazesbot/bot/vendedor.py#L317) | `sell_from_slot` |  |
-| *literal em* `_tentar_abrir_a_venda` | 0.3 s | = | FIXO | [vendedor.py:505](blazesbot/bot/vendedor.py#L505) | `_tentar_abrir_a_venda` |  |
-| *literal em* `_dismiss_confirm` | 0.125 s | = | FIXO | [vendedor.py:559](blazesbot/bot/vendedor.py#L559) | `_dismiss_confirm` | Fecha a caixa "It's precious item, please confirm!", se aberta. |
+| `ESPERA_DEPOIS_DO_SELL` | 0.6 s | = | FIXO | [vendedor.py:317](blazesbot/bot/vendedor.py#L317) | `_vender_a_lista, _bolsa_depois_do_sell` |  |
+| `PASSO_DA_CONFERENCIA_DA_VENDA` | 0.05 s | *novo* | PASSO | [vendedor.py:324](blazesbot/bot/vendedor.py#L324) | `_bolsa_depois_do_sell` |  |
+| *literal em* `_tentar_abrir_a_venda` | 0.3 s | = | FIXO | [vendedor.py:512](blazesbot/bot/vendedor.py#L512) | `_tentar_abrir_a_venda` |  |
+| *literal em* `_dismiss_confirm` | 0.125 s | = | FIXO | [vendedor.py:566](blazesbot/bot/vendedor.py#L566) | `_dismiss_confirm` | Fecha a caixa "It's precious item, please confirm!", se aberta. |
 | `ESPERA_PELA_MORTE` | 2 s | *novo* | FIXO | [watchdog.py:293](blazesbot/bot/watchdog.py#L293) | `kill_client` | Quanto tempo esperar o Windows realmente derrubar o processo depois do |
 | `PASSO_DA_CONFIRMACAO_DA_MORTE` | 0.05 s | *novo* | PASSO | [watchdog.py:297](blazesbot/bot/watchdog.py#L297) | `_morreu` | Passo entre as conferências de "já morreu?". Fatia curta porque a resposta |
 

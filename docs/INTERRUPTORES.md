@@ -83,7 +83,7 @@ ligar código não testado.
 
 ## Números medidos -- tolerância, limiar, teto, cadência
 
-640 constantes, agrupadas por arquivo.
+642 constantes, agrupadas por arquivo.
 
 | constante | valor | onde | quem lê | porquê (resumo) |
 |---|---|---|---|---|
@@ -498,6 +498,7 @@ ligar código não testado.
 | `LEITURAS_VAZIAS_PARA_PARAR` | `6` | [blazesbot/bot/vendedor.py:280](blazesbot/bot/vendedor.py#L280) | — | Quantas leituras VAZIAS SEGUIDAS encerram a venda. **SEMPRE NO MESMO SLOT** -- |
 | `LIMIAR_DA_CAIXA_PRECIOSA` | `0.8` | [blazesbot/bot/vendedor.py:167](blazesbot/bot/vendedor.py#L167) | — | Limiar do template do TEXTO da caixa "It's precious item, please confirm!". |
 | `LIMIAR_DO_VENDEDOR` | `0.8` | [blazesbot/bot/vendedor.py:86](blazesbot/bot/vendedor.py#L86) | vendor.py, indice_de_tempos.py | Limiar do casamento. Sprite de NPC contra cenário 3D é mais difícil que ícone |
+| `PASSO_DA_CONFERENCIA_DA_VENDA` | `0.05` | [blazesbot/bot/vendedor.py:324](blazesbot/bot/vendedor.py#L324) | — | — |
 | `PASSO_DA_ESPERA_DO_TELEPORTE` | `0.12` | [blazesbot/bot/vendedor.py:103](blazesbot/bot/vendedor.py#L103) | ui_service.py, entrada.py | Entre leituras. A posição vem da memória e custa microssegundos; o passo é |
 | `RAIO_DA_BUSCA_DO_VENDEDOR` | `200` | [blazesbot/bot/vendedor.py:80](blazesbot/bot/vendedor.py#L80) | vendor.py | Onde procurar: um retângulo em volta de onde ele DEVERIA estar. Não é a posição |
 | `SALTO_QUE_CONFIRMA` | `200.0` | [blazesbot/bot/vendedor.py:112](blazesbot/bot/vendedor.py#L112) | — | Salto de posição que confirma o teleporte para a cidade. |
@@ -507,6 +508,7 @@ ligar código não testado.
 | `TENTATIVAS_DE_ENCOSTAR_NO_VENDEDOR` | `6` | [blazesbot/bot/vendedor.py:143](blazesbot/bot/vendedor.py#L143) | vendor.py | Orçamento do ajuste fino no ponto do vendedor. Pequeno porque o passo real é |
 | `TENTATIVAS_DO_TOKEN` | `10` | [blazesbot/bot/vendedor.py:133](blazesbot/bot/vendedor.py#L133) | vendor.py | CHEGAR A STONE CITY -- números do usuário (18/08/2026) |
 | `TENTATIVAS_NO_OK` | `3` | [blazesbot/bot/vendedor.py:162](blazesbot/bot/vendedor.py#L162) | — | Quantas vezes reclicar o Ok da caixa "It's precious item" antes de desistir. |
+| `TENTATIVAS_NO_SELL` | `3` | [blazesbot/bot/vendedor.py:323](blazesbot/bot/vendedor.py#L323) | — | O Sell é CONFERIDO pela bolsa e reclicado quando não vende: 7 das 129 vendas |
 | `TOLERANCIA_DA_CAMINHADA_ATE_O_VENDEDOR` | `2` | [blazesbot/bot/vendedor.py:139](blazesbot/bot/vendedor.py#L139) | vendor.py | Folga da CAMINHADA até o vendedor. O painel de arredores caminha até perto e |
 | `ESPERA_PELA_MORTE` | `2.0` | [blazesbot/bot/watchdog.py:293](blazesbot/bot/watchdog.py#L293) | — | Quanto tempo esperar o Windows realmente derrubar o processo depois do |
 | `PASSO_DA_CONFIRMACAO_DA_MORTE` | `0.05` | [blazesbot/bot/watchdog.py:297](blazesbot/bot/watchdog.py#L297) | — | Passo entre as conferências de "já morreu?". Fatia curta porque a resposta |

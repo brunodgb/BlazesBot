@@ -22,7 +22,8 @@ def test_o_Sell_tem_respiro_ANTES_e_DEPOIS():
     from blazesbot.bot.bc import vendor
 
     fonte = textwrap.dedent(
-        inspect.getsource(vendor.VendorService.sell_from_slot))
+        inspect.getsource(vendor.VendorService.sell_from_slot)
+        + inspect.getsource(vendor.VendorService._vender_a_lista))
 
     # POR LINHA, e não por caminhada aninhada: percorrer a árvore duas vezes
     # conta cada chamada duas vezes, e o teste acusa dois Sell onde há um.
@@ -45,8 +46,16 @@ def test_o_Sell_tem_respiro_ANTES_e_DEPOIS():
     i = ordem.index("SELL")
     assert ordem[i - 1] == "ESPERA_ANTES_DO_SELL", (
         f"o Sell não tem respiro ANTES: {ordem}")
-    assert ordem[i + 1] == "ESPERA_DEPOIS_DO_SELL", (
-        f"o Sell não tem respiro DEPOIS: {ordem}")
+
+    # O RESPIRO DEPOIS VIROU PERGUNTA em 20/09/2026, e por isso este teste
+    # deixou de exigir um `tick` logo após o Sell. `ESPERA_DEPOIS_DO_SELL` não
+    # é mais gasto fixo: virou o TETO de `_bolsa_depois_do_sell`, que sai no
+    # instante em que a bolsa baixa. O número continua sendo o mesmo e continua
+    # protegendo o Sell -- o que mudou é que agora ele quase nunca é pago
+    # inteiro. O `tick` que sobrou no caminho é o de quem NÃO tem leitura de
+    # bolsa, onde não há o que perguntar.
+    assert "ESPERA_DEPOIS_DO_SELL" in ordem[i + 1:], (
+        f"o Sell perdeu o respiro/teto DEPOIS: {ordem}")
 
 
 def test_o_respiro_do_Sell_e_maior_que_a_cadencia_da_rajada():

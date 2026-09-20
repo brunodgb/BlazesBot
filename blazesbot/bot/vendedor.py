@@ -41,7 +41,7 @@ item, insiste. É a diferença entre vender e clicar.
 from __future__ import annotations
 
 from ..config import CLIQUES_POR_PASSADA
-from ..core import calibracao, diario, esconder_jogadores
+from ..core import calibracao, diario, esconder_jogadores, espera
 from ..core.coords import TEMPLATE_ANCHORS
 from ..core.vision import (
     capture_window,
@@ -316,6 +316,13 @@ ESPERA_PARA_CONFIRMAR_VAZIO = 0.5
 ESPERA_ANTES_DO_SELL = 0.40
 ESPERA_DEPOIS_DO_SELL = 0.60
 
+# O Sell é CONFERIDO pela bolsa e reclicado quando não vende: 7 das 129 vendas
+# do log saíram com ZERO itens, e nunca parcial. Porquê medido, hipóteses
+# reprovadas e o `break` que foi tentado e derrubado:
+# `docs/decisoes/venda.md`, "O Sell era um commit sem recibo".
+TENTATIVAS_NO_SELL = 3
+PASSO_DA_CONFERENCIA_DA_VENDA = 0.05
+
 
 class JanelaDeVenda:
     def __init__(self, ctx: BotContext, navigator: Navigator | None = None) -> None:
@@ -570,6 +577,70 @@ class JanelaDeVenda:
             "(%s). Os cliques seguintes na grade vão ser engolidos por ela.",
             TENTATIVAS_NO_OK, ok)
         return True
+
+    def _vender_a_lista(self, botao_vender, antes: int | None) -> bool | None:
+        """Clica Sell e CONFIRMA pela bolsa. Reclica quando não vendeu.
+
+            True  -- a bolsa baixou: a lista virou dinheiro
+            False -- clicou `TENTATIVAS_NO_SELL` vezes e ela não se mexeu
+            None  -- sem leitura de bolsa; clicou uma vez e seguiu
+
+        `None` NÃO é falha, é "não dá para perguntar": recusar deixaria a venda
+        impossível numa conta cuja memória não responde.
+        """
+        ctx = self.ctx
+        for tentativa in range(1, TENTATIVAS_NO_SELL + 1):
+            ctx.raise_if_stopped()
+            ctx.click(botao_vender)
+
+            if antes is None:
+                ctx.tick(ESPERA_DEPOIS_DO_SELL)
+                return None
+
+            depois = self._bolsa_depois_do_sell(antes)
+            if depois is not None and depois < antes:
+                if tentativa > 1:
+                    ctx.log.info(
+                        "O Sell pegou no %sº clique (bolsa %s -> %s). Os "
+                        "anteriores foram engolidos.", tentativa, antes, depois)
+                return True
+
+            # Uma caixa aberta engole o Sell -- é a causa que dá para tratar
+            # aqui; as outras só o reclique resolve.
+            self._dismiss_confirm()
+            if tentativa < TENTATIVAS_NO_SELL:
+                ctx.log.warning(
+                    "O Sell não tirou item nenhum da bolsa (%s itens) na "
+                    "tentativa %s de %s. Reclicando: a lista já está montada, "
+                    "então o clique repete a MESMA venda.",
+                    antes, tentativa, TENTATIVAS_NO_SELL)
+
+        # NÃO ENCERRA A VENDA: `bag_count` pode ter só atrasado, e parar aqui
+        # mataria venda boa -- o `break` foi tentado e `test_venda_rearranjo`
+        # o derrubou (24 itens de 66). Ver o doc de decisões.
+        ctx.log.error(
+            "O Sell falhou %s vezes seguidas e a bolsa continua com %s itens. "
+            "Sigo para a passada seguinte -- pode ser a bolsa atrasando, e "
+            "parar aqui mataria uma venda boa.",
+            TENTATIVAS_NO_SELL, antes)
+        return False
+
+    def _bolsa_depois_do_sell(self, antes: int) -> int | None:
+        """Pergunta à bolsa até ela baixar ou o teto passar. Devolve a leitura.
+
+        Teto: `ESPERA_DEPOIS_DO_SELL`, o mesmo número que já se gastava cego
+        aqui -- nenhuma medição nova, só a espera virando pergunta.
+        """
+        lido: list[int | None] = [None]
+
+        def baixou() -> bool:
+            lido[0] = self.ctx.memory.bag_count()
+            return lido[0] is not None and lido[0] < antes
+
+        espera.ate(baixou, ctx=self.ctx, teto=ESPERA_DEPOIS_DO_SELL,
+                   passo=PASSO_DA_CONFERENCIA_DA_VENDA,
+                   o_que="a-bolsa-baixar-no-sell")
+        return lido[0]
 
     def _quadro(self):
         """Uma captura da janela, ou None. Atalho com nome curto: este arquivo
@@ -963,13 +1034,14 @@ class JanelaDeVenda:
             # VENDE O QUE JÁ SUBIU, mesmo tendo parado cedo: o que está na lista
             # tem que virar dinheiro.
             #
-            # RESPIRO ANTES E DEPOIS -- ver `ESPERA_ANTES_DO_SELL`. O de antes é
-            # o que faltava: o Sell chegava na cola de até 24 cliques a 0,065 s,
-            # com o cliente ainda digerindo a lista, e um Sell engolido marca a
-            # passada como vendida sem ter vendido nada.
+            # RESPIRO ANTES -- ver `ESPERA_ANTES_DO_SELL`: o Sell chegava na cola
+            # de até 24 cliques a 0,065 s, com o cliente ainda digerindo a lista.
             ctx.tick(ESPERA_ANTES_DO_SELL)
-            ctx.click(botao_vender)
-            ctx.tick(ESPERA_DEPOIS_DO_SELL)
+            # E O SELL É CONFERIDO PELA BOLSA, com reclique. Ver o bloco
+            # `TENTATIVAS_NO_SELL`: era um clique cego, e 7 das 129 vendas do
+            # log saíram com ZERO itens por causa dele.
+            antes_da_passada = ctx.memory.bag_count()
+            self._vender_a_lista(botao_vender, antes_da_passada)
             self._dismiss_confirm()
             ctx.log.info("Passada %s: %s clique(s) no slot", passada, dados)
             if acabou:
