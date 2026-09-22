@@ -27,7 +27,9 @@ class _Detector:
     testes do status exercitam."""
 
     servidor_offline = LoginStateDetector.servidor_offline
-    templates = None
+    # Biblioteca que nunca acha nada: o status fica ILEGIVEL, que e o
+    # caso cego -- os testes do Offline injetam a resposta que querem.
+    templates = type("_Sem", (), {"load": staticmethod(lambda _n: None)})()
 
     def detect(self):
         return type("D", (), {"capture_ok": False, "frame": None})()
@@ -198,3 +200,82 @@ def test_o_relogio_das_telas_iniciais_NAO_desliga_com_a_lista_na_tela():
     assert "det.connected and not na_lista_de_servidores" in fonte, (
         "o relógio das telas iniciais voltou a desligar só por ter o servidor "
         "no título — a conta parada na lista fica sem prazo nenhum")
+
+
+# ===========================================================================
+# SEM PROVA DA LINHA, NÃO SE APERTA O Ok -- 22/09/2026
+# ===========================================================================
+#
+# Relato com print: a lista mostrava TRÊS servidores e o da conta não estava
+# entre eles. O bot clicou em Ok assim mesmo e ENTROU EM OUTRO SERVIDOR.
+#
+# `Coords.server_rows` é uma lista ESTÁTICA -- o bot nunca leu quais servidores
+# a tela mostra, só conta linhas a partir do índice nela. Some um servidor e
+# todos os índices abaixo deslocam: o clique cai em linha vazia, o realce não
+# muda, e o Ok confirma o que já estava selecionado.
+#
+# `find_highlighted_row` JÁ SABIA ("está selecionado 'X' em vez de 'Y'"). O
+# defeito era o desfecho: avisar e apertar o Ok mesmo assim.
+
+
+class _DetectorQueEnxerga(_Detector):
+    """Captura funcionando, e o realce onde o teste mandar."""
+
+    linha_realcada = 0
+
+    def detect(self):
+        return type("D", (), {"capture_ok": True, "frame": object()})()
+
+
+def _login_que_enxerga(servidor: str, linha_realcada: int) -> LoginSequence:
+    seq = _login(servidor)
+    seq.detector = _DetectorQueEnxerga()
+    seq.detector.linha_realcada = linha_realcada
+    return seq
+
+
+def test_linha_ERRADA_realcada_cancela_em_vez_de_apertar_Ok(monkeypatch):
+    """O servidor saiu da lista: os índices deslocam e o realce fica em outro."""
+    seq = _login_que_enxerga("Light in the Darkness", linha_realcada=0)
+    monkeypatch.setattr("blazesbot.bot.login.find_highlighted_row",
+                        lambda *a, **k: 0)
+
+    seq._do_server()
+
+    assert seq.coords.server_ok not in seq.cliques, (
+        "apertou Ok sem a linha certa realçada — entra em OUTRO servidor")
+    assert seq.cliques[-1] == seq.coords.server_cancel
+    assert seq.fases == [Phase.CREDENTIALS]
+
+
+def test_NENHUMA_linha_realcada_tambem_cancela(monkeypatch):
+    seq = _login_que_enxerga("Light in the Darkness", linha_realcada=-1)
+    monkeypatch.setattr("blazesbot.bot.login.find_highlighted_row",
+                        lambda *a, **k: None)
+
+    seq._do_server()
+
+    assert seq.coords.server_ok not in seq.cliques
+    assert seq.cliques[-1] == seq.coords.server_cancel
+
+
+def test_a_linha_CERTA_realcada_segue_para_o_Ok(monkeypatch):
+    seq = _login_que_enxerga("Light in the Darkness", linha_realcada=4)
+    monkeypatch.setattr("blazesbot.bot.login.find_highlighted_row",
+                        lambda *a, **k: seq.coords.server_index(
+                            "Light in the Darkness"))
+
+    seq._do_server()
+
+    assert seq.cliques[-1] == seq.coords.server_ok
+    assert seq.coords.server_cancel not in seq.cliques
+
+
+def test_SEM_CAPTURA_segue_com_o_Ok_como_sempre():
+    """Cancelar por não enxergar trocaria um erro raro por um permanente: numa
+    máquina sem captura a conta nunca conseguiria logar."""
+    seq = _login("Light in the Darkness")   # o dublê padrão não captura
+    seq._do_server()
+
+    assert seq.cliques[-1] == seq.coords.server_ok
+    assert seq.coords.server_cancel not in seq.cliques

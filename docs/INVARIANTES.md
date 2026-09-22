@@ -93,6 +93,13 @@
   Offline 1.000 × Online 0.713, margem +0.287. Mora em
   `LoginStateDetector.servidor_offline` — leitura de tela é do detector, não da
   sequência de login.
+- **SEM PROVA DA LINHA, NÃO SE APERTA O Ok DA LISTA DE SERVIDORES.**
+  `Coords.server_rows` é ESTÁTICA: some um servidor da tela e os índices
+  deslocam, o clique cai em linha vazia e o Ok confirma o que já estava
+  selecionado — em 22/09/2026 isso fez a conta ENTRAR EM OUTRO SERVIDOR.
+  `find_highlighted_row` já avisava; o defeito era seguir com o Ok. Agora:
+  realce certo → Ok; **olhei e está errado → Cancel**; sem captura → Ok (a
+  reserva de sempre, porque "não sei" não bloqueia).
 - **A LISTA DE SERVIDORES TEM SAÍDA, E É O CANCEL.** É o único ponto do login
   em que insistir não adianta e sair não acontece sozinho: servidor fora da
   lista, Offline ou reiniciando deixava a conta presa ali para sempre — o

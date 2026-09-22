@@ -60,6 +60,9 @@ MAX_CREDENTIAL_ERRORS = 5
 # status não pega (servidor reiniciando, Ok engolido, captura cega). Três, e não
 # uma: clique engolido é comum nesta UI, e a seleção da linha já tenta três
 # vezes pelo mesmo motivo. Conta VOLTAS À MESMA TELA, não cliques.
+# Cliques na linha antes de desistir da seleção -- clique engolido é comum aqui.
+TENTATIVAS_DE_SELECAO = 3
+
 VOLTAS_NA_LISTA_DE_SERVIDORES = 3
 
 
@@ -463,7 +466,9 @@ class LoginSequence:
         # status acontecer depois do laco -- ver o bloco antes do Ok.
         primeira = (c.server_row_x, c.server_first_row_y)
         ultimo_quadro = None
-        for attempt in range(1, 4):
+        # `None` = sem captura; `False` = olhei e a linha certa NÃO realçou.
+        confirmou_a_linha = None
+        for attempt in range(1, TENTATIVAS_DE_SELECAO + 1):
             # Linha do servidor derivada do título "Server List" localizado na
             # tela; cai para a coordenada por âncora se o template não casar.
             primeira = self._anchored(
@@ -489,7 +494,8 @@ class LoginSequence:
                 center_x=primeira[0],
             )
             esperado = indice
-            if selecionado == esperado:
+            confirmou_a_linha = selecionado == esperado
+            if confirmou_a_linha:
                 self.log.info("Servidor '%s' confirmado como selecionado", wanted)
                 break
             if selecionado is None:
@@ -500,8 +506,22 @@ class LoginSequence:
                     c.server_rows[selecionado], wanted,
                 )
         else:
-            self.log.warning("Não confirmei a seleção de '%s'; seguindo com Ok",
-                             wanted)
+            self.log.warning("Não confirmei a seleção de '%s'", wanted)
+
+        # SEM PROVA DA LINHA, NÃO SE APERTA O Ok. `c.server_rows` é uma lista
+        # ESTÁTICA: quando um servidor sai da tela os índices deslocam, o clique
+        # cai em linha vazia e o Ok confirma o que já estava selecionado -- em
+        # 22/09/2026 isso fez a conta ENTRAR EM OUTRO SERVIDOR.
+        # `None` (sem captura) segue com o Ok: é a reserva de sempre, e cancelar
+        # por não enxergar trocaria um erro raro por um permanente.
+        # Ver `docs/decisoes/login-e-relogin.md`.
+        if confirmou_a_linha is False:
+            self._sair_da_lista_de_servidores(
+                f"a linha de '{wanted}' não ficou realçada em "
+                f"{TENTATIVAS_DE_SELECAO} tentativas -- o servidor saiu da "
+                f"lista ou ela mudou de ordem, e apertar Ok entraria em OUTRO "
+                f"servidor")
+            return
 
         # O STATUS ANTES DE GASTAR O Ok, e FORA DO LAÇO: dentro dele a leitura
         # só valeria com o realce confirmado, e a linha pode estar Offline mesmo

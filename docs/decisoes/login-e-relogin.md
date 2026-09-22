@@ -1000,3 +1000,71 @@ A terceira é a REDE das duas primeiras: sem quadro, `servidor_offline` devolve
 A leitura do status acontece **fora do laço de seleção** e **antes do Ok**:
 dentro do laço ela só valeria com o realce confirmado, e a linha pode estar
 Offline mesmo sem ele (captura intermitente, clique engolido).
+
+## 22/09/2026, parte 3 — o bot entrava em OUTRO servidor
+
+Print: a lista mostrava **três** servidores e "Light in the Darkness" não estava
+entre eles. O bot apertou **Ok assim mesmo** e entrou no que estava selecionado.
+
+### A causa: a lista de servidores é ESTÁTICA no código
+
+`Coords.server_rows` é uma lista fixa, com **cinco** nomes:
+
+```
+0 White Horse [NEW]
+1 Tiger Fish (WW)          <- não aparecia na tela
+2 Sky Ice (GSM&BI)
+3 All Stars
+4 Light in the Darkness
+```
+
+O bot **nunca leu quais servidores a tela mostra**. Ele pega o índice nessa
+lista e conta linhas a partir da primeira. Some um servidor da tela e todos os
+índices abaixo deslocam: o clique cai numa linha vazia (ou na errada), o realce
+não muda, e o Ok confirma **o que já estava selecionado**.
+
+Com três servidores na tela e o índice 4, o clique caiu no vazio.
+
+### O defeito não era a detecção — era o desfecho
+
+`find_highlighted_row` **já sabia**. O log dizia, palavra por palavra:
+
+> `Está selecionado 'White Horse [NEW]' em vez de 'Light in the Darkness'`
+
+E três linhas abaixo:
+
+```python
+else:
+    self.log.warning("Não confirmei a seleção de '%s'; seguindo com Ok", wanted)
+```
+
+Avisar e apertar o Ok mesmo assim. O aviso estava certo; a ação, não.
+
+### A regra
+
+**Sem prova da linha, não se aperta o Ok.** O estado passou a ter três valores,
+e a diferença entre dois deles é o que decide:
+
+| `confirmou_a_linha` | o que significa | desfecho |
+|---|---|---|
+| `True` | a linha certa está realçada | Ok |
+| `False` | **olhei** e ela não está | **Cancel** |
+| `None` | sem captura, não sei | Ok (a reserva de sempre) |
+
+`None` seguir com o Ok não é descuido: numa máquina onde a captura não funciona,
+cancelar por não enxergar deixaria a conta sem conseguir logar **nunca** —
+trocaria um erro raro por um permanente. É a mesma regra de `_janela_confiavel`
+e do pino do `Input`: *"não sei" não bloqueia*.
+
+### A fragilidade que fica
+
+`server_rows` continua estática, e é ela que decide em qual linha clicar. Com a
+lista da tela mudando (servidor novo, servidor removido, manutenção), o índice
+volta a errar — só que agora o erro vira **Cancel e relogin**, não entrar no
+servidor errado.
+
+Acertar a linha de verdade exigiria ler os NOMES da tela, e isso é OCR: a lista
+não tem template por servidor, e o título da janela não acompanha a seleção
+(medido no print — "Talisman Online | ver.6402", sem servidor, com White Horse
+realçado). Enquanto isso não existir, manter `server_rows` igual à lista do jogo
+é manutenção manual.
