@@ -58,6 +58,10 @@ def _login(servidor: str) -> LoginSequence:
     seq._click = lambda ponto: seq.cliques.append(ponto)
     seq._set_phase = lambda fase: seq.fases.append(fase)
     seq._abort_if_stopped = lambda: None
+    # A espera pelo servidor fora do ar é de 30 s DE VERDADE; aqui só o
+    # desfecho interessa.
+    seq.esperas = []
+    seq._esperar = lambda seg: seq.esperas.append(seg)
     return seq
 
 

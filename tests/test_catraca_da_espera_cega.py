@@ -63,7 +63,16 @@ TETO_DE_ESPERAS_CEGAS = {
 # soltar o handle do `.exe` de 9 MB que o antivírus está varrendo -- evento sem
 # observável nenhum do lado de cá. E é ferramenta de empacotar, não caminho
 # quente: ali o relógio não disputa com o jogo.
-TETO_GERAL = 251
+# 251 -> 252 em 22/09/2026: `login.ESPERA_PELO_SERVIDOR_FORA_DO_AR`, os 30 s
+# entre uma ida à lista de servidores e a seguinte quando o servidor da conta
+# não está nela.
+#
+# NÃO TEM OBSERVÁVEL, e é por isso que ela é cega de verdade: durante a espera a
+# tela é a de LOGIN, e a única forma de saber se o servidor voltou é autenticar
+# de novo e abrir a lista -- que é exatamente o custo que a espera existe para
+# não pagar. Sem ela o laço deu 854 idas em 9 minutos, sete contas
+# reautenticando duas vezes por segundo contra um servidor fora do ar.
+TETO_GERAL = 252
 
 
 def _por_arquivo() -> Counter:

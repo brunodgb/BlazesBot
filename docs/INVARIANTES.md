@@ -93,6 +93,13 @@
   Offline 1.000 × Online 0.713, margem +0.287. Mora em
   `LoginStateDetector.servidor_offline` — leitura de tela é do detector, não da
   sequência de login.
+- **SERVIDOR FORA DO AR: TENTA PARA SEMPRE, A CADA 30 s.** Sem a espera o laço
+  deu **854 idas à lista em 9 minutos** (uma volta completa de login a cada
+  ~1,5 s, por conta) — inútil e caminho para a conta bloqueada. E a espera
+  **renova o relógio das telas iniciais**: ela é progresso, não travamento, e
+  sem isso o `PRE_SERVER_TIMEOUT` matava o ciclo que estava fazendo a coisa
+  certa, jogando a conta num backoff de 300 s de silêncio — que foi lido como
+  "o bot parou" em 22/09/2026.
 - **A LINHA DO SERVIDOR VEM DA TELA, NUNCA DO ÍNDICE NA LISTA ESTÁTICA.**
   `Coords.server_rows` tem cinco nomes e ordem fixa; três prints da mesma tela
   mostraram 4, 3 e 2 linhas, nenhum batendo com ela. `linha_do_servidor` acha o

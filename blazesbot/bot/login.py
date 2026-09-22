@@ -65,6 +65,11 @@ TENTATIVAS_DE_SELECAO = 3
 
 VOLTAS_NA_LISTA_DE_SERVIDORES = 3
 
+# Entre uma ida à lista e a seguinte com o servidor fora do ar. 30 s e não os
+# ~1,5 s do laço: 854 idas em 9 min martelavam o servidor de autenticação por
+# nada (medido em 22/09/2026). Ver `docs/decisoes/login-e-relogin.md`.
+ESPERA_PELO_SERVIDOR_FORA_DO_AR = 30.0
+
 
 # NÃO EXISTE LIMITE DE TEMPO NA FILA.
 #
@@ -439,17 +444,14 @@ class LoginSequence:
     def _do_server(self) -> None:
         """Seleciona o servidor da conta e confirma.
 
-        Clicar na linha do servidor já a seleciona. Como a lista abre com
-        alguma linha JÁ selecionada (a última usada), não dá para assumir que
-        não fazer nada mantém a escolha certa -- é preciso clicar na linha
-        desejada e, quando há imagem, CONFIRMAR que o realce azul mudou de
-        lugar antes de apertar Ok.
+        A lista abre com alguma linha JÁ selecionada, então não fazer nada
+        não mantém a escolha certa: clica e CONFIRMA o realce antes do Ok.
         """
         c = self.coords
         wanted = c.normalize_server(self.account.server)
         point = c.server_point(wanted)
         if point is None:
-            # Cancel e não `LoginError`: o erro seco deixava a janela PARADA
+            # Cancel e não `LoginError`: o erro seco deixava a janela parada
             # na lista, e a tentativa seguinte voltava ao mesmo erro.
             self._sair_da_lista_de_servidores(
                 f"servidor '{self.account.server}' não está na lista atual "
@@ -460,8 +462,8 @@ class LoginSequence:
             self.log.info("Servidor '%s' virou '%s' na lista atual",
                           self.account.server, wanted)
 
-        # A LINHA VEM DA TELA: a lista do jogo muda, e contar a partir da
-        # estática põe a conta em OUTRO servidor. Ver `linha_do_servidor`.
+        # A LINHA VEM DA TELA: contar a partir da lista estática põe a conta
+        # em OUTRO servidor. Ver `linha_do_servidor`.
         inicial = self.detector.detect()
         primeira = self._anchored("server", "server_first_row",
                                   (c.server_row_x, c.server_first_row_y),
@@ -470,20 +472,15 @@ class LoginSequence:
             inicial.frame, wanted, primeira, len(c.server_rows))
         if lida is None and self.detector.sabe_reconhecer(wanted):
             self._sair_da_lista_de_servidores(
-                f"o servidor '{wanted}' NÃO está na lista (fora do ar?)")
+                f"o servidor '{wanted}' NÃO está na lista (fora do ar?)",
+                esperar=ESPERA_PELO_SERVIDOR_FORA_DO_AR)
             return
         # Sem recorte daquele nome, o índice estático é a reserva de sempre.
         indice = lida if lida is not None else c.server_index(wanted)
-        # O último quadro, para ler o status depois do laço.
-        primeira = (c.server_row_x, c.server_first_row_y)
         ultimo_quadro = None
         # `None` = sem captura; `False` = olhei e a linha certa NÃO realçou.
         confirmou_a_linha = None
         for attempt in range(1, TENTATIVAS_DE_SELECAO + 1):
-            primeira = self._anchored(
-                "server", "server_first_row",
-                (c.server_row_x, c.server_first_row_y),
-            )
             alvo = (primeira[0], primeira[1] + indice * c.server_row_height)
             self.log.info("Selecionando servidor '%s' em %s (tentativa %s)",
                           wanted, alvo, attempt)
@@ -532,7 +529,8 @@ class LoginSequence:
         # valeria com o realce confirmado.
         if self.detector.servidor_offline(ultimo_quadro, primeira, indice):
             self._sair_da_lista_de_servidores(
-                f"o servidor '{wanted}' está OFFLINE na lista")
+                f"o servidor '{wanted}' está OFFLINE na lista",
+                esperar=ESPERA_PELO_SERVIDOR_FORA_DO_AR)
             return
 
         # CHEGAR AQUI DE NOVO = o Ok anterior não saiu da lista. Conta VOLTAS
@@ -551,21 +549,24 @@ class LoginSequence:
         sleep(1.75)
         self._set_phase(Phase.ENTERING)
 
-    def _sair_da_lista_de_servidores(self, motivo: str) -> None:
+    def _sair_da_lista_de_servidores(self, motivo: str,
+                                     esperar: float = 0.0) -> None:
         """Sai da lista pelo CANCEL e recomeça o login. A única saída que existe.
 
-        Servidor fora da lista, Offline ou reiniciando prendia a conta ali para
-        sempre. O Cancel volta ao login e o ciclo recomeça com a lista RELIDA.
-        Não levanta: sair pela porta é caminho normal, não falha. Relato:
-        `docs/decisoes/login-e-relogin.md`.
+        O Cancel volta ao login e o ciclo recomeça com a lista RELIDA. Não
+        levanta: sair pela porta é caminho normal. Relato em `docs/decisoes`.
         """
         self.log.warning("%s — saindo da lista pelo Cancel.", motivo)
         cancel = self._anchored("server", "server_cancel",
                                 self.coords.server_cancel)
         self._click(cancel)
-        # SEM ESPERA AQUI. O laço principal reavalia a tela na volta seguinte e
-        # tem o ritmo dele -- dormir seria espera cega, e o projeto conta essas.
         self._set_phase(Phase.CREDENTIALS)
+        if esperar:
+            # Espera LEGÍTIMA: renova o relógio das telas, senão o
+            # `PRE_SERVER_TIMEOUT` mata o ciclo que faz a coisa certa.
+            self._prazo_das_telas = time.time() + PRE_SERVER_TIMEOUT
+            self.log.info("Tentando de novo em %.0fs.", esperar)
+            self._esperar(esperar)
 
     def _try_enter_world(self, det: Detection) -> None:
         """Seleciona o personagem e entra. Chamado a cada 20 s.
@@ -1031,7 +1032,7 @@ class LoginSequence:
             )
 
         self._set_phase(Phase.CREDENTIALS)
-        pre_server_deadline = time.time() + PRE_SERVER_TIMEOUT
+        self._prazo_das_telas = time.time() + PRE_SERVER_TIMEOUT
 
         while True:
             self._abort_if_stopped()
@@ -1051,14 +1052,14 @@ class LoginSequence:
             # conta parada na lista. Ver `docs/decisoes/login-e-relogin.md`.
             na_lista_de_servidores = det.screen is LoginScreen.SERVER_LIST
             if det.connected and not na_lista_de_servidores:
-                pre_server_deadline = float("inf")
-            elif pre_server_deadline == float("inf"):
+                self._prazo_das_telas = float("inf")
+            elif self._prazo_das_telas == float("inf"):
                 # Caiu de volta para antes do servidor: religa o relógio.
-                pre_server_deadline = time.time() + PRE_SERVER_TIMEOUT
+                self._prazo_das_telas = time.time() + PRE_SERVER_TIMEOUT
                 self.connected_since = None
                 self.last_heartbeat = 0.0
 
-            if time.time() > pre_server_deadline:
+            if time.time() > self._prazo_das_telas:
                 raise LoginError(
                     "as telas de login/servidor não avançaram em "
                     f"{PRE_SERVER_TIMEOUT / 60:.0f} minutos. Confira resolução "

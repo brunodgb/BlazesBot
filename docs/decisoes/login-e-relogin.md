@@ -1213,3 +1213,88 @@ com número.
 
 "Tiger Fish (WW)" segue sem recorte, caindo no índice estático com as redes de
 baixo, até existir um print **1:1 em PNG** com ele na lista.
+
+## 22/09/2026, parte 6 — "parece que em algum momento ele parou"
+
+Percepção do usuário, e ela estava **certa**. O log de 9 minutos (19:00–19:09)
+conta a história inteira.
+
+### O que estava funcionando
+
+**854** idas à lista, todas com o desfecho certo:
+
+```
+19:03:20.184 mfaustoapp069  o servidor 'Light in the Darkness' NÃO está na
+                            lista (fora do ar?) — saindo da lista pelo Cancel.
+19:03:20.222 mfaustoapp069  Fase do login: credenciais
+```
+
+O Cancel faz o que tem de fazer.
+
+### O que estava errado: o ritmo
+
+Olhe os carimbos da mesma conta:
+
+```
+19:03:20.184   Cancel
+19:03:20.790   Cancel      (+0,6 s)
+19:03:26.074   Cancel
+19:03:26.689   Cancel      (+0,6 s)
+```
+
+**Uma volta completa — login, credenciais, Ok, lista, Cancel — a cada ~1,5 s**,
+sete contas em paralelo, por dez minutos. Isso é reautenticar contra o servidor
+duas vezes por segundo por conta. É inútil (servidor fora do ar não volta em um
+segundo) e é o caminho conhecido para a conta bloqueada — o próprio
+`MAX_CREDENTIAL_ERRORS` existe porque recusa registrada no servidor tem custo.
+
+### E foi isso que produziu o "parou"
+
+O `PRE_SERVER_TIMEOUT` de 10 minutos não sabe distinguir "cliente travado" de
+"servidor fora do ar, e o bot está lidando com isso". As sete contas bateram
+nele em sequência:
+
+```
+19:03:05 creubo         Falha de login: as telas não avançaram em 10 minutos
+19:03:05 creubo         Nova tentativa em 300s
+19:03:11 gamerblazes    Nova tentativa em 300s
+19:03:13 blazesgamer    Nova tentativa em 300s
+19:03:30 blazestpas     Nova tentativa em 300s
+19:03:31 mfaustoapp069  Nova tentativa em 300s
+19:03:32 blazesofgamer  Nova tentativa em 300s
+19:03:34 ignition0      Nova tentativa em 300s
+```
+
+E o log confirma o silêncio: **lacuna de 137 s** entre 19:03:34 e 19:05:51 — que
+é exatamente quando o usuário reiniciou o bot. Ele não parou; entrou em **cinco
+minutos de silêncio absoluto**, e do lado de fora isso é indistinguível de
+travado. (Os 14 "Encerrado" do log são do reinício dele, com "Parada
+solicitada", não de morte espontânea.)
+
+### As duas correções
+
+**1. O ciclo passa a esperar.** `ESPERA_PELO_SERVIDOR_FORA_DO_AR = 30 s` entre
+uma ida à lista e a seguinte, quando o servidor não está lá ou está Offline.
+Usa o `_esperar` que já existia — fatiado, com o Parar respondendo na hora.
+
+**2. A espera renova o relógio das telas iniciais.** Ela é progresso, não
+travamento: o bot sabe onde está, sabe o que está esperando e está agindo. Sem
+isso o `PRE_SERVER_TIMEOUT` mata justamente o ciclo que está fazendo a coisa
+certa, e o supervisor entra no backoff de 300 s.
+
+Com as duas, o bot **tenta para sempre**, a cada 30 s, sem martelar o servidor e
+sem silêncio que pareça travamento — que é o requisito: *"tem que tentar até
+conseguir, mesmo que isso leve dias"*.
+
+### A espera é CEGA, e isso está registrado
+
+`tests/test_catraca_da_espera_cega.py` subiu de 251 para 252 com o porquê: não
+há observável. Durante os 30 s a tela é a de **login**, e a única forma de saber
+se o servidor voltou é autenticar de novo e abrir a lista — exatamente o custo
+que a espera existe para não pagar.
+
+### De quebra: `primeira` era calculado três vezes
+
+Achado ao enxugar: `_do_server` calculava o ponto da primeira linha três vezes, e
+a segunda atribuição **descartava** a primeira — a que vinha do quadro inicial,
+com âncora por template. Agora é uma só.
