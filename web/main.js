@@ -692,17 +692,27 @@ function renderContas() {
     //
     // Só é "só login" quem não tem função própria NEM líder: sobe, loga,
     // reloga e não faz mais nada.
+    // O SLOT DO ESTADO EXISTE SEMPRE, mesmo vazio -- e é ele que segura o
+    // layout. Antes o rótulo só existia em ALGUMAS linhas, e a largura da
+    // coluna saía do conteúdo: uma conta seguidora a mais e a tabela inteira
+    // se reorganizava. Slot de largura fixa presente em toda linha, a coluna
+    // nunca muda.
+    const estado = document.createElement("span");
+    estado.className = "selo-estado";
     const lider = (c.lider_do_time || "").trim();
     if (!algumLigado && lider) {
-      const seguindo = document.createElement("span");
-      seguindo.className = "selo-seguindo";
-      seguindo.textContent = `${t("rotulo_segue")} ${lider}`;
-      seguindo.title = t("dica_segue_time", { lider })
+      estado.classList.add("selo-seguindo");
+      estado.textContent = `${t("rotulo_segue")} ${lider}`;
+      estado.title = t("dica_segue_time", { lider })
         + "\n" + t("dica_segue_time_2");
-      selos.appendChild(seguindo);
     } else if (!algumLigado) {
+      // O texto continua vindo do `::after` no CSS, como antes. Ele NÃO se
+      // traduz, e isso é dívida anterior a esta alteração -- trazer para o JS
+      // exigiria entender por que `t()` devolve o placeholder para uma chave
+      // que chega no payload, e isso é outro assunto.
       selos.classList.add("selos-so-login");
     }
+    selos.appendChild(estado);
     tdFuncao.appendChild(selos);
 
     const tdEdit = document.createElement("td");

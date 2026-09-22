@@ -187,6 +187,45 @@ def test_conta_ativa_sem_ecossistema_e_declarada():
     assert 'content: "só login"' in CSS
 
 
+def test_o_rotulo_de_estado_NAO_mexe_na_largura_da_tabela():
+    """*"mesmo que algo seja adicionado na tela como o 'segue xxx' não deve
+    mudar a localização do resto"* — 22/09/2026.
+
+    A tabela é `table-layout: auto`: ali o `width` do `<td>` é só uma SUGESTÃO,
+    e quem decide é a largura intrínseca do conteúdo. Com `white-space: nowrap`
+    isso é o texto inteiro do rótulo, então o login do líder mandava na tabela.
+    MEDIDO no navegador: um nome longo levava a célula Função de 205 para 322px
+    e espremia a coluna Login de 181 para 64 -- e bastava UMA conta seguidora
+    para todas as colunas mudarem de lugar.
+
+    São duas condições, e nenhuma sozinha resolve:
+
+    1. o slot existe em TODA linha, mesmo vazio (senão a largura ainda depende
+       de quantas linhas têm rótulo);
+    2. o slot tem largura FIXA e trunca (senão o texto dele manda na coluna).
+
+    Depois: as 9 colunas ficam nas MESMAS posições com rótulo, sem rótulo e com
+    um nome absurdamente longo.
+    """
+    assert 'estado.className = "selo-estado"' in JS
+    assert "selos.appendChild(estado)" in JS, "o slot tem de entrar sempre"
+    # Fora de qualquer `if`: criado antes do ramo que decide o conteúdo.
+    bloco = JS.split('const estado = document.createElement("span")')[1]
+    assert bloco.split("if (")[0].count("}") == 0, (
+        "o slot não pode nascer dentro de um ramo")
+
+    slot = CSS.split(".selo-estado {")[1].split("}")[0]
+    assert "width:" in slot and "%" not in slot, f"largura fixa: {slot!r}"
+    assert "text-overflow: ellipsis" in slot
+    assert "flex-shrink: 0" in slot
+
+    coluna = CSS.split(".cel-funcao {")[1].split("}")[0]
+    assert "width: 1%" not in coluna, (
+        "`width: 1%` encolhe a coluna até o conteúdo -- era a causa")
+    assert "--funcoes-na-coluna" in coluna, (
+        "a largura cresce com o NÚMERO de funções, não com o texto")
+
+
 def test_a_SEGUIDORA_de_time_NAO_e_chamada_de_so_login():
     """*"caso alguma conta de APP esteja ativa por causa do lider, é bom também
     mostrar visualmente que ela esta ativa e não o 'só login'"* — 06/09/2026.

@@ -1493,3 +1493,58 @@ Aqui está.
 **O que a exceção NÃO afrouxa:** os dois testes da ponte continuam valendo. O
 campo tem de ser lido do payload em `salvar_personagem` e enviado para a tela
 em `conta_editor`, senão `test_app_config_campo_por_campo` reprova.
+
+## O rótulo que aparece não pode mover a tabela (22/09/2026)
+
+Pedido: *"mesmo que algo seja adicionado na tela como o 'segue xxx' não deve
+mudar a localização do resto (...) cada elemento sempre no seu devido lugar
+(...) e lembrando que funções podem ter mais futuramente."*
+
+A coluna Função era `width: 1%` — o truque de "encolha até o conteúdo". Numa
+tabela `table-layout: auto` isso significa que a **linha mais larga decide a
+largura da coluna**, e o resto da tabela se reorganiza atrás dela. Como o rótulo
+de estado só existe em algumas linhas ("segue \<líder\>") e o texto varia com o
+login, bastava uma conta seguidora entrar para tudo se mexer.
+
+**Medido no navegador**, trocando só o texto de um selo por um login longo: a
+célula Função foi de **205 → 322px** e a coluna Login caiu de **181 → 64px**.
+
+### Por que `width` no `<td>` não bastou
+
+Primeira tentativa: largura fixa na coluna. Não resolveu, e o motivo é do
+modelo de tabela: em `table-layout: auto` o `width` do `<td>` é uma **sugestão**
+— quem manda é a largura intrínseca do conteúdo, e com `white-space: nowrap` ela
+é o texto inteiro. Medido: 208 → 322 mesmo com o `width` declarado.
+
+`table-layout: fixed` resolveria de um golpe, mas redistribui TODAS as colunas
+(Login e Servidor deixariam de esticar) — muito risco para o que o pedido exige.
+
+### O que resolveu: um slot que existe sempre
+
+Duas condições, e **nenhuma sozinha basta**:
+
+1. **O slot está em toda linha, mesmo vazio** (`<span class="selo-estado">`).
+   Só a largura fixa não bastaria: a coluna ainda mudaria conforme quantas
+   linhas tivessem rótulo — 3px de diferença, medidos.
+2. **O slot tem largura fixa e trunca** (`width: 96px` + `ellipsis`). Só o slot
+   sempre presente não bastaria: o texto dele voltaria a mandar na coluna.
+
+Com as duas, as 9 colunas ficam nas mesmas posições em três cenários: com
+rótulo, sem nenhum rótulo, e com um login absurdamente longo. O nome completo
+continua no `title`.
+
+### As próximas funções
+
+A largura da coluna é `calc(var(--funcoes-na-coluna) * 31px + 112px)`. O que
+cresce com uma função nova são os **selos**, que são iguais em toda linha e
+portanto não desalinham nada; o **rótulo** é quem cede espaço, truncando. Função
+nova = trocar um número, num lugar só.
+
+### Uma coisa que NÃO mudou, de propósito
+
+O texto "só login" continua vindo de `content:` no CSS, e portanto não se
+traduz. Tentei trazê-lo para o JS com uma chave nova e `t()` devolveu
+`[selo_so_login]` **mesmo com a chave chegando no payload de `obter_constantes`**
+— verificado instrumentando o stub. É um defeito do i18n que merece investigação
+própria; empurrá-lo junto desta alteração misturaria dois assuntos, então a
+chave não usada foi removida e o texto ficou onde estava. Fica registrado.

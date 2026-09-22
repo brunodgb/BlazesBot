@@ -607,15 +607,51 @@ body {
 
      A caixa nativa continua ali, só invisível: `:has(:checked)` desenha o
      estado e o navegador continua entregando Tab, espaço e leitor de tela. */
+  /* LARGURA FIXA, e isto NÃO é cosmético. Com `width: 1%` a coluna encolhia
+     até o conteúdo -- e o conteúdo VARIA por linha ("segue <login>" só aparece
+     em algumas). Como a tabela é `table-layout: auto`, a linha mais larga
+     decidia a largura da coluna e o resto da tabela se reorganizava atrás:
+     medido, trocar só o texto de um selo levou a célula de 205 para 260px e
+     encolheu a coluna Login de 182 para 126. Um rótulo que aparece não pode
+     mover o que já estava na tela.
+
+     MAIS FUNÇÕES NO FUTURO: é só subir `--funcoes-na-coluna`. O que cresce com
+     elas são os selos (iguais em TODA linha, então não desalinham nada); o
+     rótulo de estado é quem cede espaço, truncando com reticências -- o texto
+     inteiro continua no `title`. */
   .tabela .col-funcao,
   .cel-funcao {
-    width: 1%;
+    --funcoes-na-coluna: 3;
+    width: calc(var(--funcoes-na-coluna) * 31px + 112px);
     white-space: nowrap;
   }
 
   .selos-funcao {
-    display: inline-flex;
+    display: flex;
+    align-items: center;
     gap: 3px;
+  }
+
+  /* O selo é o dado; o rótulo é a legenda. Os selos nunca encolhem, e é o
+     rótulo que cede -- o contrário truncaria a sigla da função. */
+  .selos-funcao > .selo {
+    flex-shrink: 0;
+  }
+
+  /* O SLOT DO ESTADO ("segue <líder>" / "só login" / vazio) -- largura FIXA, e
+     ele existe em toda linha mesmo vazio.
+     A tabela é `table-layout: auto`, onde o `width` do `<td>` é só uma
+     SUGESTÃO: quem decide é a largura intrínseca do conteúdo, e com `nowrap`
+     isso é o texto inteiro. Era assim que o login do líder mandava na tabela --
+     medido, um nome longo levava a célula de 205 para 322px e espremia a coluna
+     Login de 181 para 64. Reservado o slot, o texto trunca e o nome completo
+     fica no `title`. */
+  .selo-estado {
+    width: 96px;
+    flex-shrink: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   /* COMPACTO de propósito: esta coluna precisa aguentar a QUARTA função sem
@@ -703,7 +739,7 @@ body {
     font-weight: 700;
     letter-spacing: 0.02em;
     white-space: nowrap;
-    max-width: 148px;
+    /* A largura vem do `.selo-estado`, que é o slot presente em TODA linha. */
     overflow: hidden;
     text-overflow: ellipsis;
   }
@@ -716,13 +752,17 @@ body {
     opacity: 0.45;
   }
 
-  .selos-so-login::after {
-    content: "só login";
-    align-self: center;
-    margin-left: 6px;
+  /* O texto vai DENTRO do slot, não como item solto do flex: item novo somaria
+     largura e a coluna voltaria a depender do conteúdo. */
+  .selos-so-login > .selo-estado {
+    margin-left: 3px;
     font-size: 9.5px;
     font-style: italic;
     color: var(--color-faint);
+  }
+
+  .selos-so-login > .selo-estado::after {
+    content: "só login";
   }
 
   /* ============================================================
