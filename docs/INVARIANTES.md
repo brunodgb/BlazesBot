@@ -93,6 +93,16 @@
   Offline 1.000 × Online 0.713, margem +0.287. Mora em
   `LoginStateDetector.servidor_offline` — leitura de tela é do detector, não da
   sequência de login.
+- **A LINHA DO SERVIDOR VEM DA TELA, NUNCA DO ÍNDICE NA LISTA ESTÁTICA.**
+  `Coords.server_rows` tem cinco nomes e ordem fixa; três prints da mesma tela
+  mostraram 4, 3 e 2 linhas, nenhum batendo com ela. `linha_do_servidor` acha o
+  nome por template (limiar 0.80; medido: pior acerto 0.971 × melhor falso
+  0.436, margem +0.534) e devolve a linha real. **Não achou o nome e sabe
+  reconhecê-lo → o servidor não está listado → Cancel.** Sem recorte daquele
+  nome, cai no índice estático — "não sei" não bloqueia.
+- **NÃO BINARIZE PARA VENCER O REALCE AZUL.** `TM_CCOEFF_NORMED` normaliza o
+  contraste: o mesmo template casa 1.000 no fundo preto e 0.971 no azul. Medido
+  antes de escrever o código.
 - **SEM PROVA DA LINHA, NÃO SE APERTA O Ok DA LISTA DE SERVIDORES.**
   `Coords.server_rows` é ESTÁTICA: some um servidor da tela e os índices
   deslocam, o clique cai em linha vazia e o Ok confirma o que já estava

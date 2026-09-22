@@ -449,9 +449,8 @@ class LoginSequence:
         wanted = c.normalize_server(self.account.server)
         point = c.server_point(wanted)
         if point is None:
-            # SAI PELO CANCEL em vez de levantar: o `LoginError` seco deixava a
-            # janela PARADA na lista, e a tentativa seguinte do supervisor
-            # voltava para a mesma tela e ao mesmo erro, sem fim.
+            # Cancel e não `LoginError`: o erro seco deixava a janela PARADA
+            # na lista, e a tentativa seguinte voltava ao mesmo erro.
             self._sair_da_lista_de_servidores(
                 f"servidor '{self.account.server}' não está na lista atual "
                 f"(opções: {', '.join(c.server_rows)})")
@@ -461,16 +460,26 @@ class LoginSequence:
             self.log.info("Servidor '%s' virou '%s' na lista atual",
                           self.account.server, wanted)
 
-        indice = c.server_index(wanted)
-        # A linha da tabela e o ULTIMO quadro capturado, para a leitura do
-        # status acontecer depois do laco -- ver o bloco antes do Ok.
+        # A LINHA VEM DA TELA: a lista do jogo muda, e contar a partir da
+        # estática põe a conta em OUTRO servidor. Ver `linha_do_servidor`.
+        inicial = self.detector.detect()
+        primeira = self._anchored("server", "server_first_row",
+                                  (c.server_row_x, c.server_first_row_y),
+                                  frame=inicial.frame)
+        lida = self.detector.linha_do_servidor(
+            inicial.frame, wanted, primeira, len(c.server_rows))
+        if lida is None and self.detector.sabe_reconhecer(wanted):
+            self._sair_da_lista_de_servidores(
+                f"o servidor '{wanted}' NÃO está na lista (fora do ar?)")
+            return
+        # Sem recorte daquele nome, o índice estático é a reserva de sempre.
+        indice = lida if lida is not None else c.server_index(wanted)
+        # O último quadro, para ler o status depois do laço.
         primeira = (c.server_row_x, c.server_first_row_y)
         ultimo_quadro = None
         # `None` = sem captura; `False` = olhei e a linha certa NÃO realçou.
         confirmou_a_linha = None
         for attempt in range(1, TENTATIVAS_DE_SELECAO + 1):
-            # Linha do servidor derivada do título "Server List" localizado na
-            # tela; cai para a coordenada por âncora se o template não casar.
             primeira = self._anchored(
                 "server", "server_first_row",
                 (c.server_row_x, c.server_first_row_y),
@@ -508,13 +517,9 @@ class LoginSequence:
         else:
             self.log.warning("Não confirmei a seleção de '%s'", wanted)
 
-        # SEM PROVA DA LINHA, NÃO SE APERTA O Ok. `c.server_rows` é uma lista
-        # ESTÁTICA: quando um servidor sai da tela os índices deslocam, o clique
-        # cai em linha vazia e o Ok confirma o que já estava selecionado -- em
-        # 22/09/2026 isso fez a conta ENTRAR EM OUTRO SERVIDOR.
-        # `None` (sem captura) segue com o Ok: é a reserva de sempre, e cancelar
-        # por não enxergar trocaria um erro raro por um permanente.
-        # Ver `docs/decisoes/login-e-relogin.md`.
+        # SEM PROVA DA LINHA, NÃO SE APERTA O Ok -- a rede de quando o nome
+        # não foi reconhecido e o índice estático errou. `None` (sem captura)
+        # segue: "não sei" não bloqueia. Ver `docs/decisoes/login-e-relogin.md`.
         if confirmou_a_linha is False:
             self._sair_da_lista_de_servidores(
                 f"a linha de '{wanted}' não ficou realçada em "
@@ -523,18 +528,16 @@ class LoginSequence:
                 f"servidor")
             return
 
-        # O STATUS ANTES DE GASTAR O Ok, e FORA DO LAÇO: dentro dele a leitura
-        # só valeria com o realce confirmado, e a linha pode estar Offline mesmo
-        # sem ele (captura intermitente, clique engolido).
+        # O STATUS ANTES DE GASTAR O Ok, e fora do laço: dentro dele só
+        # valeria com o realce confirmado.
         if self.detector.servidor_offline(ultimo_quadro, primeira, indice):
             self._sair_da_lista_de_servidores(
                 f"o servidor '{wanted}' está OFFLINE na lista")
             return
 
-        # CHEGAR AQUI DE NOVO SIGNIFICA QUE O Ok ANTERIOR NÃO SAIU DA LISTA.
-        # O laço principal só devolve a fase para `SERVER` quando a IMAGEM
-        # mostra a lista, então isto conta voltas à mesma tela, não cliques --
-        # é o sintoma comum do servidor Offline e do que reiniciou.
+        # CHEGAR AQUI DE NOVO = o Ok anterior não saiu da lista. Conta VOLTAS
+        # à mesma tela, não cliques: a fase só volta para `SERVER` com a imagem
+        # mostrando a lista.
         self.voltas_no_servidor += 1
         if self.voltas_no_servidor > VOLTAS_NA_LISTA_DE_SERVIDORES:
             self._sair_da_lista_de_servidores(
@@ -551,14 +554,10 @@ class LoginSequence:
     def _sair_da_lista_de_servidores(self, motivo: str) -> None:
         """Sai da lista pelo CANCEL e recomeça o login. A única saída que existe.
 
-        A lista é o único ponto do login em que insistir não adianta e sair não
-        acontece sozinho: servidor fora dela, Offline ou reiniciando prendia a
-        conta para sempre. O Cancel volta para a tela de login, e daí o ciclo
-        recomeça com a lista RELIDA -- é o que dá ao servidor a chance de voltar
-        sem ninguém olhar. Relato e medição:
+        Servidor fora da lista, Offline ou reiniciando prendia a conta ali para
+        sempre. O Cancel volta ao login e o ciclo recomeça com a lista RELIDA.
+        Não levanta: sair pela porta é caminho normal, não falha. Relato:
         `docs/decisoes/login-e-relogin.md`.
-
-        Não levanta: sair pela porta é caminho normal, não falha.
         """
         self.log.warning("%s — saindo da lista pelo Cancel.", motivo)
         cancel = self._anchored("server", "server_cancel",

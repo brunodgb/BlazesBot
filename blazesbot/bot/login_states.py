@@ -23,6 +23,7 @@ funcionaram.
 """
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
@@ -136,6 +137,31 @@ LIMIAR_DO_OFFLINE = 0.85
 # porque "Online" tem 6 letras e "Offline" tem 7.
 DO_NOME_ATE_O_STATUS = 147
 LARGURA_DA_BUSCA_DO_STATUS = 120
+
+# ===========================================================================
+# O NOME DO SERVIDOR NA LINHA -- para NÃO depender de índice fixo
+# ===========================================================================
+#
+# `Coords.server_rows` é uma lista ESTÁTICA, e a lista do jogo MUDA: servidor
+# entra em manutenção e some da tela, e todos os índices abaixo dele deslocam.
+# Em 22/09/2026 isso fez a conta entrar em OUTRO servidor.
+#
+# A saída é ler o NOME de cada linha. MEDIDO em dois prints 1:1 do mesmo dia
+# (um com 4 servidores, outro com 3), cada template contra cada linha dos dois:
+#
+#     pior ACERTO ......... 0.971   (linha SELECIONADA, fundo azul do realce)
+#     melhor FALSO ........ 0.436
+#     margem .............. +0.534
+#
+# O limiar fica no meio, com folga de 0.17 para cada lado. E NÃO é preciso
+# binarizar para vencer o fundo azul: `TM_CCOEFF_NORMED` normaliza o contraste,
+# e o mesmo template casa a 1.000 no fundo preto e 0.971 no azul.
+LIMIAR_DO_NOME_DO_SERVIDOR = 0.80
+
+# Meia-largura da busca em torno do CENTRO do nome, e não coluna absoluta: o
+# ponto da linha já vem resolvido por âncora/resolução, então derivar dele faz a
+# busca acompanhar. 80 px cobre o nome mais largo medido (279-408, centro 344).
+MEIA_LARGURA_DO_NOME = 80
 
 _SIGNATURES: list[tuple[LoginScreen, tuple[str, ...]]] = [
     # --- avisos modais, sempre primeiro ---
@@ -308,6 +334,46 @@ class LoginStateDetector:
         if frame is None:
             return None
         return find_template(frame, template, threshold=THRESHOLD)
+
+    def _modelo_do_servidor(self, nome: str):
+        """O template do NOME daquele servidor, ou `None` se não existir.
+
+        O arquivo é `servidor_<slug>.png`, e o slug sai do próprio nome. Cada
+        servidor precisa do seu recorte -- quem não tem simplesmente não é
+        reconhecido, e o login cai no índice estático de sempre.
+        """
+        slug = re.sub(r"[^a-z0-9]+", "_", nome.lower()).strip("_")
+        return self.templates.load(f"servidor_{slug}.png")
+
+    def sabe_reconhecer(self, nome: str) -> bool:
+        """Existe recorte para reconhecer este servidor na lista?"""
+        return self._modelo_do_servidor(nome) is not None
+
+    def linha_do_servidor(self, frame, nome: str, primeira, linhas: int,
+                          altura: int = 20) -> int | None:
+        """Em QUE LINHA da lista aquele servidor está. `None` = não está.
+
+        É o que tira o login da dependência de índice fixo: a lista do jogo
+        muda (manutenção tira um servidor e os de baixo sobem), e contar linhas
+        a partir de uma lista estática põe a conta em OUTRO servidor.
+
+        `None` também quando não dá para olhar -- sem quadro ou sem recorte
+        daquele nome. Quem chama distingue os dois casos por `sabe_reconhecer`:
+        "não está na lista" manda cancelar, "não sei reconhecer" não.
+        """
+        modelo = self._modelo_do_servidor(nome)
+        if frame is None or modelo is None:
+            return None
+        x0 = max(0, primeira[0] - MEIA_LARGURA_DO_NOME)
+        for indice in range(linhas):
+            y = primeira[1] + indice * altura
+            regiao = (x0, max(0, y - altura // 2),
+                      MEIA_LARGURA_DO_NOME * 2, altura)
+            if find_template(frame, modelo,
+                             threshold=LIMIAR_DO_NOME_DO_SERVIDOR,
+                             region=regiao) is not None:
+                return indice
+        return None
 
     def servidor_offline(self, frame, primeira, indice: int,
                          altura: int = 20) -> bool:

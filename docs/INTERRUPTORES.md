@@ -83,7 +83,7 @@ ligar código não testado.
 
 ## Números medidos -- tolerância, limiar, teto, cadência
 
-648 constantes, agrupadas por arquivo.
+650 constantes, agrupadas por arquivo.
 
 | constante | valor | onde | quem lê | porquê (resumo) |
 |---|---|---|---|---|
@@ -353,11 +353,13 @@ ligar código não testado.
 | `TENTATIVAS_DE_SELECAO` | `3` | [blazesbot/bot/login.py:64](blazesbot/bot/login.py#L64) | — | Voltas na lista antes de sair pelo Cancel -- a REDE, para o que a leitura do |
 | `VOLTAS_NA_LISTA_DE_SERVIDORES` | `3` | [blazesbot/bot/login.py:66](blazesbot/bot/login.py#L66) | — | — |
 | `WAIT_HEARTBEAT_SECONDS` | `150.0` | [blazesbot/bot/login.py:120](blazesbot/bot/login.py#L120) | — | Cadência do aviso de "continuo esperando", só para o log não ficar mudo. |
-| `DO_NOME_ATE_O_STATUS` | `147` | [blazesbot/bot/login_states.py:137](blazesbot/bot/login_states.py#L137) | — | Do NOME do servidor até a coluna de status, e a largura da busca: o nome |
-| `LARGURA_DA_BUSCA_DO_STATUS` | `120` | [blazesbot/bot/login_states.py:138](blazesbot/bot/login_states.py#L138) | — | — |
-| `LIMIAR_DO_OFFLINE` | `0.85` | [blazesbot/bot/login_states.py:132](blazesbot/bot/login_states.py#L132) | — | — |
-| `TEMPLATE_SERVIDOR_OFFLINE` | `'server_offline.png'` | [blazesbot/bot/login_states.py:131](blazesbot/bot/login_states.py#L131) | — | O STATUS DO SERVIDOR NA LISTA -- "Online" x "Offline" |
-| `THRESHOLD` | `0.8` | [blazesbot/bot/login_states.py:35](blazesbot/bot/login_states.py#L35) | — | — |
+| `DO_NOME_ATE_O_STATUS` | `147` | [blazesbot/bot/login_states.py:138](blazesbot/bot/login_states.py#L138) | — | Do NOME do servidor até a coluna de status, e a largura da busca: o nome |
+| `LARGURA_DA_BUSCA_DO_STATUS` | `120` | [blazesbot/bot/login_states.py:139](blazesbot/bot/login_states.py#L139) | — | — |
+| `LIMIAR_DO_NOME_DO_SERVIDOR` | `0.8` | [blazesbot/bot/login_states.py:159](blazesbot/bot/login_states.py#L159) | — | O NOME DO SERVIDOR NA LINHA -- para NÃO depender de índice fixo |
+| `LIMIAR_DO_OFFLINE` | `0.85` | [blazesbot/bot/login_states.py:133](blazesbot/bot/login_states.py#L133) | — | — |
+| `MEIA_LARGURA_DO_NOME` | `80` | [blazesbot/bot/login_states.py:164](blazesbot/bot/login_states.py#L164) | — | Meia-largura da busca em torno do CENTRO do nome, e não coluna absoluta: o |
+| `TEMPLATE_SERVIDOR_OFFLINE` | `'server_offline.png'` | [blazesbot/bot/login_states.py:132](blazesbot/bot/login_states.py#L132) | — | O STATUS DO SERVIDOR NA LISTA -- "Online" x "Offline" |
+| `THRESHOLD` | `0.8` | [blazesbot/bot/login_states.py:36](blazesbot/bot/login_states.py#L36) | — | — |
 | `CADENCIA_DO_CONVITE` | `0.5` | [blazesbot/bot/morte.py:72](blazesbot/bot/morte.py#L72) | — | Cadência da conferência do convite da Fada na TELA. |
 | `EXTENSAO_PELO_FEITICO` | `15.0` | [blazesbot/bot/morte.py:59](blazesbot/bot/morte.py#L59) | — | Quanto o prazo estica quando a Fada avisa que COMEÇOU a conjurar. |
 | `MORTES_SEGUIDAS_PARA_PARAR` | `3` | [blazesbot/bot/morte.py:93](blazesbot/bot/morte.py#L93) | — | Mortes seguidas SEM conseguir voltar ao ponto antes de parar a conta. |

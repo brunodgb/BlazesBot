@@ -1068,3 +1068,75 @@ não tem template por servidor, e o título da janela não acompanha a seleção
 (medido no print — "Talisman Online | ver.6402", sem servidor, com White Horse
 realçado). Enquanto isso não existir, manter `server_rows` igual à lista do jogo
 é manutenção manual.
+
+## 22/09/2026, parte 4 — a linha passa a vir da TELA
+
+O usuário fechou a questão: *"não é para remover nenhum servidor, eles apenas
+estão fora temporariamente (…) pode acontecer de cair qualquer servidor. O ideal
+é conseguir identificar quais estão online, onde clicar e se dá pra clicar."*
+
+Três prints da mesma tela, em dias diferentes, mostram o tamanho do problema:
+
+| print | linhas na tela |
+|---|---|
+| A | White Horse, Sky Ice, All Stars, **Light in the Darkness** (4) |
+| B | White Horse, Sky Ice, All Stars (3) |
+| C | **Tiger Fish (WW)**, Sky Ice (2) |
+
+`Coords.server_rows` tem **cinco** nomes e uma ordem fixa. Nenhum dos três
+prints bate com ela. Contar linhas a partir dessa lista é errar por construção.
+
+### O nome, lido por template
+
+Um recorte do NOME de cada servidor, e a linha sai de onde ele casa. Medido nos
+prints A e B, **cada template contra cada linha dos dois**:
+
+| | |
+|---|---|
+| pior ACERTO | **0.971** (linha selecionada, fundo azul do realce) |
+| melhor FALSO | **0.436** |
+| margem | **+0.534** |
+
+Limiar **0.80**, no meio, com 0.17 de folga para cada lado.
+
+**Não é preciso binarizar** para vencer o fundo azul: `TM_CCOEFF_NORMED`
+normaliza o contraste, e o mesmo template casa **1.000** no fundo preto e
+**0.971** no azul. Medido antes de escrever o código — a binarização que eu ia
+escrever era complexidade que os números dispensaram.
+
+A busca é por linha, e a região deriva do **centro do nome** (`primeira[0] ±
+80`), nunca de coluna absoluta: o ponto da linha já vem resolvido por âncora e
+resolução, então derivar dele faz a busca acompanhar.
+
+### A escada, agora completa
+
+| pergunta | resposta | desfecho |
+|---|---|---|
+| o nome está na tela? | `linha_do_servidor` | achou → é a linha; **não achou → Cancel** |
+| não sei reconhecer? | `sabe_reconhecer` | índice estático (a reserva) |
+| a linha está Offline? | template do status, 0.85 | **Cancel** |
+| o realce confirmou? | `find_highlighted_row` | não → **Cancel**; sem captura → segue |
+| o Ok tirou da lista? | 3 voltas | não → **Cancel** |
+
+Cada degrau é mais certo que o seguinte, e o seguinte é a rede do anterior.
+
+### O que falta, e é do usuário
+
+**"Tiger Fish (WW)" não tem recorte.** O print que o mostra está
+redimensionado (a caixa aparece ~1,37× maior que na tela), e template fora de
+escala não casa — a mesma lição de 09/09/2026.
+
+Enquanto não houver um print **1:1** com ele na lista, esse servidor cai no
+índice estático, protegido pelas redes de baixo. Os outros quatro já estão
+recortados em `data/templates/estado/servidor_*.png`.
+
+> **Como tirar um print 1:1:** com a janela do jogo em 1024×768, capturar a
+> janela sem redimensionar (Alt+PrintScreen, ou a captura de janela do Windows).
+> Se a imagem for colada e reescalada em algum lugar antes de chegar aqui, o
+> recorte não serve.
+
+### As fixtures
+
+`tests/dados/lista_com_4_servidores.png` e `lista_com_3_servidores.png` são
+recortes reais dos prints A e B, com nomes e status. É contra eles que os testes
+cobram a medição — ela vira teste, não fica só no comentário.

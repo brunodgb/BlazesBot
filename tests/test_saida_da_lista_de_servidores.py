@@ -15,6 +15,8 @@ sozinho:
 """
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 
 from blazesbot.bot.login import VOLTAS_NA_LISTA_DE_SERVIDORES, LoginSequence
@@ -27,6 +29,9 @@ class _Detector:
     testes do status exercitam."""
 
     servidor_offline = LoginStateDetector.servidor_offline
+    _modelo_do_servidor = LoginStateDetector._modelo_do_servidor
+    sabe_reconhecer = LoginStateDetector.sabe_reconhecer
+    linha_do_servidor = LoginStateDetector.linha_do_servidor
     # Biblioteca que nunca acha nada: o status fica ILEGIVEL, que e o
     # caso cego -- os testes do Offline injetam a resposta que querem.
     templates = type("_Sem", (), {"load": staticmethod(lambda _n: None)})()
@@ -279,3 +284,140 @@ def test_SEM_CAPTURA_segue_com_o_Ok_como_sempre():
 
     assert seq.cliques[-1] == seq.coords.server_ok
     assert seq.coords.server_cancel not in seq.cliques
+
+
+# ===========================================================================
+# A LINHA VEM DA TELA -- não do índice na lista estática (22/09/2026)
+# ===========================================================================
+#
+# `Coords.server_rows` tem CINCO nomes; a tela mostrou quatro num print e três
+# noutro. Contar linhas a partir da lista estática põe a conta em OUTRO
+# servidor -- e foi o que aconteceu.
+#
+# As fixtures são recortes REAIS dos dois prints, com nomes e status.
+
+
+def _fixture(nome: str):
+    import cv2
+
+    caminho = Path("tests") / "dados" / nome
+    img = cv2.imread(str(caminho))
+    assert img is not None, f"fixture {nome} sumiu"
+    return img
+
+
+def _detector_real():
+    from pathlib import Path as _P
+
+    from blazesbot.core.vision import TemplateLibrary
+
+    det = object.__new__(LoginStateDetector)
+    det.templates = TemplateLibrary(_P("data") / "templates")
+    return det
+
+
+# As fixtures começam em y=237 da área de cliente, e as linhas ficam a cada
+# 20 px a partir de 247 -- então a primeira linha está em y=10 do recorte, e a
+# coluna de nomes começa em x=265.
+PRIMEIRA_NA_FIXTURE = (345 - 265, 247 - 237)
+
+
+def _pula_sem_templates(det):
+    if not det.sabe_reconhecer("White Horse [NEW]"):
+        pytest.skip("recortes dos servidores ausentes (data/ não é versionado)")
+
+
+def test_acha_CADA_servidor_na_linha_certa_da_lista_de_quatro():
+    det = _detector_real()
+    _pula_sem_templates(det)
+    img = _fixture("lista_com_4_servidores.png")
+
+    esperado = {
+        "White Horse [NEW]": 0,
+        "Sky Ice (GSM&BI)": 1,
+        "All Stars": 2,
+        "Light in the Darkness": 3,   # índice 4 na lista ESTÁTICA
+    }
+    for nome, linha in esperado.items():
+        assert det.linha_do_servidor(img, nome, PRIMEIRA_NA_FIXTURE, 5) == linha, (
+            f"'{nome}' não foi achado na linha {linha}")
+
+
+def test_o_servidor_AUSENTE_da_tela_devolve_None():
+    """É o caso do print: a lista caiu para três e o da conta sumiu."""
+    det = _detector_real()
+    _pula_sem_templates(det)
+    img = _fixture("lista_com_3_servidores.png")
+
+    assert det.linha_do_servidor(
+        img, "Light in the Darkness", PRIMEIRA_NA_FIXTURE, 5) is None, (
+        "achou um servidor que não está na tela — o bot entraria em outro")
+    # E os que estão continuam sendo achados, cada um na sua linha.
+    for nome, linha in (("White Horse [NEW]", 0), ("Sky Ice (GSM&BI)", 1),
+                        ("All Stars", 2)):
+        assert det.linha_do_servidor(img, nome, PRIMEIRA_NA_FIXTURE, 5) == linha
+
+
+def test_o_realce_AZUL_nao_atrapalha_o_reconhecimento():
+    """Em cada print há uma linha selecionada, e é justamente onde o fundo muda.
+
+    Medido: o mesmo template casa 1.000 no fundo preto e 0.971 no azul --
+    `TM_CCOEFF_NORMED` normaliza o contraste, então não é preciso binarizar.
+    """
+    det = _detector_real()
+    _pula_sem_templates(det)
+
+    # 4.png: "White Horse [NEW]" está SELECIONADO na linha 0.
+    img = _fixture("lista_com_3_servidores.png")
+    assert det.linha_do_servidor(
+        img, "White Horse [NEW]", PRIMEIRA_NA_FIXTURE, 5) == 0
+
+
+def test_sem_recorte_do_nome_NAO_cancela_sozinho():
+    """Quem não tem recorte cai no índice estático, como antes -- não saber não
+    é motivo para derrubar o login."""
+    det = _detector_real()
+    assert det.sabe_reconhecer("Servidor Que Nunca Foi Recortado") is False
+    assert det.linha_do_servidor(
+        _fixture("lista_com_3_servidores.png"),
+        "Servidor Que Nunca Foi Recortado", PRIMEIRA_NA_FIXTURE, 5) is None
+
+
+def test_o_CLIQUE_vai_para_a_linha_que_a_TELA_mostra(monkeypatch):
+    """O defeito inteiro num teste: a lista estática diz 4, a tela diz 3.
+
+    `Coords.server_index("Light in the Darkness")` é 4 -- mas no print de
+    22/09/2026 ele está na LINHA 3, porque "Tiger Fish (WW)" saiu da tela. O
+    clique tem de ir na linha da TELA.
+    """
+    seq = _login_que_enxerga("Light in the Darkness", linha_realcada=3)
+    seq.detector.sabe_reconhecer = lambda _n: True
+    seq.detector.linha_do_servidor = lambda *a, **k: 3
+    monkeypatch.setattr("blazesbot.bot.login.find_highlighted_row",
+                        lambda *a, **k: 3)
+
+    assert seq.coords.server_index("Light in the Darkness") == 4, (
+        "a lista estática mudou; o teste perdeu o sentido")
+    seq._do_server()
+
+    altura = seq.coords.server_row_height
+    y_da_linha_3 = seq.coords.server_first_row_y + 3 * altura
+    y_da_linha_4 = seq.coords.server_first_row_y + 4 * altura
+    clicou_em = [p[1] for p in seq.cliques]
+    assert y_da_linha_3 in clicou_em, (
+        f"não clicou na linha que a tela mostra (y={y_da_linha_3})")
+    assert y_da_linha_4 not in clicou_em, (
+        "clicou na linha do índice ESTÁTICO — é o clique que entrava em outro "
+        "servidor")
+
+
+def test_nome_RECONHECIVEL_mas_ausente_da_tela_cancela(monkeypatch):
+    """Sei reconhecer e não achei: o servidor não está listado."""
+    seq = _login_que_enxerga("Light in the Darkness", linha_realcada=0)
+    seq.detector.sabe_reconhecer = lambda _n: True
+    seq.detector.linha_do_servidor = lambda *a, **k: None
+
+    seq._do_server()
+
+    assert seq.cliques == [seq.coords.server_cancel]
+    assert seq.fases == [Phase.CREDENTIALS]
