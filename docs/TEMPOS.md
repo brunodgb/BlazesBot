@@ -189,38 +189,38 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 
 | tempo | atual | original | natureza | onde | função | para que serve |
 |---|---|---|---|---|---|---|
-| `PRE_SERVER_TIMEOUT` | 600 s (10 min) | = | TETO | [login.py:75](blazesbot/bot/login.py#L75) | `run` | NÃO EXISTE LIMITE DE TEMPO NA FILA. |
-| `ESPERA_CEGA_SEGUNDOS` | 90 s (2 min) | = | FIXO | [login.py:91](blazesbot/bot/login.py#L91) | `_advance_phase` | Depois de esgotar as tentativas às cegas, o bot NÃO desiste -- ele espaça. |
-| `ESPERA_SERVIDOR_FORA` | 10 s | = | FIXO | [login.py:107](blazesbot/bot/login.py#L107) | `_handle_acquiring_ip` | Espera depois de fechar "Acquiring server IP address." (servidores fora do ar). |
-| `ESPERA_SERVIDOR_FORA_MAX` | 60 s (1 min) | = | TETO | [login.py:108](blazesbot/bot/login.py#L108) | `_handle_acquiring_ip` |  |
-| `SEGUNDOS_CONECTANDO` | 6 s | = | FIXO | [login.py:134](blazesbot/bot/login.py#L134) | `_handle_connecting` | "Connecting to the server, please wait a moment." -- espera LEGÍTIMA, com |
-| `FATIA_DA_ESPERA_DO_LOGIN` | 0.05 s | = | PASSO | [login.py:139](blazesbot/bot/login.py#L139) | `_esperar` | Fatia da espera do login. A espera é cumprida em pedaços para que Parar e |
-| *literal em* `_abort_if_stopped` | 0.075 s | = | FIXO | [login.py:304](blazesbot/bot/login.py#L304) | `_abort_if_stopped` | Verifica parada E pausa. |
-| *literal em* `_do_credentials` | 0.35 s | = | FIXO | [login.py:388](blazesbot/bot/login.py#L388) | `_do_credentials` |  |
-| *literal em* `_do_credentials` | 0.15 s | = | FIXO | [login.py:390](blazesbot/bot/login.py#L390) | `_do_credentials` |  |
-| *literal em* `_do_credentials` | 0.3 s | = | FIXO | [login.py:401](blazesbot/bot/login.py#L401) | `_do_credentials` |  |
-| *literal em* `_do_credentials` | 0.25 s | = | FIXO | [login.py:404](blazesbot/bot/login.py#L404) | `_do_credentials` |  |
-| *literal em* `_do_credentials` | 0.15 s | = | FIXO | [login.py:410](blazesbot/bot/login.py#L410) | `_do_credentials` |  |
+| `PRE_SERVER_TIMEOUT` | 600 s (10 min) | = | TETO | [login.py:87](blazesbot/bot/login.py#L87) | `run` | NÃO EXISTE LIMITE DE TEMPO NA FILA. |
+| `ESPERA_CEGA_SEGUNDOS` | 90 s (2 min) | = | FIXO | [login.py:103](blazesbot/bot/login.py#L103) | `_advance_phase` | Depois de esgotar as tentativas às cegas, o bot NÃO desiste -- ele espaça. |
+| `ESPERA_SERVIDOR_FORA` | 10 s | = | FIXO | [login.py:119](blazesbot/bot/login.py#L119) | `_handle_acquiring_ip` | Espera depois de fechar "Acquiring server IP address." (servidores fora do ar). |
+| `ESPERA_SERVIDOR_FORA_MAX` | 60 s (1 min) | = | TETO | [login.py:120](blazesbot/bot/login.py#L120) | `_handle_acquiring_ip` |  |
+| `SEGUNDOS_CONECTANDO` | 6 s | = | FIXO | [login.py:146](blazesbot/bot/login.py#L146) | `_handle_connecting` | "Connecting to the server, please wait a moment." -- espera LEGÍTIMA, com |
+| `FATIA_DA_ESPERA_DO_LOGIN` | 0.05 s | = | PASSO | [login.py:151](blazesbot/bot/login.py#L151) | `_esperar` | Fatia da espera do login. A espera é cumprida em pedaços para que Parar e |
+| *literal em* `_abort_if_stopped` | 0.075 s | = | FIXO | [login.py:319](blazesbot/bot/login.py#L319) | `_abort_if_stopped` | Verifica parada E pausa. |
+| *literal em* `_do_credentials` | 0.35 s | = | FIXO | [login.py:405](blazesbot/bot/login.py#L405) | `_do_credentials` |  |
+| *literal em* `_do_credentials` | 0.15 s | = | FIXO | [login.py:407](blazesbot/bot/login.py#L407) | `_do_credentials` |  |
 | *literal em* `_do_credentials` | 0.3 s | = | FIXO | [login.py:418](blazesbot/bot/login.py#L418) | `_do_credentials` |  |
-| *literal em* `_do_credentials` | 1.25 s | = | FIXO | [login.py:421](blazesbot/bot/login.py#L421) | `_do_credentials` |  |
-| *literal em* `_do_server` | 0.4 s | = | FIXO | [login.py:458](blazesbot/bot/login.py#L458) | `_do_server` | Seleciona o servidor da conta e confirma. |
-| *literal em* `_do_server` | 1.75 s | = | FIXO | [login.py:488](blazesbot/bot/login.py#L488) | `_do_server` | Seleciona o servidor da conta e confirma. |
-| *literal em* `_try_enter_world` | 0.6 s | = | FIXO | [login.py:520](blazesbot/bot/login.py#L520) | `_try_enter_world` | Seleciona o personagem e entra. Chamado a cada 20 s. |
-| *literal em* `_try_enter_world` | 1.5 s | = | FIXO | [login.py:529](blazesbot/bot/login.py#L529) | `_try_enter_world` | Seleciona o personagem e entra. Chamado a cada 20 s. |
-| *literal em* `_handle_login_error` | 0.6 s | = | FIXO | [login.py:543](blazesbot/bot/login.py#L543) | `_handle_login_error` |  |
-| *literal em* `_handle_login_error` | 0.6 s | = | FIXO | [login.py:548](blazesbot/bot/login.py#L548) | `_handle_login_error` |  |
-| *literal em* `_handle_conn_interrupted` | 1 s | = | FIXO | [login.py:573](blazesbot/bot/login.py#L573) | `_handle_conn_interrupted` | Fecha o aviso de conexão interrompida. |
-| *literal em* `_handle_login_busy` | 0.75 s | = | FIXO | [login.py:596](blazesbot/bot/login.py#L596) | `_handle_login_busy` | Fecha o aviso "Login server is busy now, please try again." |
-| *literal em* `_handle_connecting` | 0.5 s | = | FIXO | [login.py:627](blazesbot/bot/login.py#L627) | `_handle_connecting` | "Connecting to the server, please wait a moment." — espera COM PRAZO. |
-| *literal em* `_handle_connecting` | 0.5 s | = | FIXO | [login.py:630](blazesbot/bot/login.py#L630) | `_handle_connecting` | "Connecting to the server, please wait a moment." — espera COM PRAZO. |
-| *literal em* `_handle_acquiring_ip` | 0.6 s | = | FIXO | [login.py:685](blazesbot/bot/login.py#L685) | `_handle_acquiring_ip` | Fecha o aviso "Acquiring server IP address." e volta a tentar. |
-| *literal em* `_modal_travando_antes_do_servidor` | 0.3 s | = | FIXO | [login.py:742](blazesbot/bot/login.py#L742) | `_modal_travando_antes_do_servidor` | Aviso na tela ANTES de conectar, reconhecido só pela memória. |
-| *literal em* `_modal_travando_antes_do_servidor` | 0.5 s | = | FIXO | [login.py:744](blazesbot/bot/login.py#L744) | `_modal_travando_antes_do_servidor` | Aviso na tela ANTES de conectar, reconhecido só pela memória. |
-| *literal em* `_handle_conn_failed` | 0.75 s | = | FIXO | [login.py:757](blazesbot/bot/login.py#L757) | `_handle_conn_failed` | Fecha o aviso "Connection failed, please try again later." |
-| *literal em* `_handle_queue` | 5 s | = | FIXO | [login.py:772](blazesbot/bot/login.py#L772) | `_handle_queue` | Na fila, apenas esperar. |
-| *literal em* `_finish` | 0.25 s | = | FIXO | [login.py:823](blazesbot/bot/login.py#L823) | `_finish` | Confirma a entrada no mundo e batiza a janela. |
-| *literal em* `_advance_phase` | 2.5 s | = | FIXO | [login.py:928](blazesbot/bot/login.py#L928) | `_advance_phase` | Executa a fase atual quando nada excepcional foi detectado. |
-| *literal em* `_advance_phase` | 1 s | = | FIXO | [login.py:939](blazesbot/bot/login.py#L939) | `_advance_phase` | Executa a fase atual quando nada excepcional foi detectado. |
+| *literal em* `_do_credentials` | 0.25 s | = | FIXO | [login.py:421](blazesbot/bot/login.py#L421) | `_do_credentials` |  |
+| *literal em* `_do_credentials` | 0.15 s | = | FIXO | [login.py:427](blazesbot/bot/login.py#L427) | `_do_credentials` |  |
+| *literal em* `_do_credentials` | 0.3 s | = | FIXO | [login.py:435](blazesbot/bot/login.py#L435) | `_do_credentials` |  |
+| *literal em* `_do_credentials` | 1.25 s | = | FIXO | [login.py:438](blazesbot/bot/login.py#L438) | `_do_credentials` |  |
+| *literal em* `_do_server` | 0.4 s | = | FIXO | [login.py:478](blazesbot/bot/login.py#L478) | `_do_server` | Seleciona o servidor da conta e confirma. |
+| *literal em* `_do_server` | 1.75 s | = | FIXO | [login.py:520](blazesbot/bot/login.py#L520) | `_do_server` | Seleciona o servidor da conta e confirma. |
+| *literal em* `_try_enter_world` | 0.6 s | = | FIXO | [login.py:589](blazesbot/bot/login.py#L589) | `_try_enter_world` | Seleciona o personagem e entra. Chamado a cada 20 s. |
+| *literal em* `_try_enter_world` | 1.5 s | = | FIXO | [login.py:598](blazesbot/bot/login.py#L598) | `_try_enter_world` | Seleciona o personagem e entra. Chamado a cada 20 s. |
+| *literal em* `_handle_login_error` | 0.6 s | = | FIXO | [login.py:612](blazesbot/bot/login.py#L612) | `_handle_login_error` |  |
+| *literal em* `_handle_login_error` | 0.6 s | = | FIXO | [login.py:617](blazesbot/bot/login.py#L617) | `_handle_login_error` |  |
+| *literal em* `_handle_conn_interrupted` | 1 s | = | FIXO | [login.py:642](blazesbot/bot/login.py#L642) | `_handle_conn_interrupted` | Fecha o aviso de conexão interrompida. |
+| *literal em* `_handle_login_busy` | 0.75 s | = | FIXO | [login.py:665](blazesbot/bot/login.py#L665) | `_handle_login_busy` | Fecha o aviso "Login server is busy now, please try again." |
+| *literal em* `_handle_connecting` | 0.5 s | = | FIXO | [login.py:696](blazesbot/bot/login.py#L696) | `_handle_connecting` | "Connecting to the server, please wait a moment." — espera COM PRAZO. |
+| *literal em* `_handle_connecting` | 0.5 s | = | FIXO | [login.py:699](blazesbot/bot/login.py#L699) | `_handle_connecting` | "Connecting to the server, please wait a moment." — espera COM PRAZO. |
+| *literal em* `_handle_acquiring_ip` | 0.6 s | = | FIXO | [login.py:754](blazesbot/bot/login.py#L754) | `_handle_acquiring_ip` | Fecha o aviso "Acquiring server IP address." e volta a tentar. |
+| *literal em* `_modal_travando_antes_do_servidor` | 0.3 s | = | FIXO | [login.py:811](blazesbot/bot/login.py#L811) | `_modal_travando_antes_do_servidor` | Aviso na tela ANTES de conectar, reconhecido só pela memória. |
+| *literal em* `_modal_travando_antes_do_servidor` | 0.5 s | = | FIXO | [login.py:813](blazesbot/bot/login.py#L813) | `_modal_travando_antes_do_servidor` | Aviso na tela ANTES de conectar, reconhecido só pela memória. |
+| *literal em* `_handle_conn_failed` | 0.75 s | = | FIXO | [login.py:826](blazesbot/bot/login.py#L826) | `_handle_conn_failed` | Fecha o aviso "Connection failed, please try again later." |
+| *literal em* `_handle_queue` | 5 s | = | FIXO | [login.py:841](blazesbot/bot/login.py#L841) | `_handle_queue` | Na fila, apenas esperar. |
+| *literal em* `_finish` | 0.25 s | = | FIXO | [login.py:892](blazesbot/bot/login.py#L892) | `_finish` | Confirma a entrada no mundo e batiza a janela. |
+| *literal em* `_advance_phase` | 2.5 s | = | FIXO | [login.py:997](blazesbot/bot/login.py#L997) | `_advance_phase` | Executa a fase atual quando nada excepcional foi detectado. |
+| *literal em* `_advance_phase` | 1 s | = | FIXO | [login.py:1008](blazesbot/bot/login.py#L1008) | `_advance_phase` | Executa a fase atual quando nada excepcional foi detectado. |
 
 
 ## O SISTEMA — supervisor e watchdog

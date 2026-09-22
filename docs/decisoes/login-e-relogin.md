@@ -849,3 +849,69 @@ O caminho natural é o funil do `Input` parar a thread quando houver anúncio pa
 aquela conta, já que ele é o ponto único por onde todo ecossistema fala com o
 jogo. Não foi feito aqui: é decisão de arquitetura com mais de um caminho, e as
 contas estavam travadas agora.
+
+## 22/09/2026 — a lista de servidores prendia a conta
+
+Relato: *"caso identifique que está 'Offline' ou que o servidor não está
+listado, tem que clicar no botão Cancel para poder retornar, pois já aconteceu
+do servidor reiniciar e, como não entra, fica travado nessa tela específica de
+escolha de servidor"*.
+
+### Os dois becos, e os dois eram sem saída
+
+| situação | o que acontecia |
+|---|---|
+| servidor **fora da lista** | `_do_server` levantava `LoginError` direto. O supervisor faz backoff e volta **para a mesma janela**, que continua na lista. Mesmo erro, para sempre. |
+| servidor **Offline** / reiniciando | o Ok não faz nada. A tela continua `SERVER_LIST`, o laço devolve a fase para `SERVER`, `_do_server` clica de novo. Para sempre. |
+
+O `PRE_SERVER_TIMEOUT` de 10 min existe, mas só troca o laço rápido por um
+lento: ele levanta `LoginError`, e o supervisor volta para a mesma tela.
+
+### A saída
+
+O **Cancel** volta para a tela de login, e daí o ciclo inteiro recomeça
+sozinho: credenciais, lista **relida**, servidor de novo. É o que dá ao
+servidor a chance de voltar sem ninguém olhar.
+
+* **fora da lista** -> Cancel na hora (não há o que esperar).
+* **Ok sem efeito** -> Cancel depois de `VOLTAS_NA_LISTA_DE_SERVIDORES = 3`.
+  Três, e não uma: clique engolido é comum nesta UI — a própria seleção da
+  linha já tenta três vezes pelo mesmo motivo. E o contador conta **voltas à
+  mesma tela**, não cliques: o laço só devolve a fase para `SERVER` quando a
+  IMAGEM mostra a lista.
+
+O contador zera em `_do_credentials`, que é o ponto honesto de "o ciclo
+recomeçou" — e não ao clicar no Cancel, senão uma tela que não muda voltaria a
+gastar três tentativas antes de sair.
+
+Sem espera depois do clique: o laço principal reavalia a tela na volta seguinte
+e tem o ritmo dele. Dormir ali seria espera cega, e o projeto conta essas
+(`tests/test_catraca_da_espera_cega.py`).
+
+### A coordenada, medida
+
+Print 1:1 de 22/09/2026 (`Server List`, 1024×768):
+
+| botão | x | y |
+|---|---|---|
+| Ok | 557 | 531 |
+| Cancel | **669** | 531 |
+
+Delta de **112 px em x**, mesmo y. A folga é o próprio botão, que tem 57 px de
+largura (`data/templates/cancel.bmp`), então erro de leitura de uma dezena de
+pixels ainda acerta. Entra também como deslocamento do título `Server List`
+(`+180, +334`), para o `_anchored` funcionar fora de 1024×768 — o mesmo arranjo
+que o Ok já tinha.
+
+### O que NÃO foi feito, e por quê
+
+**Ler literalmente a palavra "Offline"** na linha do servidor. Não há template
+dela, e os dois recortes enviados estão **redimensionados** (~1,35× e ~1,44×
+sobre a tela real) — template fora de escala não casa, e limiar chutado o
+projeto não aceita. O print 1:1 que existe mostra os quatro servidores
+**Online**.
+
+O sintoma implementado — *o Ok não tira a conta da lista* — cobre o Offline na
+prática, e cobre junto o servidor reiniciando e o Ok engolido, que a leitura do
+texto não cobriria. Para a leitura literal falta **um print 1:1 da tela com o
+servidor Offline**; com ele, são cinco linhas.

@@ -310,6 +310,12 @@ _SPOTS: dict[str, Spot] = {
     # tipo sem precisar de coordenada nova.
     "server_ip_ok": _from_base(512, 335, C),
     "server_ok": _from_base(557, 531, C),
+    # O CANCEL DA LISTA DE SERVIDORES, medido no print 1:1 de 22/09/2026:
+    # o Ok fica em x=557 e o Cancel em x=669, mesmo y. O delta de 112 px é
+    # o que importa -- e a folga é o próprio botão, que tem 57 px de
+    # largura (`data/templates/cancel.bmp`), então erro de leitura de uma
+    # dezena de pixels ainda acerta.
+    "server_cancel": _from_base(669, 531, C),
 
     # ONDE FICA O TEXTO "Connection interrupted" DENTRO DA CAIXA.
     #
@@ -534,6 +540,8 @@ TEMPLATE_ANCHORS: dict[str, tuple[str, dict[str, tuple[int, int]]]] = {
     "server": ("state_server_list.png", {
         "server_first_row": (-148, 51),
         "server_ok": (68, 334),
+        # +112 em x sobre o Ok, mesmo y -- ver `server_cancel` acima.
+        "server_cancel": (180, 334),
     }),
     # Avisos que travam o login. Deslocamentos medidos em prints reais.
     # ATENÇÃO: "Connection failed" tem botão **Cancel**, não Ok.

@@ -56,6 +56,18 @@ from .watchdog import kill_client
 # horas", que é coisa diferente.
 MAX_CREDENTIAL_ERRORS = 5
 
+# Quantas voltas na lista de servidores antes de sair pelo Cancel.
+#
+# A lista não prende a conta só quando o servidor sumiu: ela também prende
+# quando o servidor está **Offline** (o Ok não faz nada) e quando ele reiniciou
+# e a lista mudou embaixo do bot. Nos três casos o sintoma é o mesmo, e é o
+# único que se mede sem template novo: **clicou no Ok e continua na lista**.
+#
+# Três, e não uma: clique engolido é comum nesta UI -- a própria seleção da
+# linha já tenta três vezes pelo mesmo motivo. Três VOLTAS DO LAÇO com o Ok sem
+# efeito não é azar, é a lista não deixando sair.
+VOLTAS_NA_LISTA_DE_SERVIDORES = 3
+
 # NÃO EXISTE LIMITE DE TEMPO NA FILA.
 #
 # Fila de servidor cheio passa de três horas em dia ruim. Qualquer número que
@@ -209,6 +221,9 @@ class LoginSequence:
         self.phase = Phase.CREDENTIALS
         self.phase_since = time.time()
         self.credential_errors = 0
+        # Voltas à lista de servidores sem conseguir sair dela. Ver
+        # `VOLTAS_NA_LISTA_DE_SERVIDORES`.
+        self.voltas_no_servidor = 0
         self.last_enter_attempt = 0.0
         self.last_heartbeat = 0.0
         self.connected_since: float | None = None
@@ -379,6 +394,8 @@ class LoginSequence:
     def _do_credentials(self) -> None:
         c = self.coords
         self.log.info("Preenchendo credenciais de '%s'", self.account.login)
+        # O ciclo recomeçou: as voltas na lista de servidores voltam a zero.
+        self.voltas_no_servidor = 0
 
         campo_conta = self._anchored("login", "login_account", c.login_account)
         campo_senha = self._anchored("login", "login_password", c.login_password)
@@ -434,10 +451,13 @@ class LoginSequence:
         wanted = c.normalize_server(self.account.server)
         point = c.server_point(wanted)
         if point is None:
-            raise LoginError(
-                f"servidor '{self.account.server}' não está na lista atual. "
-                f"Opções: {', '.join(c.server_rows)}"
-            )
+            # SAI PELO CANCEL em vez de levantar: o `LoginError` seco deixava a
+            # janela PARADA na lista, e a tentativa seguinte do supervisor
+            # voltava para a mesma tela e ao mesmo erro, sem fim.
+            self._sair_da_lista_de_servidores(
+                f"servidor '{self.account.server}' não está na lista atual "
+                f"(opções: {', '.join(c.server_rows)})")
+            return
 
         if wanted != self.account.server:
             self.log.info("Servidor '%s' virou '%s' na lista atual",
@@ -483,10 +503,59 @@ class LoginSequence:
             self.log.warning("Não confirmei a seleção de '%s'; seguindo com Ok",
                              wanted)
 
+        # CHEGAR AQUI DE NOVO SIGNIFICA QUE O Ok ANTERIOR NÃO SAIU DA LISTA.
+        # O laço principal só devolve a fase para `SERVER` quando a IMAGEM
+        # mostra a lista, então isto conta voltas à mesma tela, não cliques --
+        # é o sintoma comum do servidor Offline e do que reiniciou.
+        self.voltas_no_servidor += 1
+        if self.voltas_no_servidor > VOLTAS_NA_LISTA_DE_SERVIDORES:
+            self._sair_da_lista_de_servidores(
+                f"o Ok não tirou a conta da lista em "
+                f"{VOLTAS_NA_LISTA_DE_SERVIDORES} voltas (servidor '{wanted}' "
+                f"Offline ou reiniciando?)")
+            return
+
         ok_servidor = self._anchored("server", "server_ok", c.server_ok)
         self._click(ok_servidor)
         sleep(1.75)
         self._set_phase(Phase.ENTERING)
+
+    def _sair_da_lista_de_servidores(self, motivo: str) -> None:
+        """Sai da lista pelo CANCEL e recomeça o login. A única saída que existe.
+
+        =================================================================
+        POR QUE O CANCEL, E NÃO MAIS UMA TENTATIVA
+        =================================================================
+
+        Relato do usuário (22/09/2026): *"já aconteceu do servidor reiniciar e,
+        como não entra, fica travado nessa tela específica de escolha de
+        servidor"*.
+
+        A lista é o único ponto do login em que insistir não adianta e sair não
+        acontece sozinho:
+
+          * servidor **fora da lista** -> `_do_server` levantava `LoginError`
+            direto, e o supervisor voltava PARA A MESMA JANELA, que continua na
+            lista. Mesmo erro, para sempre.
+          * servidor **Offline** ou reiniciando -> o Ok não faz nada. A tela
+            continua `SERVER_LIST`, o laço devolve a fase para `SERVER`, e
+            `_do_server` clica de novo. Para sempre.
+
+        O Cancel volta para a tela de login, e daí o ciclo inteiro recomeça
+        sozinho: credenciais, lista RELIDA, servidor de novo. É o que dá ao
+        servidor a chance de voltar sem ninguém olhar.
+
+        NÃO LEVANTA quando consegue cancelar: sair pela porta é caminho normal,
+        não falha. Só levanta se nem o Cancel estiver onde deveria -- aí a tela
+        não é a que este método sabe desfazer.
+        """
+        self.log.warning("%s — saindo da lista pelo Cancel.", motivo)
+        cancel = self._anchored("server", "server_cancel",
+                                self.coords.server_cancel)
+        self._click(cancel)
+        # SEM ESPERA AQUI. O laço principal reavalia a tela na volta seguinte e
+        # tem o ritmo dele -- dormir seria espera cega, e o projeto conta essas.
+        self._set_phase(Phase.CREDENTIALS)
 
     def _try_enter_world(self, det: Detection) -> None:
         """Seleciona o personagem e entra. Chamado a cada 20 s.

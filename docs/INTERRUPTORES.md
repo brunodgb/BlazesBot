@@ -83,7 +83,7 @@ ligar código não testado.
 
 ## Números medidos -- tolerância, limiar, teto, cadência
 
-642 constantes, agrupadas por arquivo.
+643 constantes, agrupadas por arquivo.
 
 | constante | valor | onde | quem lê | porquê (resumo) |
 |---|---|---|---|---|
@@ -337,20 +337,21 @@ ligar código não testado.
 | `PASSO_DA_SONDA` | `0.012` | [blazesbot/bot/instrumentar_clique.py:110](blazesbot/bot/instrumentar_clique.py#L110) | — | De quanto em quanto tempo a sonda fotografa o minimapa esperando o efeito. |
 | `TETO_DA_SONDA` | `1.2` | [blazesbot/bot/instrumentar_clique.py:113](blazesbot/bot/instrumentar_clique.py#L113) | — | Teto da espera pelo efeito. Passou disso, o clique é dado como PERDIDO. |
 | `WH_MOUSE_LL` | `14` | [blazesbot/bot/instrumentar_clique.py:127](blazesbot/bot/instrumentar_clique.py#L127) | supervisor.py, inputs.py, mouse_shield.py | O SENSOR — o mesmo WH_MOUSE_LL do shield, com o sinal trocado |
-| `ENTER_RETRY_SECONDS` | `10.0` | [blazesbot/bot/login.py:78](blazesbot/bot/login.py#L78) | — | Cadência de tentativa de entrar enquanto conectado. |
-| `ESPERA_CEGA_SEGUNDOS` | `90.0` | [blazesbot/bot/login.py:91](blazesbot/bot/login.py#L91) | — | Depois de esgotar as tentativas às cegas, o bot NÃO desiste -- ele espaça. |
-| `ESPERA_SERVIDOR_FORA` | `10.0` | [blazesbot/bot/login.py:107](blazesbot/bot/login.py#L107) | — | Espera depois de fechar "Acquiring server IP address." (servidores fora do ar). |
-| `ESPERA_SERVIDOR_FORA_MAX` | `60.0` | [blazesbot/bot/login.py:108](blazesbot/bot/login.py#L108) | — | — |
-| `FATIA_DA_ESPERA_DO_LOGIN` | `0.05` | [blazesbot/bot/login.py:139](blazesbot/bot/login.py#L139) | — | Fatia da espera do login. A espera é cumprida em pedaços para que Parar e |
-| `LOGIN_SCREEN_MAX_SECONDS` | `150.0` | [blazesbot/bot/login.py:116](blazesbot/bot/login.py#L116) | — | Tempo máximo parado na tela de usuário e senha antes de reabrir o cliente. |
-| `MAX_ANCHOR_DEVIATION` | `60` | [blazesbot/bot/login.py:96](blazesbot/bot/login.py#L96) | — | Divergência a partir da qual a âncora é considerada suspeita. É folgada de |
-| `MAX_BLIND_ENTER_ATTEMPTS` | `4` | [blazesbot/bot/login.py:84](blazesbot/bot/login.py#L84) | — | Quantas tentativas de "Enter Game" fazer sem conseguir confirmar a entrada. |
+| `ENTER_RETRY_SECONDS` | `10.0` | [blazesbot/bot/login.py:90](blazesbot/bot/login.py#L90) | — | Cadência de tentativa de entrar enquanto conectado. |
+| `ESPERA_CEGA_SEGUNDOS` | `90.0` | [blazesbot/bot/login.py:103](blazesbot/bot/login.py#L103) | — | Depois de esgotar as tentativas às cegas, o bot NÃO desiste -- ele espaça. |
+| `ESPERA_SERVIDOR_FORA` | `10.0` | [blazesbot/bot/login.py:119](blazesbot/bot/login.py#L119) | — | Espera depois de fechar "Acquiring server IP address." (servidores fora do ar). |
+| `ESPERA_SERVIDOR_FORA_MAX` | `60.0` | [blazesbot/bot/login.py:120](blazesbot/bot/login.py#L120) | — | — |
+| `FATIA_DA_ESPERA_DO_LOGIN` | `0.05` | [blazesbot/bot/login.py:151](blazesbot/bot/login.py#L151) | — | Fatia da espera do login. A espera é cumprida em pedaços para que Parar e |
+| `LOGIN_SCREEN_MAX_SECONDS` | `150.0` | [blazesbot/bot/login.py:128](blazesbot/bot/login.py#L128) | — | Tempo máximo parado na tela de usuário e senha antes de reabrir o cliente. |
+| `MAX_ANCHOR_DEVIATION` | `60` | [blazesbot/bot/login.py:108](blazesbot/bot/login.py#L108) | — | Divergência a partir da qual a âncora é considerada suspeita. É folgada de |
+| `MAX_BLIND_ENTER_ATTEMPTS` | `4` | [blazesbot/bot/login.py:96](blazesbot/bot/login.py#L96) | — | Quantas tentativas de "Enter Game" fazer sem conseguir confirmar a entrada. |
 | `MAX_CREDENTIAL_ERRORS` | `5` | [blazesbot/bot/login.py:57](blazesbot/bot/login.py#L57) | — | Recusas de usuário/senha antes de desistir da conta. |
-| `MODAL_CONFIRM_SECONDS` | `7.5` | [blazesbot/bot/login.py:98](blazesbot/bot/login.py#L98) | — | Persistência do flag de modal para concluir que há um aviso na tela. |
-| `MODAL_PRE_SERVER_SECONDS` | `3.5` | [blazesbot/bot/login.py:102](blazesbot/bot/login.py#L102) | — | O mesmo, mas ANTES de conectar ao servidor. Bem menor: as telas de login e de |
-| `PRE_SERVER_TIMEOUT` | `600.0` | [blazesbot/bot/login.py:75](blazesbot/bot/login.py#L75) | — | NÃO EXISTE LIMITE DE TEMPO NA FILA. |
-| `SEGUNDOS_CONECTANDO` | `6.0` | [blazesbot/bot/login.py:134](blazesbot/bot/login.py#L134) | — | "Connecting to the server, please wait a moment." -- espera LEGÍTIMA, com |
-| `WAIT_HEARTBEAT_SECONDS` | `150.0` | [blazesbot/bot/login.py:110](blazesbot/bot/login.py#L110) | — | Cadência do aviso de "continuo esperando", só para o log não ficar mudo. |
+| `MODAL_CONFIRM_SECONDS` | `7.5` | [blazesbot/bot/login.py:110](blazesbot/bot/login.py#L110) | — | Persistência do flag de modal para concluir que há um aviso na tela. |
+| `MODAL_PRE_SERVER_SECONDS` | `3.5` | [blazesbot/bot/login.py:114](blazesbot/bot/login.py#L114) | — | O mesmo, mas ANTES de conectar ao servidor. Bem menor: as telas de login e de |
+| `PRE_SERVER_TIMEOUT` | `600.0` | [blazesbot/bot/login.py:87](blazesbot/bot/login.py#L87) | — | NÃO EXISTE LIMITE DE TEMPO NA FILA. |
+| `SEGUNDOS_CONECTANDO` | `6.0` | [blazesbot/bot/login.py:146](blazesbot/bot/login.py#L146) | — | "Connecting to the server, please wait a moment." -- espera LEGÍTIMA, com |
+| `VOLTAS_NA_LISTA_DE_SERVIDORES` | `3` | [blazesbot/bot/login.py:69](blazesbot/bot/login.py#L69) | — | Quantas voltas na lista de servidores antes de sair pelo Cancel. |
+| `WAIT_HEARTBEAT_SECONDS` | `150.0` | [blazesbot/bot/login.py:122](blazesbot/bot/login.py#L122) | — | Cadência do aviso de "continuo esperando", só para o log não ficar mudo. |
 | `THRESHOLD` | `0.8` | [blazesbot/bot/login_states.py:35](blazesbot/bot/login_states.py#L35) | — | — |
 | `CADENCIA_DO_CONVITE` | `0.5` | [blazesbot/bot/morte.py:72](blazesbot/bot/morte.py#L72) | — | Cadência da conferência do convite da Fada na TELA. |
 | `EXTENSAO_PELO_FEITICO` | `15.0` | [blazesbot/bot/morte.py:59](blazesbot/bot/morte.py#L59) | — | Quanto o prazo estica quando a Fada avisa que COMEÇOU a conjurar. |
@@ -552,14 +553,14 @@ ligar código não testado.
 | `ESPERA_ENTRE_CLIQUES` | `0.1` | [blazesbot/core/catador.py:96](blazesbot/core/catador.py#L96) | — | Espera entre dois cliques direitos. Também do T-R0XX. Não é tempo de abrir a |
 | `TETO_DE_CLIQUES` | `10` | [blazesbot/core/catador.py:124](blazesbot/core/catador.py#L124) | — | Teto de cliques no botão. REDE DE SEGURANÇA, não estratégia -- mesmo papel do |
 | `RAIO_DO_PERIMETRO` | `12` | [blazesbot/core/coleira_do_ponto.py:82](blazesbot/core/coleira_do_ponto.py#L82) | executor.py | O PERÍMETRO -- a QUARTA versão da coleira, e a primeira que anda de volta |
-| `FRIEND_ROW_HEIGHT` | `15` | [blazesbot/core/coords.py:350](blazesbot/core/coords.py#L350) | — | Altura de linha nas listas da janela de amigos. |
+| `FRIEND_ROW_HEIGHT` | `15` | [blazesbot/core/coords.py:356](blazesbot/core/coords.py#L356) | — | Altura de linha nas listas da janela de amigos. |
 | `MAXIMO_DE_RETRATOS_DO_TIME` | `4` | [blazesbot/core/coords.py:113](blazesbot/core/coords.py#L113) | afericao_do_aliado.py | — |
 | `PASSO_ENTRE_RETRATOS_DO_TIME` | `80` | [blazesbot/core/coords.py:112](blazesbot/core/coords.py#L112) | afericao_do_aliado.py | — |
-| `SELL_CELL_H` | `35` | [blazesbot/core/coords.py:346](blazesbot/core/coords.py#L346) | — | — |
-| `SELL_CELL_W` | `34` | [blazesbot/core/coords.py:345](blazesbot/core/coords.py#L345) | — | — |
-| `SELL_COLUMNS` | `6` | [blazesbot/core/coords.py:343](blazesbot/core/coords.py#L343) | — | Geometria da grade de venda, medida no print real. |
-| `SELL_ROWS` | `4` | [blazesbot/core/coords.py:344](blazesbot/core/coords.py#L344) | — | — |
-| `SERVER_ROW_HEIGHT` | `20` | [blazesbot/core/coords.py:339](blazesbot/core/coords.py#L339) | — | — |
+| `SELL_CELL_H` | `35` | [blazesbot/core/coords.py:352](blazesbot/core/coords.py#L352) | — | — |
+| `SELL_CELL_W` | `34` | [blazesbot/core/coords.py:351](blazesbot/core/coords.py#L351) | — | — |
+| `SELL_COLUMNS` | `6` | [blazesbot/core/coords.py:349](blazesbot/core/coords.py#L349) | — | Geometria da grade de venda, medida no print real. |
+| `SELL_ROWS` | `4` | [blazesbot/core/coords.py:350](blazesbot/core/coords.py#L350) | — | — |
+| `SERVER_ROW_HEIGHT` | `20` | [blazesbot/core/coords.py:345](blazesbot/core/coords.py#L345) | — | — |
 | `VALIDATED_RESOLUTION` | `'1024x768'` | [blazesbot/core/coords.py:43](blazesbot/core/coords.py#L43) | main_window.py, web_app.py | — |
 | `INTERVALO_DE_DESPEJO` | `30.0` | [blazesbot/core/cronometro.py:98](blazesbot/core/cronometro.py#L98) | — | De quanto em quanto tempo a thread despeja o que foi acumulado. |
 | `LINHAS_NO_ARQUIVO_QUENTE` | `3000` | [blazesbot/core/cronometro.py:110](blazesbot/core/cronometro.py#L110) | — | Quantas linhas o arquivo quente guarda. O `ArquivoDeLogLimitado` cuida do |
@@ -570,7 +571,7 @@ ligar código não testado.
 | `CONFIRMADO` | `'confirmado'` | [blazesbot/core/espera.py:72](blazesbot/core/espera.py#L72) | executor.py, combate.py, time_do_app.py, ui_do_jogo.py, inputs.py, memory.py, petbug.py, barra.py, achar_happy_do_pet.py | Os motivos de uma espera terminar. São chave de contador -- curtos e fixos. |
 | `NAO_SEI` | `'nao_sei'` | [blazesbot/core/espera.py:75](blazesbot/core/espera.py#L75) | rajada_de_npc.py | — |
 | `TETO` | `'teto'` | [blazesbot/core/espera.py:73](blazesbot/core/espera.py#L73) | afericao_do_aliado.py, cura.py, executor.py, sincronia.py, amostragem_de_cliques.py, ui_service.py, combate.py, deletador.py, fada.py, mapa_hh.py, routine.py, morte.py, mural.py, navegacao.py, rajada_de_npc.py, supervisor.py, time_do_app.py, ui_do_jogo.py, vendedor.py, config.py, coleira_do_ponto.py, diario.py, indice_de_tempos.py, inputs.py, mouse_shield.py, pet.py, relatorio_de_latencia.py, volta_ao_ponto.py | — |
-| `VOLTAS` | `'voltas'` | [blazesbot/core/espera.py:74](blazesbot/core/espera.py#L74) | executor.py, rajada_de_npc.py, config.py | — |
+| `VOLTAS` | `'voltas'` | [blazesbot/core/espera.py:74](blazesbot/core/espera.py#L74) | executor.py, login.py, rajada_de_npc.py, config.py | — |
 | `PASSO_DO_HALO` | `14` | [blazesbot/core/halo.py:59](blazesbot/core/halo.py#L59) | entrada.py, indice_de_tempos.py | Quanto anda o anel a cada volta, em pixels da tela. |
 | `ASSENTAR_A_PAGINA` | `0.08` | [blazesbot/core/hotbar.py:94](blazesbot/core/hotbar.py#L94) | combate.py, hotbar.py | DEPOIS DE CHEGAR NA PÁGINA 1, ANTES DE DEVOLVER |
 | `CLIQUES_PARA_VOLTAR_A_PAGINA_1` | `2` | [blazesbot/core/hotbar.py:62](blazesbot/core/hotbar.py#L62) | hotbar.py | Três páginas: do pior caso (página 3) até a 1 são dois cliques para cima. |

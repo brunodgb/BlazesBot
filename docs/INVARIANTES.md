@@ -82,6 +82,16 @@
   usá-lo fora dela é o que o projeto proíbe. Custou um laço de relogin a cada
   19 s em 09/09/2026. Agravante do travamento: a **fila de login** passa de três
   horas e não há medição de como o cliente bombeia mensagens nela.
+- **A LISTA DE SERVIDORES TEM SAÍDA, E É O CANCEL.** É o único ponto do login
+  em que insistir não adianta e sair não acontece sozinho: servidor fora da
+  lista, Offline ou reiniciando deixava a conta presa ali para sempre — o
+  `LoginError` seco devolvia o supervisor à MESMA janela, e o Ok sem efeito
+  fazia `_do_server` clicar em laço. Duas saídas, as duas pelo Cancel: servidor
+  ausente da lista sai na hora; Ok que não tira da lista em
+  `VOLTAS_NA_LISTA_DE_SERVIDORES` (3) voltas sai depois. O Cancel volta para a
+  tela de login e o ciclo recomeça com a lista RELIDA. Medido em 22/09/2026: Ok
+  em x=557, Cancel em x=669 (delta 112, mesmo y), botão de 57 px de largura.
+  Travado por `tests/test_saida_da_lista_de_servidores.py`.
 - **O LOGIN/RELOGIN NÃO SE INSTANCIA EM ECOSSISTEMA NENHUM — ELE RODA EM
   PARALELO** (diretriz do usuário, 11/09/2026). O vigia é uma **thread própria**,
   registrada UMA vez no `run()` do supervisor, que recebe PEÇAS (o login e uma
