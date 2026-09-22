@@ -663,3 +663,62 @@ A poção gastou cinco unidades para ir de 80% a 99% e parou *abaixo* do alvo,
 porque `cura_parar_pct` está em 100%. Alvo em 100% com poção fraca é receita
 para o personagem passar mais de um minuto parado bebendo — o log já avisa
 (*"poção provavelmente fraca demais"*), mas quem decide o número é ele.
+
+## A ÂNCORA DO TIME — o ponto do líder vale para todos (22/09/2026)
+
+Pedido do usuário: *"o Líder deve ditar a coordenada âncora (Ponto Inicial) para
+todos os seguidores e fadas, forçando um agrupamento perfeito"*.
+
+### O problema, e por que ele é de combate
+
+Cada conta guarda o SEU ponto inicial (`app._base_pos_x/_y` no config, ou a
+primeira posição lida). A trava de distância puxa cada uma para o dela: quem
+ligou o bot dois passos para o lado volta para dois passos para o lado. Sob
+ataque isso é um time esticado — **a Fada é quem mais sofre**, porque ela não
+persegue ninguém: fica parada curando, e a cura tem alcance.
+
+### O canal é o MURAL, e não arquivo
+
+As contas são **threads do mesmo processo** (`supervisor-<login>`), e o mural já
+é a memória compartilhada delas, com tranca — é por onde passam a largada, o
+sinal de vida, o id de cada um e o convite. Um `team_anchor.json` acrescentaria
+disco, leitura em laço e um arquivo velho para limpar, para transportar **dois
+inteiros entre threads que enxergam o mesmo dicionário**.
+
+Ele mora em `bot/mural_da_ancora.py`, e não dentro do `mural.py`, pelo mesmo
+motivo do quadro dos mortos: o `mural.py` está no teto de 800 linhas do portão
+de qualidade — a âncora tem dicionário e tranca próprios, então sai limpa. O
+`mural` reexporta, e quem lê continua dizendo `mural.publicar_ancora(...)`.
+
+**SEM VALIDADE, ao contrário da largada.** Uma largada é um INSTANTE (entrou ou
+perdeu); a âncora é um FATO que dura a sessão do líder. Um prazo faria o
+seguidor perder a referência no meio do farm e voltar para a dele — exatamente o
+espalhamento que isto existe para impedir. Quem apaga é o líder, ao encerrar.
+
+### As três travas
+
+1. **PUBLICA UMA VEZ, e só o líder.** No arranque do modo APP, junto de onde a
+   base já era decidida. Publicar durante o farm moveria a âncora do time para
+   onde o líder estivesse — e ele anda, porque a macro anda.
+2. **O seguidor ESPERA (teto de 4 s).** É a trava de concorrência: sem ela ele
+   montaria a trava de distância com a posição dele e só descobriria a do líder
+   na volta seguinte — ou nunca, porque a base entra no executor por parâmetro e
+   é lida uma vez. O teto é `ESPERA_PELA_RESPOSTA`, já medido, contra uma
+   defasagem real de ~0,9 s entre o arranque de duas contas (log de 19/09/2026).
+   Estourado, ele usa o ponto dele: começar espalhado é ruim, não começar é pior.
+3. **SOLO NÃO MUDA NADA.** As duas funções devolvem sem fazer nada quando não há
+   time (`_tem_time_do_app()`), e o seguidor nunca publica (`_dono_da_macro()`).
+   Não existe caminho em que a mesma conta faça as duas coisas.
+
+### O que NÃO foi feito, e por quê
+
+O pedido dizia "sobrescrever o ponto inicial na memória **ou** no JSON ativo". É
+só na memória da sessão: **o `config.json` do seguidor continua com o ponto
+dele**. Gravar a âncora do líder lá apagaria o ponto solo da conta — o que ela
+usa quando roda fora do time —, e o usuário teria de reconfigurar à mão depois
+de cada farm em grupo.
+
+### (0,0) é recusado
+
+É o que a leitura de posição devolve quando o personagem ainda não entrou no
+mundo. Ancorar o time ali mandaria todo mundo andar para o canto do mapa.

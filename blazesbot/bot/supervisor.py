@@ -52,10 +52,16 @@ from .time_do_app import (
     aceitador_do_seguidor as _aceitador_do_seguidor,
 )
 from .time_do_app import (
+    ancora_do_lider as _ancora_do_lider,
+)
+from .time_do_app import (
     esperar_o_lider_montar as _esperar_o_lider_montar,
 )
 from .time_do_app import (
     montar_se_for_a_hora as _montar_time_do_app,
+)
+from .time_do_app import (
+    publicar_a_ancora as _publicar_a_ancora,
 )
 from .time_do_app import (
     publicar_que_estou_de_pe as _publicar_que_estou_de_pe,
@@ -1920,6 +1926,23 @@ class AccountSupervisor(threading.Thread):
         else:
             log.info("Trava de posição: desligada por configuração.")
 
+        # A ÂNCORA DO TIME -- 22/09/2026. Em time, o ponto inicial do LÍDER vale
+        # para todos; SOLO NÃO MUDA NADA (as duas chamadas devolvem sem fazer
+        # nada quando não há time -- ver `time_do_app`).
+        #
+        # As duas linhas juntas, e cada conta executa só a que é dela: o líder
+        # publica e segue; o seguidor espera (com teto) e troca a base pela do
+        # líder. Não existe caminho em que a mesma conta faça as duas.
+        #
+        # A TROCA É SÓ DESTA SESSÃO -- o `config.json` do seguidor continua com
+        # o ponto dele. Gravar a âncora do líder lá apagaria o ponto solo da
+        # conta, que é o que ela usa quando roda fora do time.
+        if app.travar_posicao:
+            _publicar_a_ancora(self, base_pos)
+            ancora = _ancora_do_lider(self)
+            if ancora is not None:
+                base_pos = ancora
+
         # Centro do minimapa para cliques de movimento (trava de posição).
         minimap_center: tuple[int, int] | None = None
         if app.travar_posicao and memoria_do_pet is not None:
@@ -2585,6 +2608,11 @@ class AccountSupervisor(threading.Thread):
             # a largada de quem não está mais lá -- exatamente o "esperar por
             # quem não vai chegar" que a regra do teto existe para evitar.
             mural.esquecer_estado(self.account.login)
+            # A ÂNCORA MORRE COM O LÍDER. Deixá-la publicada faria o seguidor
+            # que religasse depois ancorar num ponto de uma sessão que acabou --
+            # e o líder pode ter mudado de lugar no meio. Em quem não é líder
+            # isto não faz nada: a chave do mural é o login DELE.
+            mural.esquecer_ancora(self.account.login)
             if executor.sincronia is not None:
                 log.info("Modo APP encerrado -- %s", executor.sincronia.resumo())
                 if executor.sincronia.sou_o_lider():

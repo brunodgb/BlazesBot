@@ -322,51 +322,51 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | `TETO_PARA_O_REVIVE_PEGAR` | 10 s | *novo* | TETO | [morte.py:75](blazesbot/bot/morte.py#L75) | `_esperar_ficar_de_pe` | Quanto se espera o `hp` subir depois de um clique que deveria reviver. |
 | `TETO_DA_REGENERACAO` | 60 s (1 min) | *novo* | TETO | [morte.py:82](blazesbot/bot/morte.py#L82) | `_regenerar_antes_de_andar` | Teto da regeneração sentada antes de andar de volta. |
 | `TETO_DO_RETORNO` | 180 s (3 min) | *novo* | TETO | [morte.py:90](blazesbot/bot/morte.py#L90) | `montar_para_o_app, voltar_ao_ponto` | Teto da caminhada de volta ao ponto inicial. |
-| `CONVITE_VALIDO_SEGUNDOS` | 60 s (1 min) | = | FIXO | [mural.py:80](blazesbot/bot/mural.py#L80) | `convite_pendente` | Validade do anúncio. Cobre a fila de resposta do outro cliente com folga; mais |
-| `ACEITE_VALIDO_SEGUNDOS` | 15 s | = | FIXO | [mural.py:202](blazesbot/bot/mural.py#L202) | `aceite_pendente` | Validade do aceite. Curta de propósito: ele confirma UM convite recém-enviado, |
-| `LARGADA_VALIDA_SEGUNDOS` | 5 s | *novo* | FIXO | [mural.py:286](blazesbot/bot/mural.py#L286) | `largada_pendente` | Quanto tempo uma largada anunciada continua valendo. |
-| `ESTADO_VALIDO_SEGUNDOS` | 30 s | *novo* | FIXO | [mural.py:294](blazesbot/bot/mural.py#L294) | `estado_da_conta` | Quanto tempo o estado publicado por uma conta continua valendo. |
-| `TETO_DA_BATIDA_LONGA` | 15 s | *novo* | TETO | [mural.py:515](blazesbot/bot/mural.py#L515) | `bater_fada` | Quanto uma batida pode valer, no MÁXIMO, quando a Fada avisa que vai sumir. |
+| `CONVITE_VALIDO_SEGUNDOS` | 60 s (1 min) | = | FIXO | [mural.py:89](blazesbot/bot/mural.py#L89) | `convite_pendente` | Validade do anúncio. Cobre a fila de resposta do outro cliente com folga; mais |
+| `ACEITE_VALIDO_SEGUNDOS` | 15 s | = | FIXO | [mural.py:211](blazesbot/bot/mural.py#L211) | `aceite_pendente` | Validade do aceite. Curta de propósito: ele confirma UM convite recém-enviado, |
+| `LARGADA_VALIDA_SEGUNDOS` | 5 s | *novo* | FIXO | [mural.py:295](blazesbot/bot/mural.py#L295) | `largada_pendente` | Quanto tempo uma largada anunciada continua valendo. |
+| `ESTADO_VALIDO_SEGUNDOS` | 30 s | *novo* | FIXO | [mural.py:303](blazesbot/bot/mural.py#L303) | `estado_da_conta` | Quanto tempo o estado publicado por uma conta continua valendo. |
+| `TETO_DA_BATIDA_LONGA` | 15 s | *novo* | TETO | [mural.py:524](blazesbot/bot/mural.py#L524) | `bater_fada` | Quanto uma batida pode valer, no MÁXIMO, quando a Fada avisa que vai sumir. |
 | `SEGUNDOS_DE_MORTO_PARA_FURAR_A_FILA` | 40 s | *novo* | FIXO | [mural_da_morte.py:42](blazesbot/bot/mural_da_morte.py#L42) | `morto_ha_muito_tempo` | A partir de quantos segundos de morto a vítima FURA a fila dos feridos. |
 | `PASSO_VERTICAL` | 4 s | = | PASSO | [recorte_do_time.py:90](blazesbot/bot/recorte_do_time.py#L90) | `_candidatos` |  |
 | `CADENCIA_DO_VIGIA` | 6 s | *novo* | PASSO | [sentinela.py:129](blazesbot/bot/sentinela.py#L129) | `__init__` | O ORÇAMENTO DE 20 SEGUNDOS, repartido |
-| `TETO_DA_FATIA_DE_ESPERA` | 0.25 s | = | TETO | [supervisor.py:84](blazesbot/bot/supervisor.py#L84) | `wait` | Teto de uma fatia dentro de `_AnyEvent.wait`. É REDE, não o caminho normal -- |
-| `TETO_DA_ESPERA_PELA_FADA` | 60 s (1 min) | *novo* | TETO | [supervisor.py:93](blazesbot/bot/supervisor.py#L93) | `_rodar_modo_app, chamar_a_fada` | Quanto uma vítima espera pela Fada antes de voltar para a poção. |
-| *literal em* `_sleep_interruptible` | 0.125 s | = | FIXO | [supervisor.py:357](blazesbot/bot/supervisor.py#L357) | `_sleep_interruptible` | Espera até `seconds`, acordando se o usuário mandar parar. |
-| *literal em* `_launch_client` | 1 s | = | FIXO | [supervisor.py:445](blazesbot/bot/supervisor.py#L445) | `_launch_client` | Lança o Client.bat e devolve o PID da nova instância. |
-| *literal em* `_find_window` | 1 s | = | FIXO | [supervisor.py:462](blazesbot/bot/supervisor.py#L462) | `_find_window` | Localiza a janela de nível superior pertencente ao PID. |
-| *literal em* `_run_session` | 1.5 s | = | FIXO | [supervisor.py:1066](blazesbot/bot/supervisor.py#L1066) | `_run_session` | Uma sessão: obter uma janela, logar se preciso, e operar. |
-| *literal em* `_operate` | 2.5 s | *novo* | FIXO | [supervisor.py:1361](blazesbot/bot/supervisor.py#L1361) | `_operate` | Opera a conta logada, respeitando o farm ligado/desligado ao vivo. |
-| *literal em* `_operate` | 2.5 s | *novo* | FIXO | [supervisor.py:1382](blazesbot/bot/supervisor.py#L1382) | `_operate` | Opera a conta logada, respeitando o farm ligado/desligado ao vivo. |
-| *literal em* `_operate` | 0.5 s | = | FIXO | [supervisor.py:1481](blazesbot/bot/supervisor.py#L1481) | `_operate` | Opera a conta logada, respeitando o farm ligado/desligado ao vivo. |
-| *literal em* `_publicar_o_proprio_id` | 0.3 s | *novo* | FIXO | [supervisor.py:1726](blazesbot/bot/supervisor.py#L1726) | `_publicar_o_proprio_id` | o alvo leva ~0,1 s para virar |
-| *literal em* `chamar_a_fada` | 0.2 s | *novo* | FIXO | [supervisor.py:2164](blazesbot/bot/supervisor.py#L2164) | `chamar_a_fada` | Pede cura à Fada do time e espera. `False` = não há Fada, beba poção. |
-| `ESPERA_DO_MENU` | 0.35 s | = | FIXO | [team.py:156](blazesbot/bot/team.py#L156) | `_enviar_convite` | Tempo para o menu de contexto aparecer depois do clique direito. |
-| `ESPERA_PELA_RESPOSTA` | 4 s | = | FIXO | [team.py:161](blazesbot/bot/team.py#L161) | `montar_time` | Quanto esperar a outra conta aceitar. Ela recebe o anúncio interno e clica no |
-| `PASSO_DA_ESPERA_DO_TIME` | 0.1 s | = | PASSO | [team.py:169](blazesbot/bot/team.py#L169) | `montar_time` | De quanto em quanto tempo conferir se o time já formou. |
-| *literal em* `_abrir_lista` | 0.6 s | = | FIXO | [team.py:319](blazesbot/bot/team.py#L319) | `_abrir_lista` | Abre a lista de amigos e vai para a aba Block. |
-| *literal em* `_abrir_lista` | 0.45 s | = | FIXO | [team.py:324](blazesbot/bot/team.py#L324) | `_abrir_lista` | Abre a lista de amigos e vai para a aba Block. |
-| *literal em* `_fechar_janelas` | 0.35 s | = | FIXO | [team.py:352](blazesbot/bot/team.py#L352) | `_fechar_janelas` | Fecha a caixa de nick e a lista de amigos, CONFIRMANDO que fecharam. |
-| *literal em* `_fechar_janelas` | 0.4 s | = | FIXO | [team.py:360](blazesbot/bot/team.py#L360) | `_fechar_janelas` | Fecha a caixa de nick e a lista de amigos, CONFIRMANDO que fecharam. |
-| *literal em* `_fechar_janelas` | 0.3 s | = | FIXO | [team.py:368](blazesbot/bot/team.py#L368) | `_fechar_janelas` | Fecha a caixa de nick e a lista de amigos, CONFIRMANDO que fecharam. |
-| *literal em* `_limpar_lista` | 0.15 s | = | FIXO | [team.py:398](blazesbot/bot/team.py#L398) | `_limpar_lista` | Remove todas as entradas da Block list. |
-| *literal em* `_limpar_lista` | 0.25 s | = | FIXO | [team.py:400](blazesbot/bot/team.py#L400) | `_limpar_lista` | Remove todas as entradas da Block list. |
-| *literal em* `_limpar_lista` | 0.2 s | = | FIXO | [team.py:404](blazesbot/bot/team.py#L404) | `_limpar_lista` | Remove todas as entradas da Block list. |
-| *literal em* `_adicionar_nick` | 0.5 s | = | FIXO | [team.py:415](blazesbot/bot/team.py#L415) | `_adicionar_nick` | Adiciona um nick à Block list pelo botão Block. |
-| *literal em* `_adicionar_nick` | 0.2 s | = | FIXO | [team.py:423](blazesbot/bot/team.py#L423) | `_adicionar_nick` | Adiciona um nick à Block list pelo botão Block. |
-| *literal em* `_adicionar_nick` | 0.1 s | = | FIXO | [team.py:425](blazesbot/bot/team.py#L425) | `_adicionar_nick` | Adiciona um nick à Block list pelo botão Block. |
-| *literal em* `_adicionar_nick` | 0.2 s | = | FIXO | [team.py:427](blazesbot/bot/team.py#L427) | `_adicionar_nick` | Adiciona um nick à Block list pelo botão Block. |
-| *literal em* `_adicionar_nick` | 0.6 s | = | FIXO | [team.py:429](blazesbot/bot/team.py#L429) | `_adicionar_nick` | Adiciona um nick à Block list pelo botão Block. |
-| *literal em* `_enviar_convite` | 0.5 s | = | FIXO | [team.py:575](blazesbot/bot/team.py#L575) | `_enviar_convite` | Envia o convite pelo MENU DE CONTEXTO da entrada na Block list. |
-| *literal em* `sair_do_time` | 0.4 s | = | FIXO | [team.py:738](blazesbot/bot/team.py#L738) | `sair_do_time` | Sai do time por DOIS CLIQUES medidos no cliente. |
-| *literal em* `sair_do_time` | 0.5 s | = | FIXO | [team.py:753](blazesbot/bot/team.py#L753) | `sair_do_time` | Sai do time por DOIS CLIQUES medidos no cliente. |
-| *literal em* `_aceitar` | 0.5 s | = | FIXO | [team.py:1079](blazesbot/bot/team.py#L1079) | `_aceitar` |  |
-| *literal em* `_recusar` | 0.5 s | = | FIXO | [team.py:1086](blazesbot/bot/team.py#L1086) | `_recusar` |  |
+| `TETO_DA_FATIA_DE_ESPERA` | 0.25 s | = | TETO | [supervisor.py:90](blazesbot/bot/supervisor.py#L90) | `wait` | Teto de uma fatia dentro de `_AnyEvent.wait`. É REDE, não o caminho normal -- |
+| `TETO_DA_ESPERA_PELA_FADA` | 60 s (1 min) | *novo* | TETO | [supervisor.py:99](blazesbot/bot/supervisor.py#L99) | `_rodar_modo_app, chamar_a_fada` | Quanto uma vítima espera pela Fada antes de voltar para a poção. |
+| *literal em* `_sleep_interruptible` | 0.125 s | = | FIXO | [supervisor.py:363](blazesbot/bot/supervisor.py#L363) | `_sleep_interruptible` | Espera até `seconds`, acordando se o usuário mandar parar. |
+| *literal em* `_launch_client` | 1 s | = | FIXO | [supervisor.py:451](blazesbot/bot/supervisor.py#L451) | `_launch_client` | Lança o Client.bat e devolve o PID da nova instância. |
+| *literal em* `_find_window` | 1 s | = | FIXO | [supervisor.py:468](blazesbot/bot/supervisor.py#L468) | `_find_window` | Localiza a janela de nível superior pertencente ao PID. |
+| *literal em* `_run_session` | 1.5 s | = | FIXO | [supervisor.py:1072](blazesbot/bot/supervisor.py#L1072) | `_run_session` | Uma sessão: obter uma janela, logar se preciso, e operar. |
+| *literal em* `_operate` | 2.5 s | *novo* | FIXO | [supervisor.py:1367](blazesbot/bot/supervisor.py#L1367) | `_operate` | Opera a conta logada, respeitando o farm ligado/desligado ao vivo. |
+| *literal em* `_operate` | 2.5 s | *novo* | FIXO | [supervisor.py:1388](blazesbot/bot/supervisor.py#L1388) | `_operate` | Opera a conta logada, respeitando o farm ligado/desligado ao vivo. |
+| *literal em* `_operate` | 0.5 s | = | FIXO | [supervisor.py:1487](blazesbot/bot/supervisor.py#L1487) | `_operate` | Opera a conta logada, respeitando o farm ligado/desligado ao vivo. |
+| *literal em* `_publicar_o_proprio_id` | 0.3 s | *novo* | FIXO | [supervisor.py:1732](blazesbot/bot/supervisor.py#L1732) | `_publicar_o_proprio_id` | o alvo leva ~0,1 s para virar |
+| *literal em* `chamar_a_fada` | 0.2 s | *novo* | FIXO | [supervisor.py:2187](blazesbot/bot/supervisor.py#L2187) | `chamar_a_fada` | Pede cura à Fada do time e espera. `False` = não há Fada, beba poção. |
+| `ESPERA_DO_MENU` | 0.35 s | = | FIXO | [team.py:165](blazesbot/bot/team.py#L165) | `_enviar_convite` | Tempo para o menu de contexto aparecer depois do clique direito. |
+| `ESPERA_PELA_RESPOSTA` | 4 s | = | FIXO | [team.py:170](blazesbot/bot/team.py#L170) | `montar_time` | Quanto esperar a outra conta aceitar. Ela recebe o anúncio interno e clica no |
+| `PASSO_DA_ESPERA_DO_TIME` | 0.1 s | = | PASSO | [team.py:178](blazesbot/bot/team.py#L178) | `montar_time` | De quanto em quanto tempo conferir se o time já formou. |
+| *literal em* `_abrir_lista` | 0.6 s | = | FIXO | [team.py:336](blazesbot/bot/team.py#L336) | `_abrir_lista` | Abre a lista de amigos e vai para a aba Block. |
+| *literal em* `_abrir_lista` | 0.45 s | = | FIXO | [team.py:341](blazesbot/bot/team.py#L341) | `_abrir_lista` | Abre a lista de amigos e vai para a aba Block. |
+| *literal em* `_fechar_janelas` | 0.35 s | = | FIXO | [team.py:369](blazesbot/bot/team.py#L369) | `_fechar_janelas` | Fecha a caixa de nick e a lista de amigos, CONFIRMANDO que fecharam. |
+| *literal em* `_fechar_janelas` | 0.4 s | = | FIXO | [team.py:377](blazesbot/bot/team.py#L377) | `_fechar_janelas` | Fecha a caixa de nick e a lista de amigos, CONFIRMANDO que fecharam. |
+| *literal em* `_fechar_janelas` | 0.3 s | = | FIXO | [team.py:385](blazesbot/bot/team.py#L385) | `_fechar_janelas` | Fecha a caixa de nick e a lista de amigos, CONFIRMANDO que fecharam. |
+| *literal em* `_limpar_lista` | 0.15 s | = | FIXO | [team.py:415](blazesbot/bot/team.py#L415) | `_limpar_lista` | Remove todas as entradas da Block list. |
+| *literal em* `_limpar_lista` | 0.25 s | = | FIXO | [team.py:417](blazesbot/bot/team.py#L417) | `_limpar_lista` | Remove todas as entradas da Block list. |
+| *literal em* `_limpar_lista` | 0.2 s | = | FIXO | [team.py:421](blazesbot/bot/team.py#L421) | `_limpar_lista` | Remove todas as entradas da Block list. |
+| *literal em* `_adicionar_nick` | 0.5 s | = | FIXO | [team.py:432](blazesbot/bot/team.py#L432) | `_adicionar_nick` | Adiciona um nick à Block list pelo botão Block. |
+| *literal em* `_adicionar_nick` | 0.2 s | = | FIXO | [team.py:440](blazesbot/bot/team.py#L440) | `_adicionar_nick` | Adiciona um nick à Block list pelo botão Block. |
+| *literal em* `_adicionar_nick` | 0.1 s | = | FIXO | [team.py:442](blazesbot/bot/team.py#L442) | `_adicionar_nick` | Adiciona um nick à Block list pelo botão Block. |
+| *literal em* `_adicionar_nick` | 0.2 s | = | FIXO | [team.py:444](blazesbot/bot/team.py#L444) | `_adicionar_nick` | Adiciona um nick à Block list pelo botão Block. |
+| *literal em* `_adicionar_nick` | 0.6 s | = | FIXO | [team.py:446](blazesbot/bot/team.py#L446) | `_adicionar_nick` | Adiciona um nick à Block list pelo botão Block. |
+| *literal em* `_enviar_convite` | 0.5 s | = | FIXO | [team.py:619](blazesbot/bot/team.py#L619) | `_enviar_convite` | Envia o convite pelo MENU DE CONTEXTO da entrada na Block list. |
+| *literal em* `sair_do_time` | 0.4 s | = | FIXO | [team.py:782](blazesbot/bot/team.py#L782) | `sair_do_time` | Sai do time por DOIS CLIQUES medidos no cliente. |
+| *literal em* `sair_do_time` | 0.5 s | = | FIXO | [team.py:797](blazesbot/bot/team.py#L797) | `sair_do_time` | Sai do time por DOIS CLIQUES medidos no cliente. |
+| *literal em* `_aceitar` | 0.5 s | = | FIXO | [team.py:1123](blazesbot/bot/team.py#L1123) | `_aceitar` |  |
+| *literal em* `_recusar` | 0.5 s | = | FIXO | [team.py:1130](blazesbot/bot/team.py#L1130) | `_recusar` |  |
 | `ESPERA_DEPOIS_DO_CLIQUE` | 0.35 s | = | FIXO | [teste_do_cursor.py:100](blazesbot/bot/teste_do_cursor.py#L100) | `_uma_fase` |  |
 | *literal em* `main` | 8 s | = | FIXO | [teste_do_cursor.py:476](blazesbot/bot/teste_do_cursor.py#L476) | `main` |  |
-| `CADENCIA_DAS_CONFERENCIAS` | 60 s (1 min) | *novo* | PASSO | [time_do_app.py:114](blazesbot/bot/time_do_app.py#L114) | `montar_se_for_a_hora` | De quanto em quanto tempo o líder confere se o time está completo. |
-| `TETO_DO_MENU` | 0.8 s | *novo* | TETO | [time_do_app.py:549](blazesbot/bot/time_do_app.py#L549) | `pick_mode_free` | TETO da espera pelo menu e pelo submenu aparecerem. TETO, não gasto: quem |
-| `PASSO_DO_MENU` | 0.06 s | *novo* | PASSO | [time_do_app.py:550](blazesbot/bot/time_do_app.py#L550) | `pick_mode_free` |  |
+| `CADENCIA_DAS_CONFERENCIAS` | 60 s (1 min) | *novo* | PASSO | [time_do_app.py:116](blazesbot/bot/time_do_app.py#L116) | `montar_se_for_a_hora` | De quanto em quanto tempo o líder confere se o time está completo. |
+| `TETO_DO_MENU` | 0.8 s | *novo* | TETO | [time_do_app.py:638](blazesbot/bot/time_do_app.py#L638) | `pick_mode_free` | TETO da espera pelo menu e pelo submenu aparecerem. TETO, não gasto: quem |
+| `PASSO_DO_MENU` | 0.06 s | *novo* | PASSO | [time_do_app.py:639](blazesbot/bot/time_do_app.py#L639) | `pick_mode_free` |  |
 | `PASSO_DA_ESPERA_DO_DIALOGO` | 0.08 s | = | PASSO | [ui_do_jogo.py:150](blazesbot/bot/ui_do_jogo.py#L150) | `_esperar_o_dialogo` | Diálogo do NPC aparecer. Era 0,30 s fixos, gastos inteiros mesmo quando o |
 | `LIMITE_INICIAL_DA_ESPERA_DO_DIALOGO` | 0.65 s | = | TETO | [ui_do_jogo.py:189](blazesbot/bot/ui_do_jogo.py#L189) | `limite_da_espera_do_dialogo` | TETO DA ESPERA DO DIÁLOGO -- ajustado pelo que foi MEDIDO, não chutado |
 | `LIMITE_MINIMO_DA_ESPERA_DO_DIALOGO` | 0.18 s | = | TETO | [ui_do_jogo.py:193](blazesbot/bot/ui_do_jogo.py#L193) | `limite_da_espera_do_dialogo` | Piso: o valor que valia antes. Abaixo disto não se aperta nem com evidência -- |

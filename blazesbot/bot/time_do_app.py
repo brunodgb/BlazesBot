@@ -79,11 +79,13 @@ __all__ = [
     "CADENCIA_DAS_CONFERENCIAS",
     "TENTATIVAS_POR_MEMBRO",
     "aceitador_do_seguidor",
+    "ancora_do_lider",
     "esperar_o_lider_montar",
     "falta_alguem",
     "montar_o_time",
     "montar_se_for_a_hora",
     "pick_mode_free",
+    "publicar_a_ancora",
     "publicar_que_estou_de_pe",
 ]
 
@@ -360,6 +362,93 @@ def montar_se_for_a_hora(sup, memoria, em_batalha: bool | None,
         return False
     sup._proxima_conferencia_do_time = agora + CADENCIA_DAS_CONFERENCIAS
     return montar_o_time(sup, memoria)
+
+
+# ===========================================================================
+# A ÂNCORA DO TIME — o ponto inicial do líder vale para todos
+# ===========================================================================
+#
+# *"Se o modo for Team, o comportamento individual é anulado: o líder captura a
+# coordenada inicial dele e compartilha, e todos sobrescrevem o próprio ponto"*
+# (usuário, 22/09/2026).
+#
+# O PROBLEMA QUE ISSO RESOLVE não é estético. Cada conta guarda o SEU ponto
+# inicial, e a trava de distância puxa cada uma para o seu: quem ligou o bot
+# dois passos para o lado volta para dois passos para o lado. Sob ataque, isso é
+# um time esticado -- a Fada fora do alcance da cura, o dano longe do mob que
+# está batendo no vizinho.
+#
+# O CANAL É O MURAL, e não arquivo. As contas são THREADS DO MESMO PROCESSO
+# (uma por conta, `supervisor-<login>`), e o mural já é a memória compartilhada
+# delas, com tranca -- é por onde passam a largada, o sinal de vida, o id de
+# cada um e o convite. Um `team_anchor.json` acrescentaria disco, leitura em
+# laço e um arquivo velho para limpar, para transportar dois inteiros entre
+# threads que enxergam o mesmo dicionário.
+#
+# QUEM PUBLICA É SÓ O LÍDER, E UMA VEZ SÓ (no arranque do modo APP). Publicar de
+# novo durante o farm moveria a âncora do time inteiro para onde o líder estiver
+# -- e ele anda, porque a macro anda.
+#
+# A ESPERA DO SEGUIDOR TEM TETO, e o teto é `ESPERA_PELA_RESPOSTA` (4 s), já
+# medido. A defasagem real entre o arranque de duas contas é de ~0,9 s (medido
+# no log de 19/09/2026), então o teto é quatro vezes a distância conhecida.
+# Estourado, o seguidor usa o ponto dele: começar espalhado é ruim, não começar
+# é pior.
+
+
+def publicar_a_ancora(sup, base: tuple[int, int] | None) -> bool:
+    """O líder publica o ponto inicial do time. `True` = publicou.
+
+    Chamada UMA VEZ, no arranque do modo APP. Fora de time não publica nada:
+    conta sozinha não tem com quem compartilhar âncora.
+    """
+    if not ATIVADO or base is None:
+        return False
+    if not sup._tem_time_do_app():
+        return False
+    if sup._dono_da_macro().login != sup.account.login:
+        return False                      # seguidor não dita âncora
+    mural.publicar_ancora(sup.account.login, base)
+    sup.log.info("Âncora do time: ponto inicial %s publicado para o time "
+                 "inteiro.", base)
+    return True
+
+
+def ancora_do_lider(sup, teto: float = ESPERA_PELA_RESPOSTA
+                    ) -> tuple[int, int] | None:
+    """O seguidor espera a âncora do líder. `None` = usa o ponto dele mesmo.
+
+    É a TRAVA DE ESPERA do arranque: sem ela o seguidor montaria a trava de
+    distância com a posição dele e só descobriria a do líder na volta seguinte
+    -- ou nunca, porque a base só é lida uma vez.
+    """
+    if not ATIVADO:
+        return None
+    lider = sup._dono_da_macro()
+    if lider.login == sup.account.login:
+        return None                       # o líder é a fonte, não espera nada
+    if not sup._tem_time_do_app():
+        return None                       # solo segue exatamente como era
+
+    limite = time.monotonic() + max(0.0, teto)
+    avisou = False
+    while True:
+        ponto = mural.ancora_do_time(lider.login)
+        if ponto is not None:
+            sup.log.info("Âncora do time: uso o ponto inicial do líder '%s' "
+                         "%s no lugar do meu.", lider.login, ponto)
+            return ponto
+        if sup.stop_event.is_set() or time.monotonic() >= limite:
+            break
+        if not avisou:
+            avisou = True
+            sup.log.info("Âncora do time: esperando o líder '%s' publicar o "
+                         "ponto inicial (teto de %.0fs).", lider.login, teto)
+        time.sleep(PASSO_DA_ESPERA_DO_TIME)
+
+    sup.log.warning("Âncora do time: o líder '%s' não publicou ponto inicial "
+                    "em %.0fs — sigo com o meu.", lider.login, teto)
+    return None
 
 
 def _o_lider_vai_rodar(sup, lider) -> bool:

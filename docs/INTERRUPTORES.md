@@ -52,7 +52,7 @@ ligar código não testado.
 | `PERGUNTAR_ENTRE_OS_CLIQUES` | `True` | [blazesbot/bot/rajada_de_npc.py:85](blazesbot/bot/rajada_de_npc.py#L85) | — | INTERRUPTOR -- desligar devolve a rajada cega de sempre. |
 | `MATAR_JANELA_TRAVADA` | `True` | [blazesbot/bot/sentinela.py:166](blazesbot/bot/sentinela.py#L166) | — | INTERRUPTOR (a convenção do projeto: caminho fora de uso não vira comentário) |
 | `OLHAR_A_TELA` | `True` | [blazesbot/bot/sentinela.py:202](blazesbot/bot/sentinela.py#L202) | — | O VIGIA LÊ A TELA -- religado em 11/09/2026, e o porquê do vaivém importa |
-| `ATIVADO` | `True` | [blazesbot/bot/time_do_app.py:96](blazesbot/bot/time_do_app.py#L96) | diagnostico_do_link.py, deletador.py, supervisor.py, patch_do_cliente.py, petbug.py | INTERRUPTOR |
+| `ATIVADO` | `True` | [blazesbot/bot/time_do_app.py:98](blazesbot/bot/time_do_app.py#L98) | diagnostico_do_link.py, deletador.py, supervisor.py, patch_do_cliente.py, petbug.py | INTERRUPTOR |
 | `CONFIRMAR_CHEGADA_POR_COORDENADA` | `False` | [blazesbot/bot/ui_do_jogo.py:523](blazesbot/bot/ui_do_jogo.py#L523) | — | INTERRUPTOR: a coordenada do painel CONFIRMA a chegada? |
 | `CONFERIR_SLOT_VAZIO` | `False` | [blazesbot/bot/vendedor.py:236](blazesbot/bot/vendedor.py#L236) | — | INTERRUPTOR -- A CONFERÊNCIA DE SLOT VAZIO ESTÁ DESLIGADA (decisão do usuário, |
 | `MODO_FADA_DA_HH` | `'fada'` | [blazesbot/config.py:951](blazesbot/config.py#L951) | routine.py, supervisor.py, account_dialog.py | — |
@@ -70,10 +70,10 @@ ligar código não testado.
 | `USAR_MOUSE_SHIELD` | `False` | [blazesbot/core/inputs.py:79](blazesbot/core/inputs.py#L79) | instrumentar_clique.py, teste_do_cursor.py | INTERRUPTOR DO MOUSE SHIELD |
 | `INSTRUMENTAR_O_PACOTE_INTEIRO` | `True` | [blazesbot/core/instrumentacao.py:77](blazesbot/core/instrumentacao.py#L77) | — | O INTERRUPTOR |
 | `COMPRIMIR_ARQUIVO_MORTO` | `True` | [blazesbot/core/log_limitado.py:108](blazesbot/core/log_limitado.py#L108) | — | O arquivo morto de DIAS ANTERIORES é comprimido. Medido no arquivo da noite de |
-| `EXIGIR_VIDA_MAXIMA_DE_MOB` | `True` | [blazesbot/core/memory.py:579](blazesbot/core/memory.py#L579) | — | INTERRUPTOR. Desligado, volta ao teste antigo (`hp <= max_hp`) e o fantasma |
+| `EXIGIR_VIDA_MAXIMA_DE_MOB` | `True` | [blazesbot/core/memory.py:582](blazesbot/core/memory.py#L582) | — | INTERRUPTOR. Desligado, volta ao teste antigo (`hp <= max_hp`) e o fantasma |
 | `USAR_BANDEIRA_DO_F12` | `True` | [blazesbot/core/memory.py:213](blazesbot/core/memory.py#L213) | — | O F12 PRESO -- a metade do patcher que era conferivel SO OLHANDO A TELA |
-| `USAR_PAINEL_POR_MEMORIA` | `True` | [blazesbot/core/memory.py:668](blazesbot/core/memory.py#L668) | — | ESTADO DE PAINEL DE UI POR MEMÓRIA -- o que sobreviveu ao campo |
-| `USAR_REGIOES_QUENTES` | `True` | [blazesbot/core/memory.py:481](blazesbot/core/memory.py#L481) | — | REGIÕES QUENTES -- a rota que fecha os 38% que o array de entidades perde |
+| `USAR_PAINEL_POR_MEMORIA` | `True` | [blazesbot/core/memory.py:671](blazesbot/core/memory.py#L671) | — | ESTADO DE PAINEL DE UI POR MEMÓRIA -- o que sobreviveu ao campo |
+| `USAR_REGIOES_QUENTES` | `True` | [blazesbot/core/memory.py:484](blazesbot/core/memory.py#L484) | — | REGIÕES QUENTES -- a rota que fecha os 38% que o array de entidades perde |
 | `ATIVADO` | `True` | [blazesbot/core/patch_do_cliente.py:144](blazesbot/core/patch_do_cliente.py#L144) | diagnostico_do_link.py, deletador.py, supervisor.py, time_do_app.py, petbug.py | INTERRUPTOR |
 | `ATIVADO` | `False` | [blazesbot/core/petbug.py:125](blazesbot/core/petbug.py#L125) | diagnostico_do_link.py, deletador.py, supervisor.py, time_do_app.py, patch_do_cliente.py | DESLIGADO EM 07/09/2026 -- o bot passou a fazer isto sozinho |
 | `NOVA_INSTANCIA_SEMPRE` | `True` | [blazesbot/core/petbug.py:218](blazesbot/core/petbug.py#L218) | — | INSTÂNCIA NOVA A CADA APLICAÇÃO -- 07/09/2026 |
@@ -360,14 +360,14 @@ ligar código não testado.
 | `TETO_DA_REGENERACAO` | `60.0` | [blazesbot/bot/morte.py:82](blazesbot/bot/morte.py#L82) | — | Teto da regeneração sentada antes de andar de volta. |
 | `TETO_DO_RETORNO` | `180.0` | [blazesbot/bot/morte.py:90](blazesbot/bot/morte.py#L90) | — | Teto da caminhada de volta ao ponto inicial. |
 | `TETO_PARA_O_REVIVE_PEGAR` | `10.0` | [blazesbot/bot/morte.py:75](blazesbot/bot/morte.py#L75) | — | Quanto se espera o `hp` subir depois de um clique que deveria reviver. |
-| `ACEITE_VALIDO_SEGUNDOS` | `15.0` | [blazesbot/bot/mural.py:202](blazesbot/bot/mural.py#L202) | — | Validade do aceite. Curta de propósito: ele confirma UM convite recém-enviado, |
-| `CONVITE_VALIDO_SEGUNDOS` | `60.0` | [blazesbot/bot/mural.py:80](blazesbot/bot/mural.py#L80) | — | Validade do anúncio. Cobre a fila de resposta do outro cliente com folga; mais |
-| `ESTADO_VALIDO_SEGUNDOS` | `30.0` | [blazesbot/bot/mural.py:294](blazesbot/bot/mural.py#L294) | sincronia.py, supervisor.py | Quanto tempo o estado publicado por uma conta continua valendo. |
-| `LARGADA_VALIDA_SEGUNDOS` | `5.0` | [blazesbot/bot/mural.py:286](blazesbot/bot/mural.py#L286) | sincronia.py | Quanto tempo uma largada anunciada continua valendo. |
-| `SILENCIO_DA_FADA` | `5.0` | [blazesbot/bot/mural.py:501](blazesbot/bot/mural.py#L501) | — | Quanto silêncio já é "a Fada não está lá". |
-| `SILENCIO_MAXIMO` | `5.0` | [blazesbot/bot/mural.py:146](blazesbot/bot/mural.py#L146) | — | Quanto silêncio já é "caiu". |
-| `TETO_DA_BATIDA_LONGA` | `15.0` | [blazesbot/bot/mural.py:515](blazesbot/bot/mural.py#L515) | fada_ociosa.py | Quanto uma batida pode valer, no MÁXIMO, quando a Fada avisa que vai sumir. |
-| `VALIDADE_DA_DESISTENCIA` | `20.0` | [blazesbot/bot/mural.py:590](blazesbot/bot/mural.py#L590) | — | Por quanto tempo a desistência da Fada continua valendo. |
+| `ACEITE_VALIDO_SEGUNDOS` | `15.0` | [blazesbot/bot/mural.py:211](blazesbot/bot/mural.py#L211) | — | Validade do aceite. Curta de propósito: ele confirma UM convite recém-enviado, |
+| `CONVITE_VALIDO_SEGUNDOS` | `60.0` | [blazesbot/bot/mural.py:89](blazesbot/bot/mural.py#L89) | — | Validade do anúncio. Cobre a fila de resposta do outro cliente com folga; mais |
+| `ESTADO_VALIDO_SEGUNDOS` | `30.0` | [blazesbot/bot/mural.py:303](blazesbot/bot/mural.py#L303) | sincronia.py, supervisor.py | Quanto tempo o estado publicado por uma conta continua valendo. |
+| `LARGADA_VALIDA_SEGUNDOS` | `5.0` | [blazesbot/bot/mural.py:295](blazesbot/bot/mural.py#L295) | sincronia.py | Quanto tempo uma largada anunciada continua valendo. |
+| `SILENCIO_DA_FADA` | `5.0` | [blazesbot/bot/mural.py:510](blazesbot/bot/mural.py#L510) | — | Quanto silêncio já é "a Fada não está lá". |
+| `SILENCIO_MAXIMO` | `5.0` | [blazesbot/bot/mural.py:155](blazesbot/bot/mural.py#L155) | — | Quanto silêncio já é "caiu". |
+| `TETO_DA_BATIDA_LONGA` | `15.0` | [blazesbot/bot/mural.py:524](blazesbot/bot/mural.py#L524) | fada_ociosa.py | Quanto uma batida pode valer, no MÁXIMO, quando a Fada avisa que vai sumir. |
+| `VALIDADE_DA_DESISTENCIA` | `20.0` | [blazesbot/bot/mural.py:599](blazesbot/bot/mural.py#L599) | — | Por quanto tempo a desistência da Fada continua valendo. |
 | `SEGUNDOS_DE_MORTO_PARA_FURAR_A_FILA` | `40.0` | [blazesbot/bot/mural_da_morte.py:42](blazesbot/bot/mural_da_morte.py#L42) | fada.py, fada_reviver.py, mural.py | A partir de quantos segundos de morto a vítima FURA a fila dos feridos. |
 | `VALIDADE_DO_FEITICO` | `8.0` | [blazesbot/bot/mural_da_morte.py:133](blazesbot/bot/mural_da_morte.py#L133) | mural.py | Por quanto tempo o aviso "estou conjurando" continua de pé. |
 | `ALCANCE_DA_EXPANSAO` | `4` | [blazesbot/bot/navegacao.py:219](blazesbot/bot/navegacao.py#L219) | — | ATÉ ONDE A MANOBRA SE AFASTA NA ROTA quando os vizinhos imediatos falham. |
@@ -410,37 +410,37 @@ ligar código não testado.
 | `CADENCIA_DO_VIGIA` | `6.0` | [blazesbot/bot/sentinela.py:129](blazesbot/bot/sentinela.py#L129) | — | O ORÇAMENTO DE 20 SEGUNDOS, repartido |
 | `STRIKES_PARA_JANELA_SUMIDA` | `2` | [blazesbot/bot/sentinela.py:146](blazesbot/bot/sentinela.py#L146) | — | AS CONFIRMAÇÕES -- a defesa contra derrubar conta boa por causa de lag |
 | `STRIKES_PARA_JANELA_TRAVADA` | `3` | [blazesbot/bot/sentinela.py:155](blazesbot/bot/sentinela.py#L155) | — | JANELA TRAVADA é o sinal ruidoso, e é o único que precisa de defesa de |
-| `LIMIAR_DO_CONVITE` | `0.9` | [blazesbot/bot/supervisor.py:106](blazesbot/bot/supervisor.py#L106) | — | Limiar do casamento do convite. Mais exigente que o limiar geral de telas |
-| `TETO_DA_ESPERA_PELA_FADA` | `60.0` | [blazesbot/bot/supervisor.py:93](blazesbot/bot/supervisor.py#L93) | — | Quanto uma vítima espera pela Fada antes de voltar para a poção. |
-| `TETO_DA_FATIA_DE_ESPERA` | `0.25` | [blazesbot/bot/supervisor.py:84](blazesbot/bot/supervisor.py#L84) | — | Teto de uma fatia dentro de `_AnyEvent.wait`. É REDE, não o caminho normal -- |
-| `ALTURA_DA_LINHA_DO_MENU` | `21` | [blazesbot/bot/team.py:149](blazesbot/bot/team.py#L149) | — | — |
-| `ALTURA_DO_MENU_LONGO` | `200` | [blazesbot/bot/team.py:153](blazesbot/bot/team.py#L153) | — | — |
-| `ALTURA_MAXIMA_DO_MENU` | `300` | [blazesbot/bot/team.py:152](blazesbot/bot/team.py#L152) | — | — |
+| `LIMIAR_DO_CONVITE` | `0.9` | [blazesbot/bot/supervisor.py:112](blazesbot/bot/supervisor.py#L112) | — | Limiar do casamento do convite. Mais exigente que o limiar geral de telas |
+| `TETO_DA_ESPERA_PELA_FADA` | `60.0` | [blazesbot/bot/supervisor.py:99](blazesbot/bot/supervisor.py#L99) | — | Quanto uma vítima espera pela Fada antes de voltar para a poção. |
+| `TETO_DA_FATIA_DE_ESPERA` | `0.25` | [blazesbot/bot/supervisor.py:90](blazesbot/bot/supervisor.py#L90) | — | Teto de uma fatia dentro de `_AnyEvent.wait`. É REDE, não o caminho normal -- |
+| `ALTURA_DA_LINHA_DO_MENU` | `21` | [blazesbot/bot/team.py:158](blazesbot/bot/team.py#L158) | — | — |
+| `ALTURA_DO_MENU_LONGO` | `200` | [blazesbot/bot/team.py:162](blazesbot/bot/team.py#L162) | — | — |
+| `ALTURA_MAXIMA_DO_MENU` | `300` | [blazesbot/bot/team.py:161](blazesbot/bot/team.py#L161) | — | — |
 | `ANCHOR_THRESHOLD` | `0.8` | [blazesbot/bot/team.py:92](blazesbot/bot/team.py#L92) | vendedor.py, ui_do_jogo.py, janelas_abertas.py | — |
-| `ESPERA_DO_MENU` | `0.35` | [blazesbot/bot/team.py:156](blazesbot/bot/team.py#L156) | — | Tempo para o menu de contexto aparecer depois do clique direito. |
-| `ESPERA_PELA_RESPOSTA` | `4.0` | [blazesbot/bot/team.py:161](blazesbot/bot/team.py#L161) | time_do_app.py | Quanto esperar a outra conta aceitar. Ela recebe o anúncio interno e clica no |
-| `INICIO_DA_MEDIDA_DO_MENU` | `8` | [blazesbot/bot/team.py:150](blazesbot/bot/team.py#L150) | — | — |
+| `ESPERA_DO_MENU` | `0.35` | [blazesbot/bot/team.py:165](blazesbot/bot/team.py#L165) | — | Tempo para o menu de contexto aparecer depois do clique direito. |
+| `ESPERA_PELA_RESPOSTA` | `4.0` | [blazesbot/bot/team.py:170](blazesbot/bot/team.py#L170) | time_do_app.py | Quanto esperar a outra conta aceitar. Ela recebe o anúncio interno e clica no |
+| `INICIO_DA_MEDIDA_DO_MENU` | `8` | [blazesbot/bot/team.py:159](blazesbot/bot/team.py#L159) | — | — |
 | `INVITE_TEMPLATE` | `'state_team_invite.png'` | [blazesbot/bot/team.py:89](blazesbot/bot/team.py#L89) | — | — |
 | `INVITE_TEXT_TEMPLATE` | `'state_team_invite_texto.png'` | [blazesbot/bot/team.py:90](blazesbot/bot/team.py#L90) | — | — |
 | `INVITE_THRESHOLD` | `0.8` | [blazesbot/bot/team.py:91](blazesbot/bot/team.py#L91) | janelas_abertas.py | — |
-| `LARGURA_DA_MEDIDA_DO_MENU` | `40` | [blazesbot/bot/team.py:151](blazesbot/bot/team.py#L151) | — | — |
-| `LINHAS_A_MAIS_QUANDO_PERTO` | `3` | [blazesbot/bot/team.py:148](blazesbot/bot/team.py#L148) | — | QUAL DOS DOIS MENUS VEIO se mede na hora, pela ALTURA da caixa que apareceu |
-| `MAX_CLIQUES_DE_ACEITE` | `5` | [blazesbot/bot/team.py:181](blazesbot/bot/team.py#L181) | — | Quantas vezes clicar no Ok para o MESMO convite anunciado. |
-| `MAX_ENTRADAS` | `12` | [blazesbot/bot/team.py:172](blazesbot/bot/team.py#L172) | — | Quantas linhas da lista limpar antes de desistir. |
+| `LARGURA_DA_MEDIDA_DO_MENU` | `40` | [blazesbot/bot/team.py:160](blazesbot/bot/team.py#L160) | — | — |
+| `LINHAS_A_MAIS_QUANDO_PERTO` | `3` | [blazesbot/bot/team.py:157](blazesbot/bot/team.py#L157) | — | QUAL DOS DOIS MENUS VEIO se mede na hora, pela ALTURA da caixa que apareceu |
+| `MAX_CLIQUES_DE_ACEITE` | `5` | [blazesbot/bot/team.py:190](blazesbot/bot/team.py#L190) | — | Quantas vezes clicar no Ok para o MESMO convite anunciado. |
+| `MAX_ENTRADAS` | `12` | [blazesbot/bot/team.py:181](blazesbot/bot/team.py#L181) | — | Quantas linhas da lista limpar antes de desistir. |
 | `MENU_LEAVE_TEMPLATE` | `'menu_leave_team.png'` | [blazesbot/bot/team.py:93](blazesbot/bot/team.py#L93) | — | — |
-| `MENU_TEAM_UP_TEMPLATE` | `'menu_team_up.png'` | [blazesbot/bot/team.py:109](blazesbot/bot/team.py#L109) | — | Item "Team up" do menu de contexto da entrada na lista. |
-| `PASSO_DA_ESPERA_DO_TIME` | `0.1` | [blazesbot/bot/team.py:169](blazesbot/bot/team.py#L169) | time_do_app.py | De quanto em quanto tempo conferir se o time já formou. |
-| `SEMELHANCA_MINIMA` | `0.9` | [blazesbot/bot/team.py:106](blazesbot/bot/team.py#L106) | — | Semelhança a partir da qual um recorte aprendido é considerado o mesmo texto. |
+| `MENU_TEAM_UP_TEMPLATE` | `'menu_team_up.png'` | [blazesbot/bot/team.py:118](blazesbot/bot/team.py#L118) | — | Item "Team up" do menu de contexto da entrada na lista. |
+| `PASSO_DA_ESPERA_DO_TIME` | `0.1` | [blazesbot/bot/team.py:178](blazesbot/bot/team.py#L178) | time_do_app.py | De quanto em quanto tempo conferir se o time já formou. |
+| `SEMELHANCA_MINIMA` | `0.97` | [blazesbot/bot/team.py:115](blazesbot/bot/team.py#L115) | — | Semelhança a partir da qual um recorte aprendido é considerado o mesmo texto. |
 | `TEAM_MEMBER_TEMPLATE` | `'state_team_member.png'` | [blazesbot/bot/team.py:101](blazesbot/bot/team.py#L101) | recorte_do_time.py | Painel do companheiro de time, desenhado abaixo do retrato do próprio |
 | `CLIQUES_POR_FASE` | `20` | [blazesbot/bot/teste_do_cursor.py:91](blazesbot/bot/teste_do_cursor.py#L91) | — | Quantos cliques por fase. 20 dá resolução de 5 pontos percentuais -- suficiente |
 | `DIFERENCA_QUE_E_EFEITO` | `3.0` | [blazesbot/bot/teste_do_cursor.py:95](blazesbot/bot/teste_do_cursor.py#L95) | instrumentar_clique.py | Quanto o minimapa precisa mudar para o clique contar como surtido efeito. O |
 | `DISTANCIA_MINIMA_DO_ALVO` | `120` | [blazesbot/bot/teste_do_cursor.py:98](blazesbot/bot/teste_do_cursor.py#L98) | instrumentar_clique.py | Distância mínima entre o cursor físico e o alvo, em pixels do cliente. |
 | `ESPERA_DEPOIS_DO_CLIQUE` | `0.35` | [blazesbot/bot/teste_do_cursor.py:100](blazesbot/bot/teste_do_cursor.py#L100) | — | — |
-| `CADENCIA_DAS_CONFERENCIAS` | `60.0` | [blazesbot/bot/time_do_app.py:114](blazesbot/bot/time_do_app.py#L114) | — | De quanto em quanto tempo o líder confere se o time está completo. |
-| `PASSO_DO_MENU` | `0.06` | [blazesbot/bot/time_do_app.py:550](blazesbot/bot/time_do_app.py#L550) | — | — |
-| `TENTATIVAS_DO_PICK_MODE` | `2` | [blazesbot/bot/time_do_app.py:553](blazesbot/bot/time_do_app.py#L553) | — | Tentativas de abrir o submenu antes de desistir nesta montagem. |
-| `TENTATIVAS_POR_MEMBRO` | `4` | [blazesbot/bot/time_do_app.py:103](blazesbot/bot/time_do_app.py#L103) | — | Passadas pela fila antes de desistir NESTA montagem. |
-| `TETO_DO_MENU` | `0.8` | [blazesbot/bot/time_do_app.py:549](blazesbot/bot/time_do_app.py#L549) | — | TETO da espera pelo menu e pelo submenu aparecerem. TETO, não gasto: quem |
+| `CADENCIA_DAS_CONFERENCIAS` | `60.0` | [blazesbot/bot/time_do_app.py:116](blazesbot/bot/time_do_app.py#L116) | — | De quanto em quanto tempo o líder confere se o time está completo. |
+| `PASSO_DO_MENU` | `0.06` | [blazesbot/bot/time_do_app.py:639](blazesbot/bot/time_do_app.py#L639) | — | — |
+| `TENTATIVAS_DO_PICK_MODE` | `2` | [blazesbot/bot/time_do_app.py:642](blazesbot/bot/time_do_app.py#L642) | — | Tentativas de abrir o submenu antes de desistir nesta montagem. |
+| `TENTATIVAS_POR_MEMBRO` | `4` | [blazesbot/bot/time_do_app.py:105](blazesbot/bot/time_do_app.py#L105) | — | Passadas pela fila antes de desistir NESTA montagem. |
+| `TETO_DO_MENU` | `0.8` | [blazesbot/bot/time_do_app.py:638](blazesbot/bot/time_do_app.py#L638) | — | TETO da espera pelo menu e pelo submenu aparecerem. TETO, não gasto: quem |
 | `ABERTURAS_POR_TRAJETO` | `4` | [blazesbot/bot/ui_do_jogo.py:567](blazesbot/bot/ui_do_jogo.py#L567) | — | Teto de aberturas do painel por TRAJETO. |
 | `ANCHOR_THRESHOLD` | `0.8` | [blazesbot/bot/ui_do_jogo.py:103](blazesbot/bot/ui_do_jogo.py#L103) | vendedor.py, team.py, janelas_abertas.py | — |
 | `BUSCAS_ANTES_DE_DESISTIR_DA_LEITURA` | `3` | [blazesbot/bot/ui_do_jogo.py:427](blazesbot/bot/ui_do_jogo.py#L427) | — | Quantas buscas seguidas sem a memória responder antes de desistir dela. Duas, e |
@@ -602,24 +602,24 @@ ligar código não testado.
 | `LUGAR_FORA_DA_CAVE` | `'Ghost Din Woods'` | [blazesbot/core/lugares.py:102](blazesbot/core/lugares.py#L102) | localizacao.py, routine.py | O lugar em que o personagem está quando NÃO está na cave e o X é grande. |
 | `MINIMO_CAUDA` | `5` | [blazesbot/core/lugares.py:126](blazesbot/core/lugares.py#L126) | — | Menor cauda que ainda identifica um lugar com segurança. Abaixo disso, |
 | `ANGULO_DA_CAMERA` | `956.720459` | [blazesbot/core/memory.py:360](blazesbot/core/memory.py#L360) | ler_camera.py | O ângulo em que os cliques na cena 3D foram medidos. |
-| `BAG_CLOSED_VALUE` | `902` | [blazesbot/core/memory.py:725](blazesbot/core/memory.py#L725) | — | Valor da bolsa FECHADA. Medido em 02/09/2026 alternando a tecla `I` e lido em |
-| `BAG_OPEN_VALUE` | `903` | [blazesbot/core/memory.py:721](blazesbot/core/memory.py#L721) | — | — |
-| `DIALOGO_ABERTO_VALOR` | `16775` | [blazesbot/core/memory.py:653](blazesbot/core/memory.py#L653) | — | — |
-| `DIALOGO_FECHADO_VALOR` | `16774` | [blazesbot/core/memory.py:654](blazesbot/core/memory.py#L654) | — | — |
-| `ESCALA_DE_INIMIGO` | `100` | [blazesbot/core/memory.py:730](blazesbot/core/memory.py#L730) | afericao_do_aliado.py | HP máximo padrão de inimigos do covil (Gun Witch, Cemetery Guard, etc.) |
+| `BAG_CLOSED_VALUE` | `902` | [blazesbot/core/memory.py:728](blazesbot/core/memory.py#L728) | — | Valor da bolsa FECHADA. Medido em 02/09/2026 alternando a tecla `I` e lido em |
+| `BAG_OPEN_VALUE` | `903` | [blazesbot/core/memory.py:724](blazesbot/core/memory.py#L724) | — | — |
+| `DIALOGO_ABERTO_VALOR` | `16775` | [blazesbot/core/memory.py:656](blazesbot/core/memory.py#L656) | — | — |
+| `DIALOGO_FECHADO_VALOR` | `16774` | [blazesbot/core/memory.py:657](blazesbot/core/memory.py#L657) | — | — |
+| `ESCALA_DE_INIMIGO` | `100` | [blazesbot/core/memory.py:733](blazesbot/core/memory.py#L733) | afericao_do_aliado.py | HP máximo padrão de inimigos do covil (Gun Witch, Cemetery Guard, etc.) |
 | `ESPELHO_DELTA` | `928` | [blazesbot/core/memory.py:110](blazesbot/core/memory.py#L110) | — | O BLOCO ATRASADO EM +0x3A0 -- o passado do estado, nao uma segunda fonte |
 | `JANELA_DE_COMBATE` | `16` | [blazesbot/core/memory.py:71](blazesbot/core/memory.py#L71) | — | Quantos bytes ler de cada lado de `OFF_BATTLE` em `battle_window()`. Serve para |
-| `LIMITE_DE_ENTIDADES` | `512` | [blazesbot/core/memory.py:468](blazesbot/core/memory.py#L468) | target_hybrid.py | Quantos slots do array de entidades varrer. 512 cobre com folga o que o |
-| `MAXIMO_DE_MEMBROS_LIDOS` | `4` | [blazesbot/core/memory.py:421](blazesbot/core/memory.py#L421) | — | O time do Talisman vai a cinco (o personagem mais quatro), mas a tabela lida |
+| `LIMITE_DE_ENTIDADES` | `512` | [blazesbot/core/memory.py:471](blazesbot/core/memory.py#L471) | target_hybrid.py | Quantos slots do array de entidades varrer. 512 cobre com folga o que o |
+| `MAXIMO_DE_MEMBROS_LIDOS` | `5` | [blazesbot/core/memory.py:424](blazesbot/core/memory.py#L424) | — | O time do Talisman vai a cinco (1 líder + 4 damages). `teamSize` CONTA O |
 | `PASSO_DA_PROVA_DA_CAMERA` | `0.05` | [blazesbot/core/memory.py:385](blazesbot/core/memory.py#L385) | — | — |
 | `PASSO_ENTRE_MEMBROS` | `136` | [blazesbot/core/memory.py:415](blazesbot/core/memory.py#L415) | — | — |
 | `PROVA_DA_CAMERA` | `5.0` | [blazesbot/core/memory.py:372](blazesbot/core/memory.py#L372) | — | Quanto o diagnóstico soma ao ângulo para PROVAR que a escrita move a câmera. |
-| `SIT_VALUE` | `200` | [blazesbot/core/memory.py:720](blazesbot/core/memory.py#L720) | — | Valores sentinela observados no cliente |
-| `SYSTEM_MENU_VALUE` | `1610612736` | [blazesbot/core/memory.py:726](blazesbot/core/memory.py#L726) | — | — |
+| `SIT_VALUE` | `200` | [blazesbot/core/memory.py:723](blazesbot/core/memory.py#L723) | — | Valores sentinela observados no cliente |
+| `SYSTEM_MENU_VALUE` | `1610612736` | [blazesbot/core/memory.py:729](blazesbot/core/memory.py#L729) | — | — |
 | `TETO_DA_PROVA_DA_CAMERA` | `1.0` | [blazesbot/core/memory.py:384](blazesbot/core/memory.py#L384) | — | Teto da espera pelo termômetro depois de uma escrita na câmera. |
 | `TOLERANCIA_DA_POSE` | `0.001` | [blazesbot/core/memory.py:317](blazesbot/core/memory.py#L317) | — | Quanto cada campo da pose pode variar e ainda contar como certo. |
 | `TOLERANCIA_DO_ANGULO` | `0.001` | [blazesbot/core/memory.py:366](blazesbot/core/memory.py#L366) | — | Quanto o ângulo pode variar e ainda contar como certo. |
-| `VIDA_MAXIMA_DE_MOB` | `100` | [blazesbot/core/memory.py:574](blazesbot/core/memory.py#L574) | — | MOB VÁLIDO TEM VIDA MÁXIMA 100 -- e é assim que se sabe que é mob |
+| `VIDA_MAXIMA_DE_MOB` | `100` | [blazesbot/core/memory.py:577](blazesbot/core/memory.py#L577) | — | MOB VÁLIDO TEM VIDA MÁXIMA 100 -- e é assim que se sabe que é mob |
 | `HC_ACTION` | `0` | [blazesbot/core/mouse_shield.py:126](blazesbot/core/mouse_shield.py#L126) | instrumentar_clique.py | — |
 | `VALIDADE_DO_RETANGULO` | `2.0` | [blazesbot/core/mouse_shield.py:130](blazesbot/core/mouse_shield.py#L130) | — | Quanto tempo o retângulo da janela vale antes de ser relido. A janela do jogo |
 | `WH_MOUSE_LL` | `14` | [blazesbot/core/mouse_shield.py:118](blazesbot/core/mouse_shield.py#L118) | instrumentar_clique.py, supervisor.py, inputs.py | Constantes Win32 |

@@ -50,7 +50,7 @@ def rodar_a_fada(sup, so_montar: bool = False):
     from ..core.inputs import Input as _Input
     from . import mural
     from .fada import FadaDoTime
-    from .time_do_app import aceitador_do_seguidor
+    from .time_do_app import aceitador_do_seguidor, ancora_do_lider
 
     log = logging.getLogger(f"blazes.{sup.account.login}")
     teclas = sup.account.settings.keys
@@ -199,6 +199,20 @@ def rodar_a_fada(sup, so_montar: bool = False):
     atender_convite = fechar_o_aceitador = None
     if not so_montar:
         atender_convite, fechar_o_aceitador = aceitador_do_seguidor(sup)
+
+        # A ÂNCORA DO TIME -- 22/09/2026. A Fada é quem mais sofre com o ponto
+        # individual: ela não persegue ninguém, fica parada curando, e o alcance
+        # da cura é o que define se o time vive. Ancorada dois passos ao lado do
+        # líder, ela passa o farm inteiro dois passos fora do alcance.
+        #
+        # SEMEAR ANTES DO LAÇO é o que faz isto funcionar: `voltar_ao_ponto`
+        # guarda a posição ATUAL dela na primeira chamada em que o ponto ainda é
+        # `None`. Com o ponto do líder já posto, aquela captura não acontece.
+        ancora = ancora_do_lider(sup)
+        if ancora is not None:
+            ponto_inicial[0] = ancora
+            log.info("FADA: ponto inicial veio do líder %s — é para lá que eu "
+                     "volto se me arrastarem.", ancora)
 
     fada = FadaDoTime(
         log=log,

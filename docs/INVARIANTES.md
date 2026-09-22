@@ -431,6 +431,14 @@ e `docs/decisoes/deletador.md`.
   (`no_arranque=True`, 19/09/2026): o relógio dela é do supervisor, que
   sobrevive ao ligar/desligar do modo APP — e religar é justamente quando o
   usuário acabou de mexer no time.
+- **EM TIME, O PONTO INICIAL É O DO LÍDER** (22/09/2026). Ele publica a âncora
+  UMA VEZ, no arranque do modo APP (`mural.publicar_ancora`); seguidores e Fada
+  esperam por ela (teto de `ESPERA_PELA_RESPOSTA`) e usam no lugar do ponto
+  deles. **SOLO NÃO MUDA NADA**, e a troca é só da SESSÃO: o `config.json` do
+  seguidor continua com o ponto dele, que é o que ele usa fora do time. Publicar
+  de novo durante o farm é proibido — o líder anda, e a âncora do time andaria
+  junto. `(0,0)` é recusado: é o que a leitura devolve antes de o personagem
+  entrar no mundo.
 - **NINGUÉM SE MEXE ANTES DO TIME** (19/09/2026). O seguidor espera entrar no
   time antes de começar a macro (`time_do_app.esperar_o_lider_montar`), e
   enquanto espera ele **publica sinal de vida** (senão o líder não o convida) e

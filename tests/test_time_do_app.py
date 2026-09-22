@@ -39,7 +39,7 @@ class _Sup:
 
     def __init__(self, lider="lider", membros=("lider", "s1", "s2"),
                  nicks=None, sou_o_lider=True, funcao_do_lider="app",
-                 lider_ligado=True):
+                 lider_ligado=True, em_time=True):
         self.account = SimpleNamespace(login="lider" if sou_o_lider else "s1",
                                        last_char_name="Lider" if sou_o_lider
                                        else "Um")
@@ -59,6 +59,10 @@ class _Sup:
         self._membros = list(membros)
         self._nicks = nicks or {"lider": "Lider", "s1": "Um", "s2": "Dois"}
         self._lider = lider
+        self._em_time = em_time
+
+    def _tem_time_do_app(self):
+        return self._em_time
 
     def _membros_do_time(self):
         return list(self._membros)
@@ -414,6 +418,110 @@ def test_o_interruptor_DESLIGA_a_montagem(monkeypatch):
     monkeypatch.setattr(mod, "BotContext", lambda **k: abriu.append(1))
     assert mod.montar_o_time(sup, _Memoria(["Lider"])) is False
     assert abriu == []
+
+
+# ---------------------------------------------------------------------------
+# A ÂNCORA DO TIME — o ponto inicial do líder vale para todos
+# ---------------------------------------------------------------------------
+
+def test_o_LIDER_publica_a_ancora_e_o_seguidor_usa_a_dele():
+    """*"O líder captura a coordenada inicial e compartilha; todos sobrescrevem
+    o próprio ponto"* (usuário, 22/09/2026)."""
+    lider = _Sup(sou_o_lider=True)
+    seguidor = _Sup(sou_o_lider=False)
+
+    assert mod.publicar_a_ancora(lider, (1869, 1668)) is True
+    assert mod.ancora_do_lider(seguidor) == (1869, 1668)
+
+
+def test_SOLO_nao_publica_e_nao_espera_ninguem():
+    """A trava de escopo. Conta sozinha não tem líder para procurar, e procurar
+    gastaria o teto inteiro parada antes de cada farm."""
+    solo = _Sup(sou_o_lider=True, em_time=False)
+    assert mod.publicar_a_ancora(solo, (10, 20)) is False
+    assert mural.ancora_do_time("lider") is None
+
+    seguidor_sem_time = _Sup(sou_o_lider=False, em_time=False)
+    mural.publicar_ancora("lider", (10, 20))
+    assert mod.ancora_do_lider(seguidor_sem_time) is None, (
+        "conta fora de time foi atrás da âncora de alguém")
+
+
+def test_o_SEGUIDOR_nao_dita_ancora():
+    """Só o dono da macro publica. Dois publicadores seriam duas âncoras
+    disputando a mesma chave do mural."""
+    seguidor = _Sup(sou_o_lider=False)
+    assert mod.publicar_a_ancora(seguidor, (5, 5)) is False
+    assert mural.ancora_do_time("lider") is None
+
+
+def test_a_espera_SEGURA_o_seguidor_ate_a_ancora_chegar(monkeypatch):
+    """A trava de concorrência: o líder publica ~0,9 s depois (medido em
+    19/09/2026), e sem esperar o seguidor ancoraria no ponto dele."""
+    seguidor = _Sup(sou_o_lider=False)
+    tentativas = {"n": 0}
+    de_verdade = mural.ancora_do_time
+
+    def demorando(login):
+        tentativas["n"] += 1
+        return de_verdade(login) if tentativas["n"] >= 3 else None
+
+    monkeypatch.setattr(mural, "ancora_do_time", demorando)
+    mural.publicar_ancora("lider", (77, 88))
+
+    assert mod.ancora_do_lider(seguidor) == (77, 88)
+    assert tentativas["n"] >= 3, "voltou antes de perguntar de novo"
+
+
+def test_o_TETO_solta_o_seguidor_com_o_ponto_dele():
+    """Começar espalhado é ruim; não começar é pior."""
+    seguidor = _Sup(sou_o_lider=False)
+    assert mod.ancora_do_lider(seguidor, teto=0.01) is None
+    assert any("não publicou ponto inicial" in t for _n, t in seguidor.linhas)
+
+
+def test_ancora_em_ZERO_e_recusada():
+    """(0,0) é o que a leitura devolve antes de o personagem entrar no mundo.
+    Ancorar o time ali manda todo mundo andar para o canto do mapa."""
+    lider = _Sup(sou_o_lider=True)
+    mod.publicar_a_ancora(lider, (0, 0))
+    assert mural.ancora_do_time("lider") is None
+
+
+def test_sem_base_nao_publica_nada():
+    lider = _Sup(sou_o_lider=True)
+    assert mod.publicar_a_ancora(lider, None) is False
+
+
+def test_o_supervisor_PUBLICA_e_CONSOME_antes_de_montar_o_executor():
+    """Depois do executor montado seria tarde: a base entra nele por parâmetro
+    e só é lida uma vez."""
+    import inspect
+
+    from blazesbot.bot import supervisor
+
+    fonte = inspect.getsource(supervisor.AccountSupervisor._rodar_modo_app)
+    assert "_publicar_a_ancora(self, base_pos)" in fonte
+    assert "_ancora_do_lider(self)" in fonte
+    assert fonte.index("_ancora_do_lider(self)") < fonte.index("base_pos=base_pos"), (
+        "a âncora chegou depois de a base já ter ido para o executor")
+    assert "esquecer_ancora" in fonte, (
+        "a âncora sobreviveria ao líder, e o próximo religar ancoraria numa "
+        "sessão que acabou")
+
+
+def test_a_FADA_tambem_nasce_ancorada_no_lider():
+    """Ela é a que mais sofre: fica parada curando, e a cura tem alcance."""
+    import inspect
+
+    from blazesbot.bot import fada_montagem
+
+    fonte = inspect.getsource(fada_montagem.rodar_a_fada)
+    assert "ancora_do_lider(sup)" in fonte
+    assert "ponto_inicial[0] = ancora" in fonte
+    assert fonte.index("ponto_inicial[0] = ancora") < fonte.index("fada.rodar()"), (
+        "semear depois do laço não adianta: `voltar_ao_ponto` já teria guardado "
+        "a posição dela na primeira volta")
 
 
 # ---------------------------------------------------------------------------

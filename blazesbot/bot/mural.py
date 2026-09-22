@@ -46,7 +46,16 @@ import time
 # O QUADRO DOS MORTOS mora ao lado (ver `mural_da_morte.py`): dicionários e
 # tranca próprios, e este arquivo já estava no teto de 800 linhas. Reexportado
 # aqui para quem lê o mural continuar dizendo `mural.morri(...)`.
-from . import mural_da_morte
+from . import mural_da_ancora, mural_da_morte
+
+# A ÂNCORA DO TIME mora ao lado (`mural_da_ancora.py`), pelo mesmo motivo do
+# quadro dos mortos: dicionário e tranca próprios, e este arquivo no teto de
+# 800 linhas do portão de qualidade.
+from .mural_da_ancora import (  # noqa: F401
+    ancora_do_time,
+    esquecer_ancora,
+    publicar_ancora,
+)
 from .mural_da_morte import (  # noqa: F401
     SEGUNDOS_DE_MORTO_PARA_FURAR_A_FILA,
     VALIDADE_DO_FEITICO,
@@ -754,3 +763,4 @@ def zerar_o_time_para_teste() -> None:
     # O QUADRO DOS MORTOS mora em outro arquivo (dicionários e tranca
     # próprios), e ficar de fora daqui já vazou estado entre testes.
     mural_da_morte.zerar_para_teste()
+    mural_da_ancora.zerar_para_teste()
