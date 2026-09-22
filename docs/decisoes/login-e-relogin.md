@@ -915,3 +915,88 @@ O sintoma implementado — *o Ok não tira a conta da lista* — cobre o Offline
 prática, e cobre junto o servidor reiniciando e o Ok engolido, que a leitura do
 texto não cobriria. Para a leitura literal falta **um print 1:1 da tela com o
 servidor Offline**; com ele, são cinco linhas.
+
+## 22/09/2026, parte 2 — o Offline lido, e a causa raiz do estado sem saída
+
+O Cancel da parte 1 não bastou: o usuário mandou o print da conta **parada na
+lista com o servidor Offline**, *"sem voltar apertando Cancel (…) não vai nem
+para frente nem para trás, e isso deixa o jogo em um estado infinito"*.
+
+### A causa raiz: `connected` mente sobre onde a conta está
+
+Olhe o título da janela no print:
+
+```
+Talisman Online | Light in the Darkness | ver.6401
+```
+
+…**com a lista de servidores aberta na tela**. E `Detection.connected` é
+exatamente `server_in_title is not None`.
+
+O cliente põe o nome do servidor no título **quando a linha é escolhida**, não
+quando se entra. Então, parado na lista, o bot se considerava *conectado* — e o
+laço fazia:
+
+```python
+if det.connected:
+    pre_server_deadline = float("inf")   # relógio DESLIGADO
+```
+
+Sem relógio e sem entrar, **nada mais tinha prazo**. É literalmente o "nem para
+frente nem para trás". O `PRE_SERVER_TIMEOUT` de 10 min, que era a última rede,
+nunca chegava a correr.
+
+Correção: o relógio só desliga quando a conta passou da lista de verdade.
+
+```python
+na_lista_de_servidores = det.screen is LoginScreen.SERVER_LIST
+if det.connected and not na_lista_de_servidores:
+    pre_server_deadline = float("inf")
+```
+
+> O `if` **não** menciona `det.screen` diretamente de propósito:
+> `tests/test_contador_de_credenciais.py` procura o primeiro `if` com
+> `det.screen` e `SERVER_LIST` para achar o ramo do reset do contador de
+> credenciais, e um segundo `if` com os dois roubava o dele.
+
+### O "Offline", agora lido de verdade
+
+O print 1:1 com o servidor Offline chegou, e com ele a medição que faltava. O
+mesmo recorte da coluna "Server Status", nas quatro linhas da lista:
+
+| linha | status | nota |
+|---|---|---|
+| White Horse [NEW] | Online | 0.713 |
+| Sky Ice (GSM&BI) | Online | 0.713 |
+| All Stars | Online | 0.713 |
+| **Light in the Darkness** | **Offline** | **1.000** |
+
+Margem de **+0.287**, e o limiar fica no meio: **0.85**. O template
+(`data/templates/estado/server_offline.png`, 38×12) foi recortado da linha
+**selecionada** — fundo azul do realce —, que é o único estado em que o bot faz
+esta pergunta: ele seleciona a linha antes de olhar.
+
+A leitura é **da linha escolhida**, nunca da tela inteira: quase sempre há algum
+servidor offline na lista, e olhar a tela toda derrubaria a conta pelo status
+alheio. Região derivada do próprio ponto da linha (+147 em x sobre o nome,
+janela de 120 px, altura de uma linha).
+
+Mora em `LoginStateDetector.servidor_offline`, e não no `LoginSequence`: é
+leitura de tela de login, o mesmo papel do `find_button` e das assinaturas
+daquele módulo. O `LoginSequence` decide o que fazer com a resposta; ele não lê
+pixel.
+
+### As três saídas, em ordem de certeza
+
+| quando | como se sabe | custo |
+|---|---|---|
+| servidor **fora da lista** | `server_point` não acha o nome | imediato |
+| servidor **Offline** | template na linha escolhida, 0.85 | imediato, antes de gastar o Ok |
+| **o resto** (reiniciando, Ok engolido, captura cega) | 3 voltas à mesma tela | alguns segundos |
+
+A terceira é a REDE das duas primeiras: sem quadro, `servidor_offline` devolve
+`False` — não saber não é motivo para cancelar um login — e a contagem cobre.
+
+A leitura do status acontece **fora do laço de seleção** e **antes do Ok**:
+dentro do laço ela só valeria com o realce confirmado, e a linha pode estar
+Offline mesmo sem ele (captura intermitente, clique engolido).

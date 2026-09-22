@@ -82,6 +82,17 @@
   usá-lo fora dela é o que o projeto proíbe. Custou um laço de relogin a cada
   19 s em 09/09/2026. Agravante do travamento: a **fila de login** passa de três
   horas e não há medição de como o cliente bombeia mensagens nela.
+- **`connected` NÃO QUER DIZER QUE PASSOU DA LISTA.** É só o servidor no
+  título, e o cliente o põe lá quando a LINHA É ESCOLHIDA. Desligar o relógio
+  das telas iniciais por causa dele tirava o último prazo de uma conta parada na
+  lista — o "nem para frente nem para trás" de 22/09/2026. O relógio só desliga
+  fora da `SERVER_LIST`.
+- **O STATUS "Offline" É LIDO NA LINHA ESCOLHIDA, NUNCA NA TELA INTEIRA.** Quase
+  sempre há algum servidor offline na lista; olhar a tela toda derrubaria a
+  conta pelo status alheio. Limiar 0.85, medido no print 1:1 de 22/09/2026:
+  Offline 1.000 × Online 0.713, margem +0.287. Mora em
+  `LoginStateDetector.servidor_offline` — leitura de tela é do detector, não da
+  sequência de login.
 - **A LISTA DE SERVIDORES TEM SAÍDA, E É O CANCEL.** É o único ponto do login
   em que insistir não adianta e sair não acontece sozinho: servidor fora da
   lista, Offline ou reiniciando deixava a conta presa ali para sempre — o

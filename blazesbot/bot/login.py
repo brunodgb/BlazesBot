@@ -56,17 +56,12 @@ from .watchdog import kill_client
 # horas", que é coisa diferente.
 MAX_CREDENTIAL_ERRORS = 5
 
-# Quantas voltas na lista de servidores antes de sair pelo Cancel.
-#
-# A lista não prende a conta só quando o servidor sumiu: ela também prende
-# quando o servidor está **Offline** (o Ok não faz nada) e quando ele reiniciou
-# e a lista mudou embaixo do bot. Nos três casos o sintoma é o mesmo, e é o
-# único que se mede sem template novo: **clicou no Ok e continua na lista**.
-#
-# Três, e não uma: clique engolido é comum nesta UI -- a própria seleção da
-# linha já tenta três vezes pelo mesmo motivo. Três VOLTAS DO LAÇO com o Ok sem
-# efeito não é azar, é a lista não deixando sair.
+# Voltas na lista antes de sair pelo Cancel -- a REDE, para o que a leitura do
+# status não pega (servidor reiniciando, Ok engolido, captura cega). Três, e não
+# uma: clique engolido é comum nesta UI, e a seleção da linha já tenta três
+# vezes pelo mesmo motivo. Conta VOLTAS À MESMA TELA, não cliques.
 VOLTAS_NA_LISTA_DE_SERVIDORES = 3
+
 
 # NÃO EXISTE LIMITE DE TEMPO NA FILA.
 #
@@ -464,6 +459,10 @@ class LoginSequence:
                           self.account.server, wanted)
 
         indice = c.server_index(wanted)
+        # A linha da tabela e o ULTIMO quadro capturado, para a leitura do
+        # status acontecer depois do laco -- ver o bloco antes do Ok.
+        primeira = (c.server_row_x, c.server_first_row_y)
+        ultimo_quadro = None
         for attempt in range(1, 4):
             # Linha do servidor derivada do título "Server List" localizado na
             # tela; cai para a coordenada por âncora se o template não casar.
@@ -482,6 +481,7 @@ class LoginSequence:
                 # Sem imagem não há como confirmar; segue em frente.
                 self.log.debug("Sem imagem para confirmar a seleção")
                 break
+            ultimo_quadro = det.frame
 
             selecionado = find_highlighted_row(
                 det.frame, primeira[1], c.server_row_height,
@@ -503,6 +503,14 @@ class LoginSequence:
             self.log.warning("Não confirmei a seleção de '%s'; seguindo com Ok",
                              wanted)
 
+        # O STATUS ANTES DE GASTAR O Ok, e FORA DO LAÇO: dentro dele a leitura
+        # só valeria com o realce confirmado, e a linha pode estar Offline mesmo
+        # sem ele (captura intermitente, clique engolido).
+        if self.detector.servidor_offline(ultimo_quadro, primeira, indice):
+            self._sair_da_lista_de_servidores(
+                f"o servidor '{wanted}' está OFFLINE na lista")
+            return
+
         # CHEGAR AQUI DE NOVO SIGNIFICA QUE O Ok ANTERIOR NÃO SAIU DA LISTA.
         # O laço principal só devolve a fase para `SERVER` quando a IMAGEM
         # mostra a lista, então isto conta voltas à mesma tela, não cliques --
@@ -523,31 +531,14 @@ class LoginSequence:
     def _sair_da_lista_de_servidores(self, motivo: str) -> None:
         """Sai da lista pelo CANCEL e recomeça o login. A única saída que existe.
 
-        =================================================================
-        POR QUE O CANCEL, E NÃO MAIS UMA TENTATIVA
-        =================================================================
-
-        Relato do usuário (22/09/2026): *"já aconteceu do servidor reiniciar e,
-        como não entra, fica travado nessa tela específica de escolha de
-        servidor"*.
-
         A lista é o único ponto do login em que insistir não adianta e sair não
-        acontece sozinho:
+        acontece sozinho: servidor fora dela, Offline ou reiniciando prendia a
+        conta para sempre. O Cancel volta para a tela de login, e daí o ciclo
+        recomeça com a lista RELIDA -- é o que dá ao servidor a chance de voltar
+        sem ninguém olhar. Relato e medição:
+        `docs/decisoes/login-e-relogin.md`.
 
-          * servidor **fora da lista** -> `_do_server` levantava `LoginError`
-            direto, e o supervisor voltava PARA A MESMA JANELA, que continua na
-            lista. Mesmo erro, para sempre.
-          * servidor **Offline** ou reiniciando -> o Ok não faz nada. A tela
-            continua `SERVER_LIST`, o laço devolve a fase para `SERVER`, e
-            `_do_server` clica de novo. Para sempre.
-
-        O Cancel volta para a tela de login, e daí o ciclo inteiro recomeça
-        sozinho: credenciais, lista RELIDA, servidor de novo. É o que dá ao
-        servidor a chance de voltar sem ninguém olhar.
-
-        NÃO LEVANTA quando consegue cancelar: sair pela porta é caminho normal,
-        não falha. Só levanta se nem o Cancel estiver onde deveria -- aí a tela
-        não é a que este método sabe desfazer.
+        Não levanta: sair pela porta é caminho normal, não falha.
         """
         self.log.warning("%s — saindo da lista pelo Cancel.", motivo)
         cancel = self._anchored("server", "server_cancel",
@@ -1034,7 +1025,13 @@ class LoginSequence:
             # O relógio das telas iniciais só corre enquanto NÃO estamos
             # conectados. Ao conectar, ele é desligado de vez -- é isso que
             # permite esperar a fila pelo tempo que ela levar.
-            if det.connected:
+            # `connected` é só O SERVIDOR NO TÍTULO, e o cliente põe o nome
+            # lá quando a LINHA É ESCOLHIDA -- não quando se entra. Medido no
+            # print de 22/09/2026: título "…| Light in the Darkness |…" COM a
+            # lista aberta. Desligar o relógio ali tirava o último prazo de uma
+            # conta parada na lista. Ver `docs/decisoes/login-e-relogin.md`.
+            na_lista_de_servidores = det.screen is LoginScreen.SERVER_LIST
+            if det.connected and not na_lista_de_servidores:
                 pre_server_deadline = float("inf")
             elif pre_server_deadline == float("inf"):
                 # Caiu de volta para antes do servidor: religa o relógio.

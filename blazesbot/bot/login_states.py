@@ -115,6 +115,28 @@ class Detection:
 # NOTA: o `cancel.bmp` que vem dos bots do T-R0XX NÃO é usado. Ele casa com o
 # botão "Cancel" da LISTA DE SERVIDORES também, não só o da fila -- e por isso a
 # detecção de fila original dá falso positivo na tela de servidores.
+# ===========================================================================
+# O STATUS DO SERVIDOR NA LISTA -- "Online" x "Offline"
+# ===========================================================================
+#
+# MEDIDO no print 1:1 de 22/09/2026, o MESMO recorte nas quatro linhas da lista
+# ("Light in the Darkness" Offline, os outros três Online):
+#
+#     linha Offline (a real) ....... 1.000
+#     linhas Online ................ 0.713   (as três, idênticas)
+#
+# Margem de +0.287, e o limiar fica no meio. O template foi recortado da linha
+# SELECIONADA (fundo azul do realce), que é o único estado em que o bot faz esta
+# pergunta -- ele seleciona a linha antes de olhar.
+TEMPLATE_SERVIDOR_OFFLINE = "server_offline.png"
+LIMIAR_DO_OFFLINE = 0.85
+
+# Do NOME do servidor até a coluna de status, e a largura da busca: o nome
+# centra em x=345 e o status ocupa 476-509 no mesmo print. A janela é generosa
+# porque "Online" tem 6 letras e "Offline" tem 7.
+DO_NOME_ATE_O_STATUS = 147
+LARGURA_DA_BUSCA_DO_STATUS = 120
+
 _SIGNATURES: list[tuple[LoginScreen, tuple[str, ...]]] = [
     # --- avisos modais, sempre primeiro ---
     #
@@ -286,6 +308,36 @@ class LoginStateDetector:
         if frame is None:
             return None
         return find_template(frame, template, threshold=THRESHOLD)
+
+    def servidor_offline(self, frame, primeira, indice: int,
+                         altura: int = 20) -> bool:
+        """A coluna "Server Status" daquela LINHA diz **Offline**?
+
+        Pela linha escolhida, e não pela tela: quase sempre há algum servidor
+        offline na lista, e olhar a tela inteira derrubaria a conta pelo status
+        alheio.
+
+        `False` quando não dá para olhar (sem quadro, sem template) -- não saber
+        não é motivo para cancelar um login.
+
+        Mora AQUI, e não no `LoginSequence`, porque é leitura de TELA DE LOGIN:
+        é o mesmo papel do `find_button` e das assinaturas deste módulo. O
+        `LoginSequence` decide o que fazer com a resposta; ele não lê pixel.
+        """
+        if frame is None:
+            return False
+        modelo = self.templates.load(TEMPLATE_SERVIDOR_OFFLINE)
+        if modelo is None:
+            return False
+        y = primeira[1] + indice * altura
+        regiao = (
+            primeira[0] + DO_NOME_ATE_O_STATUS - LARGURA_DA_BUSCA_DO_STATUS // 2,
+            max(0, y - altura // 2),
+            LARGURA_DA_BUSCA_DO_STATUS,
+            altura,
+        )
+        return find_template(frame, modelo, threshold=LIMIAR_DO_OFFLINE,
+                             region=regiao) is not None
 
     def capture_working(self) -> bool:
         """Se a captura já funcionou alguma vez nesta sessão."""
