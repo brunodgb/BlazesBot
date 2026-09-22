@@ -15,6 +15,7 @@ sozinho:
 """
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 import pytest
@@ -421,3 +422,58 @@ def test_nome_RECONHECIVEL_mas_ausente_da_tela_cancela(monkeypatch):
 
     assert seq.cliques == [seq.coords.server_cancel]
     assert seq.fases == [Phase.CREDENTIALS]
+
+
+def test_o_nome_e_reconhecido_NOS_DOIS_ESTADOS_da_linha():
+    """Cada servidor tem dois estados: selecionado (fundo azul) e não.
+
+    O usuário apontou a inconsistência -- os recortes tinham saído de estados
+    diferentes -- e mandou três prints da MESMA lista, cada um com uma seleção
+    diferente. A medição respondeu: o estado **não importa** (margem +0.586 do
+    selecionado contra +0.581 do não selecionado, 0.005 de diferença), porque
+    `TM_CCOEFF_NORMED` normaliza o contraste.
+
+    Este teste cobra isso: o MESMO template acha o servidor esteja a linha
+    realçada ou não, nas três telas.
+    """
+    det = _detector_real()
+    _pula_sem_templates(det)
+
+    esperado = {"White Horse [NEW]": 0, "Sky Ice (GSM&BI)": 1, "All Stars": 2}
+    for linha_selecionada in range(3):
+        img = _fixture(f"lista_3_selecao_linha{linha_selecionada}.png")
+        for nome, linha in esperado.items():
+            achou = det.linha_do_servidor(img, nome, PRIMEIRA_NA_FIXTURE, 5)
+            assert achou == linha, (
+                f"com a linha {linha_selecionada} selecionada, '{nome}' foi "
+                f"achado em {achou} e não em {linha}")
+
+
+def test_o_recorte_tem_LARGURA_FIXA_e_a_busca_e_mais_larga():
+    """O segundo achado da medição: recorte ajustado ao texto de cada nome dava
+    pior acerto 0.971; largura fixa deu 0.999.
+
+    E a busca precisa ser MAIOR que o recorte -- a janela deslizou 3 px entre os
+    prints, e sem folga o template não teria onde casar.
+    """
+    from pathlib import Path as _P
+
+    from blazesbot.bot.login_states import MEIA_LARGURA_DO_NOME
+    from blazesbot.core.vision import TemplateLibrary
+
+    lib = TemplateLibrary(_P("data") / "templates")
+    larguras = set()
+    for nome in ("White Horse [NEW]", "Sky Ice (GSM&BI)", "All Stars",
+                 "Light in the Darkness"):
+        slug = re.sub(r"[^a-z0-9]+", "_", nome.lower()).strip("_")
+        modelo = lib.load(f"servidor_{slug}.png")
+        if modelo is None:
+            pytest.skip("recortes ausentes (data/ não é versionado)")
+        larguras.add(modelo.shape[1])
+
+    assert len(larguras) == 1, (
+        f"os recortes voltaram a ter larguras diferentes: {sorted(larguras)}")
+    largura = larguras.pop()
+    assert largura < MEIA_LARGURA_DO_NOME * 2, (
+        f"o recorte ({largura}) não cabe na busca "
+        f"({MEIA_LARGURA_DO_NOME * 2}) com folga para o deslize da janela")

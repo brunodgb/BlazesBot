@@ -202,7 +202,7 @@ NOMES: dict[str, str] = {
     "Wizz68.png": "Robe Wizz lvl68",
 
     # ----------------------------------------------------------------------
-    # APP / PEÇA SEM CLASSE E BOLSA -- 40 modelos
+    # APP / PEÇA SEM CLASSE E BOLSA -- 41 modelos
     # ----------------------------------------------------------------------
     # O arquivo não diz a classe, então o rótulo não inventa uma.
     # E do tier 7 em diante ela NÃO EXISTE: o set do 70/79 e o do 80
@@ -228,6 +228,7 @@ NOMES: dict[str, str] = {
     "belt46.png": "Belt lvl46",
     "belt56.png": "Belt lvl56/66",
     "Belt76.png": "Belt lvl76",
+    "Belt84.png": "Belt lvl84",
     "Cuff12.png": "Cuff lvl12",
     "Cuff22.png": "Cuff lvl22",
     "Cuff32.png": "Cuff lvl32",
@@ -251,7 +252,7 @@ NOMES: dict[str, str] = {
     "Ring77.png": "Ring lvl77",
 
     # ----------------------------------------------------------------------
-    # APP / ITEM COM NOME -- 109 modelos
+    # APP / ITEM COM NOME -- 111 modelos
     # ----------------------------------------------------------------------
     # Nome conferido no site oficial, na lista de outro bot ou no jogo.
     # É aqui que se corrige um nome errado.
@@ -262,6 +263,7 @@ NOMES: dict[str, str] = {
     "Armguard73.png": "Armguard lvl73",
     "Armguard81.png": "Armguard lvl81",
     "Armor78.png": "Armor lvl78",
+    "Armor85.png": "Armor lvl85",
     "Armor_Piece.png": "Armor Piece",
     "BambShoot.png": "Bamboo Shoot",
     "Bjewel.png": "Bandit Jewel",
@@ -275,6 +277,7 @@ NOMES: dict[str, str] = {
     "Blue_Wolf_Meat.png": "Blue Wolf Meat",
     "Blueness-Stone.png": "Blueness Stone",
     "Boots75.png": "Boots lvl75",
+    "Boots83.png": "Boots lvl83",
     "brtpil.png": "Breath Pill",
     "Bronze_Bell.png": "Bronze Bell",
     "Cowb.png": "Cowbane",
@@ -302,7 +305,6 @@ NOMES: dict[str, str] = {
     "GlosBead.png": "Glossy Bead",
     "Gold_T.png": "Gold Thread",
     "Golden-bell.png": "Golden Bell",
-    "Golden-Id-Gem.png": "Golden Id Gem",
     "Golden-Light-Pill.png": "Golden Light Pill",
     "greenid.png": "Green Id Gem",
     "ScarpPill.png": "Green Scarp Pill",
@@ -315,6 +317,7 @@ NOMES: dict[str, str] = {
     "IceRime.png": "Ice Rime",
     "Jackstraw.png": "Jackstraw",
     "Kneepad74.png": "Kneepad lvl74",
+    "Kneepad82.png": "Kneepad lvl82",
     "LascToken.png": "Lascivious Token",
     "Lion_Meat.png": "Lion Meat",
     "Lizard-Meat.png": "Lizard Meat",

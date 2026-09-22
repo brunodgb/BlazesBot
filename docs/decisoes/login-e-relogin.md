@@ -1140,3 +1140,76 @@ recortados em `data/templates/estado/servidor_*.png`.
 `tests/dados/lista_com_4_servidores.png` e `lista_com_3_servidores.png` são
 recortes reais dos prints A e B, com nomes e status. É contra eles que os testes
 cobram a medição — ela vira teste, não fica só no comentário.
+
+## 22/09/2026, parte 5 — os dois estados da linha, e o que a medição respondeu
+
+O usuário apontou uma inconsistência real nos recortes:
+
+> *"o `servidor_light_in_the_darkness.png` está com o servidor selecionado,
+> então está tudo azul no fundo (…) cada servidor tem 2 estados, selecionado e
+> não selecionado (…) acho que vai ser melhor para identificar quando está
+> selecionado."*
+
+Ele estava certo sobre o fato (os recortes tinham saído de estados diferentes) e
+mandou três prints 1:1 da MESMA lista, cada um com uma seleção diferente — que é
+exatamente o material para medir.
+
+### O estado NÃO importa
+
+Cada servidor recortado nos dois estados, medido contra todas as linhas de todos
+os prints:
+
+| recorte tirado do estado | pior acerto | melhor falso | margem |
+|---|---|---|---|
+| **SELECIONADO** | 0.999 | 0.413 | **+0.586** |
+| não selecionado | 0.999 | 0.418 | **+0.581** |
+
+**0.005 de diferença.** `TM_CCOEFF_NORMED` normaliza o contraste, então o mesmo
+template serve para os dois fundos — não é preciso binarizar nem guardar duas
+versões por servidor. A hipótese não se confirmou, e é bom que tenha sido
+medida em vez de adotada.
+
+### Mas os prints revelaram outra coisa, essa sim
+
+Com cinco telas para medir, apareceu que o **recorte de largura fixa** é melhor
+que o recorte ajustado ao texto de cada nome:
+
+| recorte | pior acerto |
+|---|---|
+| ajustado a cada nome (larguras 57–129 px) | 0.971 |
+| **largura fixa (140 px, o centro ± 70)** | **0.999** |
+
+O recorte largo carrega um pedaço do fundo em volta do texto, e é isso que dá à
+correlação um contexto estável. A busca usa ± 80 (160 px): os 20 px de folga
+absorvem o deslize da janela, que variou 3 px entre os prints.
+
+### A medição final
+
+Cinco prints 1:1, cada template contra cada linha de cada um:
+
+| | |
+|---|---|
+| pior ACERTO | **0.999** |
+| melhor FALSO | **0.442** |
+| margem | **+0.557** |
+| limiar 0.80 | +0.358 do falso, +0.199 do acerto |
+
+### Tiger Fish: o JPEG não serve, e isso foi medido
+
+O print com "Tiger Fish (WW)" veio pelo WhatsApp — reescalado (0,735 da
+original) e em JPEG. Testei se dava para recuperar, usando como prova o **Sky
+Ice**, que aparece nessa imagem E nos prints 1:1: recortei o Sky Ice da jpeg
+reescalada de volta e medi contra as telas reais.
+
+| | |
+|---|---|
+| pior acerto | **0.080** |
+| melhor falso | **0.216** |
+| margem | **−0.136** |
+
+Margem **negativa**: o recorte da jpeg reconhece a linha errada melhor que a
+certa. Reescala + JPEG destroem o template — a mesma lição de 09/09/2026, agora
+com número.
+
+"Tiger Fish (WW)" segue sem recorte, caindo no índice estático com as redes de
+baixo, até existir um print **1:1 em PNG** com ele na lista.

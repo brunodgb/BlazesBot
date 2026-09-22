@@ -146,16 +146,25 @@ LARGURA_DA_BUSCA_DO_STATUS = 120
 # entra em manutenção e some da tela, e todos os índices abaixo dele deslocam.
 # Em 22/09/2026 isso fez a conta entrar em OUTRO servidor.
 #
-# A saída é ler o NOME de cada linha. MEDIDO em dois prints 1:1 do mesmo dia
-# (um com 4 servidores, outro com 3), cada template contra cada linha dos dois:
+# A saída é ler o NOME de cada linha. MEDIDO em CINCO prints 1:1 de 22/09/2026 --
+# listas de 4 e de 3 servidores, e três da mesma lista com uma seleção diferente
+# em cada, para o recorte ser cobrado NOS DOIS ESTADOS. Cada template contra
+# cada linha dos cinco:
 #
-#     pior ACERTO ......... 0.971   (linha SELECIONADA, fundo azul do realce)
-#     melhor FALSO ........ 0.436
-#     margem .............. +0.534
+#     pior ACERTO ......... 0.999
+#     melhor FALSO ........ 0.442
+#     margem .............. +0.557   (limiar 0.80: +0.358 do falso, +0.199 do acerto)
 #
-# O limiar fica no meio, com folga de 0.17 para cada lado. E NÃO é preciso
-# binarizar para vencer o fundo azul: `TM_CCOEFF_NORMED` normaliza o contraste,
-# e o mesmo template casa a 1.000 no fundo preto e 0.971 no azul.
+# DOIS ACHADOS que mudaram o recorte, os dois medidos e nenhum suposto:
+#
+#   1. O ESTADO NÃO IMPORTA. Recorte do selecionado x do não selecionado dá
+#      margem de +0.586 x +0.581 -- 0.005 de diferença. `TM_CCOEFF_NORMED`
+#      normaliza o contraste, então o mesmo template serve para os dois fundos e
+#      NÃO é preciso binarizar nem guardar duas versões por servidor.
+#   2. LARGURA FIXA É MELHOR que recorte ajustado ao texto de cada nome: o pior
+#      acerto subiu de 0.971 para 0.999. O recorte tem 140 px (o centro ± 70) e a
+#      busca 160 (± 80) -- os 20 px de folga absorvem o deslize da janela, que
+#      variou 3 px entre os prints.
 LIMIAR_DO_NOME_DO_SERVIDOR = 0.80
 
 # Meia-largura da busca em torno do CENTRO do nome, e não coluna absoluta: o

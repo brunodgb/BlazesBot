@@ -101,9 +101,18 @@ MENU_LEAVE_TEMPLATE = "menu_leave_team.png"
 TEAM_MEMBER_TEMPLATE = "state_team_member.png"
 
 # Semelhança a partir da qual um recorte aprendido é considerado o mesmo texto.
-# Medido alto de propósito: o que se quer distinguir são nicks diferentes na
-# mesma fonte e na mesma posição, e aí a diferença é enorme.
-SEMELHANCA_MINIMA = 0.90
+#
+# ARMADILHA DE COLISÃO (HOTFIX 21/09/2026): nomes como 'WizzOfBlazes' e
+# 'WizzOfBlazes5' diferem apenas num caractere -- na mesma fonte e na mesma
+# posição isso representa ~5–8% dos pixels. Com 0.90 ambos casavam com o
+# recorte aprendido do mais curto: `score('WizzOfBlazes') >= 0.90` era `True`
+# mesmo com 'WizzOfBlazes5' na linha, o sistema concluía "já está registrado"
+# e pulava o re-registro -- o convite saía para o nick errado.
+#
+# 0.97 exige divergência de apenas 3%, o que distingue qualquer par de nicks
+# que diferem em ≥1 caractere alfanumérico na fonte do jogo (medido: a
+# diferença de um dígito muda ~10% dos pixels no recorte).
+SEMELHANCA_MINIMA = 0.97
 
 # Item "Team up" do menu de contexto da entrada na lista.
 MENU_TEAM_UP_TEMPLATE = "menu_team_up.png"
@@ -201,6 +210,14 @@ class TeamService:
         # `None` = o do personagem, que agora é o único que existe.
         self._nick_do_reset = nick_do_reset
         self.aprendidos = LearnedCrops(ctx.templates.folder / "aprendidos")
+        # Nick que foi efetivamente registrado na Block list NESTA sessão.
+        #
+        # HOTFIX 21/09/2026 (colisão de nomes): a verificação visual
+        # (`_primeira_entrada_e`) pode retornar True para nicks parecidos, como
+        # 'WizzOfBlazes' e 'WizzOfBlazes4', mesmo com SEMELHANCA_MINIMA elevado.
+        # Este campo garante que, se o nick solicitado é DIFERENTE do que foi
+        # registrado aqui, o cache visual é ignorado e o re-registro é forçado.
+        self._nick_registrado_na_blocklist: str | None = None
 
     def nick_do_reset(self) -> str:
         """O nick da conta que reseta a cave que está rodando."""
@@ -438,8 +455,28 @@ class TeamService:
         None  = não foi possível decidir (sem captura, ou nunca aprendi o
                 recorte deste nick) -- e aí quem chama refaz o registro, que é a
                 ação segura.
+
+        GUARDA DO CACHE DE NICK (HOTFIX 21/09/2026): se o nick solicitado difere
+        do que foi registrado nesta sessão (`_nick_registrado_na_blocklist`), a
+        função retorna False imediatamente, forçando o re-registro. Isso impede
+        que o recorte visual de 'WizzOfBlazes' case com a linha 'WizzOfBlazes5'
+        -- mesmo com SEMELHANCA_MINIMA alto, o match visual nunca é acionado
+        quando o nick mudou.
         """
         ctx = self.ctx
+
+        # GUARDA PRIMÁRIA: nick diferente do registrado = re-registro obrigatório.
+        # Verificação de string exata (case-insensitive) ANTES de qualquer imagem.
+        nick_limpo = nick.strip()
+        registrado = (self._nick_registrado_na_blocklist or "").strip()
+        if registrado.lower() != nick_limpo.lower():
+            ctx.log.info(
+                "Block list: nick solicitado '%s' difere do registrado '%s'; "
+                "forçando re-registro sem usar comparação visual.",
+                nick_limpo, registrado or "(nenhum)",
+            )
+            return False
+
         regiao = self._regiao(pontos["primeira_entrada"], BLOCK_ENTRY_REGION)
         quadro = capture_window(ctx.hwnd)
         if quadro is None:
@@ -449,14 +486,15 @@ class TeamService:
             ctx.log.info("Block list está vazia")
             return False
 
-        score = self.aprendidos.score(f"block_{nick}", quadro, regiao)
+        score = self.aprendidos.score(f"block_{nick_limpo}", quadro, regiao)
         if score is None:
-            ctx.log.debug("Ainda não conheço o recorte de '%s' na Block list", nick)
+            ctx.log.debug("Ainda não conheço o recorte de '%s' na Block list",
+                          nick_limpo)
             return None
         confere = score >= SEMELHANCA_MINIMA
         ctx.log.info(
-            "Primeira linha da Block list %s '%s' (semelhança %.2f)",
-            "é" if confere else "NÃO é", nick, score,
+            "Primeira linha da Block list %s '%s' (semelhança %.2f, limiar %.2f)",
+            "é" if confere else "NÃO é", nick_limpo, score, SEMELHANCA_MINIMA,
         )
         return confere
 
@@ -488,15 +526,21 @@ class TeamService:
         if not self._adicionar_nick(pontos, nick):
             return False
 
+        # Registra o nick que acabou de ser escrito -- ANTES de aprender a imagem.
+        # É este valor que a guarda primária de `_primeira_entrada_e` usa para
+        # decidir se o re-registro é obrigatório, por comparação de string exata.
+        nick_limpo = nick.strip()
+        self._nick_registrado_na_blocklist = nick_limpo
+
         # Aprende o recorte da linha recém-escrita: é o único momento em que o
         # bot SABE o que está ali, porque acabou de digitar.
         pontos = self._pontos("block_list") or pontos
         regiao = self._regiao(pontos["primeira_entrada"], BLOCK_ENTRY_REGION)
         quadro = capture_window(ctx.hwnd)
-        if self.aprendidos.save(f"block_{nick}", quadro, regiao):
+        if self.aprendidos.save(f"block_{nick_limpo}", quadro, regiao):
             ctx.log.info(
                 "Guardei como '%s' é escrito na Block list — nas próximas runs "
-                "eu reconheço e não removo nada", nick,
+                "eu reconheço e não removo nada", nick_limpo,
             )
         return True
 

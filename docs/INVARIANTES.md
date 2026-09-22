@@ -100,6 +100,16 @@
   0.436, margem +0.534) e devolve a linha real. **Não achou o nome e sabe
   reconhecê-lo → o servidor não está listado → Cancel.** Sem recorte daquele
   nome, cai no índice estático — "não sei" não bloqueia.
+- **UM RECORTE POR SERVIDOR, NÃO DOIS.** A linha tem dois estados (selecionada,
+  fundo azul; e não), mas o estado de onde o recorte saiu não muda o resultado:
+  margem +0.586 do selecionado contra +0.581 do não selecionado. Medido em cinco
+  prints 1:1, com cada servidor nos dois estados.
+- **RECORTE DE NOME TEM LARGURA FIXA** (140 px, o centro ± 70), não ajustada ao
+  texto: ajustado dava pior acerto 0.971, fixo dá 0.999. A busca é mais larga
+  (± 80) para absorver o deslize da janela, medido em 3 px entre prints.
+- **TEMPLATE NÃO SE TIRA DE IMAGEM REESCALADA OU JPEG.** Medido em 22/09/2026
+  com um print do WhatsApp (0,735 da original): margem **−0.136** — o recorte
+  reconhece a linha errada melhor que a certa.
 - **NÃO BINARIZE PARA VENCER O REALCE AZUL.** `TM_CCOEFF_NORMED` normaliza o
   contraste: o mesmo template casa 1.000 no fundo preto e 0.971 no azul. Medido
   antes de escrever o código.

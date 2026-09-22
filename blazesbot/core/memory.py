@@ -414,11 +414,14 @@ OFF_TAMANHO_DO_TIME = 0x3D8
 OFF_PRIMEIRO_MEMBRO = 0x144
 PASSO_ENTRE_MEMBROS = 0x88
 
-# O time do Talisman vai a cinco (o personagem mais quatro), mas a tabela lida
-# tem quatro entradas. `teamSize` CONTA O PRÓPRIO PERSONAGEM: com 3 no time, os
-# nomes 1..3 são válidos e o 4 vem lixo -- foi assim em todos os clientes do
-# log, e é por isso que a leitura se guia pelo tamanho e não pelo lixo.
-MAXIMO_DE_MEMBROS_LIDOS = 4
+# O time do Talisman vai a cinco (1 líder + 4 damages). `teamSize` CONTA O
+# PRÓPRIO PERSONAGEM: com 3 no time, os nomes 1..3 são válidos e o 4 vem lixo
+# -- é por isso que a leitura se guia pelo tamanho e não pelo lixo.
+#
+# HOTFIX 21/09/2026: estava 4. Com um grupo completo de 5 a leitura encerrava
+# no índice [4] sem ler o 5º slot -- o Líder achava que o 5º membro ainda
+# faltava (spam de invite) e a Fada não via o HP dele (não curava).
+MAXIMO_DE_MEMBROS_LIDOS = 5
 
 # Dentro do bloco de CADA membro (relativo ao começo dele, onde está o nome).
 #
