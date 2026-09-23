@@ -1459,3 +1459,71 @@ Duas armadilhas menores no caminho, ambas medidas:
 `data/templates/estado/servidor_*.png`, todos 140×17, todos com o mesmo método
 (largura fixa em torno do centro do texto). `server_rows` está completa e o
 índice estático deixou de ser usado em qualquer servidor conhecido.
+
+## 23/09/2026 — o defeito era de UM PIXEL
+
+O bot continuava cancelando com o servidor na tela. O diagnóstico feito **de
+fora** (capturando a janela por conta própria) via os cinco nomes a 0.999 —
+então o template e o limiar estavam certos, e o problema estava no que o **bot**
+enxergava no momento da decisão.
+
+### A instrumentação que respondeu
+
+Gravar, no ponto exato da decisão: o quadro usado, a posição da primeira linha e
+a nota **bruta** (sem limiar) de cada linha. Saída:
+
+```
+LISTA: nao achei | alvo='Light in the Darkness' | primeira=(342, 246)
+     | quadro=(768, 1024, 3) | notas=[0.324, 0.253, 0.296, 0.177, 0.506]
+```
+
+`primeira` e `quadro` **idênticos** aos do diagnóstico externo. Só as notas
+diferiam: 0.506 onde eu media 0.966.
+
+### A causa: a região era três pixels mais curta que o necessário
+
+Rodando no quadro que o próprio bot salvou, com busca **livre** na coluna:
+
+> o texto casa a **1.000** com o topo do recorte em **y = 320**
+
+E a região do código ia de 316 a 336 — altura 20, a **altura da linha**. Um
+recorte de 17 px dentro de uma janela de 20 só pode ter o topo entre 316 e
+**319**. O texto estava em 320. **Um pixel fora.**
+
+A minha medição externa usava altura 21 (até 337), e por isso casava.
+
+O que empurrou o texto para fora: o centro real da primeira linha ficou **2 px**
+abaixo do que a âncora calcula. Dois pixels de desvio numa janela de quatro
+posições.
+
+### A correção: a altura da busca sai do RECORTE, não da linha
+
+```python
+alto = modelo.shape[0] + 2 * FOLGA_EM_Y_DA_BUSCA
+```
+
+Medido no quadro real do bot:
+
+| folga | pior acerto | erros |
+|---|---|---|
+| **0** (o que estava no código) | 0.386 | **5** de 5 |
+| 2 | 0.999 | 0 |
+| **6** (escolhida) | 0.999 | 0 |
+| 14 | 0.999 | 0 |
+
+6 fica no meio do platô: três vezes o desvio observado, e muito longe dos 20 px
+que seriam necessários para a busca alcançar o texto da **linha vizinha** — que
+é o limite real desta folga.
+
+A mesma correção foi aplicada ao status ("Offline"): o recorte dele é mais baixo
+(12 px) e por acaso já tinha folga, mas depender de acaso é depender de sorte.
+
+### A lição
+
+**Região de busca se dimensiona pelo que se procura, não pelo espaço onde se
+procura.** Derivar da altura da linha parecia natural e escondeu uma margem de
+4 posições — que 2 px de desvio de âncora consumiram inteira. E o defeito não
+aparecia em nenhum print preparado: só no quadro que o bot capturou sozinho.
+
+`tests/dados/lista_como_o_bot_ve.png` é esse quadro, recortado na caixa. A
+instrumentação foi removida no mesmo passo.

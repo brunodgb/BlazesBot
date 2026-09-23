@@ -33,9 +33,6 @@ class _Detector:
     _modelo_do_servidor = LoginStateDetector._modelo_do_servidor
     sabe_reconhecer = LoginStateDetector.sabe_reconhecer
     linha_do_servidor = LoginStateDetector.linha_do_servidor
-    # instrumentacao temporaria de 23/09/2026 -- sai com ela
-    _nota_bruta = LoginStateDetector._nota_bruta
-    _guardar_a_prova = LoginStateDetector._guardar_a_prova
     # Biblioteca que nunca acha nada: o status fica ILEGIVEL, que e o
     # caso cego -- os testes do Offline injetam a resposta que querem.
     templates = type("_Sem", (), {"load": staticmethod(lambda _n: None)})()
@@ -562,3 +559,62 @@ def test_COM_quadro_e_nome_ausente_cancela_como_deve():
     seq._do_server(_det_com_quadro())
 
     assert seq.cliques == [seq.coords.server_cancel]
+
+
+# ===========================================================================
+# A FOLGA EM Y -- o defeito de UM PIXEL, 23/09/2026
+# ===========================================================================
+#
+# O bot cancelava com o servidor na tela, e o diagnóstico feito de fora via os
+# cinco nomes a 0.999. A diferença estava na REGIÃO da busca:
+#
+#   * a região tinha a ALTURA DA LINHA (20 px) e o recorte tem 17 -> o topo do
+#     texto precisava cair numa janela de 4 posições;
+#   * o centro real da primeira linha ficou 2 px abaixo do que a âncora calcula;
+#   * medido no quadro que o PRÓPRIO BOT salvou: o texto casa a 1.000 com o topo
+#     em y=320, e a região ia só até 319. Um pixel.
+#
+# `tests/dados/lista_como_o_bot_ve.png` é esse quadro -- capturado pelo bot, no
+# momento da decisão, com a lista completa na tela.
+
+
+def test_os_cinco_servidores_no_quadro_QUE_O_BOT_SALVOU():
+    """A prova de campo: o quadro é do bot, não de um print preparado."""
+    det = _detector_real()
+    _pula_sem_templates(det)
+    img = _fixture("lista_como_o_bot_ve.png")
+
+    # O bot registrou `primeira=(342, 246)` no log daquele instante; a fixture
+    # é um recorte a partir de (250, 180), então a mesma posição vira:
+    primeira = (342 - 250, 246 - 180)
+    esperado = {
+        "White Horse [NEW]": 0,
+        "Tiger Fish (WW)": 1,
+        "Sky Ice (GSM&BI)": 2,
+        "All Stars": 3,
+        "Light in the Darkness": 4,
+    }
+    for nome, linha in esperado.items():
+        achou = det.linha_do_servidor(img, nome, primeira, 5)
+        assert achou == linha, (
+            f"'{nome}' devia estar na linha {linha} e veio {achou} — é o "
+            f"defeito da folga em y de 23/09/2026")
+
+
+def test_a_altura_da_busca_SAI_DO_RECORTE_e_nao_da_linha():
+    """Derivar da linha foi o erro: 20 px de região para 17 de recorte deixa
+    4 posições, e 2 px de desvio da âncora já quebram."""
+    import inspect
+
+    from blazesbot.bot.login_states import FOLGA_EM_Y_DA_BUSCA
+
+    assert FOLGA_EM_Y_DA_BUSCA >= 2, (
+        "medido: com folga 0 são 5 erros em 5; a partir de 2 são zero")
+    assert FOLGA_EM_Y_DA_BUSCA < 20, (
+        "com 20 a busca alcança o texto da linha VIZINHA")
+
+    for metodo in (LoginStateDetector.linha_do_servidor,
+                   LoginStateDetector.servidor_offline):
+        fonte = inspect.getsource(metodo)
+        assert "modelo.shape[0] + 2 * FOLGA_EM_Y_DA_BUSCA" in fonte, (
+            f"{metodo.__name__} voltou a derivar a altura da busca da LINHA")

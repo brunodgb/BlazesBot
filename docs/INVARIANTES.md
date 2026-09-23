@@ -124,6 +124,12 @@
   fundo azul; e não), mas o estado de onde o recorte saiu não muda o resultado:
   margem +0.586 do selecionado contra +0.581 do não selecionado. Medido em cinco
   prints 1:1, com cada servidor nos dois estados.
+- **REGIÃO DE BUSCA SE DIMENSIONA PELO QUE SE PROCURA, NÃO PELO ESPAÇO ONDE SE
+  PROCURA.** A altura sai do RECORTE mais `FOLGA_EM_Y_DA_BUSCA`, nunca da altura
+  da linha: 20 px de região para 17 de recorte deixam 4 posições, e 2 px de
+  desvio da âncora consomem isso inteiro — em 23/09/2026 foi exatamente 1 pixel
+  que fez o bot cancelar com o servidor na tela. Medido: folga 0 dá 5 erros de
+  5; de 2 em diante, zero.
 - **PARA EXTRAIR UM RECORTE, NÃO SE USA COORDENADA — acha-se o TEXTO.** A
   âncora (`título + deslocamento`) só vale quando a origem é a área de cliente;
   num print recortado ela aponta para o lugar errado. Em 23/09/2026 isso deu 18

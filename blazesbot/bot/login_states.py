@@ -187,10 +187,27 @@ ESPERA_PELO_SERVIDOR_FORA_DO_AR = 30.0
 #      variou 3 px entre os prints.
 LIMIAR_DO_NOME_DO_SERVIDOR = 0.80
 
-# DIAGNÓSTICO TEMPORÁRIO (23/09/2026): quando o nome NÃO é achado, guarda o
-# quadro da decisão e as notas de cada linha em `logs/diagnostico-servidor/`.
-# Sai assim que o defeito for entendido -- é instrumentação, não funcionalidade.
-GUARDAR_O_QUADRO_QUANDO_NAO_ACHA = True
+# FOLGA EM Y DA BUSCA, e este número consertou o defeito de 23/09/2026.
+#
+# A região era a ALTURA DA LINHA (20 px) e o recorte tem 17: sobravam 3 px, ou
+# seja o topo do texto tinha de cair numa janela de 4 posições. O centro real da
+# primeira linha ficou 2 px abaixo do que a âncora calcula, e isso bastou --
+# medido no quadro que o próprio bot salvou, o texto casava a 1.000 com o topo
+# em y=320 e a região ia só até 319. Um pixel.
+#
+# A região passa a ser derivada da ALTURA DO RECORTE, e não da linha:
+#
+#     folga   pior acerto   erros
+#       0        0.386        5     <- o que estava no código
+#       2        0.999        0
+#       6        0.999        0     <- escolhido
+#      14        0.999        0
+#
+# 6 fica no meio do platô: três vezes o erro observado, e longe dos 20 px que
+# seriam necessários para alcançar o texto da linha VIZINHA -- que é o limite
+# real desta folga.
+FOLGA_EM_Y_DA_BUSCA = 6
+
 
 # Meia-largura da busca em torno do CENTRO do nome, e não coluna absoluta: o
 # ponto da linha já vem resolvido por âncora/resolução, então derivar dele faz a
@@ -397,62 +414,20 @@ class LoginStateDetector:
         """
         modelo = self._modelo_do_servidor(nome)
         if frame is None or modelo is None:
-            if GUARDAR_O_QUADRO_QUANDO_NAO_ACHA:
-                self._guardar_a_prova(frame, nome, primeira, None,
-                                      "sem quadro" if frame is None
-                                      else "sem recorte do nome")
             return None
         x0 = max(0, primeira[0] - MEIA_LARGURA_DO_NOME)
-        notas = []
+        # A ALTURA DA BUSCA SAI DO RECORTE, não da linha -- ver
+        # `FOLGA_EM_Y_DA_BUSCA`.
+        alto = modelo.shape[0] + 2 * FOLGA_EM_Y_DA_BUSCA
         for indice in range(linhas):
             y = primeira[1] + indice * altura
-            regiao = (x0, max(0, y - altura // 2),
-                      MEIA_LARGURA_DO_NOME * 2, altura)
+            regiao = (x0, max(0, y - alto // 2),
+                      MEIA_LARGURA_DO_NOME * 2, alto)
             if find_template(frame, modelo,
                              threshold=LIMIAR_DO_NOME_DO_SERVIDOR,
                              region=regiao) is not None:
                 return indice
-            notas.append(self._nota_bruta(frame, modelo, regiao))
-        if GUARDAR_O_QUADRO_QUANDO_NAO_ACHA:
-            self._guardar_a_prova(frame, nome, primeira, notas, "nao achei")
         return None
-
-    def _nota_bruta(self, frame, modelo, regiao):
-        """A nota do template naquela região, sem limiar. Só para diagnóstico."""
-        try:
-            import cv2
-            x, y, w, h = regiao
-            recorte = frame[y:y + h, x:x + w]
-            cinza = cv2.cvtColor(recorte, cv2.COLOR_BGR2GRAY)
-            if (cinza.shape[0] < modelo.shape[0]
-                    or cinza.shape[1] < modelo.shape[1]):
-                return f"faixa{cinza.shape}<modelo{modelo.shape}"
-            return round(float(cv2.minMaxLoc(cv2.matchTemplate(
-                cinza, modelo, cv2.TM_CCOEFF_NORMED))[1]), 3)
-        except Exception as erro:
-            return f"erro:{erro}"
-
-    def _guardar_a_prova(self, frame, nome, primeira, notas, motivo):
-        """Guarda o quadro da decisão e as notas. DIAGNÓSTICO TEMPORÁRIO."""
-        import logging
-        import time as _t
-        log = logging.getLogger("blazes.servidor")
-        forma = None if frame is None else getattr(frame, "shape", "?")
-        log.warning(
-            "LISTA: %s | alvo=%r | primeira=%s | quadro=%s | notas=%s",
-            motivo, nome, primeira, forma, notas)
-        if frame is None:
-            return
-        try:
-            import cv2
-            pasta = Path("logs") / "diagnostico-servidor"
-            pasta.mkdir(parents=True, exist_ok=True)
-            arq = pasta / f"{_t.strftime('%H%M%S')}-{int(_t.time()*1000)%1000}.png"
-            if len(list(pasta.glob("*.png"))) < 20:
-                cv2.imwrite(str(arq), frame)
-                log.warning("LISTA: quadro salvo em %s", arq)
-        except Exception as erro:
-            log.warning("LISTA: nao consegui salvar o quadro: %s", erro)
 
     def servidor_offline(self, frame, primeira, indice: int,
                          altura: int = 20) -> bool:
@@ -475,11 +450,15 @@ class LoginStateDetector:
         if modelo is None:
             return False
         y = primeira[1] + indice * altura
+        # Mesma folga do nome, e pelo mesmo motivo: a região sai da altura do
+        # RECORTE. O do status é mais baixo (12 px), então já tinha alguma folga
+        # -- mas depender disso é depender de sorte.
+        alto = modelo.shape[0] + 2 * FOLGA_EM_Y_DA_BUSCA
         regiao = (
             primeira[0] + DO_NOME_ATE_O_STATUS - LARGURA_DA_BUSCA_DO_STATUS // 2,
-            max(0, y - altura // 2),
+            max(0, y - alto // 2),
             LARGURA_DA_BUSCA_DO_STATUS,
-            altura,
+            alto,
         )
         return find_template(frame, modelo, threshold=LIMIAR_DO_OFFLINE,
                              region=regiao) is not None

@@ -48,7 +48,6 @@ ligar código não testado.
 | `USAR_PORTAO_DE_NOME` | `True` | [blazesbot/bot/combate.py:864](blazesbot/bot/combate.py#L864) | memory.py, target_hybrid.py | RELIGADO EM 25/08/2026 -- O NOME VOLTOU |
 | `USAR_TAB_NOS_GUARDAS` | `True` | [blazesbot/bot/combate.py:685](blazesbot/bot/combate.py#L685) | combat.py, diagnostico_do_link.py, inputs.py | >>>  INTERRUPTOR DO EXPERIMENTO -- TROCA DE ALVO POR TAB NOS GUARDAS  <<< |
 | `ATIVADO` | `True` | [blazesbot/bot/deletador.py:74](blazesbot/bot/deletador.py#L74) | diagnostico_do_link.py, supervisor.py, time_do_app.py, patch_do_cliente.py, petbug.py | O caminho continua inteiro com ele em False -- desligado não é apagado. |
-| `GUARDAR_O_QUADRO_QUANDO_NAO_ACHA` | `True` | [blazesbot/bot/login_states.py:193](blazesbot/bot/login_states.py#L193) | — | DIAGNÓSTICO TEMPORÁRIO (23/09/2026): quando o nome NÃO é achado, guarda o |
 | `CIRCULO_POR_RAIO` | `True` | [blazesbot/bot/navegacao.py:266](blazesbot/bot/navegacao.py#L266) | — | True = raio por raio (1,2,3,5; em cada raio os 8 pontos); False = bússola por |
 | `PERGUNTAR_ENTRE_OS_CLIQUES` | `True` | [blazesbot/bot/rajada_de_npc.py:85](blazesbot/bot/rajada_de_npc.py#L85) | — | INTERRUPTOR -- desligar devolve a rajada cega de sempre. |
 | `MATAR_JANELA_TRAVADA` | `True` | [blazesbot/bot/sentinela.py:166](blazesbot/bot/sentinela.py#L166) | — | INTERRUPTOR (a convenção do projeto: caminho fora de uso não vira comentário) |
@@ -84,7 +83,7 @@ ligar código não testado.
 
 ## Números medidos -- tolerância, limiar, teto, cadência
 
-651 constantes, agrupadas por arquivo.
+652 constantes, agrupadas por arquivo.
 
 | constante | valor | onde | quem lê | porquê (resumo) |
 |---|---|---|---|---|
@@ -354,10 +353,11 @@ ligar código não testado.
 | `WAIT_HEARTBEAT_SECONDS` | `150.0` | [blazesbot/bot/login.py:123](blazesbot/bot/login.py#L123) | — | Cadência do aviso de "continuo esperando", só para o log não ficar mudo. |
 | `DO_NOME_ATE_O_STATUS` | `147` | [blazesbot/bot/login_states.py:138](blazesbot/bot/login_states.py#L138) | — | Do NOME do servidor até a coluna de status, e a largura da busca: o nome |
 | `ESPERA_PELO_SERVIDOR_FORA_DO_AR` | `30.0` | [blazesbot/bot/login_states.py:158](blazesbot/bot/login_states.py#L158) | login.py, config.py | Entre uma ida à lista e a seguinte com o servidor fora do ar. 30 s e não os |
+| `FOLGA_EM_Y_DA_BUSCA` | `6` | [blazesbot/bot/login_states.py:209](blazesbot/bot/login_states.py#L209) | — | FOLGA EM Y DA BUSCA, e este número consertou o defeito de 23/09/2026. |
 | `LARGURA_DA_BUSCA_DO_STATUS` | `120` | [blazesbot/bot/login_states.py:139](blazesbot/bot/login_states.py#L139) | — | — |
 | `LIMIAR_DO_NOME_DO_SERVIDOR` | `0.8` | [blazesbot/bot/login_states.py:188](blazesbot/bot/login_states.py#L188) | — | O NOME DO SERVIDOR NA LINHA -- para NÃO depender de índice fixo |
 | `LIMIAR_DO_OFFLINE` | `0.85` | [blazesbot/bot/login_states.py:133](blazesbot/bot/login_states.py#L133) | — | — |
-| `MEIA_LARGURA_DO_NOME` | `80` | [blazesbot/bot/login_states.py:198](blazesbot/bot/login_states.py#L198) | — | Meia-largura da busca em torno do CENTRO do nome, e não coluna absoluta: o |
+| `MEIA_LARGURA_DO_NOME` | `80` | [blazesbot/bot/login_states.py:215](blazesbot/bot/login_states.py#L215) | — | Meia-largura da busca em torno do CENTRO do nome, e não coluna absoluta: o |
 | `TEMPLATE_SERVIDOR_OFFLINE` | `'server_offline.png'` | [blazesbot/bot/login_states.py:132](blazesbot/bot/login_states.py#L132) | — | O STATUS DO SERVIDOR NA LISTA -- "Online" x "Offline" |
 | `TENTATIVAS_DE_SELECAO` | `3` | [blazesbot/bot/login_states.py:149](blazesbot/bot/login_states.py#L149) | login.py | Cliques na linha antes de desistir da seleção -- clique engolido é comum aqui. |
 | `THRESHOLD` | `0.8` | [blazesbot/bot/login_states.py:36](blazesbot/bot/login_states.py#L36) | — | — |
