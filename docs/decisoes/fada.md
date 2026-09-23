@@ -543,3 +543,80 @@ verdade.
 custo da leitura — pelo mesmo motivo que o pet e a bolsa têm: perguntar dez
 vezes por segundo uma coisa que só muda quando o time anda é gastar sem chance
 de resposta diferente.
+
+## A AMBULÂNCIA — emergência fura a própria defesa (23/09/2026)
+
+Pedido do usuário: *"se um Damage apanha muito, ele morre e perde experiência,
+pois a Fada segue seu loop normal ou aguarda o fim do combate"*. O alvo é zero
+morte no time.
+
+### O limiar é DERIVADO, não é campo novo na tela
+
+    limiar_critico = max(20, "pedir cura abaixo de" / 2)
+
+    pedir 80%  ->  crítico 40%        pedir 30%  ->  crítico 20%  (o piso segura)
+    pedir 50%  ->  crítico 25%        pedir 20%  ->  crítico 20%
+
+O piso existe porque abaixo dele não há tempo: numa rota em que o dano toma 15%
+por golpe, um crítico de 10% é uma emergência declarada depois da morte.
+
+Ele mora em `fada.hp_critico(pedir_pct)`, **função de módulo e não só método**,
+porque os DOIS lados precisam da mesma conta: a Fada, para decidir se larga a
+defesa, e o dano, para decidir se avisa. Duplicar a fórmula seria deixar os dois
+discordarem no dia em que alguém mexesse num deles. E ela é lida A CADA CHAMADA:
+a barra é do líder e o usuário mexe nela com o bot rodando.
+
+### O buraco que a modelagem encontrou: a fila estava VAZIA na luta
+
+O pedido dizia "adicione um polling do HP da equipe no laço de batalha da Fada".
+Não havia o que pollar.
+
+- **A memória não serve.** `vida_do_time()` existe, mas o `hp` dela parece ser o
+  MÁXIMO e não a vida atual (`core/memory.py`) — decidir emergência com esse
+  número é decidir com o número errado. Quem sabe a vida de uma conta é ela
+  mesma, e ela publica no mural.
+- **E o dano não publicava em batalha.** `cura.socorro` é o ÚNICO caminho de vida
+  baixa durante a luta, e ele só bebia poção. O pedido de cura nasce em
+  `chamar_a_fada`, que só roda FORA de batalha. Ou seja: exatamente no cenário do
+  relato — o dano apanhando —, a fila da Fada ficava vazia.
+
+Então a feature precisou de duas metades. Só a da Fada seria decorativa.
+
+### Metade 1 — o dano AVISA, e não espera
+
+Em `socorro`, antes da porta da poção: se há Fada de pé no time, publica a
+própria vida quando cruza o crítico, e RETIRA o pedido quando volta para a faixa
+segura (senão a Fada iria clicar no retrato de alguém com vida cheia).
+
+O aviso **não espera nada** — é uma escrita em dicionário. Em batalha quem mata
+quem está batendo é a macro, e parar para esperar cura foi o que matou três
+personagens em 07/09/2026.
+
+Ele vem ANTES da cadência da poção (`SEGUNDOS_ENTRE_SOCORROS`) de propósito: a
+poção tem ritmo próprio e não pode calar a Fada.
+
+### Metade 2 — a Fada larga a própria defesa
+
+A regra de 01/09/2026 ("em batalha ela cuida de si") continua valendo para o
+caso comum. A exceção é só para o crítico: quem está em 70% espera a luta
+acabar, como sempre esperou.
+
+**E ela só larga a defesa se ela mesma não estiver crítica.** Fada morta não cura
+ninguém, e ela é a única do time que não tem quem a cure — sair correndo com a
+própria vida no fim mata os dois.
+
+### O anti-spam já existia, e por isso não foi escrito de novo
+
+A emergência chama `_atender`, o mesmo caminho da fila normal: ele confere o
+alvo pelo id depois do clique, conta tentativas por vítima
+(`MAXIMO_DE_TENTATIVAS_POR_VITIMA`), espera `ESPERA_DEPOIS_DE_ERRAR` entre elas
+e desiste da vítima quando não adianta. Um segundo cooldown ao lado desse seria
+duas travas discordando sobre a mesma coisa.
+
+### A volta ao normal não precisou de código
+
+`_uma_volta` é um giro: ao fim da emergência o laço reavalia tudo do zero — se
+ainda há batalha e ninguém crítico, ela volta a se defender; se a luta acabou,
+cai na fila normal, nos mortos e depois na ociosidade. O estado que existe é o
+contador `emergencias`, que aparece no `resumo()` para dizer se a ambulância
+está sendo chamada.

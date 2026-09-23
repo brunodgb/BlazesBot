@@ -39,6 +39,7 @@ from .app import ExecutorDeMacro
 from .app.sincronia import SincroniaDoTime
 from .bc.routine import BossRushRoutine
 from .context import BotContext, Disconnected, StopRequested
+from .fada import hp_critico
 from .hh.routine import HHRoutine
 from .login import (
     BadCredentials,
@@ -2077,6 +2078,32 @@ class AccountSupervisor(threading.Thread):
 
         teclas = self.account.settings.keys
 
+        def avisar_a_fada(vida: float) -> None:
+            """EM BATALHA o dano não para para esperar cura -- ele só AVISA.
+
+            É o outro lado da ambulância (`fada._quem_esta_critico`): a Fada só
+            pode priorizar quem ela SABE que está morrendo, e quem sabe a vida
+            de uma conta é ela mesma. Sem esta linha a fila da Fada fica vazia
+            durante a luta inteira -- `cura.socorro` é o único caminho de vida
+            baixa em batalha, e ele só bebia poção.
+
+            NÃO ESPERA NADA, ao contrário do `chamar_a_fada` logo abaixo: quem
+            mata quem está batendo é a macro, e parar para esperar cura em
+            batalha foi o que matou três personagens em 07/09/2026.
+
+            E RETIRA O PEDIDO ao voltar para a faixa segura. Sem isso a conta
+            ficaria na fila depois de a poção resolver, e a Fada iria clicar num
+            retrato de alguém com vida cheia.
+            """
+            fada_login = self._fada_do_meu_time()
+            if not fada_login or not mural.fada_de_pe(fada_login):
+                return
+            pedir = float(self._dono_da_macro().settings.app.cura_pedir_pct)
+            if vida <= hp_critico(pedir):
+                mural.pedir_cura(self.account.login, vida)
+            elif vida >= pedir:
+                mural.cancelar_pedido(self.account.login)
+
         def chamar_a_fada(vida: float) -> bool:
             """Pede cura à Fada do time e espera. `False` = não há Fada, beba poção.
 
@@ -2263,6 +2290,9 @@ class AccountSupervisor(threading.Thread):
                 esta_sentado=esta_sentado,
                 # A FADA TEM PREFERÊNCIA SOBRE A POÇÃO -- e só existe em time.
                 fada=chamar_a_fada if self._tem_time_do_app() else None,
+                # E EM BATALHA ELA É AVISADA SEM SER ESPERADA -- ver `socorro`.
+                avisar_a_fada=(avisar_a_fada if self._tem_time_do_app()
+                               else None),
                 # A BARRA DA TELA MANDA no gatilho -- e em time é a do líder.
                 pedir_pct=lambda: float(
                     self._dono_da_macro().settings.app.cura_pedir_pct),

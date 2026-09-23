@@ -83,7 +83,7 @@ ligar código não testado.
 
 ## Números medidos -- tolerância, limiar, teto, cadência
 
-652 constantes, agrupadas por arquivo.
+653 constantes, agrupadas por arquivo.
 
 | constante | valor | onde | quem lê | porquê (resumo) |
 |---|---|---|---|---|
@@ -265,6 +265,7 @@ ligar código não testado.
 | `MAXIMO_DE_TENTATIVAS_POR_VITIMA` | `3` | [blazesbot/bot/fada.py:112](blazesbot/bot/fada.py#L112) | — | Quantas vezes tentar selecionar a MESMA vítima antes de desistir dela. |
 | `PASSO_DA_CONFERENCIA_DO_ALVO` | `0.02` | [blazesbot/bot/fada.py:88](blazesbot/bot/fada.py#L88) | executor.py | — |
 | `PASSO_DA_FADA` | `0.1` | [blazesbot/bot/fada.py:80](blazesbot/bot/fada.py#L80) | — | Cadência do laço da Fada quando não há nada a fazer. |
+| `PISO_DO_CRITICO` | `20.0` | [blazesbot/bot/fada.py:141](blazesbot/bot/fada.py#L141) | — | O LIMIAR CRÍTICO — quando a Fada vira ambulância (23/09/2026) |
 | `TETO_DA_CURA_SEGUNDOS` | `20.0` | [blazesbot/bot/fada.py:95](blazesbot/bot/fada.py#L95) | — | Quanto tempo insistir numa cura antes de desistir daquela vítima. |
 | `TETO_PARA_O_ALVO_VIRAR` | `0.4` | [blazesbot/bot/fada.py:87](blazesbot/bot/fada.py#L87) | — | Depois do clique no retrato, quanto esperar a memória mostrar o alvo novo. |
 | `SEGUNDOS_ENTRE_TENTATIVAS` | `1.0` | [blazesbot/bot/fada_montagem.py:35](blazesbot/bot/fada_montagem.py#L35) | — | Respiro quando a Fada não consegue nem começar (memória fechada, por exemplo). |
@@ -413,16 +414,16 @@ ligar código não testado.
 | `DESVIO_MINIMO` | `12.0` | [blazesbot/bot/recorte_do_time.py:109](blazesbot/bot/recorte_do_time.py#L109) | — | Recorte liso casa em todo lugar. `region_is_uniform` já é o teste que o |
 | `FOLGA_DO_ESPACAMENTO` | `6.0` | [blazesbot/bot/recorte_do_time.py:105](blazesbot/bot/recorte_do_time.py#L105) | — | Espaçamento vertical: desvio máximo aceito entre os intervalos, em pixels. As |
 | `LARGURA_DO_RECORTE` | `120` | [blazesbot/bot/recorte_do_time.py:91](blazesbot/bot/recorte_do_time.py#L91) | — | — |
-| `LIMIAR` | `0.9` | [blazesbot/bot/recorte_do_time.py:95](blazesbot/bot/recorte_do_time.py#L95) | cura.py, combate.py, navegacao.py, watchdog.py | Um casamento fraco não conta. 0.90 é o mesmo patamar que o deletador usa para |
+| `LIMIAR` | `0.9` | [blazesbot/bot/recorte_do_time.py:95](blazesbot/bot/recorte_do_time.py#L95) | cura.py, combate.py, fada.py, navegacao.py, watchdog.py | Um casamento fraco não conta. 0.90 é o mesmo patamar que o deletador usa para |
 | `MINIMO_DE_LINHAS` | `2` | [blazesbot/bot/recorte_do_time.py:99](blazesbot/bot/recorte_do_time.py#L99) | — | Menos de dois casamentos não prova repetição -- prova que o recorte se achou a |
 | `NOME_DO_TEMPLATE` | `'state_team_member.png'` | [blazesbot/bot/recorte_do_time.py:73](blazesbot/bot/recorte_do_time.py#L73) | — | Nome que `bot/team.py` procura. Mudar aqui sem mudar lá deixa o arquivo |
 | `PASSO_VERTICAL` | `4` | [blazesbot/bot/recorte_do_time.py:90](blazesbot/bot/recorte_do_time.py#L90) | — | — |
 | `CADENCIA_DO_VIGIA` | `6.0` | [blazesbot/bot/sentinela.py:129](blazesbot/bot/sentinela.py#L129) | — | O ORÇAMENTO DE 20 SEGUNDOS, repartido |
 | `STRIKES_PARA_JANELA_SUMIDA` | `2` | [blazesbot/bot/sentinela.py:146](blazesbot/bot/sentinela.py#L146) | — | AS CONFIRMAÇÕES -- a defesa contra derrubar conta boa por causa de lag |
 | `STRIKES_PARA_JANELA_TRAVADA` | `3` | [blazesbot/bot/sentinela.py:155](blazesbot/bot/sentinela.py#L155) | — | JANELA TRAVADA é o sinal ruidoso, e é o único que precisa de defesa de |
-| `LIMIAR_DO_CONVITE` | `0.9` | [blazesbot/bot/supervisor.py:112](blazesbot/bot/supervisor.py#L112) | — | Limiar do casamento do convite. Mais exigente que o limiar geral de telas |
-| `TETO_DA_ESPERA_PELA_FADA` | `60.0` | [blazesbot/bot/supervisor.py:99](blazesbot/bot/supervisor.py#L99) | — | Quanto uma vítima espera pela Fada antes de voltar para a poção. |
-| `TETO_DA_FATIA_DE_ESPERA` | `0.25` | [blazesbot/bot/supervisor.py:90](blazesbot/bot/supervisor.py#L90) | — | Teto de uma fatia dentro de `_AnyEvent.wait`. É REDE, não o caminho normal -- |
+| `LIMIAR_DO_CONVITE` | `0.9` | [blazesbot/bot/supervisor.py:113](blazesbot/bot/supervisor.py#L113) | — | Limiar do casamento do convite. Mais exigente que o limiar geral de telas |
+| `TETO_DA_ESPERA_PELA_FADA` | `60.0` | [blazesbot/bot/supervisor.py:100](blazesbot/bot/supervisor.py#L100) | — | Quanto uma vítima espera pela Fada antes de voltar para a poção. |
+| `TETO_DA_FATIA_DE_ESPERA` | `0.25` | [blazesbot/bot/supervisor.py:91](blazesbot/bot/supervisor.py#L91) | — | Teto de uma fatia dentro de `_AnyEvent.wait`. É REDE, não o caminho normal -- |
 | `ALTURA_DA_LINHA_DO_MENU` | `21` | [blazesbot/bot/team.py:158](blazesbot/bot/team.py#L158) | — | — |
 | `ALTURA_DO_MENU_LONGO` | `200` | [blazesbot/bot/team.py:162](blazesbot/bot/team.py#L162) | — | — |
 | `ALTURA_MAXIMA_DO_MENU` | `300` | [blazesbot/bot/team.py:161](blazesbot/bot/team.py#L161) | — | — |

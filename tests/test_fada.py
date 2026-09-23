@@ -512,6 +512,97 @@ def test_a_montagem_LIGA_e_FECHA_o_aceitador_da_fada():
         "o `so_montar` tem que continuar saindo antes do laço próprio"
 
 
+# ---------------------------------------------------------------------------
+# A AMBULÂNCIA — emergência fura a própria defesa
+# ---------------------------------------------------------------------------
+
+def test_o_limiar_critico_e_METADE_do_pedir_com_piso_de_20():
+    """*"`limiar_critico = max(20, config_cura / 2)`"* (usuário, 23/09/2026)."""
+    assert mod.hp_critico(80) == 40.0
+    assert mod.hp_critico(50) == 25.0
+    assert mod.hp_critico(30) == 20.0, "o piso não segurou"
+    assert mod.hp_critico(20) == 20.0
+    assert mod.hp_critico(0) == 20.0, "sem configuração, o piso ainda vale"
+
+
+def test_EM_BATALHA_ela_larga_a_defesa_por_quem_esta_critico():
+    """Era a regra de 01/09 ("em batalha ela cuida de si") deixando o dano
+    morrer. A exceção é só para o crítico."""
+    jogo = _Jogo()
+    jogo.batalha = True
+    jogo.vida = 100.0                      # ela está bem
+    f = _fada(jogo, pedir=80.0)            # crítico = 40%
+    mural.pedir_cura("aliado", 35.0)       # abaixo do crítico
+
+    f._uma_volta()
+
+    assert f.emergencias == 1, "não largou a defesa por quem estava morrendo"
+    assert jogo.cliques, "não chegou a clicar no retrato do ferido"
+
+
+def test_em_batalha_quem_esta_FERIDO_mas_nao_critico_continua_esperando():
+    """Quem está em 70% espera a luta acabar, como sempre esperou."""
+    jogo = _Jogo()
+    jogo.batalha = True
+    jogo.vida = 100.0
+    f = _fada(jogo, pedir=80.0)            # crítico = 40%
+    mural.pedir_cura("aliado", 70.0)       # ferido, não crítico
+
+    f._uma_volta()
+
+    assert f.emergencias == 0
+    assert jogo.auto_selecoes > 0, "deixou de se defender sem emergência"
+
+
+def test_a_FADA_CRITICA_cuida_de_si_primeiro():
+    """Fada morta não cura ninguém, e ela é a única do time sem quem a cure."""
+    jogo = _Jogo()
+    jogo.batalha = True
+    jogo.vida = 25.0                       # ela também está crítica
+    f = _fada(jogo, pedir=80.0)
+    mural.pedir_cura("aliado", 30.0)
+
+    f._uma_volta()
+
+    assert f.emergencias == 0, "saiu correndo curar o outro e morreria junto"
+    assert jogo.auto_selecoes > 0, "não se defendeu"
+
+
+def test_o_dano_AVISA_a_fada_de_dentro_da_batalha():
+    """Sem este aviso a fila fica vazia na luta e a ambulância não tem o que
+    priorizar -- `socorro` era o único caminho de vida baixa em batalha, e ele
+    só bebia poção."""
+    import inspect
+
+    from blazesbot.bot.app import cura as mod_cura
+
+    fonte = inspect.getsource(mod_cura.CuraDoApp.socorro)
+    assert "self._avisar_a_fada(vida)" in fonte
+    assert fonte.index("self._avisar_a_fada(vida)") < fonte.index(
+        "vida >= self._pedir_pct()"), (
+        "o aviso ficou depois da porta da poção -- quem sai do crítico nunca "
+        "seria retirado da fila")
+
+
+def test_o_supervisor_LIGA_o_aviso_e_ele_nao_espera():
+    import inspect
+
+    from blazesbot.bot import supervisor
+
+    fonte = inspect.getsource(supervisor.AccountSupervisor._rodar_modo_app)
+    assert "avisar_a_fada=(avisar_a_fada if self._tem_time_do_app()" in fonte, (
+        "o aviso não foi injetado, ou passou a valer fora de time")
+    aviso = fonte[fonte.index("def avisar_a_fada("):fonte.index("def chamar_a_fada(")]
+    assert "mural.pedir_cura" in aviso and "mural.cancelar_pedido" in aviso
+    # NÃO PODE BLOQUEAR: em batalha, quem mata quem está batendo é a macro.
+    # Comentário e docstring ficam de fora -- o que não pode ter laço nem espera
+    # é o CÓDIGO.
+    corpo = "\n".join(l for l in aviso.splitlines()
+                      if not l.strip().startswith(("#", '"""')))
+    assert "while " not in corpo and "sleep" not in corpo, (
+        "o aviso ganhou laço ou espera -- ele é uma escrita em dicionário")
+
+
 def test_a_batida_existe_enquanto_ela_gira():
     jogo = _Jogo()
     f = _fada(jogo)

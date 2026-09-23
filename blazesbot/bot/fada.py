@@ -119,6 +119,39 @@ MAXIMO_DE_TENTATIVAS_POR_VITIMA = 3
 # de fato uma tentativa nova.
 ESPERA_DEPOIS_DE_ERRAR = 0.333
 
+# ===========================================================================
+# O LIMIAR CRÍTICO — quando a Fada vira ambulância (23/09/2026)
+# ===========================================================================
+#
+# Pedido do usuário: *"se um Damage apanha muito, ele morre e perde
+# experiência, pois a Fada segue seu loop normal ou aguarda o fim do combate"*.
+#
+# O NÚMERO É DERIVADO DO QUE O USUÁRIO JÁ CONFIGURA, e não mais um campo na
+# tela: metade do "pedir cura abaixo de", com piso de 20%.
+#
+#     pedir 80%  ->  crítico 40%
+#     pedir 50%  ->  crítico 25%
+#     pedir 30%  ->  crítico 20%   (a metade seria 15, o piso segura)
+#     pedir 20%  ->  crítico 20%
+#
+# O PISO EXISTE PORQUE ABAIXO DELE NÃO HÁ TEMPO. Numa rota em que o dano toma
+# 15% por golpe, um crítico de 10% significa que entre a leitura e o clique no
+# retrato o personagem já morreu -- a emergência teria sido declarada tarde
+# demais para servir de alguma coisa.
+PISO_DO_CRITICO = 20.0
+
+
+def hp_critico(pedir_pct: float) -> float:
+    """O limiar de emergência a partir do "pedir cura abaixo de".
+
+    FUNÇÃO DE MÓDULO, e não só método: quem apanha também precisa da conta. O
+    dano avisa a Fada quando cruza este número (`cura.socorro`), e a Fada decide
+    se larga a própria defesa com ele -- a mesma regra em dois laços que não se
+    enxergam. Duplicá-la seria deixar os dois discordarem no dia em que alguém
+    mudasse um dos dois.
+    """
+    return max(PISO_DO_CRITICO, float(pedir_pct) / 2.0)
+
 
 class FadaDoTime:
     """O laço da Fada. Não ataca, não roda macro: cura e senta.
@@ -223,6 +256,9 @@ class FadaDoTime:
         self.curas = 0
         self.curas_sem_efeito = 0
         self.cliques_errados = 0
+        # Quantas vezes ela largou a própria defesa para salvar alguém. Aparece
+        # no `resumo()`: é o número que diz se a ambulância está sendo chamada.
+        self.emergencias = 0
         # Quantas vezes seguidas cada vítima falhou. Zera quando ela é atendida
         # ou sai da fila -- é por vítima, não global: uma que não dá para curar
         # não pode fazer a Fada desistir das outras.
@@ -309,6 +345,30 @@ class FadaDoTime:
             # em que ela precisava. Quem avisa o time é a batida, que agora leva
             # o estado de batalha junto.
             self._em_briga = True
+
+            # A AMBULÂNCIA FURA ESSA REGRA -- 23/09/2026.
+            #
+            # A decisão acima continua valendo para o caso comum: em batalha ela
+            # cuida de si. Mas ela é do tempo em que o companheiro apanhando
+            # tinha a poção dele e o fim da luta para se salvar -- e o usuário
+            # mediu o contrário: *"ele morre e perde experiência, pois a Fada
+            # segue seu loop normal ou aguarda o fim do combate"*.
+            #
+            # A EXCEÇÃO É SÓ PARA O CRÍTICO (ver `PISO_DO_CRITICO`), não para
+            # qualquer ferido: quem está em 70% espera a luta acabar como
+            # sempre esperou. E ela SÓ larga a própria defesa se ela mesma não
+            # estiver crítica -- Fada morta não cura ninguém, e ela é a única
+            # do time que não tem quem a cure.
+            critico = self._quem_esta_critico()
+            if critico is not None and not self._eu_estou_critica():
+                self.log.warning(
+                    "FADA: EMERGÊNCIA -- %s abaixo de %.0f%% e eu em batalha. "
+                    "Largo a minha defesa e curo ele.",
+                    critico, self._hp_critico())
+                self.emergencias += 1
+                _atendida, continuar = self._atender(critico)
+                return continuar
+
             return self._me_defender()
         self._em_briga = False
 
@@ -362,6 +422,49 @@ class FadaDoTime:
             if atendido:
                 return True
         return True
+
+    # -- a emergência ------------------------------------------------------
+
+    def _hp_critico(self) -> float:
+        """A porcentagem abaixo da qual o time vira emergência.
+
+        Metade do "pedir cura abaixo de", com piso de `PISO_DO_CRITICO`. Lê a
+        configuração A CADA CHAMADA, e não uma vez no arranque: a barra é do
+        LÍDER e o usuário pode mexer nela com o bot rodando -- é o mesmo
+        contrato do `_pedir_pct` e do `_parar_pct`.
+        """
+        return hp_critico(self._pedir_pct())
+
+    def _quem_esta_critico(self) -> str | None:
+        """O primeiro da fila abaixo do crítico. `None` = ninguém.
+
+        A VIDA VEM DO MURAL, e não da memória. `vida_do_time()` existe e seria
+        o caminho óbvio, mas o `hp` que ela devolve parece ser o MÁXIMO e não a
+        vida atual (ver `core/memory.py`) -- decidir emergência com ele seria
+        decidir com o número errado. Quem sabe a vida de cada conta é ela
+        mesma, e é ela que publica (`mural.pedir_cura`).
+
+        A ORDEM É A DA FILA: quem pediu primeiro é atendido primeiro, e a
+        emergência não reordena nada -- ela só decide se a Fada larga o que
+        está fazendo.
+        """
+        critico = self._hp_critico()
+        for login in self.mural.fila_de_cura(self._membros_do_time()):
+            if login == self.meu_login:
+                continue
+            vida = self.mural.pedido_de(login)
+            if vida is not None and vida <= critico:
+                return login
+        return None
+
+    def _eu_estou_critica(self) -> bool:
+        """A minha vida está no nível de emergência? "Não sei" conta como não.
+
+        É o freio da ambulância: com ela também caindo, sair correndo para curar
+        o outro mata os dois. A Fada é a única do time que não tem quem a cure.
+        """
+        minha = self._vida_pct()
+        return minha is not None and minha <= self._hp_critico()
 
     def _me_defender(self) -> bool:
         """Em batalha: seleciona a si mesma e cura até sair. `False` = parar.
@@ -684,4 +787,5 @@ class FadaDoTime:
 
     def resumo(self) -> str:
         return (f"fada: {self.curas} curas, {self.curas_sem_efeito} sem efeito, "
-                f"{self.cliques_errados} cliques que não pegaram")
+                f"{self.cliques_errados} cliques que não pegaram, "
+                f"{self.emergencias} emergência(s)")

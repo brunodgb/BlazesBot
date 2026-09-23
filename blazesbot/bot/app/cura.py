@@ -262,6 +262,9 @@ class CuraDoApp:
         # O PULSO DO TIME -- "estou de pé" e "aceito convite", na cadência das
         # esperas daqui. Ver `_passo`. `None` = conta fora de time.
         pulso_do_time: Callable[[], None] | None = None,
+        # "ESTOU NESTA VIDA AGORA" -- dito à Fada de dentro da batalha, sem
+        # esperar nada em troca. `None` = conta sem Fada no time. Ver `socorro`.
+        avisar_a_fada: Callable[[float], None] | None = None,
     ) -> None:
         self.log = log
         self._vida_pct = vida_pct
@@ -288,6 +291,7 @@ class CuraDoApp:
         self._parar_pct = parar_pct or (lambda: VIDA_ALVO_DA_CURA)
         self._continuar = continuar or (lambda: True)
         self._pulso_do_time = pulso_do_time
+        self._avisar_a_fada = avisar_a_fada
 
         self.curas = 0
         self.pocoes_gastas = 0
@@ -400,7 +404,29 @@ class CuraDoApp:
         """
         if vida is None:
             vida = self._vida_pct()
-        if vida is None or vida <= 0.0 or vida >= self._pedir_pct():
+        if vida is None or vida <= 0.0:
+            return False
+
+        # A FADA PRECISA SABER QUE EU ESTOU MORRENDO -- 23/09/2026.
+        #
+        # ANTES DA PORTA DA POÇÃO, e é por isso que a condição de saída acima
+        # perdeu o `vida >= pedir_pct`: o aviso vale nos dois sentidos -- entrei
+        # no crítico, ou saí dele -- e a poção tem cadência própria
+        # (`SEGUNDOS_ENTRE_SOCORROS`) que não pode calar a Fada.
+        #
+        # ELE NÃO ESPERA NADA. Em batalha o dano continua batendo: quem mata
+        # quem está batendo nele é a macro, e parar para esperar cura foi o que
+        # matou três personagens em 07/09/2026. O aviso é uma escrita em
+        # dicionário -- a Fada é que decide se larga a defesa dela.
+        #
+        # ERA AQUI O BURACO. `socorro` é o ÚNICO caminho de vida baixa em
+        # batalha, e ele só bebia poção: a fila da Fada ficava vazia durante a
+        # luta inteira, então "a Fada prioriza o crítico" não teria o que
+        # priorizar -- ela pollaria uma fila que ninguém alimenta.
+        if self._avisar_a_fada is not None:
+            self._avisar_a_fada(vida)
+
+        if vida >= self._pedir_pct():
             return False
 
         agora = time.time()
