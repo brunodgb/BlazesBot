@@ -28,7 +28,15 @@ from ..core.coords import TEMPLATE_ANCHORS, coords_for_size
 from ..core.inputs import Input, sleep
 from ..core.memory import Memory
 from ..core.vision import TemplateLibrary, find_highlighted_row
-from .login_states import Detection, LoginScreen, LoginStateDetector, Phase
+from .login_states import (
+    ESPERA_PELO_SERVIDOR_FORA_DO_AR,
+    TENTATIVAS_DE_SELECAO,
+    VOLTAS_NA_LISTA_DE_SERVIDORES,
+    Detection,
+    LoginScreen,
+    LoginStateDetector,
+    Phase,
+)
 from .watchdog import kill_client
 
 # Recusas de usuário/senha antes de desistir da conta.
@@ -60,16 +68,6 @@ MAX_CREDENTIAL_ERRORS = 5
 # status não pega (servidor reiniciando, Ok engolido, captura cega). Três, e não
 # uma: clique engolido é comum nesta UI, e a seleção da linha já tenta três
 # vezes pelo mesmo motivo. Conta VOLTAS À MESMA TELA, não cliques.
-# Cliques na linha antes de desistir da seleção -- clique engolido é comum aqui.
-TENTATIVAS_DE_SELECAO = 3
-
-VOLTAS_NA_LISTA_DE_SERVIDORES = 3
-
-# Entre uma ida à lista e a seguinte com o servidor fora do ar. 30 s e não os
-# ~1,5 s do laço: 854 idas em 9 min martelavam o servidor de autenticação por
-# nada (medido em 22/09/2026). Ver `docs/decisoes/login-e-relogin.md`.
-ESPERA_PELO_SERVIDOR_FORA_DO_AR = 30.0
-
 
 # NÃO EXISTE LIMITE DE TEMPO NA FILA.
 #
@@ -441,43 +439,45 @@ class LoginSequence:
         sleep(1.25)
         self._set_phase(Phase.SERVER)
 
-    def _do_server(self) -> None:
+    def _do_server(self, det: Detection | None = None) -> None:
         """Seleciona o servidor da conta e confirma.
 
-        A lista abre com alguma linha JÁ selecionada, então não fazer nada
-        não mantém a escolha certa: clica e CONFIRMA o realce antes do Ok.
+        A lista abre com uma linha JÁ selecionada: clica e CONFIRMA o realce
+        antes do Ok.
         """
         c = self.coords
         wanted = c.normalize_server(self.account.server)
-        point = c.server_point(wanted)
-        if point is None:
-            # Cancel e não `LoginError`: o erro seco deixava a janela parada
-            # na lista, e a tentativa seguinte voltava ao mesmo erro.
+        if c.server_point(wanted) is None:
+            # Configuração: o nome nem está em `server_rows`. Cancel e não
+            # `LoginError` -- o erro seco deixava a janela parada na lista.
             self._sair_da_lista_de_servidores(
                 f"servidor '{self.account.server}' não está na lista atual "
                 f"(opções: {', '.join(c.server_rows)})")
             return
-
         if wanted != self.account.server:
             self.log.info("Servidor '%s' virou '%s' na lista atual",
                           self.account.server, wanted)
 
-        # A LINHA VEM DA TELA: contar a partir da lista estática põe a conta
-        # em OUTRO servidor. Ver `linha_do_servidor`.
-        inicial = self.detector.detect()
+        # A LINHA VEM DA TELA (a estática põe a conta em OUTRO servidor) e o
+        # QUADRO VEM DO LAÇO: capturar de novo foi o defeito de 23/09/2026 -- a
+        # segunda captura pode falhar sozinha (ver `Detection.frame`), e com
+        # quadro nulo o bot cancelou 560 vezes com o servidor na tela.
+        quadro = det.frame if det is not None else None
         primeira = self._anchored("server", "server_first_row",
                                   (c.server_row_x, c.server_first_row_y),
-                                  frame=inicial.frame)
+                                  frame=quadro)
         lida = self.detector.linha_do_servidor(
-            inicial.frame, wanted, primeira, len(c.server_rows))
-        if lida is None and self.detector.sabe_reconhecer(wanted):
+            quadro, wanted, primeira, len(c.server_rows))
+        # "Não achei" só vale se DEU PARA OLHAR: sem quadro é "não sei".
+        if (lida is None and quadro is not None
+                and self.detector.sabe_reconhecer(wanted)):
             self._sair_da_lista_de_servidores(
                 f"o servidor '{wanted}' NÃO está na lista (fora do ar?)",
                 esperar=ESPERA_PELO_SERVIDOR_FORA_DO_AR)
             return
-        # Sem recorte daquele nome, o índice estático é a reserva de sempre.
+        # Sem recorte do nome, o índice estático é a reserva.
         indice = lida if lida is not None else c.server_index(wanted)
-        ultimo_quadro = None
+        ultimo_quadro = quadro
         # `None` = sem captura; `False` = olhei e a linha certa NÃO realçou.
         confirmou_a_linha = None
         for attempt in range(1, TENTATIVAS_DE_SELECAO + 1):
@@ -924,7 +924,7 @@ class LoginSequence:
             if det.connected:
                 self._set_phase(Phase.ENTERING)
                 return
-            self._do_server()
+            self._do_server(det)
 
         elif self.phase is Phase.ENTERING:
             # Perdeu o servidor do título: caiu de volta para o login.

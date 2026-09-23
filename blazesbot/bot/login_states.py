@@ -139,6 +139,26 @@ DO_NOME_ATE_O_STATUS = 147
 LARGURA_DA_BUSCA_DO_STATUS = 120
 
 # ===========================================================================
+# A POLÍTICA DA LISTA DE SERVIDORES -- quantas vezes insistir, quanto esperar
+# ===========================================================================
+#
+# Mora aqui, junto das medições da MESMA tela, e não em `login.py`: são três
+# números sobre como lidar com a lista, e o `LoginSequence` só os consome.
+
+# Cliques na linha antes de desistir da seleção -- clique engolido é comum aqui.
+TENTATIVAS_DE_SELECAO = 3
+
+# Voltas à mesma tela antes de sair pelo Cancel -- a REDE do reconhecimento do
+# nome, para o Ok engolido e a captura cega.
+VOLTAS_NA_LISTA_DE_SERVIDORES = 3
+
+# Entre uma ida à lista e a seguinte com o servidor fora do ar. 30 s e não os
+# ~1,5 s do laço: 854 idas em 9 min martelavam o servidor de autenticação por
+# nada (medido em 22/09/2026). Ver `docs/decisoes/login-e-relogin.md`.
+ESPERA_PELO_SERVIDOR_FORA_DO_AR = 30.0
+
+
+# ===========================================================================
 # O NOME DO SERVIDOR NA LINHA -- para NÃO depender de índice fixo
 # ===========================================================================
 #

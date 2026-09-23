@@ -189,21 +189,20 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 
 | tempo | atual | original | natureza | onde | função | para que serve |
 |---|---|---|---|---|---|---|
-| `ESPERA_PELO_SERVIDOR_FORA_DO_AR` | 30 s | *novo* | FIXO | [login.py:71](blazesbot/bot/login.py#L71) | `_do_server` | Entre uma ida à lista e a seguinte com o servidor fora do ar. 30 s e não os |
-| `PRE_SERVER_TIMEOUT` | 600 s (10 min) | = | TETO | [login.py:90](blazesbot/bot/login.py#L90) | `_sair_da_lista_de_servidores, run` | NÃO EXISTE LIMITE DE TEMPO NA FILA. |
-| `ESPERA_CEGA_SEGUNDOS` | 90 s (2 min) | = | FIXO | [login.py:106](blazesbot/bot/login.py#L106) | `_advance_phase` | Depois de esgotar as tentativas às cegas, o bot NÃO desiste -- ele espaça. |
-| `ESPERA_SERVIDOR_FORA` | 10 s | = | FIXO | [login.py:122](blazesbot/bot/login.py#L122) | `_handle_acquiring_ip` | Espera depois de fechar "Acquiring server IP address." (servidores fora do ar). |
-| `ESPERA_SERVIDOR_FORA_MAX` | 60 s (1 min) | = | TETO | [login.py:123](blazesbot/bot/login.py#L123) | `_handle_acquiring_ip` |  |
-| `SEGUNDOS_CONECTANDO` | 6 s | = | FIXO | [login.py:149](blazesbot/bot/login.py#L149) | `_handle_connecting` | "Connecting to the server, please wait a moment." -- espera LEGÍTIMA, com |
-| `FATIA_DA_ESPERA_DO_LOGIN` | 0.05 s | = | PASSO | [login.py:154](blazesbot/bot/login.py#L154) | `_esperar` | Fatia da espera do login. A espera é cumprida em pedaços para que Parar e |
-| *literal em* `_abort_if_stopped` | 0.075 s | = | FIXO | [login.py:322](blazesbot/bot/login.py#L322) | `_abort_if_stopped` | Verifica parada E pausa. |
-| *literal em* `_do_credentials` | 0.35 s | = | FIXO | [login.py:408](blazesbot/bot/login.py#L408) | `_do_credentials` |  |
-| *literal em* `_do_credentials` | 0.15 s | = | FIXO | [login.py:410](blazesbot/bot/login.py#L410) | `_do_credentials` |  |
-| *literal em* `_do_credentials` | 0.3 s | = | FIXO | [login.py:421](blazesbot/bot/login.py#L421) | `_do_credentials` |  |
-| *literal em* `_do_credentials` | 0.25 s | = | FIXO | [login.py:424](blazesbot/bot/login.py#L424) | `_do_credentials` |  |
-| *literal em* `_do_credentials` | 0.15 s | = | FIXO | [login.py:430](blazesbot/bot/login.py#L430) | `_do_credentials` |  |
-| *literal em* `_do_credentials` | 0.3 s | = | FIXO | [login.py:438](blazesbot/bot/login.py#L438) | `_do_credentials` |  |
-| *literal em* `_do_credentials` | 1.25 s | = | FIXO | [login.py:441](blazesbot/bot/login.py#L441) | `_do_credentials` |  |
+| `PRE_SERVER_TIMEOUT` | 600 s (10 min) | = | TETO | [login.py:88](blazesbot/bot/login.py#L88) | `_sair_da_lista_de_servidores, run` | NÃO EXISTE LIMITE DE TEMPO NA FILA. |
+| `ESPERA_CEGA_SEGUNDOS` | 90 s (2 min) | = | FIXO | [login.py:104](blazesbot/bot/login.py#L104) | `_advance_phase` | Depois de esgotar as tentativas às cegas, o bot NÃO desiste -- ele espaça. |
+| `ESPERA_SERVIDOR_FORA` | 10 s | = | FIXO | [login.py:120](blazesbot/bot/login.py#L120) | `_handle_acquiring_ip` | Espera depois de fechar "Acquiring server IP address." (servidores fora do ar). |
+| `ESPERA_SERVIDOR_FORA_MAX` | 60 s (1 min) | = | TETO | [login.py:121](blazesbot/bot/login.py#L121) | `_handle_acquiring_ip` |  |
+| `SEGUNDOS_CONECTANDO` | 6 s | = | FIXO | [login.py:147](blazesbot/bot/login.py#L147) | `_handle_connecting` | "Connecting to the server, please wait a moment." -- espera LEGÍTIMA, com |
+| `FATIA_DA_ESPERA_DO_LOGIN` | 0.05 s | = | PASSO | [login.py:152](blazesbot/bot/login.py#L152) | `_esperar` | Fatia da espera do login. A espera é cumprida em pedaços para que Parar e |
+| *literal em* `_abort_if_stopped` | 0.075 s | = | FIXO | [login.py:320](blazesbot/bot/login.py#L320) | `_abort_if_stopped` | Verifica parada E pausa. |
+| *literal em* `_do_credentials` | 0.35 s | = | FIXO | [login.py:406](blazesbot/bot/login.py#L406) | `_do_credentials` |  |
+| *literal em* `_do_credentials` | 0.15 s | = | FIXO | [login.py:408](blazesbot/bot/login.py#L408) | `_do_credentials` |  |
+| *literal em* `_do_credentials` | 0.3 s | = | FIXO | [login.py:419](blazesbot/bot/login.py#L419) | `_do_credentials` |  |
+| *literal em* `_do_credentials` | 0.25 s | = | FIXO | [login.py:422](blazesbot/bot/login.py#L422) | `_do_credentials` |  |
+| *literal em* `_do_credentials` | 0.15 s | = | FIXO | [login.py:428](blazesbot/bot/login.py#L428) | `_do_credentials` |  |
+| *literal em* `_do_credentials` | 0.3 s | = | FIXO | [login.py:436](blazesbot/bot/login.py#L436) | `_do_credentials` |  |
+| *literal em* `_do_credentials` | 1.25 s | = | FIXO | [login.py:439](blazesbot/bot/login.py#L439) | `_do_credentials` |  |
 | *literal em* `_do_server` | 0.4 s | = | FIXO | [login.py:488](blazesbot/bot/login.py#L488) | `_do_server` | Seleciona o servidor da conta e confirma. |
 | *literal em* `_do_server` | 1.75 s | = | FIXO | [login.py:549](blazesbot/bot/login.py#L549) | `_do_server` | Seleciona o servidor da conta e confirma. |
 | *literal em* `_try_enter_world` | 0.6 s | = | FIXO | [login.py:600](blazesbot/bot/login.py#L600) | `_try_enter_world` | Seleciona o personagem e entra. Chamado a cada 20 s. |
@@ -317,6 +316,7 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | `TETO_DA_SONDA` | 1.2 s | = | TETO | [instrumentar_clique.py:113](blazesbot/bot/instrumentar_clique.py#L113) | `_sondar_ate_mudar, _um_modo` | Teto da espera pelo efeito. Passou disso, o clique é dado como PERDIDO. |
 | *literal em* `rodar` | 0.05 s | = | FIXO | [instrumentar_clique.py:390](blazesbot/bot/instrumentar_clique.py#L390) | `rodar` |  |
 | *literal em* `main` | 8 s | = | FIXO | [instrumentar_clique.py:488](blazesbot/bot/instrumentar_clique.py#L488) | `main` |  |
+| `ESPERA_PELO_SERVIDOR_FORA_DO_AR` | 30 s | *novo* | FIXO | [login_states.py:158](blazesbot/bot/login_states.py#L158) |  | Entre uma ida à lista e a seguinte com o servidor fora do ar. 30 s e não os |
 | `PRAZO_PARA_A_FADA` | 60 s (1 min) | *novo* | TETO | [morte.py:54](blazesbot/bot/morte.py#L54) | `_esperar_a_fada` | Quanto o morto espera pela Fada antes de se reviver sozinho. |
 | `PASSO_DA_ESPERA` | 0.3 s | *novo* | PASSO | [morte.py:64](blazesbot/bot/morte.py#L64) | `_esperar_a_fada, _esperar_ficar_de_pe (+1)` | Passo entre duas perguntas durante a espera. Tudo o que ele pergunta é |
 | `CADENCIA_DO_CONVITE` | 0.5 s | *novo* | PASSO | [morte.py:72](blazesbot/bot/morte.py#L72) | `_esperar_a_fada` | Cadência da conferência do convite da Fada na TELA. |

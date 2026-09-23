@@ -1339,3 +1339,67 @@ e não o backoff, que produziu os 5 minutos de silêncio de 22/09/2026.
 `BotConfig.relogin_backoff_cap`, e ele é **persistido no `data/config.json`** —
 mudar só o default do código não teria efeito nenhum numa instalação existente.
 Os dois foram alterados. Travado por `tests/test_backoff_do_login.py`.
+
+## 23/09/2026 — os servidores voltaram e o bot não reconhecia
+
+560 Cancel seguidos, com o servidor **na tela**. O log não deixava dúvida:
+
+```
+09:51:06.857 blazestpas  Tela: lista de servidores
+09:51:07.139 blazestpas  o servidor 'Light in the Darkness' NÃO está na lista
+                         (fora do ar?) — saindo da lista pelo Cancel.
+```
+
+E **zero** "Selecionando servidor": nunca chegou a clicar.
+
+### O reconhecimento estava certo — medido na tela real
+
+Capturei as janelas do jogo em execução e medi cada template contra cada linha:
+
+| linha | nota |
+|---|---|
+| L0 White Horse [NEW] | **0.999** |
+| L1 (Tiger Fish, sem recorte) | — |
+| L2 Sky Ice (GSM&BI) | **0.999** |
+| L3 All Stars | **0.999** |
+| L4 **Light in the Darkness** | **1.000** |
+
+O servidor estava lá, na linha 4, e o template o reconhecia perfeitamente.
+
+### O erro era de ONDE o quadro vinha
+
+`_do_server` chamava `self.detector.detect()` por conta própria — uma **segunda
+captura**. E `Detection.frame` existe exatamente para isso não acontecer. O
+comentário está em `login_states.py` desde antes:
+
+> *"Quadro usado nesta detecção. Guardado de propósito: capturar duas vezes para
+> a mesma decisão é caro e, pior, **a segunda captura pode falhar sozinha** —
+> foi exatamente isso que travou o bot na seleção de personagem."*
+
+Eu repeti um defeito que o projeto já tinha documentado.
+
+Com o quadro nulo, `linha_do_servidor` devolvia `None` e o bot lia isso como *"o
+servidor não está lá"*. **Confundir "não sei olhar" com "não está"** é o mesmo
+erro do pino do `Input` de 09/09/2026 — e a mesma regra o corrige.
+
+### As duas correções
+
+1. **`_do_server(det)` recebe o `Detection` do laço** e usa `det.frame`. Uma
+   captura por decisão. A captura de DENTRO do laço de seleção continua e é
+   legítima: ela confere o realce **depois** do clique, então precisa de quadro
+   novo.
+2. **Sem quadro não cancela.** "Não achei" só vale como "não está na lista" se
+   deu para olhar:
+
+```python
+if (lida is None and quadro is not None
+        and self.detector.sabe_reconhecer(wanted)):
+```
+
+### De quebra
+
+As três constantes da lista de servidores (`TENTATIVAS_DE_SELECAO`,
+`VOLTAS_NA_LISTA_DE_SERVIDORES`, `ESPERA_PELO_SERVIDOR_FORA_DO_AR`) mudaram para
+`login_states.py`, junto das outras medições da mesma tela. `login.py` estava
+raspando a catraca de tamanho a cada alteração — agora tem folga, e as políticas
+da tela ficam onde já moram os limiares dela.

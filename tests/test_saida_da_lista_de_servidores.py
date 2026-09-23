@@ -244,6 +244,16 @@ def _login_que_enxerga(servidor: str, linha_realcada: int) -> LoginSequence:
     return seq
 
 
+def _det_com_quadro():
+    """O `Detection` que o laço entrega ao `_do_server` -- com QUADRO.
+
+    Desde 23/09/2026 o `_do_server` não captura mais por conta própria: ele usa
+    o quadro do laço, porque a segunda captura pode falhar sozinha.
+    """
+    return type("D", (), {"capture_ok": True, "frame": object(),
+                          "connected": False})()
+
+
 def test_linha_ERRADA_realcada_cancela_em_vez_de_apertar_Ok(monkeypatch):
     """O servidor saiu da lista: os índices deslocam e o realce fica em outro."""
     seq = _login_que_enxerga("Light in the Darkness", linha_realcada=0)
@@ -422,7 +432,7 @@ def test_nome_RECONHECIVEL_mas_ausente_da_tela_cancela(monkeypatch):
     seq.detector.sabe_reconhecer = lambda _n: True
     seq.detector.linha_do_servidor = lambda *a, **k: None
 
-    seq._do_server()
+    seq._do_server(_det_com_quadro())
 
     assert seq.cliques == [seq.coords.server_cancel]
     assert seq.fases == [Phase.CREDENTIALS]
@@ -481,3 +491,71 @@ def test_o_recorte_tem_LARGURA_FIXA_e_a_busca_e_mais_larga():
     assert largura < MEIA_LARGURA_DO_NOME * 2, (
         f"o recorte ({largura}) não cabe na busca "
         f"({MEIA_LARGURA_DO_NOME * 2}) com folga para o deslize da janela")
+
+
+# ===========================================================================
+# O QUADRO VEM DO LAÇO -- 23/09/2026
+# ===========================================================================
+#
+# Os servidores voltaram e o bot NÃO reconhecia: 560 Cancel seguidos, com
+# "Light in the Darkness" na tela. O reconhecimento estava certo -- medido na
+# tela real do jogo, os quatro nomes casavam a 0.999/1.000 nas linhas certas.
+#
+# O erro era de ONDE o quadro vinha: `_do_server` chamava `detector.detect()`
+# por conta própria, uma SEGUNDA captura. `Detection.frame` existe exatamente
+# porque "a segunda captura pode falhar sozinha" -- o comentário está em
+# `login_states.py` e nasceu de outro travamento, na seleção de personagem.
+#
+# Com o quadro nulo, `linha_do_servidor` devolvia `None` e o bot lia isso como
+# "o servidor não está lá". Confundir "não sei olhar" com "não está" é o mesmo
+# erro do pino do `Input` de 09/09/2026.
+
+
+def test_a_leitura_do_nome_usa_o_QUADRO_DO_LACO():
+    """O quadro da decisão vem de fora, não de uma captura nova.
+
+    A captura de DENTRO do laço de seleção continua e é legítima: ela confere o
+    realce DEPOIS do clique, então precisa de um quadro novo. O que não pode
+    voltar é capturar ANTES, para a leitura do nome -- foi o defeito de
+    23/09/2026.
+    """
+    import inspect
+
+    params = list(inspect.signature(LoginSequence._do_server).parameters)
+    assert params == ["self", "det"], (
+        f"`_do_server` deixou de receber o `Detection` do laço: {params}")
+
+    fonte = inspect.getsource(LoginSequence._do_server)
+    assert "det.frame" in fonte, "a leitura não usa mais o quadro do laço"
+    antes_do_laco = fonte.split("for attempt")[0]
+    assert "self.detector.detect()" not in antes_do_laco, (
+        "voltou a capturar por conta própria antes de ler o nome — é o defeito "
+        "de 23/09/2026, que cancelou 560 vezes com o servidor na tela")
+
+
+def test_SEM_QUADRO_nao_cancela_mesmo_sabendo_reconhecer():
+    """"Não achei" só vale se DEU PARA OLHAR.
+
+    Sem quadro é "não sei", e não sei nunca cancela — a mesma regra do pino do
+    `Input` e do realce da linha.
+    """
+    seq = _login("Light in the Darkness")
+    seq.detector.sabe_reconhecer = lambda _n: True
+    seq.detector.linha_do_servidor = lambda *a, **k: None
+
+    seq._do_server(None)          # o laço não tinha quadro
+
+    assert seq.coords.server_cancel not in seq.cliques, (
+        "cancelou por não enxergar — troca um erro raro por um permanente")
+    assert seq.cliques[-1] == seq.coords.server_ok
+
+
+def test_COM_quadro_e_nome_ausente_cancela_como_deve():
+    """O outro lado: olhei, sei reconhecer, não está lá."""
+    seq = _login_que_enxerga("Light in the Darkness", linha_realcada=0)
+    seq.detector.sabe_reconhecer = lambda _n: True
+    seq.detector.linha_do_servidor = lambda *a, **k: None
+
+    seq._do_server(_det_com_quadro())
+
+    assert seq.cliques == [seq.coords.server_cancel]

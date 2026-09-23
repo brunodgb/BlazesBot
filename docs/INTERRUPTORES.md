@@ -337,30 +337,30 @@ ligar código não testado.
 | `PASSO_DA_SONDA` | `0.012` | [blazesbot/bot/instrumentar_clique.py:110](blazesbot/bot/instrumentar_clique.py#L110) | — | De quanto em quanto tempo a sonda fotografa o minimapa esperando o efeito. |
 | `TETO_DA_SONDA` | `1.2` | [blazesbot/bot/instrumentar_clique.py:113](blazesbot/bot/instrumentar_clique.py#L113) | — | Teto da espera pelo efeito. Passou disso, o clique é dado como PERDIDO. |
 | `WH_MOUSE_LL` | `14` | [blazesbot/bot/instrumentar_clique.py:127](blazesbot/bot/instrumentar_clique.py#L127) | supervisor.py, inputs.py, mouse_shield.py | O SENSOR — o mesmo WH_MOUSE_LL do shield, com o sinal trocado |
-| `ENTER_RETRY_SECONDS` | `10.0` | [blazesbot/bot/login.py:93](blazesbot/bot/login.py#L93) | — | Cadência de tentativa de entrar enquanto conectado. |
-| `ESPERA_CEGA_SEGUNDOS` | `90.0` | [blazesbot/bot/login.py:106](blazesbot/bot/login.py#L106) | — | Depois de esgotar as tentativas às cegas, o bot NÃO desiste -- ele espaça. |
-| `ESPERA_PELO_SERVIDOR_FORA_DO_AR` | `30.0` | [blazesbot/bot/login.py:71](blazesbot/bot/login.py#L71) | config.py | Entre uma ida à lista e a seguinte com o servidor fora do ar. 30 s e não os |
-| `ESPERA_SERVIDOR_FORA` | `10.0` | [blazesbot/bot/login.py:122](blazesbot/bot/login.py#L122) | — | Espera depois de fechar "Acquiring server IP address." (servidores fora do ar). |
-| `ESPERA_SERVIDOR_FORA_MAX` | `60.0` | [blazesbot/bot/login.py:123](blazesbot/bot/login.py#L123) | — | — |
-| `FATIA_DA_ESPERA_DO_LOGIN` | `0.05` | [blazesbot/bot/login.py:154](blazesbot/bot/login.py#L154) | — | Fatia da espera do login. A espera é cumprida em pedaços para que Parar e |
-| `LOGIN_SCREEN_MAX_SECONDS` | `150.0` | [blazesbot/bot/login.py:131](blazesbot/bot/login.py#L131) | — | Tempo máximo parado na tela de usuário e senha antes de reabrir o cliente. |
-| `MAX_ANCHOR_DEVIATION` | `60` | [blazesbot/bot/login.py:111](blazesbot/bot/login.py#L111) | — | Divergência a partir da qual a âncora é considerada suspeita. É folgada de |
-| `MAX_BLIND_ENTER_ATTEMPTS` | `4` | [blazesbot/bot/login.py:99](blazesbot/bot/login.py#L99) | — | Quantas tentativas de "Enter Game" fazer sem conseguir confirmar a entrada. |
-| `MAX_CREDENTIAL_ERRORS` | `5` | [blazesbot/bot/login.py:57](blazesbot/bot/login.py#L57) | config.py | Recusas de usuário/senha antes de desistir da conta. |
-| `MODAL_CONFIRM_SECONDS` | `7.5` | [blazesbot/bot/login.py:113](blazesbot/bot/login.py#L113) | — | Persistência do flag de modal para concluir que há um aviso na tela. |
-| `MODAL_PRE_SERVER_SECONDS` | `3.5` | [blazesbot/bot/login.py:117](blazesbot/bot/login.py#L117) | — | O mesmo, mas ANTES de conectar ao servidor. Bem menor: as telas de login e de |
-| `PRE_SERVER_TIMEOUT` | `600.0` | [blazesbot/bot/login.py:90](blazesbot/bot/login.py#L90) | — | NÃO EXISTE LIMITE DE TEMPO NA FILA. |
-| `SEGUNDOS_CONECTANDO` | `6.0` | [blazesbot/bot/login.py:149](blazesbot/bot/login.py#L149) | — | "Connecting to the server, please wait a moment." -- espera LEGÍTIMA, com |
-| `TENTATIVAS_DE_SELECAO` | `3` | [blazesbot/bot/login.py:64](blazesbot/bot/login.py#L64) | — | Voltas na lista antes de sair pelo Cancel -- a REDE, para o que a leitura do |
-| `VOLTAS_NA_LISTA_DE_SERVIDORES` | `3` | [blazesbot/bot/login.py:66](blazesbot/bot/login.py#L66) | — | — |
-| `WAIT_HEARTBEAT_SECONDS` | `150.0` | [blazesbot/bot/login.py:125](blazesbot/bot/login.py#L125) | — | Cadência do aviso de "continuo esperando", só para o log não ficar mudo. |
+| `ENTER_RETRY_SECONDS` | `10.0` | [blazesbot/bot/login.py:91](blazesbot/bot/login.py#L91) | — | Cadência de tentativa de entrar enquanto conectado. |
+| `ESPERA_CEGA_SEGUNDOS` | `90.0` | [blazesbot/bot/login.py:104](blazesbot/bot/login.py#L104) | — | Depois de esgotar as tentativas às cegas, o bot NÃO desiste -- ele espaça. |
+| `ESPERA_SERVIDOR_FORA` | `10.0` | [blazesbot/bot/login.py:120](blazesbot/bot/login.py#L120) | — | Espera depois de fechar "Acquiring server IP address." (servidores fora do ar). |
+| `ESPERA_SERVIDOR_FORA_MAX` | `60.0` | [blazesbot/bot/login.py:121](blazesbot/bot/login.py#L121) | — | — |
+| `FATIA_DA_ESPERA_DO_LOGIN` | `0.05` | [blazesbot/bot/login.py:152](blazesbot/bot/login.py#L152) | — | Fatia da espera do login. A espera é cumprida em pedaços para que Parar e |
+| `LOGIN_SCREEN_MAX_SECONDS` | `150.0` | [blazesbot/bot/login.py:129](blazesbot/bot/login.py#L129) | — | Tempo máximo parado na tela de usuário e senha antes de reabrir o cliente. |
+| `MAX_ANCHOR_DEVIATION` | `60` | [blazesbot/bot/login.py:109](blazesbot/bot/login.py#L109) | — | Divergência a partir da qual a âncora é considerada suspeita. É folgada de |
+| `MAX_BLIND_ENTER_ATTEMPTS` | `4` | [blazesbot/bot/login.py:97](blazesbot/bot/login.py#L97) | — | Quantas tentativas de "Enter Game" fazer sem conseguir confirmar a entrada. |
+| `MAX_CREDENTIAL_ERRORS` | `5` | [blazesbot/bot/login.py:65](blazesbot/bot/login.py#L65) | config.py | Recusas de usuário/senha antes de desistir da conta. |
+| `MODAL_CONFIRM_SECONDS` | `7.5` | [blazesbot/bot/login.py:111](blazesbot/bot/login.py#L111) | — | Persistência do flag de modal para concluir que há um aviso na tela. |
+| `MODAL_PRE_SERVER_SECONDS` | `3.5` | [blazesbot/bot/login.py:115](blazesbot/bot/login.py#L115) | — | O mesmo, mas ANTES de conectar ao servidor. Bem menor: as telas de login e de |
+| `PRE_SERVER_TIMEOUT` | `600.0` | [blazesbot/bot/login.py:88](blazesbot/bot/login.py#L88) | — | NÃO EXISTE LIMITE DE TEMPO NA FILA. |
+| `SEGUNDOS_CONECTANDO` | `6.0` | [blazesbot/bot/login.py:147](blazesbot/bot/login.py#L147) | — | "Connecting to the server, please wait a moment." -- espera LEGÍTIMA, com |
+| `WAIT_HEARTBEAT_SECONDS` | `150.0` | [blazesbot/bot/login.py:123](blazesbot/bot/login.py#L123) | — | Cadência do aviso de "continuo esperando", só para o log não ficar mudo. |
 | `DO_NOME_ATE_O_STATUS` | `147` | [blazesbot/bot/login_states.py:138](blazesbot/bot/login_states.py#L138) | — | Do NOME do servidor até a coluna de status, e a largura da busca: o nome |
+| `ESPERA_PELO_SERVIDOR_FORA_DO_AR` | `30.0` | [blazesbot/bot/login_states.py:158](blazesbot/bot/login_states.py#L158) | login.py, config.py | Entre uma ida à lista e a seguinte com o servidor fora do ar. 30 s e não os |
 | `LARGURA_DA_BUSCA_DO_STATUS` | `120` | [blazesbot/bot/login_states.py:139](blazesbot/bot/login_states.py#L139) | — | — |
-| `LIMIAR_DO_NOME_DO_SERVIDOR` | `0.8` | [blazesbot/bot/login_states.py:168](blazesbot/bot/login_states.py#L168) | — | O NOME DO SERVIDOR NA LINHA -- para NÃO depender de índice fixo |
+| `LIMIAR_DO_NOME_DO_SERVIDOR` | `0.8` | [blazesbot/bot/login_states.py:188](blazesbot/bot/login_states.py#L188) | — | O NOME DO SERVIDOR NA LINHA -- para NÃO depender de índice fixo |
 | `LIMIAR_DO_OFFLINE` | `0.85` | [blazesbot/bot/login_states.py:133](blazesbot/bot/login_states.py#L133) | — | — |
-| `MEIA_LARGURA_DO_NOME` | `80` | [blazesbot/bot/login_states.py:173](blazesbot/bot/login_states.py#L173) | — | Meia-largura da busca em torno do CENTRO do nome, e não coluna absoluta: o |
+| `MEIA_LARGURA_DO_NOME` | `80` | [blazesbot/bot/login_states.py:193](blazesbot/bot/login_states.py#L193) | — | Meia-largura da busca em torno do CENTRO do nome, e não coluna absoluta: o |
 | `TEMPLATE_SERVIDOR_OFFLINE` | `'server_offline.png'` | [blazesbot/bot/login_states.py:132](blazesbot/bot/login_states.py#L132) | — | O STATUS DO SERVIDOR NA LISTA -- "Online" x "Offline" |
+| `TENTATIVAS_DE_SELECAO` | `3` | [blazesbot/bot/login_states.py:149](blazesbot/bot/login_states.py#L149) | login.py | Cliques na linha antes de desistir da seleção -- clique engolido é comum aqui. |
 | `THRESHOLD` | `0.8` | [blazesbot/bot/login_states.py:36](blazesbot/bot/login_states.py#L36) | — | — |
+| `VOLTAS_NA_LISTA_DE_SERVIDORES` | `3` | [blazesbot/bot/login_states.py:153](blazesbot/bot/login_states.py#L153) | login.py | Voltas à mesma tela antes de sair pelo Cancel -- a REDE do reconhecimento do |
 | `CADENCIA_DO_CONVITE` | `0.5` | [blazesbot/bot/morte.py:72](blazesbot/bot/morte.py#L72) | — | Cadência da conferência do convite da Fada na TELA. |
 | `EXTENSAO_PELO_FEITICO` | `15.0` | [blazesbot/bot/morte.py:59](blazesbot/bot/morte.py#L59) | — | Quanto o prazo estica quando a Fada avisa que COMEÇOU a conjurar. |
 | `MORTES_SEGUIDAS_PARA_PARAR` | `3` | [blazesbot/bot/morte.py:93](blazesbot/bot/morte.py#L93) | — | Mortes seguidas SEM conseguir voltar ao ponto antes de parar a conta. |

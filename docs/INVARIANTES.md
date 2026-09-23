@@ -106,6 +106,13 @@
   sem isso o `PRE_SERVER_TIMEOUT` matava o ciclo que estava fazendo a coisa
   certa, jogando a conta num backoff de 300 s de silêncio — que foi lido como
   "o bot parou" em 22/09/2026.
+- **UMA CAPTURA POR DECISÃO: use o `Detection.frame` do laço.** A segunda
+  captura pode falhar sozinha — está escrito em `login_states.py` desde o
+  travamento da seleção de personagem, e foi repetido em 23/09/2026 no
+  `_do_server`: com o quadro nulo o bot cancelou 560 vezes com o servidor na
+  tela. Capturar de novo só quando a tela MUDOU (depois de um clique).
+- **"NÃO ACHEI" SÓ VALE SE DEU PARA OLHAR.** Sem quadro é "não sei", e não sei
+  nunca cancela um login. Mesma regra do pino do `Input`.
 - **A LINHA DO SERVIDOR VEM DA TELA, NUNCA DO ÍNDICE NA LISTA ESTÁTICA.**
   `Coords.server_rows` tem cinco nomes e ordem fixa; três prints da mesma tela
   mostraram 4, 3 e 2 linhas, nenhum batendo com ela. `linha_do_servidor` acha o
