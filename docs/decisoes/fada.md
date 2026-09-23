@@ -595,15 +595,32 @@ personagens em 07/09/2026.
 Ele vem ANTES da cadência da poção (`SEGUNDOS_ENTRE_SOCORROS`) de propósito: a
 poção tem ritmo próprio e não pode calar a Fada.
 
-### Metade 2 — a Fada larga a própria defesa
+### Metade 2 — e ela NÃO larga a própria defesa em batalha
 
-A regra de 01/09/2026 ("em batalha ela cuida de si") continua valendo para o
-caso comum. A exceção é só para o crítico: quem está em 70% espera a luta
-acabar, como sempre esperou.
+A primeira versão largava: em batalha, um companheiro crítico ganhava dela,
+desde que ela mesma não estivesse crítica. Durou algumas horas. O usuário
+desfez, e o argumento dele fecha sozinho: *"se ela está em batalha tem algum mob
+batendo nela, e a prioridade é ela se manter viva"*.
 
-**E ela só larga a defesa se ela mesma não estiver crítica.** Fada morta não cura
-ninguém, e ela é a única do time que não tem quem a cure — sair correndo com a
-própria vida no fim mata os dois.
+**E havia um buraco técnico que a exceção não cobria**, encontrado ao responder
+a pergunta dele: a checagem "eu estou crítica?" acontecia UMA VEZ, antes de
+começar. `_curar` fica até `TETO_DA_CURA_SEGUNDOS` (20 s) batendo a cura no
+aliado e conferindo a vida DELE — nunca a dela. Entrar em 45% com mob batendo e
+sair morta nos 20 s seguintes era um caminho aberto, e a proteção que eu tinha
+escrito valia só para o instante da decisão.
+
+Em batalha, portanto, a regra de 01/09/2026 continua inteira: ela cuida de si.
+
+### A emergência vive FORA de batalha: o crítico fura a fila
+
+Lá ninguém está batendo nela, e parar de sentar para atender quem está morrendo
+não custa nada. `_critico_primeiro` põe os críticos na frente **preservando a
+ordem de chegada dentro de cada grupo**: entre dois críticos atende quem pediu
+primeiro, e o mesmo entre dois feridos. O que muda é que quem está morrendo não
+espera atrás de quem está em 70%.
+
+O contador `emergencias` conta quantas vezes isso aconteceu, e aparece no
+`resumo()` — se ele estiver alto, a rota está pesada demais para o time.
 
 ### O anti-spam já existia, e por isso não foi escrito de novo
 

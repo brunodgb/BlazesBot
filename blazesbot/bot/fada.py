@@ -256,8 +256,9 @@ class FadaDoTime:
         self.curas = 0
         self.curas_sem_efeito = 0
         self.cliques_errados = 0
-        # Quantas vezes ela largou a própria defesa para salvar alguém. Aparece
-        # no `resumo()`: é o número que diz se a ambulância está sendo chamada.
+        # Quantas vezes alguém em estado crítico passou na frente da fila.
+        # Aparece no `resumo()`: é o número que diz se a ambulância está sendo
+        # chamada -- e, se for alto, que a rota está pesada demais para o time.
         self.emergencias = 0
         # Quantas vezes seguidas cada vítima falhou. Zera quando ela é atendida
         # ou sai da fila -- é por vítima, não global: uma que não dá para curar
@@ -344,36 +345,30 @@ class FadaDoTime:
             # -- então a proteção que ela contava não existia justamente na hora
             # em que ela precisava. Quem avisa o time é a batida, que agora leva
             # o estado de batalha junto.
+            # E A AMBULÂNCIA NÃO FURA ESTA REGRA -- decidido em 23/09/2026,
+            # depois de a exceção ter existido por algumas horas.
+            #
+            # A tentativa foi largar a própria defesa por um companheiro em
+            # estado crítico, desde que ela mesma não estivesse crítica. O
+            # usuário desfez: *"se ela está em batalha tem algum mob batendo
+            # nela, e a prioridade é ela se manter viva"*.
+            #
+            # E ELE ESTAVA CERTO POR UM MOTIVO QUE A EXCEÇÃO NÃO COBRIA: a
+            # pergunta "eu estou crítica?" acontecia UMA VEZ, antes de começar.
+            # `_curar` fica até `TETO_DA_CURA_SEGUNDOS` (20 s) batendo a cura no
+            # aliado e conferindo a vida DELE -- nunca a dela. Entrar em 45% com
+            # mob batendo e sair morta nos 20 s seguintes era um caminho aberto.
+            #
+            # A emergência continua existindo FORA de batalha, onde ela fura a
+            # fila (ver `_critico_primeiro`): lá ninguém está batendo nela, e
+            # parar de sentar para atender quem está morrendo não custa nada.
             self._em_briga = True
-
-            # A AMBULÂNCIA FURA ESSA REGRA -- 23/09/2026.
-            #
-            # A decisão acima continua valendo para o caso comum: em batalha ela
-            # cuida de si. Mas ela é do tempo em que o companheiro apanhando
-            # tinha a poção dele e o fim da luta para se salvar -- e o usuário
-            # mediu o contrário: *"ele morre e perde experiência, pois a Fada
-            # segue seu loop normal ou aguarda o fim do combate"*.
-            #
-            # A EXCEÇÃO É SÓ PARA O CRÍTICO (ver `PISO_DO_CRITICO`), não para
-            # qualquer ferido: quem está em 70% espera a luta acabar como
-            # sempre esperou. E ela SÓ larga a própria defesa se ela mesma não
-            # estiver crítica -- Fada morta não cura ninguém, e ela é a única
-            # do time que não tem quem a cure.
-            critico = self._quem_esta_critico()
-            if critico is not None and not self._eu_estou_critica():
-                self.log.warning(
-                    "FADA: EMERGÊNCIA -- %s abaixo de %.0f%% e eu em batalha. "
-                    "Largo a minha defesa e curo ele.",
-                    critico, self._hp_critico())
-                self.emergencias += 1
-                _atendida, continuar = self._atender(critico)
-                return continuar
-
             return self._me_defender()
         self._em_briga = False
 
         fila = self.mural.fila_de_cura(self._membros_do_time())
         fila = [x for x in fila if x != self.meu_login]
+        fila = self._critico_primeiro(fila)
         self._esquecer_quem_saiu_da_fila(fila)
 
         # A AUTO-CURA VEM ANTES DA FILA. Fada morta não cura ninguém, e ela é a
@@ -435,36 +430,37 @@ class FadaDoTime:
         """
         return hp_critico(self._pedir_pct())
 
-    def _quem_esta_critico(self) -> str | None:
-        """O primeiro da fila abaixo do crítico. `None` = ninguém.
+    def _critico_primeiro(self, fila: list[str]) -> list[str]:
+        """A fila com quem está CRÍTICO na frente. Fora de batalha.
 
-        A VIDA VEM DO MURAL, e não da memória. `vida_do_time()` existe e seria
-        o caminho óbvio, mas o `hp` que ela devolve parece ser o MÁXIMO e não a
-        vida atual (ver `core/memory.py`) -- decidir emergência com ele seria
-        decidir com o número errado. Quem sabe a vida de cada conta é ela
-        mesma, e é ela que publica (`mural.pedir_cura`).
+        A ordem normal é de CHEGADA, e ela continua valendo dentro de cada
+        grupo: entre dois críticos atende primeiro quem pediu primeiro, e o
+        mesmo entre dois feridos. O que muda é que quem está morrendo não espera
+        atrás de quem está em 70%.
 
-        A ORDEM É A DA FILA: quem pediu primeiro é atendido primeiro, e a
-        emergência não reordena nada -- ela só decide se a Fada larga o que
-        está fazendo.
+        A VIDA VEM DO MURAL, e não da memória. `vida_do_time()` existe e seria o
+        caminho óbvio, mas o `hp` que ela devolve parece ser o MÁXIMO e não a
+        vida atual (ver `core/memory.py`) -- ordenar por ele seria ordenar pelo
+        número errado. Quem sabe a vida de cada conta é ela mesma, e é ela que
+        publica (`mural.pedir_cura`).
+
+        EM BATALHA ISTO NÃO ACONTECE: lá ela cuida de si e não chega aqui.
         """
-        critico = self._hp_critico()
-        for login in self.mural.fila_de_cura(self._membros_do_time()):
-            if login == self.meu_login:
-                continue
+        if len(fila) < 2:
+            return fila
+        limiar = self._hp_critico()
+
+        def esta_critico(login: str) -> bool:
             vida = self.mural.pedido_de(login)
-            if vida is not None and vida <= critico:
-                return login
-        return None
+            return vida is not None and vida <= limiar
 
-    def _eu_estou_critica(self) -> bool:
-        """A minha vida está no nível de emergência? "Não sei" conta como não.
-
-        É o freio da ambulância: com ela também caindo, sair correndo para curar
-        o outro mata os dois. A Fada é a única do time que não tem quem a cure.
-        """
-        minha = self._vida_pct()
-        return minha is not None and minha <= self._hp_critico()
+        criticos = [x for x in fila if esta_critico(x)]
+        if not criticos or len(criticos) == len(fila):
+            return fila
+        self.emergencias += 1
+        self.log.warning("FADA: %s abaixo de %.0f%% — passa na frente da fila.",
+                         ", ".join(criticos), limiar)
+        return criticos + [x for x in fila if x not in criticos]
 
     def _me_defender(self) -> bool:
         """Em batalha: seleciona a si mesma e cura até sair. `False` = parar.

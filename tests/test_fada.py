@@ -525,9 +525,16 @@ def test_o_limiar_critico_e_METADE_do_pedir_com_piso_de_20():
     assert mod.hp_critico(0) == 20.0, "sem configuração, o piso ainda vale"
 
 
-def test_EM_BATALHA_ela_larga_a_defesa_por_quem_esta_critico():
-    """Era a regra de 01/09 ("em batalha ela cuida de si") deixando o dano
-    morrer. A exceção é só para o crítico."""
+def test_EM_BATALHA_ela_cuida_de_SI_mesmo_com_aliado_critico():
+    """*"Se ela está em batalha tem algum mob batendo nela, e a prioridade é ela
+    se manter viva"* (usuário, 23/09/2026).
+
+    A exceção existiu por algumas horas e foi desfeita. O motivo técnico que a
+    condenou: a pergunta "eu estou crítica?" acontecia UMA VEZ, e `_curar` fica
+    até `TETO_DA_CURA_SEGUNDOS` conferindo a vida DA VÍTIMA -- nunca a dela.
+    Entrar em 45% com mob batendo e sair morta 20 s depois era um caminho
+    aberto.
+    """
     jogo = _Jogo()
     jogo.batalha = True
     jogo.vida = 100.0                      # ela está bem
@@ -536,36 +543,35 @@ def test_EM_BATALHA_ela_larga_a_defesa_por_quem_esta_critico():
 
     f._uma_volta()
 
-    assert f.emergencias == 1, "não largou a defesa por quem estava morrendo"
-    assert jogo.cliques, "não chegou a clicar no retrato do ferido"
-
-
-def test_em_batalha_quem_esta_FERIDO_mas_nao_critico_continua_esperando():
-    """Quem está em 70% espera a luta acabar, como sempre esperou."""
-    jogo = _Jogo()
-    jogo.batalha = True
-    jogo.vida = 100.0
-    f = _fada(jogo, pedir=80.0)            # crítico = 40%
-    mural.pedir_cura("aliado", 70.0)       # ferido, não crítico
-
-    f._uma_volta()
-
+    assert jogo.auto_selecoes > 0, "largou a própria defesa com mob batendo"
     assert f.emergencias == 0
-    assert jogo.auto_selecoes > 0, "deixou de se defender sem emergência"
+    assert not jogo.cliques, "clicou no retrato do aliado durante a batalha"
 
 
-def test_a_FADA_CRITICA_cuida_de_si_primeiro():
-    """Fada morta não cura ninguém, e ela é a única do time sem quem a cure."""
+def test_FORA_de_batalha_o_critico_passa_na_frente_da_fila():
+    """Lá ninguém está batendo nela: parar de sentar para atender quem está
+    morrendo não custa nada. A ordem de chegada vale DENTRO de cada grupo."""
     jogo = _Jogo()
-    jogo.batalha = True
-    jogo.vida = 25.0                       # ela também está crítica
+    jogo.batalha = False
+    f = _fada(jogo, pedir=80.0)            # crítico = 40%
+
+    mural.pedir_cura("outro", 70.0)        # pediu primeiro, ferido
+    mural.pedir_cura("aliado", 30.0)       # pediu depois, CRÍTICO
+
+    fila = f._critico_primeiro(["outro", "aliado"])
+
+    assert fila == ["aliado", "outro"], "quem está morrendo esperou a vez"
+    assert f.emergencias == 1
+
+
+def test_sem_ninguem_critico_a_fila_fica_como_chegou():
+    jogo = _Jogo()
     f = _fada(jogo, pedir=80.0)
-    mural.pedir_cura("aliado", 30.0)
+    mural.pedir_cura("outro", 70.0)
+    mural.pedir_cura("aliado", 60.0)
 
-    f._uma_volta()
-
-    assert f.emergencias == 0, "saiu correndo curar o outro e morreria junto"
-    assert jogo.auto_selecoes > 0, "não se defendeu"
+    assert f._critico_primeiro(["outro", "aliado"]) == ["outro", "aliado"]
+    assert f.emergencias == 0, "reordenou sem emergência nenhuma"
 
 
 def test_o_dano_AVISA_a_fada_de_dentro_da_batalha():
