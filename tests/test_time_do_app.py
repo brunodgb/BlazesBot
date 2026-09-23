@@ -542,6 +542,14 @@ def test_a_FADA_tambem_nasce_ancorada_no_lider():
     fonte = inspect.getsource(fada_montagem.rodar_a_fada)
     assert "ancora_do_lider(sup)" in fonte
     assert "ponto_inicial[0] = ancora" in fonte
+    # E NO CONFIG TAMBÉM. A gravação do seguidor de dano mora em
+    # `supervisor._rodar_modo_app`, e a Fada NUNCA passa por lá -- o laço dela é
+    # outro arquivo. Sintoma medido em 23/09/2026: os três de dano gravados em
+    # (1870, 1668) e ela sozinha em (0, 0), porque nada nunca escreveu a base
+    # dela (o bloco que salva a posição no arranque também é do modo APP).
+    assert "app._base_pos_x, app._base_pos_y = ancora" in fonte, (
+        "a Fada voltou a ficar com a âncora só na memória")
+    assert "sup.config.save()" in fonte, "semeou e não gravou"
     assert fonte.index("ponto_inicial[0] = ancora") < fonte.index("fada.rodar()"), (
         "semear depois do laço não adianta: `voltar_ao_ponto` já teria guardado "
         "a posição dela na primeira volta")

@@ -737,3 +737,26 @@ diferentes".
 
 É o que a leitura de posição devolve quando o personagem ainda não entrou no
 mundo. Ancorar o time ali mandaria todo mundo andar para o canto do mapa.
+
+### E a FADA precisou da mesma linha, no arquivo dela — 23/09/2026
+
+A gravação acima mora em `supervisor._rodar_modo_app`, e **a Fada nunca passa
+por lá**: o laço dela é o `fada_montagem.rodar_a_fada`. O sintoma foi o usuário
+reabrir o bot e olhar o `config.json`:
+
+    blazestpas (líder)   base = (1870, 1668)
+    gamerblazes          base = (1870, 1668)
+    blazesgamer          base = (1870, 1668)
+    blazesofgamer        base = (1870, 1668)
+    mfaustoapp069 (Fada) base = (0, 0)        <-- ela
+
+Os três de dano estavam certos porque passam pelo modo APP. Ela estava em (0,0)
+porque **nada nunca tinha escrito a base dela** — o bloco que salva a posição no
+arranque é do modo APP também. A âncora agora vai para o config dela no mesmo
+ponto em que semeia o `ponto_inicial`.
+
+A lição, que vale para o resto: **a Fada é um ecossistema de laço próprio.**
+Toda vez que algo entra no arranque do modo APP e vale para o time, é preciso
+perguntar se ela também precisa — porque ela não passa por nenhuma linha de lá.
+Foi assim com o aceite de convite (19/09), com a batida no mural e agora com a
+âncora.

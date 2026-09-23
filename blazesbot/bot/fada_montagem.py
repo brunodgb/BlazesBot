@@ -211,8 +211,18 @@ def rodar_a_fada(sup, so_montar: bool = False):
         ancora = ancora_do_lider(sup)
         if ancora is not None:
             ponto_inicial[0] = ancora
+            # E TAMBÉM NO CONFIG -- 23/09/2026. A gravação que o seguidor de
+            # dano faz mora em `supervisor._rodar_modo_app`, e a FADA NUNCA
+            # PASSA POR LÁ: o laço dela é este arquivo. O sintoma foi o usuário
+            # abrir o `config.json` e achar os três de dano em (1870, 1668) e
+            # ela sozinha em (0, 0) -- nada nunca tinha escrito a base dela,
+            # porque o bloco que salva a posição no arranque também é do modo
+            # APP.
+            app._base_pos_x, app._base_pos_y = ancora
+            sup.config.save()
             log.info("FADA: ponto inicial veio do líder %s — é para lá que eu "
-                     "volto se me arrastarem.", ancora)
+                     "volto se me arrastarem (gravado no config também).",
+                     ancora)
 
     fada = FadaDoTime(
         log=log,
