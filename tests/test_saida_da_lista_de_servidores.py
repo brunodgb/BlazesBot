@@ -33,6 +33,9 @@ class _Detector:
     _modelo_do_servidor = LoginStateDetector._modelo_do_servidor
     sabe_reconhecer = LoginStateDetector.sabe_reconhecer
     linha_do_servidor = LoginStateDetector.linha_do_servidor
+    # instrumentacao temporaria de 23/09/2026 -- sai com ela
+    _nota_bruta = LoginStateDetector._nota_bruta
+    _guardar_a_prova = LoginStateDetector._guardar_a_prova
     # Biblioteca que nunca acha nada: o status fica ILEGIVEL, que e o
     # caso cego -- os testes do Offline injetam a resposta que querem.
     templates = type("_Sem", (), {"load": staticmethod(lambda _n: None)})()

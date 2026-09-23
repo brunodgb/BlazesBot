@@ -187,6 +187,11 @@ ESPERA_PELO_SERVIDOR_FORA_DO_AR = 30.0
 #      variou 3 px entre os prints.
 LIMIAR_DO_NOME_DO_SERVIDOR = 0.80
 
+# DIAGNÓSTICO TEMPORÁRIO (23/09/2026): quando o nome NÃO é achado, guarda o
+# quadro da decisão e as notas de cada linha em `logs/diagnostico-servidor/`.
+# Sai assim que o defeito for entendido -- é instrumentação, não funcionalidade.
+GUARDAR_O_QUADRO_QUANDO_NAO_ACHA = True
+
 # Meia-largura da busca em torno do CENTRO do nome, e não coluna absoluta: o
 # ponto da linha já vem resolvido por âncora/resolução, então derivar dele faz a
 # busca acompanhar. 80 px cobre o nome mais largo medido (279-408, centro 344).
@@ -392,8 +397,13 @@ class LoginStateDetector:
         """
         modelo = self._modelo_do_servidor(nome)
         if frame is None or modelo is None:
+            if GUARDAR_O_QUADRO_QUANDO_NAO_ACHA:
+                self._guardar_a_prova(frame, nome, primeira, None,
+                                      "sem quadro" if frame is None
+                                      else "sem recorte do nome")
             return None
         x0 = max(0, primeira[0] - MEIA_LARGURA_DO_NOME)
+        notas = []
         for indice in range(linhas):
             y = primeira[1] + indice * altura
             regiao = (x0, max(0, y - altura // 2),
@@ -402,7 +412,47 @@ class LoginStateDetector:
                              threshold=LIMIAR_DO_NOME_DO_SERVIDOR,
                              region=regiao) is not None:
                 return indice
+            notas.append(self._nota_bruta(frame, modelo, regiao))
+        if GUARDAR_O_QUADRO_QUANDO_NAO_ACHA:
+            self._guardar_a_prova(frame, nome, primeira, notas, "nao achei")
         return None
+
+    def _nota_bruta(self, frame, modelo, regiao):
+        """A nota do template naquela região, sem limiar. Só para diagnóstico."""
+        try:
+            import cv2
+            x, y, w, h = regiao
+            recorte = frame[y:y + h, x:x + w]
+            cinza = cv2.cvtColor(recorte, cv2.COLOR_BGR2GRAY)
+            if (cinza.shape[0] < modelo.shape[0]
+                    or cinza.shape[1] < modelo.shape[1]):
+                return f"faixa{cinza.shape}<modelo{modelo.shape}"
+            return round(float(cv2.minMaxLoc(cv2.matchTemplate(
+                cinza, modelo, cv2.TM_CCOEFF_NORMED))[1]), 3)
+        except Exception as erro:
+            return f"erro:{erro}"
+
+    def _guardar_a_prova(self, frame, nome, primeira, notas, motivo):
+        """Guarda o quadro da decisão e as notas. DIAGNÓSTICO TEMPORÁRIO."""
+        import logging
+        import time as _t
+        log = logging.getLogger("blazes.servidor")
+        forma = None if frame is None else getattr(frame, "shape", "?")
+        log.warning(
+            "LISTA: %s | alvo=%r | primeira=%s | quadro=%s | notas=%s",
+            motivo, nome, primeira, forma, notas)
+        if frame is None:
+            return
+        try:
+            import cv2
+            pasta = Path("logs") / "diagnostico-servidor"
+            pasta.mkdir(parents=True, exist_ok=True)
+            arq = pasta / f"{_t.strftime('%H%M%S')}-{int(_t.time()*1000)%1000}.png"
+            if len(list(pasta.glob("*.png"))) < 20:
+                cv2.imwrite(str(arq), frame)
+                log.warning("LISTA: quadro salvo em %s", arq)
+        except Exception as erro:
+            log.warning("LISTA: nao consegui salvar o quadro: %s", erro)
 
     def servidor_offline(self, frame, primeira, indice: int,
                          altura: int = 20) -> bool:
