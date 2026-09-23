@@ -124,6 +124,11 @@
   fundo azul; e não), mas o estado de onde o recorte saiu não muda o resultado:
   margem +0.586 do selecionado contra +0.581 do não selecionado. Medido em cinco
   prints 1:1, com cada servidor nos dois estados.
+- **PARA EXTRAIR UM RECORTE, NÃO SE USA COORDENADA — acha-se o TEXTO.** A
+  âncora (`título + deslocamento`) só vale quando a origem é a área de cliente;
+  num print recortado ela aponta para o lugar errado. Em 23/09/2026 isso deu 18
+  erros de 20 antes de eu trocar para projeção horizontal. Coordenada é para o
+  bot CLICAR, não para a ferramenta recortar.
 - **RECORTE DE NOME TEM LARGURA FIXA** (140 px, o centro ± 70), não ajustada ao
   texto: ajustado dava pior acerto 0.971, fixo dá 0.999. A busca é mais larga
   (± 80) para absorver o deslize da janela, medido em 3 px entre prints.

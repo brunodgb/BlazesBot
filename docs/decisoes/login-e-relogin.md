@@ -1403,3 +1403,59 @@ As três constantes da lista de servidores (`TENTATIVAS_DE_SELECAO`,
 `login_states.py`, junto das outras medições da mesma tela. `login.py` estava
 raspando a catraca de tamanho a cada alteração — agora tem folga, e as políticas
 da tela ficam onde já moram os limiares dela.
+
+## 23/09/2026 — o quinto recorte: "Tiger Fish (WW)"
+
+O usuário mandou duas referências novas com a lista **completa**, uma delas com
+o Tiger Fish selecionado. Com elas os cinco servidores passam a ser
+reconhecidos.
+
+### Medição, nos dois prints que mostram os cinco
+
+| | |
+|---|---|
+| pior ACERTO | **0.966** |
+| melhor FALSO | **0.413** |
+| margem | **+0.554** |
+| erros | **0** de 10 |
+
+E na **tela real do jogo**, com o bot rodando:
+
+```
+L0 White Horse [NEW]      0.999
+L1 Tiger Fish (WW)        1.000
+L2 Sky Ice (GSM&BI)       0.999
+L3 All Stars              0.999
+L4 Light in the Darkness  0.966
+```
+
+Cada um na sua linha, e o melhor falso em qualquer linha fica em 0.41.
+
+### O que custou caro, e fica registrado
+
+Tentei extrair o recorte derivando a posição da linha da **âncora do título**
+(`título + (-148, +51)`, que é o que o bot usa). Deu **18 erros de 20**.
+
+O motivo: as duas referências novas são **recortes da caixa**, não a janela
+inteira. Nelas o delta título→primeira linha mede 64 px; na área de cliente
+completa, 51. O offset da âncora só vale quando a origem é a área de cliente —
+num recorte arbitrário ele aponta para o lugar errado, e à esquerda chega a
+sair da imagem.
+
+**Para EXTRAIR um recorte, não se usa sistema de coordenadas.** O template é o
+texto: acha-se o texto por projeção horizontal dentro da caixa e recorta-se
+centrado nele. Coordenada é para o bot CLICAR, não para a ferramenta recortar.
+
+Duas armadilhas menores no caminho, ambas medidas:
+
+* a **moldura dourada** da caixa é clara e entra na projeção — a janela de
+  varredura precisa começar dentro da tabela (x ≥ 40 nos recortes), senão o
+  centro do texto é puxado para a borda;
+* os dois primeiros grupos de texto são o **título** e o **cabeçalho**
+  ("Server Name"), não servidores.
+
+### Os cinco recortes
+
+`data/templates/estado/servidor_*.png`, todos 140×17, todos com o mesmo método
+(largura fixa em torno do centro do texto). `server_rows` está completa e o
+índice estático deixou de ser usado em qualquer servidor conhecido.
