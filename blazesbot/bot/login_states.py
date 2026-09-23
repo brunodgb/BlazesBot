@@ -101,8 +101,39 @@ class Detection:
 
     @property
     def connected(self) -> bool:
-        """Já passou da fase de login/servidor?"""
+        """O servidor está no TÍTULO da janela.
+
+        CUIDADO: isto NÃO quer dizer que a conta passou das telas iniciais --
+        o cliente põe o nome no título quando a LINHA É ESCOLHIDA, e ele fica
+        lá. Para a pergunta que quase todo mundo quer fazer, use
+        `passou_das_telas_iniciais`.
+        """
         return self.server_in_title is not None
+
+    @property
+    def passou_das_telas_iniciais(self) -> bool:
+        """A conta saiu do login e da lista de servidores?
+
+        =================================================================
+        POR QUE `connected` SOZINHO NÃO SERVE -- medido em 23/09/2026
+        =================================================================
+
+        O título dizia "Talisman Online | Light in the Darkness | ver.6402"
+        **com a lista de servidores aberta na tela**. Duas contas ficaram presas
+        nisso: `_advance_phase` via `det.connected`, concluía "já passou" e
+        pulava para `ENTERING` -- então `_do_server` NUNCA rodava. O laço via a
+        lista, devolvia a fase para `SERVER`, e a fase pulava de novo: **4 voltas
+        por segundo, 2014 mudanças de fase numa conta só**, sem nunca selecionar
+        nada nem perceber que o servidor estava OFFLINE.
+
+        A tela é a testemunha que falta: título com servidor + lista na frente
+        significa que a conta ESCOLHEU um servidor um dia, não que ela entrou.
+        """
+        return self.connected and self.screen not in (
+            LoginScreen.LOGIN_SCREEN,
+            LoginScreen.SERVER_LIST,
+            LoginScreen.PRE_SERVER,
+        )
 
 
 # ORDEM DE TESTE -- e a ordem importa muito.

@@ -207,7 +207,7 @@ def test_o_relogio_das_telas_iniciais_NAO_desliga_com_a_lista_na_tela():
     from blazesbot.bot.login import LoginSequence
 
     fonte = inspect.getsource(LoginSequence.run)
-    assert "det.connected and not na_lista_de_servidores" in fonte, (
+    assert "det.passou_das_telas_iniciais" in fonte, (
         "o relógio das telas iniciais voltou a desligar só por ter o servidor "
         "no título — a conta parada na lista fica sem prazo nenhum")
 
@@ -618,3 +618,68 @@ def test_a_altura_da_busca_SAI_DO_RECORTE_e_nao_da_linha():
         fonte = inspect.getsource(metodo)
         assert "modelo.shape[0] + 2 * FOLGA_EM_Y_DA_BUSCA" in fonte, (
             f"{metodo.__name__} voltou a derivar a altura da busca da LINHA")
+
+
+# ===========================================================================
+# "SERVIDOR NO TÍTULO" NÃO É "JÁ ENTROU" -- 23/09/2026
+# ===========================================================================
+#
+# O título dizia "Talisman Online | Light in the Darkness | ver.6402" COM a
+# lista de servidores aberta. `_advance_phase` via `det.connected`, concluía
+# "já passou" e pulava para ENTERING -- então `_do_server` NUNCA rodava.
+#
+# O laço via a lista, devolvia a fase para SERVER, e a fase pulava de novo:
+# 4 voltas por segundo, 2014 mudanças de fase numa conta só, sem nunca
+# selecionar nada nem perceber que o servidor estava OFFLINE.
+
+
+def _deteccao(tela, servidor_no_titulo=True):
+    from blazesbot.bot.login_states import Detection
+
+    return Detection(screen=tela,
+                     server_in_title="Light in the Darkness"
+                     if servidor_no_titulo else None)
+
+
+def test_servidor_no_titulo_COM_a_lista_na_tela_nao_e_ter_entrado():
+    from blazesbot.bot.login_states import LoginScreen
+
+    for tela in (LoginScreen.SERVER_LIST, LoginScreen.LOGIN_SCREEN,
+                 LoginScreen.PRE_SERVER):
+        det = _deteccao(tela)
+        assert det.connected, "o título tem o servidor"
+        assert not det.passou_das_telas_iniciais, (
+            f"com a tela {tela.value!r} o bot acha que já entrou — é o laço de "
+            f"4 voltas por segundo de 23/09/2026")
+
+
+def test_fora_das_telas_iniciais_o_titulo_vale():
+    from blazesbot.bot.login_states import LoginScreen
+
+    for tela in (LoginScreen.CHAR_SELECT, LoginScreen.QUEUE,
+                 LoginScreen.IN_WORLD):
+        assert _deteccao(tela).passou_das_telas_iniciais, (
+            f"a tela {tela.value!r} é depois do servidor; o título vale")
+
+
+def test_sem_servidor_no_titulo_nunca_passou():
+    from blazesbot.bot.login_states import LoginScreen
+
+    assert not _deteccao(LoginScreen.CHAR_SELECT,
+                         servidor_no_titulo=False).passou_das_telas_iniciais
+
+
+def test_a_fase_SERVER_so_pula_para_ENTERING_se_passou_de_verdade():
+    """Era aqui que a conta ficava presa: pulava a fase e nunca selecionava."""
+    import inspect
+
+    fonte = inspect.getsource(LoginSequence._advance_phase)
+    ramo = fonte.split("elif self.phase is Phase.SERVER:")[1].split("elif")[0]
+    assert "passou_das_telas_iniciais" in ramo, (
+        "o ramo SERVER voltou a confiar no título sozinho")
+    assert "if det.connected:" not in ramo, (
+        "`det.connected` sozinho prende a conta com a lista na tela")
+
+    credenciais = fonte.split("if self.phase is Phase.CREDENTIALS:")[1].split("elif")[0]
+    assert "if det.connected:" not in credenciais, (
+        "o ramo CREDENTIALS tem o mesmo defeito: pularia o preenchimento")

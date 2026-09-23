@@ -1527,3 +1527,64 @@ aparecia em nenhum print preparado: só no quadro que o bot capturou sozinho.
 
 `tests/dados/lista_como_o_bot_ve.png` é esse quadro, recortado na caixa. A
 instrumentação foi removida no mesmo passo.
+
+## 23/09/2026 — "servidor no título" não é "já entrou"
+
+Com o servidor **Offline**, duas contas ficaram presas oscilando entre duas
+fases, quatro vezes por segundo:
+
+```
+11:55:55.243 creubo  Fase do login: servidor
+11:55:55.244 creubo  Fase do login: aguardando entrar (fila ou personagem)
+11:55:55.506 creubo  Fase do login: servidor
+11:55:55.506 creubo  Fase do login: aguardando entrar (fila ou personagem)
+```
+
+**2014 mudanças de fase** numa conta, **899** noutra — e só 41 "Selecionando
+servidor" no log inteiro. O `_do_server` quase nunca rodava.
+
+### A causa
+
+```python
+elif self.phase is Phase.SERVER:
+    if det.connected:
+        self._set_phase(Phase.ENTERING)
+        return
+    self._do_server(det)
+```
+
+`det.connected` é só **"o servidor está no título"**. E o título era
+`Talisman Online | Light in the Darkness | ver.6402` — **com a lista de
+servidores aberta na tela**. O cliente põe o nome no título quando a linha é
+escolhida, e ele fica lá.
+
+Então: a fase pulava para `ENTERING` sem selecionar nada, o laço via a lista e
+devolvia para `SERVER`, e a fase pulava de novo. Para sempre — sem nunca
+perceber que o servidor estava Offline, sem nunca cancelar.
+
+O ramo `CREDENTIALS` tinha o mesmo defeito: com o título preenchido, ele pularia
+o preenchimento das credenciais.
+
+### A correção: dar nome ao conceito certo
+
+```python
+@property
+def passou_das_telas_iniciais(self) -> bool:
+    return self.connected and self.screen not in (
+        LoginScreen.LOGIN_SCREEN, LoginScreen.SERVER_LIST,
+        LoginScreen.PRE_SERVER)
+```
+
+**A tela é a testemunha que faltava.** Título com servidor + lista na frente
+significa que a conta escolheu um servidor um dia, não que entrou.
+
+Os três usos passaram para a propriedade nova: os dois ramos de `_advance_phase`
+e o relógio das telas iniciais — que eu já tinha corrigido em 22/09 com uma
+variável local, e agora usa o mesmo conceito, num lugar só.
+
+### A terceira vez que este erro aparece
+
+É o mesmo padrão de 09/09 (o pino do `Input`) e de 23/09 (o quadro nulo virando
+"não está lá"): **um sinal parcial tratado como conclusão**. "Tem servidor no
+título" não é "entrou", assim como "não consegui ler o processo" não é "não é o
+jogo" e "não achei o nome" não é "não está na lista".

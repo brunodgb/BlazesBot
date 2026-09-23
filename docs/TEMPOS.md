@@ -219,8 +219,8 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | *literal em* `_handle_conn_failed` | 0.75 s | = | FIXO | [login.py:837](blazesbot/bot/login.py#L837) | `_handle_conn_failed` | Fecha o aviso "Connection failed, please try again later." |
 | *literal em* `_handle_queue` | 5 s | = | FIXO | [login.py:852](blazesbot/bot/login.py#L852) | `_handle_queue` | Na fila, apenas esperar. |
 | *literal em* `_finish` | 0.25 s | = | FIXO | [login.py:903](blazesbot/bot/login.py#L903) | `_finish` | Confirma a entrada no mundo e batiza a janela. |
-| *literal em* `_advance_phase` | 2.5 s | = | FIXO | [login.py:1008](blazesbot/bot/login.py#L1008) | `_advance_phase` | Executa a fase atual quando nada excepcional foi detectado. |
-| *literal em* `_advance_phase` | 1 s | = | FIXO | [login.py:1019](blazesbot/bot/login.py#L1019) | `_advance_phase` | Executa a fase atual quando nada excepcional foi detectado. |
+| *literal em* `_advance_phase` | 2.5 s | = | FIXO | [login.py:1011](blazesbot/bot/login.py#L1011) | `_advance_phase` | Executa a fase atual quando nada excepcional foi detectado. |
+| *literal em* `_advance_phase` | 1 s | = | FIXO | [login.py:1022](blazesbot/bot/login.py#L1022) | `_advance_phase` | Executa a fase atual quando nada excepcional foi detectado. |
 
 
 ## O SISTEMA — supervisor e watchdog
@@ -316,7 +316,7 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | `TETO_DA_SONDA` | 1.2 s | = | TETO | [instrumentar_clique.py:113](blazesbot/bot/instrumentar_clique.py#L113) | `_sondar_ate_mudar, _um_modo` | Teto da espera pelo efeito. Passou disso, o clique é dado como PERDIDO. |
 | *literal em* `rodar` | 0.05 s | = | FIXO | [instrumentar_clique.py:390](blazesbot/bot/instrumentar_clique.py#L390) | `rodar` |  |
 | *literal em* `main` | 8 s | = | FIXO | [instrumentar_clique.py:488](blazesbot/bot/instrumentar_clique.py#L488) | `main` |  |
-| `ESPERA_PELO_SERVIDOR_FORA_DO_AR` | 30 s | *novo* | FIXO | [login_states.py:158](blazesbot/bot/login_states.py#L158) |  | Entre uma ida à lista e a seguinte com o servidor fora do ar. 30 s e não os |
+| `ESPERA_PELO_SERVIDOR_FORA_DO_AR` | 30 s | *novo* | FIXO | [login_states.py:189](blazesbot/bot/login_states.py#L189) |  | Entre uma ida à lista e a seguinte com o servidor fora do ar. 30 s e não os |
 | `PRAZO_PARA_A_FADA` | 60 s (1 min) | *novo* | TETO | [morte.py:54](blazesbot/bot/morte.py#L54) | `_esperar_a_fada` | Quanto o morto espera pela Fada antes de se reviver sozinho. |
 | `PASSO_DA_ESPERA` | 0.3 s | *novo* | PASSO | [morte.py:64](blazesbot/bot/morte.py#L64) | `_esperar_a_fada, _esperar_ficar_de_pe (+1)` | Passo entre duas perguntas durante a espera. Tudo o que ele pergunta é |
 | `CADENCIA_DO_CONVITE` | 0.5 s | *novo* | PASSO | [morte.py:72](blazesbot/bot/morte.py#L72) | `_esperar_a_fada` | Cadência da conferência do convite da Fada na TELA. |

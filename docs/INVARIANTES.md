@@ -82,6 +82,12 @@
   usá-lo fora dela é o que o projeto proíbe. Custou um laço de relogin a cada
   19 s em 09/09/2026. Agravante do travamento: a **fila de login** passa de três
   horas e não há medição de como o cliente bombeia mensagens nela.
+- **USE `Detection.passou_das_telas_iniciais`, NUNCA `connected` SOZINHO.**
+  `connected` é só "o servidor está no título", e o cliente o põe lá quando a
+  LINHA É ESCOLHIDA. Em 23/09/2026 isso prendeu duas contas oscilando entre
+  `SERVER` e `ENTERING` 4× por segundo (2014 mudanças de fase numa conta), sem
+  nunca chamar `_do_server` — logo sem nunca ver que o servidor estava Offline.
+  A tela é a testemunha que falta.
 - **`connected` NÃO QUER DIZER QUE PASSOU DA LISTA.** É só o servidor no
   título, e o cliente o põe lá quando a LINHA É ESCOLHIDA. Desligar o relógio
   das telas iniciais por causa dele tirava o último prazo de uma conta parada na

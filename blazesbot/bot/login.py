@@ -910,8 +910,8 @@ class LoginSequence:
     def _advance_phase(self, det: Detection) -> None:
         """Executa a fase atual quando nada excepcional foi detectado."""
         if self.phase is Phase.CREDENTIALS:
-            # Se o título já traz servidor, o login passou -- pula para frente.
-            if det.connected:
+            # Título com servidor E fora das telas iniciais: o login passou.
+            if det.passou_das_telas_iniciais:
                 self.log.info("Servidor '%s' já no título; aguardando entrar",
                               det.server_in_title)
                 self._set_phase(Phase.ENTERING)
@@ -921,7 +921,10 @@ class LoginSequence:
             self._do_credentials()
 
         elif self.phase is Phase.SERVER:
-            if det.connected:
+            # `det.connected` SOZINHO prendia a conta aqui: com a lista na tela
+            # e o servidor no título, a fase pulava para ENTERING e o
+            # `_do_server` nunca rodava. Ver `passou_das_telas_iniciais`.
+            if det.passou_das_telas_iniciais:
                 self._set_phase(Phase.ENTERING)
                 return
             self._do_server(det)
@@ -1045,13 +1048,10 @@ class LoginSequence:
             # O relógio das telas iniciais só corre enquanto NÃO estamos
             # conectados. Ao conectar, ele é desligado de vez -- é isso que
             # permite esperar a fila pelo tempo que ela levar.
-            # `connected` é só O SERVIDOR NO TÍTULO, e o cliente põe o nome
-            # lá quando a LINHA É ESCOLHIDA -- não quando se entra. Medido no
-            # print de 22/09/2026: título "…| Light in the Darkness |…" COM a
-            # lista aberta. Desligar o relógio ali tirava o último prazo de uma
-            # conta parada na lista. Ver `docs/decisoes/login-e-relogin.md`.
-            na_lista_de_servidores = det.screen is LoginScreen.SERVER_LIST
-            if det.connected and not na_lista_de_servidores:
+            # O relógio só desliga quando a conta passou DE VERDADE: título
+            # com servidor e lista na tela não é "entrou". Ver
+            # `Detection.passou_das_telas_iniciais`.
+            if det.passou_das_telas_iniciais:
                 self._prazo_das_telas = float("inf")
             elif self._prazo_das_telas == float("inf"):
                 # Caiu de volta para antes do servidor: religa o relógio.
