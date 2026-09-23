@@ -104,7 +104,7 @@ TEAM_MEMBER_TEMPLATE = "state_team_member.png"
 #
 # ARMADILHA DE COLISÃO (HOTFIX 21/09/2026): nomes como 'WizzOfBlazes' e
 # 'WizzOfBlazes5' diferem apenas num caractere -- na mesma fonte e na mesma
-# posição isso representa ~5–8% dos pixels. Com 0.90 ambos casavam com o
+# posição isso representa ~5-8% dos pixels. Com 0.90 ambos casavam com o
 # recorte aprendido do mais curto: `score('WizzOfBlazes') >= 0.90` era `True`
 # mesmo com 'WizzOfBlazes5' na linha, o sistema concluía "já está registrado"
 # e pulava o re-registro -- o convite saía para o nick errado.
