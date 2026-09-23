@@ -1421,7 +1421,22 @@ class BotConfig:
     # então arquivo velho com ela é simplesmente ignorado.
     launch_delay: float = 8.0
     dc_confirm_seconds: int = 20
-    relogin_backoff_cap: int = 300
+    # TETO do backoff entre tentativas de sessão. A escada é 1, 2, 4, 8... até
+    # aqui, e ela ZERA quando um login conclui -- só cresce em falhas
+    # CONSECUTIVAS, nove delas para chegar ao teto.
+    #
+    # 300 -> 120 em 22/09/2026, decisão do usuário: *"quanto mais tentativas
+    # melhor, e ficar parado pode perder uma janela importante de entrar no
+    # servidor"*. O backoff continua existindo porque o caso que ele protege é
+    # real -- cliente que abre quebrado faria o bot relançar em laço fechado,
+    # e cada tentativa recusada é registrada NO SERVIDOR (é o mesmo motivo de
+    # `MAX_CREDENTIAL_ERRORS`). O que mudou é o preço do pior caso: a janela
+    # perdida cai de 5 min para 2.
+    #
+    # O caso que motivou a conversa -- servidor fora do ar -- já não passa por
+    # aqui: `ESPERA_PELO_SERVIDOR_FORA_DO_AR` renova o relógio das telas e o
+    # ciclo tenta a cada 30 s, sem virar `LoginError`.
+    relogin_backoff_cap: int = 120
     minimize_clients: bool = False
     # Aproveitar um cliente qualquer parado na tela de login.
     #

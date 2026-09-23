@@ -1298,3 +1298,44 @@ que a espera existe para não pagar.
 Achado ao enxugar: `_do_server` calculava o ponto da primeira linha três vezes, e
 a segunda atribuição **descartava** a primeira — a que vinha do quadro inicial,
 com âncora por template. Agora é uma só.
+
+## 22/09/2026 — o teto do backoff cai de 300 s para 120 s
+
+Decisão do usuário, depois de entender o mecanismo:
+
+> *"Quanto mais tentativas melhor, e ficar parado pode perder uma janela
+> importante de entrar no servidor."*
+
+### O que o backoff é, e o que ele não é
+
+`backoff_delay(tentativa, cap) = min(2 ** (tentativa - 1), cap)` — a escada é
+**1, 2, 4, 8, 16, 32, 64, 120, 120…** e ela **zera quando um login conclui**.
+Só cresce em falhas **consecutivas**: oito delas para chegar ao teto.
+
+Quem passa por ela: `ClientClosed`, `Disconnected`, `LoginError` e `Exception`.
+`BadCredentials` **não** — senha errada desativa a conta, porque mais tentativas
+não resolvem e cada recusa é registrada no servidor. `StopRequested` também não.
+
+### Por que não foi removido
+
+O caso que ele protege é real: um cliente que abre quebrado (resolução errada,
+`Client.bat` falhando, patch do jogo) faria o bot relançar em **laço fechado** —
+sete contas, uma tentativa por segundo, contra o servidor de login, por horas. É
+o mesmo dano que `MAX_CREDENTIAL_ERRORS = 5` existe para evitar, e o projeto já
+pagou para aprender isso.
+
+O que mudou não é a existência: é o **preço do pior caso**. A janela perdida cai
+de 5 min para 2.
+
+### E o caso que motivou a conversa já não passa por aqui
+
+O "servidor fora do ar" **deixou de virar `LoginError`**: a
+`ESPERA_PELO_SERVIDOR_FORA_DO_AR` renova o relógio das telas iniciais, e o ciclo
+tenta a cada 30 s indefinidamente, sem acionar backoff nenhum. Foi esse caminho,
+e não o backoff, que produziu os 5 minutos de silêncio de 22/09/2026.
+
+### Onde o número mora
+
+`BotConfig.relogin_backoff_cap`, e ele é **persistido no `data/config.json`** —
+mudar só o default do código não teria efeito nenhum numa instalação existente.
+Os dois foram alterados. Travado por `tests/test_backoff_do_login.py`.

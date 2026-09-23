@@ -93,6 +93,12 @@
   Offline 1.000 × Online 0.713, margem +0.287. Mora em
   `LoginStateDetector.servidor_offline` — leitura de tela é do detector, não da
   sequência de login.
+- **O TETO DO BACKOFF É 120 s** (`relogin_backoff_cap`), desde 22/09/2026: a
+  escada 1,2,4…120 só cresce em falhas CONSECUTIVAS e zera quando um login
+  conclui. Não foi removido porque cliente que abre quebrado faria o bot
+  relançar em laço fechado, e cada tentativa recusada é registrada no servidor
+  — o mesmo dano de `MAX_CREDENTIAL_ERRORS`. O valor é **persistido no
+  `config.json`**: mudar só o default do código não muda instalação existente.
 - **SERVIDOR FORA DO AR: TENTA PARA SEMPRE, A CADA 30 s.** Sem a espera o laço
   deu **854 idas à lista em 9 minutos** (uma volta completa de login a cada
   ~1,5 s, por conta) — inútil e caminho para a conta bloqueada. E a espera

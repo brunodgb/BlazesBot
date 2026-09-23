@@ -182,3 +182,31 @@ def test_conta_desativada_nao_volta_a_subir():
     """
     fonte = inspect.getsource(mod_supervisor.BotManager.sync_accounts)
     assert "enabled_accounts()" in fonte
+
+def test_o_TETO_do_backoff_e_120s_e_a_escada_chega_la_em_oito_falhas():
+    """Decisão do usuário em 22/09/2026, e o porquê importa mais que o número.
+
+    *"Quanto mais tentativas melhor, e ficar parado pode perder uma janela
+    importante de entrar no servidor."*
+
+    O backoff NÃO foi removido: o caso que ele protege é real -- cliente que
+    abre quebrado faria o bot relançar em laço fechado, e cada tentativa
+    recusada é registrada NO SERVIDOR (o mesmo motivo de
+    `MAX_CREDENTIAL_ERRORS`). O que mudou é o preço do pior caso: a janela
+    perdida cai de 5 min para 2.
+
+    E a escada só chega lá em falhas CONSECUTIVAS -- um login que conclui zera
+    o contador (ver `_run_session`).
+    """
+    from blazesbot.config import BotConfig
+
+    cap = BotConfig().relogin_backoff_cap
+    assert cap == 120, (
+        "o teto do backoff mudou; se foi de propósito, atualize aqui com o "
+        "porquê -- ele é o tempo máximo que uma conta fica parada sem tentar")
+
+    escada = [backoff_delay(i, cap) for i in range(1, 9)]
+    assert escada == [1.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 120.0]
+    assert sum(escada) < 300, (
+        "oito falhas seguidas passaram a custar mais de 5 minutos somados")
+
