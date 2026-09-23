@@ -510,6 +510,29 @@ def test_o_supervisor_PUBLICA_e_CONSOME_antes_de_montar_o_executor():
         "sessão que acabou")
 
 
+def test_a_ancora_TAMBEM_vai_para_o_config_do_seguidor():
+    """Corrige o desenho de 22/09, que só trocava a base em memória.
+
+    O argumento contra era "apagaria o ponto solo da conta" -- e esse ponto NÃO
+    EXISTE: todo arranque do modo APP lê a posição atual e grava por cima de
+    `_base_pos_x/_y` (é assim que o usuário muda o ponto base, parando e
+    reiniciando). O que estava lá era a foto do arranque anterior, não um ajuste
+    guardado. Com a gravação, o config e o que o executor usa dizem a mesma
+    coisa -- *"para garantir que não vai ter erro"*.
+    """
+    import inspect
+
+    from blazesbot.bot import supervisor
+
+    fonte = inspect.getsource(supervisor.AccountSupervisor._rodar_modo_app)
+    trecho = fonte[fonte.index("_ancora_do_lider(self)"):]
+    trecho = trecho[:trecho.index("minimap_center")]
+    assert "app._base_pos_x, app._base_pos_y = ancora" in trecho, (
+        "a âncora voltou a valer só em memória; o config do seguidor ficaria "
+        "dizendo um ponto que o bot não usa")
+    assert "self.config.save()" in trecho, "trocou na memória e não gravou"
+
+
 def test_a_FADA_tambem_nasce_ancorada_no_lider():
     """Ela é a que mais sofre: fica parada curando, e a cura tem alcance."""
     import inspect

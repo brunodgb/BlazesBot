@@ -1934,14 +1934,32 @@ class AccountSupervisor(threading.Thread):
         # publica e segue; o seguidor espera (com teto) e troca a base pela do
         # líder. Não existe caminho em que a mesma conta faça as duas.
         #
-        # A TROCA É SÓ DESTA SESSÃO -- o `config.json` do seguidor continua com
-        # o ponto dele. Gravar a âncora do líder lá apagaria o ponto solo da
-        # conta, que é o que ela usa quando roda fora do time.
+        # E A ÂNCORA VAI PARA O CONFIG TAMBÉM -- 23/09/2026, corrigindo o desenho
+        # de ontem, que só trocava a base em memória "para não apagar o ponto
+        # solo da conta".
+        #
+        # ESSE PONTO SOLO NÃO EXISTE. Cem linhas acima, TODO arranque do modo APP
+        # lê a posição atual do personagem e grava por cima de
+        # `_base_pos_x/_base_pos_y` -- é assim que o usuário muda o ponto base,
+        # parando e reiniciando o APP. Então o que estava no config não era um
+        # ajuste guardado: era a foto do arranque anterior. Gravar a âncora aqui
+        # não apaga nada, e o próximo arranque solo sobrescreve sozinho com a
+        # posição de quem está rodando.
+        #
+        # O QUE ISSO COMPRA é o config e o que o bot USA dizerem a mesma coisa.
+        # Divergentes, qualquer leitor do config -- a tela, um diagnóstico, um
+        # caminho de código que ninguém auditou -- responderia com um ponto que
+        # o executor não está usando. Pedido do usuário: *"isso é para garantir
+        # que não vai ter erro"*.
         if app.travar_posicao:
             _publicar_a_ancora(self, base_pos)
             ancora = _ancora_do_lider(self)
             if ancora is not None:
                 base_pos = ancora
+                app._base_pos_x, app._base_pos_y = ancora
+                self.config.save()
+                log.info("Trava de posição: base do config trocada pela âncora "
+                         "do líder %s.", ancora)
 
         # Centro do minimapa para cliques de movimento (trava de posição).
         minimap_center: tuple[int, int] | None = None

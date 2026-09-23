@@ -710,13 +710,28 @@ espalhamento que isto existe para impedir. Quem apaga é o líder, ao encerrar.
    time (`_tem_time_do_app()`), e o seguidor nunca publica (`_dono_da_macro()`).
    Não existe caminho em que a mesma conta faça as duas coisas.
 
-### O que NÃO foi feito, e por quê
+### A ÂNCORA VAI PARA O CONFIG TAMBÉM — correção de 23/09/2026
 
-O pedido dizia "sobrescrever o ponto inicial na memória **ou** no JSON ativo". É
-só na memória da sessão: **o `config.json` do seguidor continua com o ponto
-dele**. Gravar a âncora do líder lá apagaria o ponto solo da conta — o que ela
-usa quando roda fora do time —, e o usuário teria de reconfigurar à mão depois
-de cada farm em grupo.
+O desenho de ontem trocava a base só em memória, com o argumento de que gravar
+no `config.json` "apagaria o ponto solo da conta". **Esse ponto solo não
+existe**, e o usuário apontou: *"a cada vez que a função APP é recomeçada esse
+valor é substituído"*.
+
+Conferido no código: cem linhas antes da âncora, TODO arranque do modo APP lê a
+posição atual do personagem e grava por cima de `_base_pos_x/_base_pos_y` — é
+assim que o usuário muda o ponto base, parando e reiniciando o APP. O que estava
+no config não era um ajuste guardado: era a foto do arranque anterior.
+
+Então gravar não apaga nada, e o próximo arranque solo do seguidor sobrescreve
+sozinho com a posição de quem está rodando. **O que a gravação compra é o config
+e o que o bot USA dizerem a mesma coisa**: divergentes, qualquer leitor do config
+— a tela, um diagnóstico, um caminho de código que ninguém auditou — responderia
+com um ponto que o executor não está usando.
+
+A gravação é segura entre as threads pelo mesmo motivo que a de cem linhas antes:
+`BotConfig.save` escreve num arquivo ao lado e substitui de uma vez, sob tranca,
+justamente porque "os supervisores gravam do mesmo objeto em threads
+diferentes".
 
 ### (0,0) é recusado
 

@@ -519,8 +519,10 @@ e `docs/decisoes/deletador.md`.
 - **EM TIME, O PONTO INICIAL É O DO LÍDER** (22/09/2026). Ele publica a âncora
   UMA VEZ, no arranque do modo APP (`mural.publicar_ancora`); seguidores e Fada
   esperam por ela (teto de `ESPERA_PELA_RESPOSTA`) e usam no lugar do ponto
-  deles. **SOLO NÃO MUDA NADA**, e a troca é só da SESSÃO: o `config.json` do
-  seguidor continua com o ponto dele, que é o que ele usa fora do time. Publicar
+  deles — **e a âncora também vai para o `config.json` do seguidor**, para o que
+  está gravado e o que o bot usa dizerem a mesma coisa (não apaga nada: todo
+  arranque do APP já reescreve essa base com a posição atual do personagem).
+  **SOLO NÃO MUDA NADA.** Publicar
   de novo durante o farm é proibido — o líder anda, e a âncora do time andaria
   junto. `(0,0)` é recusado: é o que a leitura devolve antes de o personagem
   entrar no mundo.

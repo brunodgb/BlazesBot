@@ -341,7 +341,7 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | *literal em* `_operate` | 2.5 s | *novo* | FIXO | [supervisor.py:1388](blazesbot/bot/supervisor.py#L1388) | `_operate` | Opera a conta logada, respeitando o farm ligado/desligado ao vivo. |
 | *literal em* `_operate` | 0.5 s | = | FIXO | [supervisor.py:1487](blazesbot/bot/supervisor.py#L1487) | `_operate` | Opera a conta logada, respeitando o farm ligado/desligado ao vivo. |
 | *literal em* `_publicar_o_proprio_id` | 0.3 s | *novo* | FIXO | [supervisor.py:1732](blazesbot/bot/supervisor.py#L1732) | `_publicar_o_proprio_id` | o alvo leva ~0,1 s para virar |
-| *literal em* `chamar_a_fada` | 0.2 s | *novo* | FIXO | [supervisor.py:2187](blazesbot/bot/supervisor.py#L2187) | `chamar_a_fada` | Pede cura à Fada do time e espera. `False` = não há Fada, beba poção. |
+| *literal em* `chamar_a_fada` | 0.2 s | *novo* | FIXO | [supervisor.py:2205](blazesbot/bot/supervisor.py#L2205) | `chamar_a_fada` | Pede cura à Fada do time e espera. `False` = não há Fada, beba poção. |
 | `ESPERA_DO_MENU` | 0.35 s | = | FIXO | [team.py:165](blazesbot/bot/team.py#L165) | `_enviar_convite` | Tempo para o menu de contexto aparecer depois do clique direito. |
 | `ESPERA_PELA_RESPOSTA` | 4 s | = | FIXO | [team.py:170](blazesbot/bot/team.py#L170) | `montar_time` | Quanto esperar a outra conta aceitar. Ela recebe o anúncio interno e clica no |
 | `PASSO_DA_ESPERA_DO_TIME` | 0.1 s | = | PASSO | [team.py:178](blazesbot/bot/team.py#L178) | `montar_time` | De quanto em quanto tempo conferir se o time já formou. |
