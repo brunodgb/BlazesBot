@@ -436,7 +436,7 @@ ligar código não testado.
 | `INVITE_THRESHOLD` | `0.8` | [blazesbot/bot/team.py:91](blazesbot/bot/team.py#L91) | janelas_abertas.py | — |
 | `LARGURA_DA_MEDIDA_DO_MENU` | `40` | [blazesbot/bot/team.py:160](blazesbot/bot/team.py#L160) | — | — |
 | `LINHAS_A_MAIS_QUANDO_PERTO` | `3` | [blazesbot/bot/team.py:157](blazesbot/bot/team.py#L157) | — | QUAL DOS DOIS MENUS VEIO se mede na hora, pela ALTURA da caixa que apareceu |
-| `MAX_CLIQUES_DE_ACEITE` | `5` | [blazesbot/bot/team.py:220](blazesbot/bot/team.py#L220) | — | ELE DEIXOU DE ENCERRAR O CONVITE DA CONTA DE RESET -- 25/09/2026 |
+| `MAX_CLIQUES_DE_ACEITE` | `5` | [blazesbot/bot/team.py:200](blazesbot/bot/team.py#L200) | — | Quantas vezes clicar no Ok para o MESMO convite anunciado -- SÓ NO MODO APP. |
 | `MAX_ENTRADAS` | `12` | [blazesbot/bot/team.py:181](blazesbot/bot/team.py#L181) | — | Quantas linhas da lista limpar antes de desistir. |
 | `MENU_LEAVE_TEMPLATE` | `'menu_leave_team.png'` | [blazesbot/bot/team.py:93](blazesbot/bot/team.py#L93) | — | — |
 | `MENU_TEAM_UP_TEMPLATE` | `'menu_team_up.png'` | [blazesbot/bot/team.py:118](blazesbot/bot/team.py#L118) | — | Item "Team up" do menu de contexto da entrada na lista. |
