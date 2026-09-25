@@ -895,7 +895,26 @@ class BossRushRoutine:
 
         # Chegamos na coordenada: é AQUI que o time de reset é montado, e não
         # antes. Mais cedo, o convite podia expirar durante o teleporte.
-        self.team.montar_time()
+        #
+        # A RESPOSTA IMPORTA, e até 25/09/2026 era descartada. Sem time novo a
+        # instância não é nova e o boss não renasce: a run inteira acontece num
+        # covil já limpo. A HH já honrava isso (`_do_entrar`); o BC entrava de
+        # qualquer jeito.
+        #
+        # Pedido do usuário: *"é muito importante o reset, então conseguir
+        # verificar é o melhor jeito de, em todas as caves, ao entrar estar em
+        # um time"*. E hoje dá para verificar: `TeamService.team_size()` lê pelo
+        # ponteiro rebaseado e respondeu em 98,6% dos 361 convites medidos.
+        #
+        # NÃO ENTRAR É O DESFECHO CERTO: a volta seguinte do laço refaz o
+        # convite com o personagem parado na porta, que é onde ele já está.
+        # Entrar sem time gasta a instância e a run.
+        if not self.team.montar_time():
+            ctx.log.warning(
+                "Não montei time com o reseter; NÃO vou entrar na cave -- sem "
+                "time novo a instância não reseta e a run seria num covil já "
+                "limpo. Tento de novo na volta seguinte.")
+            return
 
         # View Reset e esquecimento das coordenadas da run anterior.
         self.ui.preparar_entrada()

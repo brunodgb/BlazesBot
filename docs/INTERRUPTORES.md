@@ -372,7 +372,7 @@ ligar código não testado.
 | `TETO_DO_RETORNO` | `180.0` | [blazesbot/bot/morte.py:90](blazesbot/bot/morte.py#L90) | — | Teto da caminhada de volta ao ponto inicial. |
 | `TETO_PARA_O_REVIVE_PEGAR` | `10.0` | [blazesbot/bot/morte.py:75](blazesbot/bot/morte.py#L75) | — | Quanto se espera o `hp` subir depois de um clique que deveria reviver. |
 | `ACEITE_VALIDO_SEGUNDOS` | `15.0` | [blazesbot/bot/mural.py:211](blazesbot/bot/mural.py#L211) | — | Validade do aceite. Curta de propósito: ele confirma UM convite recém-enviado, |
-| `CONVITE_VALIDO_SEGUNDOS` | `60.0` | [blazesbot/bot/mural.py:89](blazesbot/bot/mural.py#L89) | — | Validade do anúncio. Cobre a fila de resposta do outro cliente com folga; mais |
+| `CONVITE_VALIDO_SEGUNDOS` | `60.0` | [blazesbot/bot/mural.py:89](blazesbot/bot/mural.py#L89) | team.py | Validade do anúncio. Cobre a fila de resposta do outro cliente com folga; mais |
 | `ESTADO_VALIDO_SEGUNDOS` | `30.0` | [blazesbot/bot/mural.py:303](blazesbot/bot/mural.py#L303) | sincronia.py, supervisor.py | Quanto tempo o estado publicado por uma conta continua valendo. |
 | `LARGADA_VALIDA_SEGUNDOS` | `5.0` | [blazesbot/bot/mural.py:295](blazesbot/bot/mural.py#L295) | sincronia.py | Quanto tempo uma largada anunciada continua valendo. |
 | `SILENCIO_DA_FADA` | `5.0` | [blazesbot/bot/mural.py:510](blazesbot/bot/mural.py#L510) | — | Quanto silêncio já é "a Fada não está lá". |
@@ -436,7 +436,7 @@ ligar código não testado.
 | `INVITE_THRESHOLD` | `0.8` | [blazesbot/bot/team.py:91](blazesbot/bot/team.py#L91) | janelas_abertas.py | — |
 | `LARGURA_DA_MEDIDA_DO_MENU` | `40` | [blazesbot/bot/team.py:160](blazesbot/bot/team.py#L160) | — | — |
 | `LINHAS_A_MAIS_QUANDO_PERTO` | `3` | [blazesbot/bot/team.py:157](blazesbot/bot/team.py#L157) | — | QUAL DOS DOIS MENUS VEIO se mede na hora, pela ALTURA da caixa que apareceu |
-| `MAX_CLIQUES_DE_ACEITE` | `5` | [blazesbot/bot/team.py:190](blazesbot/bot/team.py#L190) | — | Quantas vezes clicar no Ok para o MESMO convite anunciado. |
+| `MAX_CLIQUES_DE_ACEITE` | `5` | [blazesbot/bot/team.py:220](blazesbot/bot/team.py#L220) | — | ELE DEIXOU DE ENCERRAR O CONVITE DA CONTA DE RESET -- 25/09/2026 |
 | `MAX_ENTRADAS` | `12` | [blazesbot/bot/team.py:181](blazesbot/bot/team.py#L181) | — | Quantas linhas da lista limpar antes de desistir. |
 | `MENU_LEAVE_TEMPLATE` | `'menu_leave_team.png'` | [blazesbot/bot/team.py:93](blazesbot/bot/team.py#L93) | — | — |
 | `MENU_TEAM_UP_TEMPLATE` | `'menu_team_up.png'` | [blazesbot/bot/team.py:118](blazesbot/bot/team.py#L118) | — | Item "Team up" do menu de contexto da entrada na lista. |
@@ -580,7 +580,7 @@ ligar código não testado.
 | `NIVEL_MAXIMO_PLAUSIVEL` | `200` | [blazesbot/core/entidades.py:43](blazesbot/core/entidades.py#L43) | — | Faixa de nível. 200 é folga: o jogo vai a 8x, e o boss da cave é nv51. |
 | `CONFIRMADO` | `'confirmado'` | [blazesbot/core/espera.py:72](blazesbot/core/espera.py#L72) | executor.py, combate.py, time_do_app.py, ui_do_jogo.py, inputs.py, memory.py, petbug.py, barra.py, achar_happy_do_pet.py | Os motivos de uma espera terminar. São chave de contador -- curtos e fixos. |
 | `NAO_SEI` | `'nao_sei'` | [blazesbot/core/espera.py:75](blazesbot/core/espera.py#L75) | rajada_de_npc.py | — |
-| `TETO` | `'teto'` | [blazesbot/core/espera.py:73](blazesbot/core/espera.py#L73) | afericao_do_aliado.py, cura.py, executor.py, sincronia.py, amostragem_de_cliques.py, ui_service.py, combate.py, deletador.py, fada.py, mapa_hh.py, routine.py, morte.py, mural.py, navegacao.py, rajada_de_npc.py, supervisor.py, time_do_app.py, ui_do_jogo.py, vendedor.py, config.py, coleira_do_ponto.py, diario.py, indice_de_tempos.py, inputs.py, mouse_shield.py, pet.py, relatorio_de_latencia.py, volta_ao_ponto.py | — |
+| `TETO` | `'teto'` | [blazesbot/core/espera.py:73](blazesbot/core/espera.py#L73) | afericao_do_aliado.py, cura.py, executor.py, sincronia.py, amostragem_de_cliques.py, ui_service.py, combate.py, deletador.py, fada.py, mapa_hh.py, routine.py, morte.py, mural.py, navegacao.py, rajada_de_npc.py, supervisor.py, team.py, time_do_app.py, ui_do_jogo.py, vendedor.py, config.py, coleira_do_ponto.py, diario.py, indice_de_tempos.py, inputs.py, mouse_shield.py, pet.py, relatorio_de_latencia.py, volta_ao_ponto.py | — |
 | `VOLTAS` | `'voltas'` | [blazesbot/core/espera.py:74](blazesbot/core/espera.py#L74) | executor.py, login.py, rajada_de_npc.py, config.py | — |
 | `PASSO_DO_HALO` | `14` | [blazesbot/core/halo.py:59](blazesbot/core/halo.py#L59) | entrada.py, indice_de_tempos.py | Quanto anda o anel a cada volta, em pixels da tela. |
 | `ASSENTAR_A_PAGINA` | `0.08` | [blazesbot/core/hotbar.py:94](blazesbot/core/hotbar.py#L94) | combate.py, hotbar.py | DEPOIS DE CHEGAR NA PÁGINA 1, ANTES DE DEVOLVER |

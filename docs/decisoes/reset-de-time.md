@@ -431,3 +431,80 @@ o cabeçalho de `bot/mural.py`.
 - **Encurtar o backoff de relogin para quem é reseter.** Ver
   `login-e-relogin.md`: o defeito real do backoff era outro, e foi consertado.
   Mexer no valor exigiria medição que ninguém tem.
+
+
+## O convite que ficava aberto sem ninguém aceitar (25/09/2026)
+
+> *"o aceitar do personagem reset nem sempre funciona, principalmente depois que
+> as contas caem, na primeira vez que envia o team para ele, fica aberto o
+> convite na janela do personagem reset, mas fica sem aceitar... sempre que o
+> personagem que estiver fazendo cave, seja BC ou HH, tem que aceitar 100% das
+> vezes, não ter uma única falha."*
+
+### O caso, medido
+
+Em 361 convites (23–25/09), **2** terminaram sem prova de time na memória. Um
+deles, por inteiro:
+
+```
+23:51:07.204 [creubo]    Convidando 'Igni001' (tentativa 1)
+23:51:07.745 [ignition0] Tentando aceitar -- clique 1
+23:51:08.323 [creubo]    Block list: 'Igni001' difere do registrado '(nenhum)';
+                         forçando re-registro
+23:51:08.323 [creubo]    Limpando a Block list
+23:51:09.223 [creubo]    Registrando 'Igni001' na Block list
+23:51:11.937 [ignition0] Tentando aceitar -- clique 5, o ÚLTIMO
+23:51:11.423 [creubo]    Abrindo o menu de contexto de 'Igni001'
+```
+
+O anúncio interno sai **antes** do clique em "Team up", de propósito: sem ele a
+conta de reset trataria a caixa como convite de estranho. Mas o aceitador usava
+o anúncio como "a caixa está na tela agora" e começava a gastar o orçamento de
+`MAX_CLIQUES_DE_ACEITE = 5`.
+
+**Depois de uma queda a Block list está vazia.** Reconstruí-la leva ~4 s, e a
+caixa só aparece depois disso — com os cinco cliques já gastos no vazio e o
+anúncio consumido. A caixa fica aberta e ninguém mais clica nela. É por isso que
+o defeito aparecia *"principalmente depois que as contas caem"*.
+
+### Por que ninguém percebia
+
+O aceitador anunciava o aceite logo após clicar, sem prova. Quem convidou lia
+esse aviso e seguia para a cave: **255 dos 361 convites** foram aceitos por
+essa via, e o log dizia *"aceitou o convite em 0.0s"* — zero segundo, antes de a
+caixa poder existir. Nenhum `'X' não entrou no time` foi registrado em todo o
+período: o bot nunca soube que tinha falhado.
+
+### As três correções
+
+**1. O teto de cliques deixou de encerrar o convite da conta de reset.** Ele
+existia porque a parada dependia de `memory.team_size()`, que nunca respondeu
+neste cliente. Hoje quem encerra é `tamanho_do_time()` — o ponteiro rebaseado
+(`ADDR_TEAM`, o +0x60) —, que respondeu em **356 dos 361** convites. Quem limita
+agora é a validade do anúncio (`CONVITE_VALIDO_SEGUNDOS`, 60 s): enquanto ele
+valer, a conta de reset continua tentando, e para no instante em que o time
+forma. Clique perdido numa conta parada num canto não custa nada.
+
+O teto **fica** onde ainda é a única regra: memória muda, e o modo APP (lá o Ok
+é clique esquerdo, o mesmo que faz o personagem andar).
+
+**2. Quem convida confirma pela memória.** `TeamService.team_size()` passou a
+ler `tamanho_do_time()` primeiro, com a antiga como reserva. Medido lado a lado:
+
+| lado | leitura | confirmações |
+|---|---|---|
+| quem aceita | `tamanho_do_time()` | 356 / 361 — **98,6%** |
+| quem convida | `team_size()` | 106 / 361 — **29%** |
+
+O aviso interno virou **reserva**: `montar_time` só olha para ele quando a
+própria memória não responde. Ele continua saindo sempre do lado de quem aceita,
+e isso é deliberado — a memória que decide é a de quem convidou, e o aceitador
+não tem como saber se ela responde na outra máquina.
+
+**3. O BC passou a honrar a resposta.** A HH já falhava para `RECUPERAR` quando
+`montar_time` devolvia `False`; o BC **descartava o retorno** e entrava na cave
+de qualquer jeito. Sem time novo a instância não é nova e o boss não renasce: a
+run inteira acontece num covil já limpo. Agora ele não entra e refaz o convite
+na volta seguinte, com o personagem parado na porta — onde ele já está.
+
+Travado por `tests/test_reset_de_time.py`.

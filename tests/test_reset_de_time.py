@@ -472,3 +472,221 @@ def test_o_aceitador_para_de_clicar_pela_leitura_QUE_RESPONDE():
     fonte = inspect.getsource(InviteAcceptor.check_and_accept)
     assert "memory.tamanho_do_time()" in fonte
     assert "memory.team_size()" not in fonte
+
+
+# ===========================================================================
+# O CONVITE QUE FICAVA ABERTO SEM NINGUÉM ACEITAR -- 25/09/2026
+# ===========================================================================
+#
+# Relato do usuário: *"o aceitar do personagem reset nem sempre funciona,
+# principalmente depois que as contas caem, na primeira vez que envia o team
+# para ele, fica aberto o convite na janela do personagem reset, mas fica sem
+# aceitar... sempre que o personagem que estiver fazendo cave, seja BC ou HH,
+# tem que aceitar 100% das vezes"*.
+#
+# MEDIDO em 23/09/2026 às 23:51, um dos 2 convites (de 361) sem prova de time:
+#
+#     23:51:07.204 [creubo]    Convidando 'Igni001' (tentativa 1)
+#     23:51:07.745 [ignition0] Tentando aceitar -- clique 1
+#     23:51:08.323 [creubo]    Block list: 'Igni001' difere do registrado
+#                              '(nenhum)'; forçando re-registro
+#     23:51:11.937 [ignition0] Tentando aceitar -- clique 5, o último
+#     23:51:11.423 [creubo]    Abrindo o menu de contexto de 'Igni001'
+#
+# O anúncio sai ANTES do clique em "Team up". Depois de uma queda a Block list
+# está vazia, reconstruí-la leva ~4 s, e a caixa só aparece DEPOIS de os cinco
+# cliques terem sido gastos no vazio.
+
+
+class _MemFalsa:
+    def __init__(self, tamanho):
+        self._tamanho = tamanho
+        self.leituras = 0
+
+    def tamanho_do_time(self):
+        self.leituras += 1
+        return self._tamanho() if callable(self._tamanho) else self._tamanho
+
+    def team_size(self):
+        return None
+
+    def modal_open(self):
+        return True
+
+
+def _aceitador(tamanho, exigir_caixa=False):
+    from types import SimpleNamespace
+
+    from blazesbot.bot.team import InviteAcceptor
+
+    cliques = []
+    ctx = SimpleNamespace(
+        char_name="Reseter", hwnd=1,
+        coords=SimpleNamespace(confirm_ok=(437, 335)),
+        config=SimpleNamespace(farming_accounts=lambda: []),
+        templates=SimpleNamespace(load=lambda nome: None),
+        memory=_MemFalsa(tamanho),
+        click=lambda p: cliques.append(p),
+        tick=lambda s: None,
+        log=SimpleNamespace(info=lambda *a, **k: None,
+                            warning=lambda *a, **k: None,
+                            debug=lambda *a, **k: None),
+    )
+    a = InviteAcceptor(ctx, cooldown=0.0, exigir_caixa=exigir_caixa)
+    a.cliques = cliques
+    return a
+
+
+def test_a_conta_de_reset_NAO_desiste_no_quinto_clique():
+    """Era isto que deixava a caixa aberta: a caixa aparecia no sexto."""
+    from blazesbot.bot import mural
+    from blazesbot.bot.team import MAX_CLIQUES_DE_ACEITE
+
+    mural.consumir_convite("Reseter")
+    a = _aceitador(tamanho=1)                      # sem time ainda
+    mural.anunciar_convite("Reseter", "Lider")
+
+    for _ in range(MAX_CLIQUES_DE_ACEITE + 4):
+        a.check_and_accept()
+
+    assert len(a.cliques) == MAX_CLIQUES_DE_ACEITE + 4, (
+        "o aceitador parou de clicar antes de o time formar")
+    assert mural.convite_pendente("Reseter") == "Lider", (
+        "o anúncio foi consumido sem o time ter formado")
+    mural.consumir_convite("Reseter")
+
+
+def test_e_para_no_INSTANTE_em_que_o_time_forma():
+    """Sem teto não pode virar clique eterno: quem encerra é a memória."""
+    from blazesbot.bot import mural
+
+    mural.consumir_convite("Reseter")
+    estado = {"n": 1}
+    a = _aceitador(tamanho=lambda: estado["n"])
+    mural.anunciar_convite("Reseter", "Lider")
+
+    a.check_and_accept()
+    a.check_and_accept()
+    estado["n"] = 2                                 # a caixa foi aceita
+    a.check_and_accept()
+    antes = len(a.cliques)
+    a.check_and_accept()
+
+    assert mural.convite_pendente("Reseter") is None, (
+        "o anúncio não foi consumido com o time formado")
+    assert len(a.cliques) == antes, "continuou clicando com o time formado"
+
+
+def test_MEMORIA_MUDA_mantem_o_teto_de_cliques():
+    """Sem como confirmar, o teto volta a ser o que encerra -- é o
+    comportamento antigo, e ele continua valendo onde ainda é a única regra."""
+    from blazesbot.bot import mural
+    from blazesbot.bot.team import MAX_CLIQUES_DE_ACEITE
+
+    mural.consumir_convite("Reseter")
+    a = _aceitador(tamanho=None)
+    mural.anunciar_convite("Reseter", "Lider")
+
+    for _ in range(MAX_CLIQUES_DE_ACEITE + 3):
+        a.check_and_accept()
+
+    assert len(a.cliques) == MAX_CLIQUES_DE_ACEITE
+    assert mural.convite_pendente("Reseter") is None
+
+
+def test_o_modo_APP_mantem_o_teto():
+    """Lá o Ok é clique ESQUERDO -- cada um perdido move o personagem."""
+    from blazesbot.bot import mural
+    from blazesbot.bot.team import MAX_CLIQUES_DE_ACEITE
+
+    mural.consumir_convite("Reseter")
+    a = _aceitador(tamanho=1, exigir_caixa=True)
+    mural.anunciar_convite("Reseter", "Lider")
+
+    for _ in range(MAX_CLIQUES_DE_ACEITE + 3):
+        a.check_and_accept()
+
+    assert len(a.cliques) == MAX_CLIQUES_DE_ACEITE
+    mural.consumir_convite("Reseter")
+
+
+# ===========================================================================
+# QUEM CONVIDA CONFIRMA PELA MEMÓRIA -- e o aviso interno é reserva
+# ===========================================================================
+
+
+def test_o_tamanho_do_time_e_lido_pelo_ponteiro_REBASEADO():
+    """`memory.team_size()` nunca respondeu neste cliente; `tamanho_do_time()`
+    respondeu em 356 dos 361 convites medidos."""
+    import inspect
+
+    from blazesbot.bot.team import TeamService
+
+    fonte = inspect.getsource(TeamService.team_size)
+    assert "tamanho_do_time()" in fonte
+    assert fonte.index("tamanho_do_time()") < fonte.index("memory.team_size()"), (
+        "a leitura antiga voltou a ser a primeira")
+
+
+def test_a_antiga_continua_como_RESERVA():
+    """Ela não sai: num cliente onde só ela responde, é o que sobra."""
+    import inspect
+
+    from blazesbot.bot.team import TeamService
+
+    assert "memory.team_size()" in inspect.getsource(TeamService.team_size)
+
+
+def test_o_aviso_interno_so_vale_com_a_memoria_MUDA():
+    """Ele diz "cliquei no Ok", não "o time formou".
+
+    PELO AST: a chamada a `aceite_pendente` tem que estar DENTRO de um `if` que
+    testa a leitura de time, e não solta no laço.
+    """
+    import ast
+    import inspect
+    import textwrap
+
+    from blazesbot.bot.team import TeamService
+
+    arvore = ast.parse(textwrap.dedent(inspect.getsource(TeamService.montar_time)))
+    dentro = [
+        n for n in ast.walk(arvore)
+        if isinstance(n, ast.If) and "team_size()" in ast.unparse(n.test)
+        and "aceite_pendente" in ast.unparse(n)
+    ]
+    assert dentro, (
+        "`aceite_pendente` voltou a valer sem antes perguntar à memória")
+
+
+def test_AS_DUAS_CAVES_so_entram_com_time():
+    """Sem time novo a instância não reseta e o boss não renasce.
+
+    A HH já honrava a resposta de `montar_time`; o BC descartava e entrava de
+    qualquer jeito. Pedido do usuário em 25/09/2026: *"é muito importante o
+    reset, então conseguir verificar é o melhor jeito de, em todas as caves, ao
+    entrar estar em um time"*.
+
+    PELO AST: as duas rotinas citam `montar_time` em comentário, e uma busca
+    textual acharia a menção em vez da decisão.
+    """
+    import ast
+    import inspect
+    import textwrap
+
+    from blazesbot.bot.bc.routine import BossRushRoutine
+    from blazesbot.bot.hh.routine import HHRoutine
+
+    # A HH decide num auxiliar (`_garantir_o_time`), o BC no próprio estado.
+    # O que o teste trava é a DECISÃO existir, não onde ela mora.
+    for rotina, metodo in ((BossRushRoutine, "_do_entrar"),
+                           (HHRoutine, "_garantir_o_time")):
+        fonte = textwrap.dedent(inspect.getsource(getattr(rotina, metodo)))
+        arvore = ast.parse(fonte)
+        testes = [
+            n for n in ast.walk(arvore)
+            if isinstance(n, ast.If) and "montar_time" in ast.unparse(n.test)
+        ]
+        assert testes, (
+            f"{rotina.__name__}.{metodo} descarta a resposta de `montar_time` "
+            f"e entra na cave sem time")

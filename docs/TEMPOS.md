@@ -120,7 +120,7 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | `ASSENTAMENTO_DA_BOLSA` | 0.14 s | = | FIXO | [routine.py:315](blazesbot/bot/bc/routine.py#L315) | `_usar_package_courage` | Depois que a MEMÓRIA confirma a bolsa aberta, o quanto esperar o DESENHO dela. |
 | *literal em* `_do_situar` | 1 s | = | FIXO | [routine.py:524](blazesbot/bot/bc/routine.py#L524) | `_do_situar` | Olha onde o personagem está e entra no estado que faz sentido. |
 | *literal em* `_do_preparar` | 0.2 s | = | FIXO | [routine.py:617](blazesbot/bot/bc/routine.py#L617) | `_do_preparar` |  |
-| *literal em* `_do_recuperar` | 3 s | = | FIXO | [routine.py:2209](blazesbot/bot/bc/routine.py#L2209) | `_do_recuperar` | Recuperação após morte ou falhas em sequência. |
+| *literal em* `_do_recuperar` | 3 s | = | FIXO | [routine.py:2228](blazesbot/bot/bc/routine.py#L2228) | `_do_recuperar` | Recuperação após morte ou falhas em sequência. |
 
 
 ## DENTRO DA CAVE — combate
@@ -345,24 +345,24 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | `ESPERA_DO_MENU` | 0.35 s | = | FIXO | [team.py:165](blazesbot/bot/team.py#L165) | `_enviar_convite` | Tempo para o menu de contexto aparecer depois do clique direito. |
 | `ESPERA_PELA_RESPOSTA` | 4 s | = | FIXO | [team.py:170](blazesbot/bot/team.py#L170) | `montar_time` | Quanto esperar a outra conta aceitar. Ela recebe o anúncio interno e clica no |
 | `PASSO_DA_ESPERA_DO_TIME` | 0.1 s | = | PASSO | [team.py:178](blazesbot/bot/team.py#L178) | `montar_time` | De quanto em quanto tempo conferir se o time já formou. |
-| *literal em* `_abrir_lista` | 0.6 s | = | FIXO | [team.py:336](blazesbot/bot/team.py#L336) | `_abrir_lista` | Abre a lista de amigos e vai para a aba Block. |
-| *literal em* `_abrir_lista` | 0.45 s | = | FIXO | [team.py:341](blazesbot/bot/team.py#L341) | `_abrir_lista` | Abre a lista de amigos e vai para a aba Block. |
-| *literal em* `_fechar_janelas` | 0.35 s | = | FIXO | [team.py:369](blazesbot/bot/team.py#L369) | `_fechar_janelas` | Fecha a caixa de nick e a lista de amigos, CONFIRMANDO que fecharam. |
-| *literal em* `_fechar_janelas` | 0.4 s | = | FIXO | [team.py:377](blazesbot/bot/team.py#L377) | `_fechar_janelas` | Fecha a caixa de nick e a lista de amigos, CONFIRMANDO que fecharam. |
-| *literal em* `_fechar_janelas` | 0.3 s | = | FIXO | [team.py:385](blazesbot/bot/team.py#L385) | `_fechar_janelas` | Fecha a caixa de nick e a lista de amigos, CONFIRMANDO que fecharam. |
-| *literal em* `_limpar_lista` | 0.15 s | = | FIXO | [team.py:415](blazesbot/bot/team.py#L415) | `_limpar_lista` | Remove todas as entradas da Block list. |
-| *literal em* `_limpar_lista` | 0.25 s | = | FIXO | [team.py:417](blazesbot/bot/team.py#L417) | `_limpar_lista` | Remove todas as entradas da Block list. |
-| *literal em* `_limpar_lista` | 0.2 s | = | FIXO | [team.py:421](blazesbot/bot/team.py#L421) | `_limpar_lista` | Remove todas as entradas da Block list. |
-| *literal em* `_adicionar_nick` | 0.5 s | = | FIXO | [team.py:432](blazesbot/bot/team.py#L432) | `_adicionar_nick` | Adiciona um nick à Block list pelo botão Block. |
-| *literal em* `_adicionar_nick` | 0.2 s | = | FIXO | [team.py:440](blazesbot/bot/team.py#L440) | `_adicionar_nick` | Adiciona um nick à Block list pelo botão Block. |
-| *literal em* `_adicionar_nick` | 0.1 s | = | FIXO | [team.py:442](blazesbot/bot/team.py#L442) | `_adicionar_nick` | Adiciona um nick à Block list pelo botão Block. |
-| *literal em* `_adicionar_nick` | 0.2 s | = | FIXO | [team.py:444](blazesbot/bot/team.py#L444) | `_adicionar_nick` | Adiciona um nick à Block list pelo botão Block. |
-| *literal em* `_adicionar_nick` | 0.6 s | = | FIXO | [team.py:446](blazesbot/bot/team.py#L446) | `_adicionar_nick` | Adiciona um nick à Block list pelo botão Block. |
-| *literal em* `_enviar_convite` | 0.5 s | = | FIXO | [team.py:619](blazesbot/bot/team.py#L619) | `_enviar_convite` | Envia o convite pelo MENU DE CONTEXTO da entrada na Block list. |
-| *literal em* `sair_do_time` | 0.4 s | = | FIXO | [team.py:782](blazesbot/bot/team.py#L782) | `sair_do_time` | Sai do time por DOIS CLIQUES medidos no cliente. |
-| *literal em* `sair_do_time` | 0.5 s | = | FIXO | [team.py:797](blazesbot/bot/team.py#L797) | `sair_do_time` | Sai do time por DOIS CLIQUES medidos no cliente. |
-| *literal em* `_aceitar` | 0.5 s | = | FIXO | [team.py:1123](blazesbot/bot/team.py#L1123) | `_aceitar` |  |
-| *literal em* `_recusar` | 0.5 s | = | FIXO | [team.py:1130](blazesbot/bot/team.py#L1130) | `_recusar` |  |
+| *literal em* `_abrir_lista` | 0.6 s | = | FIXO | [team.py:393](blazesbot/bot/team.py#L393) | `_abrir_lista` | Abre a lista de amigos e vai para a aba Block. |
+| *literal em* `_abrir_lista` | 0.45 s | = | FIXO | [team.py:398](blazesbot/bot/team.py#L398) | `_abrir_lista` | Abre a lista de amigos e vai para a aba Block. |
+| *literal em* `_fechar_janelas` | 0.35 s | = | FIXO | [team.py:426](blazesbot/bot/team.py#L426) | `_fechar_janelas` | Fecha a caixa de nick e a lista de amigos, CONFIRMANDO que fecharam. |
+| *literal em* `_fechar_janelas` | 0.4 s | = | FIXO | [team.py:434](blazesbot/bot/team.py#L434) | `_fechar_janelas` | Fecha a caixa de nick e a lista de amigos, CONFIRMANDO que fecharam. |
+| *literal em* `_fechar_janelas` | 0.3 s | = | FIXO | [team.py:442](blazesbot/bot/team.py#L442) | `_fechar_janelas` | Fecha a caixa de nick e a lista de amigos, CONFIRMANDO que fecharam. |
+| *literal em* `_limpar_lista` | 0.15 s | = | FIXO | [team.py:472](blazesbot/bot/team.py#L472) | `_limpar_lista` | Remove todas as entradas da Block list. |
+| *literal em* `_limpar_lista` | 0.25 s | = | FIXO | [team.py:474](blazesbot/bot/team.py#L474) | `_limpar_lista` | Remove todas as entradas da Block list. |
+| *literal em* `_limpar_lista` | 0.2 s | = | FIXO | [team.py:478](blazesbot/bot/team.py#L478) | `_limpar_lista` | Remove todas as entradas da Block list. |
+| *literal em* `_adicionar_nick` | 0.5 s | = | FIXO | [team.py:489](blazesbot/bot/team.py#L489) | `_adicionar_nick` | Adiciona um nick à Block list pelo botão Block. |
+| *literal em* `_adicionar_nick` | 0.2 s | = | FIXO | [team.py:497](blazesbot/bot/team.py#L497) | `_adicionar_nick` | Adiciona um nick à Block list pelo botão Block. |
+| *literal em* `_adicionar_nick` | 0.1 s | = | FIXO | [team.py:499](blazesbot/bot/team.py#L499) | `_adicionar_nick` | Adiciona um nick à Block list pelo botão Block. |
+| *literal em* `_adicionar_nick` | 0.2 s | = | FIXO | [team.py:501](blazesbot/bot/team.py#L501) | `_adicionar_nick` | Adiciona um nick à Block list pelo botão Block. |
+| *literal em* `_adicionar_nick` | 0.6 s | = | FIXO | [team.py:503](blazesbot/bot/team.py#L503) | `_adicionar_nick` | Adiciona um nick à Block list pelo botão Block. |
+| *literal em* `_enviar_convite` | 0.5 s | = | FIXO | [team.py:676](blazesbot/bot/team.py#L676) | `_enviar_convite` | Envia o convite pelo MENU DE CONTEXTO da entrada na Block list. |
+| *literal em* `sair_do_time` | 0.4 s | = | FIXO | [team.py:853](blazesbot/bot/team.py#L853) | `sair_do_time` | Sai do time por DOIS CLIQUES medidos no cliente. |
+| *literal em* `sair_do_time` | 0.5 s | = | FIXO | [team.py:868](blazesbot/bot/team.py#L868) | `sair_do_time` | Sai do time por DOIS CLIQUES medidos no cliente. |
+| *literal em* `_aceitar` | 0.5 s | = | FIXO | [team.py:1210](blazesbot/bot/team.py#L1210) | `_aceitar` |  |
+| *literal em* `_recusar` | 0.5 s | = | FIXO | [team.py:1217](blazesbot/bot/team.py#L1217) | `_recusar` |  |
 | `ESPERA_DEPOIS_DO_CLIQUE` | 0.35 s | = | FIXO | [teste_do_cursor.py:100](blazesbot/bot/teste_do_cursor.py#L100) | `_uma_fase` |  |
 | *literal em* `main` | 8 s | = | FIXO | [teste_do_cursor.py:476](blazesbot/bot/teste_do_cursor.py#L476) | `main` |  |
 | `CADENCIA_DAS_CONFERENCIAS` | 60 s (1 min) | *novo* | PASSO | [time_do_app.py:116](blazesbot/bot/time_do_app.py#L116) | `montar_se_for_a_hora` | De quanto em quanto tempo o líder confere se o time está completo. |

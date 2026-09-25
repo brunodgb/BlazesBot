@@ -181,12 +181,22 @@ PASSO_DA_ESPERA_DO_TIME = 0.1
 MAX_ENTRADAS = 12
 
 
-# Quantas vezes clicar no Ok para o MESMO convite anunciado.
+# Quantas vezes clicar no Ok para o MESMO convite anunciado -- SÓ NO MODO APP.
 #
-# Mais de um porque o anúncio chega no instante do envio e a caixa pode levar um
-# ou dois segundos para aparecer -- um clique dado antes disso não aceita nada.
-# Mas com teto: sem ele, o log real registrou ONZE cliques para um convite já
-# aceito no primeiro, porque a parada dependia de `team_size()` responder.
+# ELE DEIXOU DE ENCERRAR O CONVITE DA CONTA DE RESET em 25/09/2026. O anúncio
+# sai ANTES do clique em "Team up", e depois de uma queda a Block list está
+# vazia: reconstruí-la leva ~4 s, então a caixa só aparecia com os cinco
+# cliques já gastos no vazio e o anúncio consumido. A caixa ficava aberta e
+# ninguém mais clicava nela -- o relato do usuário, medido no log de 23/09.
+#
+# QUEM LIMITA A CONTA DE RESET AGORA é a validade do anúncio
+# (`mural.CONVITE_VALIDO_SEGUNDOS`): enquanto ele valer ela continua tentando,
+# e para no instante em que `tamanho_do_time()` confirma. Clique perdido numa
+# conta parada num canto não custa nada -- foi sempre a premissa do clique cego.
+#
+# O TETO FICA onde ainda é a única regra: memória muda, e o modo APP (lá o Ok é
+# clique ESQUERDO, o mesmo que faz o personagem andar). Ver
+# `docs/decisoes/reset-de-time.md`.
 MAX_CLIQUES_DE_ACEITE = 5
 
 
@@ -250,7 +260,19 @@ class TeamService:
     # too fast" e o texto fica visível para os outros jogadores.
 
     def team_size(self) -> int | None:
-        """Membros no time, pela memória (com o offset correto)."""
+        """Membros no time, pela memória. `tamanho_do_time()` PRIMEIRO.
+
+        `memory.team_size()` é a antiga, e a docstring dela avisa: *"ESTA
+        LEITURA NUNCA RESPONDEU neste cliente"*. `tamanho_do_time()` lê pelo
+        ponteiro rebaseado (`ADDR_TEAM`, o +0x60) e foi provada em seis
+        clientes. Medido em 361 convites: 98,6% contra 29%.
+
+        A ANTIGA FICA COMO RESERVA -- este é o único lugar que a chama. Ver
+        `docs/decisoes/reset-de-time.md`.
+        """
+        tamanho = self.ctx.memory.tamanho_do_time()
+        if tamanho is not None:
+            return tamanho
         return self.ctx.memory.team_size()
 
     def _time_pela_imagem(self) -> bool | None:
@@ -702,15 +724,20 @@ class TeamService:
                     consumir_aceite(remetente)
                     return True
 
-                quem_aceitou = aceite_pendente(remetente)
-                if quem_aceitou is not None:
-                    ctx.log.info(
-                        "'%s' aceitou o convite em %.1fs (aviso interno das duas "
-                        "pontas; reset garantido)",
-                        quem_aceitou, time.time() - comecou,
-                    )
-                    consumir_aceite(remetente)
-                    return True
+                # O AVISO INTERNO É RESERVA, e só vale com a memória MUDA:
+                # ele diz "a outra conta clicou no Ok", não "o time formou". Era
+                # por aqui que o bot entrava na cave sem time. Nos 1,4% em que a
+                # memória não responde ele continua sendo a única via.
+                if self.team_size() is None:
+                    quem_aceitou = aceite_pendente(remetente)
+                    if quem_aceitou is not None:
+                        ctx.log.info(
+                            "'%s' avisou que aceitou em %.1fs, e a memória não "
+                            "responde o tamanho do time -- sigo pelo aviso.",
+                            quem_aceitou, time.time() - comecou,
+                        )
+                        consumir_aceite(remetente)
+                        return True
 
                 if time.time() >= limite:
                     break
@@ -1018,8 +1045,20 @@ class InviteAcceptor:
                 f"(clique {self._cliques_de_aceite} de {MAX_CLIQUES_DE_ACEITE})",
             )
 
-            # AVISA DE VOLTA. Quem convidou está esperando, e é isto que ele
-            # espera -- não a leitura de `team_size`, que não funciona aqui.
+            # UMA LEITURA SÓ, e ela decide as duas coisas: se avisa de volta e
+            # se este convite se encerra aqui.
+            tamanho = self.ctx.memory.tamanho_do_time()
+
+            # AVISA DE VOLTA, SEMPRE.
+            #
+            # Tentei condicionar isto à memória deste cliente e estava errado:
+            # a memória que decide é a de QUEM CONVIDOU, e o aceitador não tem
+            # como saber se ela responde na outra máquina. Suprimir o aviso aqui
+            # deixaria quem convida esperando por um sinal que nunca vem.
+            #
+            # O aviso continua não provando que o time formou -- ele diz
+            # "cliquei no Ok". Quem trata isso é quem recebe: `montar_time` só
+            # olha para ele quando a PRÓPRIA memória não responde.
             anunciar_aceite(remetente_anunciado, self._meu_nick)
 
             # QUANTAS VEZES CLICAR.
@@ -1043,17 +1082,21 @@ class InviteAcceptor:
             # O QUE ISSO COMPRA: parar de clicar assim que o time se forma. No
             # modo APP cada clique esquerdo perdido é o personagem andando, e
             # é por isso que a troca vem ANTES do time do APP, não junto.
-            tamanho = self.ctx.memory.tamanho_do_time()
-            if (tamanho is not None and tamanho > 1) or (
-                    self._cliques_de_aceite >= MAX_CLIQUES_DE_ACEITE):
+            if tamanho is not None and tamanho > 1:
                 consumir_convite(self._meu_nick)
                 self._cliques_de_aceite = 0
-                if tamanho is not None and tamanho > 1:
-                    ctx.log.info("Time confirmado com %s membros", tamanho)
-                else:
-                    ctx.log.debug(
-                        "Cliquei no Ok %s vezes e avisei quem convidou; "
-                        "encerrando este convite", MAX_CLIQUES_DE_ACEITE)
+                ctx.log.info("Time confirmado com %s membros", tamanho)
+            elif (tamanho is None or self.exigir_caixa) and (
+                    self._cliques_de_aceite >= MAX_CLIQUES_DE_ACEITE):
+                # O TETO SÓ ENCERRA QUEM NÃO TEM COMO CONFIRMAR: memória muda,
+                # ou o modo APP (onde cada clique perdido move o personagem).
+                # Com a memória respondendo, quem encerra é ela -- ver
+                # `MAX_CLIQUES_DE_ACEITE`.
+                consumir_convite(self._meu_nick)
+                self._cliques_de_aceite = 0
+                ctx.log.debug(
+                    "Cliquei no Ok %s vezes e avisei quem convidou; "
+                    "encerrando este convite", MAX_CLIQUES_DE_ACEITE)
             return True
 
         if quadro is None or ponto is None:
