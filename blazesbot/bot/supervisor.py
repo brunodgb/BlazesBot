@@ -1650,8 +1650,13 @@ class AccountSupervisor(threading.Thread):
         return (centro[0] + DO_CENTRO_ATE_O_OK[0],
                 centro[1] + DO_CENTRO_ATE_O_OK[1])
 
-    def abrir_a_bolsa_e_apagar(self, tecla: str) -> int:
+    def abrir_a_bolsa_e_apagar(self, tecla: str,
+                               continuar: Callable[[], bool] | None = None) -> int:
         """Abre a bolsa e apaga o lixo. UMA receita, dois chamadores.
+
+        `continuar` é o freio de quem chamou: devolvendo `False` no meio, a
+        limpeza para entre um modelo e outro. A Fada usa isso para largar a
+        bolsa no instante em que entra em batalha -- ver `fada_montagem`.
 
         O modo APP e a Fada montavam este mesmo `BotContext` cada um por si --
         duas cópias do mesmo bloco, e duas chances de só uma ser corrigida.
@@ -1673,7 +1678,7 @@ class AccountSupervisor(threading.Thread):
         try:
             # DEVOLVE O QUE O DELETADOR DISSE. `deletador.BOLSA_NAO_ABRIU` é a
             # segunda testemunha do teclado mudo -- ver `core/teclado_mudo.py`.
-            return deletador.limpar_a_bolsa(ctx, tecla)
+            return deletador.limpar_a_bolsa(ctx, tecla, continuar=continuar)
         finally:
             ctx.close()
 

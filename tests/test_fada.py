@@ -548,6 +548,42 @@ def test_EM_BATALHA_ela_cuida_de_SI_mesmo_com_aliado_critico():
     assert not jogo.cliques, "clicou no retrato do aliado durante a batalha"
 
 
+def test_entrar_em_batalha_LARGA_o_reviver():
+    """A regra suprema vale em TODA ação longa dela, não só na cura.
+
+    *"Caso a Fada entre em batalha ela deve parar qualquer ação que estiver
+    fazendo, apertar F1 e se curar"* (usuário, 25/09/2026). O morto continua
+    morto e na fila; ela volta quando sair da luta.
+    """
+    jogo = _Jogo(alvo=555)
+    jogo.companheiros = ["Aliado"]
+    f = _fada(jogo)
+    mural.publicar_id("aliado", 4242)
+    mural.morri("aliado", nick="Aliado")
+    jogo.batalha = True                    # o mob chegou nela
+
+    assert mod_reviver.reviver(f, "aliado") is True, (
+        "parou o laço da Fada em vez de só largar o reviver")
+    assert jogo.revives == 0, "continuou conjurando com mob batendo nela"
+
+
+def test_a_BOLSA_para_no_instante_em_que_ela_entra_em_batalha():
+    """A limpeza é a tarefa mais longa da Fada -- teto de 10 s no deletador.
+
+    Antes ela ia até o fim acontecesse o que acontecesse: um mob que começasse
+    a bater no segundo 1 tinha os 9 seguintes com ela apagando item.
+    """
+    import inspect
+
+    from blazesbot.bot import fada_montagem
+
+    fonte = inspect.getsource(fada_montagem.rodar_a_fada)
+    trecho = fonte[fonte.index("def limpar_a_bolsa_da_fada"):]
+    trecho = trecho[:trecho.index("else:")]
+    assert "continuar=lambda" in trecho and "in_battle" in trecho, (
+        "a Fada voltou a limpar a bolsa sem freio de batalha")
+
+
 def test_FORA_de_batalha_o_critico_passa_na_frente_da_fila():
     """Lá ninguém está batendo nela: parar de sentar para atender quem está
     morrendo não custa nada. A ordem de chegada vale DENTRO de cada grupo."""

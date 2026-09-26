@@ -57,6 +57,7 @@ Deletar é IRREVERSÍVEL. Um falso positivo não custa tempo, custa item:
 from __future__ import annotations
 
 import time
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -498,7 +499,8 @@ def _apagar_um(ctx: BotContext, item: tuple[int, int],
 
 def deletar_lixo(ctx: BotContext,
                  teto_segundos: float = TETO_DE_SEGUNDOS,
-                 pasta: Path | None = None) -> int:
+                 pasta: Path | None = None,
+                 continuar: Callable[[], bool] | None = None) -> int:
     """Apaga da bolsa os itens com template na `pasta`.
 
     Pressupõe o inventário JÁ ABERTO. Devolve quantos foram apagados.
@@ -572,6 +574,22 @@ def deletar_lixo(ctx: BotContext,
 
     for nome in nomes:
         if time.perf_counter() >= limite or apagados >= MAXIMO_DE_EXCLUSOES:
+            break
+        # QUEM CHAMOU PODE MANDAR PARAR NO MEIO -- 25/09/2026.
+        #
+        # A limpeza é a tarefa mais longa que existe aqui (teto de 10 s), e até
+        # hoje ela ia até o fim aconteça o que acontecer. Para a FADA isso é
+        # inaceitável: se um mob começa a bater nela no segundo 1, ela passa os
+        # 9 seguintes apagando item em vez de se curar, e ela é a única do time
+        # que não tem quem a cure. Ver `fada_montagem`.
+        #
+        # ENTRE MODELOS, e não no meio de uma exclusão: a caixa de confirmação
+        # aberta tem de ser resolvida, senão o clique seguinte cai nela.
+        # `None` = ninguém mandou nada, e o comportamento é o de sempre.
+        if continuar is not None and not continuar():
+            ctx.log.info("Limpeza interrompida por quem chamou depois de %s "
+                         "modelo(s) -- %s item(ns) apagado(s).",
+                         verificados, apagados)
             break
         ctx.raise_if_stopped()
         verificados += 1
@@ -688,7 +706,8 @@ def inventario_esta_aberto(ctx: BotContext) -> bool | None:
 
 def limpar_a_bolsa(ctx: BotContext, tecla_do_inventario: str,
                    teto_segundos: float = TETO_DE_SEGUNDOS,
-                   pasta: Path | None = None) -> int:
+                   pasta: Path | None = None,
+                   continuar: Callable[[], bool] | None = None) -> int:
     """Abre a bolsa SE precisar, apaga o lixo, e fecha SÓ se foi este passo
     que abriu.
 
@@ -749,7 +768,7 @@ def limpar_a_bolsa(ctx: BotContext, tecla_do_inventario: str,
                 return teclado_mudo.BOLSA_NAO_ABRIU
         else:
             ctx.log.debug("Inventário já estava aberto; não vou mexer na tecla.")
-        return deletar_lixo(ctx, teto_segundos, pasta)
+        return deletar_lixo(ctx, teto_segundos, pasta, continuar)
     finally:
         # FECHA SÓ O QUE ESTÁ OBSERVADAMENTE ABERTO. `eu_abri` diz o que eu
         # tentei; a tela diz o que É. Entre os dois, manda a tela.

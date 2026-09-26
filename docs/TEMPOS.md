@@ -273,13 +273,13 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | `SEGUNDOS_PARA_A_SEGUNDA` | 22.5 s | *novo* | TETO | [congelamento.py:82](blazesbot/bot/congelamento.py#L82) | `olhar` | A segunda cutucada, no MEIO do que resta até aquele teto. |
 | `FATIA_DA_ESPERA` | 0.25 s | = | PASSO | [context.py:212](blazesbot/bot/context.py#L212) | `tick` | Fatia máxima de sono dentro de um `tick`. |
 | *literal em* `wait_if_paused` | 0.075 s | = | FIXO | [context.py:573](blazesbot/bot/context.py#L573) | `wait_if_paused` | Bloqueia enquanto a pausa estiver ativa. |
-| `TETO_DE_SEGUNDOS` | 10 s | *novo* | TETO | [deletador.py:165](blazesbot/bot/deletador.py#L165) | `deletar_lixo, limpar_a_bolsa` | Teto do passo inteiro (verificar + apagar), pedido do usuário. |
-| `TETO_DA_CAIXA` | 1.2 s | *novo* | TETO | [deletador.py:168](blazesbot/bot/deletador.py#L168) | `_esperar_a_caixa` | Espera pela caixa de confirmação aparecer, depois do clique no ícone. |
-| `PASSO_DA_ESPERA` | 0.08 s | *novo* | PASSO | [deletador.py:169](blazesbot/bot/deletador.py#L169) | `_esperar_a_caixa` |  |
-| `ESPERA_DA_BOLSA_ABRIR` | 0.58 s | *novo* | FIXO | [deletador.py:179](blazesbot/bot/deletador.py#L179) | `_fechar_a_bolsa` | A janela do inventário terminar de pintar depois da tecla. |
-| `TETO_DA_BOLSA_ABRIR` | 2 s | = | TETO | [deletador.py:191](blazesbot/bot/deletador.py#L191) | `_esperar_a_bolsa_abrir, limpar_a_bolsa` | Teto da espera pela bolsa APARECER depois da tecla -- 07/09/2026. |
-| `PASSO_DA_BOLSA_ABRIR` | 0.15 s | = | PASSO | [deletador.py:195](blazesbot/bot/deletador.py#L195) | `_esperar_a_bolsa_abrir` | Passo entre duas perguntas pelo ícone. Cada uma custa uma captura de janela, |
-| *literal em* `_apagar_um` | 0.05 s | *novo* | FIXO | [deletador.py:485](blazesbot/bot/deletador.py#L485) | `_apagar_um` | Uma exclusão completa: item -> ícone -> Ok. |
+| `TETO_DE_SEGUNDOS` | 10 s | *novo* | TETO | [deletador.py:166](blazesbot/bot/deletador.py#L166) | `deletar_lixo, limpar_a_bolsa` | Teto do passo inteiro (verificar + apagar), pedido do usuário. |
+| `TETO_DA_CAIXA` | 1.2 s | *novo* | TETO | [deletador.py:169](blazesbot/bot/deletador.py#L169) | `_esperar_a_caixa` | Espera pela caixa de confirmação aparecer, depois do clique no ícone. |
+| `PASSO_DA_ESPERA` | 0.08 s | *novo* | PASSO | [deletador.py:170](blazesbot/bot/deletador.py#L170) | `_esperar_a_caixa` |  |
+| `ESPERA_DA_BOLSA_ABRIR` | 0.58 s | *novo* | FIXO | [deletador.py:180](blazesbot/bot/deletador.py#L180) | `_fechar_a_bolsa` | A janela do inventário terminar de pintar depois da tecla. |
+| `TETO_DA_BOLSA_ABRIR` | 2 s | = | TETO | [deletador.py:192](blazesbot/bot/deletador.py#L192) | `_esperar_a_bolsa_abrir, limpar_a_bolsa` | Teto da espera pela bolsa APARECER depois da tecla -- 07/09/2026. |
+| `PASSO_DA_BOLSA_ABRIR` | 0.15 s | = | PASSO | [deletador.py:196](blazesbot/bot/deletador.py#L196) | `_esperar_a_bolsa_abrir` | Passo entre duas perguntas pelo ícone. Cada uma custa uma captura de janela, |
+| *literal em* `_apagar_um` | 0.05 s | *novo* | FIXO | [deletador.py:486](blazesbot/bot/deletador.py#L486) | `_apagar_um` | Uma exclusão completa: item -> ícone -> Ok. |
 | `PASSO_DA_ESPERA_DO_RESETER` | 1 s | *novo* | PASSO | [espera_do_reseter.py:80](blazesbot/bot/espera_do_reseter.py#L80) | `esperar_o_reseter` | Cadência da espera pela conta de reset. |
 | `INTERVALO_DO_AVISO_DO_RESETER` | 300 s (5 min) | *novo* | FIXO | [espera_do_reseter.py:87](blazesbot/bot/espera_do_reseter.py#L87) | `esperar_o_reseter` | De quanto em quanto tempo repetir o aviso enquanto a trava dura. |
 | `PASSO_DA_FADA` | 0.1 s | *novo* | PASSO | [fada.py:80](blazesbot/bot/fada.py#L80) | `rodar` | Cadência do laço da Fada quando não há nada a fazer. |
@@ -340,8 +340,8 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | *literal em* `_operate` | 2.5 s | *novo* | FIXO | [supervisor.py:1368](blazesbot/bot/supervisor.py#L1368) | `_operate` | Opera a conta logada, respeitando o farm ligado/desligado ao vivo. |
 | *literal em* `_operate` | 2.5 s | *novo* | FIXO | [supervisor.py:1389](blazesbot/bot/supervisor.py#L1389) | `_operate` | Opera a conta logada, respeitando o farm ligado/desligado ao vivo. |
 | *literal em* `_operate` | 0.5 s | = | FIXO | [supervisor.py:1488](blazesbot/bot/supervisor.py#L1488) | `_operate` | Opera a conta logada, respeitando o farm ligado/desligado ao vivo. |
-| *literal em* `_publicar_o_proprio_id` | 0.3 s | *novo* | FIXO | [supervisor.py:1733](blazesbot/bot/supervisor.py#L1733) | `_publicar_o_proprio_id` | o alvo leva ~0,1 s para virar |
-| *literal em* `chamar_a_fada` | 0.2 s | *novo* | FIXO | [supervisor.py:2232](blazesbot/bot/supervisor.py#L2232) | `chamar_a_fada` | Pede cura à Fada do time e espera. `False` = não há Fada, beba poção. |
+| *literal em* `_publicar_o_proprio_id` | 0.3 s | *novo* | FIXO | [supervisor.py:1738](blazesbot/bot/supervisor.py#L1738) | `_publicar_o_proprio_id` | o alvo leva ~0,1 s para virar |
+| *literal em* `chamar_a_fada` | 0.2 s | *novo* | FIXO | [supervisor.py:2237](blazesbot/bot/supervisor.py#L2237) | `chamar_a_fada` | Pede cura à Fada do time e espera. `False` = não há Fada, beba poção. |
 | `ESPERA_DO_MENU` | 0.35 s | = | FIXO | [team.py:165](blazesbot/bot/team.py#L165) | `_enviar_convite` | Tempo para o menu de contexto aparecer depois do clique direito. |
 | `ESPERA_PELA_RESPOSTA` | 4 s | = | FIXO | [team.py:170](blazesbot/bot/team.py#L170) | `montar_time` | Quanto esperar a outra conta aceitar. Ela recebe o anúncio interno e clica no |
 | `PASSO_DA_ESPERA_DO_TIME` | 0.1 s | = | PASSO | [team.py:178](blazesbot/bot/team.py#L178) | `montar_time` | De quanto em quanto tempo conferir se o time já formou. |

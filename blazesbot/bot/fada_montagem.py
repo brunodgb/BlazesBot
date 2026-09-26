@@ -177,9 +177,24 @@ def rodar_a_fada(sup, so_montar: bool = False):
 
                 Aqui só se ENGOLE a falha: bolsa cheia é chateação, cura que
                 para é o time inteiro morrendo.
+
+                E A LIMPEZA PARA NO INSTANTE EM QUE ELA ENTRA EM BATALHA
+                (25/09/2026). Ela é a tarefa mais longa da Fada -- teto de 10 s
+                no deletador --, e antes ia até o fim acontecesse o que
+                acontecesse: um mob que começasse a bater no segundo 1 tinha os
+                9 seguintes com ela apagando item em vez de se curar.
+
+                *"Caso a Fada entre em batalha ela deve parar qualquer ação que
+                estiver fazendo, apertar F1 e se curar -- é uma regra suprema,
+                pois ela tem que se manter viva acima de tudo"* (usuário).
+
+                "NÃO SEI" NÃO PARA NADA: sem leitura de combate a limpeza
+                segue, que é o comportamento de sempre.
                 """
                 try:
-                    sup.abrir_a_bolsa_e_apagar(tecla_da_bolsa)
+                    sup.abrir_a_bolsa_e_apagar(
+                        tecla_da_bolsa,
+                        continuar=lambda: _seguro(memoria.in_battle) is not True)
                 except Exception as exc:
                     log.warning("FADA: falha ao limpar a bolsa: %s", exc)
     else:

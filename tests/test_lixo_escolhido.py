@@ -168,7 +168,9 @@ def test_COM_escolha_a_limpeza_segue_o_caminho_normal(monkeypatch):
     olhou = []
     monkeypatch.setattr(d, "inventario_esta_aberto",
                         lambda c: olhou.append(1) or True)
-    monkeypatch.setattr(d, "deletar_lixo", lambda c, teto=None, pasta=None: 3)
+    monkeypatch.setattr(
+        d, "deletar_lixo",
+        lambda c, teto=None, pasta=None, continuar=None: 3)
 
     assert d.limpar_a_bolsa(ctx, "I") == 3
     assert olhou, "não chegou a olhar a tela"

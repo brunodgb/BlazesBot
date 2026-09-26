@@ -602,12 +602,13 @@ desde que ela mesma não estivesse crítica. Durou algumas horas. O usuário
 desfez, e o argumento dele fecha sozinho: *"se ela está em batalha tem algum mob
 batendo nela, e a prioridade é ela se manter viva"*.
 
-**E havia um buraco técnico que a exceção não cobria**, encontrado ao responder
-a pergunta dele: a checagem "eu estou crítica?" acontecia UMA VEZ, antes de
-começar. `_curar` fica até `TETO_DA_CURA_SEGUNDOS` (20 s) batendo a cura no
-aliado e conferindo a vida DELE — nunca a dela. Entrar em 45% com mob batendo e
-sair morta nos 20 s seguintes era um caminho aberto, e a proteção que eu tinha
-escrito valia só para o instante da decisão.
+**Correção do que foi dito aqui em 23/09:** o texto anterior afirmava que
+`_curar` podia segurar a Fada por 20 s sem olhar a batalha. Está errado — ele
+pergunta `_em_batalha()` a cada volta do laço, ou seja, a cada
+`ESPERA_ENTRE_CURAS` (0,34 s), e larga a cura no instante em que ela entra em
+combate. O que a exceção de fato abria era outra coisa: ela LARGAVA a defesa por
+decisão própria, e nesse caso a vida dela deixava de ser a prioridade enquanto o
+aliado era atendido.
 
 Em batalha, portanto, a regra de 01/09/2026 continua inteira: ela cuida de si.
 
@@ -637,3 +638,46 @@ ainda há batalha e ninguém crítico, ela volta a se defender; se a luta acabou
 cai na fila normal, nos mortos e depois na ociosidade. O estado que existe é o
 contador `emergencias`, que aparece no `resumo()` para dizer se a ambulância
 está sendo chamada.
+
+## A REGRA SUPREMA: entrou em batalha, larga tudo — 25/09/2026
+
+*"Caso a Fada entre em batalha, ela deve parar qualquer tipo de cura, qualquer
+ação que estiver fazendo, apertar F1 e se curar. É uma regra suprema no APP,
+pois a Fada tem que se manter viva acima de tudo."*
+
+Ela já valia na cura de aliado (`_curar` pergunta a cada 0,34 s e larga) e na
+entrada dos cuidados (`posso_cuidar`). Faltavam **as duas ações longas em que
+ela ficava presa**, e as duas foram medidas pelo teto que tinham:
+
+| ação | teto | antes | agora |
+|---|---|---|---|
+| curar um aliado | 20 s | largava ✓ | largava ✓ |
+| **limpar a bolsa** | **10 s** | ia até o fim ✗ | para entre um modelo e outro |
+| **reviver um morto** | **8 s** + 3 toques | ia até o fim ✗ | larga no toque e na espera |
+| pet | curto | `posso_cuidar` antes ✓ | igual |
+
+### A bolsa precisou de um freio no deletador
+
+`deletar_lixo` e `limpar_a_bolsa` ganharam um `continuar` opcional, conferido
+**entre um modelo e outro** — nunca no meio de uma exclusão, porque a caixa de
+confirmação aberta tem de ser resolvida, senão o clique seguinte cai nela. Com
+`None` (o padrão) nada muda, e é assim que o APP e a BC continuam chamando.
+
+Quem passa o freio é a montagem da Fada: `continuar=lambda: in_battle is not
+True`. **"Não sei" não para nada** — sem leitura de combate a limpeza segue,
+como sempre seguiu.
+
+### Por que não foi uma exceção que sobe de qualquer lugar
+
+Seria menos código: uma `EntreiEmBatalha` levantada de dentro do `_dormir` dela
+desenrolaria a pilha de onde estivesse. Foi recusado porque ela desenrolaria
+TAMBÉM de dentro da limpeza — com o inventário aberto e uma caixa de
+confirmação na tela. O `continuar` para num ponto ESCOLHIDO, e o `finally` que
+fecha a bolsa continua rodando.
+
+### O que ficou sem freio, de propósito
+
+O clique no retrato e a confirmação do alvo (`TETO_PARA_O_ALVO_VIRAR`, 0,4 s) e
+o giro entre uma volta e outra (`PASSO_DA_FADA`, 0,1 s). São décimos de segundo
+contra os 8 e 10 s que foram fechados — pôr pergunta ali seria gasto sem
+resposta perceptível.

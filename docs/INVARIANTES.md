@@ -685,6 +685,13 @@ seguidores). Pedido do usuário em 27/08/2026.
 
 ## A Fada — `docs/decisoes/fada.md`
 
+- **ENTROU EM BATALHA, LARGA TUDO E SE CURA** — regra suprema, 25/09/2026.
+  *"A Fada tem que se manter viva acima de tudo."* Vale em TODA ação longa dela:
+  a cura de aliado (`_curar`), a limpeza da bolsa (o `continuar` do deletador) e
+  o reviver (`fada_reviver`) largam o que estão fazendo. Ela é a única do time
+  que não tem quem a cure. **"Não sei" não interrompe nada** — sem leitura de
+  combate, tudo segue como sempre seguiu.
+
 A conta marcada como `Fada` que, **em time**, cura em vez de atacar. Fora de um
 time a flag não faz nada.
 

@@ -138,6 +138,18 @@ def _insistir(fada, login_vitima: str, nick: str, slot: int) -> bool:
     tentativa = 0
     while (time.monotonic() < fim and tentativa < MAXIMO_DE_TOQUES
            and fada._continuar()):
+        # ENTREI EM BATALHA: LARGO O REVIVER -- 25/09/2026.
+        #
+        # Mesma regra suprema que já vale na cura (`fada._curar`) e agora vale
+        # em toda ação longa dela: com mob batendo, ela se cura e mais nada.
+        # O morto continua morto e na fila; ela volta assim que sair da luta.
+        #
+        # `True` = o laço da Fada CONTINUA (não é parada): quem decide o que
+        # fazer em batalha é o giro seguinte, e ele manda em `_me_defender`.
+        if fada._em_batalha() is True:
+            fada.log.info("FADA: entrei em batalha durante o reviver de %s — "
+                          "largo e me curo.", nick)
+            return True
         tentativa += 1
         fada_ociosa.sair_do_descanso(fada)
         if not fada._clicar_no_retrato(slot):
@@ -184,6 +196,12 @@ def _esperar_levantar(fada, login_vitima: str, nick: str, fim_da_janela) -> bool
     while time.monotonic() < limite and fada._continuar():
         if not fada.mural.esta_morto(login_vitima):
             fada.log.info("FADA: %s está de pé.", nick)
+            return True
+        # E AQUI TAMBÉM: esperar o feitiço são até `TETO_DO_FEITICO` segundos
+        # parada, e parada em batalha é exatamente o que a regra suprema proíbe.
+        if fada._em_batalha() is True:
+            fada.log.info("FADA: entrei em batalha esperando %s levantar — "
+                          "largo e me curo.", nick)
             return True
         if not fada._dormir(PASSO_DA_ESPERA):
             return False

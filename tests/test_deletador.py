@@ -678,7 +678,7 @@ class _CtxTecla(_Ctx):
 def _preparar(monkeypatch, ctx):
     """Liga `inventario_esta_aberto` ao estado do dublê e neutraliza o resto."""
     monkeypatch.setattr(d, "inventario_esta_aberto", lambda c: c.aberto)
-    monkeypatch.setattr(d, "deletar_lixo", lambda c, teto=None, pasta=None: 7)
+    monkeypatch.setattr(d, "deletar_lixo", lambda c, teto=None, pasta=None, continuar=None: 7)
 
 
 def test_bolsa_JA_ABERTA_nao_mexe_na_tecla(monkeypatch):
@@ -707,7 +707,7 @@ def test_o_fechamento_e_CONFERIDO_e_insiste(monkeypatch):
     """Um 'fechar' que não pegou custa a noite inteira da macro: com a bolsa
     aberta, toda tecla do APP é engolida."""
     ctx = _CtxTecla(aberto_no_inicio=False)
-    monkeypatch.setattr(d, "deletar_lixo", lambda c, teto=None, pasta=None: 0)
+    monkeypatch.setattr(d, "deletar_lixo", lambda c, teto=None, pasta=None, continuar=None: 0)
 
     # A primeira tentativa de fechar não pega; a segunda sim.
     #
@@ -736,7 +736,7 @@ def test_SEM_LEITURA_nao_encosta_na_tecla(monkeypatch):
     """
     ctx = _CtxTecla(aberto_no_inicio=True)
     monkeypatch.setattr(d, "inventario_esta_aberto", lambda c: None)
-    monkeypatch.setattr(d, "deletar_lixo", lambda c, teto=None, pasta=None: 0)
+    monkeypatch.setattr(d, "deletar_lixo", lambda c, teto=None, pasta=None, continuar=None: 0)
 
     assert d.limpar_a_bolsa(ctx, "I") == 0
     assert ctx.teclas == [], "mexeu na tecla sem saber o estado da bolsa"
@@ -774,7 +774,7 @@ def test_falha_ao_apagar_ainda_FECHA_a_bolsa(monkeypatch):
     ctx = _CtxTecla(aberto_no_inicio=False)
     monkeypatch.setattr(d, "inventario_esta_aberto", lambda c: c.aberto)
 
-    def explode(c, teto=None, pasta=None):
+    def explode(c, teto=None, pasta=None, continuar=None):
         raise RuntimeError("boom")
 
     monkeypatch.setattr(d, "deletar_lixo", explode)
@@ -798,7 +798,7 @@ def test_a_bolsa_que_demora_a_pintar_AINDA_e_limpa(monkeypatch):
     ctx = _CtxTecla(aberto_no_inicio=False)
     apagados = []
     monkeypatch.setattr(d, "deletar_lixo",
-                        lambda c, teto=None, pasta=None:
+                        lambda c, teto=None, pasta=None, continuar=None:
                         apagados.append(1) or 3)
     # Fechada, fechada, fechada... e só na quarta leitura ela aparece.
     estados = iter([False, False, False, True, True, False])
@@ -813,7 +813,7 @@ def test_a_bolsa_que_NAO_abre_no_teto_nao_aperta_de_novo(monkeypatch):
     incondicionalmente. Sem o ícone na tela, o que se SABE é que ela não está
     aberta -- e o que não está aberto não precisa ser fechado."""
     ctx = _CtxTecla(aberto_no_inicio=False)
-    monkeypatch.setattr(d, "deletar_lixo", lambda c, teto=None, pasta=None: 0)
+    monkeypatch.setattr(d, "deletar_lixo", lambda c, teto=None, pasta=None, continuar=None: 0)
     monkeypatch.setattr(d, "TETO_DA_BOLSA_ABRIR", 0.05)
     monkeypatch.setattr(d, "PASSO_DA_BOLSA_ABRIR", 0.0)
     monkeypatch.setattr(d, "inventario_esta_aberto", lambda c: False)
@@ -836,7 +836,7 @@ def test_a_bolsa_que_abre_DEPOIS_do_teto_ainda_e_fechada(monkeypatch):
     Intenção não fecha bolsa; observação fecha.
     """
     ctx = _CtxTecla(aberto_no_inicio=False)
-    monkeypatch.setattr(d, "deletar_lixo", lambda c, teto=None, pasta=None: 0)
+    monkeypatch.setattr(d, "deletar_lixo", lambda c, teto=None, pasta=None, continuar=None: 0)
     aberta = {"v": False}
     monkeypatch.setattr(d, "inventario_esta_aberto", lambda c: aberta["v"])
 
@@ -860,7 +860,7 @@ def test_o_finally_NAO_fecha_o_que_a_tela_diz_estar_fechado(monkeypatch):
     """`eu_abri` diz o que eu tentei; a tela diz o que É. Entre os dois, manda a
     tela -- senão o "fechar" vira um "abrir"."""
     ctx = _CtxTecla(aberto_no_inicio=False)
-    monkeypatch.setattr(d, "deletar_lixo", lambda c, teto=None, pasta=None: 0)
+    monkeypatch.setattr(d, "deletar_lixo", lambda c, teto=None, pasta=None, continuar=None: 0)
     # abriu (True na confirmação), mas na hora de fechar já está fechada.
     estados = iter([False, True, False])
     monkeypatch.setattr(d, "inventario_esta_aberto", lambda c: next(estados))
