@@ -726,7 +726,7 @@ ligar código não testado.
 | `TEXT` | `'#F7F5F5'` | [blazesbot/gui/theme.py:56](blazesbot/gui/theme.py#L56) | key_capture.py, widgets.py | Texto -- NEUTRO de propósito. Ver o comentário no topo do arquivo. |
 | `TEXT_DIM` | `'#BEB7B6'` | [blazesbot/gui/theme.py:57](blazesbot/gui/theme.py#L57) | account_dialog.py, widgets.py | — |
 | `TEXT_FAINT` | `'#8E8483'` | [blazesbot/gui/theme.py:58](blazesbot/gui/theme.py#L58) | key_capture.py | — |
-| `WARN` | `'#F0C24A'` | [blazesbot/gui/theme.py:63](blazesbot/gui/theme.py#L63) | ui_do_jogo.py, key_capture.py | — |
+| `WARN` | `'#F0C24A'` | [blazesbot/gui/theme.py:63](blazesbot/gui/theme.py#L63) | combate.py, ui_do_jogo.py, key_capture.py | — |
 | `COR_HP` | `'#8E2B22'` | [blazesbot/gui/widgets.py:25](blazesbot/gui/widgets.py#L25) | — | Cores por tipo de recurso |
 | `COR_HP_BORDA` | `'#C4544A'` | [blazesbot/gui/widgets.py:26](blazesbot/gui/widgets.py#L26) | — | — |
 | `COR_MP` | `'#22488E'` | [blazesbot/gui/widgets.py:27](blazesbot/gui/widgets.py#L27) | — | — |

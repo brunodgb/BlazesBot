@@ -2945,30 +2945,21 @@ class CombatEngine:
                 "estava.", TENTATIVAS_DE_AUTO_SELECAO, tecla)
         self._trocar_de_alvo()
 
-    def _estou_na_minha_propria_mira(self) -> bool | None:
-        """O alvo de agora sou EU? `None` quando não deu para comparar.
+    def _estou_na_minha_propria_mira(self) -> bool:
+        """O alvo de agora sou EU? PELO ID -- a leitura que responde exatamente isso.
 
-        PELA MEMÓRIA E PELO NOME. `alvo_atual()` traz o nome do alvo e
-        `char_name()` traz o meu -- as duas leituras já existem, nenhuma
-        captura de tela é paga, e a resposta vale com a janela minimizada.
+        ERA PELO NOME, via `alvo_atual()`, e não podia confirmar nunca: desde
+        11/09/2026 o `alvo_atual()` devolve None DE PROPÓSITO para a própria
+        mira (`core/memory`), e aqui None era lido como "F1 não pegou" --
+        medido: 2.067 de 2.067 reancoragens sem confirmar, ~0,49 s e um WARN
+        cada. O comentário antigo dizia que não havia leitura do próprio id;
+        havia, e ele agora fica guardado (`Memory.meu_id`, pedido do usuário).
 
-        POR QUE O NOME, E NÃO O ID: não há leitura do id do próprio personagem
-        neste cliente. Comparar "o id mudou" seria pior justamente no caso que
-        importa -- a mira já presa em mim NÃO muda o id, e o gesto pareceria
-        ter falhado quando já estava certo.
-
-        "NÃO SEI" NÃO É "NÃO": nome ilegível de qualquer um dos dois lados
-        devolve `None`, e quem chama trata isso como falta de confirmação, não
-        como prova de erro.
+        "NÃO SEI" NÃO É "SIM": id ilegível devolve False, e quem chama trata
+        como falta de confirmação -- aperta o F1 de novo e dá o TAB assim mesmo.
         """
-        alvo = self.ctx.memory.alvo_atual()
-        if alvo is None:
-            return False                    # mira vazia: F1 não pegou
-        meu = (self.ctx.memory.char_name() or "").strip().lower()
-        dele = str(alvo.get("nome") or "").strip().lower()
-        if not meu or not dele:
-            return None
-        return meu == dele
+        memoria = self.ctx.memory
+        return memoria.estou_mirando_em_mim(memoria.id_do_alvo() or 0)
 
     def _trocar_de_alvo(self) -> bool:
         """UM TAB, confirmado pela TROCA DO ID. Devolve se a troca foi vista.

@@ -64,23 +64,37 @@ class _Log:
 
 
 class _Memoria:
-    """Responde o que a confirmação do F1 pergunta.
+    """Responde o que a confirmação do F1 pergunta -- COMO A MEMÓRIA REAL.
 
-    `virar_para_mim` é o que o F1 de mentira faz: a partir dali o alvo passa a
-    ser o próprio personagem, que é como o gesto se confirma no jogo.
+    PELO ID. E `alvo_atual()` devolve None para a PRÓPRIA mira, que é o que o
+    `core/memory` faz desde 11/09/2026. O dublê antigo confirmava pelo nome e
+    devolvia o próprio nome em `alvo_atual()` -- combinação que o real nunca
+    produz --, e assim o teste ficou verde enquanto a confirmação de verdade
+    falhava 2.067 de 2.067 vezes (medido em 25/09/2026).
+
+    `virar_para_mim` é o que o F1 de mentira faz: o alvo passa a ser eu.
     """
 
-    def __init__(self, meu: str = "Eu", alvo: str | None = "MobQualquer"):
-        self.meu = meu
+    MEU_ID = 7_001
+    ID_DO_MOB = 9_999
+
+    def __init__(self, meu_id: int | None = MEU_ID, alvo: int | None = ID_DO_MOB):
+        self.meu = meu_id
         self.alvo = alvo
         self.leituras = 0
 
-    def char_name(self):
-        return self.meu
+    def id_do_alvo(self):
+        self.leituras += 1
+        return self.alvo
+
+    def estou_mirando_em_mim(self, alvo_id):
+        return bool(self.meu) and self.meu == alvo_id
 
     def alvo_atual(self):
-        self.leituras += 1
-        return None if self.alvo is None else {"nome": self.alvo}
+        # Como o real: a própria mira NÃO é alvo.
+        if self.alvo is None or self.alvo == self.meu:
+            return None
+        return {"id": self.alvo}
 
     def virar_para_mim(self):
         self.alvo = self.meu
@@ -177,13 +191,11 @@ def test_F1_que_NAO_pega_e_apertado_nas_DUAS_tentativas():
 def test_NAO_CONFIRMAR_nao_bloqueia_o_TAB():
     """"Não sei" não bloqueia: bot mudo é pior que o defeito."""
     class _Ilegivel(_Memoria):
-        def char_name(self):
-            return None             # nome corrompido, como o `yXe City`
-
         def virar_para_mim(self):
             pass
 
-    combate = _motor_de_mentira("f1", _Ilegivel())
+    # O próprio id ilegível (leitura de `PLAYER_BASE` falhou e nada guardado).
+    combate = _motor_de_mentira("f1", _Ilegivel(meu_id=None))
     combate._trocar_de_alvo = lambda *a, **k: combate.ctx.press("tab")
 
     combate.reancorar_o_alvo("teste")
@@ -196,19 +208,21 @@ def test_MIRA_VAZIA_conta_como_F1_que_nao_pegou():
     assert combate._estou_na_minha_propria_mira() is False
 
 
-def test_NOME_ILEGIVEL_nao_e_NAO():
-    """`None` é "não deu para comparar", e não "não sou eu"."""
-    class _SemNome(_Memoria):
-        def char_name(self):
-            return "  "
-
-    combate = _motor_de_mentira("f1", _SemNome())
-    assert combate._estou_na_minha_propria_mira() is None
+def test_ID_PROPRIO_ILEGIVEL_nao_confirma():
+    """"Não sei quem eu sou" não é "sou eu": quem chama repete o F1 e dá o TAB."""
+    combate = _motor_de_mentira("f1", _Memoria(meu_id=None, alvo=_Memoria.MEU_ID))
+    assert combate._estou_na_minha_propria_mira() is False
 
 
-def test_a_comparacao_IGNORA_caixa_e_espaco():
-    combate = _motor_de_mentira("f1", _Memoria(meu="BlazesOfGamer",
-                                               alvo=" blazesofgamer "))
+def test_confirma_PELO_ID_mesmo_com_o_alvo_atual_dizendo_None():
+    """O defeito de produção, reproduzido: o alvo sou eu, `alvo_atual()` diz None.
+
+    Pelo nome (o código antigo) isto dava False -- "F1 não pegou" -- em 100%
+    das reancoragens. Pelo id, confirma.
+    """
+    memoria = _Memoria(alvo=_Memoria.MEU_ID)
+    assert memoria.alvo_atual() is None
+    combate = _motor_de_mentira("f1", memoria)
     assert combate._estou_na_minha_propria_mira() is True
 
 
@@ -379,3 +393,23 @@ def test_o_F1_da_CURA_continua_proibido_em_batalha():
 
     fonte = inspect.getsource(CombatEngine.maintain)
     assert "reancorar_o_alvo" not in fonte
+
+
+def test_o_id_proprio_fica_GUARDADO_para_quando_a_leitura_falha(monkeypatch):
+    """Pedido do usuário (25/09/2026): salvar o id do próprio personagem."""
+    from blazesbot.core import memory as mem
+
+    memoria = object.__new__(mem.Memory)
+    lendo = {"ok": True}
+
+    def read_uint(endereco):
+        if not lendo["ok"]:
+            return 0
+        return 0x1000 if endereco == mem.PLAYER_BASE else 7_001
+
+    monkeypatch.setattr(memoria, "read_uint", read_uint, raising=False)
+    assert memoria.meu_id() == 7_001
+    lendo["ok"] = False
+    assert memoria.meu_id() == 7_001, "a leitura falhou e o id guardado sumiu"
+    assert memoria.estou_mirando_em_mim(7_001) is True
+    assert memoria.estou_mirando_em_mim(9_999) is False

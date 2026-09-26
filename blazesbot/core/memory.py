@@ -1611,16 +1611,30 @@ class Memory:
                         if tamanho == PEDACO_DA_VARREDURA else tamanho)
         return None
 
-    def _estou_mirando_em_mim(self, alvo_id: int) -> bool:
-        """O alvo selecionado sou EU? Então não há mob, e não há o que procurar.
+    def meu_id(self) -> int | None:
+        """O id de entidade do PRÓPRIO personagem -- e o último lido fica GUARDADO.
 
-        `False` quando não deu para ler o próprio id: sem saber quem eu sou, o
-        caminho normal ainda responde, e o atalho não pode inventar um "não".
+        Pedido do usuário (25/09/2026): *"salvar de alguma forma qual o ID ao
+        apertar F1, que sempre será o próprio, para que saiba sempre quem é e
+        não gere confusão"*. A leitura fresca manda; o valor guardado só
+        responde quando ela falha. Um `Memory` é de um processo, e o relogin que
+        troca de cliente cria outro -- o guardado não atravessa contas.
         """
         base = self.read_uint(PLAYER_BASE)
-        if not base:
-            return False
-        meu = self.read_uint(base + OFF_ENTITY_ID)
+        meu = self.read_uint(base + OFF_ENTITY_ID) if base else 0
+        if meu:
+            self._meu_id_guardado = meu
+            return meu
+        return getattr(self, "_meu_id_guardado", None)
+
+    def estou_mirando_em_mim(self, alvo_id: int) -> bool:
+        """O alvo selecionado sou EU? Então não há mob, e não há o que procurar.
+
+        É a pergunta que a confirmação do F1 faz (`CombatEngine.
+        _estou_na_minha_propria_mira`). `False` quando não deu para saber quem
+        eu sou: o atalho não pode inventar um "sim".
+        """
+        meu = self.meu_id()
         return bool(meu) and meu == alvo_id
 
     def _recusar_por_vida_maxima(self, alvo_id: int, obj: int, hp: int,
@@ -1690,7 +1704,7 @@ class Memory:
             self._obj_do_alvo = None
             return None
 
-        if self._estou_mirando_em_mim(alvo_id):
+        if self.estou_mirando_em_mim(alvo_id):
             # O F1 MIRA EM MIM, E ISSO É DE PROPÓSITO: o reancorar do HH aperta
             # F1 justamente para soltar o alvo antigo antes do TAB ("F1 para
             # mirar em mim, e TAB para o mob mais perto").

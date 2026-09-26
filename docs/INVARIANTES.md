@@ -705,6 +705,11 @@ time a flag não faz nada.
   de alguém do time — e, se for, TABa. Fora de time a pergunta não existe.
 - **DEPOIS DA AUTO-SELEÇÃO, TAB.** O id é publicado e o alvo é largado no
   mesmo passo. Publicar sem largar é deixar a conta presa em si mesma.
+- **"MIREI EM MIM?" SE PERGUNTA PELO ID** (`Memory.estou_mirando_em_mim`, com
+  o próprio id guardado em `Memory.meu_id`), nunca pelo `alvo_atual()`: ele
+  devolve `None` para a própria mira DE PROPÓSITO. A confirmação do F1 que
+  perguntava a ele falhou em 100% das reancoragens (2.067 de 2.067) até
+  25/09/2026. Travado por `tests/test_mira_do_primeiro_mob.py`.
 - **QUEM IDENTIFICA A VÍTIMA É O SLOT**, lido da memória — o `TARGET_ID`
   publicado é REDE, não portão. Ele só recusa a cura quando existe E não
   bate (aí há prova de que o clique pegou outra pessoa). Exigi-lo para curar

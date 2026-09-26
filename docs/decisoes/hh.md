@@ -2432,3 +2432,38 @@ dias de log não houve uma única ação de buff, poção ou comida tentando des
 fora da cave.
 
 Travado por `tests/test_congelamento_do_personagem.py`.
+
+
+## §37 — A confirmação do F1 era impossível por construção (25/09/2026)
+
+### O que o log mostrou
+
+Na abertura de cada luta da HH o bot aperta F1 (mira em si mesmo), confere, e só
+então dá o TAB (§14). Nos logs de 23 a 25/09, "Não confirmei a auto-seleção
+depois de 2 toque(s) em F1" saiu em **2.067 de 2.067** reancoragens nas fases de
+luta: 100%. Cada uma custava ~0,49 s (dois F1, duas esperas) e um WARN.
+
+### A causa: dois módulos se contradizendo
+
+- `CombatEngine._estou_na_minha_propria_mira` perguntava a `alvo_atual()` e
+  comparava NOMES; `None` virava "o F1 não pegou".
+- Desde 11/09/2026, `Memory.alvo_atual()` devolve `None` **de propósito** quando
+  a mira é o próprio personagem ("F1 MIRA EM MIM, E ISSO É DE PROPÓSITO" — medido:
+  a conta de HH lê o próprio id no `TARGET_ID` em 29,9% das leituras).
+
+Quando o F1 funcionava, a resposta era `None`; a confirmação nunca podia dar
+certo. E o teste não pegou porque o dublê devolvia o próprio NOME em
+`alvo_atual()` — combinação que o código real não produz. O comentário do
+combate ainda dizia "não há leitura do id do próprio personagem neste cliente",
+escrito antes de ela existir.
+
+### Como ficou
+
+A confirmação pergunta pelo ID: `Memory.estou_mirando_em_mim(id_do_alvo())`. E o
+próprio id fica **guardado** (`Memory.meu_id`), pedido do usuário: *"salvar de
+alguma forma qual o ID ao apertar F1, que sempre será o próprio"*. A leitura
+fresca manda; o guardado só responde quando ela falha. O dublê do teste passou a
+seguir o contrato real (id, e `None` para a própria mira), e o defeito de
+produção virou teste de regressão.
+
+Travado por `tests/test_mira_do_primeiro_mob.py`.
