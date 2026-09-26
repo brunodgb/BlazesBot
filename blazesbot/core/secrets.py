@@ -23,11 +23,19 @@ _ENTROPY = b"BlazesBot/v1"
 
 
 def encrypt(plaintext: str) -> str:
-    """Cifra uma senha. Devolve string com prefixo identificador."""
+    """Cifra uma senha. Devolve string com prefixo identificador.
+
+    SEM DPAPI, RECUSA -- não devolve o texto puro. Devolvia, e a senha ia para
+    o `config.json` em claro sem ninguém saber. Sem pywin32 o bot nem roda (a
+    janela, o teclado e a memória dependem dele): a senha não pode ser a única
+    coisa que "funciona" nesse estado.
+    """
     if not plaintext:
         return ""
     if not _HAS_DPAPI:
-        return plaintext
+        raise RuntimeError(
+            "pywin32 ausente: não é possível cifrar a senha, e ela não é "
+            "gravada em texto puro.")
     blob = win32crypt.CryptProtectData(
         plaintext.encode("utf-8"), "BlazesBot", _ENTROPY, None, None, 0
     )

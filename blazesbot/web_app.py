@@ -1281,7 +1281,13 @@ class Api:
         return {"ok": True}
 
     def definir_senha(self, uid: Any, nova: Any) -> dict[str, Any]:
-        self._app.definir_senha(uid, nova)
+        # A cifra RECUSA sem DPAPI (`core/secrets.encrypt`), e a tela precisa
+        # saber: sem este `except`, o erro sumia no `chamar()` do JS e a tela
+        # dizia "senha gravada" com a senha antiga valendo.
+        try:
+            self._app.definir_senha(uid, nova)
+        except Exception as exc:
+            return {"ok": False, "erro": str(exc)}
         return {"ok": True}
 
     def definir_login(self, uid: Any, novo: Any) -> dict[str, Any]:

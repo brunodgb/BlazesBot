@@ -1074,7 +1074,8 @@ $("#corpo-contas").addEventListener("change", (e) => {
     // Não fazer trim: a senha pode conter espaços/bytes iniciais.
     const senha = e.target.value;
     if (senha) {
-      chamar("definir_senha", uid, senha).then(() => {
+      chamar("definir_senha", uid, senha).then((r) => {
+        if (r && r.ok === false) { avisar(r.erro || t("erro_salvar")); return; }
         toast(t("msg_senha_gravada"));
         carregarContas();
       });
@@ -1741,8 +1742,11 @@ function salvarEditor() {
     ? chamar("definir_senha", contaUidEditando, senhaNova)
     : Promise.resolve(null);
 
-  senhaP.then(() =>
-    chamar("salvar_personagem", contaUidEditando, dados)
+  // A SENHA RECUSADA PARA AQUI (a cifra recusa sem DPAPI): seguir salvaria o
+  // resto e diria "conta salva" com a senha antiga valendo.
+  senhaP.then((rs) => ((rs && rs.ok === false)
+    ? rs
+    : chamar("salvar_personagem", contaUidEditando, dados))
   ).then((r) => {
     // RECUSADO: desmarcar "aceitar convites de time" numa conta que é o reset
     // de outra é o mesmo estrago que deletar, por outra porta. O editor fica
