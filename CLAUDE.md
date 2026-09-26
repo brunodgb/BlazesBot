@@ -148,6 +148,12 @@ do projeto".
    assuntos não dá para desfazer pela metade — então **um assunto, um commit**,
    com a mensagem dizendo o que mudou de comportamento, não que arquivo mudou.
    Nunca junte "de passagem" o conserto de outra coisa.
+0b. **A árvore é COMPARTILHADA com outras sessões** (25/09/2026: uma vizinha
+   tinha 7 arquivos alterados enquanto outra trabalhava). Commite com pathspec
+   (`git commit -- <seus arquivos>`), nunca `git add -A`/`commit -a`. Para
+   desfazer o que é SEU: `git diff -- <arquivos> > x.patch` e `git apply -R
+   x.patch` — nunca `git checkout --`/`stash` no arquivo inteiro, que apaga a
+   edição da vizinha sem aviso.
 1. **Toda alteração no código ⇒ atualizar o graphify:** `graphify update .`
    (reextrai AST-only e regenera `graph.json` + `GRAPH_REPORT.md`).
 1b. **Toda alteração em `web/` ⇒ `npm run build`, no mesmo passo.** O app abre
