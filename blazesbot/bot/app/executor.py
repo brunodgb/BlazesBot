@@ -3009,7 +3009,10 @@ class ExecutorDeMacro:
             # o sair de batalha manda mais, pois garante que não tem ninguém
             # batendo no personagem"*.
             if self._a_batalha_acabou():
-                self.log.warning(
+                # INFO, não WARNING: é o desfecho normal de uma luta curta.
+                # Como aviso, era 21% dos WARNINGs do log de dev (50 de 241,
+                # 26/09/2026) e escondia os avisos de verdade.
+                self.log.info(
                     "O mob morreu durante a execução da macro. Encerrando a "
                     "volta para evitar desperdício.")
                 self.voltas += 1
