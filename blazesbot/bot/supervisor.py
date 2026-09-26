@@ -519,7 +519,7 @@ class AccountSupervisor(threading.Thread):
 
         Em 24 h com dezenas de relogins isso aproxima o processo do limite de
         10 000 handles GDI -- e quando ele estoura, NENHUMA alocação GDI do
-        processo funciona mais, incluindo a pintura da janela PyQt6. É um dos
+        processo funciona mais, incluindo a janela da interface. É um dos
         caminhos para "a interface travou e o bot continua rodando".
 
         E tem um segundo efeito, de correção: o Windows RECICLA valores de hwnd.

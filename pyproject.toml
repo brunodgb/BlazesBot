@@ -28,10 +28,10 @@ ignore = [
   "UP031",  # %-format em prints de diagnóstico (main.py) — lazy %s pedido p/ logging
   "UP042",  # str+Enum → StrEnum mudaria semântica de runtime (login_states,
             # watchdog, coords) — não mexer
-  "RUF005", # [""] + erros → ["", *erros] é cosmético (main_window.py)
+  "RUF005", # [base] + depois → [base, *depois] é cosmético (navegacao.py)
   "RUF012", # _HANDLERS é literal de lookup de classe proposital (routine) —
             # não é bug de "mutable default"
   "RUF046", # int(round(...)) redundante, mas auto-fix é marcado unsafe
             # (vision.py) — deixar
-  "RUF059", # variável `f` descartada (account_dialog.py) — renomear p/ `_` é churn
+  "RUF059", # variável desempacotada e descartada (testes) — renomear p/ `_` é churn
 ]

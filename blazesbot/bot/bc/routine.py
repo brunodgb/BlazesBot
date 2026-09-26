@@ -2198,8 +2198,8 @@ class BossRushRoutine:
         # Decisão do usuário: "caso não chegue a vender os itens, o bot deve
         # parar de funcionar, deve ser desligado". Mesmo desfecho que já existe
         # para "sem tecla de retorno" e para os 10 ciclos sem vender: a conta
-        # fica ONLINE, LOGADA e com relogin ativo, e o checkbox desmarcado nas
-        # duas interfaces é o sinal de que precisa de intervenção. Não fecha o
+        # fica ONLINE, LOGADA e com relogin ativo, e o checkbox desmarcado na
+        # interface é o sinal de que precisa de intervenção. Não fecha o
         # cliente e não para as outras contas.
         ctx.log.error(
             "Venda falhou nas %s rodadas, cada uma com uma run de BC no meio. "

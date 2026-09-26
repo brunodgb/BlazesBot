@@ -83,7 +83,7 @@ echo.
 echo Proximos passos, nesta ordem:
 echo   1. Abra o jogo, entre com um personagem
 echo   2. Rode 2-DIAGNOSTICO.bat
-echo   3. Rode 3-INICIAR.bat e configure contas e teclas
+echo   3. Rode 3-INICIAR-WEB.bat e configure contas e teclas
 echo   4. Rode 4-TESTE-LOGIN.bat
 echo.
 pause

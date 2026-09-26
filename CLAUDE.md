@@ -15,7 +15,7 @@ atenção com tudo mais que está aqui.
 1. **Configuração de skill** — qual skill existe, quando é obrigatória, o que ela
    substitui.
 2. **Diretriz arquitetural global** — o que vale para o sistema INTEIRO:
-   fronteira entre ecossistemas, reuso e promoção, as duas interfaces.
+   fronteira entre ecossistemas, reuso e promoção, a interface.
 3. **Regra técnica crítica que exige atenção CONSTANTE** — a que a IA tem de
    carregar em toda tarefa, não só quando toca uma área (padrões obrigatórios de
    Python, de HTML/CSS/JS, de estrutura, e as regras que atravessam tudo).
@@ -78,7 +78,7 @@ bruta depois que o grafo orientou, ou para debugar linhas específicas.
 
 ## Documentação de biblioteca: Context7 (`/find-docs`)
 
-Antes de responder sobre **biblioteca externa** (PyQt6, pywebview, Tailwind v4,
+Antes de responder sobre **biblioteca externa** (pywebview, Tailwind v4,
 Vite, pymem, OpenCV, pytest, ruff), use a skill `find-docs` (Context7) em vez de
 responder de memória — essas libs mudam. Não substitui o graphify.
 
@@ -268,21 +268,20 @@ medição: `docs/REGRAS.md` (seção "Login e relogin") e
 O **detalhe de área** (telas modais, o único motivo para matar uma janela, o
 backoff, a senha errada) está em `docs/INVARIANTES.md`, seção "Login e relogin".
 
-## Duas interfaces convivem (regra permanente)
+## Uma interface: a web (regra permanente — 25/09/2026)
 
-O bot tem **DUAS interfaces** com o MESMO backend:
+A interface é **uma só**: frontend `web/` (Vite + Tailwind v4) compilado para
+`dist/`; ponte `blazesbot/web_app.py`, lançada por `3-INICIAR-WEB.bat`. Abre
+`dist/index.html` via WebView2 (Windows 11, sem navegador instalado). Janela
+frameless, `resizable=False`, 1200×800; arrasto 100% JS via
+`DRAG_REGION_SELECTOR = ".titlebar"`. Lê/grava `data/config.json` e usa o mesmo
+core; regra de negócio nunca mora no frontend. `pywebview` é dependência.
 
-- **PyQt6** (original) — `blazesbot/gui/*`, lançada por `3-INICIAR.bat`.
-- **Web (pywebview)** — frontend `web/` (Vite + Tailwind v4) compilado para
-  `dist/`; ponte `blazesbot/web_app.py`, lançada por `INICIAR-WEB.bat`. Abre
-  `dist/index.html` via WebView2 (Windows 11, sem navegador instalado). Janela
-  frameless, `resizable=False`, 1200×800; arrasto 100% JS via
-  `DRAG_REGION_SELECTOR = ".titlebar"`.
-
-Ambas leem/gravam `data/config.json` e usam o mesmo core. **REGRA PERMANENTE —
-nunca quebrar:** mexer em interface ⇒ mexer **nas duas** para manter as MESMAS
-funcionalidades. Backend compartilhado no core; só o "corpo" da tela se duplica.
-`pywebview` é dependência (`requirements.txt`).
+**A PyQt6 saiu em definitivo** (decisão do usuário, 25/09/2026): `gui/`, o
+`3-INICIAR.bat` e a dependência foram removidos, e a regra "mexer nas duas"
+acabou com ela. `main.py` continua como CLI das ferramentas de diagnóstico.
+**Nenhum módulo importa PyQt6** — travado por `tests/test_as_interfaces_importam.py`.
+Porquê: `docs/decisoes/interface.md`.
 
 ## Regras que atravessam tudo (atenção CONSTANTE)
 

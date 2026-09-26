@@ -32,7 +32,6 @@ JS = (RAIZ / "web" / "main.js").read_text(encoding="utf-8")
 CSS = (RAIZ / "web" / "style.css").read_text(encoding="utf-8")
 HTML = (RAIZ / "web" / "index.html").read_text(encoding="utf-8")
 PONTE = (RAIZ / "blazesbot" / "web_app.py").read_text(encoding="utf-8")
-GUI = (RAIZ / "blazesbot" / "gui" / "main_window.py").read_text(encoding="utf-8")
 
 
 def _sem_comentarios(texto: str, marca: str) -> str:
@@ -106,11 +105,6 @@ def test_a_escrita_tem_UM_ponto_so():
         assert antigo not in PONTE, f"{antigo} voltou"
     assert "def definir_funcao" in PONTE
     assert "definir_funcao_da_conta" in PONTE
-    # E a GUI usa o MESMO ponto de escrita.
-    assert "_trocar_funcao" in GUI
-    assert "definir_funcao_da_conta" in GUI
-    for antigo in ("def _toggle_farm", "def _toggle_hh", "def _toggle_app"):
-        assert antigo not in GUI, f"{antigo} voltou"
 
 
 def test_o_controle_da_tela_e_RADIO():
@@ -135,7 +129,6 @@ def test_a_troca_com_o_bot_rodando_AVISA_o_custo():
     boss vivo). Bloquear seria tirar uma função que o usuário usa; avisar deixa
     a decisão com ele."""
     assert "volta em andamento é perdida" in " ".join(PONTE.split())
-    assert "volta em andamento é" in " ".join(GUI.split())
 
 
 # -- 2. o tooltip -----------------------------------------------------------
@@ -293,21 +286,13 @@ def test_clicar_na_funcao_LIGADA_desliga():
         "desligar no mousedown é a corrida que trouxe o defeito de volta")
     assert "jaLigado" in corpo, "o click precisa do que o mousedown anotou"
 
-    # A GUI tem o mesmo estado: desmarcar a caixa manda `""`.
-    assert 'pedida = qual if caixas[qual].isChecked() else ""' in GUI
-
 
 def test_a_dica_das_funcoes_diz_a_REGRA():
     """A dica ensinava "Marcada junto com BC, roda a HH" -- a combinação que
     deixou de existir. Três selos não deixam adivinhar nem que a escolha é
     exclusiva, nem que clicar na ligada desliga.
 
-    A Web passou a ler a dica do dicionário de i18n (`dica_troca_funcao_1`);
-    a GUI PyQt6 continua com o texto literal -- ver `docs/SKILLS.md`, seção
-    "i18n", sobre a GUI ainda não ter sido convertida."""
-    assert "Marcada junto com BC" not in GUI
-    assert "Uma função por conta" in GUI
-
+    A Web lê a dica do dicionário de i18n (`dica_troca_funcao_1`)."""
     assert "Marcada junto com BC" not in JS
     assert 't("dica_troca_funcao_1")' in JS
     traducoes = json.loads(

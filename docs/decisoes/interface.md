@@ -1548,3 +1548,39 @@ traduz. Tentei trazê-lo para o JS com uma chave nova e `t()` devolveu
 — verificado instrumentando o stub. É um defeito do i18n que merece investigação
 própria; empurrá-lo junto desta alteração misturaria dois assuntos, então a
 chave não usada foi removida e o texto ficou onde estava. Fica registrado.
+
+## A PyQt6 sai em definitivo — 25/09/2026
+
+### A decisão
+
+Do usuário, no grilling de 25/09/2026: *"só vou manter a versão web, então a
+versão visual PyQt tem que ser removida em definitivo"*. Era o fim anunciado em
+27/08 (*"acredito que vou abandonar ela de vez, pois a versão web está ficando
+muito superior"*): congelada naquele dia e já fora do `.exe` desde 19/09.
+
+### O que saiu
+
+- `blazesbot/gui/` inteira (4.200 linhas), o `run_gui` do `main.py` e o
+  `3-INICIAR.bat`;
+- a dependência `PyQt6` do `requirements.txt` e a checagem dela no `verificar.py`;
+- as metades de teste que conferiam a PyQt6 (11 funções inteiras e ~10 trechos
+  mistos) e a exceção `CAMPOS_SO_DA_WEB`, que só existia por causa dela;
+- a regra "mexer em interface é mexer nas duas", no `CLAUDE.md`.
+
+### O que ficou, e por quê
+
+- **`main.py`** é o CLI de nove lançadores (`--check`, `--login-test`,
+  `--detect`…). Sem argumento de ação, agora mostra a ajuda e aponta para a web,
+  antes de pedir administrador.
+- **O "Testar a venda"** não era exclusivo da PyQt6, como o levantamento do
+  grilling afirmou: a web já o tinha (`_App.testar_venda`). A afirmação errada
+  veio de uma busca com a saída cortada; conferido antes da remoção.
+- **O nome `3-INICIAR-WEB.bat`**, pedido do usuário: é o de costume.
+
+### O que trava
+
+`tests/test_as_interfaces_importam.py`: as duas portas de entrada que sobraram
+(`blazesbot.web_app` e `main`) importam limpas, e **nenhum módulo do projeto
+importa PyQt6** — um import dela seria crash no próximo clone, já que ela saiu
+das dependências. Três testes antigos que se pulavam calados sem a biblioteca
+foram apagados em vez de ficarem pulados para sempre.

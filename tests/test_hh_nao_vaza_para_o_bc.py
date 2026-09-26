@@ -248,9 +248,3 @@ def test_nenhum_status_diz_BC_por_causa_de_farms(arquivo, metodo):
     assert '"com BC farm" if self.account.farms' not in fonte
     assert "O BC farm também está ligado" not in fonte
 
-
-def test_o_rotulo_da_GUI_diz_a_cave_certa():
-    fonte = (RAIZ / "blazesbot" / "gui" / "account_dialog.py").read_text(
-        encoding="utf-8")
-    assert '"BC Farm ligado" if self.conta.farms' not in fonte
-    assert "cave_ligada" in fonte

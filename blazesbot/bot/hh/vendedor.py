@@ -84,8 +84,8 @@ class VendedorDaHH(JanelaDeVenda):
         =================================================================
 
         A base lia `ctx.settings.vendor`, e essa propriedade devolve
-        `bc.vendor` SEMPRE (`AccountSettings.vendor`). As duas interfaces
-        gravam `hh.vendor.sell_start_slot` desde que a HH existe, o usuário via
+        `bc.vendor` SEMPRE (`AccountSettings.vendor`). A interface
+        grava `hh.vendor.sell_start_slot` desde que a HH existe, o usuário via
         o campo na tela -- e a venda da HH usava o número da Bewitcher Cave.
 
         MEDIDO em `data/config.json`, 09/09/2026: `gamerblazes` tem BC=1 e

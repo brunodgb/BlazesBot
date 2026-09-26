@@ -63,9 +63,9 @@ EMBUTIDOS = [
 # O que fica AO LADO do `.exe` (é lido e escrito, ou o usuário mexe).
 AO_LADO = ["dist", "data/templates"]
 
-# PyQt6 é a interface ANTIGA, descontinuada pelo usuário em 19/09/2026. Ela não
-# é importada pelo `web_app`, mas o PyInstaller varre o pacote inteiro e acharia
-# `gui/main_window.py` -- são ~120 MB de Qt para código que não roda.
+# PyQt6 saiu do projeto em 25/09/2026 (descontinuada desde 19/09). Fica na
+# lista por defesa: um venv antigo que ainda a tenha não empacota ~120 MB de Qt
+# para código que não existe mais.
 FORA = ["PyQt6", "matplotlib", "pytest", "PIL.ImageQt"]
 
 

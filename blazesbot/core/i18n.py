@@ -1,8 +1,8 @@
 """Traduções centralizadas da interface.
 
 PT-BR é a fonte (toda chave tem PT-BR); EN e ES cobrem por cima e podem ficar
-incompletos sem quebrar nada -- ver `traduzir`. Usado pelas duas interfaces
-(GUI PyQt6 e Web), por isso mora em `core/`: não sabe que ecossistema existe, e
+incompletos sem quebrar nada -- ver `traduzir`. Usado pela interface (web),
+por isso mora em `core/`: não sabe que ecossistema existe, e
 nenhuma chave aqui descreve o jogo -- descreve a interface. Contrato completo em
 `docs/SKILLS.md`, seção "i18n".
 """

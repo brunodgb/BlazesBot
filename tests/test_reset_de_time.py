@@ -426,16 +426,6 @@ def test_conta_sem_reset_nick_nao_espera_nada(monkeypatch):
 # AS DUAS INTERFACES
 # ---------------------------------------------------------------------------
 
-def test_a_GUI_oferece_LISTA_e_nao_texto_livre():
-    fonte = (RAIZ / "blazesbot/gui/account_dialog.py").read_text(encoding="utf-8")
-    assert "self.in_reset = QComboBox()" in fonte, (
-        "o seletor de reseter voltou a ser texto livre na GUI PyQt")
-    assert "self.in_reset = QLineEdit()" not in fonte
-    # UM SELETOR SÓ desde 08/09/2026: a conta de reset é do personagem.
-    assert "self.in_hh_reset" not in fonte, (
-        "a aba da HH voltou a ter seletor de reseter próprio")
-
-
 def test_a_WEB_oferece_LISTA_e_nao_texto_livre():
     html = (RAIZ / "web/index.html").read_text(encoding="utf-8")
     assert '<select id="ed-reset-nick"' in html, (
@@ -443,16 +433,11 @@ def test_a_WEB_oferece_LISTA_e_nao_texto_livre():
     assert '<input id="ed-reset-nick"' not in html
 
 
-def test_as_DUAS_interfaces_impedem_tirar_um_reseter_do_ar():
-    """Regra permanente do projeto: mexer em interface é mexer nas duas.
-
-    Sem o reseter, quem depende dele não reseta a cave, o boss não renasce e a
+def test_a_interface_impede_tirar_um_reseter_do_ar():
+    """Sem o reseter, quem depende dele não reseta a cave, o boss não renasce e a
     run é perdida -- e o sintoma aparece horas depois sem apontar para cá.
     """
-    gui = (RAIZ / "blazesbot/gui/main_window.py").read_text(encoding="utf-8")
     web = (RAIZ / "blazesbot/web_app.py").read_text(encoding="utf-8")
-    assert "_bloqueado_por_ser_reseter" in gui
-    assert "accounts_reset_by" in gui
     assert "bloqueio_de_reseter" in web
     assert "accounts_reset_by" in web
 

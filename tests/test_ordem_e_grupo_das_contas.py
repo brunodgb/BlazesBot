@@ -221,14 +221,12 @@ def test_NENHUM_caminho_do_bot_le_o_grupo():
 
     Se algum comportamento passar a depender dele, o rótulo deixa de ser
     "organização do usuário" e vira configuração escondida -- e arrastar uma
-    conta na tabela mudaria o que o bot FAZ. Só a config, as duas interfaces e
-    os testes podem tocá-lo.
+    conta na tabela mudaria o que o bot FAZ. Só a config, a interface e os
+    testes podem tocá-lo.
     """
     permitidos = {
         Path("blazesbot/config.py"),
         Path("blazesbot/web_app.py"),
-        Path("blazesbot/gui/main_window.py"),
-        Path("blazesbot/gui/account_dialog.py"),
     }
     culpados = []
     for py in (RAIZ / "blazesbot").rglob("*.py"):
@@ -258,8 +256,6 @@ def test_o_nome_do_grupo_tem_teto_nas_duas_pontas():
     assert LIMITE_DO_NOME_DO_GRUPO == 40
     assert "[:LIMITE_DO_NOME_DO_GRUPO]" in _ler("blazesbot/web_app.py")
     assert f'maxlength="{LIMITE_DO_NOME_DO_GRUPO}"' in _ler("web/index.html")
-    assert "setMaxLength(LIMITE_DO_NOME_DO_GRUPO)" in _ler(
-        "blazesbot/gui/account_dialog.py")
 
 
 def test_o_grupo_sobrevive_ao_disco():
@@ -290,24 +286,6 @@ def test_o_arraste_solta_a_captura_e_respeita_o_pointerId():
     assert "releasePointerCapture" in fonte
     assert "e.pointerId !== arraste.pointerId" in fonte
     assert "if (arraste) return;" in fonte      # um arraste por vez
-
-
-def test_a_GUI_reordena_por_BOTAO_e_nao_por_arraste():
-    """A tabela da GUI tem SEIS `setCellWidget`, e o arraste interno do Qt move
-    os itens mas NÃO os widgets de célula: a senha de uma conta ficaria na linha
-    de outra. Botão mexe no modelo e repopula."""
-    fonte = _ler("blazesbot/gui/main_window.py")
-    assert "def _mover_conta" in fonte
-    assert "InternalMove" not in fonte
-    assert "setSectionsMovable" not in fonte
-
-
-def test_a_GUI_tambem_edita_o_grupo():
-    """Regra das duas interfaces: a funcionalidade existe nas duas."""
-    fonte = _ler("blazesbot/gui/account_dialog.py")
-    assert "self.in_grupo" in fonte
-    assert "self.conta.grupo = " in fonte
-    assert "self.in_grupo.setText(self.conta.grupo)" in fonte
 
 
 # -- 7. o ícone existe de verdade -----------------------------------------
@@ -361,11 +339,9 @@ def test_o_titlebar_mostra_SO_o_nome_do_bot():
     assert ">BlazesBot</span>" in barra
 
 
-def test_a_janela_e_a_GUI_usam_o_MESMO_arquivo_de_icone():
-    """Duas cópias divergiriam na primeira troca de arte."""
-    assert "ICONE_DO_APP" in _ler("blazesbot/gui/main_window.py")
+def test_a_janela_usa_o_icone_de_um_lugar_so():
+    """O ícone mora numa constante só (`ICONE_DO_APP`), e a janela a usa."""
     assert "ICONE_DO_APP" in _ler("blazesbot/web_app.py")
-    assert "setWindowIcon" in _ler("blazesbot/gui/main_window.py")
 
 
 def test_o_titlebar_NAO_referencia_imagem_quebrada():

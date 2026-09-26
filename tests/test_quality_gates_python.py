@@ -205,7 +205,6 @@ HERDADOS = {
     "blazesbot/core/memory.py": 2498,                    # Memory, 82 métodos (74%)
     "blazesbot/bot/navegacao.py": 2164,                  # Navigator, 32 métodos (80%)
     "blazesbot/bot/ui_do_jogo.py": 1929,                 # UIDoJogo, 34 métodos (70%)
-    "blazesbot/gui/main_window.py": 1895,                # MainWindow, 59 métodos (92%)
     "blazesbot/bot/hh/routine.py": 1511,                 # HHRoutine, 34 métodos (86%)
     # SUBIU DE 1451 PARA 1603 EM 18/09/2026 (a folga era de DUAS linhas).
     # Seis linhas: o campo `desativados` nos dois sentidos da ponte, para
@@ -218,8 +217,6 @@ HERDADOS = {
     # módulo próprio, e só a delegação entra aqui.
     "blazesbot/web_app.py": 1603,                        # _App, 45 métodos (63%)
     #  +2 em 04/09: ida e volta da tecla `revive_skill` na ponte
-    "blazesbot/gui/account_dialog.py": 1418,             # AccountDialog, 20 métodos (92%)
-    #  +3 em 04/09: campo, carga e gravação da tecla `revive_skill`
     "blazesbot/bot/login.py": 1134,                      # LoginSequence, 26 métodos (84%)
     # SUBIU DE 1111 PARA 1233 EM 16/09/2026, e a folga que sobrava era de TRÊS
     # linhas. O que entrou foi `passar_o_mouse` -- o hover sintético, primitiva
@@ -431,7 +428,6 @@ NAMESPACES = frozenset({
     "blazesbot",
     "blazesbot/bot",
     "blazesbot/core",
-    "blazesbot/gui",
     "blazesbot/tools",
     "blazesbot/bot/bc",
     "blazesbot/bot/app",

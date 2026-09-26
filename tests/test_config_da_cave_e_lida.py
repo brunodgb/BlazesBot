@@ -60,8 +60,7 @@ def _o_bot_le(nome: str) -> list[str]:
         relativo = arquivo.relative_to(RAIZ).as_posix()
         # A INTERFACE não conta: ela grava e mostra. `config.py` não conta: é
         # onde o campo é declarado. O que interessa é quem AGE com o valor.
-        if relativo.startswith("blazesbot/gui/") or \
-                relativo in ("blazesbot/web_app.py", "blazesbot/config.py"):
+        if relativo in ("blazesbot/web_app.py", "blazesbot/config.py"):
             continue
         arvore = ast.parse(arquivo.read_text(encoding="utf-8"))
         for no in ast.walk(arvore):

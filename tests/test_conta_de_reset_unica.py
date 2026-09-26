@@ -160,20 +160,6 @@ def test_ida_e_volta_pelo_disco_preserva_o_nick():
 # ===========================================================================
 
 
-def test_a_GUI_mostra_o_campo_na_aba_PERSONAGEM():
-    fonte = (RAIZ / "blazesbot/gui/account_dialog.py").read_text(
-        encoding="utf-8")
-    aba = fonte[fonte.index("def _aba_personagem"):fonte.index("def _aba_teclas")]
-
-    assert "self.in_reset = QComboBox()" in aba, (
-        "o seletor de reseter não está na aba Personagem")
-    for outra in ("def _aba_bc", "def _aba_hh"):
-        inicio = fonte.index(outra)
-        fim = fonte.index("    def ", inicio + 10)
-        assert "in_reset" not in fonte[inicio:fim], (
-            f"{outra} voltou a ter seletor de conta de reset")
-
-
 def test_a_WEB_mostra_o_campo_na_aba_PERSONAGEM():
     html = (RAIZ / "web/index.html").read_text(encoding="utf-8")
     aba = html[html.index('id="aba-personagem"'):html.index('id="aba-teclas"')]
@@ -275,21 +261,7 @@ def test_a_venda_le_o_total_do_PERSONAGEM():
     assert "cfg.sell_clicks" not in fonte
 
 
-def test_as_DUAS_interfaces_moveram_o_seletor_de_cliques():
-    gui = (RAIZ / "blazesbot/gui/account_dialog.py").read_text(encoding="utf-8")
-    aba = gui[gui.index("def _aba_personagem"):gui.index("def _aba_teclas")]
-    assert "self.cb_cliques = QComboBox()" in aba, (
-        "o seletor de cliques não está na aba Personagem da PyQt6")
-    bc = gui[gui.index("def _aba_bc"):gui.index("def _aba_hh")]
-    assert "cb_cliques" not in bc, "a aba BC voltou a ter o seletor"
-    # E O RÓTULO MENTIROSO SAIU: o campo nunca foi "por passada".
-    #
-    # PELA CHAMADA `addRow`, e não pelo texto solto: o comentário do código
-    # cita o rótulo antigo para dizer que era mentira, e uma busca no texto
-    # acharia a explicação e reprovaria a correção.
-    assert 'addRow("Cliques por passada:"' not in gui
-    assert 'addRow("Total de cliques na venda:"' in gui
-
+def test_a_interface_moveu_o_seletor_de_cliques_para_o_PERSONAGEM():
     html = (RAIZ / "web/index.html").read_text(encoding="utf-8")
     pessoa = html[html.index('id="aba-personagem"'):html.index('id="aba-teclas"')]
     assert 'id="ed-cliques-venda"' in pessoa

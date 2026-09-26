@@ -534,7 +534,7 @@
   - **Precisou de poção e depois MORREU ⇒ o BC daquela conta é DESLIGADO.** Chegar
     no boss abaixo de 50% já é run apertada; morrer depois de gastar poção aponta
     ESTOQUE acabando, e conta sem poção não fecha run nenhuma. A conta fica
-    online, com relogin; o checkbox desmarca nas duas interfaces.
+    online, com relogin; o checkbox desmarca na interface.
   - Travado por `tests/test_topup_antes_do_boss.py`, e o dublê **modela o pior
     sorteio do jitter** — sem isso o teste da espera curta não pegaria nada.
 - **Desmonte em batalha só nos 2 pontos de luta** (guardas e boss). Qualquer
@@ -822,7 +822,7 @@
   ao contrário do inventário: é o que faz clicar N vezes no mesmo ponto esvaziar
   de N para frente, protegendo os slots 1..N-1.
 
-### As duas interfaces — `docs/decisoes/interface.md`
+### A interface — `docs/decisoes/interface.md`
 
 - **Tela "Histórico de Quedas"** entre Estatísticas de BC e Log, núcleo em
   `core/quedas.py` (GUI e web só desenham). Só queda REAL (gatilho `ctx.ultima_
@@ -835,7 +835,7 @@
   contar quando o bot CONFIRMA que está dentro da cave. Os cards da última run
   são FIXOS.
 
-- **Tecla repetida é BARRADA na digitação, nas duas interfaces.** O jogo não
+- **Tecla repetida é BARRADA na digitação, na interface.** O jogo não
   permite a mesma tecla em duas funções. **As teclas do APP ficam de fora da
   conta de propósito** — lá a mesma tecla se repete por desenho.
 - **A ORDEM DAS CONTAS É A ORDEM DO ARRAY `accounts`** — não existe campo de
@@ -911,7 +911,7 @@
 - **DICIONÁRIO POR `hwnd` PRECISA SER LIMPO NA MORTE DA JANELA**, e o motivo é
   CORREÇÃO: o Windows RECICLA hwnd, e a entrada órfã vai para a janela nova que
   herdou o número. Vale para `vision._pools` (DC + bitmap de ~3 MB por relogin;
-  estourar handles GDI trava até a pintura da PyQt6) e
+  estourar handles GDI trava até a pintura da janela) e
   `ui_service._BUSCAS_SEM_LEITURA`. Liberados em `_release()`, ANTES de
   `self.hwnd = None`.
 - **Todo arquivo de log tem teto** (`ArquivoDeLogLimitado`), inclusive os três
@@ -981,7 +981,7 @@
   inline de `corConta` com `color-mix(in srgb, currentColor 15%, transparent)`.
   `--log-hora` no tema claro é `#77655f` porque `#9a8884` dava **2,97:1** sobre
   `#f5efed` — abaixo de AA para 11px.
-- **DEBUG só em dev** nas duas interfaces: `run()` forçava DEBUG por cima do INFO
+- **DEBUG só em dev** na interface: `run()` forçava DEBUG por cima do INFO
   que o `setup_logging` define em prod, multiplicando o volume ~10× e antecipando
   o defeito acima de horas para minutos.
 
@@ -1786,7 +1786,7 @@ alguma"*.
 ### Quem pode ser reseter
 
 `BotConfig.reset_accounts()` — contas **ativas** (`enabled`) marcadas com
-`accept_team_invites`. É a lista que as duas interfaces oferecem, e **não existe
+`accept_team_invites`. É a lista que a interface oferece, e **não existe
 mais texto livre**: um reseter fora deste processo é invisível daqui, e sem
 observá-lo não há batida, sem batida não há trava.
 
@@ -1860,8 +1860,6 @@ desativar, e **desmarcar "aceitar convites de time"**. Quem responde é
 `BotConfig.accounts_reset_by(reseter)` — **só contas ativas** contam como
 dependentes.
 
-- PyQt: `MainWindow._bloqueado_por_ser_reseter` (remoção e `COL_ATIVA`, que
-  **volta a marcar** a caixa) e `AccountDialog._reseter_seria_desmarcado`.
 - Web: `_App.bloqueio_de_reseter`, consultado **no backend** por
   `remover_conta`, `ativar_conta` e `salvar_personagem` — um erro no frontend não
   pode furar. O aviso é **modal (`avisar`), nunca toast**: toast some em 2,6 s.
@@ -1876,7 +1874,7 @@ linha de log da duração ao liberar.
 
 `tests/test_reset_de_time.py` — a batida, a posição dela por AST, o veredito caso
 a caso, a migração, o portão antes do `montar_time()`, a espera por `ctx.tick`, e
-a lista fechada nas duas interfaces.
+a lista fechada na interface.
 
 ---
 

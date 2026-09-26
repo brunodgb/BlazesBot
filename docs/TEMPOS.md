@@ -31,7 +31,7 @@ desta lista é ou uma exceção justificada, ou dívida que ninguém converteu a
 mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 
 
-**369 tempos catalogados** — 251 FIXOS (espera cega), 118 entre TETO e PASSO.
+**368 tempos catalogados** — 250 FIXOS (espera cega), 118 entre TETO e PASSO.
 
 
 **3 estão diferentes do original:** `FATIA_DE_ESPERA`, `INTERVALO_ENTRE_INVOCACOES`, `PASSOS_DO_APP`
@@ -134,15 +134,15 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 
 | tempo | atual | original | natureza | onde | função | para que serve |
 |---|---|---|---|---|---|---|
-| `PASSO_DO_GRID` | 6 s | = | PASSO | [amostragem_de_cliques.py:121](blazesbot/bot/bc/amostragem_de_cliques.py#L121) | `gerar_grid` |  |
-| `TETO_DA_AMOSTRA` | 1.5 s | = | TETO | [amostragem_de_cliques.py:140](blazesbot/bot/bc/amostragem_de_cliques.py#L140) | `rodar, amostrar` | Teto da medição. Largo de propósito -- ver o cabeçalho. As aberturas reais |
-| `PASSO_DA_MEDICAO` | 0.03 s | = | PASSO | [amostragem_de_cliques.py:145](blazesbot/bot/bc/amostragem_de_cliques.py#L145) | `amostrar` | Passo do laço que pergunta se o diálogo abriu. Cada volta custa uma captura |
-| `ASSENTAMENTO_APOS_O_CLIQUE` | 0.125 s | = | FIXO | [amostragem_de_cliques.py:150](blazesbot/bot/bc/amostragem_de_cliques.py#L150) | `amostrar` | Assentamento depois da amostra, antes de reler a posição. É o tempo de o |
-| `ESPERA_APOS_O_ESC` | 0.075 s | = | FIXO | [amostragem_de_cliques.py:153](blazesbot/bot/bc/amostragem_de_cliques.py#L153) | `fechar_dialogo` | Espera depois de cada ESC, antes de reconferir se o diálogo fechou. |
-| `SEGUNDOS_POR_TENTATIVA_DE_ANCORAR` | 3 s | = | FIXO | [amostragem_de_cliques.py:168](blazesbot/bot/bc/amostragem_de_cliques.py#L168) | `ancorar` |  |
+| `PASSO_DO_GRID` | 6 s | = | PASSO | [amostragem_de_cliques.py:118](blazesbot/bot/bc/amostragem_de_cliques.py#L118) | `gerar_grid` |  |
+| `TETO_DA_AMOSTRA` | 1.5 s | = | TETO | [amostragem_de_cliques.py:137](blazesbot/bot/bc/amostragem_de_cliques.py#L137) | `rodar, amostrar` | Teto da medição. Largo de propósito -- ver o cabeçalho. As aberturas reais |
+| `PASSO_DA_MEDICAO` | 0.03 s | = | PASSO | [amostragem_de_cliques.py:142](blazesbot/bot/bc/amostragem_de_cliques.py#L142) | `amostrar` | Passo do laço que pergunta se o diálogo abriu. Cada volta custa uma captura |
+| `ASSENTAMENTO_APOS_O_CLIQUE` | 0.125 s | = | FIXO | [amostragem_de_cliques.py:147](blazesbot/bot/bc/amostragem_de_cliques.py#L147) | `amostrar` | Assentamento depois da amostra, antes de reler a posição. É o tempo de o |
+| `ESPERA_APOS_O_ESC` | 0.075 s | = | FIXO | [amostragem_de_cliques.py:150](blazesbot/bot/bc/amostragem_de_cliques.py#L150) | `fechar_dialogo` | Espera depois de cada ESC, antes de reconferir se o diálogo fechou. |
+| `SEGUNDOS_POR_TENTATIVA_DE_ANCORAR` | 3 s | = | FIXO | [amostragem_de_cliques.py:165](blazesbot/bot/bc/amostragem_de_cliques.py#L165) | `ancorar` |  |
 | `INTERVALO_DO_BATIMENTO` | 15 s | = | FIXO | [localizacao.py:67](blazesbot/bot/bc/localizacao.py#L67) | `_registrar` | Cadência do batimento no diário. Uma linha a cada meio minuto dá uma trilha |
 | `SEGUNDOS_PARA_DESCONFIAR` | 3 s | = | FIXO | [localizacao.py:72](blazesbot/bot/bc/localizacao.py#L72) | `_registrar_falha` | Tempo com o nome ilegível a partir do qual o bot passa a tratar a fonte de |
-| *literal em* `rodar` | 0.2 s | = | FIXO | [teste_venda.py:125](blazesbot/bot/bc/teste_venda.py#L125) | `rodar` | Executa a venda na janela JÁ ABERTA desta conta. Bloqueia até terminar. |
+| *literal em* `rodar` | 0.2 s | = | FIXO | [teste_venda.py:121](blazesbot/bot/bc/teste_venda.py#L121) | `rodar` | Executa a venda na janela JÁ ABERTA desta conta. Bloqueia até terminar. |
 
 
 ## ECOSSISTEMA APP
@@ -467,8 +467,7 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | `PET_FEED_MINUTOS_MAX` | 60 s (1 min) | *novo* | TETO | [config.py:276](blazesbot/config.py#L276) | `pet_feed_na_faixa, validate` |  |
 | `PASSOS_DO_APP` | 20 s | **16 s** ⚠ | PASSO | [config.py:488](blazesbot/config.py#L488) | `_app_from_dict` | Linhas oferecidas na aba APP. Dezesseis cobre com folga a macro mais longa que |
 | `MINIMO_DELAY_MS` | 100 s (2 min) | *novo* | FIXO | [config.py:507](blazesbot/config.py#L507) | `segundos_para_ms, ms_para_segundos` | Espera mínima de QUALQUER campo de tempo do APP, em milissegundos. |
-| `SPEED_DURACAO_SEGUNDOS` | 30 s | = | FIXO | [config.py:877](blazesbot/config.py#L877) |  | Skill de velocidade da montaria, valores do jogo. Ficam aqui e não na |
-| `INTERVALO_DE_DESCARGA_MS` | 200 s (3 min) | = | FIXO | [main_window.py:96](blazesbot/gui/main_window.py#L96) | `__init__` | Cadência com que a interface esvazia a fila de log. 5 vezes por segundo é |
+| `SPEED_DURACAO_SEGUNDOS` | 30 s | = | FIXO | [config.py:876](blazesbot/config.py#L876) |  | Skill de velocidade da montaria, valores do jogo. Ficam aqui e não na |
 | *literal em* `_limpar_a_saida_anterior` | 3 s | *novo* | FIXO | [empacotar.py:115](blazesbot/tools/empacotar.py#L115) | `_limpar_a_saida_anterior` | A pasta da entrega anterior sai ANTES de o PyInstaller começar. |
 | `PASSO` | 0.25 s | = | PASSO | [ler_camera.py:50](blazesbot/tools/ler_camera.py#L50) | `run_ler_camera` | Cadência da leitura. Barata: são 8 leituras de 4 bytes por volta. |
 | `SEGUNDOS_PADRAO` | 300 s (5 min) | = | TETO | [ler_camera.py:53](blazesbot/tools/ler_camera.py#L53) | `run_ler_camera` | Teto padrão, para a ferramenta fechar sozinha se você esquecer dela aberta. |

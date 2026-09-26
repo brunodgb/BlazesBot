@@ -473,7 +473,7 @@ class VendorBC(JanelaDeVenda):
         if not vendeu:
             # Dez ciclos sem conseguir sequer começar a vender. DESLIGA o BC farm
             # desta conta e salva: a conta fica online, logada, com o relogin
-            # ativo, e o checkbox desmarca nas duas interfaces -- que é o sinal
+            # ativo, e o checkbox desmarca na interface -- que é o sinal
             # de que precisa de você. Não fecha o cliente, não para o bot inteiro,
             # e não volta a tentar vender (sem o farm, a rotina não roda).
             ctx.account.bc_farm = False

@@ -4074,8 +4074,8 @@ class CombatEngine:
         nenhuma. Insistir a noite inteira gasta a instância, o item que ainda
         resta e o tempo, sem nunca fechar um boss.
 
-        A CONTA FICA ONLINE. Só o `bc_farm` é desligado, o checkbox desmarca nas
-        duas interfaces, e o relogin continua valendo -- é o mesmo desfecho que a
+        A CONTA FICA ONLINE. Só o `bc_farm` é desligado, o checkbox desmarca na
+        interface, e o relogin continua valendo -- é o mesmo desfecho que a
         venda usa quando não há tecla de retorno.
         """
         if not self._precisou_de_pocao_antes_do_boss:

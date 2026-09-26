@@ -17,7 +17,6 @@ CHECKS = [
     ("NumPy (cálculo)", "numpy", "numpy"),
     ("pywin32 / janelas", "win32gui", "pywin32"),
     ("pywin32 / criptografia", "win32crypt", "pywin32"),
-    ("PyQt6 (interface)", "PyQt6.QtWidgets", "PyQt6"),
 ]
 
 

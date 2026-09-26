@@ -673,9 +673,6 @@ seguidores). Pedido do usuário em 27/08/2026.
 - **Os três quadros do mural compartilham um lock de propósito** — convite e
   aceite são as duas pontas da MESMA conversa. Separar os mutexes muda a
   exclusão mútua entre elas sem alterar função nenhuma.
-- **A PyQt6 NÃO conhece o time** (congelada em 27/08/2026). A exceção é uma
-  lista fechada em `tests/test_app_config_campo_por_campo.py`
-  (`CAMPOS_SO_DA_WEB`) — não é permissão para novos campos ficarem fora da GUI.
 
 - **`TARGET_ID` EM ZERO NO MEIO DA MACRO CORTA A VOLTA.** Zero é o jogo dizendo
   "não há nada selecionado" — o mob morreu e o cliente limpou o alvo, ele sumiu
@@ -1527,7 +1524,7 @@ Cada item é o que **não pode ser violado**. O detalhe de cada área mora em
   quebraria os 56 de uma vez. Quem chama é o supervisor, com o bot subindo —
   único ponto por onde todo ecossistema passa. Ficam de fora: o próprio
   cronômetro (recursão), geradores (mediria a criação, não a execução), dunder,
-  `tools/` e `gui/`.
+  e `tools/`.
 - **O RELATÓRIO ORDENA POR TOTAL, NÃO POR MÉDIA**
   (`python -m blazesbot.core.relatorio_de_latencia`). Uma função de 400 ms
   chamada 3× custa 1,2 s; uma de 0,4 ms chamada 20.000× custa 8 s — a média

@@ -25,7 +25,7 @@ rode `1-INSTALAR.bat` de novo.
 ```
 1-INSTALAR.bat       instala tudo             (uma vez só, sem admin)
 2-DIAGNOSTICO.bat    testa ler o jogo         (com admin)
-3-INICIAR.bat        interface de config      (com admin)
+3-INICIAR-WEB.bat    interface de config      (com admin)
 4-TESTE-LOGIN.bat    testa SÓ o login         (com admin)
 5-DETECTAR-TELA.bat  mostra o que o bot vê    (com admin)
 6-TESTE-CAPTURA.bat  salva print do que vê    (com admin)
@@ -84,7 +84,7 @@ Você deve ver isto:
 D:\BlazesBot\
     1-INSTALAR.bat
     2-DIAGNOSTICO.bat
-    3-INICIAR.bat
+    3-INICIAR-WEB.bat
     4-TESTE-LOGIN.bat
     5-DETECTAR-TELA.bat
     6-TESTE-CAPTURA.bat
@@ -119,7 +119,6 @@ No fim você deve ver:
   [ ok  ] NumPy (cálculo)
   [ ok  ] pywin32 / janelas
   [ ok  ] pywin32 / criptografia
-  [ ok  ] PyQt6 (interface)
   [ ok  ] módulos do BlazesBot
 
 Tudo pronto.
@@ -158,7 +157,7 @@ Se os três críticos falharem, cole a saída aqui no chat.
 
 ---
 
-## PASSO 5 — `3-INICIAR.bat` e configurar
+## PASSO 5 — `3-INICIAR-WEB.bat` e configurar
 
 Dois cliques → **Sim** na permissão. Abre a janela com abas.
 
@@ -390,7 +389,7 @@ recorto o template.
 
 ## PASSO 7 — Só depois: o ciclo completo
 
-Quando o login funcionar, aí sim volte ao `3-INICIAR.bat`.
+Quando o login funcionar, aí sim volte ao `3-INICIAR-WEB.bat`.
 
 ### Antes: calibrar a grade de venda
 
@@ -1146,7 +1145,7 @@ pessoa. Cada um monta a própria configuração.
 2. Extrair em C:\BlazesBot
 3. 1-INSTALAR.bat                      (sem admin, uma vez só)
 4. Abrir jogo + logar -> 2-DIAGNOSTICO.bat
-5. 3-INICIAR.bat -> abas Geral/Contas/Teclas -> Salvar -> fechar
+5. 3-INICIAR-WEB.bat -> abas Geral/Contas/Teclas -> Salvar -> fechar
 6. Fechar o jogo -> 4-TESTE-LOGIN.bat        <- SEU PRIMEIRO TESTE
 7. Só depois: calibrar venda -> testar venda com lixo -> ciclo completo
 ```

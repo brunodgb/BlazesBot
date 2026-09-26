@@ -228,8 +228,6 @@ blazesbot/
     vendor.py               venda a partir do slot X, recompra
     routine.py              máquina de estados do boss-rush
     supervisor.py           ciclo de vida: lançar, logar, farmar, religar
-  gui/
-    main_window.py          interface de configuração
 ```
 
 O `supervisor.py` é a peça que os bots de referência não têm: neles o

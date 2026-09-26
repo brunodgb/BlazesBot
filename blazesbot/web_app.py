@@ -1,25 +1,23 @@
 """
 Ponte Python ⇄ interface web (pywebview + WebView2).
 
-É o análogo web de `blazesbot/gui/main_window.py` + `account_dialog.py`. O
-pywebview abre o frontend em `web/` (HTML/CSS/JS) numa janela do WebView2
+É a interface do BlazesBot -- a ÚNICA desde 25/09/2026, quando a PyQt6 saiu em
+definitivo por decisão do usuário. O pywebview abre o frontend em `web/` (HTML/CSS/JS) numa janela do WebView2
 Runtime (embutido no Windows 11 — nada a instalar); este módulo expõe ao
-JavaScript as mesmas operações que a GUI PyQt6 faz, via o objeto `js_api`, usando
+JavaScript as operações da interface, via o objeto `js_api`, usando
 o MESMO backend (`BotConfig`, `Account`, `BotManager`, `stats_diarias`). Nenhuma
 regra de negócio fica no frontend — ele só chama estes métodos.
 
 Nome do módulo (`web_app.py`) é histórico: antes era `eel_app.py` quando a ponte
 usava a biblioteca `Eel`. Hoje a ponte é pywebview; o frontend continua o mesmo.
 
-REGRA DAS DUAS INTERFACES: qualquer funcionalidade acrescentada aqui tem que
-existir igualmente na GUI PyQt6 (`blazesbot/gui/*`), e vice-versa. As duas
-convivem e usam a mesma config (`data/config.json`).
+A config é `data/config.json`, a mesma que os supervisores leem.
 
 THREADS E LOG
 =============
 O `webview.start()` bloqueia a thread principal. Os supervisores rodam nas
 próprias threads e só enchem o log via `logging`. Para empurrar o log à web SEM
-chamar o bridge de outras threads, este módulo segue o mesmo desenho da GUI: um
+chamar o bridge de outras threads, este módulo usa um
 handler enfileira tudo numa `deque` e o JavaScript PUXA as linhas novas a cada
 ~300 ms (`puxar_log`). Status e estatísticas também são puxados por poll
 (`estado`, `stats_conta`). Assim não há chamada JS←Python assíncrona de outras
@@ -28,7 +26,7 @@ threads.
 Thread-safety da config: as funções de escrita mutam o objeto `Account`/`BotConfig`
 e gravam via `config.save()` (que já é atômico e com lock); o único risco novo é
 gravar da thread do bridge do pywebview enquanto um supervisor lê o mesmo objeto
-na thread dele — o mesmo cenário que a GUI PyQt6 já tinha, e aceitável.
+na thread dele — cenário aceitável.
 """
 from __future__ import annotations
 
@@ -83,17 +81,13 @@ POSITIONS = ["Left", "Center", "Right"]
 # (espelho de como a GUI populará os combos). Calculado uma vez, é barato.
 _COORDS = get_coords(VALIDATED_RESOLUTION)
 
-# Linhas guardadas em memória para permitir refiltrar por conta, espelho do
-# MAX_LINHAS_GUARDADAS da GUI PyQt6.
+# Linhas guardadas em memória para permitir refiltrar por conta.
 MAX_LINHAS_GUARDADAS = 12000
 
 
 def format_duracao(segundos: float) -> str:
     """Formata segundos como '1d 2h 3m 4s', omitindo o que for zero.
 
-    Espelho de `blazesbot/gui/widgets.formata_duracao` mantido aqui para a
-    interface web não importar PyQt6. As duas precisam ficar iguais (regra das
-    duas interfaces).
     """
     total = int(max(0, segundos))
     dias, resto = divmod(total, 86400)
@@ -157,7 +151,7 @@ class _LogHandler(logging.Handler):
 
 
 class _App:
-    """Estado da interface web: mesma config e mesma manager da GUI PyQt6."""
+    """Estado da interface web: a config e o manager que os supervisores usam."""
 
     def __init__(self) -> None:
         self.config = BotConfig.load(DEFAULT_CONFIG_PATH)
@@ -1057,9 +1051,8 @@ class _App:
         """As quedas dos últimos dias, já traduzidas para português de gente.
 
         O Python entrega PRONTO: as frases, a lista de contas do seletor e o
-        caminho do print. O JS só desenha -- as duas interfaces mostram a mesma
-        tela, e duas traduções separadas divergiriam na primeira frase que
-        alguém ajustasse.
+        caminho do print. O JS só desenha -- traduzir em dois lugares divergiria
+        na primeira frase que alguém ajustasse.
         """
         login = (str(conta) if conta else "").strip() or None
         return {
@@ -1583,7 +1576,7 @@ def run() -> None:
     logger = logging.getLogger("blazes")
     if not any(isinstance(h, _LogHandler) for h in logger.handlers):
         logger.addHandler(_LogHandler(_APP._fila_log))
-    # DEBUG SÓ EM DEV -- paridade com a GUI (`main_window.py`, `nivel_gui`).
+    # DEBUG SÓ EM DEV.
     #
     # Era `logging.DEBUG` incondicional, e isso DESFAZIA o nível que
     # `setup_logging` acabara de definir: em prod ele põe `blazes` em INFO, e
@@ -1678,7 +1671,7 @@ def _main() -> None:
     """Entrada usada pelo INICIAR-WEB.bat (interface web).
 
     Reaproveita a exigência de admin e o logging do `main.py` SEM editar o
-    `main.py`. A GUI PyQt6 continua saindo pelo `3-INICIAR.bat`.
+    `main.py`.
     """
     from main import require_admin, setup_logging  # raiz do projeto
 

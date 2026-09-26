@@ -129,7 +129,7 @@ def rodar(
 
 
 def resumir(resultado: dict[str, Any]) -> str:
-    """O veredito em texto, montado no Python — as duas interfaces só exibem."""
+    """O veredito em texto, montado no Python — a interface só exibe."""
     achados = resultado.get("achados") or []
     if not achados:
         return (f"Nenhum item da sua bolsa casou com os "

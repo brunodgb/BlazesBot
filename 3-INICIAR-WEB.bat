@@ -38,7 +38,6 @@ if %errorLevel% NEQ 0 (
 
 rem ============================================================
 rem  Roda a interface WEB (pywebview + WebView2) sem tocar no main.py.
-rem  E a GUI PyQt6 original: use o 3-INICIAR.bat.
 rem ============================================================
 ".venv\Scripts\python.exe" -m blazesbot.web_app
 

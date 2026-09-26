@@ -212,7 +212,6 @@ blazesbot/
     login.py               auto-login por fases
     login_states.py        detecção de tela em camadas
     supervisor.py          ciclo de vida: janela, login, operação, relogin
-  gui/                     interface PyQt6
   tools/find_base.py       descoberta do ponteiro base
 data/templates/            recortes de tela usados no reconhecimento
 data/stats_diarias.json    histórico diário de runs por conta (gerado em runtime)
@@ -416,7 +415,7 @@ que se descobre o valor real.
 ```
 1-INSTALAR.bat        uma vez, sem admin
 2-DIAGNOSTICO.bat     confere a memória em todos os clientes
-3-INICIAR.bat         interface
+3-INICIAR-WEB.bat     interface (web)
 4-TESTE-LOGIN.bat     só o login
 5-DETECTAR-TELA.bat   mostra ao vivo qual tela o bot reconhece
 6-TESTE-CAPTURA.bat   salva PNG do que o bot enxerga

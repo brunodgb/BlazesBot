@@ -1,17 +1,16 @@
-"""Toda tecla do `KeyBinds` tem que existir NAS DUAS INTERFACES, nos dois sentidos.
+"""Toda tecla do `KeyBinds` tem que existir NA INTERFACE, nos dois sentidos.
 
 POR QUE ESTE TESTE EXISTE
 =========================
 
 A ponte web não serializa o dataclass: ela tem uma **lista branca explícita** em
 cada sentido -- um dicionário que monta o payload para a tela e uma sequência de
-`st.keys.X = ...` que lê o payload de volta. A GUI tem o mesmo par
-(`set_key` / atribuição).
+`st.keys.X = ...` que lê o payload de volta.
 
 Isso significa que adicionar um campo ao `KeyBinds` e ao HTML **não basta**, e a
 falha é silenciosa do pior jeito: o input aparece na tela, aceita a tecla, e o
 valor nunca sai dali. Foi exatamente o que aconteceu com `hotbar_page_1` --
-funcionava no disco, na GUI e no core, e não gravava pela web.
+funcionava no disco e no core, e não gravava pela web.
 
 Nenhum teste de comportamento pegaria isso, porque não há comportamento errado:
 há um campo que simplesmente não é transportado. Por isso a verificação é
@@ -60,18 +59,6 @@ def test_frontend_mapeia_a_tecla(tecla: str) -> None:
     fonte = _ler("web/main.js")
     assert f'"{tecla}"' in fonte, (
         f"'{tecla}' não está em CAMPO_TECLA no web/main.js."
-    )
-
-
-@pytest.mark.parametrize("tecla", TECLAS)
-def test_gui_carrega_e_grava_a_tecla(tecla: str) -> None:
-    """A GUI PyQt6 tem o mesmo par, e a regra permanente exige as duas telas."""
-    fonte = _ler("blazesbot/gui/account_dialog.py")
-    assert f"k.{tecla})" in fonte or f"k.{tecla}]" in fonte, (
-        f"'{tecla}' não é carregado no account_dialog.py (falta o set_key)."
-    )
-    assert f"k.{tecla} = " in fonte, (
-        f"'{tecla}' não é gravado no account_dialog.py (falta a atribuição)."
     )
 
 

@@ -372,7 +372,6 @@ def test_a_fada_da_HH_nao_age_sem_memoria():
     ("blazesbot/web_app.py", "st.keys.follow ="),
     ("web/main.js", '"follow"'),
     ("web/index.html", 'id="ed-k-follow"'),
-    ("blazesbot/gui/account_dialog.py", "k_follow"),
 ])
 def test_a_tecla_de_seguir_esta_ligada_de_ponta_a_ponta(arquivo, esperado):
     """`test_teclas_nas_interfaces.py` já exige isto para TODA tecla -- aqui

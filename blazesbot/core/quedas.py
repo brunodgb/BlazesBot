@@ -17,8 +17,7 @@ tela responde, para cada queda, as quatro perguntas que ele faz:
 POR QUE ESTE MÓDULO VIVE NO CORE
 =========================================================================
 
-As duas interfaces (PyQt6 e web) mostram a MESMA tela, e a regra permanente do
-projeto é que só o "corpo" se duplica. Gravar, podar, traduzir para português
+A interface (web) só mostra: o "corpo" fica lá, e o resto mora aqui. Gravar, podar, traduzir para português
 de gente e montar o relatório de suporte acontece tudo aqui; lá em cima só se
 desenha.
 
@@ -410,8 +409,8 @@ def amigavel(registro: dict[str, Any],
              hoje: date | None = None) -> dict[str, Any]:
     """O registro cru + os campos já em português, prontos para desenhar.
 
-    A tradução acontece AQUI e não na interface: são duas interfaces mostrando
-    a mesma tela, e duas traduções separadas divergiriam na primeira frase que
+    A tradução acontece AQUI e não na interface: traduzir em dois lugares
+    divergiria na primeira frase que
     alguém ajustasse.
     """
     pos = registro.get("posicao")

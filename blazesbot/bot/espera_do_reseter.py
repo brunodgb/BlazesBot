@@ -47,7 +47,7 @@ Por isso a condição é reavaliada a cada volta e não só na entrada:
 `problema_do_reset` lê a configuração VIVA, e a configuração pode mudar com o
 bot rodando. Quando ela responde, o desfecho é o mesmo da venda sem tecla de
 retorno -- desliga o farm DESTA cave nesta conta e salva, o checkbox desmarca
-nas duas interfaces, e isso É o aviso.
+na interface, e isso É o aviso.
 
 ===========================================================================
 A ESPERA NÃO CONGELA NADA
@@ -56,7 +56,7 @@ A ESPERA NÃO CONGELA NADA
 É `ctx.tick`, nunca `time.sleep`, e a diferença é grande:
 
   * cada conta roda na THREAD DELA (`AccountSupervisor`), então nenhuma espera
-    aqui toca a thread da interface -- nem a PyQt6 nem a webview;
+    aqui toca a thread da interface (a webview);
   * é o `tick` que mantém o WATCHDOG desta conta vivo enquanto ela está parada
     (uma conta de cave também cai, e parada por horas ela ficaria cega para a
     própria queda);

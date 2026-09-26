@@ -722,18 +722,6 @@ def run_headless(config_path: Path) -> int:
     return 0
 
 
-def run_gui(config_path: Path) -> int:
-    from PyQt6.QtWidgets import QApplication
-
-    from blazesbot.gui.main_window import MainWindow
-
-    app = QApplication(sys.argv)
-    app.setStyle("Fusion")
-    window = MainWindow(config_path)
-    window.show()
-    return app.exec()
-
-
 def main() -> int:
     parser = argparse.ArgumentParser(
         prog="BlazesBot",
@@ -772,6 +760,18 @@ def main() -> int:
     parser.add_argument("-q", "--quiet", action="store_true",
                         help="log resumido")
     args = parser.parse_args()
+
+    # SEM AÇÃO, A AJUDA -- e antes de pedir administrador, que ela não precisa.
+    # Até 25/09/2026 o padrão abria a interface PyQt6, removida em definitivo
+    # por decisão do usuário: a interface é a web (`3-INICIAR-WEB.bat`).
+    acoes = (args.check, args.find_base, args.ler_camera, args.list_windows,
+             args.watch_location, args.watch_combat, args.capture_test,
+             args.detect, args.login_test, args.headless)
+    if not any(acoes):
+        parser.print_help()
+        print("\nA interface do BlazesBot é a web: 3-INICIAR-WEB.bat "
+              "(python -m blazesbot.web_app).")
+        return 0
 
     if sys.platform != "win32":
         print("O BlazesBot só funciona no Windows.")
@@ -830,9 +830,7 @@ def main() -> int:
         return run_detect()
     if args.login_test:
         return run_login_test(config_path)
-    if args.headless:
-        return run_headless(config_path)
-    return run_gui(config_path)
+    return run_headless(config_path)
 
 
 if __name__ == "__main__":

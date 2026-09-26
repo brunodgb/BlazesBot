@@ -126,7 +126,6 @@ def test_max_clients_foi_APOSENTADO_de_ponta_a_ponta():
 
     for arquivo in ("web/index.html", "web/main.js",
                     "blazesbot/bot/supervisor.py",
-                    "blazesbot/gui/main_window.py",
                     "blazesbot/web_app.py", "blazesbot/config.py"):
         texto = (RAIZ / arquivo).read_text(encoding="utf-8")
         # Sobra só em comentário, contando a história da aposentadoria.

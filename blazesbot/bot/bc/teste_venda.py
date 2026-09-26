@@ -25,9 +25,6 @@ apagar este módulo e os blocos marcados TEMPORÁRIO que o citam:
 
     blazesbot/web_app.py         -- `_App.testar_venda`, `_App.cancelar_teste_venda`
                                     e os dois métodos correspondentes na `Api`
-    blazesbot/gui/main_window.py -- `_testar_venda`, `_fim_do_teste_de_venda`,
-                                    o sinal `teste_venda_pronto` e o grupo
-                                    "Teste isolado da venda" na aba Diagnóstico
     web/main.js / web/index.html -- o botão `#btn-testar-venda`
 """
 from __future__ import annotations
@@ -68,8 +65,7 @@ def rodar(
     Devolve `{"ok": bool, "erro": str, "vendidos": int}`.
 
     Roda na thread de quem chamou -- no pywebview, cada chamada do frontend já
-    vem em sua própria thread, então bloquear aqui não trava a interface; na
-    PyQt6 quem dá a thread é o `_testar_venda` da janela principal.
+    vem em sua própria thread, então bloquear aqui não trava a interface.
     """
     log = logging.getLogger(f"blazes.{account.login or 'teste'}")
 

@@ -81,9 +81,6 @@ este módulo e os blocos marcados TEMPORÁRIO que o citam:
     blazesbot/web_app.py         -- `_App.amostrar_cliques`,
                                     `_App.cancelar_amostragem` e os dois
                                     métodos correspondentes na `Api`
-    blazesbot/gui/main_window.py -- `_amostrar_cliques`, `_fim_da_amostragem`,
-                                    o sinal `amostragem_pronta` e o grupo
-                                    "Amostragem de cliques" na aba Diagnóstico
     web/main.js / web/index.html -- o botão `#btn-amostrar-cliques`
 """
 from __future__ import annotations
@@ -377,7 +374,7 @@ def ranquear(
 
 
 def resumir(resultado: dict[str, Any]) -> str:
-    """O veredito em texto, para as duas interfaces mostrarem.
+    """O veredito em texto, para a interface mostrar.
 
     Mora AQUI, e não em cada interface, pela regra do projeto: o Python decide
     e o JavaScript só exibe. Duas formatações separadas contariam a mesma

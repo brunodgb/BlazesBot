@@ -69,38 +69,9 @@ def test_web_transporta_o_tempo_da_linha_0_nos_dois_sentidos():
     assert "st.app.espera_depois_do_tab_ms = max(" in ponte
 
 
-# -- a GUI ----------------------------------------------------------------
-
-def test_gui_desenha_a_linha_0_e_a_deixa_somente_leitura():
-    gui = _ler("blazesbot/gui/account_dialog.py")
-
-    assert "self.app_tecla_do_tab" in gui
-    assert "self.app_tecla_do_tab.setReadOnly(True)" in gui
-    assert "st.keys.next_target" in gui
-
-
-def test_gui_carrega_e_grava_o_tempo_da_linha_0():
-    gui = _ler("blazesbot/gui/account_dialog.py")
-
-    assert "self.sp_app_espera_tab.setValue(st.app.espera_depois_do_tab_ms)" in gui
-    assert "st.app.espera_depois_do_tab_ms = self.sp_app_espera_tab.value()" in gui
-
-
-def test_gui_NAO_poe_a_linha_0_em_app_linhas():
-    """`app_linhas` é o que vira `steps`. A linha 0 tem widgets próprios."""
-    gui = _ler("blazesbot/gui/account_dialog.py")
-
-    assert "self.app_linhas.append((tecla, espera))" in gui
-    assert "self.app_linhas.append((self.app_tecla_do_tab" not in gui
-
-
-# -- o piso, nas duas ------------------------------------------------------
+# -- o piso, na tela e na ponte --------------------------------------------
 
 @pytest.mark.parametrize("arquivo, trecho", [
-    ("blazesbot/gui/account_dialog.py",
-     "espera.setRange(MINIMO_DE_ESPERA_DO_APP_MS, 10000)"),
-    ("blazesbot/gui/account_dialog.py",
-     "self.sp_app_espera_tab.setRange(MINIMO_DE_ESPERA_DO_APP_MS, 10000)"),
     # O piso saiu da espera da macro e virou o piso de QUALQUER delay
     # (26/08/2026), então agora ele mora numa constante que os dois lados citam.
     ("web/main.js", "const MINIMO_DELAY_MS = 100;"),
@@ -109,7 +80,7 @@ def test_gui_NAO_poe_a_linha_0_em_app_linhas():
     ("blazesbot/config.py", "MINIMO_DE_ESPERA_DO_APP_MS = MINIMO_DELAY_MS"),
     ("blazesbot/web_app.py", "MINIMO_DE_ESPERA_DO_APP_MS,"),
 ])
-def test_o_piso_de_100ms_esta_nas_duas_telas(arquivo: str, trecho: str):
+def test_o_piso_de_100ms_esta_na_tela_e_na_ponte(arquivo: str, trecho: str):
     """*"O mínimo vai ser 100ms em todos os campos do APP."*
 
     E a ponte reaplica o piso: "a tela impõe" não é garantia, é boa vontade.

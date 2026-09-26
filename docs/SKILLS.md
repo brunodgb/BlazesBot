@@ -18,8 +18,8 @@ Este projeto usa o `pywebview` (WebView2) para criar uma aplicação desktop.
    - JavaScript NUNCA processa regras de negócio pesadas. Ele chama o Python via `window.pywebview.api.nome_funcao_python()`.
 
 ## Estrutura de Pastas Esperada
-- `main.py` (Ponto de entrada do aplicativo PyQt6; a web só importa
-  `require_admin`/`setup_logging` dele).
+- `main.py` (CLI das ferramentas de diagnóstico; a web só importa
+  `require_admin`/`setup_logging` dele. A PyQt6 saiu em 25/09/2026).
 - `web/` (Pasta exclusiva do frontend, editada na mão).
   - `web/index.html` — classes utilitárias Tailwind, preservando os IDs do JS.
   - `web/style.css` — Tailwind v4 (`@import "tailwindcss"` + `@theme`) e os
@@ -601,12 +601,8 @@ HTML/JS/PyQt6 e passa a vir de um dicionário único por chave.
   `preencherEditor`) **se ele estiver aberto no momento da troca**. Sem isto,
   o modal já aberto ficaria com tooltip e rótulo dinâmico no idioma antigo até
   ser fechado e reaberto.
-- **PyQt6 (`blazesbot/gui/`) — NÃO TOCADO.** A regra permanente "duas
-  interfaces convivem" (`CLAUDE.md`) exige que qualquer coisa na Web exista
-  também na GUI PyQt6. Isso está PENDENTE: nem o campo de idioma, nem o
-  seletor, nem uma única chave do dicionário foram plugados lá. Enquanto
-  isso não for feito, a Web tem uma capacidade que a GUI não tem — o mesmo
-  tipo de dívida que o `CLAUDE.md` já rastreia em "Candidatos de promoção".
+- **A PyQt6 saiu em 25/09/2026**, e com ela a pendência que morava aqui (o
+  idioma nunca foi plugado nela). A web é a única interface.
 
 ## O que continua em PT-BR fixo, e por quê (pendência real, não esquecimento)
 

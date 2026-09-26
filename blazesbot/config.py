@@ -216,7 +216,7 @@ class KeyBinds:
         então uma configuração com repetição descreve algo que não existe: o bot
         acha que trocou de barra e na verdade disparou uma skill, e nunca
         percebe. O erro é silencioso, e é por isso que ele é barrado aqui e
-        também na hora de digitar, nas duas interfaces.
+        também na hora de digitar, na interface.
         """
         usos: dict[str, list[str]] = {}
 
@@ -499,7 +499,7 @@ PASSOS_DO_APP = 20
 # arquivo salvo por uma versão antiga também suba corrigido.
 # PISO DE QUALQUER DELAY DA INTERFACE, EM MILISSEGUNDOS.
 #
-# As duas interfaces mostram TODO campo de tempo em ms (pedido do usuário: havia
+# A interface mostra TODO campo de tempo em ms (pedido do usuário: havia
 # segundos, milissegundos e minutos na mesma tela) e nenhuma delas aceita menos
 # que isto. O piso saiu daqui, da espera da macro, e valia só para ela; virou o
 # piso de todos porque o defeito é o mesmo em qualquer delay -- tempo perto de
@@ -509,11 +509,10 @@ MINIMO_DELAY_MS = 100
 # Um número lido por dois lados mora num lugar só.
 MINIMO_DE_ESPERA_DO_APP_MS = MINIMO_DELAY_MS
 
-# ÍCONE DO APLICATIVO — UM ARQUIVO SÓ para as duas interfaces.
+# ÍCONE DO APLICATIVO — UM ARQUIVO SÓ.
 #
 # Mora em `web/public/` porque é de lá que o Vite o copia para o `dist/`, e é o
-# `dist/` que o pywebview abre. A GUI PyQt6 aponta para o MESMO arquivo: duas
-# cópias divergiriam na primeira troca de arte.
+# `dist/` que o pywebview abre.
 #
 # Antes disto, `favicon.ico` era referenciado em dois lugares do HTML e NÃO
 # EXISTIA no repositório -- o que aparecia no titlebar era o placeholder de
@@ -1083,7 +1082,7 @@ class AccountSettings:
     # logada, e no modo fada da HH é ele que entra junto para curar.
     #
     # Vazio = não usa reset de time; preenchido, o bot convida esse nick antes
-    # de cada entrada, nas duas caves. LISTA FECHADA nas duas interfaces --
+    # de cada entrada, nas duas caves. LISTA FECHADA na interface --
     # reseter tem de ser conta cadastrada aqui, porque é isso que permite ao bot
     # perceber que ela caiu e SEGURAR a entrada em vez de perder a run.
     #
@@ -1468,7 +1467,7 @@ class BotConfig:
     def reset_accounts(self) -> list[Account]:
         """Contas habilitadas marcadas como 'aceitar convites de time'.
 
-        É a lista que as duas interfaces oferecem no seletor de reseter -- o
+        É a lista que a interface oferece no seletor de reseter -- o
         campo deixou de ser texto livre justamente para que o nick escolhido
         seja sempre uma conta que este bot controla e, portanto, consegue
         observar. Ver `problema_do_reset`.
@@ -1556,7 +1555,7 @@ class BotConfig:
     def definir_funcao_da_conta(self, conta: Account, qual: str) -> str:
         """Liga UMA função e desliga as outras. `""` desliga todas.
 
-        É o ÚNICO ponto de escrita das três: as duas interfaces chamam aqui, e é
+        É o ÚNICO ponto de escrita das três: a interface chama aqui, e é
         isso que garante que nunca existam duas ligadas. Devolve o que ficou
         ativo, para quem chamou poder avisar a tela.
         """
@@ -1747,7 +1746,7 @@ class BotConfig:
         O desfecho aqui é o VETO POR CONTA: ela loga, fica online, com relogin
         ativo, e só o BC dela não roda. É o mesmo desenho que a venda sem tecla
         de retorno já usa (`vendor.py`): desliga o `bc_farm` daquela conta,
-        salva, e o checkbox desmarcando nas duas interfaces É o aviso.
+        salva, e o checkbox desmarcando na interface É o aviso.
 
         =================================================================
         E POR QUE ELE É CONSULTADO EM DOIS MOMENTOS DIFERENTES
