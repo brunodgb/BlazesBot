@@ -48,7 +48,7 @@ npx ctx7@latest docs <libraryId> "<query>"
 
 You MUST call `library` first to obtain a valid library ID UNLESS the user explicitly provides a library ID in the format `/org/project` or `/org/project/version`.
 
-IMPORTANT: Do not run these commands more than 3 times per question. If you cannot find what you need after 3 attempts, use the best result you have.
+Do not run these commands more than 3 times per question. If you cannot find what you need after 3 attempts, use the best result you have.
 
 ## Step 1: Resolve a Library
 
