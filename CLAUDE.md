@@ -114,6 +114,10 @@ Contrato completo, assentos ativos e quando NÃO vale a pena invocar:
   qualquer correção de defeito (causa raiz antes de remendo, 4 fases), a
   segunda ao avaliar o que `code-reviewer`/`security-reviewer`/`claude-council`
   apontam (verificar antes de implementar, nunca concordância performática).
+- **`grilling-extras`** (25/09/2026) — complemento **obrigatório** das sessões
+  de grilling (`mattpocock-skills:grilling`/`grill-me`), que é plugin e não
+  aceita edição durável: pergunta o que é DOMÍNIO, anuncia para veto o que é
+  ENGENHARIA, e só leva ao council as de engenharia. Carregar junto, sempre.
 
 ## Agentes especializados do ECC: proativo, não sob pedido (diretriz permanente — 09/09/2026)
 
