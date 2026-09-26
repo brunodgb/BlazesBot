@@ -654,7 +654,7 @@ ligar código não testado.
 | `SEGUNDOS_PARA_O_PROGRAMA_MORRER` | `3.0` | [blazesbot/core/petbug.py:233](blazesbot/core/petbug.py#L233) | — | Espera o processo antigo MORRER antes de abrir o novo. Curto: é um formulário |
 | `TEXTO_DO_BOTAO` | `'Patch'` | [blazesbot/core/petbug.py:171](blazesbot/core/petbug.py#L171) | — | — |
 | `DIAS_GUARDADOS` | `3` | [blazesbot/core/quedas.py:56](blazesbot/core/quedas.py#L56) | web_app.py | Por TEMPO, e não por contagem: a pergunta é "o que aconteceu essa noite", e |
-| `FASE_DESCONHECIDA` | `'Estava começando a rodar'` | [blazesbot/core/quedas.py:122](blazesbot/core/quedas.py#L122) | — | — |
+| `FASE_DESCONHECIDA` | `'Estava começando a rodar'` | [blazesbot/core/quedas.py:125](blazesbot/core/quedas.py#L125) | — | — |
 | `LARGURA_DA_MINIATURA` | `320` | [blazesbot/core/quedas.py:78](blazesbot/core/quedas.py#L78) | — | Largura da MINIATURA, gravada ao lado do print inteiro. |
 | `LINHAS_DE_LOG_GUARDADAS` | `20` | [blazesbot/core/quedas.py:63](blazesbot/core/quedas.py#L63) | — | Linhas de log guardadas por conta. NÃO aparecem na tela (ver `FASES`); vão |
 | `MOTIVO_DESCONHECIDO` | `'O jogo parou de responder'` | [blazesbot/core/quedas.py:95](blazesbot/core/quedas.py#L95) | — | — |

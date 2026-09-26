@@ -108,7 +108,10 @@ FASES: dict[str, str] = {
     "PREPARAR": "Estava se preparando (montaria e bichinho)",
     "ATE_A_ENTRADA": "Estava indo até a entrada da caverna",
     "ENTRAR": "Estava tentando entrar na caverna",
+    # O nome antigo do PREPARAR_DENTRO do BC (até 26/09/2026): quedas já
+    # gravadas ainda o trazem.
     "CURAR": "Estava se curando",
+    "PREPARAR_DENTRO": "Estava se preparando dentro da caverna (vida, buffs e bichinho)",
     "ATE_O_ALTAR": "Estava atravessando a caverna até o Altar",
     "ENTRAR_NO_COVIL": "Estava abrindo a passagem para o covil do chefe",
     "ATE_OS_GUARDAS": "Estava indo até os quatro guardas",

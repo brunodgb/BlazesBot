@@ -96,7 +96,7 @@ def test_as_DUAS_caves_destravam_ao_entrar():
     from blazesbot.bot.bc.routine import BossRushRoutine
     from blazesbot.bot.hh.routine import HHRoutine
 
-    for rotina, preparo in ((BossRushRoutine, "_do_curar"),
+    for rotina, preparo in ((BossRushRoutine, "_do_preparar_dentro"),
                             (HHRoutine, "_do_preparar_dentro")):
         metodo = getattr(rotina, preparo)
         arvore = ast.parse(textwrap.dedent(inspect.getsource(metodo)))

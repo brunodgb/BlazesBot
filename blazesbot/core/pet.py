@@ -108,7 +108,7 @@ from collections.abc import Callable
 # NÃO É ESPERA DE CORTESIA -- É A JANELA EM QUE A AÇÃO SEGUINTE CANCELA O ITEM.
 #
 # MEDIDO NO LOG EM 27/08/2026 (`logs/dev/blazes-dev.jsonl`, conta `creubo`). O
-# preparo de entrada (`RotinaBC._do_curar`) dá a comida e MONTA em seguida, e as
+# preparo de entrada (`BossRushRoutine._do_preparar_dentro`) dá a comida e MONTA em seguida, e as
 # três alimentações do log têm exatamente a mesma forma:
 #
 #     +0.0s  Alimentando o pet (a cada 56 min)      <- a tecla sai aqui

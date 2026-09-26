@@ -360,7 +360,7 @@ class State(Enum):
     PREPARAR = auto()
     ATE_A_ENTRADA = auto()
     ENTRAR = auto()
-    CURAR = auto()
+    PREPARAR_DENTRO = auto()
     ATE_O_ALTAR = auto()
     ENTRAR_NO_COVIL = auto()
     ATE_OS_GUARDAS = auto()
@@ -376,7 +376,7 @@ class State(Enum):
 # Ali o bot corre com pausas mínimas entre estados; fora da cave não há pressa e
 # folga de tempo é preferível.
 ESTADOS_DENTRO_DA_CAVE = frozenset({
-    State.CURAR, State.ATE_O_ALTAR, State.ENTRAR_NO_COVIL,
+    State.PREPARAR_DENTRO, State.ATE_O_ALTAR, State.ENTRAR_NO_COVIL,
     State.ATE_OS_GUARDAS, State.GUARDAS, State.ATE_O_BOSS, State.BOSS,
     State.SAIR,
 })
@@ -636,7 +636,7 @@ class BossRushRoutine:
         #
         # Regra do usuário, 25/08/2026 -- *"fora da cave BC ele só vai sair da
         # mount caso o pet não esteja ativo"*. Comida e buff saíram daqui e
-        # foram para o PREPARO DE ENTRADA (`_do_curar`), já dentro da cave.
+        # foram para o PREPARO DE ENTRADA (`_do_preparar_dentro`), já dentro da cave.
         #
         # A exceção do pet é a certa: entrar sem pet significa invocar lá dentro,
         # e lá dentro parar para invocar é parar com o trem de mobs em cima.
@@ -697,7 +697,7 @@ class BossRushRoutine:
         # Ela existia porque "dentro da cave não dá: alimentar exige desmontar, e
         # desmontar no meio da travessia é parar com o trem de mobs em cima" -- e
         # isso continua verdade PARA A TRAVESSIA. Só que a comida não é dada no
-        # meio da travessia: ela é dada no PREPARO DE ENTRADA (`_do_curar`), com
+        # meio da travessia: ela é dada no PREPARO DE ENTRADA (`_do_preparar_dentro`), com
         # o personagem já dentro, ainda parado e já a pé para curar.
         #
         # Com isso o trajeto até a entrada não desmonta mais por comida --
@@ -844,7 +844,7 @@ class BossRushRoutine:
         PELO PONTO COMUM DESDE 25/09/2026 (`UIDoJogo.esperar_a_chegada`, cujo laço
         também dorme só o que falta para o teto). É ele que marca a troca de mapa
         para a comida do pet (`core/pet.trocou_de_mapa`): o laço próprio que
-        morava aqui não marcava, e a comida do `_do_curar` saía com o pet ainda
+        morava aqui não marcava, e a comida do `_do_preparar_dentro` saía com o pet ainda
         sendo recriado no mapa novo -- a comida queimada que derrubou a
         felicidade de 94 para 45 na HH. `em_disputa`: o teto é a regra na porta.
         """
@@ -980,7 +980,7 @@ class BossRushRoutine:
         self.team.sair_do_time()
 
         # O CRONÔMETRO NÃO COMEÇA AQUI -- ele começa no fim do PREPARO DE
-        # ENTRADA, quando o personagem monta para sair andando (`_do_curar`).
+        # ENTRADA, quando o personagem monta para sair andando (`_do_preparar_dentro`).
         #
         # Ordem do usuário, 25/08/2026: *"os timers de Tempo do 'estatísticas BC'
         # hoje começam a contar a partir do momento que entrou; vamos mudar,
@@ -1022,13 +1022,13 @@ class BossRushRoutine:
         # ATE_O_ALTAR abria outro -- foram seis num minuto no log, e o
         # personagem andou cinco, seis waypoints de ré.
         self.nav.esquecer_retrocessos()
-        self._succeed(State.CURAR)
+        self._succeed(State.PREPARAR_DENTRO)
 
     # ==================================================================
     # CURAR (já dentro da cave)
     # ==================================================================
 
-    def _do_curar(self) -> None:
+    def _do_preparar_dentro(self) -> None:
         """O PREPARO DE ENTRADA: tudo que exige estar a pé, num lugar só.
 
         =================================================================
@@ -2262,7 +2262,7 @@ class BossRushRoutine:
         State.PREPARAR: "_do_preparar",
         State.ATE_A_ENTRADA: "_do_ate_a_entrada",
         State.ENTRAR: "_do_entrar",
-        State.CURAR: "_do_curar",
+        State.PREPARAR_DENTRO: "_do_preparar_dentro",
         State.ATE_O_ALTAR: "_do_ate_o_altar",
         State.ENTRAR_NO_COVIL: "_do_entrar_no_covil",
         State.ATE_OS_GUARDAS: "_do_ate_os_guardas",
@@ -2428,7 +2428,7 @@ class BossRushRoutine:
                 #
                 # Voltou com outra forma: `cuidar_da_comida_no_laco` só age
                 # depois de a refeição passar do prazo, e aí ela fura o veto.
-                # O preparo de entrada (`_do_curar`, passo 4) continua sendo o
+                # O preparo de entrada (`_do_preparar_dentro`, passo 4) continua sendo o
                 # caminho normal; isto é a rede para quando ele não chega --
                 # venda longa, disputa de entrada, run retomada no meio.
                 self.combat.cuidar_da_comida_no_laco(

@@ -121,7 +121,7 @@ Duas coisas erradas aparecem aí, e as duas são de temporização.
 ### Causa A — montar cancela o uso do item
 
 `feed_pet` esperava `tick(0.5)` depois da tecla, e o passo seguinte de
-`_do_curar` é **montar**. Ou seja: **600 ms depois de apertar a comida o bot
+`_do_preparar_dentro` é **montar**. Ou seja: **600 ms depois de apertar a comida o bot
 aperta a montaria.** Montar interrompe o uso do item, e o desfecho é o pior
 possível — a grade avança, o disco é gravado, o log diz "alimentei" e a bolsa
 diz que não.
@@ -172,7 +172,7 @@ o clique a mais quando o `ensure_pet` acabou de garantir).
 O APP já barrava a comida em combate e o comentário dele explica por quê: *"a
 tecla de alimento é IGNORADA pelo jogo em combate, mas o `PetFeeder` registrava a
 refeição mesmo assim -- o pet passava fome com o cronômetro dizendo que tinha
-comido"*. **O BC não tinha essa guarda**, e `_do_curar` roda logo depois de
+comido"*. **O BC não tinha essa guarda**, e `_do_preparar_dentro` roda logo depois de
 entrar na cave, onde o aggro é a regra. Guarda adicionada, tri-estado: só `True`
 barra, "não sei" passa.
 
@@ -203,11 +203,11 @@ barra, "não sei" passa.
   e a contagem da bolsa não é lida. Enquanto isso, o que existe é o log de estado
   no instante do aperto (`montado / batalha / sentado / pet`), que é o que
   transforma *"não funciona"* em *"não funciona QUANDO"*.
-* **`feed_pet` do BC tem um único chamador**, `_do_curar`
+* **`feed_pet` do BC tem um único chamador**, `_do_preparar_dentro`
   (`bc/routine.py:1165`). A checagem no laço principal está **comentada** e não
   em interruptor (`bc/routine.py:2518`). Consequência: conta que não completa
   entradas na cave nunca come. Mantido por decisão do usuário em 27/08/2026 —
-  *"talvez até esta executando a função que deve continuar dentro do `_do_curar`
+  *"talvez até esta executando a função que deve continuar dentro do `_do_preparar_dentro`
   como está hoje"*.
 * **`CombatEngine.vale_alimentar_antes_de_entrar` é código morto** (zero
   chamadores). Sobrou da alimentação pré-entrada removida em 25/08/2026.
@@ -273,7 +273,7 @@ não tem teto.
 
 Duas causas somadas, as duas por desenho:
 
-1. **Um único ponto de alimentação por ecossistema.** BC alimenta em `_do_curar`,
+1. **Um único ponto de alimentação por ecossistema.** BC alimenta em `_do_preparar_dentro`,
    HH em `_do_preparar_dentro`. Nenhum dos dois tem conferência no laço
    principal — a da BC existe, mas **comentada** desde 25/08/2026.
 2. **O veto de desmonte fora da cave** (`_preparar_para_agir`,
@@ -497,7 +497,7 @@ mapa, a grade que não avança nessa recusa, e a chamada no ponto do boss.
 A frase "`UIDoJogo.esperar_a_chegada` é o único ponto por onde passam entrada,
 saída e teleporte" era **falsa para o BC**. A entrada do BC tinha um laço de
 espera próprio (`_reconhecer_entrada`), e a saída era um `tick(1.5)` cego — nenhum
-dos dois marcava a troca de mapa. Então a comida do `_do_curar`, segundos depois
+dos dois marcava a troca de mapa. Então a comida do `_do_preparar_dentro`, segundos depois
 da entrada, saía com o pet sendo recriado: o mesmo mecanismo que derrubou a
 felicidade de 94 para 45 na HH. E o BC não tinha a 2ª chance no ponto do boss.
 

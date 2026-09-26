@@ -1174,7 +1174,7 @@ momento certo é **antes**, não depois de dez segundos de sintoma.
 
 `Navigator.destravar_ao_entrar(motivo)` — casca fina sobre o passo que já
 existia, chamada como passo **0** do preparo de entrada das duas caves
-(`bc.routine._do_curar` e `hh.routine._do_preparar_dentro`), antes de curar,
+(`bc.routine._do_preparar_dentro` e `hh.routine._do_preparar_dentro`), antes de curar,
 buffar, invocar pet ou montar.
 
 Ela só faz duas coisas além de delegar:

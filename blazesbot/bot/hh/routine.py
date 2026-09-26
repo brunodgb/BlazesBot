@@ -525,7 +525,7 @@ class HHRoutine:
         Regra do usuário, 03/09/2026: *"o uso de SS, o uso de buff, o uso de
         poção de cura, qualquer coisa que precisar é só depois que entrar na
         cave e não fora, como é feito no bot BC"*. É a mesma regra que a
-        Bewitcher Cave já seguia desde 25/08/2026 -- ver `bc.routine._do_curar`.
+        Bewitcher Cave já seguia desde 25/08/2026 -- ver `bc.routine._do_preparar_dentro`.
 
         Buff, poção e comida de pet foram para `_do_preparar_dentro`. Os dois
         motivos são medidos e valem igual aqui:
@@ -797,7 +797,7 @@ class HHRoutine:
     # ==================================================================
 
     def _do_preparar_dentro(self) -> None:
-        """O PREPARO DE ENTRADA. É o `_do_curar` da BC, com os mesmos motivos.
+        """O PREPARO DE ENTRADA. É o `_do_preparar_dentro` da BC, com os mesmos motivos.
 
         =================================================================
         A ORDEM, E POR QUE ELA É ESTA

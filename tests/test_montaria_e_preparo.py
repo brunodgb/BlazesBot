@@ -495,7 +495,7 @@ def test_a_contagem_da_run_comeca_no_preparo_de_entrada():
     para andar -- não de quando entrou."""
     from blazesbot.bot.bc.routine import BossRushRoutine
 
-    assert "begin_run" in _chamadas(BossRushRoutine._do_curar)
+    assert "begin_run" in _chamadas(BossRushRoutine._do_preparar_dentro)
 
 
 def test_a_contagem_NAO_comeca_mais_ao_confirmar_a_entrada():
@@ -514,7 +514,7 @@ def test_a_ordem_do_preparo_de_entrada():
     """
     from blazesbot.bot.bc.routine import BossRushRoutine
 
-    passos = _chamadas(BossRushRoutine._do_curar)
+    passos = _chamadas(BossRushRoutine._do_preparar_dentro)
     esperados = ["curar_ao_entrar", "apply_buffs", "ensure_pet", "feed_pet",
                  "garantir_montaria_para_andar", "begin_run"]
     posicoes = [passos.index(p) for p in esperados]

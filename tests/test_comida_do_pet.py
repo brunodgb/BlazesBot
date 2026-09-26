@@ -29,7 +29,7 @@ slot (`6`) saíam no MESMO instante, três vezes de três. Os outros consumidore
 sobrevivem porque insistem e conferem; a comida apertava uma vez e acreditava.
 
 **BC -- em batalha a tecla é engolida e a grade avançava.** O APP já barrava a
-comida em combate; o BC não, e `_do_curar` roda logo depois de entrar na cave.
+comida em combate; o BC não, e `_do_preparar_dentro` roda logo depois de entrar na cave.
 """
 from __future__ import annotations
 
@@ -295,7 +295,7 @@ def _hotbar_falsa(monkeypatch):
 def test_o_BC_NAO_alimenta_em_batalha_e_a_grade_NAO_avanca(
         monkeypatch, _hotbar_falsa):
     """A tecla de alimento é ignorada pelo jogo em combate -- o APP já sabia
-    disso, o BC não. E `_do_curar` roda logo depois de entrar na cave."""
+    disso, o BC não. E `_do_preparar_dentro` roda logo depois de entrar na cave."""
     monkeypatch.setattr(time, "time", lambda: 2000.0)
     motor = _motor_bc(em_batalha=True)
 

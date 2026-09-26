@@ -3899,7 +3899,7 @@ class CombatEngine:
         não por evento: o bot conta os minutos desde a última vez.
 
         ONDE ELA ACONTECE MUDOU EM 25/08/2026: saiu do trajeto e foi para o
-        PREPARO DE ENTRADA (`_do_curar` na BC, `_do_preparar_dentro` na HH), com
+        PREPARO DE ENTRADA (`_do_preparar_dentro` na BC, `_do_preparar_dentro` na HH), com
         o personagem já parado e a pé por causa da cura. `em_transito=True`
         barra a alimentação depois que a travessia começou.
 
@@ -3952,7 +3952,7 @@ class CombatEngine:
         # ==============================================================
         #
         # O APP já sabia disso e barrava a comida em combate (ver o laço em
-        # `bot/app/executor`); o BC não barrava, e `_do_curar` roda logo depois
+        # `bot/app/executor`); o BC não barrava, e `_do_preparar_dentro` roda logo depois
         # de entrar na cave, onde o aggro é a regra e não a exceção. Sem esta
         # guarda o desfecho é o pior possível: a tecla é engolida pelo jogo, a
         # grade avança e o pet fica 56 minutos sem comer com o relógio dizendo
