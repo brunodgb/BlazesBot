@@ -24,7 +24,7 @@ está medindo o placar dele, não o do projeto.
 """
 import pytest
 
-from blazesbot.core import calibracao
+from blazesbot.core import calibracao, diario
 
 
 @pytest.fixture(autouse=True)
@@ -33,3 +33,28 @@ def _placar_de_calibracao_fora_do_projeto(tmp_path, monkeypatch):
     monkeypatch.setattr(calibracao, "CAMINHO_DO_PLACAR",
                         tmp_path / "calibracao-de-teste.json")
     calibracao.zerar_para_teste()
+
+
+def _soltar_os_diarios() -> None:
+    """Fecha e esquece os loggers de diário já abertos (eles guardam o arquivo)."""
+    for log in diario._criados.values():
+        for handler in list(log.handlers):
+            log.removeHandler(handler)
+            handler.close()
+    diario._criados.clear()
+
+
+@pytest.fixture(autouse=True)
+def _diarios_fora_do_projeto(tmp_path, monkeypatch):
+    """Nenhum teste escreve em `logs/eventos.log` nem nos outros diários.
+
+    O MESMO DEFEITO DA CALIBRAÇÃO, medido em 26/09/2026: 3.566 das 20.058 linhas
+    do `logs/eventos.log` eram de teste (contas `simulacao` e `conta`), e uma
+    "travada" sintética em (203,30) virou o maior ponto quente do BC. E o dano
+    passa do barulho: o diário tem teto de linhas e poda as antigas, então cada
+    linha de teste EMPURROU PARA FORA um evento real.
+    """
+    _soltar_os_diarios()
+    monkeypatch.setattr(diario, "PASTA", tmp_path / "logs")
+    yield
+    _soltar_os_diarios()
