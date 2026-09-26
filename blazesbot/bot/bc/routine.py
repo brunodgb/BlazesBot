@@ -481,7 +481,7 @@ class BossRushRoutine:
             self.ctx.log.warning("Personagem morto detectado")
             self.state = State.RECUPERAR
 
-    def _fail(self, message: str, next_state: State = State.RECUPERAR) -> None:
+    def _falhar(self, message: str, next_state: State = State.RECUPERAR) -> None:
         self.consecutive_failures += 1
         self.ctx.log.warning("%s (falha %s)", message, self.consecutive_failures)
         self.state = next_state
@@ -735,7 +735,7 @@ class BossRushRoutine:
                         "Não abri o transporte, mas ESTOU em Stone City "
                         "(posição %s). Não gasto item de retorno para ir aonde "
                         "já estou -- tentando de novo.", s.posicao)
-                    self._fail("Não abri o diálogo da Fay estando em Stone City",
+                    self._falhar("Não abri o diálogo da Fay estando em Stone City",
                                next_state=State.ATE_A_ENTRADA)
                     return
 
@@ -751,7 +751,7 @@ class BossRushRoutine:
                     s.posicao, s.local,
                 )
                 self.vendor.voltar_para_a_cidade()
-                self._fail("Não consegui viajar para Ghost Din Woods",
+                self._falhar("Não consegui viajar para Ghost Din Woods",
                            next_state=State.SITUAR)
                 return
             self._situacao("depois do transporte")
@@ -760,7 +760,7 @@ class BossRushRoutine:
 
         self.nav.garantir_montaria_para_andar("ir até o NPC da entrada")
         if not self.ui.ir_ate_o_npc_da_cave():
-            self._fail("Não cheguei no NPC da entrada da cave")
+            self._falhar("Não cheguei no NPC da entrada da cave")
             return
 
         # CONFERE a chegada pela coordenada. O painel de arredores caminha até o
@@ -779,7 +779,7 @@ class BossRushRoutine:
             if not self.nav.goto(mapa_bc.ENTRADA_EM_GHOST_DIN,
                                  tolerance=TOLERANCIA_DA_ENTRADA,
                                  max_seconds=60.0, usar_mapa=False):
-                self._fail("Não alcancei a coordenada exata da entrada",
+                self._falhar("Não alcancei a coordenada exata da entrada",
                            next_state=State.ATE_A_ENTRADA)
                 return
 
@@ -967,7 +967,7 @@ class BossRushRoutine:
                 )
             ctx.tick(ESPERA_ENTRE_TENTATIVAS)
         else:
-            self._fail(
+            self._falhar(
                 f"Não entrei na cave em {MAX_SEGUNDOS_ENTRADA / 60:.0f} min "
                 f"({tentativa} tentativas)",
                 next_state=State.ATE_A_ENTRADA,
@@ -1153,7 +1153,7 @@ class BossRushRoutine:
         else:
             # Não desiste da run: reavalia onde está e tenta retomar. Sair da
             # instância aqui jogaria fora a travessia já feita e o reset do boss.
-            self._fail("Falhei na travessia até o altar", next_state=State.SITUAR)
+            self._falhar("Falhei na travessia até o altar", next_state=State.SITUAR)
 
     # ==================================================================
     # ENTRAR_NO_COVIL
@@ -1169,7 +1169,7 @@ class BossRushRoutine:
         distância nem a coordenada, é o estado em que o cliente e o servidor
         deixaram o personagem naquele ponto. Mudar de lugar e voltar refaz esse
         estado -- e sair e voltar é mais rápido que refazer a pirâmide inteira, que
-        é o que o `_fail` para SITUAR acabaria fazendo.
+        é o que o `_falhar` para SITUAR acabaria fazendo.
         """
         ctx = self.ctx
         ctx.log.info(
@@ -1468,7 +1468,7 @@ class BossRushRoutine:
         )
 
         if not chegou:
-            self._fail("Não alcancei o patamar do Altar Stone",
+            self._falhar("Não alcancei o patamar do Altar Stone",
                        next_state=State.SITUAR)
             return
 
@@ -1482,7 +1482,7 @@ class BossRushRoutine:
         # gasta a tentativa do ciclo -- e é a tentativa que faltou para o ciclo
         # acertar quando o mob saísse da frente.
         if not self._encostar_exato_no_patamar():
-            self._fail("Não encostei em (218,45) para clicar no Altar Stone",
+            self._falhar("Não encostei em (218,45) para clicar no Altar Stone",
                        next_state=State.ENTRAR_NO_COVIL)
             return
 
@@ -1512,7 +1512,7 @@ class BossRushRoutine:
         else:
             ctx.log.warning("O portal do altar não confirmou (%s -> %s)",
                             antes, depois.posicao)
-            self._fail("Não entrei no covil pelo Altar Stone",
+            self._falhar("Não entrei no covil pelo Altar Stone",
                        next_state=State.ENTRAR_NO_COVIL)
 
     # ==================================================================
@@ -1525,7 +1525,7 @@ class BossRushRoutine:
         if self.nav.seguir_rota(mapa_bc.CAMINHO_ATE_O_BOSS):
             self._succeed(State.GUARDAS)
         else:
-            self._fail("Não cheguei na posição dos guardas",
+            self._falhar("Não cheguei na posição dos guardas",
                        next_state=State.SITUAR)
 
     def _do_guardas(self) -> None:
@@ -1623,7 +1623,7 @@ class BossRushRoutine:
             ctx.log.info("Na posição do boss: %s", ctx.memory.position())
             self._succeed(State.BOSS)
         else:
-            self._fail("Não alcancei a posição do boss", next_state=State.SITUAR)
+            self._falhar("Não alcancei a posição do boss", next_state=State.SITUAR)
 
     # ==================================================================
     # BOSS
@@ -2037,13 +2037,13 @@ class BossRushRoutine:
             stats_diarias.registrar_run(
                 ctx.account_login, False, ctx.stats.last_run_seconds,
                 ctx.stats.boss_time_seconds)
-            self._fail("Morri na luta do boss", next_state=State.RECUPERAR)
+            self._falhar("Morri na luta do boss", next_state=State.RECUPERAR)
             return
 
         # Flag presa ou ilegível: repete a FASE, no mesmo lugar. A run continua em
         # pé, e é ela que decide o resultado -- contá-la como perdida aqui faria a
         # estatística mentir a cada repetição.
-        self._fail("A luta do boss não fechou; repetindo no mesmo ponto",
+        self._falhar("A luta do boss não fechou; repetindo no mesmo ponto",
                    next_state=State.BOSS)
 
     # ==================================================================
@@ -2100,7 +2100,7 @@ class BossRushRoutine:
         # passavam raspando e a saída virava cara ou coroa. Agora os dois lados
         # leem a MESMA constante por construção.
         if not self._encostar_exato_na_saida():
-            self._fail("Não encostei no ponto da saída", next_state=State.SAIR)
+            self._falhar("Não encostei no ponto da saída", next_state=State.SAIR)
             return
 
         antes = ctx.memory.position()
@@ -2112,7 +2112,7 @@ class BossRushRoutine:
             saiu = mapa_bc.distancia(antes, depois.posicao) > 200
         if not saiu:
             ctx.log.warning("A saída pelo NPC não confirmou; tentando de novo")
-            self._fail("Não saí da cave", next_state=State.SAIR)
+            self._falhar("Não saí da cave", next_state=State.SAIR)
             return
 
         ctx.log.info("Fora da cave: %s", depois.resumo())
@@ -2187,7 +2187,7 @@ class BossRushRoutine:
                 "para o gatilho de venda.",
                 self._rodadas_de_venda_falhas,
                 RODADAS_DE_VENDA_ANTES_DE_DESLIGAR)
-            self._fail("Manutenção incompleta; mais uma run antes de tentar de "
+            self._falhar("Manutenção incompleta; mais uma run antes de tentar de "
                        "novo", next_state=State.SITUAR)
             return
 
@@ -2211,7 +2211,7 @@ class BossRushRoutine:
             ctx.config.save()
         except Exception as exc:
             ctx.log.warning("Não consegui salvar a configuração: %s", exc)
-        self._fail("Venda impossível; BC desligado nesta conta",
+        self._falhar("Venda impossível; BC desligado nesta conta",
                    next_state=State.SITUAR)
 
     # ==================================================================
@@ -2476,7 +2476,7 @@ class BossRushRoutine:
                         f"{previous.name}: {type(exc).__name__}: {exc}",
                         ctx.memory.position(), ctx.memory.location(),
                     )
-                    self._fail(f"exceção em {previous.name}")
+                    self._falhar(f"exceção em {previous.name}")
 
                 gasto = time.time() - comecou
                 if self.state is not previous:
