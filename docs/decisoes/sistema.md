@@ -39,12 +39,14 @@
     `thread`, `exc` completo). Em prod a pasta `logs/dev/` nem é criada — o
     detalhe de dev só existe na máquina de quem desenvolve. O sink reusa a
     poda por linha do `ArquivoDeLogLimitado` (`LOG_JSON_MAXIMO = 4000`).
-  - **Correlação:** em `routine.py`, a cada run o contexto ganha um
-    `id_run` (`uuid.uuid4().hex[:10]`) via `logmodo.contexto(conta, id_run)` e
-    `logmodo.fase(...)` no laço principal, dando um ID único para rastrear uma
+  - **Correlação:** em `bc/routine.py`, a cada run o contexto ganha um
+    `id_run` (`uuid.uuid4().hex[:10]`) via `logmodo.contexto(conta, id_run)`,
+    e o laço comum das caves (`bot/rotina_de_cave.py`) grava
+    `logmodo.fase(...)` a cada estado, dando um ID único para rastrear uma
     run inteira pelo JSON (ob. request-ID do DevOps checklist). O contexto é
-    thread-local (cada conta roda na própria thread) e é limpo no `finally` do
-    `run()`.
+    thread-local (cada conta roda na própria thread) e é limpo na SAÍDA LIMPA
+    do `run()` — numa queda ele fica, porque o Histórico de Quedas lê a fase
+    depois (ver "O laço comum das caves", abaixo).
   - **Interface:** mudar o nível de DEBUG↔INFO ao vivo só em modo dev. Na web
     o checkbox "detalhado" no cabeçalho do log (chama
     `Api.definir_nivel_log`); na GUI o `ck_debug` — em prod o checkbox aparece
@@ -604,3 +606,50 @@ observável deste lado.)
 O erro do PyInstaller também parou de ser engolido: era `check=True`, e o
 traceback do `CalledProcessError` enterrava a única mensagem que dizia o que
 houve.
+
+## O laço comum das caves — `bot/rotina_de_cave.py` (26/09/2026)
+
+Decisão Q17 da auditoria de 25/09. `BossRushRoutine.run` e `HHRoutine.run` eram
+o MESMO laço de estados (164 e 111 linhas) e já tinham divergido — o sintoma que
+a regra de reuso existe para evitar. Subiu para `RotinaDeCave`: o laço é um só,
+cada cave declara o que ele pergunta (`NOME`, `CAVE`, `LARGADA`, os passos, o
+estado inicial e o de recuperar) e entra pelos ganchos (`_anunciar_a_largada`,
+`_antes_do_laco`, `_ao_comecar`, `_a_cada_volta`).
+
+### O defeito que a divergência escondia
+
+O BC chamava `logmodo.limpar()` no `finally` do laço. O supervisor só grava a
+queda (`_registrar_queda`, no `except` de `_run_session`) DEPOIS que o
+`Disconnected` sai do laço — e aí a fase já tinha sido apagada. Toda queda do BC
+ia para o Histórico de Quedas sem dizer o que o bot estava fazendo. A HH não
+limpava, e por isso as quedas dela têm fase. (No `logs/quedas/quedas.jsonl` de
+26/09 as 11 quedas com fase são todas da HH; o BC não roda desde antes disso, e
+o defeito foi achado lendo o código, não o registro.)
+
+Agora a limpeza é só na SAÍDA LIMPA (farm desligado, limite de runs): as saídas
+do laço são `break`, e o `limpar` fica depois do `try`/`finally` — uma exceção
+o pula. Travado por
+`tests/test_rotina_de_cave.py::test_numa_QUEDA_a_fase_fica_para_o_historico`.
+
+### O que mudou de comportamento
+
+- A HH ganhou o que só o BC tinha: o cronômetro por estado
+  (`hh.estado.<ESTADO>`) e a linha "`<ESTADO>` levou N s -> `<PRÓXIMO>`" no log.
+- O BC grava a fase em minúsculas no JSON de dev, como a HH. A frase do
+  Histórico não muda: `quedas.frase_da_fase` compara em maiúsculas.
+- O despacho é pela convenção `_do_<estado>`; o `_HANDLERS` do BC saiu.
+  `tests/test_rotina_de_cave.py::test_todo_estado_tem_o_seu_handler` trava as
+  duas caves.
+- Os passos do BC entre estados (0,06/0,15 s) eram literais dentro de uma
+  expressão e não apareciam no `TEMPOS.md`; viraram `PASSO_DENTRO_DA_CAVE` e
+  `PASSO_FORA_DA_CAVE`, como na HH.
+- As duas rotinas passaram a ser conferidas pelo `test_sem_chamada_orfa.py`: o
+  `getattr` do laço as tirava de lá.
+
+### O que NÃO subiu, e por quê
+
+- **Os passos:** números medidos e diferentes (BC 0,06/0,15; HH 0,05/0,4).
+- **`_falhar`:** o BC conta falhas seguidas e reavalia a partir da quarta; a HH
+  não conta.
+- **`_guard`:** o BC consulta o `Watchdog` dele e vê a morte; a HH usa
+  `ctx.check_watchdog()` e respeita a pausa.

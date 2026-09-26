@@ -210,13 +210,18 @@ def test_os_pontos_quentes_estao_instrumentados(modulo, classe, metodo):
     assert hasattr(alvo, "__wrapped__"), f"{classe}.{metodo} perdeu o cronômetro"
 
 
-def test_o_laco_do_BC_mede_por_ESTADO():
+def test_o_laco_das_caves_mede_por_ESTADO():
+    """O laço é o comum (`bot/rotina_de_cave.py`) desde 26/09/2026; a chave de
+    cada cave sai do `NOME` dela -- `bc.estado.<ESTADO>`, `hh.estado.<ESTADO>`."""
     import inspect
 
-    from blazesbot.bot.bc import routine
+    from blazesbot.bot.bc.routine import BossRushRoutine
+    from blazesbot.bot.hh.routine import HHRoutine
+    from blazesbot.bot.rotina_de_cave import RotinaDeCave
 
-    fonte = inspect.getsource(routine.BossRushRoutine.run)
-    assert 'cronometro(f"bc.estado.{previous.name}")' in fonte
+    fonte = inspect.getsource(RotinaDeCave.run)
+    assert 'cronometro(f"{self.NOME.lower()}.estado.{anterior.name}")' in fonte
+    assert (BossRushRoutine.NOME, HHRoutine.NOME) == ("BC", "HH")
 
 
 def test_o_supervisor_liga_a_telemetria_e_carimba_a_conta():

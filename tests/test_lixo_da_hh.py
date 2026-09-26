@@ -126,12 +126,16 @@ def test_a_memoria_da_limpa_e_do_OBJETO():
 
 
 def test_o_INICIO_da_rotina_zera_a_limpa():
-    """E é no `run`, não num estado: desligar/ligar não passa pelos estados."""
-    fonte = inspect.getsource(HHRoutine.run)
+    """E é no `run`, não num estado: desligar/ligar não passa pelos estados.
+
+    O `run` é o laço comum das caves desde 26/09/2026; a HH entra nele pelo
+    gancho `_antes_do_laco`."""
+    fonte = inspect.getsource(HHRoutine._antes_do_laco)
 
     assert "self.manutencao.a_hh_comecou()" in fonte, (
         "Sem isto, só a PRIMEIRA largada da sessão limpa a bolsa -- que é o "
         "defeito medido.")
+    assert "self._antes_do_laco()" in inspect.getsource(HHRoutine.run)
 
 
 # ===========================================================================

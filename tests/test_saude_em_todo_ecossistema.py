@@ -183,22 +183,25 @@ def test_a_HH_NAO_ENGOLE_Disconnected():
     Todo `except` que nomeia `Disconnected` tem de ser um `raise` puro. É o
     mesmo desenho da BC (`bc/routine.py`).
     """
+    from blazesbot.bot import rotina_de_cave
     from blazesbot.bot.hh import routine as mod_hh
 
-    fonte = inspect.getsource(mod_hh)
-    arvore = ast.parse(fonte)
+    # O laço da HH é o comum das caves desde 26/09/2026: o `except` que mais
+    # importa mora lá, e varrer só o módulo da HH passaria vazio.
     engolidos = []
-    for no in ast.walk(arvore):
-        if not isinstance(no, ast.ExceptHandler) or no.type is None:
-            continue
-        if "Disconnected" not in ast.unparse(no.type):
-            continue
-        # O corpo tem de ser um `raise` seco -- nada antes, nada depois.
-        corpo = [c for c in no.body if not (isinstance(c, ast.Expr)
-                                            and isinstance(c.value, ast.Constant))]
-        if not (len(corpo) == 1 and isinstance(corpo[0], ast.Raise)
-                and corpo[0].exc is None):
-            engolidos.append(no.lineno)
+    for modulo in (mod_hh, rotina_de_cave):
+        for no in ast.walk(ast.parse(inspect.getsource(modulo))):
+            if not isinstance(no, ast.ExceptHandler) or no.type is None:
+                continue
+            if "Disconnected" not in ast.unparse(no.type):
+                continue
+            # O corpo tem de ser um `raise` seco -- nada antes, nada depois.
+            corpo = [c for c in no.body
+                     if not (isinstance(c, ast.Expr)
+                             and isinstance(c.value, ast.Constant))]
+            if not (len(corpo) == 1 and isinstance(corpo[0], ast.Raise)
+                    and corpo[0].exc is None):
+                engolidos.append(f"{modulo.__name__}:{no.lineno}")
     assert not engolidos, (
         f"a HH captura Disconnected nas linhas {engolidos} sem relançar; ela "
         f"tem que subir para o supervisor")

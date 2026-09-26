@@ -62,9 +62,8 @@ def test_comeca_SITUANDO_e_nunca_PREPARANDO():
     Começar preparando faria o bot tentar entrar estando dentro -- e aí o clique
     cai no chão e tira o personagem da rota. É o mesmo motivo da BC.
     """
-    fonte = _fonte(HHRoutine.run)
-    assert "State.SITUAR" in fonte
-    assert "State.PREPARAR" not in fonte
+    assert HHRoutine.ESTADO_INICIAL is State.SITUAR
+    assert "self.state = self.ESTADO_INICIAL" in _fonte(HHRoutine.run)
 
 
 def test_o_laco_respeita_o_should_continue_ANTES_de_agir():

@@ -210,14 +210,18 @@ def test_sem_saber_a_cave_cai_em_farms(bc, hh):
 
 
 def test_cada_rotina_DIZ_qual_cave_e():
-    """Sem isso a parada cai no último recurso e volta a errar o alvo."""
+    """Sem isso a parada cai no último recurso e volta a errar o alvo.
+
+    O laço é o comum das caves desde 26/09/2026: ele marca `ctx.cave_em_farm`
+    com o `CAVE` que cada rotina declara."""
     from blazesbot.bot.bc.routine import BossRushRoutine
     from blazesbot.bot.hh.routine import HHRoutine
+    from blazesbot.config import CAVE_BC, CAVE_HH
 
-    for rotina, esperado in ((BossRushRoutine, "CAVE_BC"),
-                             (HHRoutine, "CAVE_HH")):
+    assert (BossRushRoutine.CAVE, HHRoutine.CAVE) == (CAVE_BC, CAVE_HH)
+    for rotina in (BossRushRoutine, HHRoutine):
         fonte = _fonte(rotina.run)
-        assert f"ctx.cave_em_farm = {esperado}" in fonte, rotina.__name__
+        assert "ctx.cave_em_farm = self.CAVE" in fonte, rotina.__name__
 
 
 def test_a_cave_e_LIMPA_na_saida():

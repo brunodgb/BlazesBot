@@ -55,22 +55,20 @@ ORDEM em que essas coisas acontecem nesta cave, e mais nada.
 from __future__ import annotations
 
 import time
-from collections.abc import Callable
 from enum import Enum, auto
 
 from ...config import CAVE_HH, MODO_FADA_DA_HH
-from ...core import catador, diario, esconder_jogadores, logmodo
+from ...core import catador, esconder_jogadores
 from ...core.vision import capture_window, find_template
 from .. import mural
 from ..context import (
     BotContext,
-    Disconnected,
-    FarmDesligado,
     StopRequested,
 )
 from ..esconder import EsconderOsJogadores
 from ..espera_do_reseter import esperar_o_reseter
-from ..navegacao import Navigator, PersonagemMortoNoPortao
+from ..navegacao import Navigator
+from ..rotina_de_cave import RotinaDeCave
 from ..team import TeamService
 from . import bosses, mapa_hh
 from .combate import CombateHH
@@ -190,8 +188,22 @@ ESTADOS_DENTRO_DA_CAVE = frozenset({
 })
 
 
-class HHRoutine:
-    """Executa ciclos de boss-rush na HH até parada ou desconexão."""
+class HHRoutine(RotinaDeCave):
+    """Executa ciclos de boss-rush na HH até parada ou desconexão.
+
+    O LAÇO é o de `bot/rotina_de_cave.py`, comum às duas caves. Daqui saem o
+    que ele pergunta (os atributos abaixo) e o que é regra da HH (os ganchos
+    `_anunciar_a_largada`, `_antes_do_laco` e `_a_cada_volta`).
+    """
+
+    NOME = "HH"
+    CAVE = CAVE_HH
+    LARGADA = "largada da HH"
+    PASSO_DENTRO = PASSO_DENTRO_DA_CAVE
+    PASSO_FORA = PASSO_FORA_DA_CAVE
+    ESTADO_INICIAL = State.SITUAR
+    ESTADO_DE_RECUPERAR = State.RECUPERAR
+    ESTADOS_DENTRO_DA_CAVE = ESTADOS_DENTRO_DA_CAVE
 
     def __init__(self, ctx: BotContext) -> None:
         self.ctx = ctx
@@ -260,22 +272,10 @@ class HHRoutine:
         self._contou_a_morte = False
 
     # ==================================================================
-    # O laço
+    # O laço é o de `bot/rotina_de_cave.py`; aqui, os ganchos da HH
     # ==================================================================
 
-    def run(self, max_runs: int | None = None,
-            should_continue: Callable[[], bool] | None = None) -> None:
-        """Executa ciclos até parada, desconexão ou limite de runs.
-
-        `should_continue` é consultado no início de cada iteração. É assim que
-        desligar o farm pela interface tem efeito imediato: a rotina devolve o
-        controle num ponto seguro, entre estados, sem interromper uma ação pela
-        metade.
-
-        NÃO TRATA `Disconnected`: deixa subir para o supervisor, que é quem sabe
-        matar o cliente, relançar e relogar. Login e relogin são a fundação, e
-        todo ecossistema usa a MESMA -- ver o `CLAUDE.md`.
-        """
+    def _anunciar_a_largada(self) -> None:
         ctx = self.ctx
         ctx.log.info(
             "Iniciando HH (Black Wind Camp Dungeon) | reset: %s (%s) | "
@@ -285,95 +285,15 @@ class HHRoutine:
             ctx.settings.mount_speed_pct,
             ctx.settings.hh.vendor.sell_start_slot,
         )
-        # Começa SITUANDO, nunca preparando: uma conta que já está no meio da
-        # cave continua de onde estava, em vez de tentar entrar estando dentro --
-        # o que faria o clique cair no chão e tirar o personagem da rota.
-        self.state = State.SITUAR
+
+    def _antes_do_laco(self) -> None:
         # LIGAR A HH ZERA A LIMPA DA LARGADA. A rotina é guardada pelo
         # supervisor e sobrevive a desligar/ligar o farm; sem isto, só a
         # primeira largada da sessão limpava a bolsa.
         self.manutencao.a_hh_comecou()
-        # O F12 PRESO JÁ NA LARGADA, antes de andar -- §31.
-        self.esconder.prender("largada da HH")
 
-        # Desligar a HH pela interface precisa cortar a fase atual NO MEIO.
-        # `farming` é o sinal para `ctx.raise_if_stopped` detonar `FarmDesligado`.
-        # O `finally` garante que a flag cai mesmo em exceção ou `return` --
-        # senão o laço "online" seguinte re-detonaria a parada e derrubaria a
-        # sessão, o oposto do desejado.
-        ctx.farming = True
-        # QUEM está no ar. É o que faz a parada conferir o
-        # interruptor desta cave, e não `account.farms`.
-        ctx.cave_em_farm = CAVE_HH
-        try:
-            while True:
-                if should_continue is not None and not should_continue():
-                    ctx.log.info("HH desligada; devolvendo o controle")
-                    return
-                if max_runs is not None and ctx.runs_completed >= max_runs:
-                    ctx.log.info("Limite de %s runs atingido", max_runs)
-                    return
-
-                self._guard()
-                self.combat.cuidar_da_comida_no_laco(  # a rede da comida
-                    em_transito=self.state in ESTADOS_DENTRO_DA_CAVE)
-                self._contar_a_volta()
-                logmodo.fase(self.state.name.lower())
-
-                anterior = self.state
-                handler = getattr(self, f"_do_{self.state.name.lower()}")
-                try:
-                    handler()
-                except (StopRequested, Disconnected):
-                    # Parar a conta e cair são do supervisor, não daqui.
-                    raise
-                except FarmDesligado:
-                    # DESLIGAR A HH NÃO É DEFEITO.
-                    #
-                    # `ctx.tick` chama `raise_if_stopped`, que detona
-                    # `FarmDesligado` assim que o interruptor da cave cai -- e
-                    # `tick` é chamado de dentro da navegação, do combate e da
-                    # venda. Sem este ramo a exceção subia até o supervisor,
-                    # que a registrava como "Erro inesperado na sessão" COM
-                    # TRACEBACK e derrubava a sessão inteira: a conta soltava o
-                    # controle e refazia login, janela e contexto.
-                    #
-                    # Medido no log de 03/09/2026: **15 vezes em 33 minutos**,
-                    # cada uma reconstruindo a sessão. É o mesmo desenho que a
-                    # BC já tinha em `bc/routine.py`.
-                    ctx.log.info(
-                        "HH desligada no meio de %s; devolvendo o controle "
-                        "(a conta fica online, parada)", anterior.name)
-                    return
-                except PersonagemMortoNoPortao as exc:
-                    # O portão da montaria avisando que não há o que insistir:
-                    # cadáver não monta. Não é exceção inesperada, e o desfecho
-                    # é o mesmo do `_guard()` ao ver o personagem morto.
-                    ctx.log.warning("%s. Indo para RECUPERAR.", exc)
-                    self.state = State.RECUPERAR
-                except Exception as exc:
-                    ctx.log.exception("HH: erro no estado %s: %s",
-                                      anterior.name, exc)
-                    diario.registrar_evento(
-                        ctx.account_login, "excecao",
-                        f"HH {anterior.name}: {type(exc).__name__}: {exc}",
-                        ctx.memory.position(), ctx.memory.location(),
-                    )
-                    self._falhar(f"exceção em {anterior.name}")
-
-                ctx.tick(PASSO_DENTRO_DA_CAVE
-                         if self.state in ESTADOS_DENTRO_DA_CAVE
-                         else PASSO_FORA_DA_CAVE)
-        except FarmDesligado:
-            # REDE DE SEGURANÇA: o `ctx.tick` do fim do laço e o `_guard()` do
-            # começo ficam FORA do `try` do handler. A HH pode apagar ali
-            # também, e o desfecho tem de ser o mesmo -- controle devolvido
-            # limpo, sem derrubar a sessão.
-            ctx.log.info("HH desligada; devolvendo o controle")
-            return
-        finally:
-            ctx.farming = False
-            ctx.cave_em_farm = ""
+    def _a_cada_volta(self) -> None:
+        self._contar_a_volta()
 
     def _guard(self) -> None:
         """A parada e a queda respondem ENTRE estados, sempre."""

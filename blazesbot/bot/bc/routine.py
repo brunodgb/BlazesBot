@@ -65,7 +65,6 @@ from __future__ import annotations
 
 import time
 import uuid
-from collections.abc import Callable
 from enum import Enum, auto
 
 from ...config import CAVE_BC
@@ -77,14 +76,14 @@ from ...core import (
     stats_diarias,
     vision,
 )
-from ...core.cronometro import cronometro
 from ...core.lugares import LUGAR_FORA_DA_CAVE
 from ...core.vision import capture_window, find_template, frame_is_blank
 from .. import hotbar
 from ..context import BotContext, Disconnected, FarmDesligado, StopRequested
 from ..esconder import EsconderOsJogadores
 from ..espera_do_reseter import esperar_o_reseter
-from ..navegacao import Navigator, PersonagemMortoNoPortao
+from ..navegacao import Navigator
+from ..rotina_de_cave import RotinaDeCave
 from ..team import TeamService
 from ..watchdog import DcReason, Watchdog
 from . import mapa_bc
@@ -380,6 +379,10 @@ ESTADOS_DENTRO_DA_CAVE = frozenset({
     State.ATE_OS_GUARDAS, State.GUARDAS, State.ATE_O_BOSS, State.BOSS,
     State.SAIR,
 })
+# A PAUSA ENTRE ESTADOS, dentro e fora da cave. Eram literais no laço; quem as
+# aplica agora é o laço comum, `bot/rotina_de_cave.py`.
+PASSO_DENTRO_DA_CAVE = 0.06
+PASSO_FORA_DA_CAVE = 0.15
 
 
 # Quantas rodadas de "não vendeu ⇒ roda mais uma run de BC ⇒ tenta de novo"
@@ -391,8 +394,22 @@ ESTADOS_DENTRO_DA_CAVE = frozenset({
 RODADAS_DE_VENDA_ANTES_DE_DESLIGAR = 3
 
 
-class BossRushRoutine:
-    """Executa ciclos de boss-rush até parada ou desconexão."""
+class BossRushRoutine(RotinaDeCave):
+    """Executa ciclos de boss-rush até parada ou desconexão.
+
+    O LAÇO é o de `bot/rotina_de_cave.py`, comum às duas caves. Daqui saem o
+    que ele pergunta (os atributos abaixo) e o que é regra do BC (os ganchos
+    `_anunciar_a_largada`, `_antes_do_laco` e `_ao_comecar`).
+    """
+
+    NOME = "BC"
+    CAVE = CAVE_BC
+    LARGADA = "largada do BC"
+    PASSO_DENTRO = PASSO_DENTRO_DA_CAVE
+    PASSO_FORA = PASSO_FORA_DA_CAVE
+    ESTADO_INICIAL = State.SITUAR
+    ESTADO_DE_RECUPERAR = State.RECUPERAR
+    ESTADOS_DENTRO_DA_CAVE = ESTADOS_DENTRO_DA_CAVE
 
     def __init__(self, ctx: BotContext) -> None:
         self.ctx = ctx
@@ -457,7 +474,7 @@ class BossRushRoutine:
         # Contagem de runs do gatilho de venda ("vender a cada N runs"). Guarda
         # em que run a última venda aconteceu; a diferença para `ctx.stats.runs`
         # é o que `_seguir_depois_de_sair` compara com `runs_before_selling`.
-        # **Why 0**: no `run()` a base é repetida para `ctx.stats.runs` no começo
+        # **Why 0**: o `_antes_do_laco` repete a base para `ctx.stats.runs` no começo
         # de cada execução, então a contagem só conta dali pra frente e volta a
         # zero quando a execução do bot BC termina (uma nova `run()` recomeça).
         self._runs_na_ultima_venda = 0
@@ -2254,25 +2271,8 @@ class BossRushRoutine:
         self.state = State.SITUAR
 
     # ==================================================================
-    # Laço principal
+    # A largada: os ganchos do laço comum, `bot/rotina_de_cave.py`
     # ==================================================================
-
-    _HANDLERS = {
-        State.SITUAR: "_do_situar",
-        State.PREPARAR: "_do_preparar",
-        State.ATE_A_ENTRADA: "_do_ate_a_entrada",
-        State.ENTRAR: "_do_entrar",
-        State.PREPARAR_DENTRO: "_do_preparar_dentro",
-        State.ATE_O_ALTAR: "_do_ate_o_altar",
-        State.ENTRAR_NO_COVIL: "_do_entrar_no_covil",
-        State.ATE_OS_GUARDAS: "_do_ate_os_guardas",
-        State.GUARDAS: "_do_guardas",
-        State.ATE_O_BOSS: "_do_ate_o_boss",
-        State.BOSS: "_do_boss",
-        State.SAIR: "_do_sair",
-        State.MANUTENCAO: "_do_manutencao",
-        State.RECUPERAR: "_do_recuperar",
-    }
 
     def _vender_ao_iniciar_se_estiver_na_cidade(self) -> None:
         """Começou o bot já em Stone City? Então vende ANTES de sair farmando.
@@ -2336,21 +2336,7 @@ class BossRushRoutine:
             ctx.log.exception(
                 "A venda de início falhou (%s). Seguindo para o farm.", exc)
 
-    def run(
-        self,
-        max_runs: int | None = None,
-        should_continue: Callable[[], bool] | None = None,
-    ) -> None:
-        """Executa ciclos até parada, desconexão ou limite de runs.
-
-        `should_continue` é consultado no início de cada iteração. É assim que
-        desligar o farm pela interface tem efeito imediato: a rotina devolve o
-        controle num ponto seguro, entre estados, sem interromper uma ação pela
-        metade.
-
-        Não trata Disconnected: deixa subir para o supervisor, que é quem sabe
-        matar o cliente, relançar e relogar.
-        """
+    def _anunciar_a_largada(self) -> None:
         ctx = self.ctx
         ctx.log.info(
             "Iniciando boss-rush | montaria %s%% | rota %s | venda a cada %s "
@@ -2362,141 +2348,29 @@ class BossRushRoutine:
             ctx.settings.bags.bolsas, ctx.settings.bags.capacidade,
             self.nav.velocidade.estado_para_log(),
         )
-        # Começa SITUANDO, nunca preparando. Assim uma conta que já está no meio
-        # da cave continua de onde estava, em vez de tentar entrar de novo estando
-        # dentro -- o que fazia o clique cair no chão e tirar o personagem da rota.
-        self.state = State.SITUAR
+
+    def _antes_do_laco(self) -> None:
         # A contagem de runs do gatilho de venda recomeça a cada execução do bot
         # BC: só conta as runs dali pra frente, e terminar a execução volta o
         # contador a zero (a próxima `run()` reajusta a base aqui).
-        self._runs_na_ultima_venda = ctx.stats.runs
+        self._runs_na_ultima_venda = self.ctx.stats.runs
 
-        # Enquanto o laço roda, desligar o BC pela interface precisa cortar a
-        # fase atual NO MEIO (navigation, combate, entrada, venda). `farming` é o
-        # sinal para `ctx.raise_if_stopped` detonar `FarmDesligado` quando
-        # `bc_farm` apagar. O `finally` garante que a flag cai mesmo em exceção
-        # ou `return` -- senão o laço "online" seguinte (fora do farming)
-        # re-detonaria a parada e derrubaria a sessão, o oposto do desejado.
-        # O F12 PRESO JÁ NA LARGADA -- *"no momento que eu clicar em BC ou HH,
-        # antes de começar a andar"* (usuário, 10/09/2026). O supervisor prende
-        # ao preparar o cliente, no login; a cave é ligada depois.
+    def _ao_comecar(self) -> None:
+        self._vender_ao_iniciar_se_estiver_na_cidade()
+
+        # GARANTIR QUE O PET ESTÁ ATIVO ANTES DE COMEÇAR O FARM.
         #
-        # REAFIRMAR É O CORRETO, e não redundância: uma tecla fisicamente presa
-        # repete sozinha, e reenviar recupera o estado quando o cliente o perde
-        # -- num relogin, em que a janela é outra.
-        self.esconder.prender("largada do BC")
-
-        ctx.farming = True
-        # QUEM está no ar. É o que faz a parada conferir o
-        # interruptor desta cave, e não `account.farms`.
-        ctx.cave_em_farm = CAVE_BC
-        try:
-            self._vender_ao_iniciar_se_estiver_na_cidade()
-
-            # GARANTIR QUE O PET ESTÁ ATIVO ANTES DE COMEÇAR O FARM.
-            #
-            # O pet é essencial para o farm (auto-pick e dano), e sem ele a run é
-            # desperdício. `ensure_pet()` também roda no PREPARAR, mas esse estado
-            # só acontece quando o bot está fora da cave e precisa se preparar. Se
-            # o bot começar já dentro (ou o SITUAR pular direto para estados
-            # internos), o pet nunca seria verificado -- e um pet caído passaria
-            # despercebido até o usuário notar que nada está sendo coletado.
-            #
-            # Chamada aqui: ANTES do loop, depois da venda inicial (que pode ter
-            # movido o personagem), e coberta pelo `ctx.farming = True` (permite
-            # que o usuário pare caso a invocação trave). Se a memória não for
-            # confiável, `ensure_pet()` invoca UMA vez e segue -- o fallback é
-            # melhor que travar na largada.
-            if ctx.settings.pet.summon_on_login:
-                self.combat.ensure_pet()
-
-            while True:
-                if should_continue is not None and not should_continue():
-                    ctx.log.info("Farm desligado; devolvendo o controle")
-                    return
-                if max_runs is not None and ctx.runs_completed >= max_runs:
-                    ctx.log.info("Limite de %s runs atingido", max_runs)
-                    return
-
-                self._guard()
-                # A COMIDA DO PET, CONFERIDA A CADA VOLTA -- 13/09/2026.
-                #
-                # ESTA CHAMADA JÁ EXISTIU E ESTAVA COMENTADA. Ela saiu de
-                # circulação porque, do jeito antigo, dentro da cave ela não
-                # fazia nada e fora dela batia no veto do desmonte a cada volta
-                # -- ou seja, era custo sem efeito.
-                #
-                # Voltou com outra forma: `cuidar_da_comida_no_laco` só age
-                # depois de a refeição passar do prazo, e aí ela fura o veto.
-                # O preparo de entrada (`_do_preparar_dentro`, passo 4) continua sendo o
-                # caminho normal; isto é a rede para quando ele não chega --
-                # venda longa, disputa de entrada, run retomada no meio.
-                self.combat.cuidar_da_comida_no_laco(
-                    em_transito=self.state in ESTADOS_DENTRO_DA_CAVE)
-                # Contexto estruturado do JSON de dev: registra a fase atual
-                # antes de o handler rodar (o log do handler sai com esta fase).
-                logmodo.fase(self.state.name)
-                handler = getattr(self, self._HANDLERS[self.state])
-                previous = self.state
-                # Cronômetro por estado. É o número que diz ONDE o tempo da run é
-                # gasto -- foi assim que apareceu que o trajeto da cave custava 8,6 s
-                # por waypoint. Sem esta linha, otimizar é adivinhar.
-                comecou = time.time()
-                try:
-                    # UM NOME POR ESTADO. O `comecou` logo acima ja mede e loga a
-                    # passagem individual; o cronometro agrega a DISTRIBUICAO
-                    # (n, minimo, media, maximo por estado), que e o que mostra
-                    # se um estado piorou -- uma linha solta nao mostra.
-                    #
-                    # Custo zero de verdade aqui: o estado mais curto da rotina
-                    # leva dezenas de milissegundos contra os 310 ns do
-                    # cronometro. Ver o piso em `core/cronometro.py`.
-                    with cronometro(f"bc.estado.{previous.name}"):
-                        handler()
-                except (StopRequested, Disconnected):
-                    raise
-                except PersonagemMortoNoPortao as exc:
-                    # NAO e excecao inesperada: e o portao da montaria avisando
-                    # que nao ha o que insistir. Sem este ramo ele cairia no
-                    # `except Exception` abaixo e sairia com traceback no log,
-                    # como se fosse defeito. O desfecho e o mesmo do `_guard()`
-                    # ao ver o personagem morto -- RECUPERAR, que revive.
-                    ctx.log.warning("%s. Indo para RECUPERAR.", exc)
-                    self.state = State.RECUPERAR
-                except FarmDesligado:
-                    ctx.log.info(
-                        "BC desligado no meio de %s; devolvendo o controle "
-                        "(conta fica online, parada, com relogin)",
-                        previous.name)
-                    return
-                except Exception as exc:
-                    ctx.log.exception("Erro no estado %s: %s", previous.name, exc)
-                    diario.registrar_evento(
-                        ctx.account_login, "excecao",
-                        f"{previous.name}: {type(exc).__name__}: {exc}",
-                        ctx.memory.position(), ctx.memory.location(),
-                    )
-                    self._falhar(f"exceção em {previous.name}")
-
-                gasto = time.time() - comecou
-                if self.state is not previous:
-                    ctx.log.info("%s levou %.1fs -> %s | posição %s",
-                                 previous.name, gasto, self.state.name,
-                                 ctx.memory.position())
-                elif gasto > 5.0:
-                    ctx.log.info("%s levou %.1fs e continua no mesmo estado",
-                                 previous.name, gasto)
-
-                # Pausa mínima entre estados. Dentro da cave cada décimo conta: os
-                # mobs do caminho continuam vindo enquanto o bot pensa.
-                ctx.tick(0.06 if self.state in ESTADOS_DENTRO_DA_CAVE else 0.15)
-        except FarmDesligado:
-            # Rede de segurança: um `FarmDesligado` pode vir também da `ctx.tick`
-            # do fim do laço (o BC apagou ENTRE fases), fora do `try` do handler.
-            # Nesse caso também devolvemos o controle limpo, sem derrubar a sessão.
-            ctx.log.info("BC desligado; devolvendo o controle")
-            return
-        finally:
-            ctx.farming = False
-            ctx.cave_em_farm = ""
-            logmodo.limpar()
+        # O pet é essencial para o farm (auto-pick e dano), e sem ele a run é
+        # desperdício. `ensure_pet()` também roda no PREPARAR, mas esse estado
+        # só acontece quando o bot está fora da cave e precisa se preparar. Se
+        # o bot começar já dentro (ou o SITUAR pular direto para estados
+        # internos), o pet nunca seria verificado -- e um pet caído passaria
+        # despercebido até o usuário notar que nada está sendo coletado.
+        #
+        # Chamada aqui: ANTES do loop, depois da venda inicial (que pode ter
+        # movido o personagem), e coberta pelo `ctx.farming = True` (permite
+        # que o usuário pare caso a invocação trave). Se a memória não for
+        # confiável, `ensure_pet()` invoca UMA vez e segue -- o fallback é
+        # melhor que travar na largada.
+        if self.ctx.settings.pet.summon_on_login:
+            self.combat.ensure_pet()

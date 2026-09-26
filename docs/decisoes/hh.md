@@ -1211,8 +1211,9 @@ por sessão do bot", e isso deu defeito na hora do teste:
 O motivo: a rotina da HH é criada uma vez e **guardada** pelo supervisor
 (`_rotina_da_hh`), porque o estado dela diz em que trecho a run está — ela
 sobrevive a desligar e ligar o farm, e com ela sobrevivia a memória de que a
-limpa já tinha acontecido. Agora `HHRoutine.run` chama
-`ManutencaoDaHH.a_hh_comecou()` na entrada, e cada largada tem direito à sua
+limpa já tinha acontecido. Agora a largada chama
+`ManutencaoDaHH.a_hh_comecou()` (o gancho `HHRoutine._antes_do_laco`, que o
+`run` comum das caves chama na entrada), e cada largada tem direito à sua
 limpa. O reset é no `run` e não num estado porque desligar/ligar o farm não
 passa pela máquina de estados.
 
@@ -1980,8 +1981,7 @@ daí `key_up` a recusa. É o que faz "nunca soltar" ser verdade mesmo quando um
 | momento | quem |
 |---|---|
 | preparar o cliente (login, com o patch e o pet bug) | `supervisor` |
-| largada do BC, antes de andar | `BossRushRoutine.run` |
-| largada da HH, antes de andar | `HHRoutine.run` |
+| largada do BC e da HH, antes de andar | `RotinaDeCave.run` (`bot/rotina_de_cave.py`), o laço comum das duas |
 | antes de cada entrada, nas duas | `_do_entrar` |
 
 **Reafirmar não é redundância:** uma tecla fisicamente presa repete sozinha, e

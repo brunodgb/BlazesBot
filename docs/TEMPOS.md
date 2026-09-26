@@ -31,7 +31,7 @@ desta lista é ou uma exceção justificada, ou dívida que ninguém converteu a
 mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 
 
-**368 tempos catalogados** — 250 FIXOS (espera cega), 118 entre TETO e PASSO.
+**370 tempos catalogados** — 250 FIXOS (espera cega), 120 entre TETO e PASSO.
 
 
 **3 estão diferentes do original:** `FATIA_DE_ESPERA`, `INTERVALO_ENTRE_INVOCACOES`, `PASSOS_DO_APP`
@@ -112,15 +112,17 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 
 | tempo | atual | original | natureza | onde | função | para que serve |
 |---|---|---|---|---|---|---|
-| `PASSO_DO_RECONHECIMENTO` | 0.04 s | = | PASSO | [routine.py:121](blazesbot/bot/bc/routine.py#L121) | `_reconhecer_entrada` | PASSO: de quanto em quanto tempo perguntar, dentro da janela. A pergunta é uma |
-| `ESPERA_ENTRE_TENTATIVAS` | 0.025 s | = | FIXO | [routine.py:131](blazesbot/bot/bc/routine.py#L131) | `_do_entrar` | E O INTERVALO ENTRE TENTATIVAS quase desaparece: a janela de reconhecimento já |
-| `SEGUNDOS_POR_TENTATIVA_NO_ALTAR` | 1.5 s | = | FIXO | [routine.py:167](blazesbot/bot/bc/routine.py#L167) | `_encostar_exato_no_patamar` |  |
-| `SEGUNDOS_ESPERANDO_A_BOLSA` | 0.2 s | = | FIXO | [routine.py:284](blazesbot/bot/bc/routine.py#L284) | `_usar_package_courage` | Quanto esperar a bolsa CONFIRMAR que abriu, lendo a memória. |
-| `PASSO_DA_ESPERA_DA_BOLSA` | 0.05 s | = | PASSO | [routine.py:309](blazesbot/bot/bc/routine.py#L309) | `_usar_package_courage` | De quanto em quanto tempo perguntar se a bolsa já abriu. Era 0,15 s, o que |
-| `ASSENTAMENTO_DA_BOLSA` | 0.14 s | = | FIXO | [routine.py:315](blazesbot/bot/bc/routine.py#L315) | `_usar_package_courage` | Depois que a MEMÓRIA confirma a bolsa aberta, o quanto esperar o DESENHO dela. |
-| *literal em* `_do_situar` | 1 s | = | FIXO | [routine.py:524](blazesbot/bot/bc/routine.py#L524) | `_do_situar` | Olha onde o personagem está e entra no estado que faz sentido. |
-| *literal em* `_do_preparar` | 0.2 s | = | FIXO | [routine.py:617](blazesbot/bot/bc/routine.py#L617) | `_do_preparar` |  |
-| *literal em* `_do_recuperar` | 3 s | = | FIXO | [routine.py:2233](blazesbot/bot/bc/routine.py#L2233) | `_do_recuperar` | Recuperação após morte ou falhas em sequência. |
+| `PASSO_DO_RECONHECIMENTO` | 0.04 s | = | PASSO | [routine.py:120](blazesbot/bot/bc/routine.py#L120) | `_reconhecer_entrada` | PASSO: de quanto em quanto tempo perguntar, dentro da janela. A pergunta é uma |
+| `ESPERA_ENTRE_TENTATIVAS` | 0.025 s | = | FIXO | [routine.py:130](blazesbot/bot/bc/routine.py#L130) | `_do_entrar` | E O INTERVALO ENTRE TENTATIVAS quase desaparece: a janela de reconhecimento já |
+| `SEGUNDOS_POR_TENTATIVA_NO_ALTAR` | 1.5 s | = | FIXO | [routine.py:166](blazesbot/bot/bc/routine.py#L166) | `_encostar_exato_no_patamar` |  |
+| `SEGUNDOS_ESPERANDO_A_BOLSA` | 0.2 s | = | FIXO | [routine.py:283](blazesbot/bot/bc/routine.py#L283) | `_usar_package_courage` | Quanto esperar a bolsa CONFIRMAR que abriu, lendo a memória. |
+| `PASSO_DA_ESPERA_DA_BOLSA` | 0.05 s | = | PASSO | [routine.py:308](blazesbot/bot/bc/routine.py#L308) | `_usar_package_courage` | De quanto em quanto tempo perguntar se a bolsa já abriu. Era 0,15 s, o que |
+| `ASSENTAMENTO_DA_BOLSA` | 0.14 s | = | FIXO | [routine.py:314](blazesbot/bot/bc/routine.py#L314) | `_usar_package_courage` | Depois que a MEMÓRIA confirma a bolsa aberta, o quanto esperar o DESENHO dela. |
+| `PASSO_DENTRO_DA_CAVE` | 0.06 s | *novo* | PASSO | [routine.py:384](blazesbot/bot/bc/routine.py#L384) |  | A PAUSA ENTRE ESTADOS, dentro e fora da cave. Eram literais no laço; quem as |
+| `PASSO_FORA_DA_CAVE` | 0.15 s | *novo* | PASSO | [routine.py:385](blazesbot/bot/bc/routine.py#L385) |  |  |
+| *literal em* `_do_situar` | 1 s | = | FIXO | [routine.py:541](blazesbot/bot/bc/routine.py#L541) | `_do_situar` | Olha onde o personagem está e entra no estado que faz sentido. |
+| *literal em* `_do_preparar` | 0.2 s | = | FIXO | [routine.py:634](blazesbot/bot/bc/routine.py#L634) | `_do_preparar` |  |
+| *literal em* `_do_recuperar` | 3 s | = | FIXO | [routine.py:2250](blazesbot/bot/bc/routine.py#L2250) | `_do_recuperar` | Recuperação após morte ou falhas em sequência. |
 
 
 ## DENTRO DA CAVE — combate
@@ -305,11 +307,11 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | `PASSO_ESPERANDO_O_LIDER` | 0.5 s | *novo* | PASSO | [fada.py:87](blazesbot/bot/hh/fada.py#L87) | `esperar_o_lider_entrar` |  |
 | *literal em* `seguir_o_lider` | 0.15 s | *novo* | FIXO | [fada.py:160](blazesbot/bot/hh/fada.py#L160) | `seguir_o_lider` | Clica no retrato do líder e aperta a tecla de seguir. |
 | *literal em* `entrar` | 0.25 s | *novo* | FIXO | [fada.py:250](blazesbot/bot/hh/fada.py#L250) | `entrar` | Entra na cave. Mesma porta, mesma máquina, mesmo NPC do líder. |
-| `PASSO_DENTRO_DA_CAVE` | 0.05 s | *novo* | PASSO | [routine.py:121](blazesbot/bot/hh/routine.py#L121) | `run` | Quanto esperar entre estados DENTRO da cave. |
-| `PASSO_FORA_DA_CAVE` | 0.4 s | *novo* | PASSO | [routine.py:122](blazesbot/bot/hh/routine.py#L122) | `run` |  |
-| `SEGUNDOS_PARA_ENGAJAR` | 5 s | *novo* | FIXO | [routine.py:141](blazesbot/bot/hh/routine.py#L141) | `_do_boss` | Quanto esperar, num ponto de batalha, para a flag de combate LIGAR. |
-| *literal em* `_do_situar` | 1 s | *novo* | FIXO | [routine.py:433](blazesbot/bot/hh/routine.py#L433) | `_do_situar` | Descobre em que ponto do ciclo a conta está, e entra por ali. |
-| *literal em* `_do_recuperar` | 2 s | *novo* | FIXO | [routine.py:1612](blazesbot/bot/hh/routine.py#L1612) | `_do_recuperar` | Algo saiu do roteiro. Volta a se situar, sem inventar. |
+| `PASSO_DENTRO_DA_CAVE` | 0.05 s | *novo* | PASSO | [routine.py:119](blazesbot/bot/hh/routine.py#L119) |  | Quanto esperar entre estados DENTRO da cave. |
+| `PASSO_FORA_DA_CAVE` | 0.4 s | *novo* | PASSO | [routine.py:120](blazesbot/bot/hh/routine.py#L120) |  |  |
+| `SEGUNDOS_PARA_ENGAJAR` | 5 s | *novo* | FIXO | [routine.py:139](blazesbot/bot/hh/routine.py#L139) | `_do_boss` | Quanto esperar, num ponto de batalha, para a flag de combate LIGAR. |
+| *literal em* `_do_situar` | 1 s | *novo* | FIXO | [routine.py:353](blazesbot/bot/hh/routine.py#L353) | `_do_situar` | Descobre em que ponto do ciclo a conta está, e entra por ali. |
+| *literal em* `_do_recuperar` | 2 s | *novo* | FIXO | [routine.py:1532](blazesbot/bot/hh/routine.py#L1532) | `_do_recuperar` | Algo saiu do roteiro. Volta a se situar, sem inventar. |
 | `SEGUNDOS_POR_TENTATIVA` | 1.8 s | *novo* | FIXO | [vendedor.py:71](blazesbot/bot/hh/vendedor.py#L71) | `encostar_no_ponto_da_venda` |  |
 | `RECARGA` | 5 s | = | FIXO | [hotbar.py:63](blazesbot/bot/hotbar.py#L63) | `garantir_pagina_1` | Recarga do caminho com `ctx`. Os momentos-chave acontecem em rajada -- o portão |
 | `PASSO_DA_SONDA` | 0.012 s | = | PASSO | [instrumentar_clique.py:110](blazesbot/bot/instrumentar_clique.py#L110) | `_sondar_ate_mudar` | De quanto em quanto tempo a sonda fotografa o minimapa esperando o efeito. |

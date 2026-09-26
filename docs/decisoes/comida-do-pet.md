@@ -354,8 +354,8 @@ core/pet.py           A POLÍTICA (pura, testável sem jogo)
 bot/combate.py        A AÇÃO (o que toca o jogo)
                       · cuidar_da_comida_no_laco()  a rede de segurança
                       · feed_pet(em_transito=)      o aperto
-bot/hh/routine.py     uma linha no laço principal
-bot/bc/routine.py     uma linha no laço principal (a que estava comentada)
+bot/rotina_de_cave.py uma linha no laço comum do BC e da HH (a do BC estava
+                      comentada) -- o laço é um só desde 26/09/2026
 bot/app/executor.py   auditoria: ver §9
 ```
 

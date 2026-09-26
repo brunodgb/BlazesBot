@@ -85,7 +85,7 @@ ligar código não testado.
 
 ## Números medidos -- tolerância, limiar, teto, cadência
 
-630 constantes, agrupadas por arquivo.
+633 constantes, agrupadas por arquivo.
 
 | constante | valor | onde | quem lê | porquê (resumo) |
 |---|---|---|---|---|
@@ -169,27 +169,29 @@ ligar código não testado.
 | `SEGUNDOS_DESENCALHANDO_O_ALTAR` | `3` | [blazesbot/bot/bc/mapa_bc.py:183](blazesbot/bot/bc/mapa_bc.py#L183) | routine.py | Quanto esperar no ponto de vai-e-volta antes de retornar. |
 | `SEGUNDOS_POR_TENTATIVA_NA_SAIDA` | `1.8` | [blazesbot/bot/bc/mapa_bc.py:229](blazesbot/bot/bc/mapa_bc.py#L229) | routine.py | — |
 | `TENTATIVAS_DE_ENCOSTAR_NA_SAIDA` | `6` | [blazesbot/bot/bc/mapa_bc.py:228](blazesbot/bot/bc/mapa_bc.py#L228) | routine.py | Orçamento para encostar no ponto da saída. Mesmo desenho do patamar do Altar |
-| `ASSENTAMENTO_DA_BOLSA` | `0.14` | [blazesbot/bot/bc/routine.py:315](blazesbot/bot/bc/routine.py#L315) | — | Depois que a MEMÓRIA confirma a bolsa aberta, o quanto esperar o DESENHO dela. |
-| `CAPTURAS_INVALIDAS_PACKAGE` | `3` | [blazesbot/bot/bc/routine.py:247](blazesbot/bot/bc/routine.py#L247) | — | Se a captura do inventário vier preta/None por estas vezes seguidas, NÃO é |
-| `DEPOIS_DE_FECHAR_A_BOLSA` | `0.05` | [blazesbot/bot/bc/routine.py:326](blazesbot/bot/bc/routine.py#L326) | — | Depois de fechar o inventário. Nada depende deste tempo -- o passo seguinte é |
-| `ENTRE_CLIQUES_NO_PACKAGE` | `0.05` | [blazesbot/bot/bc/routine.py:321](blazesbot/bot/bc/routine.py#L321) | — | Entre um clique direito e o seguinte. Curto porque o clique deste bot é |
-| `ESPERA_ENTRE_TENTATIVAS` | `0.025` | [blazesbot/bot/bc/routine.py:131](blazesbot/bot/bc/routine.py#L131) | — | E O INTERVALO ENTRE TENTATIVAS quase desaparece: a janela de reconhecimento já |
-| `JANELA_DE_RECONHECIMENTO` | `0.25` | [blazesbot/bot/bc/routine.py:116](blazesbot/bot/bc/routine.py#L116) | — | para reconhecer e reagir ..........   0,607 s |
-| `LIMIAR_DO_PACKAGE_EM_COR` | `0.92` | [blazesbot/bot/bc/routine.py:268](blazesbot/bot/bc/routine.py#L268) | — | Limiar do casamento EM COR do ícone do item. |
-| `LIMIAR_DO_PICK_UP_ALL` | `0.85` | [blazesbot/bot/bc/routine.py:222](blazesbot/bot/bc/routine.py#L222) | routine.py | Limiar do botão. 0.85 e não 0.90: é um botão de UI com texto, e o fundo atrás |
-| `PASSO_DA_ESPERA_DA_BOLSA` | `0.05` | [blazesbot/bot/bc/routine.py:309](blazesbot/bot/bc/routine.py#L309) | — | De quanto em quanto tempo perguntar se a bolsa já abriu. Era 0,15 s, o que |
-| `PASSO_DO_RECONHECIMENTO` | `0.04` | [blazesbot/bot/bc/routine.py:121](blazesbot/bot/bc/routine.py#L121) | — | PASSO: de quanto em quanto tempo perguntar, dentro da janela. A pergunta é uma |
-| `RODADAS_DE_USO_DO_PACKAGE` | `5` | [blazesbot/bot/bc/routine.py:242](blazesbot/bot/bc/routine.py#L242) | — | Rodadas de "procurar -> clicar em todos -> reconferir". |
-| `RODADAS_DE_VENDA_ANTES_DE_DESLIGAR` | `3` | [blazesbot/bot/bc/routine.py:391](blazesbot/bot/bc/routine.py#L391) | — | Quantas rodadas de "não vendeu ⇒ roda mais uma run de BC ⇒ tenta de novo" |
-| `SEGUNDOS_ESPERANDO_A_BOLSA` | `0.2` | [blazesbot/bot/bc/routine.py:284](blazesbot/bot/bc/routine.py#L284) | — | Quanto esperar a bolsa CONFIRMAR que abriu, lendo a memória. |
-| `SEGUNDOS_POR_TENTATIVA_NO_ALTAR` | `1.5` | [blazesbot/bot/bc/routine.py:167](blazesbot/bot/bc/routine.py#L167) | — | — |
-| `TEMPLATE_PACKAGE_COURAGE` | `'package_courage.png'` | [blazesbot/bot/bc/routine.py:190](blazesbot/bot/bc/routine.py#L190) | — | USO DO PACKAGE_COURAGE (pós-boss, ANTES de ativar a montaria e sair) |
-| `TEMPLATE_PICK_UP_ALL` | `'btn_pick_up_all.png'` | [blazesbot/bot/bc/routine.py:201](blazesbot/bot/bc/routine.py#L201) | routine.py | Botão "Pick up all" da janela de loot. É ELE que autoriza o clique esquerdo do |
-| `TENTATIVAS_ANTES_DE_DESENCALHAR` | `6` | [blazesbot/bot/bc/routine.py:152](blazesbot/bot/bc/routine.py#L152) | — | Quantas tentativas de clique no Altar Stone por CICLO, antes do vai-e-volta. |
-| `TENTATIVAS_DE_ENCOSTAR_NO_ALTAR` | `6` | [blazesbot/bot/bc/routine.py:166](blazesbot/bot/bc/routine.py#L166) | — | Orçamento do ajuste fino do patamar: quantos `goto` apertados tentamos e por |
-| `TENTATIVAS_POR_LINHA_DE_LOG` | `15` | [blazesbot/bot/bc/routine.py:141](blazesbot/bot/bc/routine.py#L141) | routine.py, indice_de_tempos.py | A cada quantas tentativas o log conta como vai a disputa. Uma linha por |
-| `TOLERANCIA_DA_ENTRADA` | `12` | [blazesbot/bot/bc/routine.py:334](blazesbot/bot/bc/routine.py#L334) | — | DUAS PERGUNTAS DIFERENTES sobre a mesma coordenada, e por isso dois números. |
-| `TOLERANCIA_DO_PONTO_DO_BOSS` | `15` | [blazesbot/bot/bc/routine.py:176](blazesbot/bot/bc/routine.py#L176) | routine.py | Quão perto do ponto do boss conta como "estou no waypoint". |
+| `ASSENTAMENTO_DA_BOLSA` | `0.14` | [blazesbot/bot/bc/routine.py:314](blazesbot/bot/bc/routine.py#L314) | — | Depois que a MEMÓRIA confirma a bolsa aberta, o quanto esperar o DESENHO dela. |
+| `CAPTURAS_INVALIDAS_PACKAGE` | `3` | [blazesbot/bot/bc/routine.py:246](blazesbot/bot/bc/routine.py#L246) | — | Se a captura do inventário vier preta/None por estas vezes seguidas, NÃO é |
+| `DEPOIS_DE_FECHAR_A_BOLSA` | `0.05` | [blazesbot/bot/bc/routine.py:325](blazesbot/bot/bc/routine.py#L325) | — | Depois de fechar o inventário. Nada depende deste tempo -- o passo seguinte é |
+| `ENTRE_CLIQUES_NO_PACKAGE` | `0.05` | [blazesbot/bot/bc/routine.py:320](blazesbot/bot/bc/routine.py#L320) | — | Entre um clique direito e o seguinte. Curto porque o clique deste bot é |
+| `ESPERA_ENTRE_TENTATIVAS` | `0.025` | [blazesbot/bot/bc/routine.py:130](blazesbot/bot/bc/routine.py#L130) | — | E O INTERVALO ENTRE TENTATIVAS quase desaparece: a janela de reconhecimento já |
+| `JANELA_DE_RECONHECIMENTO` | `0.25` | [blazesbot/bot/bc/routine.py:115](blazesbot/bot/bc/routine.py#L115) | — | para reconhecer e reagir ..........   0,607 s |
+| `LIMIAR_DO_PACKAGE_EM_COR` | `0.92` | [blazesbot/bot/bc/routine.py:267](blazesbot/bot/bc/routine.py#L267) | — | Limiar do casamento EM COR do ícone do item. |
+| `LIMIAR_DO_PICK_UP_ALL` | `0.85` | [blazesbot/bot/bc/routine.py:221](blazesbot/bot/bc/routine.py#L221) | routine.py | Limiar do botão. 0.85 e não 0.90: é um botão de UI com texto, e o fundo atrás |
+| `PASSO_DA_ESPERA_DA_BOLSA` | `0.05` | [blazesbot/bot/bc/routine.py:308](blazesbot/bot/bc/routine.py#L308) | — | De quanto em quanto tempo perguntar se a bolsa já abriu. Era 0,15 s, o que |
+| `PASSO_DENTRO_DA_CAVE` | `0.06` | [blazesbot/bot/bc/routine.py:384](blazesbot/bot/bc/routine.py#L384) | routine.py | A PAUSA ENTRE ESTADOS, dentro e fora da cave. Eram literais no laço; quem as |
+| `PASSO_DO_RECONHECIMENTO` | `0.04` | [blazesbot/bot/bc/routine.py:120](blazesbot/bot/bc/routine.py#L120) | — | PASSO: de quanto em quanto tempo perguntar, dentro da janela. A pergunta é uma |
+| `PASSO_FORA_DA_CAVE` | `0.15` | [blazesbot/bot/bc/routine.py:385](blazesbot/bot/bc/routine.py#L385) | routine.py | — |
+| `RODADAS_DE_USO_DO_PACKAGE` | `5` | [blazesbot/bot/bc/routine.py:241](blazesbot/bot/bc/routine.py#L241) | — | Rodadas de "procurar -> clicar em todos -> reconferir". |
+| `RODADAS_DE_VENDA_ANTES_DE_DESLIGAR` | `3` | [blazesbot/bot/bc/routine.py:394](blazesbot/bot/bc/routine.py#L394) | — | Quantas rodadas de "não vendeu ⇒ roda mais uma run de BC ⇒ tenta de novo" |
+| `SEGUNDOS_ESPERANDO_A_BOLSA` | `0.2` | [blazesbot/bot/bc/routine.py:283](blazesbot/bot/bc/routine.py#L283) | — | Quanto esperar a bolsa CONFIRMAR que abriu, lendo a memória. |
+| `SEGUNDOS_POR_TENTATIVA_NO_ALTAR` | `1.5` | [blazesbot/bot/bc/routine.py:166](blazesbot/bot/bc/routine.py#L166) | — | — |
+| `TEMPLATE_PACKAGE_COURAGE` | `'package_courage.png'` | [blazesbot/bot/bc/routine.py:189](blazesbot/bot/bc/routine.py#L189) | — | USO DO PACKAGE_COURAGE (pós-boss, ANTES de ativar a montaria e sair) |
+| `TEMPLATE_PICK_UP_ALL` | `'btn_pick_up_all.png'` | [blazesbot/bot/bc/routine.py:200](blazesbot/bot/bc/routine.py#L200) | routine.py | Botão "Pick up all" da janela de loot. É ELE que autoriza o clique esquerdo do |
+| `TENTATIVAS_ANTES_DE_DESENCALHAR` | `6` | [blazesbot/bot/bc/routine.py:151](blazesbot/bot/bc/routine.py#L151) | — | Quantas tentativas de clique no Altar Stone por CICLO, antes do vai-e-volta. |
+| `TENTATIVAS_DE_ENCOSTAR_NO_ALTAR` | `6` | [blazesbot/bot/bc/routine.py:165](blazesbot/bot/bc/routine.py#L165) | — | Orçamento do ajuste fino do patamar: quantos `goto` apertados tentamos e por |
+| `TENTATIVAS_POR_LINHA_DE_LOG` | `15` | [blazesbot/bot/bc/routine.py:140](blazesbot/bot/bc/routine.py#L140) | routine.py, indice_de_tempos.py | A cada quantas tentativas o log conta como vai a disputa. Uma linha por |
+| `TOLERANCIA_DA_ENTRADA` | `12` | [blazesbot/bot/bc/routine.py:333](blazesbot/bot/bc/routine.py#L333) | — | DUAS PERGUNTAS DIFERENTES sobre a mesma coordenada, e por isso dois números. |
+| `TOLERANCIA_DO_PONTO_DO_BOSS` | `15` | [blazesbot/bot/bc/routine.py:175](blazesbot/bot/bc/routine.py#L175) | routine.py | Quão perto do ponto do boss conta como "estou no waypoint". |
 | `FALHAS_MECANICAS_PARA_REAPLICAR_O_PETBUG` | `20` | [blazesbot/bot/bc/ui_service.py:124](blazesbot/bot/bc/ui_service.py#L124) | — | REAPLICAR O PETBUG QUANDO A ENTRADA NÃO ABRE -- 07/09/2026 |
 | `LINK_ENTRAR_BC` | `'link_enter_bc.png'` | [blazesbot/bot/bc/ui_service.py:33](blazesbot/bot/bc/ui_service.py#L33) | — | — |
 | `LINK_GHOST_DIN_WOODS` | `'link_ghost_din_woods.png'` | [blazesbot/bot/bc/ui_service.py:32](blazesbot/bot/bc/ui_service.py#L32) | — | Links dentro dos diálogos, localizados por imagem. |
@@ -318,16 +320,16 @@ ligar código não testado.
 | `ROTULO_DE_TELA_DA_CHEGADA` | `'Happiness Hall Dungeon'` | [blazesbot/bot/hh/mapa_hh.py:121](blazesbot/bot/hh/mapa_hh.py#L121) | — | NÃO COMPARE ESTES NOMES COM `Memory.location()` |
 | `TABS_ENTRE_OS_ALVOS_DO_PONTO` | `2` | [blazesbot/bot/hh/mapa_hh.py:307](blazesbot/bot/hh/mapa_hh.py#L307) | — | Quantos TABs dar depois de cada morte, num ponto com mais de um alvo. |
 | `VETOS_ANTES_DE_DESISTIR` | `3` | [blazesbot/bot/hh/ponto_do_boss.py:64](blazesbot/bot/hh/ponto_do_boss.py#L64) | routine.py | Quantos vetos SEGUIDOS de rollback um mesmo trecho aguenta antes de a rotina |
-| `ENTRE_TENTATIVAS_DE_ENTRAR` | `0.025` | [blazesbot/bot/hh/routine.py:104](blazesbot/bot/hh/routine.py#L104) | — | Entre uma tentativa de entrada e a seguinte. É o RESTO do orçamento da |
-| `ENTRE_TENTATIVAS_DE_SAIR` | `1.0` | [blazesbot/bot/hh/routine.py:154](blazesbot/bot/hh/routine.py#L154) | — | Entre uma tentativa de sair e a seguinte. Maior que o da entrada porque cada |
-| `LIMIAR_DO_PICK_UP_ALL` | `0.85` | [blazesbot/bot/hh/routine.py:171](blazesbot/bot/hh/routine.py#L171) | routine.py | — |
-| `PASSO_DENTRO_DA_CAVE` | `0.05` | [blazesbot/bot/hh/routine.py:121](blazesbot/bot/hh/routine.py#L121) | — | Quanto esperar entre estados DENTRO da cave. |
-| `PASSO_FORA_DA_CAVE` | `0.4` | [blazesbot/bot/hh/routine.py:122](blazesbot/bot/hh/routine.py#L122) | — | — |
-| `SEGUNDOS_PARA_ENGAJAR` | `5.0` | [blazesbot/bot/hh/routine.py:141](blazesbot/bot/hh/routine.py#L141) | ponto_do_boss.py | Quanto esperar, num ponto de batalha, para a flag de combate LIGAR. |
-| `TEMPLATE_PICK_UP_ALL` | `'btn_pick_up_all.png'` | [blazesbot/bot/hh/routine.py:170](blazesbot/bot/hh/routine.py#L170) | routine.py | O botão "Pick up all" da janela de loot, achado por template. |
-| `TENTATIVAS_POR_LINHA_DE_LOG` | `15` | [blazesbot/bot/hh/routine.py:111](blazesbot/bot/hh/routine.py#L111) | routine.py, indice_de_tempos.py | De quantas em quantas tentativas escrever uma linha no log. |
-| `TOLERANCIA_DO_PONTO` | `15` | [blazesbot/bot/hh/routine.py:162](blazesbot/bot/hh/routine.py#L162) | — | Quanto o personagem pode estar longe do ponto do boss e ainda contar como |
-| `VOLTAS_ANTES_DE_RECUPERAR` | `3` | [blazesbot/bot/hh/routine.py:125](blazesbot/bot/hh/routine.py#L125) | — | Quantas voltas do laço sem sair do estado antes de desconfiar. |
+| `ENTRE_TENTATIVAS_DE_ENTRAR` | `0.025` | [blazesbot/bot/hh/routine.py:102](blazesbot/bot/hh/routine.py#L102) | — | Entre uma tentativa de entrada e a seguinte. É o RESTO do orçamento da |
+| `ENTRE_TENTATIVAS_DE_SAIR` | `1.0` | [blazesbot/bot/hh/routine.py:152](blazesbot/bot/hh/routine.py#L152) | — | Entre uma tentativa de sair e a seguinte. Maior que o da entrada porque cada |
+| `LIMIAR_DO_PICK_UP_ALL` | `0.85` | [blazesbot/bot/hh/routine.py:169](blazesbot/bot/hh/routine.py#L169) | routine.py | — |
+| `PASSO_DENTRO_DA_CAVE` | `0.05` | [blazesbot/bot/hh/routine.py:119](blazesbot/bot/hh/routine.py#L119) | routine.py | Quanto esperar entre estados DENTRO da cave. |
+| `PASSO_FORA_DA_CAVE` | `0.4` | [blazesbot/bot/hh/routine.py:120](blazesbot/bot/hh/routine.py#L120) | routine.py | — |
+| `SEGUNDOS_PARA_ENGAJAR` | `5.0` | [blazesbot/bot/hh/routine.py:139](blazesbot/bot/hh/routine.py#L139) | ponto_do_boss.py | Quanto esperar, num ponto de batalha, para a flag de combate LIGAR. |
+| `TEMPLATE_PICK_UP_ALL` | `'btn_pick_up_all.png'` | [blazesbot/bot/hh/routine.py:168](blazesbot/bot/hh/routine.py#L168) | routine.py | O botão "Pick up all" da janela de loot, achado por template. |
+| `TENTATIVAS_POR_LINHA_DE_LOG` | `15` | [blazesbot/bot/hh/routine.py:109](blazesbot/bot/hh/routine.py#L109) | routine.py, indice_de_tempos.py | De quantas em quantas tentativas escrever uma linha no log. |
+| `TOLERANCIA_DO_PONTO` | `15` | [blazesbot/bot/hh/routine.py:160](blazesbot/bot/hh/routine.py#L160) | — | Quanto o personagem pode estar longe do ponto do boss e ainda contar como |
+| `VOLTAS_ANTES_DE_RECUPERAR` | `3` | [blazesbot/bot/hh/routine.py:123](blazesbot/bot/hh/routine.py#L123) | — | Quantas voltas do laço sem sair do estado antes de desconfiar. |
 | `PRECISAO_NO_PONTO_DA_VENDA` | `1.5` | [blazesbot/bot/hh/vendedor.py:67](blazesbot/bot/hh/vendedor.py#L67) | — | Folga aceita para considerar que se está no ponto de clicar no vendedor. |
 | `SEGUNDOS_POR_TENTATIVA` | `1.8` | [blazesbot/bot/hh/vendedor.py:71](blazesbot/bot/hh/vendedor.py#L71) | — | — |
 | `TEMPLATE_DO_LINK_DE_VENDER` | `'link_sell_item.png'` | [blazesbot/bot/hh/vendedor.py:59](blazesbot/bot/hh/vendedor.py#L59) | — | O link "Sell Item" dentro do diálogo do vendedor, achado por IMAGEM. |
@@ -421,10 +423,11 @@ ligar código não testado.
 | `DESVIO_MINIMO` | `12.0` | [blazesbot/bot/recorte_do_time.py:109](blazesbot/bot/recorte_do_time.py#L109) | — | Recorte liso casa em todo lugar. `region_is_uniform` já é o teste que o |
 | `FOLGA_DO_ESPACAMENTO` | `6.0` | [blazesbot/bot/recorte_do_time.py:105](blazesbot/bot/recorte_do_time.py#L105) | — | Espaçamento vertical: desvio máximo aceito entre os intervalos, em pixels. As |
 | `LARGURA_DO_RECORTE` | `120` | [blazesbot/bot/recorte_do_time.py:91](blazesbot/bot/recorte_do_time.py#L91) | — | — |
-| `LIMIAR` | `0.9` | [blazesbot/bot/recorte_do_time.py:95](blazesbot/bot/recorte_do_time.py#L95) | cura.py, combate.py, fada.py, navegacao.py, watchdog.py | Um casamento fraco não conta. 0.90 é o mesmo patamar que o deletador usa para |
+| `LIMIAR` | `0.9` | [blazesbot/bot/recorte_do_time.py:95](blazesbot/bot/recorte_do_time.py#L95) | cura.py, combate.py, fada.py, navegacao.py, rotina_de_cave.py, watchdog.py | Um casamento fraco não conta. 0.90 é o mesmo patamar que o deletador usa para |
 | `MINIMO_DE_LINHAS` | `2` | [blazesbot/bot/recorte_do_time.py:99](blazesbot/bot/recorte_do_time.py#L99) | — | Menos de dois casamentos não prova repetição -- prova que o recorte se achou a |
 | `NOME_DO_TEMPLATE` | `'state_team_member.png'` | [blazesbot/bot/recorte_do_time.py:73](blazesbot/bot/recorte_do_time.py#L73) | — | Nome que `bot/team.py` procura. Mudar aqui sem mudar lá deixa o arquivo |
 | `PASSO_VERTICAL` | `4` | [blazesbot/bot/recorte_do_time.py:90](blazesbot/bot/recorte_do_time.py#L90) | — | — |
+| `LIMIAR_DO_ESTADO_LONGO` | `5.0` | [blazesbot/bot/rotina_de_cave.py:45](blazesbot/bot/rotina_de_cave.py#L45) | — | Um estado que segue no mesmo lugar por mais que isto (segundos) também vai |
 | `CADENCIA_DO_VIGIA` | `6.0` | [blazesbot/bot/sentinela.py:129](blazesbot/bot/sentinela.py#L129) | — | O ORÇAMENTO DE 20 SEGUNDOS, repartido |
 | `STRIKES_PARA_JANELA_SUMIDA` | `2` | [blazesbot/bot/sentinela.py:146](blazesbot/bot/sentinela.py#L146) | — | AS CONFIRMAÇÕES -- a defesa contra derrubar conta boa por causa de lag |
 | `STRIKES_PARA_JANELA_TRAVADA` | `3` | [blazesbot/bot/sentinela.py:155](blazesbot/bot/sentinela.py#L155) | — | JANELA TRAVADA é o sinal ruidoso, e é o único que precisa de defesa de |
@@ -703,7 +706,7 @@ ligar código não testado.
 | `MINIMAP_SCALE` | `1.7` | [blazesbot/core/zones.py:214](blazesbot/core/zones.py#L214) | ui_do_jogo.py, coords.py | Escala do minimapa: pixels por unidade de coordenada. |
 | `MAXIMO_DE_CANDIDATOS` | `4000` | [blazesbot/tools/achar_happy_do_pet.py:85](blazesbot/tools/achar_happy_do_pet.py#L85) | — | Quantos candidatos levar adiante na varredura larga. Felicidade é 0..100: |
 | `TAMANHO_DE_OBJETO` | `9216` | [blazesbot/tools/achar_happy_do_pet.py:77](blazesbot/tools/achar_happy_do_pet.py#L77) | — | Até onde procurar dentro de um objeto. Os objetos deste cliente que o projeto |
-| `NOME` | `'BlazesBot'` | [blazesbot/tools/empacotar.py:52](blazesbot/tools/empacotar.py#L52) | afericao_do_aliado.py, deletador.py, executor.py, combat.py, localizacao.py, routine.py, vendor.py, combate.py, deletador.py, bosses.py, mapa_hh.py, ponto_do_boss.py, routine.py, login_states.py, nomes_do_lixo.py, team.py, time_do_app.py, calibracao.py, cronometro.py, entidades.py, indice_de_tempos.py, injecao_de_texto.py, inputs.py, log_limitado.py, memory.py, petbug.py, registro_de_mortes.py, stone_city.py, target_hybrid.py, templates.py, achar_happy_do_pet.py, sincronizar_nomes_do_lixo.py, vigiar_combate.py, vigiar_local.py, web_lixo.py | — |
+| `NOME` | `'BlazesBot'` | [blazesbot/tools/empacotar.py:52](blazesbot/tools/empacotar.py#L52) | afericao_do_aliado.py, deletador.py, executor.py, combat.py, localizacao.py, routine.py, vendor.py, combate.py, deletador.py, bosses.py, mapa_hh.py, ponto_do_boss.py, routine.py, login_states.py, nomes_do_lixo.py, rotina_de_cave.py, team.py, time_do_app.py, calibracao.py, cronometro.py, entidades.py, indice_de_tempos.py, injecao_de_texto.py, inputs.py, log_limitado.py, memory.py, petbug.py, registro_de_mortes.py, stone_city.py, target_hybrid.py, templates.py, achar_happy_do_pet.py, sincronizar_nomes_do_lixo.py, vigiar_combate.py, vigiar_local.py, web_lixo.py | — |
 | `CHUNK` | `1048576` | [blazesbot/tools/find_base.py:57](blazesbot/tools/find_base.py#L57) | — | — |
 | `MUDOU` | `0.0005` | [blazesbot/tools/ler_camera.py:57](blazesbot/tools/ler_camera.py#L57) | afericao_do_aliado.py, executor.py, localizacao.py, routine.py, combate.py, context.py, fada.py, time_do_app.py, config.py, calibracao.py, memory.py, target_hybrid.py | O que conta como "mudou". Menor que isto é ruído de interpolação -- andando, o |
 | `PASSO` | `0.25` | [blazesbot/tools/ler_camera.py:50](blazesbot/tools/ler_camera.py#L50) | routine.py, entrada.py, mapa_hh.py, supervisor.py, ui_do_jogo.py, espera.py, indice_de_tempos.py, relatorio_de_latencia.py, vigiar_combate.py | Cadência da leitura. Barata: são 8 leituras de 4 bytes por volta. |
