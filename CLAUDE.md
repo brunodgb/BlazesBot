@@ -214,6 +214,11 @@ uma tarefa à parte.**
 2. **PROMOÇÃO É OBRIGAÇÃO, NÃO OPÇÃO.** Lógica nasce específica e evolui: viu
    que uma função de um ecossistema tem utilidade geral, **abstraia as
    dependências locais e mova para o `core/`** — no mesmo passo, não "depois".
+   **O DESTINO É DECIDIDO PELOS IMPORTS**, não pelo quão genérico o código
+   parece: a camada mais rasa que já contém todas as dependências do módulo.
+   Leia o bloco de imports ANTES de escrever o destino em qualquer documento —
+   `tests/test_ecossistemas.py` é o contrato (plano escrito sem isso já apontou
+   três módulos para o `core/` e custou quatro documentos corrigidos).
 3. **RIGOR DE DIRETÓRIO.** Local fica na pasta do ecossistema; compartilhado
    fica em `core/`. A pasta É a declaração de escopo.
 4. **DOCUMENTAÇÃO DE TRANSIÇÃO, no mesmo passo.** Quem promove escreve no
