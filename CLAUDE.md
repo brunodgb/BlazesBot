@@ -402,6 +402,16 @@ código** (nome de função/variável segue o idioma já usado no arquivo) nem p
 **string traduzível de interface** (`docs/SKILLS.md`, seção "i18n" — ali PT-BR
 é só a chave-fonte, não o único idioma válido).
 
+### 6. Código por script: NUNCA por heredoc (medido em 5 sessões)
+
+Código com barra invertida, crase, aspas aninhadas ou prosa acentuada **não
+passa por heredoc de shell**: o `\n` vira quebra de linha real, o `\\` vira `\`,
+e o script imprime "ok" do mesmo jeito. Grave o script com a ferramenta de
+escrita e rode-o pelo caminho. Depois de TODO patch por script, rode o
+parser/linter do alvo — o "ok" prova que a âncora casou, não que o resultado é
+válido. E script de patch é migração: passos idempotentes, âncora que só casa
+num lugar, contagem de itens antes e depois.
+
 ## Skills e Agent skills
 
 As definições completas de skill (pywebview + Web Frontend, GUI e Interatividade,
