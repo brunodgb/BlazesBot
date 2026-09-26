@@ -31,7 +31,7 @@ desta lista é ou uma exceção justificada, ou dívida que ninguém converteu a
 mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 
 
-**368 tempos catalogados** — 252 FIXOS (espera cega), 116 entre TETO e PASSO.
+**369 tempos catalogados** — 252 FIXOS (espera cega), 117 entre TETO e PASSO.
 
 
 **3 estão diferentes do original:** `FATIA_DE_ESPERA`, `INTERVALO_ENTRE_INVOCACOES`, `PASSOS_DO_APP`
@@ -438,10 +438,11 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | `PASSO_DA_PROVA_DA_CAMERA` | 0.05 s | = | PASSO | [memory.py:385](blazesbot/core/memory.py#L385) | `_esperar_o_termometro` |  |
 | `PASSO_ENTRE_MEMBROS` | 136 s (2 min) | *novo* | PASSO | [memory.py:415](blazesbot/core/memory.py#L415) | `time_do_jogo, vida_do_time` |  |
 | *literal em* `_ensure_hook_installed` | 0.05 s | = | FIXO | [mouse_shield.py:223](blazesbot/core/mouse_shield.py#L223) | `_ensure_hook_installed` | Sobe o hook uma vez. NADA aqui bloqueia o callback. |
-| `SEGUNDOS_PARA_A_COMIDA_SER_USADA` | 4 s | *novo* | FIXO | [pet.py:159](blazesbot/core/pet.py#L159) | `falta_da_comida` | 1,5 -> 4,0 EM 16/09/2026: O DEFEITO NUNCA FOI CONSERTADO, SÓ ENCURTADO |
-| `SEGUNDOS_NO_MAPA_ANTES_DE_ALIMENTAR` | 30 s | *novo* | FIXO | [pet.py:200](blazesbot/core/pet.py#L200) | `deve_alimentar` | QUANTO TEMPO NO MAPA ANTES DE ALIMENTAR -- o defeito de 15 e 16/09/2026 |
-| `LIMITE_DE_ATRASO_DA_COMIDA_EM_MINUTOS` | 15 s | *novo* | TETO | [pet.py:296](blazesbot/core/pet.py#L296) | `a_fome_e_urgente` | QUANTO ATRASO A REFEIÇÃO AGUENTA ANTES DE FURAR O VETO DA CAVE |
-| `CADENCIA_DAS_TENTATIVAS_DE_COMIDA` | 30 s | *novo* | PASSO | [pet.py:309](blazesbot/core/pet.py#L309) | `tentativa_liberada` | Entre duas TENTATIVAS de alimentar depois de o prazo estourar. |
+| `SEGUNDOS_PARA_A_COMIDA_SER_USADA` | 4 s | *novo* | FIXO | [pet.py:161](blazesbot/core/pet.py#L161) | `falta_da_comida` | 1,5 -> 4,0 EM 16/09/2026: O DEFEITO NUNCA FOI CONSERTADO, SÓ ENCURTADO |
+| `SEGUNDOS_NO_MAPA_ANTES_DE_ALIMENTAR` | 30 s | *novo* | FIXO | [pet.py:202](blazesbot/core/pet.py#L202) | `deve_alimentar` | QUANTO TEMPO NO MAPA ANTES DE ALIMENTAR -- o defeito de 15 e 16/09/2026 |
+| `PASSO_DA_AMOSTRA_DA_VOLTA` | 0.25 s | *novo* | PASSO | [pet.py:222](blazesbot/core/pet.py#L222) | `_amostrar_a_volta_do_pet` |  |
+| `LIMITE_DE_ATRASO_DA_COMIDA_EM_MINUTOS` | 15 s | *novo* | TETO | [pet.py:355](blazesbot/core/pet.py#L355) | `a_fome_e_urgente` | QUANTO ATRASO A REFEIÇÃO AGUENTA ANTES DE FURAR O VETO DA CAVE |
+| `CADENCIA_DAS_TENTATIVAS_DE_COMIDA` | 30 s | *novo* | PASSO | [pet.py:368](blazesbot/core/pet.py#L368) | `tentativa_liberada` | Entre duas TENTATIVAS de alimentar depois de o prazo estourar. |
 | `INTERVALO_MINIMO` | 30 s | = | FIXO | [petbug.py:227](blazesbot/core/petbug.py#L227) | `aplicar_patch` | Tempos |
 | `SEGUNDOS_PARA_A_JANELA_ABRIR` | 10 s | = | FIXO | [petbug.py:230](blazesbot/core/petbug.py#L230) | `_abrir_o_programa` | Espera pela janela aparecer depois de lançar o programa. |
 | `SEGUNDOS_PARA_O_PROGRAMA_MORRER` | 3 s | = | FIXO | [petbug.py:233](blazesbot/core/petbug.py#L233) | `aplicar_patch` | Espera o processo antigo MORRER antes de abrir o novo. Curto: é um formulário |

@@ -489,3 +489,17 @@ felicidade voltar a cair depois de um dia de farm.
 `tests/test_comida_do_pet.py`. O que ninguém pode desfazer sem o teste reprovar:
 a recusa logo depois da troca de mapa, a grade que não avança nessa recusa, e a
 chamada no ponto do boss.
+
+## Os 30 segundos, em medição — 25/09/2026
+
+Os 30 s da guarda não são medidos: são conservadores por assimetria. O ideal do
+usuário é a comida sair SÓ na entrada, e o que impede é justamente esse tempo —
+na entrada, a refeição é recusada e vai para o pós-boss.
+
+`core/pet.MEDIR_A_VOLTA_DO_PET = True`: cada troca de mapa confirmada amostra o
+`pet_active()` por 30 s numa thread à parte (leitura de ponteiro sem estado) e
+grava uma linha com os trechos. `python -m blazesbot.tools.medir_a_volta_do_pet`
+julga: se o sinal some e volta de forma consistente (80% de 30 trocas), os 30 s
+fixos viram uma espera por ele, com teto na cauda medida — e a comida pode voltar
+para a entrada. Se fica `True` o tempo todo, a leitura não enxerga a recriação do
+pet e os 30 s ficam. Travado por `tests/test_medicao_da_volta_do_pet.py`.

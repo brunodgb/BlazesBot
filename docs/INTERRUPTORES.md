@@ -76,6 +76,7 @@ ligar código não testado.
 | `USAR_PAINEL_POR_MEMORIA` | `True` | [blazesbot/core/memory.py:671](blazesbot/core/memory.py#L671) | — | ESTADO DE PAINEL DE UI POR MEMÓRIA -- o que sobreviveu ao campo |
 | `USAR_REGIOES_QUENTES` | `True` | [blazesbot/core/memory.py:484](blazesbot/core/memory.py#L484) | — | REGIÕES QUENTES -- a rota que fecha os 38% que o array de entidades perde |
 | `ATIVADO` | `True` | [blazesbot/core/patch_do_cliente.py:144](blazesbot/core/patch_do_cliente.py#L144) | diagnostico_do_link.py, deletador.py, supervisor.py, time_do_app.py, petbug.py | INTERRUPTOR |
+| `MEDIR_A_VOLTA_DO_PET` | `True` | [blazesbot/core/pet.py:220](blazesbot/core/pet.py#L220) | medir_a_volta_do_pet.py | INTERRUPTOR -- A MEDIÇÃO DA VOLTA DO PET (25/09/2026). SÓ REGISTRA. |
 | `ATIVADO` | `False` | [blazesbot/core/petbug.py:125](blazesbot/core/petbug.py#L125) | diagnostico_do_link.py, deletador.py, supervisor.py, time_do_app.py, patch_do_cliente.py | DESLIGADO EM 07/09/2026 -- o bot passou a fazer isto sozinho |
 | `NOVA_INSTANCIA_SEMPRE` | `True` | [blazesbot/core/petbug.py:218](blazesbot/core/petbug.py#L218) | — | INSTÂNCIA NOVA A CADA APLICAÇÃO -- 07/09/2026 |
 | `USAR_OFFSET_FIXO_DA_BARRA` | `True` | [blazesbot/core/vision/barra.py:259](blazesbot/core/vision/barra.py#L259) | __init__.py | INTERRUPTOR: o offset fixo é a régua; a âncora azul é a reserva |
@@ -84,7 +85,7 @@ ligar código não testado.
 
 ## Números medidos -- tolerância, limiar, teto, cadência
 
-656 constantes, agrupadas por arquivo.
+659 constantes, agrupadas por arquivo.
 
 | constante | valor | onde | quem lê | porquê (resumo) |
 |---|---|---|---|---|
@@ -636,10 +637,11 @@ ligar código não testado.
 | `VALIDADE_DO_RETANGULO` | `2.0` | [blazesbot/core/mouse_shield.py:130](blazesbot/core/mouse_shield.py#L130) | — | Quanto tempo o retângulo da janela vale antes de ser relido. A janela do jogo |
 | `WH_MOUSE_LL` | `14` | [blazesbot/core/mouse_shield.py:118](blazesbot/core/mouse_shield.py#L118) | instrumentar_clique.py, supervisor.py, inputs.py | Constantes Win32 |
 | `NOME_DO_MODULO` | `'client.exe'` | [blazesbot/core/patch_do_cliente.py:146](blazesbot/core/patch_do_cliente.py#L146) | conferir_petbug.py | — |
-| `CADENCIA_DAS_TENTATIVAS_DE_COMIDA` | `30.0` | [blazesbot/core/pet.py:309](blazesbot/core/pet.py#L309) | — | Entre duas TENTATIVAS de alimentar depois de o prazo estourar. |
-| `LIMITE_DE_ATRASO_DA_COMIDA_EM_MINUTOS` | `15.0` | [blazesbot/core/pet.py:296](blazesbot/core/pet.py#L296) | combate.py | QUANTO ATRASO A REFEIÇÃO AGUENTA ANTES DE FURAR O VETO DA CAVE |
-| `SEGUNDOS_NO_MAPA_ANTES_DE_ALIMENTAR` | `30.0` | [blazesbot/core/pet.py:200](blazesbot/core/pet.py#L200) | ui_do_jogo.py | QUANTO TEMPO NO MAPA ANTES DE ALIMENTAR -- o defeito de 15 e 16/09/2026 |
-| `SEGUNDOS_PARA_A_COMIDA_SER_USADA` | `4.0` | [blazesbot/core/pet.py:159](blazesbot/core/pet.py#L159) | executor.py | 1,5 -> 4,0 EM 16/09/2026: O DEFEITO NUNCA FOI CONSERTADO, SÓ ENCURTADO |
+| `CADENCIA_DAS_TENTATIVAS_DE_COMIDA` | `30.0` | [blazesbot/core/pet.py:368](blazesbot/core/pet.py#L368) | — | Entre duas TENTATIVAS de alimentar depois de o prazo estourar. |
+| `LIMITE_DE_ATRASO_DA_COMIDA_EM_MINUTOS` | `15.0` | [blazesbot/core/pet.py:355](blazesbot/core/pet.py#L355) | combate.py | QUANTO ATRASO A REFEIÇÃO AGUENTA ANTES DE FURAR O VETO DA CAVE |
+| `PASSO_DA_AMOSTRA_DA_VOLTA` | `0.25` | [blazesbot/core/pet.py:222](blazesbot/core/pet.py#L222) | — | — |
+| `SEGUNDOS_NO_MAPA_ANTES_DE_ALIMENTAR` | `30.0` | [blazesbot/core/pet.py:202](blazesbot/core/pet.py#L202) | ui_do_jogo.py | QUANTO TEMPO NO MAPA ANTES DE ALIMENTAR -- o defeito de 15 e 16/09/2026 |
+| `SEGUNDOS_PARA_A_COMIDA_SER_USADA` | `4.0` | [blazesbot/core/pet.py:161](blazesbot/core/pet.py#L161) | executor.py | 1,5 -> 4,0 EM 16/09/2026: O DEFEITO NUNCA FOI CONSERTADO, SÓ ENCURTADO |
 | `BM_CLICK` | `245` | [blazesbot/core/petbug.py:184](blazesbot/core/petbug.py#L184) | — | — |
 | `CLASSE_DO_BOTAO` | `'TButton'` | [blazesbot/core/petbug.py:170](blazesbot/core/petbug.py#L170) | — | Como o botão é reconhecido: classe e texto, medidos na janela real. |
 | `CLASSE_DO_LOG` | `'TMemo'` | [blazesbot/core/petbug.py:173](blazesbot/core/petbug.py#L173) | — | O log do programa. |
@@ -737,6 +739,8 @@ ligar código não testado.
 | `SEGUNDOS_PADRAO` | `300.0` | [blazesbot/tools/ler_camera.py:53](blazesbot/tools/ler_camera.py#L53) | vigiar_combate.py | Teto padrão, para a ferramenta fechar sozinha se você esquecer dela aberta. |
 | `EXATIDAO_MINIMA` | `0.95` | [blazesbot/tools/medir_a_rolha.py:32](blazesbot/tools/medir_a_rolha.py#L32) | — | — |
 | `VENDAS_MINIMAS` | `30` | [blazesbot/tools/medir_a_rolha.py:31](blazesbot/tools/medir_a_rolha.py#L31) | — | — |
+| `CONSISTENCIA_MINIMA` | `0.8` | [blazesbot/tools/medir_a_volta_do_pet.py:25](blazesbot/tools/medir_a_volta_do_pet.py#L25) | — | — |
+| `TROCAS_MINIMAS` | `30` | [blazesbot/tools/medir_a_volta_do_pet.py:24](blazesbot/tools/medir_a_volta_do_pet.py#L24) | — | — |
 | `TETO_DO_PORTAO_DE_COMMIT` | `300` | [blazesbot/tools/portao_de_commit.py:63](blazesbot/tools/portao_de_commit.py#L63) | — | O portão inteiro leva ~40 s. O teto é a garantia de que um teste preso não |
 | `PASSO` | `0.1` | [blazesbot/tools/vigiar_combate.py:48](blazesbot/tools/vigiar_combate.py#L48) | routine.py, entrada.py, mapa_hh.py, supervisor.py, ui_do_jogo.py, espera.py, indice_de_tempos.py, relatorio_de_latencia.py, ler_camera.py | Cadência da leitura. É memória pura -- algumas leituras de 4 bytes por volta, |
 | `SEGUNDOS_ENTRE_ECOS` | `5.0` | [blazesbot/tools/vigiar_combate.py:58](blazesbot/tools/vigiar_combate.py#L58) | — | De quanto em quanto tempo repetir uma linha que NÃO mudou. |

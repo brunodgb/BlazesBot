@@ -96,6 +96,8 @@ presente em vez de acumular dívida.
 """
 from __future__ import annotations
 
+import json
+import threading
 import time
 from collections.abc import Callable
 
@@ -205,9 +207,66 @@ SEGUNDOS_NO_MAPA_ANTES_DE_ALIMENTAR = 30.0
 _ENTROU_NO_MAPA_EM: dict[int, float] = {}
 
 
-def trocou_de_mapa(hwnd: int) -> None:
-    """O mapa mudou nesta janela. O pet vai levar alguns segundos para voltar."""
-    _ENTROU_NO_MAPA_EM[int(hwnd or 0)] = time.monotonic()
+# ===========================================================================
+# INTERRUPTOR -- A MEDIÇÃO DA VOLTA DO PET (25/09/2026). SÓ REGISTRA.
+# ===========================================================================
+#
+# Os 30 s acima NÃO são medidos: são conservadores por assimetria. Se o
+# `pet_active()` marcar a volta do pet depois da troca de mapa, eles viram uma
+# espera curta por esse sinal -- e a comida pode voltar a sair na ENTRADA, que é
+# o ideal do usuário. Com isto ligado, cada troca de mapa amostra `pet_active()`
+# por `SEGUNDOS_DE_AMOSTRA_DA_VOLTA`, numa thread à parte, e grava UMA linha;
+# `python -m blazesbot.tools.medir_a_volta_do_pet` julga se o sinal serve.
+MEDIR_A_VOLTA_DO_PET = True
+SEGUNDOS_DE_AMOSTRA_DA_VOLTA = SEGUNDOS_NO_MAPA_ANTES_DE_ALIMENTAR
+PASSO_DA_AMOSTRA_DA_VOLTA = 0.25
+
+
+def trocou_de_mapa(hwnd: int, ctx=None) -> None:
+    """O mapa mudou nesta janela. O pet vai levar alguns segundos para voltar.
+
+    Com `ctx`, e a medição ligada, começa a amostrar a volta do pet.
+    """
+    agora = time.monotonic()
+    _ENTROU_NO_MAPA_EM[int(hwnd or 0)] = agora
+    if MEDIR_A_VOLTA_DO_PET and ctx is not None:
+        threading.Thread(target=_amostrar_a_volta_do_pet, args=(ctx, agora),
+                         daemon=True, name="medir-a-volta-do-pet").start()
+
+
+def _amostrar_a_volta_do_pet(ctx, comeco: float) -> None:
+    """Lê `pet_active()` depois da troca de mapa e grava UMA linha com os trechos.
+
+    COMPLEMENTO: engole tudo -- medição não derruba o bot. Só usa `memory`, `log`
+    e `account_login` do contexto: `core/` não sabe que ecossistema existe. Ler
+    a memória de outra thread é seguro aqui: `pet_active` é leitura de ponteiro
+    sem estado guardado.
+    """
+    leituras: list[tuple[float, bool | None]] = []
+    try:
+        while (decorrido := time.monotonic() - comeco) < SEGUNDOS_DE_AMOSTRA_DA_VOLTA:
+            try:
+                valor = ctx.memory.pet_active()
+            except Exception:
+                valor = None
+            leituras.append((round(decorrido, 2), valor))
+            time.sleep(PASSO_DA_AMOSTRA_DA_VOLTA)
+        ctx.log.info("PET/MEDIÇÃO conta=%s leituras=%s trechos=%s",
+                     getattr(ctx, "account_login", "?"), len(leituras),
+                     json.dumps(trechos_da_volta(leituras)))
+    except Exception:
+        pass
+
+
+def trechos_da_volta(leituras: list[tuple[float, bool | None]]) -> list[list]:
+    """`[(t, valor), ...]` -> `[[valor, t_inicio, t_fim], ...]`, iguais seguidos juntos."""
+    trechos: list[list] = []
+    for t, valor in leituras:
+        if trechos and trechos[-1][0] == valor:
+            trechos[-1][2] = t
+        else:
+            trechos.append([valor, t, t])
+    return trechos
 
 
 def segundos_no_mapa(hwnd: int) -> float | None:

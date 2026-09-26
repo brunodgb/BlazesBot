@@ -1926,7 +1926,7 @@ class UIDoJogo:
                          o_que=f"chegada.{o_que}")
         if fim:
             # `core/pet.SEGUNDOS_NO_MAPA_ANTES_DE_ALIMENTAR` explica o porquê.
-            pet_core.trocou_de_mapa(ctx.hwnd)
+            pet_core.trocou_de_mapa(ctx.hwnd, ctx)
             ctx.log.info("%s confirmado em %.0f ms: %s | local %s", o_que,
                          fim.ms, ctx.memory.position(), ctx.memory.location())
             return True
