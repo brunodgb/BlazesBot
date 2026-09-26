@@ -1579,6 +1579,23 @@ insistência). Grava quanto tempo ficou parado, se estava montado e qual cutucad
 foi — é o que, em alguns dias, responde se 15 s é o número certo e se a montaria
 é de fato o remédio. Confundir os dois eventos apagaria essa medida.
 
+### A resposta, 18 dias depois (26/09/2026) — e o que ainda falta
+
+**A montaria é o remédio:** desde 19/09, dentro da cave, a PRIMEIRA cutucada
+destravou 191 de 219 congelamentos (87%), e destrava em ~2 s. **O custo é a
+espera:** ~27 congelamentos por dia, cada um parado 15 s antes do remédio — no
+log de dev de 25–26/09, o congelamento é a maior causa de tempo perdido na
+cave (21 min, à frente do rollback com 19 e da travada com 9).
+
+**O que ainda não se sabe** é quantas paradas se resolvem SOZINHAS antes dos
+15 s — com o limiar mais baixo, elas levariam cutucada à toa, e o vigia não
+registrava parada nenhuma que não chegasse a cutucar. Agora registra
+(`MEDIR_O_CONGELAMENTO`, só log): toda parada de 2 s ou mais, com a duração e as
+cutucadas. O juiz é `python -m blazesbot.tools.medir_o_congelamento`; ele só
+aprova um limiar com 30 congelamentos medidos e no máximo 10% de cutucadas à
+toa (critério proposto, para o usuário confirmar). Travado por
+`tests/test_medicao_do_congelamento.py`.
+
 ## 24. POR QUE A VENDA DA HH NUNCA ABRIU A JANELA (09/09/2026)
 
 ### O sintoma

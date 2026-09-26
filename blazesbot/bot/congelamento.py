@@ -94,6 +94,18 @@ SEGUNDOS_PARA_A_SEGUNDA = 22.5
 # ela sabe refazer o trecho e passa pelo `_guard()`.
 CUTUCADAS = 2
 
+# A MEDIÇÃO QUE DECIDE SE OS 15 S PODEM CAIR (26/09/2026). Nos 16 dias do
+# `logs/eventos.log`, a PRIMEIRA cutucada destravou 87% dos congelamentos da cave
+# (191 de 219) e destrava em ~2 s -- então quase todo o custo de um congelamento
+# é a espera. O que falta saber é quantas paradas se resolvem SOZINHAS antes dos
+# 15 s: com o limiar mais baixo, elas levariam cutucada à toa. Só log; o juiz é
+# `tools/medir_o_congelamento.py`.
+MEDIR_O_CONGELAMENTO = True
+# Parada mais curta que isto não entra: lendo a posição ~4 vezes por segundo,
+# menos que isto andando é ruído de leitura, não parada. Limiar de REGISTRO, não
+# espera -- o juiz só avalia limiares a partir de 3 s.
+LIMIAR_DA_PARADA_REGISTRADA = 2.0
+
 
 class VigiaDoCongelamento:
     """Vê a coordenada travada e mexe na montaria. Desligado, não faz nada."""
@@ -130,6 +142,20 @@ class VigiaDoCongelamento:
         self._desde = 0.0
         self._visto_em = 0.0
         self._cutucadas = 0
+
+    def _medir_a_parada(self, agora: float) -> None:
+        """Registra a parada que acabou AGORA -- a coordenada mudou.
+
+        A parada interrompida porque o bot parou de andar (a leitura veio tarde
+        demais, e o relógio foi zerado lá em cima) NÃO entra: ali não se sabe se
+        o personagem destravou, e o juiz precisa do desfecho.
+        """
+        if not MEDIR_O_CONGELAMENTO or self._posicao is None or not self._desde:
+            return
+        parado = agora - self._desde
+        if parado >= LIMIAR_DA_PARADA_REGISTRADA:
+            self.ctx.log.debug("CONGELAMENTO/MEDIÇÃO parado=%.1fs cutucadas=%d em %s",
+                               parado, self._cutucadas, self._posicao)
 
     # -- o gesto -----------------------------------------------------------
 
@@ -174,6 +200,7 @@ class VigiaDoCongelamento:
         # QUALQUER mudança de coordenada zera -- inclusive o rollback, que é
         # outro problema e tem outro remédio.
         if self._posicao is None or pos != self._posicao:
+            self._medir_a_parada(agora)
             self._posicao = pos
             self._desde = agora
             self._cutucadas = 0

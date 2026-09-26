@@ -47,6 +47,7 @@ ligar código não testado.
 | `USAR_IMAGEM_DA_FASE_2` | `True` | [blazesbot/bot/combate.py:918](blazesbot/bot/combate.py#L918) | combat.py | A SEGUNDA FASE DO BOSS TAMBÉM É VISTA NA TELA |
 | `USAR_PORTAO_DE_NOME` | `True` | [blazesbot/bot/combate.py:864](blazesbot/bot/combate.py#L864) | memory.py, target_hybrid.py | RELIGADO EM 25/08/2026 -- O NOME VOLTOU |
 | `USAR_TAB_NOS_GUARDAS` | `True` | [blazesbot/bot/combate.py:685](blazesbot/bot/combate.py#L685) | combat.py, diagnostico_do_link.py, inputs.py | >>>  INTERRUPTOR DO EXPERIMENTO -- TROCA DE ALVO POR TAB NOS GUARDAS  <<< |
+| `MEDIR_O_CONGELAMENTO` | `True` | [blazesbot/bot/congelamento.py:103](blazesbot/bot/congelamento.py#L103) | medir_o_congelamento.py | A MEDIÇÃO QUE DECIDE SE OS 15 S PODEM CAIR (26/09/2026). Nos 16 dias do |
 | `ATIVADO` | `True` | [blazesbot/bot/deletador.py:75](blazesbot/bot/deletador.py#L75) | diagnostico_do_link.py, supervisor.py, time_do_app.py, patch_do_cliente.py, petbug.py | O caminho continua inteiro com ele em False -- desligado não é apagado. |
 | `MEDIR_A_ROLHA` | `True` | [blazesbot/bot/leitura_do_slot.py:97](blazesbot/bot/leitura_do_slot.py#L97) | vendedor.py, medir_a_rolha.py | INTERRUPTOR -- A MEDIÇÃO DA ROLHA (25/09/2026). SÓ REGISTRA, não decide nada. |
 | `CIRCULO_POR_RAIO` | `True` | [blazesbot/bot/navegacao.py:266](blazesbot/bot/navegacao.py#L266) | — | True = raio por raio (1,2,3,5; em cada raio os 8 pontos); False = bússola por |
@@ -85,7 +86,7 @@ ligar código não testado.
 
 ## Números medidos -- tolerância, limiar, teto, cadência
 
-635 constantes, agrupadas por arquivo.
+638 constantes, agrupadas por arquivo.
 
 | constante | valor | onde | quem lê | porquê (resumo) |
 |---|---|---|---|---|
@@ -244,8 +245,9 @@ ligar código não testado.
 | `TETO_DO_DESTRAVAMENTO` | `60.0` | [blazesbot/bot/combate.py:786](blazesbot/bot/combate.py#L786) | — | Teto de UMA rodada de destravamento. Palavra do usuario: *"no maximo atrasar 1 |
 | `TETO_PARA_A_MIRA_CAIR` | `0.6` | [blazesbot/bot/combate.py:429](blazesbot/bot/combate.py#L429) | — | Quanto esperar o `target_id` zerar depois de cada ESC. |
 | `CUTUCADAS` | `2` | [blazesbot/bot/congelamento.py:95](blazesbot/bot/congelamento.py#L95) | — | Quantas cutucadas por congelamento. |
+| `LIMIAR_DA_PARADA_REGISTRADA` | `2.0` | [blazesbot/bot/congelamento.py:107](blazesbot/bot/congelamento.py#L107) | — | Parada mais curta que isto não entra: lendo a posição ~4 vezes por segundo, |
 | `SEGUNDOS_PARA_A_SEGUNDA` | `22.5` | [blazesbot/bot/congelamento.py:82](blazesbot/bot/congelamento.py#L82) | — | A segunda cutucada, no MEIO do que resta até aquele teto. |
-| `SEGUNDOS_PARA_CUTUCAR` | `15.0` | [blazesbot/bot/congelamento.py:76](blazesbot/bot/congelamento.py#L76) | — | Quanto tempo na MESMA coordenada, tentando andar, antes de mexer na montaria. |
+| `SEGUNDOS_PARA_CUTUCAR` | `15.0` | [blazesbot/bot/congelamento.py:76](blazesbot/bot/congelamento.py#L76) | medir_o_congelamento.py | Quanto tempo na MESMA coordenada, tentando andar, antes de mexer na montaria. |
 | `FATIA_DA_ESPERA` | `0.25` | [blazesbot/bot/context.py:212](blazesbot/bot/context.py#L212) | petbug.py | Fatia máxima de sono dentro de um `tick`. |
 | `TENTATIVAS_DE_AJUSTE_DA_CAMERA` | `3` | [blazesbot/bot/context.py:245](blazesbot/bot/context.py#L245) | — | Quantas vezes insistir para a câmera ficar no ângulo certo. |
 | `DEPOIS_DO_OK` | `0.18` | [blazesbot/bot/deletador.py:173](blazesbot/bot/deletador.py#L173) | — | Assentamento depois do Ok, para o item sumir antes do clique seguinte. |
@@ -422,7 +424,7 @@ ligar código não testado.
 | `DESVIO_MINIMO` | `12.0` | [blazesbot/bot/recorte_do_time.py:109](blazesbot/bot/recorte_do_time.py#L109) | — | Recorte liso casa em todo lugar. `region_is_uniform` já é o teste que o |
 | `FOLGA_DO_ESPACAMENTO` | `6.0` | [blazesbot/bot/recorte_do_time.py:105](blazesbot/bot/recorte_do_time.py#L105) | — | Espaçamento vertical: desvio máximo aceito entre os intervalos, em pixels. As |
 | `LARGURA_DO_RECORTE` | `120` | [blazesbot/bot/recorte_do_time.py:91](blazesbot/bot/recorte_do_time.py#L91) | — | — |
-| `LIMIAR` | `0.9` | [blazesbot/bot/recorte_do_time.py:95](blazesbot/bot/recorte_do_time.py#L95) | cura.py, combate.py, fada.py, navegacao.py, rotina_de_cave.py, watchdog.py | Um casamento fraco não conta. 0.90 é o mesmo patamar que o deletador usa para |
+| `LIMIAR` | `0.9` | [blazesbot/bot/recorte_do_time.py:95](blazesbot/bot/recorte_do_time.py#L95) | cura.py, combate.py, fada.py, navegacao.py, rotina_de_cave.py, watchdog.py, medir_o_congelamento.py | Um casamento fraco não conta. 0.90 é o mesmo patamar que o deletador usa para |
 | `MINIMO_DE_LINHAS` | `2` | [blazesbot/bot/recorte_do_time.py:99](blazesbot/bot/recorte_do_time.py#L99) | — | Menos de dois casamentos não prova repetição -- prova que o recorte se achou a |
 | `NOME_DO_TEMPLATE` | `'state_team_member.png'` | [blazesbot/bot/recorte_do_time.py:73](blazesbot/bot/recorte_do_time.py#L73) | — | Nome que `bot/team.py` procura. Mudar aqui sem mudar lá deixa o arquivo |
 | `PASSO_VERTICAL` | `4` | [blazesbot/bot/recorte_do_time.py:90](blazesbot/bot/recorte_do_time.py#L90) | — | — |
@@ -714,6 +716,8 @@ ligar código não testado.
 | `VENDAS_MINIMAS` | `30` | [blazesbot/tools/medir_a_rolha.py:31](blazesbot/tools/medir_a_rolha.py#L31) | — | — |
 | `CONSISTENCIA_MINIMA` | `0.8` | [blazesbot/tools/medir_a_volta_do_pet.py:25](blazesbot/tools/medir_a_volta_do_pet.py#L25) | — | — |
 | `TROCAS_MINIMAS` | `30` | [blazesbot/tools/medir_a_volta_do_pet.py:24](blazesbot/tools/medir_a_volta_do_pet.py#L24) | — | — |
+| `CONGELAMENTOS_MINIMOS` | `30` | [blazesbot/tools/medir_o_congelamento.py:33](blazesbot/tools/medir_o_congelamento.py#L33) | — | — |
+| `FALSAS_TOLERADAS` | `0.1` | [blazesbot/tools/medir_o_congelamento.py:34](blazesbot/tools/medir_o_congelamento.py#L34) | — | — |
 | `TETO_DO_PORTAO_DE_COMMIT` | `300` | [blazesbot/tools/portao_de_commit.py:64](blazesbot/tools/portao_de_commit.py#L64) | — | O portão inteiro leva ~40 s. O teto é a garantia de que um teste preso não |
 | `DISTANCIA_PARA_CASAR` | `10` | [blazesbot/tools/relatorio_da_rota_hh.py:40](blazesbot/tools/relatorio_da_rota_hh.py#L40) | — | A tolerância da rota da cave é 7; a posição é lida depois do passo, com folga. |
 | `LINHAS_DO_RELATORIO` | `15` | [blazesbot/tools/relatorio_da_rota_hh.py:44](blazesbot/tools/relatorio_da_rota_hh.py#L44) | — | — |
