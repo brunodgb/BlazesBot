@@ -37,22 +37,43 @@ def _modulos() -> list[Path]:
     return sorted(PACOTE.rglob("*.py"))
 
 
-def _classes_analisaveis(arvore: ast.Module) -> list[ast.ClassDef]:
-    """Só as classes cuja superfície dá para provar lendo o arquivo.
+def _todas_as_classes() -> dict[str, list[ast.ClassDef]]:
+    """Toda classe do pacote, por nome -- para seguir as bases DO PROJETO."""
+    mapa: dict[str, list[ast.ClassDef]] = {}
+    for caminho in _modulos():
+        for no in ast.walk(ast.parse(caminho.read_text(encoding="utf-8"))):
+            if isinstance(no, ast.ClassDef):
+                mapa.setdefault(no.name, []).append(no)
+    return mapa
 
-    Herdar de qualquer coisa que não seja `object` põe métodos na classe que este
-    arquivo não enxerga. Pular é a resposta honesta.
+
+def _superficie(classe: ast.ClassDef, mapa, vistos: tuple = ()) -> set[str] | None:
+    """O que `self` tem: o da classe mais o das bases que são DO PROJETO.
+
+    `None` = não dá para provar lendo o código -- base de fora (`Enum`,
+    `Exception`...), base com nome ambíguo no pacote, ou metaclasse. Pular é a
+    resposta honesta.
+
+    SEGUIR A BASE DO PROJETO ENTROU EM 26/09/2026. Antes, herdar de qualquer
+    coisa tirava a classe da conferência -- e a `JanelaDeVenda`, ao passar a
+    herdar do mixin `LeituraDoSlot`, saiu dela sem aviso; as duas rotinas de
+    cave, as maiores classes do projeto, sairiam também ao ganhar uma base.
     """
-    saida = []
-    for no in ast.walk(arvore):
-        if not isinstance(no, ast.ClassDef):
+    if classe.keywords:
+        return None
+    nomes = _definidos(classe)
+    for base in classe.bases:
+        nome = getattr(base, "id", getattr(base, "attr", None))
+        if nome == "object":
             continue
-        bases = [b for b in no.bases
-                 if not (isinstance(b, ast.Name) and b.id == "object")]
-        if bases or no.keywords:
-            continue
-        saida.append(no)
-    return saida
+        candidatas = mapa.get(nome or "", [])
+        if len(candidatas) != 1 or nome in vistos:
+            return None
+        herdado = _superficie(candidatas[0], mapa, (*vistos, nome))
+        if herdado is None:
+            return None
+        nomes |= herdado
+    return nomes
 
 
 def _definidos(classe: ast.ClassDef) -> set[str]:
@@ -99,13 +120,15 @@ def _usa_atalho_dinamico(classe: ast.ClassDef) -> bool:
 def test_nenhuma_classe_chama_self_ponto_nada():
     """`self.x` tem que existir na classe. É o que os três crashes violaram."""
     faltando: list[str] = []
+    mapa = _todas_as_classes()
 
     for caminho in _modulos():
         arvore = ast.parse(caminho.read_text(encoding="utf-8"))
-        for classe in _classes_analisaveis(arvore):
-            if _usa_atalho_dinamico(classe):
+        for classe in [n for n in ast.walk(arvore) if isinstance(n, ast.ClassDef)]:
+            superficie = _superficie(classe, mapa)
+            if superficie is None or _usa_atalho_dinamico(classe):
                 continue
-            definidos = _definidos(classe) | DE_GRACA
+            definidos = superficie | DE_GRACA
             for no in ast.walk(classe):
                 if (isinstance(no, ast.Attribute)
                         and isinstance(no.value, ast.Name)
