@@ -1825,12 +1825,15 @@ class BotConfig:
         """Grava a configuração. Sem `path`, usa o arquivo de onde ela veio."""
         destino = Path(path) if path is not None else self.config_path
         destino.parent.mkdir(parents=True, exist_ok=True)
-        dados = self.to_dict()
         # GRAVAÇÃO ATÔMICA: escreve ao lado e substitui de uma vez. A interface e
         # os supervisores gravam do mesmo objeto em threads diferentes; sem isso
         # uma escrita interrompida no meio deixaria o config.json pela metade, e
         # metade de config.json é senha cifrada perdida.
         with _LOCK_ARQUIVO:
+            # A FOTOGRAFIA TAMBÉM É DENTRO DA TRAVA. Tirada fora, duas gravações
+            # quase juntas podiam trocar de ordem: a que fotografou ANTES
+            # escrevia DEPOIS, e a mudança mais nova sumia do arquivo.
+            dados = self.to_dict()
             temporario = destino.with_name(destino.name + ".tmp")
             with temporario.open("w", encoding="utf-8") as fh:
                 json.dump(dados, fh, indent=2, ensure_ascii=False)

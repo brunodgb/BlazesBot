@@ -258,3 +258,33 @@ def test_sao_VINTE_linhas_mais_a_linha_0():
 
     assert PASSOS_DO_APP == 20
     assert len(AppConfig().steps) == 20
+
+
+def test_a_fotografia_da_gravacao_e_tirada_DENTRO_da_trava(tmp_path, monkeypatch):
+    """Fotografada fora da trava, a gravação que fotografou antes podia escrever
+    depois -- e a mudança mais nova sumia do arquivo."""
+    from blazesbot import config as mod
+
+    class Trava:
+        presa = False
+
+        def __enter__(self):
+            self.presa = True
+
+        def __exit__(self, *_):
+            self.presa = False
+
+    trava = Trava()
+    monkeypatch.setattr(mod, "_LOCK_ARQUIVO", trava)
+    cfg = BotConfig()
+    fotografar = cfg.to_dict
+    presa_na_fotografia = []
+
+    def to_dict():
+        presa_na_fotografia.append(trava.presa)
+        return fotografar()
+
+    monkeypatch.setattr(cfg, "to_dict", to_dict)
+    cfg.save(tmp_path / "config.json")
+
+    assert presa_na_fotografia == [True]
