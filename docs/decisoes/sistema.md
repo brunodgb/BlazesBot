@@ -26,7 +26,7 @@
   default `dev`), resolvida UMA vez por processo em `blazesbot/core/logmodo.py`
   (cache proposital — o env não muda durante a vida do processo). O nível do
   logger raiz `blazes` é `DEBUG` em dev (se `verbose`) e `INFO` em prod, setado
-  em `setup_logging()` (`main.py`, usado pela PyQt6; `web_app.py` o importa com
+  em `setup_logging()` (`main.py`; `web_app.py` o importa com
   `verbose=True`).
   - **O que o USUÁRIO vê** (todos os ambientes): os arquivos legíveis
     (`logs/sessao-atual.log`, `logs/blazesbot.log`) e a tela de log na
@@ -49,7 +49,7 @@
     depois (ver "O laço comum das caves", abaixo).
   - **Interface:** mudar o nível de DEBUG↔INFO ao vivo só em modo dev. Na web
     o checkbox "detalhado" no cabeçalho do log (chama
-    `Api.definir_nivel_log`); na GUI o `ck_debug` — em prod o checkbox aparece
+    `Api.definir_nivel_log`) — em prod o checkbox aparece
     desmarcado e desabilitado e o nível fica preso em INFO.
   - **Regra de trabalho (pedido do usuário, valendo sempre):** ao investigar
     qualquer problema, analisar PRIMEIRO os logs atrás (o `logs/dev/blazes-dev.jsonl`)
@@ -554,9 +554,10 @@ exatamente o que devolviam:
 
 ### PyQt6 fora do pacote
 
-A interface antiga não é importada pela web, mas o PyInstaller varre o pacote
-inteiro e acharia `gui/main_window.py`. São ~120 MB de Qt para código que não
-roda — `--exclude-module PyQt6`, conferido: zero ocorrência de Qt no pacote.
+A interface antiga não era importada pela web, mas o PyInstaller varria o
+pacote inteiro e achava `gui/main_window.py`: ~120 MB de Qt para código que não
+rodava, e `--exclude-module PyQt6` resolvia. Desde 26/09/2026 a PyQt6 nem está
+instalada e o `gui/` não existe; a exclusão saiu do `empacotar.py`.
 
 ### Como isto foi verificado
 

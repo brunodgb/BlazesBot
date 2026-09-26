@@ -62,8 +62,7 @@
   daquela conta, salva (`config.save()`, persiste) e devolve False — o farm
   para na próxima iteração. As views refletem o checkbox BC vazio ao vivo:
   a web via `estado()`→`farm` por conta (sync no `atualizarEstado` de
-  `web/main.js`) e a GUI no `_refresh_status` (só seta o checkbox quando difere,
-  para não disparar `stateChanged` à toa).
+  `web/main.js`).
 - **O ponto de parada do vendedor é (158,-494), EXATO.** `POSICAO_DO_VENDEDOR`
   mudou de (153,-492) para (158,-494) (remedido pelo usuário), e **as
   coordenadas de tela andam junto**: o `vendor_npc` saiu de (464,377) para

@@ -172,7 +172,7 @@ class CapturaDeLog(logging.Handler):
     Uma `deque` por conta, com `maxlen` -- custo constante e sem crescimento.
     As interfaces têm filas parecidas, mas elas são DELAS: a queda é gravada
     pelo supervisor, numa thread que não conhece interface nenhuma, e depender
-    da fila da interface deixaria o registro vazio quando o bot roda sem GUI.
+    da fila da interface deixaria o registro vazio quando o bot roda sem interface.
     """
 
     def __init__(self, maximo: int = LINHAS_DE_LOG_GUARDADAS) -> None:

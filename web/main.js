@@ -2,8 +2,6 @@
    BlazesBot — lógica da interface web (pywebview).
    NENHUMA regra de negócio aqui: este arquivo só chama o backend
    Python via `window.pywebview.api.*` e desenha o resultado.
-   Espelho da GUI PyQt6 (blazesbot/gui/). Regra das duas
-   interfaces: mudou um lado, muda o outro.
    ============================================================ */
 
 "use strict";
@@ -545,7 +543,7 @@ function renderContas() {
     rotAtiva.appendChild(chkAtiva);
     tdAtiva.appendChild(rotAtiva);
 
-    // Login — editável inline, como a célula COL_LOGIN da tabela da GUI.
+    // Login — editável inline.
     const tdLogin = document.createElement("td");
     tdLogin.className = "cel-login";
 
@@ -607,7 +605,7 @@ function renderContas() {
     marcaRun.dataset.papel = "runs";
     tdRun.appendChild(marcaRun);
 
-    // Posição — combo inline, como o QComboBox da tabela da GUI.
+    // Posição — combo inline.
     const tdPos = document.createElement("td");
     tdPos.className = "cel-posicao";
     const selPos = document.createElement("select");
@@ -1359,8 +1357,7 @@ function msParaSegundos(ms) {
 }
 
 const MINIMO_ESPERA_APP = MINIMO_DELAY_MS;
-// Teto igual ao `setRange(MINIMO_DE_ESPERA_DO_APP_MS, 10000)` da GUI
-// (`account_dialog._aba_app`) -- as duas interfaces com a mesma faixa.
+// Teto da espera de cada linha do APP, em ms.
 const MAXIMO_ESPERA_APP = 10000;
 const PASSO_ESPERA_APP = 100;
 
@@ -1426,8 +1423,8 @@ function preencherApp(steps, app, keys) {
   atualizarPreviaApp();
 }
 
-// Prévia do modo APP: mostra a sequência exata que será enviada (espelha a
-// prévia do AccountDialog da GUI). Linha com tecla roda; vazia é ignorada.
+// Prévia do modo APP: mostra a sequência exata que será enviada. Linha com
+// tecla roda; vazia é ignorada.
 function atualizarPreviaApp() {
   const el = $("#lbl-previa-app");
   if (!el) return;
@@ -1457,9 +1454,7 @@ $("#corpo-app").addEventListener("input", atualizarPreviaApp);
 
 /* Seletor da conta que reseta a cave.
  *
- * O campo era texto livre e virou lista fechada. Espelha
- * `AccountDialog._montar_lista_de_reset` da GUI PyQt — as duas interfaces
- * precisam oferecer exatamente as mesmas opções, e quem decide quais são é o
+ * O campo era texto livre e virou lista fechada; quem decide as opções é o
  * backend (`BotConfig.reset_accounts`).
  *
  * Três casos, e o terceiro é o que não pode sumir:
@@ -1887,9 +1882,7 @@ document.addEventListener("keydown", (e) => {
   //
   // Antes só metade disso valia: os campos do APP não têm `id^=ed-k-`, então
   // não conflitavam ENTRE SI, mas o campo em captura ainda era comparado com a
-  // aba Teclas — e uma tecla já usada no BC era recusada no APP. A GUI já
-  // estava certa (`KeyCapture()` sem `conflito` nos passos do APP); era só a
-  // web que barrava.
+  // aba Teclas — e uma tecla já usada no BC era recusada no APP.
   const doApp = capturando.classList.contains("app-tecla");
   const emUso = doApp ? null : [...document.querySelectorAll('[id^="ed-k-"]')].find(
     (i) => i !== capturando && i.value && i.value.toUpperCase() === val);
@@ -1988,7 +1981,7 @@ function atualizarSeletorStats(lista) {
     opt.textContent = t("opt_personagem_runs", { nick: p.nick, n: p.total });
     sel.appendChild(opt);
   });
-  // mantém a escolha; senão, pega o primeiro (mais runs, como na PyQt6)
+  // mantém a escolha; senão, pega o primeiro (o de mais runs)
   const valido = lista.some((p) => p.login === atual);
   statsLogin = valido ? atual : lista[0].login;
   sel.value = statsLogin;
@@ -2425,7 +2418,7 @@ $("#btn-limpar-log").addEventListener("click", () => {
   });
 });
 
-// Toggle "log detalhado" (ambiente dev): paridade com o `ck_debug` da GUI.
+// Toggle "log detalhado" (ambiente dev).
 // Em prod o elemento fica oculto e o backend ignora a chamada.
 $("#ck-log-detall").addEventListener("change", () => {
   chamar("definir_nivel_log", $("#ck-log-detall").checked ? "DEBUG" : "INFO");
@@ -2935,12 +2928,10 @@ setTimeout(() => {
       antigo -- conferido, o rótulo agora acompanha. O mesmo ouvinte alimenta
       `atualizarPreviaApp` ("volta completa em X s"), que hoje sai no
       `if (!el) return` porque **`#lbl-previa-app` não existe no `index.html`**
-      (a prévia da sequência é funcionalidade só da GUI PyQt6 -- divergência
-      registrada em `docs/decisoes/interface.md`, não consertada aqui). Quando o
-      elemento entrar, este ouvinte já o alimenta.
+      (a prévia da sequência nunca entrou na web). Quando o elemento entrar,
+      este ouvinte já o alimenta.
    2. **RESPEITAR `min` E `max`.** Ela só cuidava de não passar de zero. O slot
-      de venda é 1..24 (`config.validar` recusa fora disso, e a GUI já usava
-      `setRange(1, 24)`): rolar até 30 só produzia erro na hora de salvar.
+      de venda é 1..24 (`config.validar` recusa fora disso): rolar até 30 só produzia erro na hora de salvar.
    3. **ARREDONDAR PELA CASA DECIMAL DO PASSO.** Em ponto flutuante, 0,5 + 0,1
       dá 0.6000000000000001 -- e esse texto ia direto para dentro do campo.
 

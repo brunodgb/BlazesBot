@@ -470,7 +470,7 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | `PASSOS_DO_APP` | 20 s | **16 s** ⚠ | PASSO | [config.py:488](blazesbot/config.py#L488) | `_app_from_dict` | Linhas oferecidas na aba APP. Dezesseis cobre com folga a macro mais longa que |
 | `MINIMO_DELAY_MS` | 100 s (2 min) | = | FIXO | [config.py:507](blazesbot/config.py#L507) | `segundos_para_ms, ms_para_segundos` | Espera mínima de QUALQUER campo de tempo do APP, em milissegundos. |
 | `SPEED_DURACAO_SEGUNDOS` | 30 s | = | FIXO | [config.py:876](blazesbot/config.py#L876) |  | Skill de velocidade da montaria, valores do jogo. Ficam aqui e não na |
-| *literal em* `_limpar_a_saida_anterior` | 3 s | = | FIXO | [empacotar.py:115](blazesbot/tools/empacotar.py#L115) | `_limpar_a_saida_anterior` | A pasta da entrega anterior sai ANTES de o PyInstaller começar. |
+| *literal em* `_limpar_a_saida_anterior` | 3 s | = | FIXO | [empacotar.py:112](blazesbot/tools/empacotar.py#L112) | `_limpar_a_saida_anterior` | A pasta da entrega anterior sai ANTES de o PyInstaller começar. |
 | `PASSO` | 0.25 s | = | PASSO | [ler_camera.py:50](blazesbot/tools/ler_camera.py#L50) | `run_ler_camera` | Cadência da leitura. Barata: são 8 leituras de 4 bytes por volta. |
 | `SEGUNDOS_PADRAO` | 300 s (5 min) | = | TETO | [ler_camera.py:53](blazesbot/tools/ler_camera.py#L53) | `run_ler_camera` | Teto padrão, para a ferramenta fechar sozinha se você esquecer dela aberta. |
 | `TETO_DO_PORTAO_DE_COMMIT` | 300 s (5 min) | = | TETO | [portao_de_commit.py:64](blazesbot/tools/portao_de_commit.py#L64) | `rodar_o_portao` | O portão inteiro leva ~40 s. O teto é a garantia de que um teste preso não |

@@ -1,7 +1,7 @@
 /* ============================================================
    BlazesBot — Frontend web (pywebview + WebView2) — Tailwind CSS v4.
-   Refatoração UI/UX: paleta VERMELHA (identidade BlazesBot, igual à
-   GUI PyQt6 em blazesbot/gui/theme.py), alta densidade de informação,
+   Refatoração UI/UX: paleta VERMELHA (identidade BlazesBot), alta
+   densidade de informação,
    scroll interno por painel (o corpo não rola) e modal com
    cabeçalho/rodapé fixos.
 
@@ -12,7 +12,7 @@
 @import "tailwindcss";
 
 /* ---------- Tokens de tema (Tailwind v4) ----------
-   Paleta espelhada em blazesbot/gui/theme.py: o vermelho #541E1B é a
+   Paleta: o vermelho #541E1B é a
    IDENTIDADE (fundos, bordas, abas selecionadas); o âmbar #E08A4C é o
    DESTAQUE (botões primários, foco). O texto é NEUTRO de propósito —
    quem carrega a identidade é o fundo, não o texto.

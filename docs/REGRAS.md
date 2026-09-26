@@ -825,7 +825,7 @@
 ### A interface — `docs/decisoes/interface.md`
 
 - **Tela "Histórico de Quedas"** entre Estatísticas de BC e Log, núcleo em
-  `core/quedas.py` (GUI e web só desenham). Só queda REAL (gatilho `ctx.ultima_
+  `core/quedas.py` (a web só desenha). Só queda REAL (gatilho `ctx.ultima_
   queda`, que só o watchdog escreve). Registrada em `_run_session` **antes** de
   `_encerrar_caido` matar a janela — ordem obrigatória. Print só no
   `RECONNECT_DIALOG`, e é o PRÓPRIO quadro que detectou. JPEG + miniatura
@@ -848,8 +848,7 @@
 - **`Account.grupo` É RÓTULO VISUAL e nenhum caminho do bot pode ler dele**
   (travado por AST). Ordem, time do APP (`time_logins`) e grupo são ORTOGONAIS.
   O arraste **não tem debounce**: grava no soltar e, se falhar, recarrega do
-  backend. Na GUI a reordenação é por BOTÃO — a `QTableWidget` tem seis
-  `setCellWidget` e o arraste do Qt não move widget de célula.
+  backend.
 - **A RODA DO MOUSE SOBE E DESCE TODO CAMPO NUMÉRICO** da web (`type="number"` e
   `type="range"`), incluindo os que a aba APP cria em tempo de execução — por
   isso o ouvinte é **delegado no `document`**, não instalado campo por campo.
@@ -879,7 +878,7 @@
   MINUTOS, faixa fechada **40..60** (`PET_FEED_MINUTOS_MIN`/`MAX`). Em ms pediria
   7 dígitos, e não é delay de mecânica — é grade de longo prazo. A faixa é
   **GRAMPEADA NA LEITURA** (`pet_feed_na_faixa`), não recusada na validação: o
-  combo antigo da GUI oferecia 10/20/30 min e recusar faria o bot rejeitar a
+  versão antiga oferecia 10/20/30 min e recusar faria o bot rejeitar a
   configuração inteira de quem já usava. Arquivo velho sobe corrigido — mesmo
   contrato do piso de 100 ms —, e a ponte reaplica.
 - **`max_clients` FOI APOSENTADO** (26/08/2026): quantas contas rodam é decidido
@@ -894,12 +893,10 @@
   inalcançável** — e 90% é o mínimo de vida para começar uma run. Slider fica com
   `step="1"` e declara o passo grosso da roda em **`data-passo-roda`**; é a única
   exceção à regra do `step`.
-- **PASSO DE CAMPO É O MESMO NAS DUAS INTERFACES.** Todo `QSpinBox` já responde à
-  roda por conta do Qt; o que não pode divergir é o passo. Alinhados: espera da
-  APP = 100 ms (era 50 na GUI), shuffle = 5.
+- **O PASSO DE CADA CAMPO** é o `step` dele: espera do APP = 100 ms,
+  shuffle = 5.
 - **Balão de ajuda por CAMPO** na web (`.ajuda` + `#balao-ajuda`), no `<body>`
-  em `position: fixed` — dentro do painel que rola seria CORTADO. Na GUI é o
-  terceiro item de `_bloco_teclas`.
+  em `position: fixed` — dentro do painel que rola seria CORTADO.
 - **Login e senha editáveis inline** na tabela da web; a senha real NUNCA sai do
   Python (DPAPI) — a web só recebe `tem_senha`.
 - **CURSOR DE LOG NUNCA É ÍNDICE DE DEQUE.** `puxar_log` recebe cursor ABSOLUTO

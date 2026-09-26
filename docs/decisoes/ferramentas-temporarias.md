@@ -16,13 +16,11 @@
   supervisor, e devolve o PID com `_release()` no `finally` de TODA saída —
   sem isso o bot de verdade veria a janela como "de outra conta" e abriria um
   cliente novo (fila de três horas). Exige o bot **parado** (os dois disputariam
-  teclado e mouse do mesmo cliente) e o personagem já dentro do jogo. Nas duas
-  interfaces o **próprio botão vira o cancelar** enquanto a venda roda: o botão
+  teclado e mouse do mesmo cliente) e o personagem já dentro do jogo. Na
+  interface o **próprio botão vira o cancelar** enquanto a venda roda: o botão
   Parar da barra fica desabilitado com o bot parado, então não haveria outra
   saída. Blocos marcados `TEMPORÁRIO` em `web_app.py` (`_App.testar_venda`,
-  `cancelar_teste_venda` + os dois métodos da `Api`), em
-  `gui/main_window.py` (grupo "Teste isolado da venda" na aba Diagnóstico,
-  `_testar_venda`, `_fim_do_teste_de_venda`, sinal `teste_venda_pronto`) e no
+  `cancelar_teste_venda` + os dois métodos da `Api`) e no
   `web/index.html` + `web/main.js` (`#btn-testar-venda`).
 - **TEMPORÁRIO — botão "Amostrar Cliques" (amostragem de coordenadas de clique
   DIREITO).** Vive em `blazesbot/bot/amostragem_de_cliques.py`, módulo FOLHA
@@ -85,13 +83,11 @@
     e uma `RANKING …` por coordenada no log (o JSON de dev **não copia campos de
     `extra`**, só a mensagem — por isso o dado vai no texto), mais o arquivo
     completo em `logs/amostragem/<ponto>-<carimbo>.json`. O veredito em texto é
-    montado no Python (`resumir` / `resumir_curto`) e as duas interfaces só
-    exibem: a GUI num `QMessageBox`, a web num toast de uma linha (o toast é
+    montado no Python (`resumir` / `resumir_curto`) e a interface só
+    exibe, num toast de uma linha (o toast é
     pílula de uma linha que some sozinha; o relatório fica no log).
   - Blocos `TEMPORÁRIO` em `web_app.py` (`_App.amostrar_cliques`,
-    `cancelar_amostragem` + os dois métodos da `Api`), em `gui/main_window.py`
-    (grupo "Amostragem de coordenadas de clique direito" na aba Diagnóstico,
-    `_amostrar_cliques`, `_fim_da_amostragem`, sinal `amostragem_pronta`), no
+    `cancelar_amostragem` + os dois métodos da `Api`), no
     `web/index.html` + `web/main.js` (`#btn-amostrar-cliques`) e o
     `tests/test_amostragem_de_cliques.py`.
 - **TEMPORÁRIO — `blazesbot/bot/diagnostico_do_link.py`, as fotos em volta do

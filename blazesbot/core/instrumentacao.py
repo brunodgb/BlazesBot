@@ -83,10 +83,9 @@ INSTRUMENTAR_O_PACOTE_INTEIRO = True
 # para uma função chamada mil vezes por segundo pagar o embrulho por 20 ms.
 AMOSTRAS_PARA_DECIDIR = 20
 
-# Pacotes que NÃO entram. `tools` é investigação manual, `gui` e `web` só rodam
-# no thread da interface e ali latência de microssegundo não decide nada.
+# Pacotes que NÃO entram. `tools` é investigação manual.
 FORA = ("blazesbot.core.cronometro", "blazesbot.core.instrumentacao",
-        "blazesbot.tools", "blazesbot.gui")
+        "blazesbot.tools")
 
 
 def _pode_embrulhar(f) -> bool:
@@ -188,7 +187,7 @@ def instrumentar_tudo(pacote: str = "blazesbot") -> int:
         try:
             mod = importlib.import_module(info.name)
         except Exception:
-            # Módulo que não importa nesta máquina (dependência de GUI, de
+            # Módulo que não importa nesta máquina (dependência que falta, de
             # Windows) não é problema da telemetria.
             continue
         try:

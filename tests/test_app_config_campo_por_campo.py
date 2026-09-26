@@ -1,7 +1,6 @@
 """
 Verifica que TODO campo do `AppConfig` (fora `steps`) é transportado entre
-as duas camadas: o dataclass e a ponte web (`web_app.py`). A terceira, a
-interface PyQt6, saiu em definitivo em 25/09/2026.
+as duas camadas: o dataclass e a ponte web (`web_app.py`).
 
 POR QUE ESTE TESTE EXISTE
 =========================

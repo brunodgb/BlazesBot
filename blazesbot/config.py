@@ -280,7 +280,7 @@ def pet_feed_na_faixa(minutos: object) -> int:
     """Grampeia o intervalo na faixa. Aplicado na LEITURA e na TELA.
 
     Grampeia em vez de RECUSAR de propósito: `config.json` salvo por versão
-    antiga (o combo da GUI oferecia 10, 20 e 30 minutos) sobe corrigido em vez de
+    antiga (que oferecia 10, 20 e 30 minutos) sobe corrigido em vez de
     fazer o bot recusar a configuração inteira. É o mesmo contrato do piso de
     `MINIMO_DELAY_MS`.
     """
@@ -1259,8 +1259,8 @@ class Account:
     # `definir_senha` grava a senha NA CONTA ERRADA -- login quebrado e senha
     # certa perdida, sem desfazer.
     #
-    # O `uid` acerta a conta mesmo com a GUI e a web abertas ao mesmo tempo, que
-    # é o cenário em que recarregar a tabela depois do arraste não protege.
+    # O `uid` acerta a conta mesmo com a lista mudando por baixo -- o cenário
+    # em que recarregar a tabela depois do arraste não protege.
     #
     # Vazio no dataclass e preenchido por `garantir_uid()`: conta de
     # `config.json` antigo recebe o dela na leitura, e o valor NUNCA muda depois.

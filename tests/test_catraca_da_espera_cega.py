@@ -39,7 +39,7 @@ from blazesbot.core.indice_de_tempos import extrair
 
 # QUANTAS ESPERAS CEGAS CADA MÓDULO TINHA EM 11/09/2026, medido pelo mesmo
 # extrator que gera o `docs/TEMPOS.md`. Só entram os módulos do caminho quente
-# -- onde espera cega custa APM; o resto do projeto (ferramentas, GUI) não
+# -- onde espera cega custa APM; o resto do projeto (ferramentas) não
 # entra na catraca porque ali o relógio não disputa com o jogo.
 TETO_DE_ESPERAS_CEGAS = {
     "blazesbot/bot/combate.py": 36,

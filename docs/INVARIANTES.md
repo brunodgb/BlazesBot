@@ -1582,9 +1582,6 @@ Pedidos entre 28/08 e 06/09/2026.
 - **O ARRASTE NÃO TEM DEBOUNCE.** Grava no soltar; se falhar, a tabela recarrega
   do backend — a tela nunca mostra ordem que o disco não tem. Debounce é o que
   perde a última alteração quando a janela fecha.
-- **NA GUI A REORDENAÇÃO É POR BOTÃO.** A `QTableWidget` tem seis
-  `setCellWidget`, e o arraste do Qt move os itens mas **não** os widgets de
-  célula: a senha de uma conta ficaria na linha de outra.
 - **UMA coluna "Função"**, não três de caixa: o rótulo tem de ficar DENTRO do
   controle. Selo é **só a sigla** (virão mais funções, e quem separava BC de HH
   sempre foi a sigla — dois pictogramas de caverna não se distinguem a 16px).
@@ -1654,7 +1651,7 @@ Refatoração de 06/09/2026: exclusividade das funções, tooltip e altura das a
   (`position: absolute; opacity: 0`) e quem o recebe é o `<span>` IRMÃO dele
   dentro do mesmo `<label>`. Rádio nativo não desmarca sozinho, e no rádio já
   marcado o `change` também não dispara: sem tratamento próprio, ligar o BC era
-  uma porta sem volta. Na GUI, desmarcar a caixa manda `""`.
+  uma porta sem volta.
 - **O ESPELHO AO VIVO TAMBÉM É EXCLUSIVO.** Ele corrigia BC e HH de forma
   independente, e com rádio isso **reintroduzia a função antiga a cada poll de
   1,5 s** — medido na tela.

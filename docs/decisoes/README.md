@@ -18,7 +18,7 @@ medição. Regra sem porquê apodrece; porquê aqui dentro faz o arquivo voltar 
 | `docs/decisoes/navegacao.md` | rota, destravamento, altar, saída, tempos |
 | **`docs/decisoes/janela-na-frente.md`** | **janela aberta engole o clique: guarda, painel, montaria** |
 | `docs/decisoes/cliques-e-resolucao.md` | clique, entrada da cave, resolução |
-| `docs/decisoes/interface.md` | web e GUI, quedas, cronômetros, Tailwind, log, campos numéricos, ordem/uid/grupo das contas, ícone |
+| `docs/decisoes/interface.md` | a interface web, quedas, cronômetros, Tailwind, log, campos numéricos, ordem/uid/grupo das contas, ícone |
 | `docs/decisoes/sistema.md` | pino de janela, log de dev, hotbar, testes, o laço comum das caves |
 | `docs/decisoes/login-e-relogin.md` | queda, telas de login, matar janela, backoff, senha errada |
 | **`docs/decisoes/reset-de-time.md`** | **conta de reset: lista fechada, batida, trava na porta** |

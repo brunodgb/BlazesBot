@@ -11,7 +11,7 @@ direto, em quatro lugares, independentemente de qual cave estava rodando.
 
 Quatro campos do `HHConfig` estavam nesse estado: `attack_delay`,
 `aoe_until_mana_pct`, `usar_skill_de_velocidade` e `limpar_mobs_a_cada`. Escritos
-pela GUI E pela web, lidos por ninguém.
+pela interface, lidos por ninguém.
 
 E o pior deles não era um número: **`reset_nick`**. `TeamService.montar_time()`
 lia `settings.bc.reset_nick`. O usuário configurou o campo da HH, o do BC

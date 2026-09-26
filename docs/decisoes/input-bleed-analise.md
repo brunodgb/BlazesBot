@@ -251,4 +251,4 @@ AttachThreadInput(botThreadId, gameThreadId, TRUE);
 
 ---
 
-**Princípio norteador:** "Memória primeiro, medido depois, interruptor sempre." Nenhuma das soluções acima quebra o contrato de isolamento de ecossistemas (BC ↔ APP) nem a paridade PyQt6 ↔ Web.
+**Princípio norteador:** "Memória primeiro, medido depois, interruptor sempre." Nenhuma das soluções acima quebra o contrato de isolamento de ecossistemas (BC ↔ APP).

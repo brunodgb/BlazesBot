@@ -63,8 +63,8 @@ Este projeto usa o `pywebview` (WebView2) para criar uma aplicação desktop.
 
 - **Princípio RPC (Remote Procedure Call)**: A interface é apenas "visão". A lógica é "cérebro" (Python).
 - **Atualização em Tempo Real**:
-    - O `web_app.py` NÃO usa push do Python→JS: segue o mesmo desenho da GUI, um
-      handler enfileira o log numa `deque` e o JS PUXA por poll
+    - O `web_app.py` NÃO usa push do Python→JS: um handler
+      enfileira o log numa `deque` e o JS PUXA por poll
       (`puxar_log` a cada ~300 ms; `estado` a cada 1,5 s). Isso evita chamar o
       bridge de outras threads.
     - Para eventos de UI (como arrastar e soltar), use eventos de mouse/toque padrão (`dragstart`, `dragover`, `drop`).
@@ -565,13 +565,13 @@ vezes por sessão, e **qualquer falha do revisor libera o Stop** (falha aberta,
 # Skill: i18n (interface em PT-BR / EN / ES)
 
 Mecanismo central de tradução da interface — texto deixa de ser fixo no
-HTML/JS/PyQt6 e passa a vir de um dicionário único por chave.
+HTML/JS e passa a vir de um dicionário único por chave.
 
 - **Fonte:** `blazesbot/locales/traducoes.json` — `{"chave": {"pt-br": "...",
   "en": "...", "es": "..."}}`. PT-BR é obrigatório em toda chave; EN/ES podem
   faltar sem quebrar nada.
 - **Resolução:** `blazesbot/core/i18n.py` (`core/` porque não sabe que
-  ecossistema existe — GUI e Web usam o mesmo módulo). `traduzir(chave,
+  ecossistema existe — a web e o log usam o mesmo módulo). `traduzir(chave,
   idioma)` cai para PT-BR se o idioma não existe ou a chave não tem entrada
   nele; se a própria chave não existe, devolve `[chave]` em vez de lançar —
   testado em `tests/test_i18n.py`, inclusive o caso real de fallback

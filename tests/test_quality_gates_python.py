@@ -165,11 +165,10 @@ def _todos_os_python(raiz: Path) -> list[Path]:
 # QUANDO A LINHA DE BASE PODE SUBIR -- e é raro
 #
 # A catraca não tem escapatória de propósito: herdado encolhe ou fica. Só que
-# TRÊS destes arquivos são o ÚNICO lugar possível de uma classe inteira de
+# DOIS destes arquivos são o ÚNICO lugar possível de uma classe inteira de
 # alteração -- um campo novo de configuração precisa de uma linha no dataclass
 # (`config.py`), uma no dicionário que a ponte manda para a tela e outra na que
-# ela lê de volta (`web_app.py`), e uma no par carregar/gravar da GUI
-# (`account_dialog.py`). Não existe "outro módulo" para uma linha dentro de um
+# ela lê de volta (`web_app.py`). Não existe "outro módulo" para uma linha dentro de um
 # literal, e quebrar `config.py` para acrescentar uma tecla seria pior desenho
 # do que a linha.
 #

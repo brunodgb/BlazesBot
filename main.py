@@ -73,7 +73,7 @@ def setup_logging(verbose: bool = True) -> None:
     from blazesbot.core.log_limitado import LINHAS_MAXIMAS, ArquivoDeLogLimitado
 
     dev = logmodo.eh_dev()
-    # Em dev, `verbose` (a tecla --quiet da GUI) pode forçar INFO; em prod o
+    # Em dev, `verbose` (o `--quiet` desliga) pode forçar INFO; em prod o
     # nível é sempre INFO -- usuário não recebe o detalhe de desenvolvimento.
     nivel = logging.DEBUG if (dev and verbose) else logging.INFO
 
@@ -642,7 +642,7 @@ def run_login_test(config_path: Path) -> int:
     ativas = config.enabled_accounts()
     if not ativas:
         print(f"Nenhuma conta ativa em {config_path}.")
-        print("Cadastre uma conta pela interface (3-INICIAR.bat) e volte.")
+        print("Cadastre uma conta pela interface (3-INICIAR-WEB.bat) e volte.")
         return 1
 
     if not Path(config.client_bat).exists():
@@ -762,8 +762,7 @@ def main() -> int:
     args = parser.parse_args()
 
     # SEM AÇÃO, A AJUDA -- e antes de pedir administrador, que ela não precisa.
-    # Até 25/09/2026 o padrão abria a interface PyQt6, removida em definitivo
-    # por decisão do usuário: a interface é a web (`3-INICIAR-WEB.bat`).
+    # A interface é a web (`3-INICIAR-WEB.bat`); aqui só as ferramentas.
     acoes = (args.check, args.find_base, args.ler_camera, args.list_windows,
              args.watch_location, args.watch_combat, args.capture_test,
              args.detect, args.login_test, args.headless)

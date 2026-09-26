@@ -36,7 +36,7 @@ O usuário resumiu assim, em 26/08/2026:
 ## Decisão 1 — o campo de texto livre virou LISTA FECHADA
 
 `BCConfig.reset_nick` continua sendo um **nick**, gravado igual. O que mudou é
-como ele é escolhido: um `QComboBox` na GUI e um `<select>` na web, montados a
+como ele é escolhido: um `<select>` na web, montado a
 partir de `BotConfig.reset_accounts()` — as contas **ativas** marcadas com
 `accept_team_invites`.
 
@@ -317,19 +317,14 @@ usuário veria a conta de reset vazia. Travado por
 
 ---
 
-## Decisão 9 — o seletor mora na aba PERSONAGEM, nas duas interfaces
+## Decisão 9 — o seletor mora na aba PERSONAGEM
 
-Nas **duas interfaces** (regra permanente do projeto):
-
-* **PyQt6** — grupo *"Conta de reset (vale para TODAS as caves)"* na aba
-  Personagem, logo depois de "Função desta conta". Saiu da aba BC (o grupo
-  "Reset do boss" inteiro) e da aba HH (onde sobrou só o Modo).
-* **Web** — sexta célula da grade da aba Personagem, ao lado de "Grupo". Duas
+* **Na web** — sexta célula da grade da aba Personagem, ao lado de "Grupo". Duas
   linhas cheias de três campos, sem crescer a altura da aba e sem scroll novo.
   A aba BC perdeu o grupo "Reset do Time" e a "Rota na Cave" passou a ocupar a
   linha inteira.
 
-**Continua LISTA FECHADA**, nas duas. O reseter precisa ser uma conta cadastrada
+**Continua LISTA FECHADA**. O reseter precisa ser uma conta cadastrada
 neste bot — é isso que permite ao bot perceber que ela caiu e segurar a entrada.
 Nick de outra máquina é invisível daqui.
 
@@ -396,7 +391,7 @@ concluiu que o farm não pode continuar.
 ### A espera não congela nada
 
 * cada conta roda **na thread dela** (`AccountSupervisor`), então nenhuma espera
-  aqui toca a thread da interface — nem a PyQt6 nem a webview;
+  aqui toca a thread da interface — nem a webview;
 * é `ctx.tick`, **nunca** `time.sleep`: é o `tick` que mantém o watchdog desta
   conta vivo enquanto ela está parada (uma conta de cave também cai, e parada
   por horas num `sleep` ela ficaria cega para a própria queda);

@@ -1,8 +1,7 @@
 """
 Ponte Python ⇄ interface web (pywebview + WebView2).
 
-É a interface do BlazesBot -- a ÚNICA desde 25/09/2026, quando a PyQt6 saiu em
-definitivo por decisão do usuário. O pywebview abre o frontend em `web/` (HTML/CSS/JS) numa janela do WebView2
+É a interface do BlazesBot -- a única. O pywebview abre o frontend em `web/` (HTML/CSS/JS) numa janela do WebView2
 Runtime (embutido no Windows 11 — nada a instalar); este módulo expõe ao
 JavaScript as operações da interface, via o objeto `js_api`, usando
 o MESMO backend (`BotConfig`, `Account`, `BotManager`, `stats_diarias`). Nenhuma
@@ -77,8 +76,8 @@ from .core.raiz import raiz_do_bot
 
 POSITIONS = ["Left", "Center", "Right"]
 
-# Coords para a lista de servidores e para normalizar o servidor exibido
-# (espelho de como a GUI populará os combos). Calculado uma vez, é barato.
+# Coords para a lista de servidores e para normalizar o servidor exibido.
+# Calculado uma vez, é barato.
 _COORDS = get_coords(VALIDATED_RESOLUTION)
 
 # Linhas guardadas em memória para permitir refiltrar por conta.
@@ -109,8 +108,8 @@ def _nick(conta: Account) -> str:
 class _LogHandler(logging.Handler):
     """Enfileira o log para a web, marcando de qual conta veio.
 
-    O nome do logger é sempre `blazes.<login>` (mesmo contrato do `QtLogHandler`
-    da GUI), então dá para separar as linhas por conta. O handler só dá `append`
+    O nome do logger é sempre `blazes.<login>`, então dá para separar as linhas
+    por conta. O handler só dá `append`
     numa `deque` -- operação atômica, sem thread -- e a web puxa em lote.
     """
 
@@ -157,7 +156,7 @@ class _App:
         self.config = BotConfig.load(DEFAULT_CONFIG_PATH)
         self.manager: BotManager | None = None
         # Fila que as threads do bot alimentam, e o histórico completo (para
-        # refiltrar por conta) -- mesmo desenho da GUI.
+        # refiltrar por conta).
         self._fila_log: deque[tuple[str, str]] = deque(maxlen=40000)
         self._historico: deque[tuple[str, str]] = deque(
             maxlen=MAX_LINHAS_GUARDADAS)
@@ -172,8 +171,7 @@ class _App:
     # ------------------------------------------------------------------
 
     def _conta(self, uid: str) -> Account:
-        """Conta pelo `uid` -- a identidade ESTÁVEL, espelho da referência de
-        objeto que a GUI guarda no item da tabela (`ACCOUNT_ROLE`).
+        """Conta pelo `uid` -- a identidade ESTÁVEL da conta.
 
         ERA O ÍNDICE NA LISTA, e valia enquanto a lista não podia ser
         reordenada. A tabela ganhou arraste para reordenar, e isso quebra a
@@ -336,7 +334,7 @@ class _App:
 
         `ordem` vai junto só para a tela conseguir conferir se está desatualizada
         em relação ao disco; ela NÃO é fonte de verdade de nada.
-        O servidor vem NORMALIZADO (mesma regra dos combos da GUI).
+        O servidor vem NORMALIZADO.
         """
         # ANTES DE A TELA RECEBER A LISTA. A leitura do arquivo já desfaz uid
         # repetido, mas conta criada em MEMÓRIA nunca passa por lá -- e a tela
@@ -526,7 +524,7 @@ class _App:
         self._aplicar()
 
     def definir_login(self, uid: str, novo: str) -> None:
-        """Login editável direto na tabela (como a célula COL_LOGIN da GUI).
+        """Login editável direto na tabela.
 
         Vazio NÃO apaga o login atual — mesmo contrato do campo de login do
         editor (`salvar_personagem`). Um campo em branco na tabela costuma
@@ -553,7 +551,7 @@ class _App:
         self._aplicar()
 
     def nova_conta(self) -> None:
-        # Com o bot rodando a conta nasce INATIVA de propósito (mesmo da GUI):
+        # Com o bot rodando a conta nasce INATIVA de propósito:
         # o usuário preenche com calma e, ao marcar "Ativa", entra no ar.
         rodando = bool(self.manager and self.manager.running())
         nova = Account(enabled=not rodando)
@@ -592,9 +590,7 @@ class _App:
     def bloqueio_de_reseter(self, uid: str, acao: str) -> str | None:
         """Por que esta conta NÃO pode ser tirada do ar. `None` = pode.
 
-        Espelho de `MainWindow._bloqueado_por_ser_reseter` na GUI: as duas
-        interfaces têm que impedir a mesma coisa, e quem responde é o mesmo
-        `BotConfig.accounts_reset_by`.
+        Quem responde é `BotConfig.accounts_reset_by`.
 
         POR QUE IMPEDIR, E NÃO SÓ AVISAR. Sem o reseter, a conta que depende
         dele não reseta a cave -- e sem reset o boss não renasce e a run é
@@ -687,7 +683,7 @@ class _App:
 
         O login é editável AQUI (campo do editor). Vazio não apaga o login
         atual; diferente, renomeia. É o mesmo efeito do login editável da
-        célula da tabela na GUI.
+        célula da tabela.
         """
         c = self._conta(uid)
         st = c.settings
@@ -1472,7 +1468,7 @@ class Api:
         return {"ok": True}
 
     def definir_nivel_log(self, nivel: str) -> dict[str, Any]:
-        """Ajusta o nível do logger `blazes` (paridade com o `ck_debug` da GUI).
+        """Ajusta o nível do logger `blazes` .
 
         Só vale no ambiente dev (`BLAZES_MODO=dev`): é o toggle "log detalhado"
         da web. Em prod o nível é sempre INFO+ e a chamada é ignorada -- o

@@ -546,10 +546,8 @@ dois sentidos).
 
 ### Só na web, e por decisão escrita
 
-A PyQt6 está descontinuada (decisão do usuário) e isto não é um campo — é uma
-janela com 208 miniaturas, busca, filtro e ação em massa. A GUI antiga não tem
-**um único `QPixmap`** nem um único diálogo aberto de dentro do editor. O campo
-entrou em `CAMPOS_SO_DA_WEB`, com o porquê em `docs/decisoes/interface.md`.
+Isto não é um campo — é uma janela com 208 miniaturas, busca, filtro e ação
+em massa. Nasceu na web, que desde 25/09/2026 é a única interface.
 
 ### Duas janelas irmãs, não uma com abas
 

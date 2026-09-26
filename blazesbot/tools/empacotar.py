@@ -63,10 +63,7 @@ EMBUTIDOS = [
 # O que fica AO LADO do `.exe` (é lido e escrito, ou o usuário mexe).
 AO_LADO = ["dist", "data/templates"]
 
-# PyQt6 saiu do projeto em 25/09/2026 (descontinuada desde 19/09). Fica na
-# lista por defesa: um venv antigo que ainda a tenha não empacota ~120 MB de Qt
-# para código que não existe mais.
-FORA = ["PyQt6", "matplotlib", "pytest", "PIL.ImageQt"]
+FORA = ["matplotlib", "pytest", "PIL.ImageQt"]
 
 
 def _pyinstaller() -> list[str]:

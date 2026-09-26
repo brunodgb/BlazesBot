@@ -342,12 +342,11 @@ com o motivo em âmbar: o conflito fica visível e tirar continua sendo decisão
 líder. Verificado em tela com duas contas do time em conflito (uma em BC, uma
 inativa): as duas marcadas, nenhuma travada, `time_logins` intacto.
 
-### Dívida de paridade, preexistente
+### Dívida de paridade — encerrada
 
-Esta lista **só existe na interface web** — a `account_dialog.py` da PyQt6 nunca
-teve a escolha do time do APP (só menciona `time_logins` num comentário). A regra
-da elegibilidade fica na ponte web hoje; quando a lista chegar à PyQt6, ela
-desce para `BotConfig` e as duas telas passam a chamar a mesma função.
+A PyQt6 nunca teve a escolha do time do APP, e a dívida acabou com ela em
+25/09/2026: a web é a única interface, e a regra da elegibilidade fica na
+ponte web.
 
 ## "segue X" só vale com o APP do líder LIGADO (08/09/2026)
 

@@ -357,7 +357,6 @@
   "blazesbot/core/vision.py::PASSO_DA_AMOSTRAGEM_DO_QUADRO": 8.0,
   "blazesbot/core/vision/captura.py::PASSO_DA_AMOSTRAGEM_DO_QUADRO": 8.0,
   "blazesbot/core/volta_ao_ponto.py::SEGUNDOS_PARA_CHEGAR": 5.0,
-  "blazesbot/gui/main_window.py::INTERVALO_DE_DESCARGA_MS": 200.0,
   "blazesbot/tools/empacotar.py::_limpar_a_saida_anterior::3.0": 3.0,
   "blazesbot/tools/ler_camera.py::PASSO": 0.25,
   "blazesbot/tools/ler_camera.py::SEGUNDOS_PADRAO": 300.0,
