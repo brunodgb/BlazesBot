@@ -536,7 +536,7 @@ preservados.**
 
 ### Travado por
 
-`tests/test_lixo_desativado.py` — a pasta escolhe o campo, a leitura é agora
+`tests/test_lixo_escolhido.py` (era `test_lixo_desativado.py` até a inversão de e4eebbe — a conta passou a ESCOLHER o que apagar) — a pasta escolhe o campo, a leitura é agora
 (e não na montagem), nome órfão não atrapalha, lista suja não derruba a macro,
 e `_carregar` respeita a lista. Mais `test_config_ida_e_volta.py` (o campo
 sobrevive ao disco) e `test_app_config_campo_por_campo.py` (a ponte leva nos

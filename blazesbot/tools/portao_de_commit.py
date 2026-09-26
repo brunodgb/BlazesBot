@@ -56,6 +56,7 @@ TESTES_DO_PORTAO = (
     "tests/test_indice_de_tempos.py",
     "tests/test_indice_de_constantes.py",
     "tests/test_sem_chamada_orfa.py",
+    "tests/test_travas_citadas_existem.py",
 )
 
 # O portão inteiro leva ~40 s. O teto é a garantia de que um teste preso não

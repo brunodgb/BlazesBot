@@ -208,9 +208,9 @@ Mais:
 
 ### Testes
 
-* `tests/test_cegueira_no_instante_da_morte.py` — 16 testes, com dente para cada
+* *test_cegueira_no_instante_da_morte.py — NUNCA ENTROU NO GIT (conferido em 25/09/2026): os quatro consertos abaixo ficaram sem esta trava.* Descrito como 16 testes, com dente para cada
   um dos quatro consertos e para a credencial.
-* `tests/test_alvo_sem_o_pet.py` — +4 testes da tabela estática, incluindo o dente
+* *test_alvo_sem_o_pet.py — NUNCA ENTROU NO GIT (conferido em 25/09/2026).* Descrito como +4 testes da tabela estática, incluindo o dente
   que preserva o defeito atrás do interruptor.
 
 ### Documentação

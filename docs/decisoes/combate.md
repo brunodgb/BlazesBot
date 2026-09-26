@@ -281,7 +281,7 @@
   - **O aviso de "bati sem ler o nome" usa flag própria**, não `sem_ler_desde`:
     mexer no relógio ali reiniciaria a carência e o bot passaria a bater de 3 em
     3 segundos — mudança de comportamento disfarçada de log.
-- **A simulação de combate** (`tests/test_combat_vigia_do_alvo.py`) roda
+- **A simulação de combate** (`tests/test_virada_de_fase_nao_e_vitoria.py`; o test_combat_vigia_do_alvo.py citado aqui antes nunca entrou no git — conferido em 25/09/2026) roda
   `atacar_ate_sair_de_combate` INTEIRO com o jogo dublado e **relógio
   determinístico começando em 10.000,0** — `0.0` é o sentinela de
   `falso_desde`, `sem_ler_desde` e `proximo_ataque`, e um relógio em zero torna

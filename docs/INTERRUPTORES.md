@@ -742,7 +742,7 @@ ligar código não testado.
 | `VENDAS_MINIMAS` | `30` | [blazesbot/tools/medir_a_rolha.py:31](blazesbot/tools/medir_a_rolha.py#L31) | — | — |
 | `CONSISTENCIA_MINIMA` | `0.8` | [blazesbot/tools/medir_a_volta_do_pet.py:25](blazesbot/tools/medir_a_volta_do_pet.py#L25) | — | — |
 | `TROCAS_MINIMAS` | `30` | [blazesbot/tools/medir_a_volta_do_pet.py:24](blazesbot/tools/medir_a_volta_do_pet.py#L24) | — | — |
-| `TETO_DO_PORTAO_DE_COMMIT` | `300` | [blazesbot/tools/portao_de_commit.py:63](blazesbot/tools/portao_de_commit.py#L63) | — | O portão inteiro leva ~40 s. O teto é a garantia de que um teste preso não |
+| `TETO_DO_PORTAO_DE_COMMIT` | `300` | [blazesbot/tools/portao_de_commit.py:64](blazesbot/tools/portao_de_commit.py#L64) | — | O portão inteiro leva ~40 s. O teto é a garantia de que um teste preso não |
 | `PASSO` | `0.1` | [blazesbot/tools/vigiar_combate.py:48](blazesbot/tools/vigiar_combate.py#L48) | routine.py, entrada.py, mapa_hh.py, supervisor.py, ui_do_jogo.py, espera.py, indice_de_tempos.py, relatorio_de_latencia.py, ler_camera.py | Cadência da leitura. É memória pura -- algumas leituras de 4 bytes por volta, |
 | `SEGUNDOS_ENTRE_ECOS` | `5.0` | [blazesbot/tools/vigiar_combate.py:58](blazesbot/tools/vigiar_combate.py#L58) | — | De quanto em quanto tempo repetir uma linha que NÃO mudou. |
 | `SEGUNDOS_PADRAO` | `900.0` | [blazesbot/tools/vigiar_combate.py:51](blazesbot/tools/vigiar_combate.py#L51) | ler_camera.py | Teto padrão, para a ferramenta fechar sozinha se você esquecer dela aberta. |

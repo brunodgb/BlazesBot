@@ -646,7 +646,7 @@
 - **Memória:** raiz das cadeias de UI em `0x012CE340`; `ADDR_MODAL` está errado
   (guarda ponteiro, `modal_open()` é sempre False); `jogador+0x80C` é o PET; nome
   de entidade vem inline **ou** por ponteiro, e a ordem importa.
-- **A simulação** (`tests/test_combat_vigia_do_alvo.py`) roda a luta inteira com
+- **A simulação** (`tests/test_virada_de_fase_nao_e_vitoria.py`; o arquivo que esta linha citava, test_combat_vigia_do_alvo.py, nunca entrou no git — conferido em 25/09/2026) roda a luta inteira com
   relógio determinístico começando em **10.000,0** — `0.0` é sentinela. TRÊS
   dentes.
 
