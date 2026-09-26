@@ -58,6 +58,21 @@ You MUST complete each phase before proceeding to the next.
    `logs/dev/blazes-dev.jsonl` é enriquecido por `id_run`/`conta`/`fase`.
    Não pule pro código antes de ler o que já foi registrado.
 
+   **Como ler, nesta ordem:**
+   - **Frequência antes de cronologia.** Extraia só o texto das mensagens e
+     agregue (`Counter`, ou `sort | uniq -c | sort -rn`). A mensagem que
+     domina nomeia o defeito; **duas mensagens que se contradizem na mesma
+     sessão** provam uma leitura não-determinística.
+   - **Reconstrua UM incidente de ponta a ponta** (filtre por `id_run`,
+     suprima a linha repetida) e responda duas perguntas: o que ENCERROU o
+     travamento? (se foi algo externo, o código não tem saída nenhuma) e o que
+     o laço LEU enquanto estava preso? (se nada, a correção é diagnóstico +
+     remediação, não um teto menor).
+   - **O intervalo entre duas linhas vizinhas é evidência.** Menor que a
+     operação mais barata entre elas, ele prova que o trabalho não rodou: a
+     falha está no prólogo da função (ex.: import preguiçoso que aponta para
+     um nome que não existe mais).
+
 2. **Read Error Messages Carefully**
    - Don't skip past errors or warnings
    - They often contain the exact solution
@@ -94,6 +109,17 @@ You MUST complete each phase before proceeding to the next.
    THEN investigate that specific component
    ```
 
+   **O instrumento faz parte da cadeia.** Anomalia vista por um script de
+   diagnóstico só vira defeito do sistema depois de reproduzida pelo CAMINHO
+   do sistema — mesmas entradas, mesma ordem, mesmos filtros. Até lá, escreva
+   "minha ferramenta viu X", nunca "o código de produção faz X".
+
+   **Dado fora do seu alcance: peça.** "Não dá para medir" costuma ser "eu
+   não tenho o dado" — o usuário tem o jogo aberto, capturas e logs. Peça a
+   amostra ANTES de recomendar uma heurística. E evidência bruta só se apaga
+   depois de reproduzida pelo código de PRODUÇÃO: conversão de cor, escala ou
+   encoding muda o número sem mudar o código.
+
 6. **Trace Data Flow**
 
    **WHEN error is deep in call stack:**
@@ -107,6 +133,24 @@ You MUST complete each phase before proceeding to the next.
    - What called this with bad value?
    - Keep tracing up until you find the source
    - Fix at source, not at symptom
+
+7. **Quando quem falha é um TESTE, depois de mudança manual**
+
+   Um teste que falha é um desacordo entre dois artefatos, não defeito de um
+   deles. Antes de editar qualquer lado, descubra com qual o resto do sistema
+   concorda. Por falha, em ordem:
+   - (a) o dublê ainda bate com o contrato do produtor REAL? Não → conserte
+     o dublê, e a asserção costuma passar sem mudar;
+   - (b) o código contradiz a PRÓPRIA docstring, comentário ou texto de log?
+     → é defeito do código: não edite o teste;
+   - (c) `git log -S <símbolo>` mostra que o que o teste guarda foi APAGADO,
+     e não redesenhado? → defeito do código;
+   - (d) quais caminhos chegam à linha mudada?
+
+   Depois de adaptar, varra a região mexida atrás de prosa que contradiz o
+   código — número no comentário diferente da constante ao lado, referência a
+   símbolo apagado, log anunciando ação que não acontece mais — e conserte no
+   mesmo passo: é o mapa pelo qual o próximo leitor vai se guiar.
 
 ### Phase 2: Pattern Analysis
 
@@ -135,6 +179,18 @@ You MUST complete each phase before proceeding to the next.
    - What settings, config, environment?
    - What assumptions does it make?
 
+6. **Audite os validadores, não só os valores**
+   - Checagem que não consegue falhar (`return True`, faixa mais larga que o
+     tipo) não é checagem: fabrica confiança. Procure a propriedade que
+     OBRIGATORIAMENTE difere entre instâncias independentes (um ponteiro de
+     heap é diferente em cada processo) e teste essa.
+   - Numa cadeia "tenta A; se inválido, tenta B", meça QUAL ramo serviu cada
+     chamada. Um guarda permissivo que aceita o lixo de A transforma B em
+     código morto — e o chamador recebe um valor plausível e errado.
+   - Parâmetro que precisa de ajuste (teto, margem, fallback) costuma indicar
+     a UNIDADE errada. Antes de afinar números, veja se o sistema já expõe a
+     fronteira natural (região de alocação, página, partição) e adote-a.
+
 ### Phase 3: Hypothesis and Testing
 
 **Scientific method:**
@@ -148,11 +204,25 @@ You MUST complete each phase before proceeding to the next.
    - Make the SMALLEST possible change to test hypothesis
    - One variable at a time
    - Don't fix multiple things at once
+   - **Teste que DISCRIMINA, não que concorda:** para decidir entre duas
+     fontes do mesmo valor, use dois sujeitos cujo valor verdadeiro difere; a
+     fonte que responde igual para os dois mede outra coisa.
+   - **Estado limpo ANTES de cada passo:** numa sequência de toggles, afirme
+     a linha de base antes de medir. "Mandei o reset" não é "observei o
+     reset" — e experimento que falhou no objetivo ainda produziu um estado:
+     leia-o antes de descartar a rodada.
+   - **Negativo vale o espaço de busca:** "não achei X" é fato sobre a sua
+     busca. Declare o espaço (todo offset, alinhado ou não; toda largura e
+     sinal; as formas derivadas do valor) junto com a conclusão.
 
 3. **Verify Before Continuing**
    - Did it work? Yes → Phase 4
    - Didn't work? Form NEW hypothesis
    - DON'T add more fixes on top
+   - **Conte a premissa, não as tentativas:** N hipóteses que caíram pela
+     MESMA premissa são uma falha só. Antes de recomendar parar, nomeie a
+     premissa comum e procure a abordagem que não a faz; recomende "buscar
+     dentro de X está esgotado", nunca "a pergunta está fechada".
 
 4. **When You Don't Know**
    - Say "I don't understand X"
@@ -171,6 +241,16 @@ You MUST complete each phase before proceeding to the next.
    - MUST have before fixing
    - Invoque o agente `tdd-guide` (ECC) para escrever o teste que falha
      corretamente, se for um caso novo de teste (não uma reprodução manual).
+   - Propriedade ESTRUTURAL ("não chama X") se afirma na árvore (`ast`),
+     nunca por substring: o texto inclui as docstrings que citam justamente o
+     proibido. Para desindentar fonte de método, `textwrap.dedent`.
+   - Dublê é uma afirmação sobre o contrato do produtor: confira o real
+     ANTES de mexer na asserção, e faça o dublê falhar para o lado DIFÍCIL —
+     nunca mais permissivo que o real.
+   - Teste que falha no cenário que VOCÊ inventou pode estar fixando um
+     limite real: reescreva para o caso medido E acrescente um teste que
+     afirma o limite, com o porquê. Fronteira sem teste é lida como garantia
+     sem fronteira.
 
 2. **Implement Single Fix**
    - Address the root cause identified
@@ -185,6 +265,12 @@ You MUST complete each phase before proceeding to the next.
      inteira, nunca só a área mexida)
    - Issue actually resolved? Confirme com evidência real (rodar o comando,
      ver o output) antes de declarar concluído — nunca por afirmação.
+   - **Suíte verde não prova fiação.** Módulo que ninguém importa e função
+     que ninguém chama passam em qualquer teste de comportamento. Depois de
+     mover ou compor, confira que o ponto de entrada IMPORTA e ALCANÇA as
+     partes (teste que importa a entrada; AST do grafo de chamadas).
+   - **O timeout da ferramenta encerra a espera, não o processo.** Estourou o
+     tempo? Liste e mate o que você lançou antes de seguir.
 
 4. **If Fix Doesn't Work**
    - STOP
@@ -260,10 +346,10 @@ If you catch yourself thinking:
 
 | Phase | Key Activities | Success Criteria |
 |-------|---------------|------------------|
-| **1. Root Cause** | Ler logs, ler erros, reproduzir, checar mudanças, evidência | Understand WHAT and WHY |
-| **2. Pattern** | `graphify query`, achar exemplo funcionando, comparar | Identify differences |
-| **3. Hypothesis** | Form theory, test minimally | Confirmed or new hypothesis |
-| **4. Implementation** | `tdd-guide`, fix, suíte inteira, evidência real | Bug resolved, tests pass |
+| **1. Root Cause** | Ler logs (frequência → incidente → intervalo entre linhas), ler erros, reproduzir, checar mudanças, conferir o instrumento; teste falhando: triagem (a)–(d) | Understand WHAT and WHY |
+| **2. Pattern** | `graphify query`, achar exemplo funcionando, comparar, auditar os validadores | Identify differences |
+| **3. Hypothesis** | Form theory, test minimally, teste que discrimina, base limpa, conte a premissa | Confirmed or new hypothesis |
+| **4. Implementation** | `tdd-guide`, fix, suíte inteira, fiação (importa e alcança), processos lançados encerrados, evidência real | Bug resolved, tests pass |
 
 ## When Process Reveals "No Root Cause"
 
