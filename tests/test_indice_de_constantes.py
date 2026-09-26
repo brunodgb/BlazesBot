@@ -63,8 +63,19 @@ def _documentos() -> list[Path]:
     história para ficar verde -- exatamente o contrário do que os arquivos de
     decisão existem para fazer.
     """
-    candidatos = (Path("CLAUDE.md"), Path("docs/INVARIANTES.md"))
-    return [c for c in candidatos if c.is_file()]
+    # SEM `if is_file()`: documento que muda de lugar tem que REPROVAR, não sair
+    # da conferência calado -- ver `test_os_documentos_conferidos_existem`.
+    return list(DOCUMENTOS_CONFERIDOS)
+
+
+DOCUMENTOS_CONFERIDOS = (Path("CLAUDE.md"), Path("docs/INVARIANTES.md"))
+
+# QUANTAS CITAÇÕES `NOME = valor` DE INTERRUPTOR A CONFERÊNCIA ACHA HOJE
+# (25/09/2026). É catraca, como a da espera cega: a rede que encolhe até zero
+# continua VERDE -- "nenhuma divergência" porque não sobrou o que examinar -- e
+# é assim que uma reorganização de documentos a desliga sem sinal nenhum.
+# Tirou uma citação de propósito? Baixe o número NESTE arquivo, no mesmo commit.
+PISO_DE_CITACOES_CONFERIDAS = 2
 
 
 def _normalizar(texto: str) -> str:
@@ -168,6 +179,7 @@ def test_a_documentacao_nao_contradiz_o_codigo():
                      for nome, lista in por_nome.items() if len(lista) == 1}
 
     divergencias: list[str] = []
+    conferidas = 0
 
     for documento in _documentos():
         texto = documento.read_text(encoding="utf-8")
@@ -175,6 +187,7 @@ def test_a_documentacao_nao_contradiz_o_codigo():
             constante = interruptores.get(nome)
             if constante is None:
                 continue
+            conferidas += 1
             if _normalizar(citado) != _normalizar(repr(constante.valor)):
                 divergencias.append(
                     f"  {documento}: diz `{nome} = {citado.strip()}`, "
@@ -188,6 +201,25 @@ def test_a_documentacao_nao_contradiz_o_codigo():
         + "\n\nCorrija o LADO ERRADO: se o código está certo, atualize a prosa; "
         "se a prosa está certa, o interruptor foi trocado sem querer."
     )
+    assert conferidas >= PISO_DE_CITACOES_CONFERIDAS, (
+        f"a conferência achou {conferidas} citação(ões) de interruptor, contra "
+        f"{PISO_DE_CITACOES_CONFERIDAS} em 25/09/2026. Rede que encolhe continua "
+        f"verde sem proteger nada: se a citação saiu de propósito, baixe "
+        f"PISO_DE_CITACOES_CONFERIDAS neste arquivo, no mesmo commit.")
+
+
+def test_os_documentos_conferidos_existem():
+    """Documento que muda de lugar REPROVA -- não sai da conferência calado.
+
+    Foi exatamente o modo de falha que o `INVARIANTES.md` quase causou em
+    27/08/2026: a lista de caminhos é literal, e um arquivo renomeado sairia da
+    varredura sem nenhum sinal.
+    """
+    faltam = [str(d) for d in DOCUMENTOS_CONFERIDOS if not d.is_file()]
+    assert not faltam, (
+        f"sumiram da conferência: {faltam}. Se mudaram de lugar, atualize "
+        f"DOCUMENTOS_CONFERIDOS -- sem isso as citações deles param de ser "
+        f"conferidas sem aviso.")
 
 
 if __name__ == "__main__":
