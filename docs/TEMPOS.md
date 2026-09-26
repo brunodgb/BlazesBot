@@ -31,7 +31,7 @@ desta lista é ou uma exceção justificada, ou dívida que ninguém converteu a
 mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 
 
-**367 tempos catalogados** — 252 FIXOS (espera cega), 115 entre TETO e PASSO.
+**368 tempos catalogados** — 252 FIXOS (espera cega), 116 entre TETO e PASSO.
 
 
 **3 estão diferentes do original:** `FATIA_DE_ESPERA`, `INTERVALO_ENTRE_INVOCACOES`, `PASSOS_DO_APP`
@@ -471,6 +471,7 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | *literal em* `_limpar_a_saida_anterior` | 3 s | *novo* | FIXO | [empacotar.py:115](blazesbot/tools/empacotar.py#L115) | `_limpar_a_saida_anterior` | A pasta da entrega anterior sai ANTES de o PyInstaller começar. |
 | `PASSO` | 0.25 s | = | PASSO | [ler_camera.py:50](blazesbot/tools/ler_camera.py#L50) | `run_ler_camera` | Cadência da leitura. Barata: são 8 leituras de 4 bytes por volta. |
 | `SEGUNDOS_PADRAO` | 300 s (5 min) | = | TETO | [ler_camera.py:53](blazesbot/tools/ler_camera.py#L53) | `run_ler_camera` | Teto padrão, para a ferramenta fechar sozinha se você esquecer dela aberta. |
+| `TETO_DO_PORTAO_DE_COMMIT` | 300 s (5 min) | *novo* | TETO | [portao_de_commit.py:63](blazesbot/tools/portao_de_commit.py#L63) | `rodar_o_portao` | O portão inteiro leva ~40 s. O teto é a garantia de que um teste preso não |
 | `PASSO` | 0.1 s | *novo* | PASSO | [vigiar_combate.py:48](blazesbot/tools/vigiar_combate.py#L48) | `run_vigiar_combate` | Cadência da leitura. É memória pura -- algumas leituras de 4 bytes por volta, |
 | `SEGUNDOS_PADRAO` | 900 s (15 min) | *novo* | TETO | [vigiar_combate.py:51](blazesbot/tools/vigiar_combate.py#L51) | `run_vigiar_combate` | Teto padrão, para a ferramenta fechar sozinha se você esquecer dela aberta. |
 | `SEGUNDOS_ENTRE_ECOS` | 5 s | *novo* | FIXO | [vigiar_combate.py:58](blazesbot/tools/vigiar_combate.py#L58) | `run_vigiar_combate` | De quanto em quanto tempo repetir uma linha que NÃO mudou. |

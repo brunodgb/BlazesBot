@@ -153,7 +153,13 @@ do projeto".
    (`git commit -- <seus arquivos>`), nunca `git add -A`/`commit -a`. Para
    desfazer o que é SEU: `git diff -- <arquivos> > x.patch` e `git apply -R
    x.patch` — nunca `git checkout --`/`stash` no arquivo inteiro, que apaga a
-   edição da vizinha sem aviso.
+   edição da vizinha sem aviso. Índice GERADO (`TEMPOS`/`INTERRUPTORES`):
+   `python -m blazesbot.tools.portao_de_commit --regenerar <seus arquivos>`,
+   que regenera sobre HEAD + os seus, sem a edição da vizinha.
+0c. **O commit passa pelo PORTÃO** (`.githooks/pre-commit`, instalado com
+   `git config core.hooksPath .githooks`): os testes estáticos rodam sobre o
+   ÍNDICE exportado — o que vai ser gravado — e o commit vermelho não entra.
+   Motivo medido: 22 commits entraram por cima de uma suíte vermelha.
 1. **Toda alteração no código ⇒ atualizar o graphify:** `graphify update .`
    (reextrai AST-only e regenera `graph.json` + `GRAPH_REPORT.md`).
 1b. **Toda alteração em `web/` ⇒ `npm run build`, no mesmo passo.** O app abre
