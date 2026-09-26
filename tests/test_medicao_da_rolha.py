@@ -111,3 +111,22 @@ def test_a_venda_mede_cada_clique_e_registra_cada_passada():
                 if isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute)]
     assert chamadas.count("_medir_o_slot") == 2      # antes do 1º e depois de cada
     assert "_registrar_a_rolha" in chamadas
+
+
+def test_o_juiz_le_tambem_o_arquivo_diario_do_log(tmp_path):
+    """O arquivo vivo guarda poucas linhas; o excedente vai para `arquivo/`, e
+    é lá que horas de venda medida vão estar. Ler só a pasta de cima dava
+    "SEM DADOS" com a medição inteira gravada."""
+    import gzip
+    import json
+
+    linha = json.dumps({"msg": "ROLHA/MEDIÇÃO passada=1 cliques=3 vendidos=2 "
+                               "difs=[5.0, 0.1, 0.2]"}, ensure_ascii=False)
+    (tmp_path / "arquivo").mkdir()
+    (tmp_path / "arquivo" / "blazes-dev-2026-09-26.jsonl").write_text(
+        linha + "\n", encoding="utf-8")
+    with gzip.open(tmp_path / "arquivo" / "blazes-dev-2026-09-25.jsonl.gz",
+                   "wt", encoding="utf-8") as f:
+        f.write(linha + "\n")
+
+    assert len(medir_a_rolha.ler_passadas(tmp_path)) == 2

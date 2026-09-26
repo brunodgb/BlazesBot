@@ -63,3 +63,16 @@ def test_o_juiz_do_pet_separa_os_desfechos():
     assert classificar([[True, 0.0, 30.0]]) == ("sempre_true", None)
     assert classificar([[False, 0.0, 30.0]]) == ("nao_voltou", None)
     assert classificar([[None, 0.0, 30.0]]) == ("ilegivel", None)
+
+
+def test_o_juiz_do_pet_le_tambem_o_arquivo_diario_do_log(tmp_path):
+    """O excedente do log de dev vai para `arquivo/`: ler só a pasta de cima
+    dava "SEM DADOS" com a medição inteira gravada."""
+    linha = json.dumps({"msg": "PET/MEDIÇÃO conta=teste leituras=3 "
+                               "trechos=[[false, 0.0, 3.0], [true, 3.25, 30.0]]"},
+                       ensure_ascii=False)
+    (tmp_path / "arquivo").mkdir()
+    (tmp_path / "arquivo" / "blazes-dev-2026-09-26.jsonl").write_text(
+        linha + "\n", encoding="utf-8")
+
+    assert len(medir_a_volta_do_pet.ler_trocas(tmp_path)) == 1

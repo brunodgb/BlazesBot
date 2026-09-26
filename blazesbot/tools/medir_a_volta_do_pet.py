@@ -46,7 +46,8 @@ def classificar(trechos: list[list]) -> tuple[str, float | None]:
 
 def ler_trocas(pasta: Path) -> list[list[list]]:
     trocas = []
-    for arquivo in sorted(pasta.glob("*.jsonl*")):
+    # `rglob`, não `glob`: o excedente do log de dev vai para `arquivo/`.
+    for arquivo in sorted(pasta.rglob("*.jsonl*")):
         abrir = gzip.open if arquivo.suffix == ".gz" else open
         with abrir(arquivo, "rt", encoding="utf-8", errors="replace") as f:
             for linha in f:

@@ -65,7 +65,10 @@ def julgar(passadas: list[dict], k: int, limiar: float) -> dict:
 
 def ler_passadas(pasta: Path) -> list[dict]:
     passadas = []
-    for arquivo in sorted(pasta.glob("*.jsonl*")):
+    # `rglob`, não `glob`: o log de dev guarda poucas linhas no arquivo vivo e
+    # despeja o resto em `arquivo/` (o do dia, depois `.gz`) -- é lá que a
+    # medição de horas de venda vai estar.
+    for arquivo in sorted(pasta.rglob("*.jsonl*")):
         abrir = gzip.open if arquivo.suffix == ".gz" else open
         with abrir(arquivo, "rt", encoding="utf-8", errors="replace") as f:
             for linha in f:
