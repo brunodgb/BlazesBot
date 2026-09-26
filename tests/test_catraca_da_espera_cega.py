@@ -55,6 +55,12 @@ TETO_DE_ESPERAS_CEGAS = {
     "blazesbot/bot/bc/vendor.py": 6,
     "blazesbot/bot/hh/routine.py": 3,
     "blazesbot/bot/hh/entrada.py": 1,
+    # ENTRARAM EM 25/09/2026 (auditoria global): o time é montado a CADA run de
+    # BC e HH, e os `tick` literais dele somam ~4-5 s por run; o login é o
+    # caminho do relogin. Estavam fora da catraca e podiam crescer sem aviso. A
+    # conversão em perguntas vem depois de medir o observável de cada passo.
+    "blazesbot/bot/team.py": 20,
+    "blazesbot/bot/login.py": 29,
 }
 
 # O TOTAL do projeto inteiro, incluindo o que não está na tabela acima.
@@ -75,7 +81,9 @@ TETO_DE_ESPERAS_CEGAS = {
 # de novo e abrir a lista -- que é exatamente o custo que a espera existe para
 # não pagar. Sem ela o laço deu 854 idas em 9 minutos, sete contas
 # reautenticando duas vezes por segundo contra um servidor fora do ar.
-TETO_GERAL = 252
+# 252 -> 251 em 25/09/2026, e a DESCIDA tem nome: a saída do BC era `tick(1.5)`
+# cego depois do clique no link e virou pergunta (`esperar_a_chegada`, mesmo teto).
+TETO_GERAL = 251
 
 
 def _por_arquivo() -> Counter:
