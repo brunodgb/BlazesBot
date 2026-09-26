@@ -53,8 +53,9 @@ mais fraco, e cada nível diz de onde veio a resposta:
   EXATO    -- a string é um nome do catálogo. Confiança total.
   PARCIAL  -- a string é a cauda de um nome do catálogo ('8tcher Cave').
               Confiança total, e o nome devolvido é o COMPLETO.
-  FORMATO  -- não está no catálogo, mas tem cara de nome de lugar. Aceita e
-              AVISA, porque pode ser uma área que ainda não catalogamos.
+  FORMATO  -- não está no catálogo, mas tem cara de nome de lugar (Maiúscula
+              palavra por palavra -- ver `_PALAVRA_DE_LUGAR`). Aceita e AVISA,
+              porque pode ser uma área que ainda não catalogamos.
 
 Só o que não passa em nenhum dos três é tratado como ilegível -- e, mesmo aí, a
 string bruta é preservada para o log.
@@ -136,6 +137,17 @@ _FORMATO_DE_NOME = re.compile(r"^[A-Za-z][A-Za-z0-9 '\-\.]{2,48}$")
 # símbolos; nome de lugar é quase todo letra e espaço.
 _MINIMO_DE_LETRAS = 0.60
 
+# A CARA DE NOME, palavra por palavra -- MEDIDO em 26/09/2026. Os dois filtros
+# acima deixavam passar 35 lixos distintos de 42.770 leituras do log de dev
+# (`D5vl` x216, `UUUU...` x188, `hCKD` x181, `PV8`, `CPC`, `HxH`, pedaços de
+# mensagem como `ase try later again.`). Todo nome de verdade -- os 116 do
+# catálogo e os que o log mostrou fora dele (`Happiness Hall Main Hall`...) --
+# é Maiúscula-minúsculas palavra por palavra, com conectivo minúsculo no meio
+# ("East of Simen Mountain"); nenhum dos 35 lixos é.
+_PALAVRA_DE_LUGAR = re.compile(r"^[A-Z][a-z'\-\.]*$")
+_CONECTIVO = re.compile(r"^[a-z]{2,}$")
+_PALAVRA_INTEIRA = re.compile(r"^[A-Z][a-z]{2,}")
+
 
 class Resolucao:
     """Como um nome de lugar foi reconhecido. Vira texto no log."""
@@ -165,6 +177,18 @@ def _proporcao_de_letras(texto: str) -> float:
     if not uteis:
         return 0.0
     return sum(c.isalpha() for c in uteis) / len(uteis)
+
+
+def _tem_cara_de_nome(texto: str) -> bool:
+    """Abre com palavra Maiúscula, segue com Maiúsculas ou conectivos, e tem ao
+    menos uma palavra de três letras. Ver `_PALAVRA_DE_LUGAR`."""
+    palavras = texto.split()
+    if not palavras or not _PALAVRA_DE_LUGAR.match(palavras[0]):
+        return False
+    if not all(_PALAVRA_DE_LUGAR.match(p) or _CONECTIVO.match(p)
+               for p in palavras[1:]):
+        return False
+    return any(_PALAVRA_INTEIRA.match(p) for p in palavras)
 
 
 def casar_por_cauda(texto: str) -> str | None:
@@ -219,7 +243,8 @@ def resolver(bruto: str | None) -> tuple[str | None, str]:
         return parcial, Resolucao.PARCIAL
 
     if (_FORMATO_DE_NOME.match(texto)
-            and _proporcao_de_letras(texto) >= _MINIMO_DE_LETRAS):
+            and _proporcao_de_letras(texto) >= _MINIMO_DE_LETRAS
+            and _tem_cara_de_nome(texto)):
         return texto, Resolucao.FORMATO
 
     return None, Resolucao.RECUSADO
