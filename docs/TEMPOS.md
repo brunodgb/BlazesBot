@@ -316,7 +316,7 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | `TETO_DA_SONDA` | 1.2 s | = | TETO | [instrumentar_clique.py:113](blazesbot/bot/instrumentar_clique.py#L113) | `_sondar_ate_mudar, _um_modo` | Teto da espera pelo efeito. Passou disso, o clique é dado como PERDIDO. |
 | *literal em* `rodar` | 0.05 s | = | FIXO | [instrumentar_clique.py:390](blazesbot/bot/instrumentar_clique.py#L390) | `rodar` |  |
 | *literal em* `main` | 8 s | = | FIXO | [instrumentar_clique.py:488](blazesbot/bot/instrumentar_clique.py#L488) | `main` |  |
-| `ESPERA_PARA_CONFIRMAR_VAZIO` | 0.5 s | *novo* | FIXO | [leitura_do_slot.py:74](blazesbot/bot/leitura_do_slot.py#L74) | `_confirmar_slot_vazio` | As leituras de confirmação são ESPAÇADAS, não coladas: veja |
+| `ESPERA_PARA_CONFIRMAR_VAZIO` | 0.5 s | *novo* | FIXO | [leitura_do_slot.py:76](blazesbot/bot/leitura_do_slot.py#L76) | `_confirmar_slot_vazio` | As leituras de confirmação são ESPAÇADAS, não coladas: veja |
 | `ESPERA_PELO_SERVIDOR_FORA_DO_AR` | 30 s | *novo* | FIXO | [login_states.py:189](blazesbot/bot/login_states.py#L189) |  | Entre uma ida à lista e a seguinte com o servidor fora do ar. 30 s e não os |
 | `PRAZO_PARA_A_FADA` | 60 s (1 min) | *novo* | TETO | [morte.py:54](blazesbot/bot/morte.py#L54) | `_esperar_a_fada` | Quanto o morto espera pela Fada antes de se reviver sozinho. |
 | `PASSO_DA_ESPERA` | 0.3 s | *novo* | PASSO | [morte.py:64](blazesbot/bot/morte.py#L64) | `_esperar_a_fada, _esperar_ficar_de_pe (+1)` | Passo entre duas perguntas durante a espera. Tudo o que ele pergunta é |

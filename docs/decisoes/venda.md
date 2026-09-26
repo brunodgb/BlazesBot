@@ -703,3 +703,48 @@ saiu, que é justamente quando vale esperar.
 `hh/vendedor.py` herdam de `JanelaDeVenda` e já a chamavam — consertar ali
 conserta os dois. Injetar a rotina em cada ecossistema seria a duplicata que o
 `CLAUDE.md` proíbe. Travado por `test_os_DOIS_ecossistemas_herdam_o_mesmo_conserto`.
+
+## A rolha da HH — 25/09/2026
+
+### O que o log mostrou
+
+182 vendas de uma conta na HH (23 a 25/09), por passada (V = vendeu, F = o Sell
+falhou 3/3):
+
+| padrão | vendas |
+|---|---|
+| V F F | 172 |
+| F F F | 5 |
+| V | 3 |
+| V V F | 1 |
+| V F | 1 |
+
+**Nenhuma** passada vendeu depois de um Sell falhado 3/3, e **nenhum** Sell
+confirmou no 2º ou no 3º clique. As passadas inúteis custaram 861 s (4,9 s por
+venda) e 361 linhas de ERROR falsas.
+
+### A causa: a rolha
+
+O primeiro item INVENDÁVEL que chega ao slot N não sai do lugar; os cliques
+seguintes batem nele e a lista da passada fica vazia. Confirmado pelo usuário:
+os itens que o deletador apaga (Purple-Cowry, Trap-Meshwork, Tao-Symbol…) não
+aparecem no vendedor — é por isso que o deletador existe, e ele segue depois da
+venda. A bolsa fica estável em 59–60 itens, sem lotar.
+
+### Por que a venda ainda não para na rolha
+
+A decisão de 20/09 (`test_o_Sell_falhado_NAO_encerra_a_venda`) proíbe encerrar
+por Sell falhado, com base num dublê de bolsa congelada. A opção escolhida no
+grilling de 25/09 foi outra: detectar por IMAGEM que o slot N parou de mudar — e
+**só depois de medir** (*"tem que medir perfeitamente"*). O risco que a medição
+existe para pegar: itens IGUAIS em sequência deixam a imagem igual com a grade
+andando, e isso seria falso positivo (venda parada com item vendável na grade).
+
+### O protocolo
+
+`leitura_do_slot.MEDIR_A_ROLHA = True` grava uma linha por passada: a mudança do
+miolo do slot a cada clique e quanto a bolsa baixou (a verdade, pela memória).
+`python -m blazesbot.tools.medir_a_rolha` julga cada `(k, limiar)`: exige 30
+vendas, **zero** falso positivo e a posição da rolha exata em 95% das passadas
+com rolha. Só então a parada entra, com interruptor próprio e teste forçando-o.
+Travado por `tests/test_medicao_da_rolha.py`.

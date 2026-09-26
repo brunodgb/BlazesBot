@@ -20,6 +20,8 @@ continuam importáveis de `vendedor.py` pelo nome.
 """
 from __future__ import annotations
 
+import json
+from itertools import pairwise
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -72,6 +74,27 @@ LEITURAS_VAZIAS_PARA_PARAR = 6
 # `_confirmar_slot_vazio`. Sem espaço entre elas as três caem dentro do mesmo
 # vão de rearranjo e a venda para no começo.
 ESPERA_PARA_CONFIRMAR_VAZIO = 0.5
+
+# ===========================================================================
+# INTERRUPTOR -- A MEDIÇÃO DA ROLHA (25/09/2026). SÓ REGISTRA, não decide nada.
+# ===========================================================================
+#
+# A ROLHA: o primeiro item INVENDÁVEL que chega ao slot N não sai do lugar, os
+# cliques seguintes batem nele, e a lista da passada fica vazia. Medido em 182
+# vendas da HH (23 a 25/09): 172 no padrão vende-falha-falha, NENHUMA passada
+# vendeu depois de um Sell falhado 3/3, e as inúteis custaram 4,9 s por venda.
+#
+# A PARADA NA ROLHA vai ser decidida pelo slot N PARAR DE MUDAR -- e só depois
+# de medida (pedido do usuário: *"tem que medir perfeitamente"*). O risco que a
+# medição existe para pegar: itens IGUAIS em sequência deixam a imagem igual com
+# a grade andando -- falso positivo, venda parada cedo.
+#
+# O PROTOCOLO: com isto ligado, cada passada grava a mudança do miolo a cada
+# clique e quanto a bolsa baixou (a verdade, pela memória). `python -m
+# blazesbot.tools.medir_a_rolha` julga: ≥ 30 vendas, ZERO falso positivo, e a
+# posição da rolha batendo com a contagem em ≥ 95%. Só então entra a parada, com
+# interruptor próprio. Custo enquanto mede: uma captura por clique.
+MEDIR_A_ROLHA = True
 
 
 class LeituraDoSlot:
@@ -132,6 +155,20 @@ class LeituraDoSlot:
         Devolve `(contraste, "miolo")`. O nome fica para o log continuar
         dizendo de onde veio a leitura.
         """
+        cinza = self._miolo_do_slot(quadro, ponto)
+        if cinza is None:
+            return None
+        # Contraste ALTO = tem ícone. A nota é invertida na comparação: quem
+        # decide "vazio" é `_esta_vazio`, para o sentido ficar num lugar só.
+        return (float(cinza.std()), "miolo")
+
+    def _miolo_do_slot(self, quadro, ponto: tuple[int, int]):
+        """O miolo da célula em `ponto`, em cinza -- ou None.
+
+        UM recorte serve às duas leituras do slot: o contraste do vazio
+        (`_nota_do_slot_vazio`) e a mudança clique a clique (medição da rolha).
+        Centrado no ponto de clique, e em nenhum outro lugar da tela.
+        """
         import cv2
 
         # `..` e nao `...`: este arquivo mora em `bot/`, nao mais em `bot/bc/`.
@@ -155,9 +192,54 @@ class LeituraDoSlot:
                  if janela.ndim == 3 else janela)
         if cinza.shape[0] < LADO_DO_MIOLO_DA_CELULA // 2:
             return None
-        # Contraste ALTO = tem ícone. A nota é invertida na comparação: quem
-        # decide "vazio" é `_esta_vazio`, para o sentido ficar num lugar só.
-        return (float(cinza.std()), "miolo")
+        return cinza
+
+    # -- medição da rolha: SÓ REGISTRA -- ver `MEDIR_A_ROLHA` ---------------
+
+    def _medir_o_slot(self, ponto: tuple[int, int]):
+        """O miolo do slot AGORA, para a medição. None = desligada ou falhou.
+
+        COMPLEMENTO: engole tudo. Instrumentação no meio da venda não pode
+        custar uma passada -- a mesma regra do `_provar_o_modal`.
+        """
+        if not MEDIR_A_ROLHA:
+            return None
+        try:
+            return self._miolo_do_slot(self._quadro(), ponto)
+        except Exception:
+            return None
+
+    @staticmethod
+    def diferenca_do_slot(anterior, atual) -> float | None:
+        """Quanto o miolo mudou entre duas leituras (0 a 255). None = não dá."""
+        import numpy as np
+
+        if (anterior is None or atual is None
+                or getattr(anterior, "shape", None) != getattr(atual, "shape", None)):
+            return None
+        return float(np.abs(atual.astype(np.int16) - anterior.astype(np.int16)).mean())
+
+    def _registrar_a_rolha(self, passada: int, recortes: list, antes: int | None,
+                           cliques: int) -> None:
+        """UMA linha por passada: a mudança a cada clique e quanto a bolsa baixou.
+
+        É a matéria-prima do `tools/medir_a_rolha.py`: a verdade é a bolsa --
+        se o detector acusasse rolha no clique k, a passada tinha de ter vendido
+        k - 1 itens. COMPLEMENTO: engole tudo, inclusive o próprio log.
+        """
+        if not MEDIR_A_ROLHA:
+            return
+        try:
+            depois = self.ctx.memory.bag_count()
+            vendidos = (antes - depois
+                        if antes is not None and depois is not None else None)
+            difs = [self.diferenca_do_slot(a, b) for a, b in pairwise(recortes)]
+            self.ctx.log.info(
+                "ROLHA/MEDIÇÃO passada=%s cliques=%s vendidos=%s difs=%s",
+                passada, cliques, vendidos,
+                json.dumps([None if d is None else round(d, 1) for d in difs]))
+        except Exception:
+            pass
 
     @staticmethod
     def _esta_vazio(leitura: tuple[float, str] | None) -> bool:

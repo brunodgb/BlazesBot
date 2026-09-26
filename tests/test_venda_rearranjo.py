@@ -255,6 +255,10 @@ def test_DESLIGADA_nao_paga_a_captura(monkeypatch):
     — ela tem captura própria, e sem ela a passada inteira vende zero.
     """
     monkeypatch.setattr(janela_de_venda, "CONFERIR_SLOT_VAZIO", False)
+    # A MEDIÇÃO DA ROLHA fotografa por clique de propósito (e só registra); a
+    # afirmação deste teste é sobre a CONFERÊNCIA, então a medição sai daqui.
+    from blazesbot.bot import leitura_do_slot
+    monkeypatch.setattr(leitura_do_slot, "MEDIR_A_ROLHA", False)
     servico, _grade = _servico(monkeypatch, itens=9, cliques=66)
     olhadas = []
     monkeypatch.setattr(

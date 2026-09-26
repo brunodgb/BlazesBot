@@ -125,7 +125,12 @@ def test_a_conferencia_e_no_slot_CLICADO_e_nao_na_tela_toda():
     """
     import inspect
 
-    fonte = inspect.getsource(v.VendorService._nota_do_slot_vazio)
+    # O RECORTE MORA EM `_miolo_do_slot` desde 25/09/2026: um recorte serve às
+    # duas leituras (o vazio e a medição da rolha). A nota tem de passar por ele.
+    nota = inspect.getsource(v.VendorService._nota_do_slot_vazio)
+    assert "self._miolo_do_slot(quadro, ponto)" in nota, (
+        "a nota deixou de usar o recorte centrado no ponto clicado")
+    fonte = inspect.getsource(v.VendorService._miolo_do_slot)
     assert "crop(" in fonte, "deixou de recortar: passaria a olhar a tela toda"
     assert "ponto[0]" in fonte and "ponto[1]" in fonte, (
         "o recorte deixou de ser centrado no ponto de clique")

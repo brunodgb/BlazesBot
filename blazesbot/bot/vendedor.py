@@ -810,10 +810,14 @@ class JanelaDeVenda(LeituraDoSlot):
                          passada, passadas, nesta, alvo, origem)
 
             dados = 0
+            # A MEDIÇÃO DA ROLHA (`leitura_do_slot.MEDIR_A_ROLHA`): o miolo antes
+            # do 1º clique e depois de cada um. Só registra; nada aqui decide.
+            recortes = [self._medir_o_slot(alvo)]
             for _ in range(nesta):
                 ctx.raise_if_stopped()
                 leitura = self._clicar_no_slot(alvo)
                 dados += 1
+                recortes.append(self._medir_o_slot(alvo))
 
                 if leitura is None:
                     # Sem imagem não se julga: segue clicando. Recusar aqui
@@ -870,6 +874,7 @@ class JanelaDeVenda(LeituraDoSlot):
             antes_da_passada = ctx.memory.bag_count()
             self._vender_a_lista(botao_vender, antes_da_passada)
             self._dismiss_confirm()
+            self._registrar_a_rolha(passada, recortes, antes_da_passada, dados)
             ctx.log.info("Passada %s: %s clique(s) no slot", passada, dados)
             if acabou:
                 break
