@@ -154,3 +154,30 @@ def test_o_criterio_de_chegada_separa_os_dois_mapas(pos, chegou):
 
 def test_o_teto_esta_em_um_e_meio_segundo_no_codigo():
     assert ui_service.TETO_DO_TELEPORTE_DA_FAY == 2.0
+
+
+# ===========================================================================
+# A PORTA DISPUTADA: o teto é a regra, e aviso por tentativa é enxurrada
+# ===========================================================================
+
+def test_o_teto_EM_DISPUTA_devolve_False_sem_avisar(monkeypatch):
+    """Medido em 25/09/2026: 47.082 dos 65.413 WARN do log de dev (72%) eram
+    "Entrada na HH NÃO confirmado (teto)" -- o desfecho NORMAL da disputa, que o
+    contador de desfechos já registra e a linha agregada da rotina já resume."""
+    ui, relogio = _ui(monkeypatch, lambda t: EM_STONE_CITY)
+
+    assert ui.esperar_a_chegada(
+        chegou=lambda: False, teto=0.12, passo=0.04, o_que="Entrada na HH",
+        em_disputa=True) is False
+    assert _decorrido(relogio) <= 0.12 + 1e-9
+    assert [n for n, _ in ui.ctx.log.linhas if n == "warning"] == []
+
+
+def test_a_entrada_da_HH_espera_EM_DISPUTA():
+    import inspect
+
+    from blazesbot.bot.hh.entrada import EntradaDaHH
+
+    assert "em_disputa=True" in inspect.getsource(EntradaDaHH.esperar_entrar)
+    assert "em_disputa" not in inspect.getsource(EntradaDaHH.esperar_sair), (
+        "a SAÍDA não é disputada: o teto dela é aviso de verdade")

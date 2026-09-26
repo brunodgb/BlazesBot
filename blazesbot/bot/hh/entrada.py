@@ -627,4 +627,5 @@ class EntradaDaHH(UIDoJogo):
             teto=TETO_DA_ENTRADA,
             passo=PASSO_DA_ESPERA_DA_ENTRADA,
             o_que="Entrada na HH",
+            em_disputa=True,
         )

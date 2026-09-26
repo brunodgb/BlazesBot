@@ -1899,13 +1899,8 @@ class UIDoJogo:
     # Esperar uma troca de mapa
     # ==================================================================
 
-    def esperar_a_chegada(
-        self,
-        chegou,
-        teto: float,
-        passo: float,
-        o_que: str,
-    ) -> bool:
+    def esperar_a_chegada(self, chegou, teto: float, passo: float, o_que: str,
+                          em_disputa: bool = False) -> bool:
         """Espera uma troca de mapa. Sai no INSTANTE em que `chegou()` confirma.
 
         `chegou` é um predicado sem argumentos -- normalmente uma leitura de
@@ -1921,6 +1916,9 @@ class UIDoJogo:
         saiu do lugar é a leitura de posição do passo seguinte, que já existe e
         não custa nada. Se o aviso aparecer com frequência, o teto é que está
         curto -- e a linha do log traz o número para decidir, em vez de palpite.
+
+        `em_disputa=True` CALA O AVISO: na porta disputada o teto é a regra (72%
+        dos WARN do log, 47 mil em 37 h), e quem o conta é o desfecho.
         """
         ctx = self.ctx
         # O laço é do orquestrador (`core/espera.py`), com a telemetria junto.
@@ -1932,6 +1930,8 @@ class UIDoJogo:
             ctx.log.info("%s confirmado em %.0f ms: %s | local %s", o_que,
                          fim.ms, ctx.memory.position(), ctx.memory.location())
             return True
+        if em_disputa:
+            return False
         ctx.log.warning(
             "%s NÃO confirmado em %.0f ms (teto): ainda em %s | local "
             "%s. Seguindo -- o passo seguinte relê a posição.",
