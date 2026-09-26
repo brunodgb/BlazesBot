@@ -133,6 +133,22 @@ def test_tres_falhas_devolvem_False_e_nao_martelam(relogio):
     assert len(v.ctx.cliques) == vendedor.TENTATIVAS_NO_SELL
 
 
+def test_tres_falhas_contam_a_historia_em_UMA_linha(relogio):
+    """Eram três: dois WARNING de "reclicando" e o ERROR do fim, que já diz
+    quantas vezes foi. As intermediárias vão ao DEBUG."""
+    v = _vendedor([58], relogio)
+    linhas = []
+    v.ctx.log = SimpleNamespace(
+        info=lambda *a, **k: linhas.append("info"),
+        debug=lambda *a, **k: None,
+        warning=lambda *a, **k: linhas.append("warning"),
+        error=lambda *a, **k: linhas.append("error"))
+
+    v._vender_a_lista((1, 1), antes=58)
+
+    assert linhas == ["error"]
+
+
 def test_entre_as_tentativas_a_caixa_e_fechada(relogio):
     """Uma caixa aberta engole o Sell — é a causa que dá para tratar aqui."""
     v = _vendedor([58], relogio)

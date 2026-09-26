@@ -572,7 +572,10 @@ class JanelaDeVenda(LeituraDoSlot):
             # aqui; as outras só o reclique resolve.
             self._dismiss_confirm()
             if tentativa < TENTATIVAS_NO_SELL:
-                ctx.log.warning(
+                # DEBUG, e não WARNING: quem conta a história é UMA linha --
+                # o INFO do Sell que pegou tarde, ou o ERROR do fim, que já
+                # diz quantas vezes foi. Eram três linhas por falha.
+                ctx.log.debug(
                     "O Sell não tirou item nenhum da bolsa (%s itens) na "
                     "tentativa %s de %s. Reclicando: a lista já está montada, "
                     "então o clique repete a MESMA venda.",
