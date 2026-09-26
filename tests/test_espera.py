@@ -89,7 +89,10 @@ def test_o_teto_de_TEMPO_encerra():
                      o_que="t")
     assert fim.motivo == espera.TETO
     assert fim.confirmado is False
-    assert fim.segundos >= 0.05
+    # 1 µs de TOLERÂNCIA, e ela tem medida: `time.time()` vale ~1,8e9, onde o
+    # passo do float64 é ~2,4e-7 s -- `(comeco + 0.05) - comeco` pode sair
+    # 0.04999988. Oscilou na suíte inteira em 25/09/2026 (3 de 3 verdes isolado).
+    assert fim.segundos >= 0.05 - 1e-6
 
 
 def test_o_teto_de_VOLTAS_encerra_e_e_distinguivel():
