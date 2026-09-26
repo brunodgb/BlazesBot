@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import os
 import threading
+import uuid
 
 # Cache da resolução -- o env não muda durante a vida do processo.
 _MODO: str | None = None
@@ -63,6 +64,17 @@ def contexto(*, conta: str, id_run: str) -> None:
         dados = {}
         _local.dados = dados
     dados.update({"conta": conta, "id_run": id_run})
+
+
+def nova_run(conta: str) -> str:
+    """Começo de uma run: o contexto ganha um `id_run` NOVO, e o devolve.
+
+    Um lugar só gera o id -- o BC e a HH o chamam na entrada da cave --, para as
+    duas caves agruparem a run do mesmo jeito no JSON de dev.
+    """
+    id_run = uuid.uuid4().hex[:10]
+    contexto(conta=conta, id_run=id_run)
+    return id_run
 
 
 def fase(nome: str) -> None:

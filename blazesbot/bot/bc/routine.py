@@ -64,7 +64,6 @@ DECISÕES DE TEMPO
 from __future__ import annotations
 
 import time
-import uuid
 from enum import Enum, auto
 
 from ...config import CAVE_BC
@@ -1021,10 +1020,7 @@ class BossRushRoutine(RotinaDeCave):
 
         # Nova run: o contexto estruturado ganha um id próprio (correlação) para
         # o JSON de dev agrupar todos os registros desta corrida na cave.
-        logmodo.contexto(
-            conta=ctx.account_login,
-            id_run=uuid.uuid4().hex[:10],
-        )
+        logmodo.nova_run(ctx.account_login)
         self._retomar_altar_em = 0
         # Instância nova, sequência nova: o boss desta instância ainda está vivo.
         self._boss_derrotado = False

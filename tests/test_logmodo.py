@@ -63,3 +63,30 @@ def test_contexto_por_thread():
     assert ctx["fase"] == "NAVEGANDO"
     logmodo.limpar()
     assert logmodo.contexto_atual() == {}
+
+
+def test_nova_run_da_um_id_novo_a_cada_run():
+    logmodo.limpar()
+    primeiro = logmodo.nova_run("alice")
+    segundo = logmodo.nova_run("alice")
+
+    assert primeiro != segundo
+    assert len(segundo) == 10 and int(segundo, 16) >= 0
+    assert logmodo.contexto_atual() == {"conta": "alice", "id_run": segundo}
+    logmodo.limpar()
+
+
+def test_as_DUAS_caves_abrem_a_run_pelo_mesmo_gerador():
+    """A HH saía com `id_run` nulo em todo registro: só o BC abria a run."""
+    import ast
+    import inspect
+    import textwrap
+
+    from blazesbot.bot.bc.routine import BossRushRoutine
+    from blazesbot.bot.hh.routine import HHRoutine
+
+    for metodo in (BossRushRoutine._do_entrar, HHRoutine._entrou):
+        arvore = ast.parse(textwrap.dedent(inspect.getsource(metodo)))
+        chamadas = {getattr(n.func, "attr", "") for n in ast.walk(arvore)
+                    if isinstance(n, ast.Call)}
+        assert "nova_run" in chamadas, metodo.__qualname__

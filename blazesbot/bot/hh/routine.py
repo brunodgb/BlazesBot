@@ -58,7 +58,7 @@ import time
 from enum import Enum, auto
 
 from ...config import CAVE_HH, MODO_FADA_DA_HH
-from ...core import catador, esconder_jogadores
+from ...core import catador, esconder_jogadores, logmodo
 from ...core.vision import capture_window, find_template
 from .. import mural
 from ..context import (
@@ -696,6 +696,9 @@ class HHRoutine(RotinaDeCave):
         ctx = self.ctx
         # ENTRADA NOVA, INSTÂNCIA NOVA: os quatro bosses estão vivos de novo.
         self.progresso.entrei_na_cave()
+        # E UM ID DE RUN NO JSON DE DEV, como no BC: é o que agrupa os registros
+        # desta ida à cave. Faltava -- todo registro da HH saía com `id_run` nulo.
+        logmodo.nova_run(ctx.account_login)
 
         if ctx.settings.hh.modo_do_reset != MODO_FADA_DA_HH:
             # SOLO: a conta de reset já cumpriu o papel dela. Desfazer agora é o

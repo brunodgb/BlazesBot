@@ -39,9 +39,11 @@
     `thread`, `exc` completo). Em prod a pasta `logs/dev/` nem é criada — o
     detalhe de dev só existe na máquina de quem desenvolve. O sink reusa a
     poda por linha do `ArquivoDeLogLimitado` (`LOG_JSON_MAXIMO = 4000`).
-  - **Correlação:** em `bc/routine.py`, a cada run o contexto ganha um
-    `id_run` (`uuid.uuid4().hex[:10]`) via `logmodo.contexto(conta, id_run)`,
-    e o laço comum das caves (`bot/rotina_de_cave.py`) grava
+  - **Correlação:** a cada run — no BC e na HH, na entrada da cave — o
+    contexto ganha um `id_run` novo por `logmodo.nova_run(conta)`, o único
+    gerador (a HH saía com `id_run` nulo até 26/09/2026). A `conta` de cada
+    registro vem do nome do logger (`blazes.<login>`), então vale para todo
+    ecossistema. O laço comum das caves (`bot/rotina_de_cave.py`) grava
     `logmodo.fase(...)` a cada estado, dando um ID único para rastrear uma
     run inteira pelo JSON (ob. request-ID do DevOps checklist). O contexto é
     thread-local (cada conta roda na própria thread) e é limpo na SAÍDA LIMPA
