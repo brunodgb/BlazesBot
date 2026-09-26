@@ -83,7 +83,10 @@ TETO_DE_ESPERAS_CEGAS = {
 # reautenticando duas vezes por segundo contra um servidor fora do ar.
 # 252 -> 251 em 25/09/2026, e a DESCIDA tem nome: a saída do BC era `tick(1.5)`
 # cego depois do clique no link e virou pergunta (`esperar_a_chegada`, mesmo teto).
-TETO_GERAL = 251
+# 251 -> 250 em 26/09/2026: o número real já era 250 e a folga de um deixou
+# passar, calado, um LIMIAR de log que o nome fazia parecer espera. Desde então
+# o total também aperta sozinho (`test_a_catraca_APERTA_quando_o_numero_cai`).
+TETO_GERAL = 250
 
 
 def _por_arquivo() -> Counter:
@@ -124,6 +127,10 @@ def test_a_catraca_APERTA_quando_o_numero_cai():
     folgados = {arq: (teto, contagem[arq])
                 for arq, teto in TETO_DE_ESPERAS_CEGAS.items()
                 if contagem[arq] < teto}
+    # O TOTAL TAMBÉM: folga no geral é por onde uma espera nova entra calada
+    # em qualquer módulo fora da tabela.
+    if sum(contagem.values()) < TETO_GERAL:
+        folgados["TETO_GERAL"] = (TETO_GERAL, sum(contagem.values()))
     assert not folgados, (
         "estes módulos têm MENOS espera cega que a tabela: "
         + ", ".join(f"{arq} (tabela {teto}, real {real})"
