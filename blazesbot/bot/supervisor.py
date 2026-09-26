@@ -2454,6 +2454,10 @@ class AccountSupervisor(threading.Thread):
             try:
                 return bool(mural.quem_e_o_id(id_do_alvo()))
             except Exception:
+                # "NÃO SEI" NÃO É "ALIADO". Aliado faz a conta largar o alvo, e
+                # uma leitura quebrada de vez a deixaria TABando para sempre,
+                # sem atacar -- bot mudo é pior que o defeito (`CLAUDE.md`).
+                # Falso volta ao comportamento de antes desta pergunta existir.
                 return False
 
         def montar_sincronia(ex):
