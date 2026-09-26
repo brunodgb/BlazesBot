@@ -82,6 +82,17 @@ AREAS_BC: tuple[str, ...] = (
     "Secret Cemetery",
 )
 
+# Áreas de DENTRO da HH, como `Memory.location()` as devolve -- medidas no log
+# em 26/09/2026 (22.701 leituras). Quem liga cada uma às coordenadas é
+# `bot/hh/mapa_hh.py`. A entrada da HH não está aqui: ali o ponteiro devolve o
+# nome de FORA, `Black Wind Camp Dungeon`, que já é do catálogo do mapa-múndi.
+AREAS_HH: tuple[str, ...] = (
+    "Happiness Hall Visitor Room",
+    "Happiness Hall Cella",
+    "Happiness Hall Main Hall",
+    "Happiness Hall Subway",
+)
+
 # Lugares de FORA da cave que o bot pisa no ciclo normal. Manter esta lista
 # curta e específica é de propósito: ela existe para reconhecer o caminho da
 # rotina, não para catalogar o jogo inteiro.
@@ -105,7 +116,7 @@ assert LUGAR_FORA_DA_CAVE in LUGARES_DA_ROTA
 
 
 def _todos_os_nomes() -> tuple[str, ...]:
-    """Catálogo completo: áreas da BC, caminho da rotina e o mapa-múndi.
+    """Catálogo completo: áreas das caves, caminho da rotina e o mapa-múndi.
 
     O catálogo do mapa-múndi entra porque o bot também precisa reconhecer
     lugares por onde ele passa sem querer -- se o personagem for arrastado para
@@ -113,7 +124,8 @@ def _todos_os_nomes() -> tuple[str, ...]:
     """
     from .zones import LOCAL_PARA_ZONA
 
-    nomes = set(AREAS_BC) | set(LUGARES_DA_ROTA) | set(LOCAL_PARA_ZONA)
+    nomes = (set(AREAS_BC) | set(AREAS_HH) | set(LUGARES_DA_ROTA)
+             | set(LOCAL_PARA_ZONA))
     return tuple(sorted(nomes, key=len, reverse=True))
 
 

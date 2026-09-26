@@ -243,27 +243,36 @@ def test_o_ponto_de_mobs_esta_na_rota():
 # ===========================================================================
 
 
-def test_a_area_interna_continua_marcada_como_nao_medida():
-    """ESTE TESTE VAI FALHAR DE PROPÓSITO quando a área for medida.
+def test_as_areas_internas_estao_MEDIDAS_e_travadas():
+    """Medidas no log em 26/09/2026 (22.701 leituras, voto a até 6 unidades).
 
-    Quando isso acontecer, o certo é apagar este teste e ligar o de baixo -- não
-    afrouxar este. O marcador existe para que ninguém confunda "não sei" com
-    "sei que é isto", e a hora de trocar é quando houver medição, não quando o
-    teste incomodar.
+    A SEQUÊNCIA DE CADA TRECHO É O QUE SE TRAVA: um waypoint novo, ou uma área
+    trocada sem medição nova, reprova aqui -- e o cabeçalho de `mapa_hh.py` diz
+    de onde cada fronteira saiu.
     """
-    assert not m.area_medida(), (
-        "TODAS as áreas internas da HH aparecem como medidas. Se foram medidas "
-        "de verdade, apague este teste e atualize docs/decisoes/hh.md seção 9.")
+    assert m.area_medida()
+    E, V, C, M, S = (m.ROTULO_DE_TELA_DA_CHEGADA, m.AREA_DA_VISITOR_ROOM,
+                     m.AREA_DA_CELLA, m.AREA_DA_SAIDA, m.AREA_DO_SUBWAY)
+    esperado = {
+        "Fa-Yuan": [E] * 9 + [V] * 11,
+        "Dupla": [V] * 4 + [C] * 10,
+        "Green Robmaster": [C] * 3 + [M] * 3 + [S] * 5,
+        "Purple": [S] * 3 + [M] * 8,
+    }
+    for trecho, caminho, _boss in m.TRECHOS_DOS_BOSSES:
+        assert [wp.area for wp in caminho] == esperado[trecho], trecho
+    assert m.CAMINHO_ATE_A_SAIDA[0].area == M
 
-    # O INVENTÁRIO DO QUE JÁ FOI MEDIDO É EXPLÍCITO, e é ele que impede o
-    # afrouxamento: um nome novo aqui só entra junto com a linha que diz de que
-    # print ele saiu. Medidos em 03/09/2026, nos prints do usuário.
-    assert m.areas_medidas() == {(527, 124): "Happiness Hall Main Hall"}, (
-        "alguém nomeou uma área da HH sem registrar a medição -- ver o "
-        "cabeçalho de mapa_hh.py e docs/decisoes/hh.md seção 9")
-    assert all(wp.area == m.AREA_INTERNA_NAO_MEDIDA
-               for wp in m.TODOS_OS_WAYPOINTS
-               if wp.pos not in m.areas_medidas())
+
+def test_o_nome_das_salas_e_o_do_CATALOGO():
+    """A ligação nome <-> coordenada: cada sala é uma string que
+    `Memory.location()` devolve, e o catálogo a reconhece como EXATA."""
+    from blazesbot.core import lugares
+
+    salas = {wp.area for wp in m.TODOS_OS_WAYPOINTS} - {m.ROTULO_DE_TELA_DA_CHEGADA}
+    assert salas == set(lugares.AREAS_HH)
+    for sala in salas:
+        assert lugares.resolver(sala) == (sala, lugares.Resolucao.EXATO)
 
 
 def test_o_interior_da_HH_tem_MAIS_DE_UMA_area():
@@ -280,13 +289,13 @@ def test_o_interior_da_HH_tem_MAIS_DE_UMA_area():
 
 
 def test_os_nomes_de_Happiness_Hall_sao_da_TELA_e_nao_do_PONTEIRO():
-    """Registrado porque foi tratado errado uma vez, em 03/09/2026.
+    """O NOME NÃO DECIDE dentro ou fora -- medido nos dois sentidos.
 
-    O ponteiro devolve `Black Wind Camp Dungeon` DENTRO e FORA da cave -- a
-    linha do log que confirma a entrada diz *"(55, 33) | local Black Wind Camp
-    Dungeon"*. Os nomes `Happiness Hall *` são o rótulo do canto da TELA.
-
-    A consequência é a regra: quem responde "dentro ou fora" é a COORDENADA.
+    Na ENTRADA o ponteiro devolve o nome de fora (`Black Wind Camp Dungeon`, na
+    linha que confirma a entrada em (55, 33)). E ao SAIR ele segura o nome da
+    sala: na porta, do lado de fora, a memória disse `Happiness Hall Main Hall`
+    em 2.299 de 2.358 eventos (log de 26/09/2026). Quem responde "dentro ou
+    fora" é a COORDENADA.
     """
     assert m.LUGAR_FORA_DA_HH == "Black Wind Camp Dungeon"
     # o nome NÃO decide -- o mesmo nome com coordenadas opostas dá etapas
@@ -294,6 +303,8 @@ def test_os_nomes_de_Happiness_Hall_sao_da_TELA_e_nao_do_PONTEIRO():
     assert m.etapa_pelo_lugar(m.LUGAR_FORA_DA_HH, (55, 33)) == m.ETAPA_DENTRO
     assert (m.etapa_pelo_lugar(m.LUGAR_FORA_DA_HH, (-343, -288))
             == m.ETAPA_NA_PORTA)
+    # o nome preso da sala, na porta, também não convence
+    assert m.etapa_pelo_lugar(m.AREA_DA_SAIDA, (-343, -288)) == m.ETAPA_NA_PORTA
     # e nenhum `Happiness Hall *` participa da decisão
     import inspect
 

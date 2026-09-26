@@ -17,7 +17,10 @@ LIXO_MEDIDO = [
     "BBA", "THT", "ZRw", "TBHNT",
 ]
 
-REAIS_FORA_DO_CATALOGO = [
+# Eram os nomes reais que o log mostrou FORA do catálogo -- as salas da HH. Em
+# 26/09/2026 entraram nele (`lugares.AREAS_HH`); continuam aqui como a prova de
+# que a regra de cara de nome aceita nome de verdade.
+SALAS_DA_HH = [
     "Happiness Hall Main Hall", "Happiness Hall Visitor Room",
     "Happiness Hall Cella", "Happiness Hall Subway",
 ]
@@ -28,9 +31,17 @@ def test_o_lixo_medido_e_RECUSADO(lixo):
     assert lugares.resolver(lixo) == (None, Resolucao.RECUSADO)
 
 
-@pytest.mark.parametrize("nome", REAIS_FORA_DO_CATALOGO)
-def test_nome_real_fora_do_catalogo_passa_pelo_FORMATO(nome):
-    assert lugares.resolver(nome) == (nome, Resolucao.FORMATO)
+@pytest.mark.parametrize("nome", SALAS_DA_HH)
+def test_as_salas_da_HH_sao_do_catalogo_e_tem_cara_de_nome(nome):
+    assert lugares.resolver(nome) == (nome, Resolucao.EXATO)
+    assert lugares._tem_cara_de_nome(nome)
+
+
+def test_nome_fora_do_catalogo_com_cara_de_nome_passa_pelo_FORMATO():
+    """Nome INVENTADO de propósito: o caso é "um mapa que ainda não
+    catalogamos", e nenhum dos medidos está mais fora do catálogo."""
+    assert lugares.resolver("Hall of Unknown Trials") == (
+        "Hall of Unknown Trials", Resolucao.FORMATO)
 
 
 def test_todo_nome_do_catalogo_tem_a_cara_que_o_FORMATO_exige():

@@ -32,32 +32,27 @@ usada depois de a certa ser medida, e era impossível perceber porque tudo parec
 configurado.
 
 =========================================================================
-O QUE AINDA NÃO ESTÁ MEDIDO -- LEIA ANTES DE CONFIAR NA ÁREA
+AS ÁREAS DE DENTRO -- MEDIDAS NO LOG EM 26/09/2026
 =========================================================================
 
-Os nomes de ÁREA de dentro desta cave são quase todos DESCONHECIDOS. O bot Lua
-nunca lê o nome do lugar: ele decide tudo por coordenada.
+O bot Lua nunca lê o nome do lugar. Aqui cada waypoint carrega a área que
+`Memory.location()` devolve ali: 22.701 leituras do log com a posição dentro da
+caixa da cave, votadas pelos nomes lidos a até 6 unidades de cada waypoint.
 
-DOIS FORAM MEDIDOS, nos prints do usuário de 03/09/2026, e eles provam que o
-interior tem MAIS DE UMA área nomeada -- o que descarta a hipótese de tratar a
-cave inteira como um nome só:
+    Happiness Hall Dungeon ....... a entrada, de (80,42) a (216,186)
+    Happiness Hall Visitor Room .. de (232,190) ao boss 1, e o começo do 2
+    Happiness Hall Cella ......... de (354,134) a (427,152)
+    Happiness Hall Main Hall ..... de (460,152) a (448,184), e o fim do 4
+    Happiness Hall Subway ........ de (448,218) ao boss 3, e o começo do 4
 
-    (55, 33) .... "Happiness Hall Dungeon"      -- onde a entrada deposita
-    (529, 118) .. "Happiness Hall Main Hall"    -- o ponto de saída
-
-Fora da cave é `Black Wind Camp Dungeon`, que já estava medido.
-
-Os outros 64 waypoints continuam com `AREA_INTERNA_NAO_MEDIDA`. É um
-MARCADOR EXPLÍCITO, não uma adivinhação disfarçada de dado: enquanto ele estiver
-ali, a área não serve para conferir onde o bot está, e quem depender disso tem de
-tratar a ausência. Preencher exige rodar a ferramenta de medição pela rota e
-registrar o que `Memory.location()` devolve em cada trecho.
-
-Ver `docs/decisoes/hh.md`, seção 9, para a lista completa do que falta medir.
+A ENTRADA É A EXCEÇÃO: ali o ponteiro devolve o nome de FORA (`Black Wind Camp
+Dungeon`), e o rótulo vem da TELA. E O NOME NÃO DECIDE DENTRO OU FORA: ao sair,
+a memória segura `Happiness Hall Main Hall` na porta, do lado de fora (2.299 de
+2.358 eventos ali). Quem decide é a coordenada. Ver `docs/decisoes/hh.md` §9.
 """
 from __future__ import annotations
 
-from ...core import rota
+from ...core import lugares, rota
 
 # REEXPORTAÇÃO PROPOSITAL (a forma `X as X` é o que diz isso ao ruff): a HH
 # chama estes nomes por `mapa_hh.`, igual à BC por `mapa_bc.`. A regra mora em
@@ -87,39 +82,24 @@ GRUPO_DOS_ARREDORES = "Outside Black Wind Camp"
 # Hall". A sigla é do usuário e do bot em Lua; o jogo escreve o nome inteiro
 # nesse link, e em nenhum outro lugar.
 #
-# NÃO É O NOME DO LUGAR. A ZONA se chama `Black Wind Camp Dungeon` (é o que a
-# memória devolve, e o que entra em `core/lugares.py`); `Happiness Hall` é o
-# nome da INSTÂNCIA, que só aparece no link de entrar.
+# NÃO É O NOME DO LUGAR. A ZONA se chama `Black Wind Camp Dungeon`;
+# `Happiness Hall` é o nome da INSTÂNCIA, e dentro dela cada sala se chama
+# `Happiness Hall <sala>` (ver o cabeçalho e `lugares.AREAS_HH`).
 NOME_DA_INSTANCIA = "Happiness Hall"
 
-# Marcador para a área que ainda não foi medida. Ver o cabeçalho do módulo: é
-# proposital que isto seja feio e visível.
+# Marcador de área NÃO medida. Nenhum waypoint o carrega desde 26/09/2026; fica
+# para o waypoint novo que nascer sem medição -- feio e visível de propósito.
 AREA_INTERNA_NAO_MEDIDA = "HH (área não medida)"
 
-# OS DOIS NOMES DE DENTRO QUE JÁ FORAM MEDIDOS -- E ELES SÃO DA **TELA**.
-#
-# =========================================================================
-# NÃO COMPARE ESTES NOMES COM `Memory.location()`
-# =========================================================================
-#
-# Vieram dos prints do usuário de 03/09/2026, do canto superior direito do
-# cliente, onde o jogo escreve `<lugar> [x, y]`. Isso é o rótulo da ÁREA, e
-# **não é o que o ponteiro devolve**.
-#
-# O ponteiro devolve `Black Wind Camp Dungeon` -- dentro E fora da cave. Medido
-# no log de 03/09/2026: a linha que confirma a entrada diz
-# *"Entrada na HH confirmado em 0 ms: (55, 33) | local Black Wind Camp
-# Dungeon"*, e em 673 menções do log essa é a ÚNICA string de lugar.
-#
-# Quando estes dois nomes entraram aqui, em 03/09, eles foram tratados como se
-# fossem leitura de ponteiro. Não são, e a diferença importa: é por isso que
-# `etapa_pelo_lugar` decide "dentro ou fora" pela COORDENADA e nunca pelo nome.
-#
-# Para que servem, então: são o rótulo humano da área numa `Waypoint.area` --
-# melhor no log que o marcador `HH (área não medida)` -- e são a prova de que o
-# interior tem MAIS DE UMA área nomeada.
+# AS ÁREAS DE DENTRO (a medição está no cabeçalho). As quatro salas são o que
+# `Memory.location()` devolve, e moram no catálogo (`lugares.AREAS_HH`) para
+# existir uma grafia só. A da CHEGADA é o rótulo da TELA, lido no print do
+# usuário de 03/09/2026: ali o ponteiro devolve o nome de fora. Em 03/09 só a
+# entrada tinha sido vista, e dela saiu a conclusão errada de que o ponteiro
+# nunca dava nome de sala -- a sala só aparece depois de pisar nela.
 ROTULO_DE_TELA_DA_CHEGADA = "Happiness Hall Dungeon"
-AREA_DA_SAIDA = "Happiness Hall Main Hall"
+(AREA_DA_VISITOR_ROOM, AREA_DA_CELLA, AREA_DA_SAIDA,
+ AREA_DO_SUBWAY) = lugares.AREAS_HH
 
 
 # ---------------------------------------------------------------------------
@@ -389,48 +369,49 @@ POSICAO_DA_FADA_NO_BOSS = (185, 133)
 # Cada linha é `(x, y, área, clique_calibrado)`. O quarto item é o `via` do Lua:
 # RESERVA, para quando o motor de navegação desistir. Ver `core/rota.py`.
 
-_A = AREA_INTERNA_NAO_MEDIDA
+_E, _V, _C, _M, _S = (ROTULO_DE_TELA_DA_CHEGADA, AREA_DA_VISITOR_ROOM,
+                      AREA_DA_CELLA, AREA_DA_SAIDA, AREA_DO_SUBWAY)
 
 # Da chegada dentro da cave até o boss 1 (Fa-Yuan).
 CAMINHO_ATE_O_BOSS_1: tuple[Waypoint, ...] = _wp([
-    (80, 42, _A, (943, 104)),
-    (107, 47, _A, (945, 110)),
-    (124, 49, _A, (935, 115)),
-    (141, 75, _A),
-    (162, 82, _A),
-    (188, 104, _A),
-    (188, 140, _A),
-    (188, 176, _A),
-    (216, 186, _A),
-    (232, 190, _A),
-    (250, 190, _A),
-    (274, 190, _A),
-    (280, 172, _A),
-    (300, 176, _A),
-    (304, 204, _A),
-    (320, 184, _A),
-    (318, 140, _A),
-    (300, 140, _A),
-    (282, 138, _A),
-    (272, 136, _A, (908, 117)),
+    (80, 42, _E, (943, 104)),
+    (107, 47, _E, (945, 110)),
+    (124, 49, _E, (935, 115)),
+    (141, 75, _E),
+    (162, 82, _E),
+    (188, 104, _E),
+    (188, 140, _E),
+    (188, 176, _E),
+    (216, 186, _E),
+    (232, 190, _V),
+    (250, 190, _V),
+    (274, 190, _V),
+    (280, 172, _V),
+    (300, 176, _V),
+    (304, 204, _V),
+    (320, 184, _V),
+    (318, 140, _V),
+    (300, 140, _V),
+    (282, 138, _V),
+    (272, 136, _V, (908, 117)),
 ])
 
 # Do boss 1 até o boss 2 (a dupla). Cliques calibrados manualmente.
 CAMINHO_ATE_O_BOSS_2: tuple[Waypoint, ...] = _wp([
-    (288, 139, _A, (930, 113)),
-    (306, 140, _A, (936, 114)),
-    (316, 142, _A, (929, 113)),
-    (336, 134, _A),
-    (354, 134, _A, (933, 111)),
-    (366, 136, _A),
-    (368, 162, _A),
-    (368, 173, _A),
-    (368, 192, _A),
-    (379, 190, _A, (929, 114)),
-    (392, 190, _A),
-    (394, 154, _A),
-    (409, 150, _A, (933, 115)),
-    (409, 128, _A, (918, 129)),
+    (288, 139, _V, (930, 113)),
+    (306, 140, _V, (936, 114)),
+    (316, 142, _V, (929, 113)),
+    (336, 134, _V),
+    (354, 134, _C, (933, 111)),
+    (366, 136, _C),
+    (368, 162, _C),
+    (368, 173, _C),
+    (368, 192, _C),
+    (379, 190, _C, (929, 114)),
+    (392, 190, _C),
+    (394, 154, _C),
+    (409, 150, _C, (933, 115)),
+    (409, 128, _C, (918, 129)),
 ])
 
 # Do boss 2 até o boss 3 (Green Robmaster).
@@ -438,33 +419,33 @@ CAMINHO_ATE_O_BOSS_3: tuple[Waypoint, ...] = _wp([
     # (414,136) É A TERCEIRA VERSÃO desta entrada, medida em 10/09/2026 porque
     # "começou a travar". A anterior, (420,136), ficava a 6,3 do ponto seguinte
     # -- dentro da tolerância de chegada (7) --, e esta está a 12,2.
-    (412, 136, _A),
-    (426, 136, _A),
-    (427, 152, _A),
-    (460, 152, _A),
-    (462, 170, _A),
-    (448, 184, _A),
-    (448, 218, _A),
-    (484, 218, _A),
-    (516, 212, _A),
-    (544, 196, _A, (947, 130)),
-    (552, 188, _A),
+    (412, 136, _C),
+    (426, 136, _C),
+    (427, 152, _C),
+    (460, 152, _M),
+    (462, 170, _M),
+    (448, 184, _M),
+    (448, 218, _S),
+    (484, 218, _S),
+    (516, 212, _S),
+    (544, 196, _S, (947, 130)),
+    (552, 188, _S),
 ])
 
 # Do boss 3 até o boss 4 (Purple). ANDA PARA TRÁS no começo: o trecho volta
 # sobre o caminho do boss 3 antes de subir. Não é erro de medição.
 CAMINHO_ATE_O_BOSS_4: tuple[Waypoint, ...] = _wp([
-    (524, 208, _A),
-    (490, 216, _A),
-    (454, 220, _A),
-    (448, 184, _A),
-    (464, 170, _A),
-    (450, 136, _A),
-    (460, 108, _A),
-    (470, 108, _A, (930, 136)),
-    (478, 108, _A, (936, 118)),
-    (508, 108, _A, (948, 114)),
-    (526, 108, _A, (936, 101)),
+    (524, 208, _S),
+    (490, 216, _S),
+    (454, 220, _S),
+    (448, 184, _M),
+    (464, 170, _M),
+    (450, 136, _M),
+    (460, 108, _M),
+    (470, 108, _M, (930, 136)),
+    (478, 108, _M, (936, 118)),
+    (508, 108, _M, (948, 114)),
+    (526, 108, _M, (936, 101)),
 ])
 
 # Do boss 4 até o ponto de onde se sai da cave pelo NPC.
@@ -503,9 +484,9 @@ PONTO_FORA_DA_HH = PONTO_DA_ENTRADA
 
 
 CAMINHO_ATE_A_SAIDA: tuple[Waypoint, ...] = _wp([
-    # ÚNICO WAYPOINT COM ÁREA MEDIDA: o print do usuário mostra
-    # `Happiness Hall Main Hall` com o personagem aqui. O par exato mudou de
-    # (529,119) para (527,124) em 04/09/2026 -- ver `PONTO_DA_SAIDA`.
+    # A PRIMEIRA ÁREA MEDIDA (03/09/2026, print do usuário); o log de 26/09
+    # confirma `Happiness Hall Main Hall` nas 970 leituras daqui. O par exato
+    # mudou de (529,119) para (527,124) em 04/09/2026 -- ver `PONTO_DA_SAIDA`.
     (*PONTO_DA_SAIDA, AREA_DA_SAIDA, (921, 104)),
 ])
 
@@ -789,13 +770,10 @@ def esta_dentro_da_hh(pos: tuple[int, int] | None) -> bool:
 # é assim que a HH usa o mesmo motor de rota da BC sem importar nada dela.
 #
 # A DIFERENÇA CONTRA A BC, E ELA É DE PROPÓSITO: aqui NÃO se passa
-# `areas_apertadas` nem `area_da_posicao`. As áreas internas desta cave não foram
-# medidas (ver o cabeçalho do módulo), e o recuo "volte ao início da área" só faz
-# sentido quando se sabe onde a área começa. Sem esse dado, a retomada volta ao
-# waypoint mais próximo -- que é o comportamento certo -- em vez de agir sobre um
-# nome que é marcador.
-#
-# Quando a área for medida, é aqui que ela entra, e o motor não muda.
+# `areas_apertadas` nem `area_da_posicao`. As áreas estão medidas desde
+# 26/09/2026, mas nenhuma é APERTADA -- o recuo "volte ao início da área" é da
+# pirâmide do Secret Altar, que a HH não tem --, e `area_da_posicao` só mudaria o
+# rótulo da retomada. Ela volta ao waypoint mais próximo, que é o certo aqui.
 
 
 def onde_retomar(
@@ -837,12 +815,12 @@ def area_medida() -> bool:
     """TODAS as áreas internas já foram medidas?
 
     Existe para que quem depende da área PERGUNTE em vez de descobrir na hora
-    errada. Enquanto isto devolver False, a `Waypoint.area` da HH é um marcador
-    na maioria dos pontos -- ver o cabeçalho do módulo.
+    errada. Verdade desde 26/09/2026; um waypoint NOVO sem medição volta a
+    torná-la falsa, e é esse o aviso -- ver o cabeçalho do módulo.
 
     RESPONDE PELO CONJUNTO, e não ponto a ponto, porque é assim que ela é usada:
     o recuo "volte ao começo da área" só faz sentido quando se sabe onde CADA
-    área começa. Um nome medido no meio de 64 marcadores não muda isso.
+    área começa.
     """
     return all(wp.area != AREA_INTERNA_NAO_MEDIDA for wp in TODOS_OS_WAYPOINTS)
 

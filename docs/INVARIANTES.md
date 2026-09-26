@@ -827,21 +827,18 @@ time a flag não faz nada.
   motor de navegação, que calcula a partir da posição ATUAL e sabe destravar. Um
   clique fixo foi calibrado numa posição e, usado de outra, aponta para o lugar
   errado. Ver `core/rota.py`.
-- **A área interna da HH está medida em 2 dos 66 waypoints**; o resto vale o
-  marcador `AREA_INTERNA_NAO_MEDIDA`. Medidos em 03/09/2026, nos prints do
-  usuário: `Happiness Hall Dungeon` em (55,33) e `Happiness Hall Main Hall` em
-  (529,118) — e eles provam que **o interior NÃO é uma área só**. Quem depender
-  de área tem de tratar a ausência; nome novo só entra junto com a linha que diz
-  de que print ele saiu, e o inventário (`mapa_hh.areas_medidas()`) é travado
-  por `test_a_area_interna_continua_marcada_como_nao_medida`. Consequência
-  prática, inalterada: a retomada de rota da HH volta ao waypoint mais próximo e
-  **não** recua para o início da área — recuar sobre um marcador devolveria o
-  personagem ao waypoint 1 da cave a cada escorregão.
-- **`Memory.location()` NÃO distingue dentro de fora da HH.** Ele devolve
-  `Black Wind Camp Dungeon` nos dois lados — medido no log de 03/09/2026, 673
-  menções e uma única string. Os nomes `Happiness Hall *` são rótulo da **TELA**
-  (`ROTULO_DE_TELA_DA_CHEGADA`, `AREA_DA_SAIDA`) e **não podem ser comparados**
-  com o que o ponteiro devolve. Travado por
+- **A área de todo waypoint da HH está MEDIDA** (log de 26/09/2026, 22.701
+  leituras): entrada `Happiness Hall Dungeon` (rótulo da tela), depois as salas
+  `Visitor Room`, `Cella`, `Main Hall` e `Subway`, que são o que
+  `Memory.location()` devolve e moram em `lugares.AREAS_HH`. Waypoint novo nasce
+  com `AREA_INTERNA_NAO_MEDIDA` até ser medido; a sequência por trecho é travada
+  por `test_as_areas_internas_estao_MEDIDAS_e_travadas`. A retomada da HH
+  continua voltando ao waypoint mais próximo: nenhuma sala é apertada, e o
+  recuo "volte ao início da área" é da pirâmide do Secret Altar.
+- **`Memory.location()` NÃO distingue dentro de fora da HH**, nos dois
+  sentidos: na entrada ele devolve o nome de fora (`Black Wind Camp Dungeon`),
+  e ao sair segura o da sala — na porta, do lado de fora, `Happiness Hall Main
+  Hall` em 2.299 de 2.358 eventos. Quem decide é a coordenada. Travado por
   `test_os_nomes_de_Happiness_Hall_sao_da_TELA_e_nao_do_PONTEIRO`.
 - **A ETAPA DA VIAGEM SAI DE NOME + COORDENADA** (`mapa_hh.etapa_pelo_lugar`),
   e a divisão é fixa: a **coordenada** responde "dentro ou fora", o **nome**

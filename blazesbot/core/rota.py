@@ -242,9 +242,9 @@ def onde_retomar(
 
     `areas_apertadas` e `area_da_posicao` são os dados da cave, injetados por
     quem chama. Sem eles a regra 2 não dispara e a área devolvida é a do
-    waypoint escolhido -- que é o comportamento CORRETO para uma cave cujas
-    áreas ainda não foram medidas, como a HH: sem nome de área confiável, mandar
-    o bot "voltar ao início da área" seria agir sobre um dado que não existe.
+    waypoint escolhido -- que é o comportamento CORRETO para uma cave sem área
+    apertada, como a HH: sem pirâmide para refazer, "voltar ao início da área"
+    só custaria caminho.
     """
     if pos is None or not caminho:
         return Retomada(max(0, indice_esperado), float("inf"),

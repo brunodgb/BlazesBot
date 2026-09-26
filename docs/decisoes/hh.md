@@ -209,12 +209,10 @@ via principal. O `Navigator` do BlazesBot tem detecção de travamento medida
 varredura em círculo e retomada de rota — tudo isso é melhor que um clique fixo.
 O `via` é o que se tenta quando o motor medido desiste, e é gratuito guardá-lo.
 
-**O que ainda falta medir:** o nome de ÁREA de cada waypoint. A `Waypoint` da BC
-carrega `area`, e é ela que dá as três capacidades descritas em `mapa_bc.py`
-(conferir onde está, saber sem a memória, reagir a rollback). Para a HH só
-sabemos o nome de FORA. Por isso os waypoints da HH nascem com a área
-`AREA_INTERNA_NAO_MEDIDA` — um marcador explícito, e não uma adivinhação
-disfarçada de dado.
+**O nome de ÁREA de cada waypoint foi medido em 26/09/2026** (seção 9, item 1).
+Até lá os waypoints da HH nasceram com `AREA_INTERNA_NAO_MEDIDA` — um marcador
+explícito, e não uma adivinhação disfarçada de dado —, e o marcador continua
+existindo para o waypoint novo que nascer sem medição.
 
 ### 5.1 O ponto (232, 188)
 
@@ -416,14 +414,25 @@ o vendedor está no waypoint da porta. Os dois estão travados por teste.
 
 Registrado aqui para não virar palpite depois:
 
-1. **Nomes de área DENTRO da cave — 2 de 66 medidos.** Os prints de 03/09/2026
-   deram `Happiness Hall Dungeon` em (55,33) e `Happiness Hall Main Hall` em
-   (529,118). Os outros 64 waypoints continuam com `AREA_INTERNA_NAO_MEDIDA`, e
-   `mapa_hh.area_medida()` continua `False` — ela responde pelo CONJUNTO,
-   porque o recuo "volte ao começo da área" só serve quando se sabe onde cada
-   área começa. O inventário do que já se sabe é `mapa_hh.areas_medidas()`, e o
-   teste trava esse dicionário: nome novo só entra com a linha que diz de que
-   print ele saiu.
+1. ~~Nomes de área DENTRO da cave~~ **FEITO em 26/09/2026, pelo log.** 22.701
+   leituras de `Memory.location()` com a posição dentro da caixa da cave, e
+   cada waypoint levou o nome mais lido a até 6 unidades dele:
+
+   | área | waypoints |
+   |---|---|
+   | `Happiness Hall Dungeon` (rótulo da TELA) | Fa-Yuan 1–9 |
+   | `Happiness Hall Visitor Room` | Fa-Yuan 10–20, Dupla 1–4 |
+   | `Happiness Hall Cella` | Dupla 5–14, Green Robmaster 1–3 |
+   | `Happiness Hall Main Hall` | Green Robmaster 4–6, Purple 4–11, a saída |
+   | `Happiness Hall Subway` | Green Robmaster 7–11, Purple 1–3 |
+
+   **O que 03/09 concluiu errado:** que o ponteiro nunca devolve nome de sala.
+   Só a entrada tinha sido vista — e ali ele devolve mesmo o nome de fora,
+   `Black Wind Camp Dungeon`; a sala aparece depois de pisar nela. As quatro
+   salas entraram no catálogo (`lugares.AREAS_HH`), e a da entrada fica com o
+   rótulo da tela. **O nome continua sem decidir dentro/fora:** na porta, do lado
+   de fora, a memória segura `Happiness Hall Main Hall` em 2.299 de 2.358
+   eventos. Travado por `tests/test_mapa_hh.py::test_as_areas_internas_estao_MEDIDAS_e_travadas`.
 2. **Os nomes exatos dos 4 bosses**, para a trava por identidade. Continuam sem
    medição — e é por isso que `lutar_contra_um_boss` **não tem** portão de
    nome (ver seção 11).
@@ -507,8 +516,8 @@ Em ordem de bloqueio:
    porque o cliente não tem atalho padrão para o follow: configure no jogo e
    repita em *Editar conta > Teclas > Seguir*. Sem ela a Fada avisa uma vez e
    acompanha sem seguir — ela continua curando de onde estiver.
-3. **A área interna** (seção 9, item 1) e **os nomes dos quatro bosses**
-   (item 2). Nenhum dos dois bloqueia; os dois melhoram o log e a retomada.
+3. ~~A área interna~~ (medida em 26/09/2026, seção 9, item 1) e **os nomes dos
+   quatro bosses** (item 2), que não bloqueiam e melhorariam o log.
 
 ### 10.5 O modo HH+Fada, e a lacuna que ele quase teve
 
