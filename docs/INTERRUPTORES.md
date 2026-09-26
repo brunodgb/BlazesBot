@@ -54,7 +54,7 @@ ligar código não testado.
 | `OLHAR_A_TELA` | `True` | [blazesbot/bot/sentinela.py:202](blazesbot/bot/sentinela.py#L202) | — | O VIGIA LÊ A TELA -- religado em 11/09/2026, e o porquê do vaivém importa |
 | `ATIVADO` | `True` | [blazesbot/bot/time_do_app.py:98](blazesbot/bot/time_do_app.py#L98) | diagnostico_do_link.py, deletador.py, supervisor.py, patch_do_cliente.py, petbug.py | INTERRUPTOR |
 | `CONFIRMAR_CHEGADA_POR_COORDENADA` | `False` | [blazesbot/bot/ui_do_jogo.py:523](blazesbot/bot/ui_do_jogo.py#L523) | — | INTERRUPTOR: a coordenada do painel CONFIRMA a chegada? |
-| `CONFERIR_SLOT_VAZIO` | `False` | [blazesbot/bot/vendedor.py:236](blazesbot/bot/vendedor.py#L236) | — | INTERRUPTOR -- A CONFERÊNCIA DE SLOT VAZIO ESTÁ DESLIGADA (decisão do usuário, |
+| `CONFERIR_SLOT_VAZIO` | `False` | [blazesbot/bot/vendedor.py:243](blazesbot/bot/vendedor.py#L243) | leitura_do_slot.py | INTERRUPTOR -- A CONFERÊNCIA DE SLOT VAZIO ESTÁ DESLIGADA (decisão do usuário, |
 | `MODO_FADA_DA_HH` | `'fada'` | [blazesbot/config.py:951](blazesbot/config.py#L951) | routine.py, supervisor.py, account_dialog.py | — |
 | `MODO_PADRAO_DO_TIME` | `'largada'` | [blazesbot/config.py:602](blazesbot/config.py#L602) | — | — |
 | `MODO_SOLO_DA_HH` | `'solo'` | [blazesbot/config.py:950](blazesbot/config.py#L950) | account_dialog.py | Os dois modos de reset da HH. A cave não renasce sozinha -- regra do jogo. |
@@ -338,6 +338,10 @@ ligar código não testado.
 | `PASSO_DA_SONDA` | `0.012` | [blazesbot/bot/instrumentar_clique.py:110](blazesbot/bot/instrumentar_clique.py#L110) | — | De quanto em quanto tempo a sonda fotografa o minimapa esperando o efeito. |
 | `TETO_DA_SONDA` | `1.2` | [blazesbot/bot/instrumentar_clique.py:113](blazesbot/bot/instrumentar_clique.py#L113) | — | Teto da espera pelo efeito. Passou disso, o clique é dado como PERDIDO. |
 | `WH_MOUSE_LL` | `14` | [blazesbot/bot/instrumentar_clique.py:127](blazesbot/bot/instrumentar_clique.py#L127) | supervisor.py, inputs.py, mouse_shield.py | O SENSOR — o mesmo WH_MOUSE_LL do shield, com o sinal trocado |
+| `CONTRASTE_QUE_E_SLOT_VAZIO` | `25.0` | [blazesbot/bot/leitura_do_slot.py:61](blazesbot/bot/leitura_do_slot.py#L61) | vendedor.py | Abaixo disto o slot está vazio. Fica a 2,5x do pior vazio (9.76) e a menos da |
+| `ESPERA_PARA_CONFIRMAR_VAZIO` | `0.5` | [blazesbot/bot/leitura_do_slot.py:74](blazesbot/bot/leitura_do_slot.py#L74) | vendedor.py | As leituras de confirmação são ESPAÇADAS, não coladas: veja |
+| `LADO_DO_MIOLO_DA_CELULA` | `24` | [blazesbot/bot/leitura_do_slot.py:57](blazesbot/bot/leitura_do_slot.py#L57) | vendedor.py | COMO SE SABE QUE O SLOT ESTÁ VAZIO: pelo CONTRASTE DO MIOLO da célula. |
+| `LEITURAS_VAZIAS_PARA_PARAR` | `6` | [blazesbot/bot/leitura_do_slot.py:70](blazesbot/bot/leitura_do_slot.py#L70) | vendedor.py | Quantas leituras VAZIAS SEGUIDAS encerram a venda. **SEMPRE NO MESMO SLOT** -- |
 | `ENTER_RETRY_SECONDS` | `10.0` | [blazesbot/bot/login.py:91](blazesbot/bot/login.py#L91) | — | Cadência de tentativa de entrar enquanto conectado. |
 | `ESPERA_CEGA_SEGUNDOS` | `90.0` | [blazesbot/bot/login.py:104](blazesbot/bot/login.py#L104) | — | Depois de esgotar as tentativas às cegas, o bot NÃO desiste -- ele espaça. |
 | `ESPERA_SERVIDOR_FORA` | `10.0` | [blazesbot/bot/login.py:120](blazesbot/bot/login.py#L120) | — | Espera depois de fechar "Acquiring server IP address." (servidores fora do ar). |
@@ -497,30 +501,26 @@ ligar código não testado.
 | `TETO_DO_DESESPERO` | `1.2` | [blazesbot/bot/ui_do_jogo.py:247](blazesbot/bot/ui_do_jogo.py#L247) | — | O teto do desespero. Passado daqui não é mais latência: é NPC errado, cliente |
 | `TOLERANCIA_DA_POSICAO` | `4` | [blazesbot/bot/ui_do_jogo.py:649](blazesbot/bot/ui_do_jogo.py#L649) | — | NUNCA CLICAR NO LINK SEM O DIÁLOGO ABERTO |
 | `SEGUNDOS_ANDANDO_ANTES` | `0.5` | [blazesbot/bot/velocidade.py:45](blazesbot/bot/velocidade.py#L45) | — | Quanto o personagem precisa ter andado antes de valer a pena acionar. |
-| `CICLOS_DE_VENDA` | `10` | [blazesbot/bot/vendedor.py:157](blazesbot/bot/vendedor.py#L157) | vendor.py | Quantos CICLOS COMPLETOS de venda (reposicionar -> abrir diálogo -> vender) |
-| `CONTRASTE_QUE_E_SLOT_VAZIO` | `25.0` | [blazesbot/bot/vendedor.py:271](blazesbot/bot/vendedor.py#L271) | — | Abaixo disto o slot está vazio. Fica a 2,5x do pior vazio (9.76) e a menos da |
-| `ESPERA_ANTES_DO_SELL` | `0.4` | [blazesbot/bot/vendedor.py:316](blazesbot/bot/vendedor.py#L316) | halo.py | O RESPIRO EM VOLTA DO BOTÃO "SELL" |
-| `ESPERA_DEPOIS_DO_SELL` | `0.6` | [blazesbot/bot/vendedor.py:317](blazesbot/bot/vendedor.py#L317) | — | — |
-| `ESPERA_DO_TELEPORTE` | `5.0` | [blazesbot/bot/vendedor.py:99](blazesbot/bot/vendedor.py#L99) | indice_de_tempos.py | TETO da espera do teleporte -- não é mais o tempo gasto, é o limite. |
-| `ESPERA_ENTRE_CLIQUES_DA_VENDA` | `0.065` | [blazesbot/bot/vendedor.py:213](blazesbot/bot/vendedor.py#L213) | — | Espera entre um clique e o seguinte na grade. Era 200 ms. |
-| `ESPERA_ENTRE_TENTATIVAS_DE_RETORNO` | `8.0` | [blazesbot/bot/vendedor.py:135](blazesbot/bot/vendedor.py#L135) | vendor.py | — |
-| `ESPERA_PARA_CONFIRMAR_VAZIO` | `0.5` | [blazesbot/bot/vendedor.py:284](blazesbot/bot/vendedor.py#L284) | — | As leituras de confirmação são ESPAÇADAS, não coladas: veja |
-| `LADO_DO_MIOLO_DA_CELULA` | `24` | [blazesbot/bot/vendedor.py:267](blazesbot/bot/vendedor.py#L267) | — | COMO SE SABE QUE O SLOT ESTÁ VAZIO: pelo CONTRASTE DO MIOLO da célula. |
-| `LEITURAS_VAZIAS_PARA_PARAR` | `6` | [blazesbot/bot/vendedor.py:280](blazesbot/bot/vendedor.py#L280) | — | Quantas leituras VAZIAS SEGUIDAS encerram a venda. **SEMPRE NO MESMO SLOT** -- |
-| `LIMIAR_DA_CAIXA_PRECIOSA` | `0.8` | [blazesbot/bot/vendedor.py:167](blazesbot/bot/vendedor.py#L167) | — | Limiar do template do TEXTO da caixa "It's precious item, please confirm!". |
-| `LIMIAR_DO_VENDEDOR` | `0.8` | [blazesbot/bot/vendedor.py:86](blazesbot/bot/vendedor.py#L86) | vendor.py, indice_de_tempos.py | Limiar do casamento. Sprite de NPC contra cenário 3D é mais difícil que ícone |
-| `PASSO_DA_CONFERENCIA_DA_VENDA` | `0.05` | [blazesbot/bot/vendedor.py:324](blazesbot/bot/vendedor.py#L324) | — | — |
-| `PASSO_DA_ESPERA_DO_TELEPORTE` | `0.12` | [blazesbot/bot/vendedor.py:103](blazesbot/bot/vendedor.py#L103) | ui_service.py, entrada.py | Entre leituras. A posição vem da memória e custa microssegundos; o passo é |
-| `RAIO_DA_BUSCA_DO_VENDEDOR` | `200` | [blazesbot/bot/vendedor.py:80](blazesbot/bot/vendedor.py#L80) | vendor.py | Onde procurar: um retângulo em volta de onde ele DEVERIA estar. Não é a posição |
-| `SALTO_QUE_CONFIRMA` | `200.0` | [blazesbot/bot/vendedor.py:112](blazesbot/bot/vendedor.py#L112) | — | Salto de posição que confirma o teleporte para a cidade. |
-| `SEGUNDOS_POR_TENTATIVA_NO_VENDEDOR` | `4` | [blazesbot/bot/vendedor.py:144](blazesbot/bot/vendedor.py#L144) | vendor.py | — |
-| `TEMPLATE_VENDEDOR` | `'vendedor.png'` | [blazesbot/bot/vendedor.py:71](blazesbot/bot/vendedor.py#L71) | vendor.py | O RICH É PROCURADO NA TELA, NÃO DECORADO NUMA COORDENADA |
-| `TENTATIVAS_DA_PEDRA` | `3` | [blazesbot/bot/vendedor.py:134](blazesbot/bot/vendedor.py#L134) | vendor.py | — |
-| `TENTATIVAS_DE_ENCOSTAR_NO_VENDEDOR` | `6` | [blazesbot/bot/vendedor.py:143](blazesbot/bot/vendedor.py#L143) | vendor.py | Orçamento do ajuste fino no ponto do vendedor. Pequeno porque o passo real é |
-| `TENTATIVAS_DO_TOKEN` | `10` | [blazesbot/bot/vendedor.py:133](blazesbot/bot/vendedor.py#L133) | vendor.py | CHEGAR A STONE CITY -- números do usuário (18/08/2026) |
-| `TENTATIVAS_NO_OK` | `3` | [blazesbot/bot/vendedor.py:162](blazesbot/bot/vendedor.py#L162) | — | Quantas vezes reclicar o Ok da caixa "It's precious item" antes de desistir. |
-| `TENTATIVAS_NO_SELL` | `3` | [blazesbot/bot/vendedor.py:323](blazesbot/bot/vendedor.py#L323) | — | O Sell é CONFERIDO pela bolsa e reclicado quando não vende: 7 das 129 vendas |
-| `TOLERANCIA_DA_CAMINHADA_ATE_O_VENDEDOR` | `2` | [blazesbot/bot/vendedor.py:139](blazesbot/bot/vendedor.py#L139) | vendor.py | Folga da CAMINHADA até o vendedor. O painel de arredores caminha até perto e |
+| `CICLOS_DE_VENDA` | `10` | [blazesbot/bot/vendedor.py:164](blazesbot/bot/vendedor.py#L164) | vendor.py | Quantos CICLOS COMPLETOS de venda (reposicionar -> abrir diálogo -> vender) |
+| `ESPERA_ANTES_DO_SELL` | `0.4` | [blazesbot/bot/vendedor.py:279](blazesbot/bot/vendedor.py#L279) | halo.py | O RESPIRO EM VOLTA DO BOTÃO "SELL" |
+| `ESPERA_DEPOIS_DO_SELL` | `0.6` | [blazesbot/bot/vendedor.py:280](blazesbot/bot/vendedor.py#L280) | — | — |
+| `ESPERA_DO_TELEPORTE` | `5.0` | [blazesbot/bot/vendedor.py:106](blazesbot/bot/vendedor.py#L106) | indice_de_tempos.py | TETO da espera do teleporte -- não é mais o tempo gasto, é o limite. |
+| `ESPERA_ENTRE_CLIQUES_DA_VENDA` | `0.065` | [blazesbot/bot/vendedor.py:220](blazesbot/bot/vendedor.py#L220) | leitura_do_slot.py | Espera entre um clique e o seguinte na grade. Era 200 ms. |
+| `ESPERA_ENTRE_TENTATIVAS_DE_RETORNO` | `8.0` | [blazesbot/bot/vendedor.py:142](blazesbot/bot/vendedor.py#L142) | vendor.py | — |
+| `LIMIAR_DA_CAIXA_PRECIOSA` | `0.8` | [blazesbot/bot/vendedor.py:174](blazesbot/bot/vendedor.py#L174) | — | Limiar do template do TEXTO da caixa "It's precious item, please confirm!". |
+| `LIMIAR_DO_VENDEDOR` | `0.8` | [blazesbot/bot/vendedor.py:93](blazesbot/bot/vendedor.py#L93) | vendor.py, indice_de_tempos.py | Limiar do casamento. Sprite de NPC contra cenário 3D é mais difícil que ícone |
+| `PASSO_DA_CONFERENCIA_DA_VENDA` | `0.05` | [blazesbot/bot/vendedor.py:287](blazesbot/bot/vendedor.py#L287) | — | — |
+| `PASSO_DA_ESPERA_DO_TELEPORTE` | `0.12` | [blazesbot/bot/vendedor.py:110](blazesbot/bot/vendedor.py#L110) | ui_service.py, entrada.py | Entre leituras. A posição vem da memória e custa microssegundos; o passo é |
+| `RAIO_DA_BUSCA_DO_VENDEDOR` | `200` | [blazesbot/bot/vendedor.py:87](blazesbot/bot/vendedor.py#L87) | vendor.py | Onde procurar: um retângulo em volta de onde ele DEVERIA estar. Não é a posição |
+| `SALTO_QUE_CONFIRMA` | `200.0` | [blazesbot/bot/vendedor.py:119](blazesbot/bot/vendedor.py#L119) | — | Salto de posição que confirma o teleporte para a cidade. |
+| `SEGUNDOS_POR_TENTATIVA_NO_VENDEDOR` | `4` | [blazesbot/bot/vendedor.py:151](blazesbot/bot/vendedor.py#L151) | vendor.py | — |
+| `TEMPLATE_VENDEDOR` | `'vendedor.png'` | [blazesbot/bot/vendedor.py:78](blazesbot/bot/vendedor.py#L78) | vendor.py | O RICH É PROCURADO NA TELA, NÃO DECORADO NUMA COORDENADA |
+| `TENTATIVAS_DA_PEDRA` | `3` | [blazesbot/bot/vendedor.py:141](blazesbot/bot/vendedor.py#L141) | vendor.py | — |
+| `TENTATIVAS_DE_ENCOSTAR_NO_VENDEDOR` | `6` | [blazesbot/bot/vendedor.py:150](blazesbot/bot/vendedor.py#L150) | vendor.py | Orçamento do ajuste fino no ponto do vendedor. Pequeno porque o passo real é |
+| `TENTATIVAS_DO_TOKEN` | `10` | [blazesbot/bot/vendedor.py:140](blazesbot/bot/vendedor.py#L140) | vendor.py | CHEGAR A STONE CITY -- números do usuário (18/08/2026) |
+| `TENTATIVAS_NO_OK` | `3` | [blazesbot/bot/vendedor.py:169](blazesbot/bot/vendedor.py#L169) | — | Quantas vezes reclicar o Ok da caixa "It's precious item" antes de desistir. |
+| `TENTATIVAS_NO_SELL` | `3` | [blazesbot/bot/vendedor.py:286](blazesbot/bot/vendedor.py#L286) | — | O Sell é CONFERIDO pela bolsa e reclicado quando não vende: 7 das 129 vendas |
+| `TOLERANCIA_DA_CAMINHADA_ATE_O_VENDEDOR` | `2` | [blazesbot/bot/vendedor.py:146](blazesbot/bot/vendedor.py#L146) | vendor.py | Folga da CAMINHADA até o vendedor. O painel de arredores caminha até perto e |
 | `ESPERA_PELA_MORTE` | `2.0` | [blazesbot/bot/watchdog.py:293](blazesbot/bot/watchdog.py#L293) | — | Quanto tempo esperar o Windows realmente derrubar o processo depois do |
 | `PASSO_DA_CONFIRMACAO_DA_MORTE` | `0.05` | [blazesbot/bot/watchdog.py:297](blazesbot/bot/watchdog.py#L297) | — | Passo entre as conferências de "já morreu?". Fatia curta porque a resposta |
 | `RAIO_DA_BUSCA_DO_AVISO` | `120` | [blazesbot/bot/watchdog.py:74](blazesbot/bot/watchdog.py#L74) | — | Meio-lado da janela de busca, em volta de `coords.aviso_de_conexao`. A caixa |

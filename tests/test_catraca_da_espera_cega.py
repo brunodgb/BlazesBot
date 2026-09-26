@@ -46,7 +46,10 @@ TETO_DE_ESPERAS_CEGAS = {
     "blazesbot/bot/navegacao.py": 28,
     "blazesbot/bot/app/executor.py": 16,
     "blazesbot/bot/ui_do_jogo.py": 14,
-    "blazesbot/bot/vendedor.py": 8,
+    # 8 -> 7 + 1 em 25/09/2026: a confirmação espaçada do slot vazio mudou de
+    # arquivo junto com a leitura (`bot/leitura_do_slot.py`); o total não mudou.
+    "blazesbot/bot/vendedor.py": 7,
+    "blazesbot/bot/leitura_do_slot.py": 1,
     "blazesbot/core/inputs.py": 7,
     "blazesbot/bot/bc/routine.py": 7,
     "blazesbot/bot/bc/vendor.py": 6,

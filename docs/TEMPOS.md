@@ -316,6 +316,7 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | `TETO_DA_SONDA` | 1.2 s | = | TETO | [instrumentar_clique.py:113](blazesbot/bot/instrumentar_clique.py#L113) | `_sondar_ate_mudar, _um_modo` | Teto da espera pelo efeito. Passou disso, o clique é dado como PERDIDO. |
 | *literal em* `rodar` | 0.05 s | = | FIXO | [instrumentar_clique.py:390](blazesbot/bot/instrumentar_clique.py#L390) | `rodar` |  |
 | *literal em* `main` | 8 s | = | FIXO | [instrumentar_clique.py:488](blazesbot/bot/instrumentar_clique.py#L488) | `main` |  |
+| `ESPERA_PARA_CONFIRMAR_VAZIO` | 0.5 s | *novo* | FIXO | [leitura_do_slot.py:74](blazesbot/bot/leitura_do_slot.py#L74) | `_confirmar_slot_vazio` | As leituras de confirmação são ESPAÇADAS, não coladas: veja |
 | `ESPERA_PELO_SERVIDOR_FORA_DO_AR` | 30 s | *novo* | FIXO | [login_states.py:189](blazesbot/bot/login_states.py#L189) |  | Entre uma ida à lista e a seguinte com o servidor fora do ar. 30 s e não os |
 | `PRAZO_PARA_A_FADA` | 60 s (1 min) | *novo* | TETO | [morte.py:54](blazesbot/bot/morte.py#L54) | `_esperar_a_fada` | Quanto o morto espera pela Fada antes de se reviver sozinho. |
 | `PASSO_DA_ESPERA` | 0.3 s | *novo* | PASSO | [morte.py:64](blazesbot/bot/morte.py#L64) | `_esperar_a_fada, _esperar_ficar_de_pe (+1)` | Passo entre duas perguntas durante a espera. Tudo o que ele pergunta é |
@@ -399,17 +400,16 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | *literal em* `clicar_link` | 0.75 s | = | FIXO | [ui_do_jogo.py:1769](blazesbot/bot/ui_do_jogo.py#L1769) | `clicar_link` | Clica num link do diálogo, localizado pelo texto. Devolve o ponto. |
 | *literal em* `clicar_link` | 0.4 s | = | FIXO | [ui_do_jogo.py:1771](blazesbot/bot/ui_do_jogo.py#L1771) | `clicar_link` | Clica num link do diálogo, localizado pelo texto. Devolve o ponto. |
 | `SEGUNDOS_ANDANDO_ANTES` | 0.5 s | = | FIXO | [velocidade.py:45](blazesbot/bot/velocidade.py#L45) | `usar_se_puder` | Quanto o personagem precisa ter andado antes de valer a pena acionar. |
-| `ESPERA_DO_TELEPORTE` | 5 s | = | TETO | [vendedor.py:99](blazesbot/bot/vendedor.py#L99) |  | TETO da espera do teleporte -- não é mais o tempo gasto, é o limite. |
-| `PASSO_DA_ESPERA_DO_TELEPORTE` | 0.12 s | *novo* | PASSO | [vendedor.py:103](blazesbot/bot/vendedor.py#L103) |  | Entre leituras. A posição vem da memória e custa microssegundos; o passo é |
-| `ESPERA_ENTRE_TENTATIVAS_DE_RETORNO` | 8 s | = | FIXO | [vendedor.py:135](blazesbot/bot/vendedor.py#L135) |  |  |
-| `SEGUNDOS_POR_TENTATIVA_NO_VENDEDOR` | 4 s | = | FIXO | [vendedor.py:144](blazesbot/bot/vendedor.py#L144) |  |  |
-| `ESPERA_ENTRE_CLIQUES_DA_VENDA` | 0.065 s | = | FIXO | [vendedor.py:213](blazesbot/bot/vendedor.py#L213) | `_clicar_no_slot` | Espera entre um clique e o seguinte na grade. Era 200 ms. |
-| `ESPERA_PARA_CONFIRMAR_VAZIO` | 0.5 s | = | FIXO | [vendedor.py:284](blazesbot/bot/vendedor.py#L284) | `_confirmar_slot_vazio, sell_from_slot` | As leituras de confirmação são ESPAÇADAS, não coladas: veja |
-| `ESPERA_ANTES_DO_SELL` | 0.4 s | = | FIXO | [vendedor.py:316](blazesbot/bot/vendedor.py#L316) | `sell_from_slot` | O RESPIRO EM VOLTA DO BOTÃO "SELL" |
-| `ESPERA_DEPOIS_DO_SELL` | 0.6 s | = | FIXO | [vendedor.py:317](blazesbot/bot/vendedor.py#L317) | `_vender_a_lista, _bolsa_depois_do_sell` |  |
-| `PASSO_DA_CONFERENCIA_DA_VENDA` | 0.05 s | *novo* | PASSO | [vendedor.py:324](blazesbot/bot/vendedor.py#L324) | `_bolsa_depois_do_sell` |  |
-| *literal em* `_tentar_abrir_a_venda` | 0.3 s | = | FIXO | [vendedor.py:512](blazesbot/bot/vendedor.py#L512) | `_tentar_abrir_a_venda` |  |
-| *literal em* `_dismiss_confirm` | 0.125 s | = | FIXO | [vendedor.py:566](blazesbot/bot/vendedor.py#L566) | `_dismiss_confirm` | Fecha a caixa "It's precious item, please confirm!", se aberta. |
+| `ESPERA_DO_TELEPORTE` | 5 s | = | TETO | [vendedor.py:106](blazesbot/bot/vendedor.py#L106) |  | TETO da espera do teleporte -- não é mais o tempo gasto, é o limite. |
+| `PASSO_DA_ESPERA_DO_TELEPORTE` | 0.12 s | *novo* | PASSO | [vendedor.py:110](blazesbot/bot/vendedor.py#L110) |  | Entre leituras. A posição vem da memória e custa microssegundos; o passo é |
+| `ESPERA_ENTRE_TENTATIVAS_DE_RETORNO` | 8 s | = | FIXO | [vendedor.py:142](blazesbot/bot/vendedor.py#L142) |  |  |
+| `SEGUNDOS_POR_TENTATIVA_NO_VENDEDOR` | 4 s | = | FIXO | [vendedor.py:151](blazesbot/bot/vendedor.py#L151) |  |  |
+| `ESPERA_ENTRE_CLIQUES_DA_VENDA` | 0.065 s | = | FIXO | [vendedor.py:220](blazesbot/bot/vendedor.py#L220) | `_clicar_no_slot` | Espera entre um clique e o seguinte na grade. Era 200 ms. |
+| `ESPERA_ANTES_DO_SELL` | 0.4 s | = | FIXO | [vendedor.py:279](blazesbot/bot/vendedor.py#L279) | `sell_from_slot` | O RESPIRO EM VOLTA DO BOTÃO "SELL" |
+| `ESPERA_DEPOIS_DO_SELL` | 0.6 s | = | FIXO | [vendedor.py:280](blazesbot/bot/vendedor.py#L280) | `_vender_a_lista, _bolsa_depois_do_sell` |  |
+| `PASSO_DA_CONFERENCIA_DA_VENDA` | 0.05 s | *novo* | PASSO | [vendedor.py:287](blazesbot/bot/vendedor.py#L287) | `_bolsa_depois_do_sell` |  |
+| *literal em* `_tentar_abrir_a_venda` | 0.3 s | = | FIXO | [vendedor.py:475](blazesbot/bot/vendedor.py#L475) | `_tentar_abrir_a_venda` |  |
+| *literal em* `_dismiss_confirm` | 0.125 s | = | FIXO | [vendedor.py:529](blazesbot/bot/vendedor.py#L529) | `_dismiss_confirm` | Fecha a caixa "It's precious item, please confirm!", se aberta. |
 | `ESPERA_PELA_MORTE` | 2 s | *novo* | FIXO | [watchdog.py:293](blazesbot/bot/watchdog.py#L293) | `kill_client` | Quanto tempo esperar o Windows realmente derrubar o processo depois do |
 | `PASSO_DA_CONFIRMACAO_DA_MORTE` | 0.05 s | *novo* | PASSO | [watchdog.py:297](blazesbot/bot/watchdog.py#L297) | `_morreu` | Passo entre as conferências de "já morreu?". Fatia curta porque a resposta |
 

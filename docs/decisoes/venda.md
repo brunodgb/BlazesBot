@@ -4,6 +4,13 @@
 > `CLAUDE.md` guarda a REGRA em uma ou duas linhas e aponta para cá; aqui
 > fica a MEDIÇÃO que sustenta cada uma. Leia antes de mexer nesta área —
 > quase toda decisão aqui já foi tentada do outro jeito e reprovou.
+>
+> **Onde mora o código (25/09/2026):** a leitura do slot por imagem
+> (`_nota_do_slot_vazio`, `_esta_vazio`, `_confirmar_slot_vazio` e as
+> constantes do miolo) saiu de `bot/vendedor.py` para `bot/leitura_do_slot.py`,
+> mixin da `JanelaDeVenda`, sem mudar lógica — o arquivo tinha passado do teto
+> da catraca de tamanho. O interruptor `CONFERIR_SLOT_VAZIO` e o
+> `_clicar_no_slot` ficaram em `vendedor.py`.
 
 - **Começar o bot em Stone City VENDE antes de sair farmando**
   (`routine._vender_ao_iniciar_se_estiver_na_cidade`, chamada UMA vez no início
