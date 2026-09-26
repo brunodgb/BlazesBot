@@ -1,8 +1,8 @@
 {
   "env": {
     "COUNCIL_PROVIDERS": "openrouter-1,openrouter-2,openrouter-3,codex",
-    "OPENROUTER_MODELS": "z-ai/glm-5.2:free,cohere/north-mini-code:free,minimax/minimax-m3:free",
-    "OPENROUTER_MODEL": "z-ai/glm-5.2:free",
+    "OPENROUTER_MODELS": "cohere/north-mini-code:free,poolside/laguna-s-2.1:free,nvidia/nemotron-3.5-lightning:free",
+    "OPENROUTER_MODEL": "cohere/north-mini-code:free",
     "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1",
     "CLAUDE_FLOW_V3_ENABLED": "true",
     "CLAUDE_FLOW_HOOKS_ENABLED": "true"

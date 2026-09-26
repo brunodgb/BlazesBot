@@ -303,23 +303,27 @@ respostas lado a lado, com síntese honesta de onde concordam e onde divergem.
   `installed_plugins.json` e o clone manual some sem aviso.
 - **Ativação:** `.claude/settings.local.json` (escopo de projeto).
 
-## Assentos configurados (medidos em 2026-09-06)
+## Assentos configurados (trocados em 2026-09-26, decisão Q19 do grilling)
 
 `COUNCIL_PROVIDERS="openrouter-1,openrouter-2,openrouter-3,codex"` — 4 assentos,
-todos de **custo zero**, uma rodada completa em **13 s**:
+todos de **custo zero**:
 
-| assento | modelo | papel |
+| assento | modelo | medido (respostas úteis / chamadas) |
 |---|---|---|
-| `openrouter-1` | `z-ai/glm-5.2:free` | melhor nota em código entre os gratuitos (256k) |
-| `openrouter-2` | `cohere/north-mini-code:free` | treinado para terminal e agente de código (256k) |
-| `openrouter-3` | `minimax/minimax-m3:free` | contexto de 1M — base inteira no prompt |
-| `codex` | Codex CLI v0.150.1 | reusa a subscription OpenAI já autenticada |
+| `openrouter-1` | `cohere/north-mini-code:free` | 3/3 — o mais confiável do andar gratuito |
+| `openrouter-2` | `poolside/laguna-s-2.1:free` | 2/3 — e errou a semântica de `break`/`finally` em 26/09 |
+| `openrouter-3` | `nvidia/nemotron-3.5-lightning:free` | 2/3 — responde em inglês mesmo com pergunta em PT-BR |
+| `codex` | Codex CLI | 3/3 — reusa a subscription OpenAI já autenticada |
+
+**Por que trocou:** `z-ai/glm-5.2` e `minimax/minimax-m3` deixaram de ter
+versão `:free` (25/09/2026). Reprovados na mesma medição, 0/2 cada:
+`qwen3.8`, `nemotron-ultra` e `gemma-4`.
 
 O roster **degrada sozinho**: assento que falha reporta o erro na própria coluna
 e os outros respondem. Isso importa porque o andar gratuito é instável por
-natureza — medido: `minimax-m3:free` bate o **teto diário** (`limit_rpd`, e
-crédito não levanta) e `glm-5.2:free` alterna entre responder e
-"Provider returned error" conforme o upstream que a OpenRouter sorteia.
+natureza — e modelo gratuito também SOME: foi o que tirou os dois antigos.
+Resposta de assento é insumo, nunca veredito: a do `poolside` acima estava
+errada e soava segura.
 
 **Modelo local foi descartado** (decisão do usuário, 06/09/2026): a RTX 3060
 não sustenta modelo útil. Medido antes de descartar: `qwen2.5-coder:14b` derruba
@@ -401,7 +405,7 @@ para de responder — não existe troca por alternativa paga. O que sustenta iss
   perplexity, gemini e kimi — **nenhum assento `openrouter`**. Sem entrada no
   mapa, o código segue por "no configured fallback: one plain attempt": o
   assento falha e pronto, não reenvia para outro modelo.
-- **`OPENROUTER_MODEL="z-ai/glm-5.2:free"` está fixado como trava.** Não é
+- **`OPENROUTER_MODEL="cohere/north-mini-code:free"` está fixado como trava.** Não é
   redundância com `OPENROUTER_MODELS`: um `--providers=openrouter` (sem número)
   não casa com o roster e cai no default do plugin, que é
   **`anthropic/claude-sonnet-5` — PAGO**. A trava neutraliza esse caminho.
