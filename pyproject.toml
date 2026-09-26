@@ -9,6 +9,13 @@
 [tool.pytest.ini_options]
 pythonpath = ["."]
 testpaths = ["tests"]
+# TETO DE TEMPO POR TESTE (25/09/2026). Um teste com relógio mockado que não
+# andava ficou 119 h em laço, queimando um núcleo inteiro, sem ninguém ver. O
+# `pytest-timeout` (requirements-dev.txt) MATA aos 300 s; o `faulthandler`
+# nativo despeja as pilhas antes, aos 120 s, para mostrar ONDE travou. A suíte
+# inteira leva ~2 min, e nenhum teste sozinho chega perto de nenhum dos dois.
+timeout = 300
+faulthandler_timeout = 120
 
 [tool.ruff]
 target-version = "py312"

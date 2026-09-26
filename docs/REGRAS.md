@@ -58,7 +58,9 @@
   sobe limpa até `routine.run`. A conta fica online, parada, com relogin.
 - **Rede de segurança:** `./.venv/Scripts/python.exe -m pytest -q` e
   `-m ruff check blazesbot/ tests/ main.py`. As categorias intencionais estão no
-  `ignore` do `pyproject.toml`.
+  `ignore` do `pyproject.toml`. **Todo teste tem teto:** o `pytest-timeout`
+  (`requirements-dev.txt`) mata aos 300 s e o `faulthandler` despeja as pilhas
+  aos 120 s — um teste de relógio parado já rodou 119 h queimando um núcleo.
 - **O plugin ECC (hooks) está com escopo `project` apontando para a pasta temp
   do Claude.** Se o GateGuard atrapalhar, `ECC_GATEGUARD=off`.
 

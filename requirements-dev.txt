@@ -1,0 +1,6 @@
+# BlazesBot - dependências de DESENVOLVIMENTO (testes). O bot não precisa delas.
+# Instalar: .venv\Scripts\python.exe -m pip install -r requirements-dev.txt
+pytest>=8.0
+# Mata o teste preso (pyproject.toml, `timeout`). Sem ele um laço infinito
+# num teste roda para sempre -- já rodou 119 h.
+pytest-timeout>=2.3
