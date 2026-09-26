@@ -2467,3 +2467,27 @@ seguir o contrato real (id, e `None` para a própria mira), e o defeito de
 produção virou teste de regressão.
 
 Travado por `tests/test_mira_do_primeiro_mob.py`.
+
+## §38 — Onde a rota trava, par a par de waypoints (26/09/2026)
+
+Decisão Q11 do grilling: um relatório que SÓ APONTA, e quem valida é o usuário,
+no jogo. Nada muda rota, tolerância ou tempo antes disso.
+
+    ./.venv/Scripts/python.exe -m blazesbot.tools.relatorio_da_rota_hh
+
+Ele lê o log de dev inteiro (inclusive `arquivo/` e `.gz`) e conta, por par de
+waypoints, as passagens, o tempo do par e os problemas (travada, rollback, "sem
+progresso", tempo esgotado). O waypoint é identificado pelo índice E pela
+coordenada, porque o BC tem pontos a menos de 12 unidades de pontos da HH.
+
+**A primeira leitura** (log de 25 e 26/09, 20.194 passagens em 56 pares) — os
+quatro candidatos do topo, para conferir no jogo:
+
+| trecho | par | passagens | travadas | rollbacks | sem progresso |
+|---|---|---|---|---|---|
+| Purple | 6 (450,136) → 7 (460,108) | 390 | 135 | 103 | 26 |
+| Green Robmaster | 5 (462,170) → 6 (448,184) | 383 | 112 | 109 | 0 |
+| Purple | 3 (454,220) → 4 (448,184) | 390 | 92 | 0 | 96 |
+| Fa-Yuan | 18 (300,140) → 19 (282,138) | 461 | 83 | 88 | 0 |
+
+Travado por `tests/test_relatorio_da_rota_hh.py`.
