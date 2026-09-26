@@ -2499,12 +2499,16 @@ Travado por `tests/test_mira_do_primeiro_mob.py`.
 Decisão Q11 do grilling: um relatório que SÓ APONTA, e quem valida é o usuário,
 no jogo. Nada muda rota, tolerância ou tempo antes disso.
 
-    ./.venv/Scripts/python.exe -m blazesbot.tools.relatorio_da_rota_hh
+    ./.venv/Scripts/python.exe -m blazesbot.tools.relatorio_da_rota [--desde AAAA-MM-DD]
 
 Ele lê o log de dev inteiro (inclusive `arquivo/` e `.gz`) e conta, por par de
 waypoints, as passagens, o tempo do par e os problemas (travada, rollback, "sem
-progresso", tempo esgotado). O waypoint é identificado pelo índice E pela
-coordenada, porque o BC tem pontos a menos de 12 unidades de pontos da HH.
+progresso", tempo esgotado, congelado). O waypoint é identificado pelo índice E
+pela coordenada, porque o BC tem pontos a menos de 12 unidades de pontos da HH.
+Desde 26/09 cobre as DUAS caves, mede o TEMPO PERDIDO de cada par (o que as
+passagens gastaram acima da mediana dele) com a causa, e lista os pontos quentes
+do `logs/eventos.log` (semanas de histórico). O `--desde` compara antes e depois
+de qualquer mudança de rota — é o laço de aprender.
 
 **A primeira leitura** (log de 25 e 26/09, 20.194 passagens em 56 pares) — os
 quatro candidatos do topo, para conferir no jogo:
@@ -2516,4 +2520,35 @@ quatro candidatos do topo, para conferir no jogo:
 | Purple | 3 (454,220) → 4 (448,184) | 390 | 92 | 0 | 96 |
 | Fa-Yuan | 18 (300,140) → 19 (282,138) | 461 | 83 | 88 | 0 |
 
-Travado por `tests/test_relatorio_da_rota_hh.py`.
+### A análise completa (26/09/2026): o gargalo não é a geometria
+
+Pedido do usuário: *"tente alguma forma de aprender se existem melhores [waypoints],
+analise todos os waypoints, veja novos"*. O que os dados mostram:
+
+1. **Contar travada engana; o que importa é tempo.** São ~16 s perdidos por run
+   (335 runs). Pela causa: congelado 30 min, rollback 19, travada 10, e 31 min
+   sem problema registrado (luta no caminho, reclique). Os pares que mais
+   custam — Green Robmaster 3→4 (2,9 s/run) e Purple 5→6 (2,5 s/run) — têm
+   POUCA travada: é o congelamento.
+2. **Onde trava, o próprio alvo é alcançável.** Em todo ponto quente o
+   destravamento escapa na PRIMEIRA tentativa em 94–100% das vezes, e quase
+   sempre indo ao MESMO alvo (no (454,220), direto ao (448,184): 89 de 91) ou
+   ao ponto onde já está (no (450,136): 54 de 56). Um waypoint novo ou mudado
+   não resolveria: o caminho existe, a travada é momentânea.
+3. **O rollback é do servidor.** 53% deles vêm logo depois de uma travada
+   (10% antes de chegada normal); skill de velocidade e montaria aparecem
+   MENOS antes de rollback que o normal. E ele puxa o personagem para pontos
+   fixos: a porta Main Hall/Subway (448,184) é o ponto mais quente da cave (773
+   rollbacks e 501 travadas em 16 dias).
+4. **A alavanca que sobra é o congelamento** — ver §23: a primeira cutucada
+   resolve 87% e a espera de 15 s é quase todo o custo. A medição que decide o
+   novo limiar começou em 26/09.
+
+**No BC** os pontos quentes são a pirâmide do Secret Altar (87% dos 644 eventos
+de 5 dias), área já tratada como apertada. Sem run de BC no log de dev recente,
+não há tempo por par para julgar; o relatório passa a medi-lo quando o BC rodar.
+**Cuidado com o histórico:** até 26/09 a suíte de testes gravava no diário real
+— 1.564 das 1.612 "travadas" do ponto (204,22) eram de teste. O relatório
+ignora essas contas.
+
+Travado por `tests/test_relatorio_da_rota.py`.

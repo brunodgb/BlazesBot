@@ -1,9 +1,9 @@
-"""O relatório da rota da HH conta cada coisa no par certo -- e só da HH."""
+"""O relatório da rota conta cada coisa no par certo -- nas duas caves."""
 from datetime import datetime, timedelta
 
-from blazesbot.tools import relatorio_da_rota_hh as rel
+from blazesbot.tools import relatorio_da_rota as rel
 
-# Um trecho de mentira, e um do BC com os MESMOS pontos mas outro tamanho.
+# Um trecho de mentira; os testes do fim usam os de verdade.
 TRECHOS = {"Teste": [(80, 42), (107, 47), (124, 49), (141, 75)]}
 T0 = datetime(2026, 9, 26, 10, 0, 0)
 
@@ -78,6 +78,60 @@ def test_chegada_que_atravessou_waypoints_fica_fora_do_tempo():
     assert pares[("Teste", 1, 2)]["tempos"] == []
 
 
-def test_os_trechos_reais_da_HH_carregam():
-    trechos = rel.trechos_da_hh()
-    assert len(trechos) == 4 and all(len(p) >= 2 for p in trechos.values())
+def test_os_trechos_reais_das_DUAS_caves_carregam():
+    trechos = rel.trechos_das_caves()
+    assert sum(t.startswith("HH ") for t in trechos) == 4
+    assert {"BC altar", "BC boss"} <= set(trechos)
+    assert all(len(p) >= 2 for p in trechos.values())
+
+
+def test_o_tempo_perdido_vai_para_a_causa_MAIS_GRAVE_da_passagem():
+    registros = [_r(0, _chegada(1, 4, (80, 42)))]
+    for i in range(5):                                   # cinco passagens normais
+        registros.append(_r(10 + i, _chegada(2, 4, (107, 47), 2.0)))
+    registros += [_r(30, "sem progresso indo para (107, 47) (waypoint 2/4, "
+                         "distância 20) — relançando (1)"),
+                  _r(31, "CONGELADO em (90, 44) há 15s tentando andar"),
+                  _r(50, _chegada(2, 4, (107, 47), 20.0))]
+    pares, _ = rel.analisar(registros, TRECHOS)
+
+    perdido = rel.tempo_perdido(pares[("Teste", 0, 1)])
+    assert perdido == {"congelado": 18.0}               # 20 s contra a mediana de 2
+
+
+def test_o_BC_casa_pelo_trecho_dele():
+    from blazesbot.bot.bc import mapa_bc
+
+    trechos = rel.trechos_das_caves()
+    x, y = mapa_bc.CAMINHO_ATE_O_ALTAR[4].pos
+    total = len(mapa_bc.CAMINHO_ATE_O_ALTAR)
+    pares, _ = rel.analisar([_r(0, _chegada(5, total, (x, y)))], trechos)
+    assert ("BC altar", 3, 4) in pares
+
+
+def test_pontos_quentes_separa_as_caves_pelo_NOME_e_ignora_as_contas_de_teste():
+    from blazesbot.bot.hh import mapa_hh
+
+    x, y = mapa_hh.TODOS_OS_WAYPOINTS[0].pos
+    linhas = [
+        f"2026-09-26 10:00:00 | creubo | ROLLBACK | w 2 -> 1 | pos=({x}, {y}) "
+        f"| local='Happiness Hall Visitor Room'",
+        f"2026-09-26 10:00:01 | simulacao | TRAVADO-NA-CAVE | v | pos=({x}, {y}) "
+        f"| local='Secret Altar'",
+        "2026-09-20 10:00:01 | creubo | ROLLBACK | w | pos=(1, 1) | local='Stone City'",
+    ]
+    quentes = rel.pontos_quentes(linhas)
+    assert quentes["HH"][(0, (x, y))] == {"rollback": 1}
+    assert not quentes["BC"]
+
+
+def test_o_desde_corta_o_periodo(tmp_path):
+    import json
+
+    antigo = json.dumps({"ts": "2026-09-20 10:00:00.000", "conta": "a",
+                         "msg": _chegada(1, 4, (80, 42))}, ensure_ascii=False)
+    novo = antigo.replace("2026-09-20", "2026-09-26")
+    (tmp_path / "blazes-dev.jsonl").write_text(antigo + "\n" + novo + "\n",
+                                                encoding="utf-8")
+    registros = list(rel.ler_registros(tmp_path, datetime(2026, 9, 25)))
+    assert [r["ts"].day for r in registros] == [26]

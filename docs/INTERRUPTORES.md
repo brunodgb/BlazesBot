@@ -86,7 +86,7 @@ ligar código não testado.
 
 ## Números medidos -- tolerância, limiar, teto, cadência
 
-638 constantes, agrupadas por arquivo.
+639 constantes, agrupadas por arquivo.
 
 | constante | valor | onde | quem lê | porquê (resumo) |
 |---|---|---|---|---|
@@ -311,8 +311,8 @@ ligar código não testado.
 | `ETAPA_NA_VIZINHANCA` | `'já passei do teleporte'` | [blazesbot/bot/hh/mapa_hh.py:681](blazesbot/bot/hh/mapa_hh.py#L681) | routine.py | — |
 | `FOLGA_DA_CAIXA` | `25` | [blazesbot/bot/hh/mapa_hh.py:585](blazesbot/bot/hh/mapa_hh.py#L585) | mapa_bc.py | A caixa que envolve o interior da cave |
 | `GRUPO_DOS_ARREDORES` | `'Outside Black Wind Camp'` | [blazesbot/bot/hh/mapa_hh.py:77](blazesbot/bot/hh/mapa_hh.py#L77) | — | O grupo do painel de arredores naquele lugar. Serve para conferir que o painel |
-| `LUGAR_FORA_DA_HH` | `'Black Wind Camp Dungeon'` | [blazesbot/bot/hh/mapa_hh.py:73](blazesbot/bot/hh/mapa_hh.py#L73) | — | A zona de FORA da cave, lida da tela em 01/09/2026 (o rótulo do canto superior |
-| `NOME_DA_INSTANCIA` | `'Happiness Hall'` | [blazesbot/bot/hh/mapa_hh.py:88](blazesbot/bot/hh/mapa_hh.py#L88) | — | O QUE "HH" SIGNIFICA: **Happiness Hall**. |
+| `LUGAR_FORA_DA_HH` | `'Black Wind Camp Dungeon'` | [blazesbot/bot/hh/mapa_hh.py:73](blazesbot/bot/hh/mapa_hh.py#L73) | relatorio_da_rota.py | A zona de FORA da cave, lida da tela em 01/09/2026 (o rótulo do canto superior |
+| `NOME_DA_INSTANCIA` | `'Happiness Hall'` | [blazesbot/bot/hh/mapa_hh.py:88](blazesbot/bot/hh/mapa_hh.py#L88) | relatorio_da_rota.py | O QUE "HH" SIGNIFICA: **Happiness Hall**. |
 | `NPC_DA_ENTRADA` | `'Elite Axe Monk Soldier'` | [blazesbot/bot/hh/mapa_hh.py:170](blazesbot/bot/hh/mapa_hh.py#L170) | entrada.py | O NPC com quem se fala para entrar na cave. |
 | `NPC_DA_SAIDA` | `'Servant Child'` | [blazesbot/bot/hh/mapa_hh.py:461](blazesbot/bot/hh/mapa_hh.py#L461) | entrada.py, routine.py | Do boss 4 até o ponto de onde se sai da cave pelo NPC. |
 | `PRECISAO_NO_PONTO_DA_ENTRADA` | `1.5` | [blazesbot/bot/hh/mapa_hh.py:167](blazesbot/bot/hh/mapa_hh.py#L167) | entrada.py, routine.py | Folga aceita para considerar que já se está no ponto de conversa. |
@@ -707,7 +707,7 @@ ligar código não testado.
 | `MINIMAP_SCALE` | `1.7` | [blazesbot/core/zones.py:214](blazesbot/core/zones.py#L214) | ui_do_jogo.py, coords.py | Escala do minimapa: pixels por unidade de coordenada. |
 | `MAXIMO_DE_CANDIDATOS` | `4000` | [blazesbot/tools/achar_happy_do_pet.py:85](blazesbot/tools/achar_happy_do_pet.py#L85) | — | Quantos candidatos levar adiante na varredura larga. Felicidade é 0..100: |
 | `TAMANHO_DE_OBJETO` | `9216` | [blazesbot/tools/achar_happy_do_pet.py:77](blazesbot/tools/achar_happy_do_pet.py#L77) | — | Até onde procurar dentro de um objeto. Os objetos deste cliente que o projeto |
-| `NOME` | `'BlazesBot'` | [blazesbot/tools/empacotar.py:52](blazesbot/tools/empacotar.py#L52) | afericao_do_aliado.py, deletador.py, executor.py, combat.py, localizacao.py, routine.py, vendor.py, combate.py, deletador.py, bosses.py, mapa_hh.py, ponto_do_boss.py, routine.py, login_states.py, nomes_do_lixo.py, rotina_de_cave.py, team.py, time_do_app.py, calibracao.py, cronometro.py, entidades.py, indice_de_tempos.py, injecao_de_texto.py, inputs.py, log_limitado.py, lugares.py, memory.py, petbug.py, registro_de_mortes.py, stone_city.py, target_hybrid.py, templates.py, achar_happy_do_pet.py, sincronizar_nomes_do_lixo.py, vigiar_combate.py, vigiar_local.py, web_lixo.py | — |
+| `NOME` | `'BlazesBot'` | [blazesbot/tools/empacotar.py:52](blazesbot/tools/empacotar.py#L52) | afericao_do_aliado.py, deletador.py, executor.py, combat.py, localizacao.py, routine.py, vendor.py, combate.py, deletador.py, bosses.py, mapa_hh.py, ponto_do_boss.py, routine.py, login_states.py, nomes_do_lixo.py, rotina_de_cave.py, team.py, time_do_app.py, calibracao.py, cronometro.py, entidades.py, indice_de_tempos.py, injecao_de_texto.py, inputs.py, log_limitado.py, lugares.py, memory.py, petbug.py, registro_de_mortes.py, stone_city.py, target_hybrid.py, templates.py, achar_happy_do_pet.py, relatorio_da_rota.py, sincronizar_nomes_do_lixo.py, vigiar_combate.py, vigiar_local.py, web_lixo.py | — |
 | `CHUNK` | `1048576` | [blazesbot/tools/find_base.py:57](blazesbot/tools/find_base.py#L57) | — | — |
 | `MUDOU` | `0.0005` | [blazesbot/tools/ler_camera.py:57](blazesbot/tools/ler_camera.py#L57) | afericao_do_aliado.py, executor.py, localizacao.py, routine.py, combate.py, context.py, fada.py, time_do_app.py, config.py, calibracao.py, memory.py, target_hybrid.py | O que conta como "mudou". Menor que isto é ruído de interpolação -- andando, o |
 | `PASSO` | `0.25` | [blazesbot/tools/ler_camera.py:50](blazesbot/tools/ler_camera.py#L50) | routine.py, entrada.py, mapa_hh.py, supervisor.py, ui_do_jogo.py, espera.py, indice_de_tempos.py, relatorio_de_latencia.py, vigiar_combate.py | Cadência da leitura. Barata: são 8 leituras de 4 bytes por volta. |
@@ -719,9 +719,10 @@ ligar código não testado.
 | `CONGELAMENTOS_MINIMOS` | `30` | [blazesbot/tools/medir_o_congelamento.py:33](blazesbot/tools/medir_o_congelamento.py#L33) | — | — |
 | `FALSAS_TOLERADAS` | `0.1` | [blazesbot/tools/medir_o_congelamento.py:34](blazesbot/tools/medir_o_congelamento.py#L34) | — | — |
 | `TETO_DO_PORTAO_DE_COMMIT` | `300` | [blazesbot/tools/portao_de_commit.py:64](blazesbot/tools/portao_de_commit.py#L64) | — | O portão inteiro leva ~40 s. O teto é a garantia de que um teste preso não |
-| `DISTANCIA_PARA_CASAR` | `10` | [blazesbot/tools/relatorio_da_rota_hh.py:40](blazesbot/tools/relatorio_da_rota_hh.py#L40) | — | A tolerância da rota da cave é 7; a posição é lida depois do passo, com folga. |
-| `LINHAS_DO_RELATORIO` | `15` | [blazesbot/tools/relatorio_da_rota_hh.py:44](blazesbot/tools/relatorio_da_rota_hh.py#L44) | — | — |
-| `VALIDADE_DO_PAR` | `300` | [blazesbot/tools/relatorio_da_rota_hh.py:43](blazesbot/tools/relatorio_da_rota_hh.py#L43) | — | Chegada mais velha que isto (segundos) já não diz em que par a conta está |
+| `DISTANCIA_PARA_CASAR` | `10` | [blazesbot/tools/relatorio_da_rota.py:50](blazesbot/tools/relatorio_da_rota.py#L50) | — | A tolerância da rota da cave é 7; a posição é lida depois do passo, com folga. |
+| `LINHAS_DO_RELATORIO` | `12` | [blazesbot/tools/relatorio_da_rota.py:54](blazesbot/tools/relatorio_da_rota.py#L54) | — | — |
+| `RAIO_DO_PONTO_QUENTE` | `25` | [blazesbot/tools/relatorio_da_rota.py:56](blazesbot/tools/relatorio_da_rota.py#L56) | — | Evento a mais que isto do waypoint mais próximo não é de rota nenhuma. |
+| `VALIDADE_DO_PAR` | `300` | [blazesbot/tools/relatorio_da_rota.py:53](blazesbot/tools/relatorio_da_rota.py#L53) | — | Chegada mais velha que isto (segundos) já não diz em que par a conta está |
 | `PASSO` | `0.1` | [blazesbot/tools/vigiar_combate.py:48](blazesbot/tools/vigiar_combate.py#L48) | routine.py, entrada.py, mapa_hh.py, supervisor.py, ui_do_jogo.py, espera.py, indice_de_tempos.py, relatorio_de_latencia.py, ler_camera.py | Cadência da leitura. É memória pura -- algumas leituras de 4 bytes por volta, |
 | `SEGUNDOS_ENTRE_ECOS` | `5.0` | [blazesbot/tools/vigiar_combate.py:58](blazesbot/tools/vigiar_combate.py#L58) | — | De quanto em quanto tempo repetir uma linha que NÃO mudou. |
 | `SEGUNDOS_PADRAO` | `900.0` | [blazesbot/tools/vigiar_combate.py:51](blazesbot/tools/vigiar_combate.py#L51) | ler_camera.py | Teto padrão, para a ferramenta fechar sozinha se você esquecer dela aberta. |

@@ -128,7 +128,7 @@ EXCECOES_DE_PRINT = frozenset({
     "blazesbot/tools/medir_a_rolha.py",
     "blazesbot/tools/medir_a_volta_do_pet.py",
     "blazesbot/tools/portao_de_commit.py",
-    "blazesbot/tools/relatorio_da_rota_hh.py",
+    "blazesbot/tools/relatorio_da_rota.py",
     "blazesbot/tools/medir_o_congelamento.py",
     "blazesbot/core/calibracao.py",
     "blazesbot/core/indice_de_constantes.py",
