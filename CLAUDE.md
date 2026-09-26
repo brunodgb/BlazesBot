@@ -238,10 +238,12 @@ uma tarefa à parte.**
    identidade). NÃO subiu, e por quê: a reserva pela **TELA** fica no BC (o APP
    não captura) e a reserva pela **FLAG DE COMBATE** fica no APP.
 
-**Candidatos de promoção já identificados** (ainda em duplicata): a espera
-fatiada que responde ao Parar (`app/executor._dormir` × `BotContext.tick`).
+**Candidatos de promoção já identificados** (ainda em duplicata): nenhum.
 *Confirmar o TAB pela troca do id subiu em 06/09/2026 —
-`core/target_hybrid.esperar_o_alvo_trocar`.*
+`core/target_hybrid.esperar_o_alvo_trocar`; o laço de estados das caves, em
+26/09/2026 — `bot/rotina_de_cave.py`. A espera fatiada (`app/executor._dormir`
+× `BotContext.tick`) foi REPROVADA como promoção no mesmo dia: são contratos
+diferentes, não duplicata — ver `docs/decisoes/sistema.md`.*
 
 - **COMPARTILHADO vs. ESPECÍFICO — o critério é UMA pergunta:** *isso é sobre o
   JOGO ou sobre o que este ecossistema faz?* Sobre o jogo desce para `core/`

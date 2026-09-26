@@ -653,3 +653,21 @@ o pula. Travado por
   não conta.
 - **`_guard`:** o BC consulta o `Watchdog` dele e vê a morte; a HH usa
   `ctx.check_watchdog()` e respeita a pausa.
+
+### Reprovado: promover também a espera fatiada (`_dormir` × `tick`)
+
+Estava no `CLAUDE.md` como candidato de promoção. Lidas lado a lado em
+26/09/2026, as duas não são duplicata: é a mesma ideia (dormir em fatias e
+conferir algo entre elas, umas cinco linhas) com quatro contratos diferentes.
+
+| | `app/executor._dormir` | `BotContext.tick` |
+|---|---|---|
+| parar | devolve `False`; quem chama decide | levanta (`StopRequested`, `FarmDesligado`, `Disconnected`) |
+| relógio | soma as fatias dormidas | prazo em `monotonic()` |
+| duração | exata — é o tempo da linha da macro | sorteada (`jitter`), contra assinatura de cadência |
+| entre fatias | `_continuar()` e o pulso do time | pausa, watchdog e `raise_if_stopped` |
+
+Unificar pediria uma função com quatro chaves para dois chamadores — pior que as
+duas. E o relógio somado não é detalhe: `tests/test_laco_simples_do_app.py`
+troca o `time.sleep` do executor por `dormidas.append` e confere a soma; com
+prazo em `monotonic()`, a espera giraria até o relógio de verdade andar.
