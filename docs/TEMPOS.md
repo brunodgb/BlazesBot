@@ -31,7 +31,7 @@ desta lista é ou uma exceção justificada, ou dívida que ninguém converteu a
 mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 
 
-**369 tempos catalogados** — 252 FIXOS (espera cega), 117 entre TETO e PASSO.
+**369 tempos catalogados** — 251 FIXOS (espera cega), 118 entre TETO e PASSO.
 
 
 **3 estão diferentes do original:** `FATIA_DE_ESPERA`, `INTERVALO_ENTRE_INVOCACOES`, `PASSOS_DO_APP`
@@ -54,11 +54,11 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | tempo | atual | original | natureza | onde | função | para que serve |
 |---|---|---|---|---|---|---|
 | `TETO_DO_TELEPORTE_DA_FAY` | 2 s | = | TETO | [ui_service.py:54](blazesbot/bot/bc/ui_service.py#L54) | `viajar_para_ghost_din_woods, _esperar_o_teleporte` | TELEPORTE DA FAY (Stone City -> Ghost Din Woods) |
-| `PASSO_DA_ESPERA_DO_TELEPORTE` | 0.08 s | = | PASSO | [ui_service.py:55](blazesbot/bot/bc/ui_service.py#L55) | `viajar_para_ghost_din_woods, _esperar_o_teleporte` |  |
-| `TETO_POR_TENTATIVA_NA_ENTRADA` | 2.5 s | *novo* | TETO | [ui_service.py:92](blazesbot/bot/bc/ui_service.py#L92) | `garantir_coordenada_da_entrada` | TETO de cada tentativa -- não é o tempo gasto, é o limite. Quem encerra é a |
-| `SEGUNDOS_ENTRE_REAPLICACOES` | 120 s (2 min) | *novo* | FIXO | [ui_service.py:129](blazesbot/bot/bc/ui_service.py#L129) | `_reaplicar_o_petbug_se_preciso` | Espaço mínimo entre duas reaplicações vindas DAQUI. |
-| *literal em* `entrar_no_covil_do_boss` | 1.5 s | = | FIXO | [ui_service.py:610](blazesbot/bot/bc/ui_service.py#L610) | `entrar_no_covil_do_boss` | Altar Stone -> "Secret Cemetery", que é a sala do boss. |
-| *literal em* `sair_da_cave` | 1.5 s | = | FIXO | [ui_service.py:647](blazesbot/bot/bc/ui_service.py#L647) | `sair_da_cave` | Skull Herald do covil -> "Leave Bewitcher Cave". |
+| `PASSO_DA_ESPERA_DO_TELEPORTE` | 0.08 s | = | PASSO | [ui_service.py:55](blazesbot/bot/bc/ui_service.py#L55) | `viajar_para_ghost_din_woods, _esperar_o_teleporte (+1)` |  |
+| `TETO_DA_SAIDA_DA_CAVE` | 1.5 s | *novo* | TETO | [ui_service.py:59](blazesbot/bot/bc/ui_service.py#L59) | `sair_da_cave` | A saída da cave: o MESMO 1,5 s que era gasto cego depois do clique no link, |
+| `TETO_POR_TENTATIVA_NA_ENTRADA` | 2.5 s | *novo* | TETO | [ui_service.py:96](blazesbot/bot/bc/ui_service.py#L96) | `garantir_coordenada_da_entrada` | TETO de cada tentativa -- não é o tempo gasto, é o limite. Quem encerra é a |
+| `SEGUNDOS_ENTRE_REAPLICACOES` | 120 s (2 min) | *novo* | FIXO | [ui_service.py:133](blazesbot/bot/bc/ui_service.py#L133) | `_reaplicar_o_petbug_se_preciso` | Espaço mínimo entre duas reaplicações vindas DAQUI. |
+| *literal em* `entrar_no_covil_do_boss` | 1.5 s | = | FIXO | [ui_service.py:614](blazesbot/bot/bc/ui_service.py#L614) | `entrar_no_covil_do_boss` | Altar Stone -> "Secret Cemetery", que é a sala do boss. |
 
 
 ## FORA DA CAVE — montaria e trajeto
@@ -120,7 +120,7 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | `ASSENTAMENTO_DA_BOLSA` | 0.14 s | = | FIXO | [routine.py:315](blazesbot/bot/bc/routine.py#L315) | `_usar_package_courage` | Depois que a MEMÓRIA confirma a bolsa aberta, o quanto esperar o DESENHO dela. |
 | *literal em* `_do_situar` | 1 s | = | FIXO | [routine.py:524](blazesbot/bot/bc/routine.py#L524) | `_do_situar` | Olha onde o personagem está e entra no estado que faz sentido. |
 | *literal em* `_do_preparar` | 0.2 s | = | FIXO | [routine.py:617](blazesbot/bot/bc/routine.py#L617) | `_do_preparar` |  |
-| *literal em* `_do_recuperar` | 3 s | = | FIXO | [routine.py:2228](blazesbot/bot/bc/routine.py#L2228) | `_do_recuperar` | Recuperação após morte ou falhas em sequência. |
+| *literal em* `_do_recuperar` | 3 s | = | FIXO | [routine.py:2233](blazesbot/bot/bc/routine.py#L2233) | `_do_recuperar` | Recuperação após morte ou falhas em sequência. |
 
 
 ## DENTRO DA CAVE — combate

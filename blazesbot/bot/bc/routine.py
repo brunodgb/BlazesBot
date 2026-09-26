@@ -840,21 +840,21 @@ class BossRushRoutine:
         `JANELA_DE_RECONHECIMENTO`. Entrou, sai na hora; não entrou, a janela fecha
         e a próxima tentativa começa. A leitura é de memória -- posição e nome do
         lugar --, custa microssegundos, e é por isso que dá para repeti-la.
+
+        PELO PONTO COMUM DESDE 25/09/2026 (`UIDoJogo.esperar_a_chegada`, cujo laço
+        também dorme só o que falta para o teto). É ele que marca a troca de mapa
+        para a comida do pet (`core/pet.trocou_de_mapa`): o laço próprio que
+        morava aqui não marcava, e a comida do `_do_curar` saía com o pet ainda
+        sendo recriado no mapa novo -- a comida queimada que derrubou a
+        felicidade de 94 para 45 na HH. `em_disputa`: o teto é a regra na porta.
         """
-        limite = time.time() + JANELA_DE_RECONHECIMENTO
-        while True:
-            self.ctx.raise_if_stopped()
+        def entrou() -> bool:
             self.local.atualizar()
-            if self.local.chegou_na_cave(posicao_antes):
-                return True
-            restante = limite - time.time()
-            if restante <= 0:
-                return False
-            # DORME O QUE FALTA, não o passo inteiro. Sem esta conta a janela
-            # passava do teto em até um passo -- 0,56 s em vez de 0,50 --, e com os
-            # 0,05 s de intervalo o orçamento fechava em 0,61 s, acima dos 0,60
-            # exigidos. Um passo de sobra é pouco por volta e muito em seis.
-            self.ctx.tick(min(PASSO_DO_RECONHECIMENTO, restante))
+            return self.local.chegou_na_cave(posicao_antes)
+
+        return self.ui.esperar_a_chegada(
+            entrou, teto=JANELA_DE_RECONHECIMENTO, passo=PASSO_DO_RECONHECIMENTO,
+            o_que="Entrada na BC", em_disputa=True)
 
     def _do_entrar(self) -> None:
         """Entra na cave, insistindo a cada ~1 segundo.
@@ -2010,6 +2010,11 @@ class BossRushRoutine:
             # antes disso. Foi o próprio usuário que apontou a ordem.
             self._catar_o_loot()
             self._usar_package_courage()
+            # A 2ª CHANCE DA COMIDA, como na HH: mapa com minutos de vida, pet de
+            # volta. POR ÚLTIMO e ANTES DE MONTAR -- regra do usuário, *"faça a
+            # ação antes de ativar a montaria"*; o portão da montaria da saída
+            # espera a barreira da comida (`core/pet.esperar_a_comida`).
+            self.combat.feed_pet()
             self._succeed(State.SAIR)
             return
 

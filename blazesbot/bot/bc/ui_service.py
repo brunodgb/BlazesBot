@@ -54,6 +54,10 @@ LINK_ENTRAR_BC = "link_enter_bc.png"
 TETO_DO_TELEPORTE_DA_FAY = 2.0
 PASSO_DA_ESPERA_DO_TELEPORTE = 0.08
 
+# A saída da cave: o MESMO 1,5 s que era gasto cego depois do clique no link,
+# agora como teto de uma pergunta (ver `sair_da_cave`). Número antigo, não novo.
+TETO_DA_SAIDA_DA_CAVE = 1.5
+
 # ===========================================================================
 # O SKULL HERALD DA ENTRADA EXIGE A COORDENADA EXATA
 # ===========================================================================
@@ -644,5 +648,12 @@ class UIService(UIDoJogo):
         if not self._abrir_dialogo_e_clicar(c.cave_exit_npc, c.cave_exit_link,
                                             "sair da cave"):
             return False
-        ctx.tick(1.5)
+        # ERA `tick(1.5)` CEGO até 25/09/2026 -- e, por não passar pelo ponto
+        # comum, a troca de mapa não era marcada para a comida do pet. O teto é
+        # o mesmo 1,5 s, agora como pergunta: a saída da HH confirma em ~0 ms.
+        # Quem decide se saiu continua sendo o `_do_sair`, que relê a posição.
+        self.esperar_a_chegada(
+            chegou=lambda: mapa_bc.posicao_esta_fora_da_cave(ctx.memory.position()),
+            teto=TETO_DA_SAIDA_DA_CAVE, passo=PASSO_DA_ESPERA_DO_TELEPORTE,
+            o_que="Saída da BC")
         return True

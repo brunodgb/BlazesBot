@@ -486,9 +486,29 @@ felicidade voltar a cair depois de um dia de farm.
 
 ### Travado por
 
-`tests/test_comida_do_pet.py`. O que ninguém pode desfazer sem o teste reprovar:
-a recusa logo depois da troca de mapa, a grade que não avança nessa recusa, e a
-chamada no ponto do boss.
+`tests/test_comida_depois_da_troca_de_mapa.py` — **desde 25/09/2026**. Até ali
+esta frase citava `tests/test_comida_do_pet.py`, e ele não tinha nenhum destes
+testes: a guarda foi para produção sem a trava que esta ata anunciava. O que
+ninguém pode desfazer sem o teste reprovar: a recusa logo depois da troca de
+mapa, a grade que não avança nessa recusa, e a chamada no ponto do boss.
+
+## O BC ficava de fora — 25/09/2026
+
+A frase "`UIDoJogo.esperar_a_chegada` é o único ponto por onde passam entrada,
+saída e teleporte" era **falsa para o BC**. A entrada do BC tinha um laço de
+espera próprio (`_reconhecer_entrada`), e a saída era um `tick(1.5)` cego — nenhum
+dos dois marcava a troca de mapa. Então a comida do `_do_curar`, segundos depois
+da entrada, saía com o pet sendo recriado: o mesmo mecanismo que derrubou a
+felicidade de 94 para 45 na HH. E o BC não tinha a 2ª chance no ponto do boss.
+
+Achado pela auditoria de 25/09/2026, lendo o código — nenhuma conta rodou BC no
+período dos logs. A causa foi a duplicata: o laço copiado deixou de chamar o
+efeito colateral que o ponto comum chamava.
+
+Como ficou: as duas transições do BC passam pelo `esperar_a_chegada` (a entrada
+com `em_disputa=True`, a saída com o mesmo 1,5 s agora como teto de pergunta), e
+o `_do_boss` do BC dá a comida **por último, depois do `package_courage` e antes
+de montar** — regra do usuário: *"faça a ação antes de ativar a montaria"*.
 
 ## Os 30 segundos, em medição — 25/09/2026
 

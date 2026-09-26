@@ -1318,6 +1318,14 @@ Cada item é o que **não pode ser violado**. O detalhe de cada área mora em
   dada ONDE O BOT ESTIVER, furando o veto de desmonte fora da cave
   (`_preparar_para_agir(..., mesmo_fora_da_cave=True)`). Buff e poção **não**
   ganharam essa saída — adiar os dois não custa o pet.
+- **A COMIDA NÃO SAI NOS 30 s DEPOIS DE UMA TROCA DE MAPA**
+  (`SEGUNDOS_NO_MAPA_ANTES_DE_ALIMENTAR`), e a grade não avança na recusa: o
+  servidor recria o pet no mapa novo e a comida dada ali é perdida. Nem a
+  urgência fura isso. **Toda troca de mapa — entrada, saída e teleporte, na HH e
+  no BC — é confirmada por `UIDoJogo.esperar_a_chegada`, que é quem marca**; um
+  laço próprio que não passe por ele desliga a guarda em silêncio (foi o caso do
+  BC até 25/09/2026). A 2ª chance é no ponto do boss, por último e antes de
+  montar. Travado por `tests/test_comida_depois_da_troca_de_mapa.py`.
 - **A BATALHA NUNCA CEDE, nem com a comida atrasada.** Em combate o jogo ignora a
   tecla, e apertá-la faria o `PetFeeder` registrar uma refeição que não houve.
   `in_battle()` é tri-estado: só `True` barra.

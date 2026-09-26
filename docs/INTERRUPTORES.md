@@ -85,7 +85,7 @@ ligar código não testado.
 
 ## Números medidos -- tolerância, limiar, teto, cadência
 
-659 constantes, agrupadas por arquivo.
+660 constantes, agrupadas por arquivo.
 
 | constante | valor | onde | quem lê | porquê (resumo) |
 |---|---|---|---|---|
@@ -190,16 +190,17 @@ ligar código não testado.
 | `TENTATIVAS_POR_LINHA_DE_LOG` | `15` | [blazesbot/bot/bc/routine.py:141](blazesbot/bot/bc/routine.py#L141) | routine.py, indice_de_tempos.py | A cada quantas tentativas o log conta como vai a disputa. Uma linha por |
 | `TOLERANCIA_DA_ENTRADA` | `12` | [blazesbot/bot/bc/routine.py:334](blazesbot/bot/bc/routine.py#L334) | — | DUAS PERGUNTAS DIFERENTES sobre a mesma coordenada, e por isso dois números. |
 | `TOLERANCIA_DO_PONTO_DO_BOSS` | `15` | [blazesbot/bot/bc/routine.py:176](blazesbot/bot/bc/routine.py#L176) | routine.py | Quão perto do ponto do boss conta como "estou no waypoint". |
-| `FALHAS_MECANICAS_PARA_REAPLICAR_O_PETBUG` | `20` | [blazesbot/bot/bc/ui_service.py:120](blazesbot/bot/bc/ui_service.py#L120) | — | REAPLICAR O PETBUG QUANDO A ENTRADA NÃO ABRE -- 07/09/2026 |
+| `FALHAS_MECANICAS_PARA_REAPLICAR_O_PETBUG` | `20` | [blazesbot/bot/bc/ui_service.py:124](blazesbot/bot/bc/ui_service.py#L124) | — | REAPLICAR O PETBUG QUANDO A ENTRADA NÃO ABRE -- 07/09/2026 |
 | `LINK_ENTRAR_BC` | `'link_enter_bc.png'` | [blazesbot/bot/bc/ui_service.py:33](blazesbot/bot/bc/ui_service.py#L33) | — | — |
 | `LINK_GHOST_DIN_WOODS` | `'link_ghost_din_woods.png'` | [blazesbot/bot/bc/ui_service.py:32](blazesbot/bot/bc/ui_service.py#L32) | — | Links dentro dos diálogos, localizados por imagem. |
 | `PASSO_DA_ESPERA_DO_TELEPORTE` | `0.08` | [blazesbot/bot/bc/ui_service.py:55](blazesbot/bot/bc/ui_service.py#L55) | entrada.py, vendedor.py | — |
-| `SEGUNDOS_ENTRE_REAPLICACOES` | `120.0` | [blazesbot/bot/bc/ui_service.py:129](blazesbot/bot/bc/ui_service.py#L129) | — | Espaço mínimo entre duas reaplicações vindas DAQUI. |
-| `TENTATIVAS_DE_ENCOSTAR_NA_ENTRADA` | `2` | [blazesbot/bot/bc/ui_service.py:85](blazesbot/bot/bc/ui_service.py#L85) | — | Quantas vezes andar os ÚLTIMOS PASSOS pelo minimapa até a coordenada exata. |
-| `TENTATIVAS_DE_POSICIONAR_NA_ENTRADA` | `3` | [blazesbot/bot/bc/ui_service.py:97](blazesbot/bot/bc/ui_service.py#L97) | — | Quantas vezes refazer a caminhada pelo painel de arredores antes de desistir de |
+| `SEGUNDOS_ENTRE_REAPLICACOES` | `120.0` | [blazesbot/bot/bc/ui_service.py:133](blazesbot/bot/bc/ui_service.py#L133) | — | Espaço mínimo entre duas reaplicações vindas DAQUI. |
+| `TENTATIVAS_DE_ENCOSTAR_NA_ENTRADA` | `2` | [blazesbot/bot/bc/ui_service.py:89](blazesbot/bot/bc/ui_service.py#L89) | — | Quantas vezes andar os ÚLTIMOS PASSOS pelo minimapa até a coordenada exata. |
+| `TENTATIVAS_DE_POSICIONAR_NA_ENTRADA` | `3` | [blazesbot/bot/bc/ui_service.py:101](blazesbot/bot/bc/ui_service.py#L101) | — | Quantas vezes refazer a caminhada pelo painel de arredores antes de desistir de |
+| `TETO_DA_SAIDA_DA_CAVE` | `1.5` | [blazesbot/bot/bc/ui_service.py:59](blazesbot/bot/bc/ui_service.py#L59) | — | A saída da cave: o MESMO 1,5 s que era gasto cego depois do clique no link, |
 | `TETO_DO_TELEPORTE_DA_FAY` | `2.0` | [blazesbot/bot/bc/ui_service.py:54](blazesbot/bot/bc/ui_service.py#L54) | — | TELEPORTE DA FAY (Stone City -> Ghost Din Woods) |
-| `TETO_POR_TENTATIVA_NA_ENTRADA` | `2.5` | [blazesbot/bot/bc/ui_service.py:92](blazesbot/bot/bc/ui_service.py#L92) | — | TETO de cada tentativa -- não é o tempo gasto, é o limite. Quem encerra é a |
-| `TOLERANCIA_DO_NPC_DA_ENTRADA` | `2` | [blazesbot/bot/bc/ui_service.py:77](blazesbot/bot/bc/ui_service.py#L77) | routine.py | O SKULL HERALD DA ENTRADA EXIGE A COORDENADA EXATA |
+| `TETO_POR_TENTATIVA_NA_ENTRADA` | `2.5` | [blazesbot/bot/bc/ui_service.py:96](blazesbot/bot/bc/ui_service.py#L96) | — | TETO de cada tentativa -- não é o tempo gasto, é o limite. Quem encerra é a |
+| `TOLERANCIA_DO_NPC_DA_ENTRADA` | `2` | [blazesbot/bot/bc/ui_service.py:81](blazesbot/bot/bc/ui_service.py#L81) | routine.py | O SKULL HERALD DA ENTRADA EXIGE A COORDENADA EXATA |
 | `ALVO_DO_TOPUP_ANTES_DO_BOSS` | `100.0` | [blazesbot/bot/combate.py:167](blazesbot/bot/combate.py#L167) | — | TOP-UP ANTES DO BOSS: ATÉ 100%, SENTADO, E OS 15 s INTEIROS |
 | `AVISO_DA_ESPERA_SEM_PRAZO` | `10` | [blazesbot/bot/combate.py:462](blazesbot/bot/combate.py#L462) | — | Cadência do aviso enquanto espera sem prazo. Uma espera sem limite PRECISA |
 | `CADENCIA_DA_LEITURA_DO_ALVO` | `0.15` | [blazesbot/bot/combate.py:930](blazesbot/bot/combate.py#L930) | routine.py | De quanto em quanto tempo olhar a barra do alvo durante a luta. |
