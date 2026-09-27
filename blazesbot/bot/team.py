@@ -648,8 +648,10 @@ class TeamService:
     def montar_time(self) -> bool:
         """Monta o time com a conta de reset. Chamado NA ENTRADA da cave.
 
-        Campo de nick vazio significa "não usar reset de time" -- não existe um
-        interruptor separado, porque ele seria só uma forma de errar.
+        RESPONDE SE A CAVE PODE ENTRAR: `True` com o time formado ou sem reseter;
+        `False` quando o convite falhou. Campo de nick vazio significa "não usar
+        reset de time" -- não existe um interruptor separado, porque ele seria só
+        uma forma de errar.
 
         =================================================================
         O CONVITE É POR MENU DE CONTEXTO, NÃO POR TEXTO
@@ -670,7 +672,7 @@ class TeamService:
         ctx = self.ctx
         nick = self.nick_do_reset()
         if not nick:
-            return False
+            return True  # sem reseter: nada a montar, a cave entra sem time
 
         if self.in_team:
             ctx.log.info("Já estou em time (%s membros); não convido de novo",

@@ -723,3 +723,17 @@ def test_sem_time_a_lista_de_amigos_fecha_antes_de_voltar(tmp_path, monkeypatch)
     servico = _servico_com_o_reseter_calado(tmp_path, monkeypatch)
     servico.montar_time()
     assert servico.fechou, "a saída sem time não fechou as janelas do convite"
+
+
+def test_SEM_RESETER_configurado_a_cave_entra_sem_convidar(tmp_path, monkeypatch):
+    """Campo vazio é "esta conta não usa reset" (docstring de `montar_time`).
+
+    A HH já tratava o vazio antes de chamar; o BC dependia da resposta, e o
+    `False` do vazio fazia ele recusar a cave para sempre ("Não montei time com
+    o reseter; NÃO vou entrar") numa conta que nunca pediu reseter.
+    """
+    servico = _servico_com_o_reseter_calado(tmp_path, monkeypatch, nick="")
+    convites = []
+    monkeypatch.setattr(servico, "_enviar_convite", convites.append)
+    assert servico.montar_time() is True
+    assert convites == [], "sem reseter configurado não há quem convidar"
