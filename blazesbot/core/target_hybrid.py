@@ -58,7 +58,7 @@ from .registro_de_mortes import RegistroDeMortes
 from .vision import LeituraDaBarra
 
 if TYPE_CHECKING:
-    from .vision import BGRFrame
+    import numpy as np
 
 _logger = logging.getLogger("blazes.target_hybrid")
 
@@ -217,7 +217,7 @@ class AlvoInfo:
     target_id: int | None           # 0 = sem alvo; None = não consegui ler
     mudou: bool                     # o id é diferente do da leitura anterior
     barra: LeituraDaBarra | None    # None = não consegui ler a barra
-    quadro: BGRFrame | None         # a captura desta leitura, para reuso
+    quadro: np.ndarray | None       # a captura desta leitura (BGR), para reuso
     timestamp: float
     entidade: dict | None = None    # o alvo lido da MEMÓRIA; None = não achei
 
