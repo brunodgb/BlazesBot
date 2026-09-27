@@ -63,3 +63,21 @@ def test_maximo_minimo_1(tmp_path):
     assert h.maximo == 1
     assert h.folga == 1
     h.close()
+
+def test_os_dois_logs_GRANDES_podam_com_folga_igual_ao_maximo(tmp_path):
+    """Folga de 100 num arquivo de 4000 linhas reescrevia o arquivo inteiro a
+    cada 100 linhas, dentro do `emit` e com o lock das 7 contas (~14 GB/dia
+    para ~180 MB de conteúdo, medido em 26-27/09/2026). Achado A1."""
+    import inspect
+
+    from blazesbot.core import cronometro
+    from blazesbot.core.log_json import LOG_JSON_MAXIMO, LogJsonHandler
+
+    dev = LogJsonHandler(tmp_path / "dev.jsonl")
+    try:
+        assert dev.folga == dev.maximo == LOG_JSON_MAXIMO
+    finally:
+        dev.close()
+    # O da telemetria grava em logs/ de verdade: confere a montagem, não a instância.
+    fonte = inspect.getsource(cronometro._preparar_o_logger)
+    assert "folga=LINHAS_NO_ARQUIVO_QUENTE" in fonte

@@ -21,10 +21,20 @@ import logging
 import time
 
 from . import logmodo
-from .log_limitado import FOLGA_ANTES_DE_PODAR, ArquivoDeLogLimitado
+from .log_limitado import ArquivoDeLogLimitado
 
 # Quantos registros o JSON dev guarda (reusa a poda por linha do arquivo).
 LOG_JSON_MAXIMO = 4000
+
+# A FOLGA É O PRÓPRIO MÁXIMO, e não os 100 dos logs de 500 linhas. Cada poda
+# relê e reescreve o arquivo quente INTEIRO, dentro do `emit`, com o lock que
+# as 7 contas dividem: com folga de 100 eram ~40 reescritas de 1,6 MB para
+# cada 1,6 MB de dado novo (~14 GB/dia de escrita para ~180 MB de conteúdo,
+# 72 s de bloqueio nas threads das contas em 12 h, pico de 1,1 s -- medido em
+# 26-27/09/2026). Com folga = máximo a poda roda 40x menos e cada uma descarta
+# metade do arquivo, que vai inteira para o arquivo morto. Custo: o quente
+# chega a 2x o teto antes de podar (~3 MB).
+FOLGA_DO_LOG_JSON = LOG_JSON_MAXIMO
 
 # `formatException` é método do `Formatter`, não do `Handler` -- o LogJsonHandler
 # estende um Handler, então usa-se um Formatter só para formatar a exceção.
@@ -39,7 +49,7 @@ class LogJsonHandler(ArquivoDeLogLimitado):
         caminho,
         *,
         maximo: int = LOG_JSON_MAXIMO,
-        folga: int = FOLGA_ANTES_DE_PODAR,
+        folga: int = FOLGA_DO_LOG_JSON,
     ) -> None:
         # `arquivar=True`: ESTE é o log que alimenta a calibração, e o que a
         # poda descartava era a evidência. Ver `DIAS_DE_ARQUIVO_MORTO` em

@@ -319,9 +319,14 @@ def _preparar_o_logger() -> logging.Logger:
         # REUSA `ArquivoDeLogLimitado`: teto de linhas, arquivo morto por dia,
         # compressão e a retenção de 2 dias já vivem lá. Reescrever isso aqui
         # seria a duplicata que o CLAUDE.md proíbe.
+        # FOLGA = O PRÓPRIO MÁXIMO, pelo mesmo motivo do log de dev
+        # (`log_json.FOLGA_DO_LOG_JSON`): com folga de 100 cada despejo de ~555
+        # linhas disparava ~5 podas do arquivo inteiro (2.885 em 4,3 h, medido
+        # em 26/09/2026).
         handler = ArquivoDeLogLimitado(
             ARQUIVO, encoding="utf-8",
-            maximo=LINHAS_NO_ARQUIVO_QUENTE, arquivar=True)
+            maximo=LINHAS_NO_ARQUIVO_QUENTE, folga=LINHAS_NO_ARQUIVO_QUENTE,
+            arquivar=True)
         handler.setFormatter(logging.Formatter("%(message)s"))
         log.addHandler(handler)
     _logger = log

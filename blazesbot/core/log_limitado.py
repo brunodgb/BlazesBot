@@ -34,7 +34,9 @@ from pathlib import Path
 LINHAS_MAXIMAS = 500
 
 # Quanto ele pode passar antes de a poda acontecer. Podar de cem em cem em vez de
-# uma a uma troca cem reescritas por uma só.
+# uma a uma troca cem reescritas por uma só. Vale para os arquivos de 500 linhas;
+# os dois GRANDES que arquivam (dev e telemetria) podam com folga = máximo --
+# ver `log_json.FOLGA_DO_LOG_JSON`.
 FOLGA_ANTES_DE_PODAR = 100
 
 # ===========================================================================
