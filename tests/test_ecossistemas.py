@@ -153,6 +153,47 @@ def test_o_supervisor_e_a_unica_excecao():
 # caso: um `from . import X` nao cita ecossistema nenhum -- ele so aponta para o
 # vazio. Sao perguntas diferentes, e esta e a que sobrevive a um refactor de
 # pastas.
+#
+# O MESMO REFACTOR, O MESMO DEFEITO COM OUTRA ROUPA (achado em 27/09/2026): o
+# `supervisor._release` importava `esquecer_janela` de `bc/ui_service` -- modulo
+# que existe, mas que perdeu a funcao na mudanca. Conferir so o MODULO deixou
+# passar; o `except Exception: pass` em volta engoliu o ImportError por 25 dias.
+# Por isso o NOME importado tambem tem de existir no modulo de destino.
+
+
+def _nomes_definidos(modulo: pathlib.Path) -> set[str] | None:
+    """Nomes que o modulo liga no nivel de topo. `None` = dinamico, nao confere.
+
+    Entra tudo que um `from modulo import nome` consegue achar: def, class,
+    atribuicao, import -- inclusive dentro de `if`/`try`/`with` de topo -- e o
+    que alguma funcao liga por `global`. `__getattr__` de modulo e `import *`
+    tornam a resposta impossivel de saber pelo AST, e ai o teste nao julga.
+    """
+    arvore = ast.parse(modulo.read_text(encoding="utf-8"))
+    nomes: set[str] = set()
+    for no in ast.walk(arvore):
+        if isinstance(no, ast.Global):
+            nomes.update(no.names)
+    pilha = list(arvore.body)
+    while pilha:
+        no = pilha.pop()
+        if isinstance(no, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            if no.name == "__getattr__":
+                return None
+            nomes.add(no.name)
+        elif isinstance(no, (ast.Import, ast.ImportFrom)):
+            for a in no.names:
+                if a.name == "*":
+                    return None
+                nomes.add((a.asname or a.name).split(".")[0])
+        elif isinstance(no, (ast.Assign, ast.AnnAssign, ast.AugAssign)):
+            alvos = no.targets if isinstance(no, ast.Assign) else [no.target]
+            nomes.update(n.id for alvo in alvos for n in ast.walk(alvo)
+                         if isinstance(n, ast.Name))
+        else:
+            for campo in ("body", "orelse", "finalbody", "handlers"):
+                pilha.extend(getattr(no, campo, None) or [])
+    return nomes
 
 
 def _relativos_que_nao_resolvem(arquivo: pathlib.Path) -> list[str]:
@@ -169,8 +210,22 @@ def _relativos_que_nao_resolvem(arquivo: pathlib.Path) -> list[str]:
 
         if no.module:
             alvo = base.joinpath(*no.module.split("."))
-            if not (alvo.with_suffix(".py").exists() or alvo.is_dir()):
-                quebrados.append(f"L{no.lineno}: from {'.' * no.level}{no.module}")
+            origem = f"L{no.lineno}: from {'.' * no.level}{no.module}"
+            if alvo.with_suffix(".py").exists():
+                definidos = _nomes_definidos(alvo.with_suffix(".py"))
+                if definidos is not None:
+                    quebrados += [f"{origem} import {a.name}" for a in no.names
+                                  if a.name not in definidos]
+            elif alvo.is_dir():
+                definidos = (_nomes_definidos(alvo / "__init__.py")
+                             if (alvo / "__init__.py").exists() else set())
+                if definidos is not None:
+                    quebrados += [f"{origem} import {a.name}" for a in no.names
+                                  if a.name not in definidos
+                                  and not (alvo / a.name).with_suffix(".py").exists()
+                                  and not (alvo / a.name).is_dir()]
+            else:
+                quebrados.append(origem)
             continue
 
         # `from . import nome`: o nome precisa ser um MODULO da pasta -- ou algo
