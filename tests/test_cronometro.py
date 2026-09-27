@@ -251,3 +251,29 @@ def test_o_log_de_latencia_NAO_propaga_para_o_log_de_dev(tmp_path):
 def test_o_arquivo_de_latencia_e_separado_do_log_de_dev():
     assert "latencia" in str(cr.ARQUIVO)
     assert "blazes-dev" not in str(cr.ARQUIVO)
+
+
+def test_o_balde_da_thread_que_MORREU_sai_depois_de_colhido(tmp_path):
+    """Cada chamada JS->Python do pywebview roda numa thread NOVA, e cada uma que
+    passa por função cronometrada ganhava um balde para sempre: ~4.800 por hora,
+    percorridos a cada despejo, e 14,7% das linhas da telemetria (achado A9,
+    27/09/2026). O balde sai depois de a medição dele ter sido escrita."""
+
+    def efemera():
+        cr.anotar("ponte.summary", 0.001)
+
+    ts = [threading.Thread(target=efemera) for _ in range(3)]
+    for t in ts:
+        t.start()
+    for t in ts:
+        t.join()
+    assert len(cr._baldes) == 3
+
+    assert cr.despejar() == 3, "a medição da thread morta não pode se perder"
+    assert cr._baldes == [], "os baldes de threads mortas ficaram para sempre"
+
+
+def test_o_balde_da_thread_VIVA_fica(tmp_path):
+    cr.anotar("laco.combate", 0.001)
+    cr.despejar()
+    assert cr._meu_balde() in cr._baldes

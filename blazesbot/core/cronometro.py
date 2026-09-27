@@ -141,13 +141,16 @@ class _Balde:
     arquivo, para depois exigir um `join` na hora de ler.
     """
 
-    __slots__ = ("conta", "desfechos", "nomes", "thread")
+    __slots__ = ("conta", "desfechos", "nomes", "thread", "vivo")
 
     def __init__(self) -> None:
         self.nomes: dict[str, _Acumulado] = {}
         self.desfechos: dict[str, dict[str, int]] = {}
         self.conta = ""
-        self.thread = threading.current_thread().name
+        dona = threading.current_thread()
+        self.thread = dona.name
+        # Para o despejo saber quando o balde pode sair (ver `despejar`).
+        self.vivo = dona.is_alive
 
 
 _local = threading.local()
@@ -383,6 +386,14 @@ def despejar() -> int:
                 "desfechos": por_desfecho,
             }, ensure_ascii=False))
             linhas += 1
+
+    # O BALDE DA THREAD QUE MORREU SAI, depois de colhido (27/09/2026). Cada
+    # chamada JS->Python do pywebview roda numa thread NOVA, e cada uma ganhava
+    # um balde para sempre: ~4.800 por hora, percorridos a cada despejo. Só sai
+    # morto E vazio -- o que ela anotou entre a colheita e a morte fica para o
+    # próximo despejo, então nada se perde.
+    with _trava_do_registro:
+        _baldes[:] = [b for b in _baldes if b.vivo() or b.nomes or b.desfechos]
     return linhas
 
 
