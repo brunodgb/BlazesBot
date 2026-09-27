@@ -339,12 +339,12 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | *literal em* `_sleep_interruptible` | 0.125 s | = | FIXO | [supervisor.py:364](blazesbot/bot/supervisor.py#L364) | `_sleep_interruptible` | Espera até `seconds`, acordando se o usuário mandar parar. |
 | *literal em* `_launch_client` | 1 s | = | FIXO | [supervisor.py:452](blazesbot/bot/supervisor.py#L452) | `_launch_client` | Lança o Client.bat e devolve o PID da nova instância. |
 | *literal em* `_find_window` | 1 s | = | FIXO | [supervisor.py:469](blazesbot/bot/supervisor.py#L469) | `_find_window` | Localiza a janela de nível superior pertencente ao PID. |
-| *literal em* `_run_session` | 1.5 s | = | FIXO | [supervisor.py:1073](blazesbot/bot/supervisor.py#L1073) | `_run_session` | Uma sessão: obter uma janela, logar se preciso, e operar. |
-| *literal em* `_operate` | 2.5 s | = | FIXO | [supervisor.py:1368](blazesbot/bot/supervisor.py#L1368) | `_operate` | Opera a conta logada, respeitando o farm ligado/desligado ao vivo. |
-| *literal em* `_operate` | 2.5 s | = | FIXO | [supervisor.py:1389](blazesbot/bot/supervisor.py#L1389) | `_operate` | Opera a conta logada, respeitando o farm ligado/desligado ao vivo. |
-| *literal em* `_operate` | 0.5 s | = | FIXO | [supervisor.py:1488](blazesbot/bot/supervisor.py#L1488) | `_operate` | Opera a conta logada, respeitando o farm ligado/desligado ao vivo. |
-| *literal em* `_publicar_o_proprio_id` | 0.3 s | = | FIXO | [supervisor.py:1738](blazesbot/bot/supervisor.py#L1738) | `_publicar_o_proprio_id` | o alvo leva ~0,1 s para virar |
-| *literal em* `chamar_a_fada` | 0.2 s | = | FIXO | [supervisor.py:2237](blazesbot/bot/supervisor.py#L2237) | `chamar_a_fada` | Pede cura à Fada do time e espera. `False` = não há Fada, beba poção. |
+| *literal em* `_run_session` | 1.5 s | = | FIXO | [supervisor.py:1075](blazesbot/bot/supervisor.py#L1075) | `_run_session` | Uma sessão: obter uma janela, logar se preciso, e operar. |
+| *literal em* `_operate` | 2.5 s | = | FIXO | [supervisor.py:1370](blazesbot/bot/supervisor.py#L1370) | `_operate` | Opera a conta logada, respeitando o farm ligado/desligado ao vivo. |
+| *literal em* `_operate` | 2.5 s | = | FIXO | [supervisor.py:1391](blazesbot/bot/supervisor.py#L1391) | `_operate` | Opera a conta logada, respeitando o farm ligado/desligado ao vivo. |
+| *literal em* `_operate` | 0.5 s | = | FIXO | [supervisor.py:1490](blazesbot/bot/supervisor.py#L1490) | `_operate` | Opera a conta logada, respeitando o farm ligado/desligado ao vivo. |
+| *literal em* `_publicar_o_proprio_id` | 0.3 s | = | FIXO | [supervisor.py:1740](blazesbot/bot/supervisor.py#L1740) | `_publicar_o_proprio_id` | o alvo leva ~0,1 s para virar |
+| *literal em* `chamar_a_fada` | 0.2 s | = | FIXO | [supervisor.py:2239](blazesbot/bot/supervisor.py#L2239) | `chamar_a_fada` | Pede cura à Fada do time e espera. `False` = não há Fada, beba poção. |
 | `ESPERA_DO_MENU` | 0.35 s | = | FIXO | [team.py:165](blazesbot/bot/team.py#L165) | `_enviar_convite` | Tempo para o menu de contexto aparecer depois do clique direito. |
 | `ESPERA_PELA_RESPOSTA` | 4 s | = | FIXO | [team.py:170](blazesbot/bot/team.py#L170) | `montar_time` | Quanto esperar a outra conta aceitar. Ela recebe o anúncio interno e clica no |
 | `PASSO_DA_ESPERA_DO_TIME` | 0.1 s | = | PASSO | [team.py:178](blazesbot/bot/team.py#L178) | `montar_time` | De quanto em quanto tempo conferir se o time já formou. |

@@ -544,8 +544,10 @@ class AccountSupervisor(threading.Thread):
             try:
                 # Mesma história, outro dicionário por hwnd: a lição "o leitor de
                 # arredores não responde nesta janela" não pode ser herdada por
-                # uma janela nova que reciclou o número.
-                from .bc.ui_service import esquecer_janela
+                # uma janela nova que reciclou o número. (O import apontava para
+                # `bc/ui_service` até 27/09/2026 -- a função subiu para
+                # `ui_do_jogo` em 02/09 e o ImportError era engolido aqui.)
+                from .ui_do_jogo import esquecer_janela
                 esquecer_janela(self.hwnd)
             except Exception:
                 pass
