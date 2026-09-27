@@ -721,6 +721,16 @@ posição atual do personagem e grava por cima de `_base_pos_x/_base_pos_y` — 
 assim que o usuário muda o ponto base, parando e reiniciando o APP. O que estava
 no config não era um ajuste guardado: era a foto do arranque anterior.
 
+**27/09/2026 — o relogin NÃO é arranque.** `_rodar_modo_app` roda de novo a cada
+relogin, e cada entrada também fotografava a base. Custo medido em 24/09 03:05:
+um relogin que caiu em outro personagem trocou a base (1864, 1674) por
+(303, -447), e a conta passou ~1 h abortando voltas (740) longe do ponto, com o
+ponto do usuário apagado do config. Agora a foto é **uma por arranque pedido pelo
+usuário** (`AccountSupervisor._capturar_a_base_do_app`): o Iniciar (o supervisor
+nasce de novo) ou religar o APP (a marca zera quando ele é desligado). O relogin
+restaura a base do config. Leitura ilegível ou (0, 0) não gasta a foto. Travado
+por `tests/test_relogin_nao_muda_a_base_do_app.py`.
+
 Então gravar não apaga nada, e o próximo arranque solo do seguidor sobrescreve
 sozinho com a posição de quem está rodando. **O que a gravação compra é o config
 e o que o bot USA dizerem a mesma coisa**: divergentes, qualquer leitor do config

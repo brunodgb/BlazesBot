@@ -252,6 +252,9 @@ class AccountSupervisor(threading.Thread):
         # sessão. Depois de uma queda, adotar às cegas faria o supervisor roubar
         # o cliente que outra conta acabou de abrir.
         self._primeira_sessao = True
+        # A BASE DO APP É A FOTO DO ARRANQUE PEDIDO PELO USUÁRIO -- não do
+        # relogin. Ver `_capturar_a_base_do_app`.
+        self._base_do_app_capturada = False
 
     # -- utilidades --------------------------------------------------------
 
@@ -1820,19 +1823,10 @@ class AccountSupervisor(threading.Thread):
         # TRAVA DE POSIÇÃO: salva a posição base IMEDIATAMENTE ao iniciar o APP,
         # usando a mesma leitura do diagnóstico (Memory.position()). Isso garante
         # que a posição seja salva no config mesmo se o resto da inicialização
-        # falhar ou o processo for morto.
-        if app.travar_posicao and memoria_do_pet is not None:
-            try:
-                pos_inicial = memoria_do_pet.position()
-                if pos_inicial is not None:
-                    x, y = pos_inicial
-                    if x != 0 or y != 0:
-                        app._base_pos_x = x
-                        app._base_pos_y = y
-                        self.config.save()
-                        log.info("Trava de posição: base inicial salva no config %s (diagnóstico direto)", pos_inicial)
-            except Exception as exc:
-                log.warning("Trava de posição: falha ao salvar base inicial (diagnóstico): %s", exc)
+        # falhar ou o processo for morto. Só no arranque, não no relogin.
+        if app.travar_posicao:
+            self._capturar_a_base_do_app(app, memoria_do_pet, log,
+                                         "diagnóstico direto")
 
         def pet_ativo() -> bool | None:
             """True/False/None -- e o `None` é o que preserva o modo cego."""
@@ -1920,7 +1914,8 @@ class AccountSupervisor(threading.Thread):
         # Trava de posição: salvamos a posição inicial no config.json para persistência
         # entre execuções. O executor AGORA move o personagem de volta andando pelo
         # minimapa se ele sair da base. A base é salva no config a cada início do APP
-        # (ou restaurada do config se já existe), permitindo que o usuário mude o
+        # PEDIDO PELO USUÁRIO -- Iniciar, ou religar o APP -- e restaurada do config
+        # no relogin (`_capturar_a_base_do_app`), permitindo que o usuário mude o
         # ponto base apenas parando e reiniciando o APP.
         base_pos: tuple[int, int] | None = None
         if app.travar_posicao:
@@ -1947,9 +1942,10 @@ class AccountSupervisor(threading.Thread):
         # solo da conta".
         #
         # ESSE PONTO SOLO NÃO EXISTE. Cem linhas acima, TODO arranque do modo APP
-        # lê a posição atual do personagem e grava por cima de
-        # `_base_pos_x/_base_pos_y` -- é assim que o usuário muda o ponto base,
-        # parando e reiniciando o APP. Então o que estava no config não era um
+        # pedido pelo usuário lê a posição atual do personagem e grava por cima
+        # de `_base_pos_x/_base_pos_y` -- é assim que o usuário muda o ponto
+        # base, parando e reiniciando o APP. (O relogin não é arranque: desde
+        # 27/09/2026 ele mantém a base do config.) Então o que estava no config não era um
         # ajuste guardado: era a foto do arranque anterior. Gravar a âncora aqui
         # não apaga nada, e o próximo arranque solo sobrescreve sozinho com a
         # posição de quem está rodando.
@@ -2622,18 +2618,9 @@ class AccountSupervisor(threading.Thread):
         # for morto, a posição inicial fica salva para a próxima execução.
         # O executor também salva a base se vier None, mas fazemos aqui também
         # para garantir que o config seja atualizado antes do executor rodar.
-        if app.travar_posicao and base_pos is None and memoria_do_pet is not None:
-            try:
-                pos_inicial = memoria_do_pet.position()
-                if pos_inicial is not None:
-                    x, y = pos_inicial
-                    if x != 0 or y != 0:
-                        app._base_pos_x = x
-                        app._base_pos_y = y
-                        self.config.save()
-                        log.info("Trava de posição: base inicial salva no config %s", pos_inicial)
-            except Exception as exc:
-                log.warning("Trava de posição: falha ao salvar base inicial: %s", exc)
+        if app.travar_posicao and base_pos is None:
+            self._capturar_a_base_do_app(app, memoria_do_pet, log,
+                                         "antes do executor")
 
         # O TIME ANTES DA MACRO -- 16/09/2026. *"Quando eu iniciar o APP e for
         # um líder, tem que verificar também se está em time, pois às vezes eu
@@ -2700,7 +2687,44 @@ class AccountSupervisor(threading.Thread):
         if not win32gui.IsWindow(self.hwnd):
             raise Disconnected("janela do cliente fechada durante o modo APP")
         if not app.enabled:
+            # Religar o APP é arranque do usuário: a próxima entrada fotografa
+            # a base de novo (é assim que ele muda o ponto sem parar o bot).
+            self._base_do_app_capturada = False
             self._status("Modo APP desligado")
+
+    def _capturar_a_base_do_app(self, app, memoria, log, origem: str) -> None:
+        """Grava a posição atual como base da trava -- UMA VEZ POR ARRANQUE.
+
+        `_rodar_modo_app` roda de novo a CADA RELOGIN, e até 27/09/2026 cada
+        entrada regravava a base persistida com a posição daquele instante. Um
+        relogin que caísse em outro lugar (ou em OUTRO PERSONAGEM, 24/09 03:05:
+        base (1864, 1674) trocada por (303, -447), ~1 h e 740 voltas abortadas)
+        apagava o ponto do usuário do config. Achado C5 da auditoria.
+
+        A marca volta a `False` quando o APP é desligado, e o supervisor nasce
+        de novo a cada Iniciar: parar e religar continua mudando o ponto.
+        """
+        if self._base_do_app_capturada:
+            log.info("Trava de posição: relogin -- mantenho a base do config "
+                     "(só o arranque pedido pelo usuário a fotografa).")
+            return
+        if memoria is None:
+            return
+        try:
+            pos = memoria.position()
+            if pos is None:
+                return
+            x, y = pos
+            if x == 0 and y == 0:
+                return
+            app._base_pos_x, app._base_pos_y = x, y
+            self.config.save()
+            self._base_do_app_capturada = True
+            log.info("Trava de posição: base inicial salva no config %s (%s)",
+                     pos, origem)
+        except Exception as exc:
+            log.warning("Trava de posição: falha ao salvar base inicial (%s): %s",
+                        origem, exc)
 
     # -- laço de vida ------------------------------------------------------
 
