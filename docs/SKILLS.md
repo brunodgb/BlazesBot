@@ -161,6 +161,13 @@ próprio `~/.claude/rules/ecc/agents.md`. Ampliado 14/09/2026 (auditoria via
 abaixo): `doc-updater` e `e2e-runner` existiam sem uso proativo comprometido
 — agora entram na lista.
 
+**Se o `e2e-runner` cair (limite de sessão etc.), a verificação não é
+dispensada** — falha do verificador delegado não é dispensa, é troca de
+método: rode à mão, e gere o stub da ponte pywebview a partir do próprio
+`web_app.py` (respostas REAIS sobre uma config de mentira), nunca escrito de
+memória — os campos batem com os de verdade e acham chamador que um stub
+manual não acharia.
+
 ## `mattpocock-skills@claude-plugins-official` — habilitado GLOBAL (todos os projetos do usuário, não só aqui)
 
 Por estar em escopo global, **não desliguei o plugin** — poderia quebrar
@@ -324,6 +331,12 @@ e os outros respondem. Isso importa porque o andar gratuito é instável por
 natureza — e modelo gratuito também SOME: foi o que tirou os dois antigos.
 Resposta de assento é insumo, nunca veredito: a do `poolside` acima estava
 errada e soava segura.
+
+**Metodologia de medição, pra próxima revalidação:** "respondeu" não é
+"acertou" — o `poolside` respondeu às 3 chamadas e ainda assim errou a
+semântica de `break`/`finally`. Meça com pergunta de GABARITO conhecido, na
+área do projeto, e registre três colunas: respondeu, acertou, respeitou
+formato/idioma pedido.
 
 **Modelo local foi descartado** (decisão do usuário, 06/09/2026): a RTX 3060
 não sustenta modelo útil. Medido antes de descartar: `qwen2.5-coder:14b` derruba

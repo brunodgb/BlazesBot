@@ -72,6 +72,11 @@ You MUST complete each phase before proceeding to the next.
      operação mais barata entre elas, ele prova que o trabalho não rodou: a
      falha está no prólogo da função (ex.: import preguiçoso que aponta para
      um nome que não existe mais).
+   - **Campo posicional tem o significado que o REGISTRADOR deu, não o
+     óbvio.** Antes de agregar por coordenada/posição, leia o código que
+     grava esse campo: é origem, destino ou alvo? Um evento de rollback
+     gravado no ponto de CHEGADA aponta o destino (às vezes um ponto fixo do
+     servidor) como culpado, quando o problema começou em outro lugar.
 
 2. **Read Error Messages Carefully**
    - Don't skip past errors or warnings
@@ -179,7 +184,13 @@ You MUST complete each phase before proceeding to the next.
    - What settings, config, environment?
    - What assumptions does it make?
 
-6. **Audite os validadores, não só os valores**
+6. **Ao fundir/promover duplicata, cada divergência é pergunta, não ruído**
+   - A cópia "mais completa" não é necessariamente a certa. Para cada
+     diferença entre as cópias, rastreie o CONSUMIDOR do efeito — quem lê o
+     estado depois, inclusive no caminho de exceção (`finally` roda ANTES do
+     tratador de quem chamou) — antes de escolher qual lado vira o padrão.
+
+7. **Audite os validadores, não só os valores**
    - Checagem que não consegue falhar (`return True`, faixa mais larga que o
      tipo) não é checagem: fabrica confiança. Procure a propriedade que
      OBRIGATORIAMENTE difere entre instâncias independentes (um ponteiro de
@@ -271,6 +282,11 @@ You MUST complete each phase before proceeding to the next.
      partes (teste que importa a entrada; AST do grafo de chamadas).
    - **O timeout da ferramenta encerra a espera, não o processo.** Estourou o
      tempo? Liste e mate o que você lançou antes de seguir.
+   - **Novo modo de falha é contrato novo para TODO chamador.** Deu a uma
+     função uma exceção, `None` ou `ok: false` que ela não tinha antes? Grep
+     TODAS as chamadas dela, em toda camada (backend, ponte, frontend) — não
+     só a vizinhança do diff — antes de declarar completo. O chamador
+     distante que ninguém revisou é o que quebra em produção.
 
 4. **If Fix Doesn't Work**
    - STOP
