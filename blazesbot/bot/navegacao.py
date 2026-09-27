@@ -241,32 +241,23 @@ TOLERANCIA_DE_VOLTA_AO_CAMINHO = 2
 MANOBRAS_DE_PARADO = 2
 
 # ===========================================================================
-# CÍRCULO DE OFFSETS (última carta da manobra de destravamento)
+# CÍRCULO DE OFFSETS (a antiga última carta da manobra de destravamento)
 # ===========================================================================
 #
-# Quando nenhum waypoint é alcançado, o culpado costuma ser o ÂNGULO em que o
-# personagem parou -- principalmente na pirâmide do Secret Altar, onde a escada
-# tem ponto que é cenário e bloqueia a rota exata do waypoint. Clicar num ponto
-# LIGEIRAMENTE deslocado do destino faz o pathfinding achar uma rota que o ângulo
-# não bloqueia. E se nem ao redor do waypoint, ao redor da PRÓPRIA posição, para
-# trocar o ângulo de saída.
-#
-# São 8 direções de bússola x raios crescentes (1, 2, 3, 5). Cada ponto é um
-# clique curto + janela de movimento (~2 s) -- NÃO um goto completo por ponto,
-# senão o trem de mobs encosta. Andou? Confirma o waypoint com um goto. A ordem
-# da varredura é uma constante para poder trocar no teste: por raio ou por
-# direção de bússola.
+# O porquê e o círculo em si: `bot/circulo_de_offsets.py`. Aqui ficam as 8
+# direções de bússola e a janela do clique com conferência, que o passo de
+# destrave da montaria também usa.
 BUSSOLA = (
     (0.0, -1.0), (0.707, -0.707), (1.0, 0.0), (0.707, 0.707),
     (0.0, 1.0), (-0.707, 0.707), (-1.0, 0.0), (-0.707, -0.707),
 )
-CIRCULO_RAIOS = (1, 2, 3, 5)
-# True = raio por raio (1,2,3,5; em cada raio os 8 pontos); False = bússola por
-# bússola (N, NE, ...; em cada direção os 4 raios). Constante de teste.
-CIRCULO_POR_RAIO = True
-# Teto de tempo TOTAL do círculo antes de desistir e devolver o controle. É a
-# última carta -- não pode virar mais uma forma de nunca parar (trem de mobs).
-CIRCULO_TETO_SEGUNDOS = 6.5
+# O CÍRCULO EM SI (raios, ordem, teto) mora em `bot/circulo_de_offsets.py`
+# desde 27/09/2026, DESLIGADO por decisão do usuário ("só use o cálculo dos
+# waypoints vizinhos"): a chamada tinha sido APAGADA, e o código ficou sem
+# chamador nem teste. Voltou ao ponto antigo, guardada por este interruptor.
+# `BUSSOLA` e o clique com conferência ficam aqui: o passo de destrave da
+# montaria também gira por eles.
+USAR_CIRCULO_DE_OFFSETS = False
 # Janela por ponto do círculo para saber se o clique fez o personagem andar.
 SEGUNDOS_POR_CLIQUE_CIRCULO = 1.0
 # Cadência da manutenção durante o deslocamento (poção).
@@ -978,55 +969,6 @@ class Navigator:
             [i + 1 for i in candidatos], atual, PASSADAS_DO_DESTRAVAMENTO)
         return None
 
-    def _tentar_circulo(self, rota: tuple, alvo_idx: int) -> int | None:
-        """Círculo de offsets (última carta): clica levemente fora do alvo.
-
-        `alvo_idx` é o waypoint que não foi alcançado. O ângulo em que o
-        personagem parou pode bloquear a rota exata; clicar num ponto LIGEIRAMENTE
-        deslocado do centro (primeiro ao redor do waypoint, depois ao redor da
-        própria posição) faz o pathfinding achar uma abertura.
-
-        Cada ponto é um clique curto + janela de movimento
-        (`_clicar_offset_e_verificar`), não um goto completo. Andou? Só então
-        confirma com um `goto` no waypoint real. Teto total de
-        `CIRCULO_TETO_SEGUNDOS` para não virar outra forma de nunca desistir (o
-        trem de mobs encosta a cada segundo).
-
-        Devolve `alvo_idx` se o waypoint foi alcançado, ou `None`.
-        """
-        ctx = self.ctx
-        alvo = rota[alvo_idx].pos
-        tolerancia = self.mapa.tolerancia_do_waypoint(
-            rota[alvo_idx], TOLERANCIA_ROTA, TRICKY_TOLERANCE)
-        # Q4: o PRÓPRIO personagem primeiro (quebrar o bolsão), o waypoint
-        # depois. Quando o alvo está a dezenas de unidades, offsets de 1-5u ao
-        # redor dele não trocam o ÂNGULO DE SAÍDA, que é o que destrava.
-        centros = []
-        atual = self.position()
-        if atual:
-            centros.append(atual)
-        centros.append(alvo)
-
-        inicio = time.time()
-        for centro, raio, (dx, dy) in self._pontos_do_circulo(centros):
-            ctx.raise_if_stopped()
-            if time.time() - inicio > CIRCULO_TETO_SEGUNDOS:
-                ctx.log.warning(
-                    "Círculo de offsets estourou o teto de %.0fs; devolvendo o "
-                    "controle", CIRCULO_TETO_SEGUNDOS)
-                return None
-            if self._clicar_offset_e_verificar(centro, raio, dx, dy):
-                if time.time() - inicio > CIRCULO_TETO_SEGUNDOS:
-                    return None
-                ctx.log.info(
-                    "Offset (%d,%d) a %d unidades andou o personagem; confirmando "
-                    "o waypoint %s/%s", dx, dy, raio, alvo_idx + 1, len(rota))
-                if self.goto(alvo, tolerance=tolerancia,
-                             max_seconds=SEGUNDOS_POR_TENTATIVA_DE_DESTRAVAR,
-                             usar_mapa=False):
-                    return alvo_idx
-        return None
-
     def _clicar_offset_e_verificar(
         self, centro: tuple[int, int], raio: int, dx: float, dy: float,
     ) -> bool:
@@ -1058,26 +1000,6 @@ class Navigator:
             if distancia_linear(antes, agora) > RUIDO_DA_POSICAO:
                 return True
         return False
-
-    def _pontos_do_circulo(
-        self, centros: list[tuple[int, int]],
-    ) -> list[tuple[tuple[int, int], int, tuple[int, int]]]:
-        """Gera (centro, raio, direção) conforme `CIRCULO_POR_RAIO`.
-
-        `True` -> raio por raio (1,2,3,5; em cada raio as 8 direções).
-        `False` -> bússola por bússola (N, NE, ...; em cada direção os 4 raios).
-        """
-        pontos = []
-        for centro in centros:
-            if CIRCULO_POR_RAIO:
-                for raio in CIRCULO_RAIOS:
-                    for diret in BUSSOLA:
-                        pontos.append((centro, raio, diret))
-            else:
-                for diret in BUSSOLA:
-                    for raio in CIRCULO_RAIOS:
-                        pontos.append((centro, raio, diret))
-        return pontos
 
     def goto(
         self,
@@ -1694,6 +1616,10 @@ class Navigator:
                     # retrocesso por completo custava caro -- de 20 chegadas
                     # bem-sucedidas no log, 6 eram descartadas por serem de trás.
                     alcancado = self.destravar_pelos_vizinhos(rota)
+                    if alcancado is None and USAR_CIRCULO_DE_OFFSETS:
+                        from . import circulo_de_offsets
+                        alcancado = circulo_de_offsets.tentar(
+                            self, rota, indice)
                     if alcancado is not None:
                         indice = alcancado
                         travas = 0

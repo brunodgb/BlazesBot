@@ -35,6 +35,7 @@ ligar código não testado.
 | `USAR_A_TELA_COMO_SEGUNDA_PORTA` | `True` | [blazesbot/bot/app/executor.py:700](blazesbot/bot/app/executor.py#L700) | — | A SEGUNDA PORTA: A VIDA PELA TELA -- 26/08/2026 |
 | `USAR_COMBATE_COMO_RESERVA_DE_MORTE` | `True` | [blazesbot/bot/app/executor.py:532](blazesbot/bot/app/executor.py#L532) | supervisor.py | A RESERVA: QUANDO O HP É ILEGÍVEL, QUEM RESPONDE É A FLAG DE COMBATE |
 | `ATIVADO` | `True` | [blazesbot/bot/bc/diagnostico_do_link.py:62](blazesbot/bot/bc/diagnostico_do_link.py#L62) | deletador.py, supervisor.py, time_do_app.py, patch_do_cliente.py, petbug.py | Interruptor, no padrão do `USAR_TAB_NOS_GUARDAS`: desligar é trocar uma |
+| `CIRCULO_POR_RAIO` | `True` | [blazesbot/bot/circulo_de_offsets.py:48](blazesbot/bot/circulo_de_offsets.py#L48) | — | True = raio por raio (1,2,3,5; em cada raio os 8 pontos); False = bússola por |
 | `ATACAR_DURANTE_A_CONFIRMACAO_NO_BOSS` | `True` | [blazesbot/bot/combate.py:523](blazesbot/bot/combate.py#L523) | — | SÓ NO BOSS, e a razão é o motivo pelo qual o golpe parava |
 | `DESMONTAR_FORA_DA_CAVE_SO_SEM_PET` | `True` | [blazesbot/bot/combate.py:1010](blazesbot/bot/combate.py#L1010) | — | FORA DA CAVE, SÓ DESMONTA SE O PET NÃO ESTIVER ATIVO |
 | `DESTRAVAMENTO_BATE_NO_ALVO_PROIBIDO` | `True` | [blazesbot/bot/combate.py:824](blazesbot/bot/combate.py#L824) | — | O DESTRAVAMENTO BATE NO CEMETERY GUARD? Decisao do usuario, 01/09/2026. |
@@ -50,7 +51,7 @@ ligar código não testado.
 | `MEDIR_O_CONGELAMENTO` | `True` | [blazesbot/bot/congelamento.py:103](blazesbot/bot/congelamento.py#L103) | medir_o_congelamento.py | A MEDIÇÃO QUE DECIDE SE OS 15 S PODEM CAIR (26/09/2026). Nos 16 dias do |
 | `ATIVADO` | `True` | [blazesbot/bot/deletador.py:75](blazesbot/bot/deletador.py#L75) | diagnostico_do_link.py, supervisor.py, time_do_app.py, patch_do_cliente.py, petbug.py | O caminho continua inteiro com ele em False -- desligado não é apagado. |
 | `MEDIR_A_ROLHA` | `True` | [blazesbot/bot/leitura_do_slot.py:97](blazesbot/bot/leitura_do_slot.py#L97) | vendedor.py, medir_a_rolha.py | INTERRUPTOR -- A MEDIÇÃO DA ROLHA (25/09/2026). SÓ REGISTRA, não decide nada. |
-| `CIRCULO_POR_RAIO` | `True` | [blazesbot/bot/navegacao.py:266](blazesbot/bot/navegacao.py#L266) | — | True = raio por raio (1,2,3,5; em cada raio os 8 pontos); False = bússola por |
+| `USAR_CIRCULO_DE_OFFSETS` | `False` | [blazesbot/bot/navegacao.py:260](blazesbot/bot/navegacao.py#L260) | circulo_de_offsets.py | O CÍRCULO EM SI (raios, ordem, teto) mora em `bot/circulo_de_offsets.py` |
 | `PERGUNTAR_ENTRE_OS_CLIQUES` | `True` | [blazesbot/bot/rajada_de_npc.py:85](blazesbot/bot/rajada_de_npc.py#L85) | — | INTERRUPTOR -- desligar devolve a rajada cega de sempre. |
 | `MATAR_JANELA_TRAVADA` | `True` | [blazesbot/bot/sentinela.py:166](blazesbot/bot/sentinela.py#L166) | — | INTERRUPTOR (a convenção do projeto: caminho fora de uso não vira comentário) |
 | `OLHAR_A_TELA` | `True` | [blazesbot/bot/sentinela.py:202](blazesbot/bot/sentinela.py#L202) | — | O VIGIA LÊ A TELA -- religado em 11/09/2026, e o porquê do vaivém importa |
@@ -204,6 +205,7 @@ ligar código não testado.
 | `TETO_DO_TELEPORTE_DA_FAY` | `2.0` | [blazesbot/bot/bc/ui_service.py:54](blazesbot/bot/bc/ui_service.py#L54) | — | TELEPORTE DA FAY (Stone City -> Ghost Din Woods) |
 | `TETO_POR_TENTATIVA_NA_ENTRADA` | `2.5` | [blazesbot/bot/bc/ui_service.py:96](blazesbot/bot/bc/ui_service.py#L96) | — | TETO de cada tentativa -- não é o tempo gasto, é o limite. Quem encerra é a |
 | `TOLERANCIA_DO_NPC_DA_ENTRADA` | `2` | [blazesbot/bot/bc/ui_service.py:81](blazesbot/bot/bc/ui_service.py#L81) | routine.py | O SKULL HERALD DA ENTRADA EXIGE A COORDENADA EXATA |
+| `CIRCULO_TETO_SEGUNDOS` | `6.5` | [blazesbot/bot/circulo_de_offsets.py:51](blazesbot/bot/circulo_de_offsets.py#L51) | — | Teto de tempo TOTAL do círculo antes de desistir e devolver o controle. É a |
 | `ALVO_DO_TOPUP_ANTES_DO_BOSS` | `100.0` | [blazesbot/bot/combate.py:167](blazesbot/bot/combate.py#L167) | — | TOP-UP ANTES DO BOSS: ATÉ 100%, SENTADO, E OS 15 s INTEIROS |
 | `AVISO_DA_ESPERA_SEM_PRAZO` | `10` | [blazesbot/bot/combate.py:462](blazesbot/bot/combate.py#L462) | — | Cadência do aviso enquanto espera sem prazo. Uma espera sem limite PRECISA |
 | `CADENCIA_DA_LEITURA_DO_ALVO` | `0.15` | [blazesbot/bot/combate.py:930](blazesbot/bot/combate.py#L930) | routine.py | De quanto em quanto tempo olhar a barra do alvo durante a luta. |
@@ -392,35 +394,34 @@ ligar código não testado.
 | `SEGUNDOS_DE_MORTO_PARA_FURAR_A_FILA` | `40.0` | [blazesbot/bot/mural_da_morte.py:42](blazesbot/bot/mural_da_morte.py#L42) | fada.py, fada_reviver.py, mural.py | A partir de quantos segundos de morto a vítima FURA a fila dos feridos. |
 | `VALIDADE_DO_FEITICO` | `8.0` | [blazesbot/bot/mural_da_morte.py:133](blazesbot/bot/mural_da_morte.py#L133) | mural.py | Por quanto tempo o aviso "estou conjurando" continua de pé. |
 | `ALCANCE_DA_EXPANSAO` | `4` | [blazesbot/bot/navegacao.py:219](blazesbot/bot/navegacao.py#L219) | — | ATÉ ONDE A MANOBRA SE AFASTA NA ROTA quando os vizinhos imediatos falham. |
-| `AVISAR_A_PE_NO_TRAJETO` | `4.0` | [blazesbot/bot/navegacao.py:292](blazesbot/bot/navegacao.py#L292) | — | Depois de quanto tempo a pé, no meio de um trajeto, o log passa a dizer isso em |
-| `CICLOS_ANTES_DE_DESTRAVAR` | `2` | [blazesbot/bot/navegacao.py:396](blazesbot/bot/navegacao.py#L396) | — | Depois de quantos ciclos sem montar o portao para de insistir MUDO e vai |
-| `CICLOS_ANTES_DE_GRITAR` | `5` | [blazesbot/bot/navegacao.py:323](blazesbot/bot/navegacao.py#L323) | — | Quantos ciclos do portão sem montar antes de o log passar a GRITAR. |
-| `CICLOS_ANTES_DE_IR_A_PE` | `20` | [blazesbot/bot/navegacao.py:338](blazesbot/bot/navegacao.py#L338) | — | Quantos ciclos o portão insiste antes de aceitar ir A PÉ. |
-| `CIRCULO_TETO_SEGUNDOS` | `6.5` | [blazesbot/bot/navegacao.py:269](blazesbot/bot/navegacao.py#L269) | — | Teto de tempo TOTAL do círculo antes de desistir e devolver o controle. É a |
+| `AVISAR_A_PE_NO_TRAJETO` | `4.0` | [blazesbot/bot/navegacao.py:283](blazesbot/bot/navegacao.py#L283) | — | Depois de quanto tempo a pé, no meio de um trajeto, o log passa a dizer isso em |
+| `CICLOS_ANTES_DE_DESTRAVAR` | `2` | [blazesbot/bot/navegacao.py:387](blazesbot/bot/navegacao.py#L387) | — | Depois de quantos ciclos sem montar o portao para de insistir MUDO e vai |
+| `CICLOS_ANTES_DE_GRITAR` | `5` | [blazesbot/bot/navegacao.py:314](blazesbot/bot/navegacao.py#L314) | — | Quantos ciclos do portão sem montar antes de o log passar a GRITAR. |
+| `CICLOS_ANTES_DE_IR_A_PE` | `20` | [blazesbot/bot/navegacao.py:329](blazesbot/bot/navegacao.py#L329) | — | Quantos ciclos o portão insiste antes de aceitar ir A PÉ. |
 | `DEFAULT_TOLERANCE` | `3` | [blazesbot/bot/navegacao.py:66](blazesbot/bot/navegacao.py#L66) | — | — |
 | `FOLGA_ROLLBACK` | `1` | [blazesbot/bot/navegacao.py:133](blazesbot/bot/navegacao.py#L133) | — | Folga do detector de rollback: voltar ATÉ 1 índice é ruído normal de leitura; |
-| `INTERVALO_MANUTENCAO` | `0.6` | [blazesbot/bot/navegacao.py:273](blazesbot/bot/navegacao.py#L273) | — | Cadência da manutenção durante o deslocamento (poção). |
-| `INTERVALO_PARADA_POCAO` | `10.0` | [blazesbot/bot/navegacao.py:441](blazesbot/bot/navegacao.py#L441) | — | Recarga da PARADA para tomar poção durante o trajeto. |
+| `INTERVALO_MANUTENCAO` | `0.6` | [blazesbot/bot/navegacao.py:264](blazesbot/bot/navegacao.py#L264) | — | Cadência da manutenção durante o deslocamento (poção). |
+| `INTERVALO_PARADA_POCAO` | `10.0` | [blazesbot/bot/navegacao.py:432](blazesbot/bot/navegacao.py#L432) | — | Recarga da PARADA para tomar poção durante o trajeto. |
 | `INTERVALO_RECLIQUE` | `1.1` | [blazesbot/bot/navegacao.py:98](blazesbot/bot/navegacao.py#L98) | — | Intervalo MÁXIMO entre cliques enquanto anda. Não é a cadência normal -- o |
-| `INTERVALO_REMONTAR` | `3.0` | [blazesbot/bot/navegacao.py:284](blazesbot/bot/navegacao.py#L284) | — | A MONTARIA É PRÉ-REQUISITO DE ANDAR, NÃO UMA OTIMIZAÇÃO -- tudo que este bot |
-| `JANELA_ADIANTE` | `2` | [blazesbot/bot/navegacao.py:418](blazesbot/bot/navegacao.py#L418) | — | Quantos waypoints à frente podem ser aproveitados de uma vez. |
+| `INTERVALO_REMONTAR` | `3.0` | [blazesbot/bot/navegacao.py:275](blazesbot/bot/navegacao.py#L275) | — | A MONTARIA É PRÉ-REQUISITO DE ANDAR, NÃO UMA OTIMIZAÇÃO -- tudo que este bot |
+| `JANELA_ADIANTE` | `2` | [blazesbot/bot/navegacao.py:409](blazesbot/bot/navegacao.py#L409) | — | Quantos waypoints à frente podem ser aproveitados de uma vez. |
 | `MANOBRAS_DE_PARADO` | `2` | [blazesbot/bot/navegacao.py:241](blazesbot/bot/navegacao.py#L241) | — | Quantas vezes a manobra pode rodar no mesmo trajeto. |
 | `MARGEM_RECLIQUE` | `2.0` | [blazesbot/bot/navegacao.py:103](blazesbot/bot/navegacao.py#L103) | — | Distância do fim do trecho já clicado em que o próximo clique é disparado. |
 | `PASSADAS_DO_DESTRAVAMENTO` | `2` | [blazesbot/bot/navegacao.py:199](blazesbot/bot/navegacao.py#L199) | — | Quantas voltas a manobra dá sobre os dois candidatos: frente, trás, frente, trás. |
-| `PASSO_AO_ENTRAR_NA_CAVE` | `3` | [blazesbot/bot/navegacao.py:381](blazesbot/bot/navegacao.py#L381) | — | METADE dele ao ENTRAR na cave (16/09/2026, *"qualquer andada ja resolve"*). |
-| `PASSO_PARA_DESTRAVAR_A_MONTARIA` | `6` | [blazesbot/bot/navegacao.py:379](blazesbot/bot/navegacao.py#L379) | — | O tamanho do passo, em unidades de posicao. Numero do usuario ("6px"). |
+| `PASSO_AO_ENTRAR_NA_CAVE` | `3` | [blazesbot/bot/navegacao.py:372](blazesbot/bot/navegacao.py#L372) | — | METADE dele ao ENTRAR na cave (16/09/2026, *"qualquer andada ja resolve"*). |
+| `PASSO_PARA_DESTRAVAR_A_MONTARIA` | `6` | [blazesbot/bot/navegacao.py:370](blazesbot/bot/navegacao.py#L370) | — | O tamanho do passo, em unidades de posicao. Numero do usuario ("6px"). |
 | `POLL_MOVIMENTO` | `0.22` | [blazesbot/bot/navegacao.py:106](blazesbot/bot/navegacao.py#L106) | — | Intervalo de leitura de posição. É o que define quanto tempo o personagem fica |
 | `RUIDO_DA_POSICAO` | `1.0` | [blazesbot/bot/navegacao.py:164](blazesbot/bot/navegacao.py#L164) | — | Quanto a posição pode variar e ainda contar como "não saiu do lugar". Uma |
-| `SEGUNDOS_ANTES_DE_CUTUCAR` | `10.0` | [blazesbot/bot/navegacao.py:371](blazesbot/bot/navegacao.py#L371) | — | Quanto esperar, desde a PRIMEIRA tentativa, antes de andar um passo. Numero do |
+| `SEGUNDOS_ANTES_DE_CUTUCAR` | `10.0` | [blazesbot/bot/navegacao.py:362](blazesbot/bot/navegacao.py#L362) | — | Quanto esperar, desde a PRIMEIRA tentativa, antes de andar um passo. Numero do |
 | `SEGUNDOS_PARADO_DE_VERDADE` | `1.5` | [blazesbot/bot/navegacao.py:158](blazesbot/bot/navegacao.py#L158) | — | PERSONAGEM COMPLETAMENTE PARADO DENTRO DA CAVE |
-| `SEGUNDOS_POR_CLIQUE_CIRCULO` | `1.0` | [blazesbot/bot/navegacao.py:271](blazesbot/bot/navegacao.py#L271) | — | Janela por ponto do círculo para saber se o clique fez o personagem andar. |
-| `SEGUNDOS_POR_TENTATIVA_DE_DESTRAVAR` | `4.0` | [blazesbot/bot/navegacao.py:187](blazesbot/bot/navegacao.py#L187) | — | Prazo para alcançar CADA candidato da manobra de destravamento. |
+| `SEGUNDOS_POR_CLIQUE_CIRCULO` | `1.0` | [blazesbot/bot/navegacao.py:262](blazesbot/bot/navegacao.py#L262) | — | Janela por ponto do círculo para saber se o clique fez o personagem andar. |
+| `SEGUNDOS_POR_TENTATIVA_DE_DESTRAVAR` | `4.0` | [blazesbot/bot/navegacao.py:187](blazesbot/bot/navegacao.py#L187) | circulo_de_offsets.py | Prazo para alcançar CADA candidato da manobra de destravamento. |
 | `SEM_PROGRESSO_SEGUNDOS` | `1.2` | [blazesbot/bot/navegacao.py:112](blazesbot/bot/navegacao.py#L112) | — | Sem aproximar-se do alvo por este tempo, considera travado. |
-| `TETO_DO_PORTAO` | `6.0` | [blazesbot/bot/navegacao.py:311](blazesbot/bot/navegacao.py#L311) | — | A ORDEM DO PORTÃO: CONFERIR -> ATIVAR -> CONFIRMAR -> ANDAR |
+| `TETO_DO_PORTAO` | `6.0` | [blazesbot/bot/navegacao.py:302](blazesbot/bot/navegacao.py#L302) | — | A ORDEM DO PORTÃO: CONFERIR -> ATIVAR -> CONFIRMAR -> ANDAR |
 | `TETO_PRESO_NO_MESMO_PONTO` | `30.0` | [blazesbot/bot/navegacao.py:128](blazesbot/bot/navegacao.py#L128) | congelamento.py | TETO PARA FICAR PRESO NO MESMO WAYPOINT, sem conseguir manobra nenhuma. |
 | `TOLERANCIA_DE_VOLTA_AO_CAMINHO` | `2` | [blazesbot/bot/navegacao.py:232](blazesbot/bot/navegacao.py#L232) | — | Tolerância para VOLTAR ao caminho, no candidato mais próximo da manobra. |
-| `TOLERANCIA_ROTA` | `7` | [blazesbot/bot/navegacao.py:110](blazesbot/bot/navegacao.py#L110) | mapa_bc.py | Tolerância dos waypoints de rota. Waypoint de rota não é destino: é só uma |
-| `TRICKY_TOLERANCE` | `8` | [blazesbot/bot/navegacao.py:67](blazesbot/bot/navegacao.py#L67) | mapa_bc.py, routine.py | — |
+| `TOLERANCIA_ROTA` | `7` | [blazesbot/bot/navegacao.py:110](blazesbot/bot/navegacao.py#L110) | mapa_bc.py, circulo_de_offsets.py | Tolerância dos waypoints de rota. Waypoint de rota não é destino: é só uma |
+| `TRICKY_TOLERANCE` | `8` | [blazesbot/bot/navegacao.py:67](blazesbot/bot/navegacao.py#L67) | mapa_bc.py, routine.py, circulo_de_offsets.py | — |
 | `DESVIO_MINIMO` | `12.0` | [blazesbot/bot/recorte_do_time.py:109](blazesbot/bot/recorte_do_time.py#L109) | — | Recorte liso casa em todo lugar. `region_is_uniform` já é o teste que o |
 | `FOLGA_DO_ESPACAMENTO` | `6.0` | [blazesbot/bot/recorte_do_time.py:105](blazesbot/bot/recorte_do_time.py#L105) | — | Espaçamento vertical: desvio máximo aceito entre os intervalos, em pixels. As |
 | `LARGURA_DO_RECORTE` | `120` | [blazesbot/bot/recorte_do_time.py:91](blazesbot/bot/recorte_do_time.py#L91) | — | — |

@@ -464,10 +464,15 @@ perde precisão, e a precisão de salto curto nunca foi medida.
   (leitura pode pegar o personagem no meio do "pulo" do lag). Se a manobra não
   alcançar nada, o índice volta para o waypoint do rollback.
 
-  O **círculo de offsets** (`_tentar_circulo`) e a **retomada de rota**
+  O **círculo de offsets** e a **retomada de rota**
   (`onde_retomar`) ficaram **DESLIGADOS do fluxo** por decisão do usuário ("só
-  use o cálculo dos waypoints vizinhos"); o código continua definido
-  (navigation.py + mapa_bc.py) para reuso futuro, mas nada os chama mais. O
+  use o cálculo dos waypoints vizinhos"). Desde 27/09/2026 o círculo mora em
+  `bot/circulo_de_offsets.py` e a chamada voltou ao ponto antigo (depois de
+  `destravar_pelos_vizinhos` não alcançar nada) atrás do interruptor
+  `navegacao.USAR_CIRCULO_DE_OFFSETS = False`, com teste forçando-o ligado —
+  antes a chamada tinha sido apagada e o código ficou sem chamador nem teste.
+  O clique com conferência (`_clicar_offset_e_verificar`) ficou no
+  `Navigator`: o passo de destrave da montaria também o usa. O
   círculo era a antiga "última carta" (offsets ao redor da própria posição e do
   waypoint, teto `CIRCULO_TETO_SEGUNDOS`); detalhes históricos na seção 5 do
   `NAVEGACAO.md`. A rota continua do waypoint ALCANÇADO; se nada deu, retoma do
