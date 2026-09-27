@@ -71,7 +71,7 @@ ligar código não testado.
 | `MODO_DE_TECLA` | `'postmessage'` | [blazesbot/core/inputs.py:191](blazesbot/core/inputs.py#L191) | injecao_de_texto.py, teclado_win32.py | INTERRUPTOR DO TECLADO -- "sendmessage" \| "postmessage" |
 | `USAR_MOUSE_SHIELD` | `False` | [blazesbot/core/inputs.py:79](blazesbot/core/inputs.py#L79) | instrumentar_clique.py, teste_do_cursor.py | INTERRUPTOR DO MOUSE SHIELD |
 | `INSTRUMENTAR_O_PACOTE_INTEIRO` | `True` | [blazesbot/core/instrumentacao.py:77](blazesbot/core/instrumentacao.py#L77) | — | O INTERRUPTOR |
-| `COMPRIMIR_ARQUIVO_MORTO` | `True` | [blazesbot/core/log_limitado.py:110](blazesbot/core/log_limitado.py#L110) | — | O arquivo morto de DIAS ANTERIORES é comprimido. Medido no arquivo da noite de |
+| `COMPRIMIR_ARQUIVO_MORTO` | `True` | [blazesbot/core/log_limitado.py:111](blazesbot/core/log_limitado.py#L111) | — | O arquivo morto de DIAS ANTERIORES é comprimido. Medido no arquivo da noite de |
 | `EXIGIR_VIDA_MAXIMA_DE_MOB` | `True` | [blazesbot/core/memory.py:582](blazesbot/core/memory.py#L582) | — | INTERRUPTOR. Desligado, volta ao teste antigo (`hp <= max_hp`) e o fantasma |
 | `USAR_BANDEIRA_DO_F12` | `True` | [blazesbot/core/memory.py:213](blazesbot/core/memory.py#L213) | — | O F12 PRESO -- a metade do patcher que era conferivel SO OLHANDO A TELA |
 | `USAR_PAINEL_POR_MEMORIA` | `True` | [blazesbot/core/memory.py:671](blazesbot/core/memory.py#L671) | — | ESTADO DE PAINEL DE UI POR MEMÓRIA -- o que sobreviveu ao campo |
@@ -612,11 +612,11 @@ ligar código não testado.
 | `TEMPLATE_DA_MOLDURA` | `'janela_moldura.png'` | [blazesbot/core/janelas_abertas.py:90](blazesbot/core/janelas_abertas.py#L90) | — | — |
 | `TEMPLATE_DO_X` | `'janela_fechar.png'` | [blazesbot/core/janelas_abertas.py:89](blazesbot/core/janelas_abertas.py#L89) | — | Templates. Medidos e recortados em 26/08/2026 -- ver o cabeçalho. |
 | `LOG_JSON_MAXIMO` | `4000` | [blazesbot/core/log_json.py:27](blazesbot/core/log_json.py#L27) | — | Quantos registros o JSON dev guarda (reusa a poda por linha do arquivo). |
-| `DIAS_DE_ARQUIVO_MORTO` | `2` | [blazesbot/core/log_limitado.py:79](blazesbot/core/log_limitado.py#L79) | log_json.py | O ARQUIVO MORTO: o que a poda descarta deixou de ser PERDIDO |
-| `FOLGA_ANTES_DE_PODAR` | `100` | [blazesbot/core/log_limitado.py:40](blazesbot/core/log_limitado.py#L40) | — | Quanto ele pode passar antes de a poda acontecer. Podar de cem em cem em vez de |
-| `INTERVALO_ENTRE_LIMPEZAS` | `3600.0` | [blazesbot/core/log_limitado.py:91](blazesbot/core/log_limitado.py#L91) | — | De quanto em quanto tempo varrer a pasta do arquivo morto. |
-| `LINHAS_MAXIMAS` | `500` | [blazesbot/core/log_limitado.py:34](blazesbot/core/log_limitado.py#L34) | — | Quantas linhas o arquivo guarda. As mais antigas são descartadas. |
-| `SEGUNDOS_DE_SILENCIO_ANTES_DE_COMPRIMIR` | `60.0` | [blazesbot/core/log_limitado.py:99](blazesbot/core/log_limitado.py#L99) | — | Quanto tempo um arquivo precisa estar QUIETO para poder ser comprimido. |
+| `DIAS_DE_ARQUIVO_MORTO` | `2` | [blazesbot/core/log_limitado.py:80](blazesbot/core/log_limitado.py#L80) | log_json.py | O ARQUIVO MORTO: o que a poda descarta deixou de ser PERDIDO |
+| `FOLGA_ANTES_DE_PODAR` | `100` | [blazesbot/core/log_limitado.py:41](blazesbot/core/log_limitado.py#L41) | — | Quanto ele pode passar antes de a poda acontecer. Podar de cem em cem em vez de |
+| `INTERVALO_ENTRE_LIMPEZAS` | `3600.0` | [blazesbot/core/log_limitado.py:92](blazesbot/core/log_limitado.py#L92) | — | De quanto em quanto tempo varrer a pasta do arquivo morto. |
+| `LINHAS_MAXIMAS` | `500` | [blazesbot/core/log_limitado.py:35](blazesbot/core/log_limitado.py#L35) | — | Quantas linhas o arquivo guarda. As mais antigas são descartadas. |
+| `SEGUNDOS_DE_SILENCIO_ANTES_DE_COMPRIMIR` | `60.0` | [blazesbot/core/log_limitado.py:100](blazesbot/core/log_limitado.py#L100) | — | Quanto tempo um arquivo precisa estar QUIETO para poder ser comprimido. |
 | `LUGAR_FORA_DA_CAVE` | `'Ghost Din Woods'` | [blazesbot/core/lugares.py:114](blazesbot/core/lugares.py#L114) | localizacao.py, routine.py | O lugar em que o personagem está quando NÃO está na cave e o X é grande. |
 | `MINIMO_CAUDA` | `5` | [blazesbot/core/lugares.py:139](blazesbot/core/lugares.py#L139) | — | Menor cauda que ainda identifica um lugar com segurança. Abaixo disso, |
 | `ANGULO_DA_CAMERA` | `956.720459` | [blazesbot/core/memory.py:360](blazesbot/core/memory.py#L360) | ler_camera.py | O ângulo em que os cliques na cena 3D foram medidos. |

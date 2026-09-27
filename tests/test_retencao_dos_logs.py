@@ -268,3 +268,41 @@ def test_duas_varreduras_ao_mesmo_tempo_nao_se_atropelam(tmp_path):
         h._limpando.release()
     finally:
         h.close()
+
+
+def test_poda_que_NAO_CONSEGUE_reescrever_nao_rearquiva_o_mesmo_bloco(tmp_path, monkeypatch):
+    """Arquivo quente preso por outro processo (editor, antivírus): a reescrita
+    falha. Antes, o bloco descartado já tinha ido para o arquivo morto, o
+    contador não zerava, e CADA linha nova relia o arquivo inteiro e arquivava o
+    mesmo bloco de novo -- com a folga de 4000 do log de dev, 4000 linhas
+    duplicadas por linha escrita (achado S14-12, 27/09/2026)."""
+    h = _handler(tmp_path / "quente.jsonl", maximo=10, folga=5)
+
+    def _preso(*_a, **_k):
+        raise PermissionError("arquivo em uso por outro processo")
+
+    monkeypatch.setattr(log_limitado.os, "replace", _preso)
+    try:
+        for i in range(30):
+            h.emit(_record(f"linha {i}"))
+    finally:
+        h.close()
+    arquivadas = sum(len(p.read_text(encoding="utf-8").splitlines())
+                     for p in (tmp_path / "arquivo").glob("*"))
+    assert arquivadas == 0, "arquivou o que não conseguiu tirar do quente"
+    quente = (tmp_path / "quente.jsonl").read_text(encoding="utf-8").splitlines()
+    assert len(quente) == 30, "a reescrita falha não pode perder linha"
+
+
+def test_a_poda_normal_arquiva_cada_linha_UMA_vez(tmp_path):
+    h = _handler(tmp_path / "quente.jsonl", maximo=10, folga=5)
+    try:
+        for i in range(40):
+            h.emit(_record(f"linha {i}"))
+    finally:
+        h.close()
+    quente = (tmp_path / "quente.jsonl").read_text(encoding="utf-8").splitlines()
+    morto = [linha for p in (tmp_path / "arquivo").glob("*")
+             for linha in p.read_text(encoding="utf-8").splitlines()]
+    assert sorted(quente + morto, key=lambda s: int(s.split()[1])) == \
+        [f"linha {i}" for i in range(40)]

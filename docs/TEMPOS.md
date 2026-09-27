@@ -435,8 +435,8 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | *literal em* `_click_rapido_reafirmado` | 0.002 s | = | FIXO | [inputs.py:1034](blazesbot/core/inputs.py#L1034) | `_click_rapido_reafirmado` | O rápido, mais a coordenada REAFIRMADA entre o down e o up. |
 | *literal em* `_click_postmessage_puro` | 0.002 s | = | FIXO | [inputs.py:1143](blazesbot/core/inputs.py#L1143) | `_click_postmessage_puro` | AS QUATRO mensagens por `PostMessageW`. Nenhuma síncrona. |
 | `TIMEOUT_DA_SONDA_MS` | 1500 s (25 min) | = | TETO | [janelas.py:116](blazesbot/core/janelas.py#L116) | `janela_responde` | A SONDA DE TRAVAMENTO -- "Não Está Respondendo", medido em vez de suposto |
-| `INTERVALO_ENTRE_LIMPEZAS` | 3600 s (60 min) | = | FIXO | [log_limitado.py:91](blazesbot/core/log_limitado.py#L91) | `_limpar_de_tempos_em_tempos` | De quanto em quanto tempo varrer a pasta do arquivo morto. |
-| `SEGUNDOS_DE_SILENCIO_ANTES_DE_COMPRIMIR` | 60 s (1 min) | = | FIXO | [log_limitado.py:99](blazesbot/core/log_limitado.py#L99) | `_esta_quieto` | Quanto tempo um arquivo precisa estar QUIETO para poder ser comprimido. |
+| `INTERVALO_ENTRE_LIMPEZAS` | 3600 s (60 min) | = | FIXO | [log_limitado.py:92](blazesbot/core/log_limitado.py#L92) | `_limpar_de_tempos_em_tempos` | De quanto em quanto tempo varrer a pasta do arquivo morto. |
+| `SEGUNDOS_DE_SILENCIO_ANTES_DE_COMPRIMIR` | 60 s (1 min) | = | FIXO | [log_limitado.py:100](blazesbot/core/log_limitado.py#L100) | `_esta_quieto` | Quanto tempo um arquivo precisa estar QUIETO para poder ser comprimido. |
 | `TETO_DA_PROVA_DA_CAMERA` | 1 s | = | TETO | [memory.py:384](blazesbot/core/memory.py#L384) | `_esperar_o_termometro` | Teto da espera pelo termômetro depois de uma escrita na câmera. |
 | `PASSO_DA_PROVA_DA_CAMERA` | 0.05 s | = | PASSO | [memory.py:385](blazesbot/core/memory.py#L385) | `_esperar_o_termometro` |  |
 | `PASSO_ENTRE_MEMBROS` | 136 s (2 min) | = | PASSO | [memory.py:415](blazesbot/core/memory.py#L415) | `time_do_jogo, vida_do_time` |  |

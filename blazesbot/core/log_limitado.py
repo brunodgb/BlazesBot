@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import gzip
 import logging
+import os
 import shutil
 import threading
 import time
@@ -235,14 +236,31 @@ class ArquivoDeLogLimitado(logging.FileHandler):
                     linhas = arq.readlines()
 
                 mantidas = linhas[-self.maximo:]
-                # O QUE SAI VAI PARA O ARQUIVO MORTO ANTES de ser perdido, e num
-                # `writelines` só. Se isto falhar, a poda SEGUE: o teto do
-                # arquivo quente é o que protege o disco, e arquivar é o extra.
                 descartadas = linhas[:-self.maximo] if self.maximo else linhas
+                # REESCREVE PRIMEIRO, DE UMA VEZ, E SÓ DEPOIS ARQUIVA (27/09/2026).
+                #
+                # Arquivar antes fazia o modo de falha girar: com o quente preso
+                # por outro processo a reescrita falhava, o contador não zerava,
+                # e CADA linha nova relia o arquivo e arquivava o MESMO bloco de
+                # novo -- com a folga de 4000 do log de dev, 4000 linhas
+                # duplicadas por linha escrita. Agora a reescrita é atômica
+                # (`.tmp` + replace: quem lê vê o velho ou o novo, e o `open("w")`
+                # que truncava no meio sumiu), e falhando ela não arquiva nada e
+                # adia a próxima tentativa por mais uma folga: o quente cresce,
+                # que é o pior caso já aceito acima. O preço é uma janela mínima
+                # em que um processo morto entre o replace e o arquivamento perde
+                # o bloco descartado -- arquivar é o extra; o teto é o que
+                # protege o disco.
+                temporario = self.caminho.with_name(self.caminho.name + ".poda")
+                try:
+                    with open(temporario, "w", encoding=self.encoding or "utf-8") as arq:
+                        arq.writelines(mantidas)
+                    os.replace(temporario, self.caminho)
+                except OSError:
+                    self._linhas = self.maximo
+                    return
                 if descartadas and self.pasta_do_arquivo_morto is not None:
                     self._arquivar(descartadas)
-                with open(self.caminho, "w", encoding=self.encoding or "utf-8") as arq:
-                    arq.writelines(mantidas)
 
                 # Recontagem a partir do que SOBROU, e não do contador: o contador
                 # é só o gatilho, e estimativa acumulada erra com o tempo.
