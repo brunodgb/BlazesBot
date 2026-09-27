@@ -244,6 +244,25 @@ def test_o_TAB_que_nao_traz_mob_ABORTA_a_volta(passos):
     assert caso.teclas == [], "rodou a macro sem alvo"
 
 
+def test_o_CORTE_do_reflexo_encerra_a_volta_ali_mesmo(passos):
+    """`False` = corte: a volta cortada pelo reflexo não chega ao laço da macro.
+
+    O teste acima passava por OUTRO motivo: o dublê tem id do alvo 0, e era o
+    portão de "alvo zerado" do laço das linhas que cortava a volta -- depois de
+    o reflexo já ter cortado. `_abortar_a_volta` devolve `True` ("segue"), e o
+    reflexo repassava esse `True` como se fosse o seu "não cortei". Achado C7
+    da auditoria de 27/09/2026: a volta cortada entrava no laço das linhas, e
+    com um cadáver na mira ainda pagava até 2 s de conferência de saída.
+    """
+    caso = _Executor(vida=(100.0, 92.0), em_batalha=True, alvo_vivo=False,
+                     tab_traz_alvo=False)
+    caso.e._uma_volta_simples(passos)
+    antes = caso.e.voltas_abortadas
+    caso.e._uma_volta_simples(passos)
+    assert caso.e.voltas_abortadas == antes + 1, "um corte por volta, não dois"
+    assert caso.e._ultimo_corte.startswith("reflexo:"), caso.e._ultimo_corte
+
+
 def test_FORA_de_batalha_a_manutencao_VOLTA_a_acontecer(passos):
     """O desvio é só para o caso de emergência: o ciclo calmo continua inteiro."""
     caso = _Executor(vida=(100.0, 92.0), em_batalha=False, alvo_vivo=False)

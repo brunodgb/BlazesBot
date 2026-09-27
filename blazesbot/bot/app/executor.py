@@ -3354,10 +3354,15 @@ class ExecutorDeMacro:
 
         O TAB É `urgente`: sem o respiro de entrada e sem a pausa da roda. Ver
         `_garantir_alvo`.
+
+        OS CORTES DEVOLVEM `False` EXPLÍCITO. `_abortar_a_volta` devolve `True`
+        ("a interrupção é normal, segue") e até 27/09/2026 era esse `True` que
+        subia daqui -- a volta cortada entrava no laço das linhas.
         """
         agora = time.time()
         if agora - self._ultimo_tab_do_reflexo < ESPERA_SEM_ALVO:
-            return self._abortar_a_volta(motivo="reflexo: aguardando cadência")
+            self._abortar_a_volta(motivo="reflexo: aguardando cadência")
+            return False
         self._ultimo_tab_do_reflexo = agora
         self.urgencias += 1
         self.log.info("APP: REFLEXO — em batalha, sem alvo vivo e levando "
@@ -3375,7 +3380,8 @@ class ExecutorDeMacro:
             # NÃO ACHOU MOB VIVO. A marca FICA de pé: o próximo golpe volta
             # aqui depois da cadência, que é o comportamento certo -- alguém
             # está batendo e ainda não foi encontrado.
-            return self._abortar_a_volta(motivo="reflexo: TAB sem mob vivo")
+            self._abortar_a_volta(motivo="reflexo: TAB sem mob vivo")
+            return False
 
         # ACEITE: a marca é consumida e a macro roda contra o novo alvo.
         self._vigia.consumir()
