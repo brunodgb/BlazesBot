@@ -326,3 +326,26 @@ def test_a_regua_do_filtro_e_a_MESMA_da_tentativa(monkeypatch):
     assert len(chamadas) == 2, (
         "o filtro e a tentativa têm que usar a mesma função de tolerância, e "
         f"cada um chamá-la uma vez -- achei {len(chamadas)} chamada(s)")
+
+
+def test_a_manobra_respeita_o_TETO_DE_PRESO_no_mesmo_ponto(monkeypatch):
+    """Até 9 candidatos x 2 passadas x 4 s, sem teto total: o teto do usuário
+    ("30 segundos sem fazer nada já é bastante") só era conferido ENTRE uma
+    manobra e outra, e uma só chegou a 91 s (26/09/2026). Achado A7 da
+    auditoria de 27/09/2026: estourado o teto, a manobra devolve o controle."""
+    rota = _rota(20)
+    servico, tentativas = _navegador(
+        monkeypatch, rota, intransitaveis={w.pos for w in rota}, posicao=(300, 30))
+    relogio = [1_000.0]
+    monkeypatch.setattr(nav.time, "time", lambda: relogio[0])
+    chamar = servico.follow_path
+
+    def cada_tentativa_custa_12s(alvos, **kw):
+        relogio[0] += 12.0
+        return chamar(alvos, **kw)
+
+    monkeypatch.setattr(servico, "follow_path", cada_tentativa_custa_12s)
+    assert servico.destravar_pelos_vizinhos(rota) is None
+    assert len(tentativas) == 3, (
+        f"{len(tentativas)} tentativas: o teto de "
+        f"{nav.TETO_PRESO_NO_MESMO_PONTO:.0f} s não segurou a manobra")

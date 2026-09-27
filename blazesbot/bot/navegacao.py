@@ -193,8 +193,9 @@ SEGUNDOS_POR_TENTATIVA_DE_DESTRAVAR = 4.0
 # personagem tentou o outro candidato, então mudou de lugar e de ângulo. Repetir
 # na hora, do mesmo ponto, seria reclicar o que já não pegou.
 #
-# Teto total: 3 candidatos x 2 passadas x 4 s = 24 s (era 3 x 20 s = 60 s).
-# RESTAURADO PARA 2 EM 18/08/2026, pelo mesmo motivo do valor acima: o
+# Teto total: com a expansão (`ALCANCE_DA_EXPANSAO`) são até 9 candidatos x 2
+# passadas x 4 s = 72 s -- por isso a manobra para em `TETO_PRESO_NO_MESMO_PONTO`
+# (27/09/2026). RESTAURADO PARA 2 EM 18/08/2026, pelo mesmo motivo do valor acima: o
 # comentário descrevia 2 e o código fazia 1.
 PASSADAS_DO_DESTRAVAMENTO = 2
 
@@ -928,9 +929,18 @@ class Navigator:
             atual, ctx.memory.location(),
         )
 
+        # O TETO DO USUÁRIO VALE DENTRO DA MANOBRA (27/09/2026, achado A7).
+        # São até 9 candidatos x 2 passadas x 4 s, e `TETO_PRESO_NO_MESMO_PONTO`
+        # só era conferido ENTRE uma manobra e outra: uma chegou a 91 s.
+        comeco_da_manobra = time.time()
         for passada in range(1, PASSADAS_DO_DESTRAVAMENTO + 1):
             for i in candidatos:
                 ctx.raise_if_stopped()
+                if time.time() - comeco_da_manobra > TETO_PRESO_NO_MESMO_PONTO:
+                    ctx.log.warning(
+                        "A manobra passou de %.0f s sem alcançar vizinho; "
+                        "devolvo o controle.", TETO_PRESO_NO_MESMO_PONTO)
+                    return None
                 alvo = rota[i].pos
                 tolerancia = self._tolerancia_do_candidato(rota, i, base)
                 ctx.log.info(
