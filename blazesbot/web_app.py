@@ -835,7 +835,50 @@ class _App:
     # controle do bot
     # ------------------------------------------------------------------
 
+    # UM DONO POR VEZ PARA OS CLIENTES (achado C1 da auditoria de 27/09/2026).
+    #
+    # `iniciar` trocava `self.manager` sem olhar o anterior, e o botão do front
+    # se reabilita antes de o poll de 1,5 s refletir "Rodando". Um clique duplo,
+    # um Parar->Iniciar com as threads antigas ainda saindo, ou um Iniciar no
+    # meio de um teste punham DOIS remetentes de tecla e clique no mesmo
+    # cliente -- e o manager órfão ficava fora do alcance do Parar. Os testes só
+    # conferiam o sentido teste->bot, e só pela intenção (`running()`), que cai
+    # antes de as threads saírem. Resíduo aceito: dois cliques diferentes no
+    # mesmo milissegundo ainda passam pela janela entre conferir e agir.
+    _FERRAMENTAS = ((teste_venda, "o teste de venda"),
+                    (amostragem_de_cliques, "a amostragem de cliques"),
+                    (afericao, "a conferência dos modelos de exclusão"))
+
+    def _bot_ocupado(self) -> bool:
+        """Há intenção de rodar, ou supervisor da geração anterior ainda vivo?"""
+        m = self.manager
+        return bool(m and (m.quer_rodar or any(s.is_alive() for s in m.supervisors)))
+
+    def _ferramenta_rodando(self) -> str | None:
+        return next((nome for modulo, nome in self._FERRAMENTAS
+                     if modulo.em_andamento()), None)
+
+    def _recusa_das_ferramentas(self) -> str | None:
+        """Por que uma ferramenta NÃO pode começar agora (ou None: pode)."""
+        if self._bot_ocupado():
+            return ("O bot está rodando ou ainda encerrando as contas -- os dois "
+                    "disputariam o teclado e o mouse do mesmo cliente. Pare o "
+                    "bot e espere alguns segundos.")
+        outra = self._ferramenta_rodando()
+        if outra:
+            return f"Há {outra} em andamento -- espere terminar ou cancele."
+        return None
+
     def iniciar(self) -> dict[str, Any]:
+        if self._bot_ocupado():
+            return {"ok": False, "erros": [
+                "O bot ainda está rodando ou encerrando as contas -- aguarde "
+                "alguns segundos e tente de novo."]}
+        ferramenta = self._ferramenta_rodando()
+        if ferramenta:
+            return {"ok": False, "erros": [
+                f"Há {ferramenta} em andamento -- espere terminar ou cancele "
+                "antes de iniciar o bot."]}
         problemas = self.config.validate()
         if problemas:
             return {"ok": False, "erros": problemas}
@@ -867,10 +910,9 @@ class _App:
         thread própria, então o poll do log (300 ms) continua correndo e o
         usuário acompanha o teste ao vivo.
         """
-        if self.manager and self.manager.running():
-            return {"ok": False, "erro": (
-                "Pare o bot antes de testar a venda — os dois disputariam o "
-                "teclado e o mouse do mesmo cliente.")}
+        recusa = self._recusa_das_ferramentas()
+        if recusa:
+            return {"ok": False, "erro": recusa}
         try:
             conta = self._conta(uid)
         except ValueError as exc:
@@ -892,10 +934,9 @@ class _App:
         Bloqueia como o teste de venda, e pelo mesmo motivo: cada chamada do
         frontend já vem em sua própria thread no pywebview.
         """
-        if self.manager and self.manager.running():
-            return {"ok": False, "erro": (
-                "Pare o bot antes de amostrar — os dois disputariam o teclado "
-                "e o mouse do mesmo cliente.")}
+        recusa = self._recusa_das_ferramentas()
+        if recusa:
+            return {"ok": False, "erro": recusa}
         try:
             conta = self._conta(uid)
         except ValueError as exc:
@@ -909,10 +950,9 @@ class _App:
 
     def conferir_modelos_de_exclusao(self, uid: str) -> dict[str, Any]:
         """Fotografa a bolsa e DESENHA o que seria apagado. Não apaga nada."""
-        if self.manager and self.manager.running():
-            return {"ok": False, "erro": (
-                "Pare o bot antes de conferir — os dois disputariam o teclado "
-                "e o mouse do mesmo cliente.")}
+        recusa = self._recusa_das_ferramentas()
+        if recusa:
+            return {"ok": False, "erro": recusa}
         try:
             conta = self._conta(uid)
         except ValueError as exc:
