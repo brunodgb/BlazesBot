@@ -59,8 +59,10 @@ TESTES_DO_PORTAO = (
     "tests/test_travas_citadas_existem.py",
 )
 
-# O portão inteiro leva ~40 s. O teto é a garantia de que um teste preso não
-# segura o commit para sempre -- a lição do pytest que rodou 119 h.
+# O portão inteiro leva ~20 s (421 testes, medido em 27/09/2026).
+# Eram ~75 s enquanto a catraca refazia a varredura por caso. O teto é a
+# garantia de que um teste preso não segura o commit para sempre -- a lição
+# do pytest que rodou 119 h.
 TETO_DO_PORTAO_DE_COMMIT = 300
 
 INDICES_GERADOS = ("docs/TEMPOS.md", "docs/INTERRUPTORES.md")

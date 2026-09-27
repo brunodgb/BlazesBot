@@ -31,6 +31,7 @@ O catálogo completo, com a natureza de cada tempo, é `docs/TEMPOS.md` (gerado)
 """
 from __future__ import annotations
 
+import functools
 from collections import Counter
 
 import pytest
@@ -89,6 +90,9 @@ TETO_DE_ESPERAS_CEGAS = {
 TETO_GERAL = 250
 
 
+# A extração parseia o projeto inteiro (~2 s) e o código não muda durante a
+# rodada: uma vez por processo basta. Refazer por caso custava ~44 s por commit.
+@functools.cache
 def _por_arquivo() -> Counter:
     contagem: Counter = Counter()
     for tempo in extrair():

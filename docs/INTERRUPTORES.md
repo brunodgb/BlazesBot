@@ -718,7 +718,7 @@ ligar código não testado.
 | `TROCAS_MINIMAS` | `30` | [blazesbot/tools/medir_a_volta_do_pet.py:24](blazesbot/tools/medir_a_volta_do_pet.py#L24) | — | — |
 | `CONGELAMENTOS_MINIMOS` | `30` | [blazesbot/tools/medir_o_congelamento.py:33](blazesbot/tools/medir_o_congelamento.py#L33) | — | — |
 | `FALSAS_TOLERADAS` | `0.1` | [blazesbot/tools/medir_o_congelamento.py:34](blazesbot/tools/medir_o_congelamento.py#L34) | — | — |
-| `TETO_DO_PORTAO_DE_COMMIT` | `300` | [blazesbot/tools/portao_de_commit.py:64](blazesbot/tools/portao_de_commit.py#L64) | — | O portão inteiro leva ~40 s. O teto é a garantia de que um teste preso não |
+| `TETO_DO_PORTAO_DE_COMMIT` | `300` | [blazesbot/tools/portao_de_commit.py:66](blazesbot/tools/portao_de_commit.py#L66) | — | O portão inteiro leva ~20 s (421 testes, medido em 27/09/2026). |
 | `DISTANCIA_PARA_CASAR` | `10` | [blazesbot/tools/relatorio_da_rota.py:50](blazesbot/tools/relatorio_da_rota.py#L50) | — | A tolerância da rota da cave é 7; a posição é lida depois do passo, com folga. |
 | `LINHAS_DO_RELATORIO` | `12` | [blazesbot/tools/relatorio_da_rota.py:54](blazesbot/tools/relatorio_da_rota.py#L54) | — | — |
 | `RAIO_DO_PONTO_QUENTE` | `25` | [blazesbot/tools/relatorio_da_rota.py:56](blazesbot/tools/relatorio_da_rota.py#L56) | — | Evento a mais que isto do waypoint mais próximo não é de rota nenhuma. |
