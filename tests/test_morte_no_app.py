@@ -80,7 +80,7 @@ class _Mundo:
         return self.volta_da_certo
 
 
-def _ciclo(mundo, *, sou_a_fada=False, parar_pct=90.0):
+def _ciclo(mundo, *, sou_a_fada=False, parar_pct=90.0, puxar_o_freio=None):
     return mod.CicloDaMorte(
         log=logging.getLogger("teste.morte"),
         meu_login="vitima",
@@ -99,6 +99,7 @@ def _ciclo(mundo, *, sou_a_fada=False, parar_pct=90.0):
         continuar=lambda: True,
         dormir=lambda _s: True,
         nick=lambda: "Vitima",
+        puxar_o_freio=puxar_o_freio,
     )
 
 
@@ -254,6 +255,37 @@ def test_tres_mortes_sem_voltar_PARAM_a_conta():
 
     assert resultados[:-1] == [True] * (mod.MORTES_SEGUIDAS_PARA_PARAR - 1)
     assert resultados[-1] is False
+
+
+def test_o_freio_PUXADO_para_a_conta_de_verdade():
+    """O `False` do freio não tinha quem lesse: `rodar()` descarta o retorno da
+    volta, e o log dizia "PARO esta conta" com a macro seguindo (26/09 22:31, a
+    4ª morte veio 24 min depois). Achado C6 da auditoria de 27/09/2026."""
+    mundo = _Mundo(fada=None)
+    mundo.volta_da_certo = False
+    puxadas = []
+    ciclo = _ciclo(mundo, puxar_o_freio=lambda: puxadas.append(1))
+    for _ in range(mod.MORTES_SEGUIDAS_PARA_PARAR):
+        ciclo.resolver()
+    assert puxadas == [1], "o freio tem de ser puxado uma vez, no limite"
+
+
+def test_o_freio_da_conta_vence_a_convocacao_do_lider():
+    """Com o freio puxado a conta fica PARADA até um novo Iniciar, e o
+    executor do APP para mesmo convocado pelo líder."""
+    import inspect
+
+    from blazesbot.bot.supervisor import AccountSupervisor
+
+    sup = AccountSupervisor.__new__(AccountSupervisor)
+    sup._freio_da_morte = False
+    sup._personagem_errado = None
+    assert sup._motivo_da_parada() is None
+    sup.puxar_o_freio_da_morte()
+    assert "freio" in sup._motivo_da_parada()
+    fonte = inspect.getsource(AccountSupervisor._rodar_modo_app)
+    continuar = fonte[fonte.index("continuar=lambda: ("):]
+    assert "not self._freio_da_morte" in continuar[:400]
 
 
 def test_voltar_ao_ponto_ZERA_o_contador():

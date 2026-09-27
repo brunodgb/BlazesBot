@@ -122,9 +122,14 @@ class CicloDaMorte:
         continuar: Callable[[], bool],
         dormir: Callable[[float], bool],
         nick: Callable[[], str | None] | None = None,
+        # QUEM PARA A CONTA quando o freio é puxado. O `False` de `resolver` não
+        # tem quem leia (`rodar()` descarta o retorno da volta): sem isto o log
+        # dizia "PARO esta conta" e a macro seguia (achado C6, 27/09/2026).
+        puxar_o_freio: Callable[[], None] | None = None,
     ) -> None:
         self.log = log
         self.meu_login = meu_login
+        self._puxar_o_freio = puxar_o_freio
         self.mural = mural
         self._vida_pct = vida_pct
         self._em_batalha = em_batalha
@@ -277,6 +282,7 @@ class CicloDaMorte:
             "%d mortes seguidas sem conseguir voltar ao ponto — PARO esta "
             "conta. O spot virou armadilha, ou o ponto inicial está errado.",
             self.mortes_sem_voltar)
+        self._seguro(self._puxar_o_freio)
         return False
 
     def _meu_nick(self) -> str:
@@ -502,6 +508,7 @@ def montar_para_o_app(sup, executor, entrada, *, vida_pct, em_batalha,
         else "?",
         quao_longe=executor.distancia_da_base,
         vizinhanca=lambda: _vizinhanca(sup),
+        puxar_o_freio=sup.puxar_o_freio_da_morte,
     )
 
 

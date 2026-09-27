@@ -258,6 +258,9 @@ class AccountSupervisor(threading.Thread):
         # O nick que a memória leu quando NÃO é o desta conta; a sessão fica
         # online e parada. Ver `_aceitar_o_personagem_lido`.
         self._personagem_errado: str | None = None
+        # O freio das 3 mortes seguidas, puxado pelo ciclo da morte do APP. Vale
+        # até um novo Iniciar: um relogin não desarma um spot que virou armadilha.
+        self._freio_da_morte = False
 
     # -- utilidades --------------------------------------------------------
 
@@ -370,6 +373,28 @@ class AccountSupervisor(threading.Thread):
             time.sleep(0.125)
 
     # -- identidade da janela ----------------------------------------------
+
+    def puxar_o_freio_da_morte(self) -> None:
+        """3 mortes seguidas sem voltar ao ponto: a conta PARA, de verdade.
+
+        Até 27/09/2026 o ciclo da morte devolvia `False` para um chamador que o
+        descartava: logava "PARO esta conta" e a macro seguia (26/09 22:31, a
+        4ª morte veio 24 min depois). Achado C6 da auditoria. A marca vale para
+        a conta mesmo convocada pelo líder (decisão com o council: o líder não
+        pode manter rodando quem o freio parou) e sai com um novo Iniciar.
+        """
+        self._freio_da_morte = True
+
+    def _motivo_da_parada(self) -> str | None:
+        """Por que esta conta está online e PARADA, ou `None` se não está."""
+        if self._freio_da_morte:
+            return ("o freio das 3 mortes seguidas sem voltar ao ponto foi "
+                    "puxado -- o spot virou armadilha, ou o ponto inicial está "
+                    "errado. Pare e Inicie de novo para retomar.")
+        if self._personagem_errado is not None:
+            return (f"logada como '{self._personagem_errado}', que não é o "
+                    "personagem desta conta.")
+        return None
 
     def _aceitar_o_personagem_lido(self, nome: str, *, renomear: bool = False) -> bool:
         """Grava o nick LIDO DA MEMÓRIA -- a menos que seja OUTRO personagem.
@@ -1363,16 +1388,15 @@ class AccountSupervisor(threading.Thread):
         while not self.stop_event.is_set():
             ctx.raise_if_stopped()
 
-            # PERSONAGEM ERRADO: online e PARADA, antes de qualquer farm ou APP
-            # (`_aceitar_o_personagem_lido`). A saúde da janela continua sendo
-            # conferida, como no ramo ocioso: uma queda reloga, e o relogin
-            # confere o personagem de novo.
-            if self._personagem_errado is not None:
-                if anunciado != "personagem errado":
-                    anunciado = "personagem errado"
-                    self._status(
-                        f"Parada: logada como '{self._personagem_errado}', que "
-                        "não é o personagem desta conta.", erro=True)
+            # CONTA PARADA -- personagem errado ou freio da morte -- fica online,
+            # antes de qualquer farm ou APP (`_motivo_da_parada`). A saúde da
+            # janela continua sendo conferida, como no ramo ocioso: uma queda
+            # reloga, e o relogin confere o personagem de novo.
+            parada = self._motivo_da_parada()
+            if parada is not None:
+                if anunciado != parada:
+                    anunciado = parada
+                    self._status(f"Parada: {parada}", erro=True)
                 reason = watchdog.check(ctx.snapshot())
                 if reason is not DcReason.NONE:
                     raise Disconnected(reason.value)
@@ -2555,6 +2579,8 @@ class AccountSupervisor(threading.Thread):
             fonte_dos_passos=lambda: self._dono_da_macro().settings.app.passos_ativos,
             continuar=lambda: (
                 not self.stop_event.is_set()
+                # O freio da morte vence até a convocação do líder.
+                and not self._freio_da_morte
                 # Ou a caixa desta conta, OU a convocação do líder. É isto que
                 # faz o seguidor parar quando o líder desliga o modo APP.
                 and (app.enabled or self._lider_do_time() is not None)

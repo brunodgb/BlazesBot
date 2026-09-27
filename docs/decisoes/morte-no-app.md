@@ -72,6 +72,19 @@ zera o contador, porque um farm de horas morre várias vezes e isso é normal.
 Sem o contador, um spot que virou armadilha vira um moedor de tentativas a noite
 toda.
 
+**27/09/2026 — o freio só passou a frear agora.** O ciclo devolvia `False` e
+logava "PARO esta conta", mas quem recebia o `False` (`_uma_volta_simples`)
+devolvia para `rodar()`, que descarta o retorno da volta: a macro seguia.
+Medido em 26/09 22:31 (blazesofgamer): "PARO esta conta", e a 4ª morte 24 min
+depois. Os dois testes do freio conferiam só o `False` interno, nunca a conta.
+Agora o ciclo recebe `puxar_o_freio` e chama
+`AccountSupervisor.puxar_o_freio_da_morte`: o executor para na volta corrente,
+e o `_operate` mantém a conta **online e parada** (o mesmo ramo do personagem
+errado, com o watchdog valendo). **Vence a convocação do líder** — decisão
+conferida com o claude-council: um seguidor que o freio parou não pode seguir
+rodando porque o líder o chama. Sai com um novo **Iniciar** (o supervisor
+nasce de novo); um relogin não desarma o freio.
+
 ## Onde mora, e por quê
 
 `blazesbot/bot/morte.py` — no `bot/`, **não** no `bot/app/`. Os dois lados
