@@ -745,18 +745,23 @@ class TeamService:
             ctx.log.warning("'%s' não entrou no time em %.0fs",
                             nick, ESPERA_PELA_RESPOSTA)
 
+        # SEM TIME, A RESPOSTA É `False` -- quem decide é a cave (o BC refaz o
+        # convite, a HH cai em RECUPERAR). Era `True` até 27/09/2026 e custou
+        # 60 min na porta da HH: docs/decisoes/reset-de-time.md, Decisão 3. As
+        # janelas fecham antes: a Block list aberta engole o próximo clique.
         ctx.log.warning(
-            "Não consegui formar time com '%s'. Sigo para a entrada da cave: sem "
-            "troca de time o boss pode não renascer, mas é melhor tentar a run do "
-            "que travar aqui. Confira se a conta de reset está online e com "
-            "'aceitar convites de time' marcado.", nick,
+            "Não consegui formar time com '%s'. NÃO sigo para a entrada: sem "
+            "troca de time o boss não renasce. Refaço o convite. Confira se a "
+            "conta de reset está online e com 'aceitar convites de time' "
+            "marcado.", nick,
         )
         diario.registrar_evento(
             ctx.account_login, "time-nao-formado",
-            f"convidei '{nick}' e ele não entrou; o boss pode não renascer",
+            f"convidei '{nick}' e ele não entrou; não entro sem time",
             ctx.memory.position(), ctx.memory.location(),
         )
-        return True
+        self._fechar_janelas()
+        return False
 
     def sair_do_time(self) -> bool:
         """Sai do time por DOIS CLIQUES medidos no cliente.

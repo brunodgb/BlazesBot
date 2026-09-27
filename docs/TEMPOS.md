@@ -362,10 +362,10 @@ mudou** — e a coluna mostra de quanto era. É o ponto de restauração.
 | *literal em* `_adicionar_nick` | 0.2 s | = | FIXO | [team.py:466](blazesbot/bot/team.py#L466) | `_adicionar_nick` | Adiciona um nick à Block list pelo botão Block. |
 | *literal em* `_adicionar_nick` | 0.6 s | = | FIXO | [team.py:468](blazesbot/bot/team.py#L468) | `_adicionar_nick` | Adiciona um nick à Block list pelo botão Block. |
 | *literal em* `_enviar_convite` | 0.5 s | = | FIXO | [team.py:641](blazesbot/bot/team.py#L641) | `_enviar_convite` | Envia o convite pelo MENU DE CONTEXTO da entrada na Block list. |
-| *literal em* `sair_do_time` | 0.4 s | = | FIXO | [team.py:809](blazesbot/bot/team.py#L809) | `sair_do_time` | Sai do time por DOIS CLIQUES medidos no cliente. |
-| *literal em* `sair_do_time` | 0.5 s | = | FIXO | [team.py:824](blazesbot/bot/team.py#L824) | `sair_do_time` | Sai do time por DOIS CLIQUES medidos no cliente. |
-| *literal em* `_aceitar` | 0.5 s | = | FIXO | [team.py:1166](blazesbot/bot/team.py#L1166) | `_aceitar` |  |
-| *literal em* `_recusar` | 0.5 s | = | FIXO | [team.py:1173](blazesbot/bot/team.py#L1173) | `_recusar` |  |
+| *literal em* `sair_do_time` | 0.4 s | = | FIXO | [team.py:814](blazesbot/bot/team.py#L814) | `sair_do_time` | Sai do time por DOIS CLIQUES medidos no cliente. |
+| *literal em* `sair_do_time` | 0.5 s | = | FIXO | [team.py:829](blazesbot/bot/team.py#L829) | `sair_do_time` | Sai do time por DOIS CLIQUES medidos no cliente. |
+| *literal em* `_aceitar` | 0.5 s | = | FIXO | [team.py:1171](blazesbot/bot/team.py#L1171) | `_aceitar` |  |
+| *literal em* `_recusar` | 0.5 s | = | FIXO | [team.py:1178](blazesbot/bot/team.py#L1178) | `_recusar` |  |
 | `ESPERA_DEPOIS_DO_CLIQUE` | 0.35 s | = | FIXO | [teste_do_cursor.py:100](blazesbot/bot/teste_do_cursor.py#L100) | `_uma_fase` |  |
 | *literal em* `main` | 8 s | = | FIXO | [teste_do_cursor.py:476](blazesbot/bot/teste_do_cursor.py#L476) | `main` |  |
 | `CADENCIA_DAS_CONFERENCIAS` | 60 s (1 min) | = | PASSO | [time_do_app.py:116](blazesbot/bot/time_do_app.py#L116) | `montar_se_for_a_hora` | De quanto em quanto tempo o líder confere se o time está completo. |

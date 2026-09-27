@@ -675,3 +675,51 @@ def test_AS_DUAS_CAVES_so_entram_com_time():
         assert testes, (
             f"{rotina.__name__}.{metodo} descarta a resposta de `montar_time` "
             f"e entra na cave sem time")
+
+
+# ===========================================================================
+# A RESPOSTA DE `montar_time` TEM QUE SER A VERDADE (achado C3, 27/09/2026)
+# ===========================================================================
+#
+# O teste acima trava que as rotinas PERGUNTAM; ele não olha o que
+# `montar_time` RESPONDE. E ela respondia `True` com o time NÃO formado -- um
+# resto de fb776800 (03/09), anterior à decisão de 25/09. Medido em 25/09: a
+# HH seguiu para a porta sem time e ficou 60 min lá (9.935 tentativas), num
+# covil sem boss para renascer. Aqui é COMPORTAMENTO: o convite sai, ninguém
+# aceita, e a resposta tem que ser `False`.
+
+
+def _servico_com_o_reseter_calado(tmp_path, monkeypatch, nick="NickDoTesteC3"):
+    import logging
+    from types import SimpleNamespace
+
+    monkeypatch.setattr(mod_team, "ESPERA_PELA_RESPOSTA", 0.0)
+    monkeypatch.setattr(mod_mural, "_CONVITES", {})
+    monkeypatch.setattr(mod_mural, "_ACEITES", {})
+    ctx = SimpleNamespace(
+        templates=SimpleNamespace(folder=tmp_path),
+        log=logging.getLogger("teste.reset_de_time"),
+        char_name="QuemConvida", account=SimpleNamespace(login="conta-c3"),
+        account_login="conta-c3",
+        raise_if_stopped=lambda: None, tick=lambda segundos: None,
+        memory=SimpleNamespace(tamanho_do_time=lambda: 1, team_size=lambda: None,
+                               position=lambda: (0, 0), location=lambda: "teste"),
+    )
+    servico = mod_team.TeamService(ctx, nick_do_reset=lambda: nick)
+    monkeypatch.setattr(servico, "_enviar_convite", lambda _nick: True)
+    fechou = []
+    monkeypatch.setattr(servico, "_fechar_janelas", lambda: fechou.append(1) or True)
+    servico.fechou = fechou
+    return servico
+
+
+def test_convite_que_NINGUEM_ACEITOU_responde_que_nao_ha_time(tmp_path, monkeypatch):
+    servico = _servico_com_o_reseter_calado(tmp_path, monkeypatch)
+    assert servico.montar_time() is False
+
+
+def test_sem_time_a_lista_de_amigos_fecha_antes_de_voltar(tmp_path, monkeypatch):
+    """A lista aberta tapa o NPC da tentativa seguinte."""
+    servico = _servico_com_o_reseter_calado(tmp_path, monkeypatch)
+    servico.montar_time()
+    assert servico.fechou, "a saída sem time não fechou as janelas do convite"

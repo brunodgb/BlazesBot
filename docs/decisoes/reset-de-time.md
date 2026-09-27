@@ -503,3 +503,15 @@ run inteira acontece num covil já limpo. Agora ele não entra e refaz o convite
 na volta seguinte, com o personagem parado na porta — onde ele já está.
 
 Travado por `tests/test_reset_de_time.py`.
+
+**27/09/2026 — a decisão só passou a valer agora.** Honrar a resposta não
+adiantava enquanto a resposta mentia: depois das duas tentativas de convite,
+`montar_time` registrava "Sigo para a entrada da cave" e devolvia **`True`** —
+um resto de `fb776800` (03/09), anterior a esta decisão. O único `False` era o
+do nick vazio. Custo medido em 25/09: a creubo seguiu para a porta da HH sem
+time e ficou **60 min** lá (9.935 tentativas), até o teto de 1 h. O teste que
+travava a decisão conferia pela AST que as rotinas **perguntam**, não o que a
+função **responde** — por isso passou verde. Agora a saída sem time devolve
+`False` e fecha as janelas do convite antes (a Block list aberta engole o
+clique no NPC seguinte); o teste novo é de comportamento: convite enviado,
+ninguém aceita, a resposta é `False`.
