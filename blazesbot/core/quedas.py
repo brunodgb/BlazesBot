@@ -40,6 +40,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import threading
 import time
 from collections import deque
@@ -57,6 +58,13 @@ DIAS_GUARDADOS = 3
 
 PASTA = Path("logs") / "quedas"
 ARQUIVO = PASTA / "quedas.jsonl"
+
+# UMA TRAVA PARA O ARQUIVO (achado C9, 27/09/2026). Numa onda, as 7 contas caem
+# no mesmo segundo e todas gravam; a poda de uma lia a lista, a outra fazia o
+# append, e a reescrita da primeira apagava o cartão da segunda, calada. A aba
+# da interface também poda (`listar`), de outra thread. Reentrante porque
+# `registrar` poda com ela na mão.
+_TRAVA_DO_ARQUIVO = threading.RLock()
 
 # Linhas de log guardadas por conta. NÃO aparecem na tela (ver `FASES`); vão
 # para o arquivo e para o relatório de suporte.
@@ -351,9 +359,10 @@ def registrar(
             registro["print"] = nome
 
         PASTA.mkdir(parents=True, exist_ok=True)
-        with ARQUIVO.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(registro, ensure_ascii=False) + "\n")
-        podar(agora=carimbo)
+        with _TRAVA_DO_ARQUIVO:
+            with ARQUIVO.open("a", encoding="utf-8") as f:
+                f.write(json.dumps(registro, ensure_ascii=False) + "\n")
+            podar(agora=carimbo)
     except Exception:
         logging.getLogger("blazes").debug(
             "Não consegui gravar o histórico de quedas", exc_info=True)
@@ -389,23 +398,29 @@ def podar(agora: float | None = None) -> int:
     e imagem sem histórico seria lixo que ninguém encontra.
     """
     corte = (agora if agora is not None else time.time()) - DIAS_GUARDADOS * 86400
-    registros = _carregar()
-    ficam = [r for r in registros if r.get("quando", 0) >= corte]
-    if len(ficam) == len(registros):
-        return 0
-    try:
-        vivos = {r.get("print") for r in ficam}
-        for r in registros:
-            nome = r.get("print")
-            if nome and nome not in vivos:
-                (PASTA / nome).unlink(missing_ok=True)
-                (PASTA / nome_da_miniatura(nome)).unlink(missing_ok=True)
-        ARQUIVO.write_text(
-            "".join(json.dumps(r, ensure_ascii=False) + "\n" for r in ficam),
-            encoding="utf-8")
-    except OSError:
-        return 0
-    return len(registros) - len(ficam)
+    with _TRAVA_DO_ARQUIVO:
+        registros = _carregar()
+        ficam = [r for r in registros if r.get("quando", 0) >= corte]
+        if len(ficam) == len(registros):
+            return 0
+        try:
+            vivos = {r.get("print") for r in ficam}
+            for r in registros:
+                nome = r.get("print")
+                if nome and nome not in vivos:
+                    (PASTA / nome).unlink(missing_ok=True)
+                    (PASTA / nome_da_miniatura(nome)).unlink(missing_ok=True)
+            # ATÔMICO: `write_text` trunca antes de escrever, e o processo que
+            # morre no meio levaria o histórico inteiro. O `.tmp` + replace
+            # deixa quem lê ver o arquivo velho ou o novo, nunca a metade.
+            temporario = ARQUIVO.with_suffix(".jsonl.tmp")
+            temporario.write_text(
+                "".join(json.dumps(r, ensure_ascii=False) + "\n" for r in ficam),
+                encoding="utf-8")
+            os.replace(temporario, ARQUIVO)
+        except OSError:
+            return 0
+        return len(registros) - len(ficam)
 
 
 def amigavel(registro: dict[str, Any],

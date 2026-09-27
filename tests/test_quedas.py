@@ -249,3 +249,40 @@ def test_relatorio_leva_o_tecnico_que_a_tela_esconde():
 
 def test_relatorio_vazio_nao_inventa():
     assert "Nenhuma queda" in quedas.relatorio([])
+
+
+def test_a_poda_nao_apaga_a_queda_que_chegou_no_meio(monkeypatch):
+    """Numa onda, 7 contas caem no mesmo segundo e todas gravam; a poda de uma
+    corre com o append da outra. Sem trava, a poda regravava a lista LIDA ANTES
+    do append e o cartão da outra conta sumia calado (achado C9, 27/09/2026).
+
+    A intrusa é lançada no meio exato da poda: com a trava ela espera; sem ela,
+    grava ali e é apagada pela reescrita.
+    """
+    import threading
+
+    agora = 2_000_000_000.0
+    quedas.PASTA.mkdir(parents=True, exist_ok=True)
+    velha = {"quando": agora - 10 * 86400, "conta": "velha", "print": None}
+    quedas.ARQUIVO.write_text(json.dumps(velha) + "\n", encoding="utf-8")
+
+    carregar_de_verdade = quedas._carregar
+    intrusa: list[threading.Thread] = []
+
+    def _carregar_com_intrusa():
+        registros = carregar_de_verdade()
+        if not intrusa:
+            t = threading.Thread(target=lambda: quedas.registrar(
+                conta="nova", motivo="conexao", agora=agora))
+            intrusa.append(t)
+            t.start()
+            t.join(timeout=0.3)
+        return registros
+
+    monkeypatch.setattr(quedas, "_carregar", _carregar_com_intrusa)
+    quedas.podar(agora=agora)
+    intrusa[0].join(timeout=5)
+    contas = [json.loads(linha)["conta"]
+              for linha in quedas.ARQUIVO.read_text(encoding="utf-8").splitlines()
+              if linha.strip()]
+    assert contas == ["nova"], contas

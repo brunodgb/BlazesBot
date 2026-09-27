@@ -657,12 +657,12 @@ ligar código não testado.
 | `SEGUNDOS_PARA_O_LOG_CONFIRMAR` | `5.0` | [blazesbot/core/petbug.py:235](blazesbot/core/petbug.py#L235) | — | Espera pela confirmação no log depois do clique. |
 | `SEGUNDOS_PARA_O_PROGRAMA_MORRER` | `3.0` | [blazesbot/core/petbug.py:233](blazesbot/core/petbug.py#L233) | — | Espera o processo antigo MORRER antes de abrir o novo. Curto: é um formulário |
 | `TEXTO_DO_BOTAO` | `'Patch'` | [blazesbot/core/petbug.py:171](blazesbot/core/petbug.py#L171) | — | — |
-| `DIAS_GUARDADOS` | `3` | [blazesbot/core/quedas.py:56](blazesbot/core/quedas.py#L56) | web_app.py | Por TEMPO, e não por contagem: a pergunta é "o que aconteceu essa noite", e |
-| `FASE_DESCONHECIDA` | `'Estava começando a rodar'` | [blazesbot/core/quedas.py:125](blazesbot/core/quedas.py#L125) | — | — |
-| `LARGURA_DA_MINIATURA` | `320` | [blazesbot/core/quedas.py:78](blazesbot/core/quedas.py#L78) | — | Largura da MINIATURA, gravada ao lado do print inteiro. |
-| `LINHAS_DE_LOG_GUARDADAS` | `20` | [blazesbot/core/quedas.py:63](blazesbot/core/quedas.py#L63) | — | Linhas de log guardadas por conta. NÃO aparecem na tela (ver `FASES`); vão |
-| `MOTIVO_DESCONHECIDO` | `'O jogo parou de responder'` | [blazesbot/core/quedas.py:95](blazesbot/core/quedas.py#L95) | — | — |
-| `QUALIDADE_DO_JPEG` | `85` | [blazesbot/core/quedas.py:69](blazesbot/core/quedas.py#L69) | — | Qualidade do JPEG. O print aqui é para OLHO HUMANO ler um aviso, não para |
+| `DIAS_GUARDADOS` | `3` | [blazesbot/core/quedas.py:57](blazesbot/core/quedas.py#L57) | web_app.py | Por TEMPO, e não por contagem: a pergunta é "o que aconteceu essa noite", e |
+| `FASE_DESCONHECIDA` | `'Estava começando a rodar'` | [blazesbot/core/quedas.py:133](blazesbot/core/quedas.py#L133) | — | — |
+| `LARGURA_DA_MINIATURA` | `320` | [blazesbot/core/quedas.py:86](blazesbot/core/quedas.py#L86) | — | Largura da MINIATURA, gravada ao lado do print inteiro. |
+| `LINHAS_DE_LOG_GUARDADAS` | `20` | [blazesbot/core/quedas.py:71](blazesbot/core/quedas.py#L71) | — | Linhas de log guardadas por conta. NÃO aparecem na tela (ver `FASES`); vão |
+| `MOTIVO_DESCONHECIDO` | `'O jogo parou de responder'` | [blazesbot/core/quedas.py:103](blazesbot/core/quedas.py#L103) | — | — |
+| `QUALIDADE_DO_JPEG` | `85` | [blazesbot/core/quedas.py:77](blazesbot/core/quedas.py#L77) | — | Qualidade do JPEG. O print aqui é para OLHO HUMANO ler um aviso, não para |
 | `DESLOCAMENTO_6139_PARA_6400` | `96` | [blazesbot/core/rebase.py:91](blazesbot/core/rebase.py#L91) | — | Deslocamento MEDIDO entre a versão 6139 e a 6400 do cliente, em dois |
 | `EMPATE_ENTRE_VIZINHOS` | `8.0` | [blazesbot/core/rota.py:141](blazesbot/core/rota.py#L141) | — | Diferença de distância abaixo da qual dois waypoints VIZINHOS contam como |
 | `NA_ROTA` | `12.0` | [blazesbot/core/rota.py:137](blazesbot/core/rota.py#L137) | mapa_bc.py, routine.py, mapa_hh.py | Distância até o waypoint mais próximo abaixo da qual o personagem é considerado |
