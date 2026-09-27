@@ -87,7 +87,11 @@ TETO_DE_ESPERAS_CEGAS = {
 # 251 -> 250 em 26/09/2026: o número real já era 250 e a folga de um deixou
 # passar, calado, um LIMIAR de log que o nome fazia parecer espera. Desde então
 # o total também aperta sozinho (`test_a_catraca_APERTA_quando_o_numero_cai`).
-TETO_GERAL = 250
+# 250 -> 251 em 27/09/2026, e a SUBIDA tem nome: a conta que relogou no
+# personagem ERRADO fica online e parada (`supervisor._operate`, achado C4) --
+# ela espera o usuário agir, e isso não tem observável; a queda é conferida a
+# cada volta pelo watchdog, como no ramo ocioso ao lado (mesmos 2,5 s).
+TETO_GERAL = 251
 
 
 # A extração parseia o projeto inteiro (~2 s) e o código não muda durante a

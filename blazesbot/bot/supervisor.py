@@ -255,6 +255,9 @@ class AccountSupervisor(threading.Thread):
         # A BASE DO APP É A FOTO DO ARRANQUE PEDIDO PELO USUÁRIO -- não do
         # relogin. Ver `_capturar_a_base_do_app`.
         self._base_do_app_capturada = False
+        # O nick que a memória leu quando NÃO é o desta conta; a sessão fica
+        # online e parada. Ver `_aceitar_o_personagem_lido`.
+        self._personagem_errado: str | None = None
 
     # -- utilidades --------------------------------------------------------
 
@@ -342,8 +345,8 @@ class AccountSupervisor(threading.Thread):
         else:
             self.log.debug("PetBug: %s", resultado)
 
-    def _status(self, message: str) -> None:
-        self.log.info(message)
+    def _status(self, message: str, erro: bool = False) -> None:
+        (self.log.error if erro else self.log.info)(message)
         if self.on_status:
             try:
                 self.on_status(self.account.login, message)
@@ -367,6 +370,38 @@ class AccountSupervisor(threading.Thread):
             time.sleep(0.125)
 
     # -- identidade da janela ----------------------------------------------
+
+    def _aceitar_o_personagem_lido(self, nome: str, *, renomear: bool = False) -> bool:
+        """Grava o nick LIDO DA MEMÓRIA -- a menos que seja OUTRO personagem.
+
+        O login clica na plaquinha pela posição (Left/Center/Right) e aperta
+        Enter sem conferir o realce. Em 24/09 03:05 um relogin entrou em
+        WizzOfBlazes2 no lugar de WizzOfBlazes4, este método gravou o nick
+        errado como o da conta e o APP gravou a base no lugar errado: ~1 h de
+        conta improdutiva, identidade corrompida no config. Achado C4 da
+        auditoria de 27/09/2026 (decisão com o council: parar sem gravar, não
+        matar -- a regra é que só desconexão confirmada fecha o jogo).
+
+        Nick divergente do salvo: NÃO grava, NÃO renomeia a janela, marca a
+        sessão (`_operate` a mantém online e parada) e avisa com ERRO. Sem nick
+        salvo (conta nova) ou sem leitura, não há o que comparar e grava como
+        sempre. Devolve se aceitou.
+        """
+        esperado = (self.account.last_char_name or "").strip()
+        lido = (nome or "").strip()
+        if esperado and lido and lido.casefold() != esperado.casefold():
+            self._personagem_errado = lido
+            self._status(
+                f"ERRO: o login entrou como '{lido}', mas esta conta é de "
+                f"'{esperado}'. NÃO gravei nick nem base e a conta fica online "
+                "PARADA. Confira a posição do personagem (Left/Center/Right) na "
+                "edição da conta; se a troca foi de propósito, atualize o nick "
+                "salvo e reinicie.", erro=True)
+            return False
+        if renomear:
+            self._batizar_janela(lido)
+        self._gravar_personagem(lido)
+        return True
 
     def _gravar_personagem(self, nome: str) -> None:
         """Guarda o nick desta conta NO ARQUIVO de configuração.
@@ -956,6 +991,7 @@ class AccountSupervisor(threading.Thread):
         # `LoginDetector`, não o vigia global. Ver
         # `sentinela.SO_FATO_DO_SISTEMA_DURANTE_O_LOGIN`.
         self._login_em_curso = True
+        self._personagem_errado = None        # cada sessão confere de novo
         self._status("procurando uma janela do jogo para esta conta")
         ja_logado = False
         personagem_adotado: str | None = None
@@ -1011,8 +1047,9 @@ class AccountSupervisor(threading.Thread):
             # Só grava o que veio da MEMÓRIA. Se o nome foi deduzido (login da
             # conta, porque a memória não abriu ainda), gravar sobrescreveria o
             # nick bom por um palpite -- e o palpite não reconhece janela nenhuma.
+            # E só se for O PERSONAGEM DESTA CONTA (`_aceitar_o_personagem_lido`).
             if nome_confirmado:
-                self._gravar_personagem(char_name)
+                self._aceitar_o_personagem_lido(char_name)
 
         # LOGIN CONCLUÍDO -- os dois caminhos acima chegam aqui, tanto a janela
         # adotada já logada quanto a sequência de login inteira. É o único sinal
@@ -1069,11 +1106,11 @@ class AccountSupervisor(threading.Thread):
                     lido = (memoria.char_name() or "").strip()
                     if lido:
                         char_name = lido
-                        # Renomear é incondicional (e não faz nada se o título já
-                        # está certo): assim uma janela batizada com o login por
-                        # uma versão antiga passa a se identificar pelo nick.
-                        self._batizar_janela(lido)
-                        self._gravar_personagem(lido)
+                        # Renomear não faz nada se o título já está certo: assim
+                        # uma janela batizada com o login por uma versão antiga
+                        # passa a se identificar pelo nick -- se o nick for o
+                        # desta conta.
+                        self._aceitar_o_personagem_lido(lido, renomear=True)
                     break
                 self._sleep_interruptible(1.5)
             else:
@@ -1325,6 +1362,22 @@ class AccountSupervisor(threading.Thread):
 
         while not self.stop_event.is_set():
             ctx.raise_if_stopped()
+
+            # PERSONAGEM ERRADO: online e PARADA, antes de qualquer farm ou APP
+            # (`_aceitar_o_personagem_lido`). A saúde da janela continua sendo
+            # conferida, como no ramo ocioso: uma queda reloga, e o relogin
+            # confere o personagem de novo.
+            if self._personagem_errado is not None:
+                if anunciado != "personagem errado":
+                    anunciado = "personagem errado"
+                    self._status(
+                        f"Parada: logada como '{self._personagem_errado}', que "
+                        "não é o personagem desta conta.", erro=True)
+                reason = watchdog.check(ctx.snapshot())
+                if reason is not DcReason.NONE:
+                    raise Disconnected(reason.value)
+                ctx.tick(2.5)
+                continue
 
             # MODO APP: sistema separado, e o primeiro a ser consultado.
             #

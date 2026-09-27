@@ -233,6 +233,18 @@
   thread que roda o tempo todo, com o bot ocioso ou não.
 - Interruptor: `sentinela.MATAR_JANELA_TRAVADA` (o único critério que mata janela
   que o Windows ainda considera viva).
+- **LOGIN NO PERSONAGEM ERRADO NÃO GRAVA NADA E A CONTA FICA PARADA** (27/09/2026,
+  `AccountSupervisor._aceitar_o_personagem_lido`). O login escolhe a plaquinha
+  pela posição e não confere o realce; em 24/09 um relogin entrou em outro
+  personagem da mesma conta, o nick errado foi gravado como o da conta e o APP
+  gravou a base no lugar errado. Nick lido da memória diferente do salvo: não
+  grava nick nem base, não renomeia a janela, avisa com ERRO e o `_operate`
+  mantém a conta online e parada (o watchdog segue valendo; a próxima sessão
+  confere de novo). **Não mata o cliente** — só desconexão confirmada fecha o
+  jogo. Conta sem nick salvo grava o que leu (é o primeiro login).
+- **O RELOGIN NÃO FOTOGRAFA A BASE DO APP** (27/09/2026,
+  `_capturar_a_base_do_app`): só o arranque pedido pelo usuário (Iniciar, ou
+  religar o APP). Ver `docs/decisoes/time-do-app.md`.
 
 ---
 ## O laço do APP — `docs/decisoes/cura-no-app.md`
