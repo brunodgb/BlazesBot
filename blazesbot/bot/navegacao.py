@@ -1355,6 +1355,20 @@ class Navigator:
                 voltou = houve_rollback(
                     indice, atual, rota, FOLGA_ROLLBACK)
                 if voltou is not None:
+                    # A leitura pode ter pego o personagem NO MEIO do "pulo" do
+                    # lag -- a posição ainda se move. RECONFIRMA ANTES de avisar
+                    # e de agir: até 27/09/2026 a releitura depois do tick não
+                    # decidia nada, e 410 de 505 rollbacks da creubo já não
+                    # existiam 0,25 s depois (1.382 s de manobra num dia, contra
+                    # 74 s dos que se sustentaram). Achado A6 da auditoria.
+                    ctx.tick(0.25)
+                    atual = self.position()
+                    if atual is None:
+                        raise Disconnected("posição ilegível ao reconfirmar o rollback")
+                    voltou = houve_rollback(indice, atual, rota, FOLGA_ROLLBACK)
+                    if voltou is None:
+                        ctx.log.debug("O rollback não se confirmou na releitura.")
+                        continue
                     ctx.log.warning(
                         "Voltei do waypoint %s para perto do %s (posição %s). "
                         "Parece lag ou rollback; relançando a navegação.",
@@ -1365,12 +1379,6 @@ class Navigator:
                         f"waypoint {indice + 1} -> {voltou + 1}",
                         atual, ctx.memory.location(),
                     )
-                    # A leitura pode ter pego o personagem NO MEIO do "pulo" do
-                    # lag -- a posição ainda se move. Reconfirmar ~0,5 s antes
-                    # de relançar evita apontar para onde ele já não está.
-                    # (A rotina relê a posição sozinha; o tick é só para o
-                    # servidor assentar.)
-                    ctx.tick(0.25)
                     # `tras_primeiro=True`: no rollback o personagem acabou de
                     # PERDER terreno, e o chão por onde ele passou há instantes é
                     # o comprovadamente andável. Nos outros gatilhos a frente vem

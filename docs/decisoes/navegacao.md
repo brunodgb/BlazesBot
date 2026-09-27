@@ -460,9 +460,13 @@ perde precisão, e a precisão de salto curto nunca foi medida.
   **2+ índices** é rollback e relança (o usuário confirmou: o lag costuma
   devolver 2-3 waypoints, nunca mais de 5). O rollback relança com
   `tras_primeiro=True` (o chão por onde o personagem acabou de passar é o
-  comprovadamente andável) e reconfirma a posição ~0,5 s antes de relançar
-  (leitura pode pegar o personagem no meio do "pulo" do lag). Se a manobra não
-  alcançar nada, o índice volta para o waypoint do rollback.
+  comprovadamente andável) e reconfirma a posição 0,25 s depois, ANTES de avisar
+  e de agir (leitura pode pegar o personagem no meio do "pulo" do lag): se na
+  releitura o rollback não se sustenta, nada acontece. **Até 27/09/2026 esta
+  reconfirmação estava escrita aqui mas não no código** — a releitura não
+  decidia, e 410 de 505 rollbacks da creubo (26/09) já não existiam 0,25 s
+  depois (1.382 s de manobra num dia, contra 74 s dos confirmados). Se a
+  manobra não alcançar nada, o índice volta para o waypoint do rollback.
 
   O **círculo de offsets** e a **retomada de rota**
   (`onde_retomar`) ficaram **DESLIGADOS do fluxo** por decisão do usuário ("só
