@@ -261,6 +261,9 @@ class AccountSupervisor(threading.Thread):
         # O freio das 3 mortes seguidas, puxado pelo ciclo da morte do APP. Vale
         # até um novo Iniciar: um relogin não desarma um spot que virou armadilha.
         self._freio_da_morte = False
+        # O `Disconnected` da sessão foi QUEDA (e não leitura ruim)? Ver
+        # `_a_queda_esta_confirmada`.
+        self._queda_confirmada = False
 
     # -- utilidades --------------------------------------------------------
 
@@ -377,11 +380,8 @@ class AccountSupervisor(threading.Thread):
     def puxar_o_freio_da_morte(self) -> None:
         """3 mortes seguidas sem voltar ao ponto: a conta PARA, de verdade.
 
-        Até 27/09/2026 o ciclo da morte devolvia `False` para um chamador que o
-        descartava: logava "PARO esta conta" e a macro seguia (26/09 22:31, a
-        4ª morte veio 24 min depois). Achado C6 da auditoria. A marca vale para
-        a conta mesmo convocada pelo líder (decisão com o council: o líder não
-        pode manter rodando quem o freio parou) e sai com um novo Iniciar.
+        Vence a convocação do líder e sai com um novo Iniciar. Achado C6
+        (27/09/2026): docs/decisoes/morte-no-app.md, "O freio".
         """
         self._freio_da_morte = True
 
@@ -399,18 +399,10 @@ class AccountSupervisor(threading.Thread):
     def _aceitar_o_personagem_lido(self, nome: str, *, renomear: bool = False) -> bool:
         """Grava o nick LIDO DA MEMÓRIA -- a menos que seja OUTRO personagem.
 
-        O login clica na plaquinha pela posição (Left/Center/Right) e aperta
-        Enter sem conferir o realce. Em 24/09 03:05 um relogin entrou em
-        WizzOfBlazes2 no lugar de WizzOfBlazes4, este método gravou o nick
-        errado como o da conta e o APP gravou a base no lugar errado: ~1 h de
-        conta improdutiva, identidade corrompida no config. Achado C4 da
-        auditoria de 27/09/2026 (decisão com o council: parar sem gravar, não
-        matar -- a regra é que só desconexão confirmada fecha o jogo).
-
-        Nick divergente do salvo: NÃO grava, NÃO renomeia a janela, marca a
-        sessão (`_operate` a mantém online e parada) e avisa com ERRO. Sem nick
-        salvo (conta nova) ou sem leitura, não há o que comparar e grava como
-        sempre. Devolve se aceitou.
+        Divergente do salvo: não grava, não renomeia a janela, marca a sessão
+        (o `_operate` a mantém online e parada) e avisa com ERRO. Sem nick salvo
+        grava como sempre. Devolve se aceitou. Achado C4 (27/09/2026); o porquê
+        em docs/INVARIANTES.md, "Login e relogin".
         """
         esperado = (self.account.last_char_name or "").strip()
         lido = (nome or "").strip()
@@ -1017,6 +1009,7 @@ class AccountSupervisor(threading.Thread):
         # `sentinela.SO_FATO_DO_SISTEMA_DURANTE_O_LOGIN`.
         self._login_em_curso = True
         self._personagem_errado = None        # cada sessão confere de novo
+        self._queda_confirmada = False        # ver `_a_queda_esta_confirmada`
         self._status("procurando uma janela do jogo para esta conta")
         ja_logado = False
         personagem_adotado: str | None = None
@@ -1177,7 +1170,7 @@ class AccountSupervisor(threading.Thread):
             # VIVO. Quem trata a exceção acima chama `_encerrar_caido`, que
             # MATA a janela -- depois disso não há mais o que fotografar nem
             # memória para consultar.
-            self._registrar_queda(ctx)
+            self._queda_confirmada = self._registrar_queda(ctx)
             raise
         finally:
             self.total_runs += ctx.runs_completed
@@ -1298,8 +1291,11 @@ class AccountSupervisor(threading.Thread):
             self._hh = HHRoutine(ctx)
         return self._hh
 
-    def _registrar_queda(self, ctx: BotContext) -> None:
-        """Grava a queda no histórico que a interface mostra.
+    def _registrar_queda(self, ctx: BotContext) -> bool:
+        """Grava a queda no histórico que a interface mostra. Devolve se HOUVE queda.
+
+        A resposta é o que `_a_queda_esta_confirmada` usa para decidir se fecha
+        o jogo: `False` = foi leitura ruim, não queda.
 
         SÓ QUEDA DE VERDADE DO JOGO. `Disconnected` também é levantada por
         leitura de memória ruim ("posição ilegível em goto()"), e isso não é
@@ -1313,6 +1309,7 @@ class AccountSupervisor(threading.Thread):
         Nunca levanta: falhar em gravar o histórico não pode atrapalhar o
         relogin, que é o que devolve a conta ao ar.
         """
+        houve = False
         try:
             queda = ctx.ultima_queda
             if not queda:
@@ -1324,8 +1321,9 @@ class AccountSupervisor(threading.Thread):
                 # futuro: um lugar, não um por modo.
                 anuncio = sentinela.cobrar_a_queda(self.account.login)
                 if not anuncio:
-                    return
+                    return False
                 queda = (anuncio[0], anuncio[1])
+            houve = True
             ctx.ultima_queda = None
             chave, quadro = queda
             rodando = (time.time() - ctx.stats.started_at
@@ -1357,6 +1355,25 @@ class AccountSupervisor(threading.Thread):
         except Exception:
             self.log.debug("Não consegui registrar a queda no histórico",
                            exc_info=True)
+        return houve
+
+    def _a_queda_esta_confirmada(self) -> bool:
+        """Há queda DE VERDADE? Só ela autoriza fechar o jogo (A2, 27/09/2026).
+
+        Queda anotada pelo watchdog/vigia (`_registrar_queda`), ou processo,
+        janela ou a caixa de conexão na avaliação de saúde de agora. Leitura
+        ruim com o cliente vivo não é queda; "não sei" não mata. O porquê:
+        docs/INVARIANTES.md, "Login e relogin".
+        """
+        if self._queda_confirmada or not self.pid or not self.hwnd:
+            return True
+        try:
+            motivo, _quadro = avaliar_saude(
+                self.pid, self.hwnd, bool(win32gui.IsWindow(self.hwnd)),
+                TemplateLibrary(Path("data") / "templates"))
+        except Exception:
+            return False
+        return motivo is not DcReason.NONE
 
     def _operate(self, ctx: BotContext) -> None:
         """Opera a conta logada, respeitando o farm ligado/desligado ao vivo.
@@ -2774,14 +2791,9 @@ class AccountSupervisor(threading.Thread):
     def _capturar_a_base_do_app(self, app, memoria, log, origem: str) -> None:
         """Grava a posição atual como base da trava -- UMA VEZ POR ARRANQUE.
 
-        `_rodar_modo_app` roda de novo a CADA RELOGIN, e até 27/09/2026 cada
-        entrada regravava a base persistida com a posição daquele instante. Um
-        relogin que caísse em outro lugar (ou em OUTRO PERSONAGEM, 24/09 03:05:
-        base (1864, 1674) trocada por (303, -447), ~1 h e 740 voltas abortadas)
-        apagava o ponto do usuário do config. Achado C5 da auditoria.
-
-        A marca volta a `False` quando o APP é desligado, e o supervisor nasce
-        de novo a cada Iniciar: parar e religar continua mudando o ponto.
+        O relogin não é arranque: a marca só volta a `False` com o APP desligado
+        (e o supervisor nasce de novo a cada Iniciar). Achado C5 (27/09/2026):
+        docs/decisoes/time-do-app.md, "A ÂNCORA VAI PARA O CONFIG TAMBÉM".
         """
         if self._base_do_app_capturada:
             log.info("Trava de posição: relogin -- mantenho a base do config "
@@ -2895,16 +2907,27 @@ class AccountSupervisor(threading.Thread):
 
                 except Disconnected as exc:
                     self.tentativas_de_login += 1
-                    self.relogin_count += 1
-                    self._status(f"Desconexão detectada: {exc}. "
-                                 f"Relogin #{self.relogin_count}")
-                    # AQUI o cliente é encerrado, e só aqui. A sessão morreu: a
-                    # janela não está logada nem na fila, então ela não vale nada
-                    # e ainda atrapalha -- o supervisor a reconheceria como "sua"
-                    # na volta seguinte e ficaria preso nela. Ver `_encerrar_caido`.
-                    # `_encerrar_caido` -> `_release` é quem apaga o anúncio do
-                    # vigia. Um só lugar, para os cinco caminhos de morte.
-                    self._encerrar_caido("Sessão caída")
+                    if self._a_queda_esta_confirmada():
+                        self.relogin_count += 1
+                        self._status(f"Desconexão detectada: {exc}. "
+                                     f"Relogin #{self.relogin_count}")
+                        # AQUI o cliente é encerrado, e só aqui. A sessão morreu:
+                        # a janela não está logada nem na fila, então ela não
+                        # vale nada e ainda atrapalha -- o supervisor a
+                        # reconheceria como "sua" na volta seguinte e ficaria
+                        # preso nela. Ver `_encerrar_caido`. `_encerrar_caido` ->
+                        # `_release` é quem apaga o anúncio do vigia. Um só
+                        # lugar, para os cinco caminhos de morte.
+                        self._encerrar_caido("Sessão caída")
+                    else:
+                        # LEITURA RUIM COM O CLIENTE VIVO NÃO É QUEDA: solta o
+                        # controle sem fechar o jogo, e a sessão seguinte readota
+                        # a janela já logada (~1 s, como no "Erro inesperado").
+                        self._status(
+                            f"{exc} -- mas o cliente segue vivo e sem aviso de "
+                            "queda: solto o controle SEM fechar o jogo e readoto "
+                            "a janela.")
+                        self._teardown()
                     delay = backoff_delay(self.tentativas_de_login,
                                           self.config.relogin_backoff_cap)
                     self._status(f"Aguardando {delay:.0f}s antes de religar")

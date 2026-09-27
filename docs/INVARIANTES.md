@@ -211,6 +211,14 @@
 - **QUEM RELIGA CONTINUA SENDO O SUPERVISOR.** O vigia não sabe o que é login. A
   thread do bot lê o anúncio (`BotContext.check_watchdog`), levanta
   `Disconnected`, e o `run()` faz `_encerrar_caido` → backoff → nova sessão.
+- **`Disconnected` DE LEITURA RUIM NÃO FECHA O JOGO** (27/09/2026,
+  `_a_queda_esta_confirmada`). Seis pontos levantam `Disconnected` numa única
+  leitura `None` da posição; antes os dois significados matavam o cliente. Agora
+  o `run()` só chama `_encerrar_caido` com a queda **confirmada** — anotada pelo
+  watchdog/vigia (`_registrar_queda` devolve se houve), ou processo/janela
+  sumidos ou a caixa de conexão na avaliação de saúde daquele instante
+  (`avaliar_saude`). Cliente vivo e sem aviso: `_teardown` (solta sem fechar) e
+  a sessão seguinte readota a janela. "Não sei" não mata.
 - **O ANÚNCIO MORRE JUNTO COM O CONTROLE DA JANELA**, em `_release()` — o ponto
   por onde os CINCO caminhos de morte de sessão passam, e não em cada um deles.
   Apaga-se também sozinho quando a conta volta noutro PID. Anúncio esquecido de
