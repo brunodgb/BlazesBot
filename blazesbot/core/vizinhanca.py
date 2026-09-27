@@ -24,6 +24,7 @@ só o `TARGET_ID`.
 
 from __future__ import annotations
 
+from .memory import ESCALA_DE_INIMIGO
 from .zones import distancia_linear
 
 # Raio, em unidades de jogo, do que conta como "em volta".
@@ -32,6 +33,18 @@ from .zones import distancia_linear
 # pegar o trem de mobs que mata um personagem de macro e estreito o bastante
 # para não descrever o spot inteiro.
 RAIO = 40
+
+
+def _e_mob_vivo(entidade) -> bool:
+    """A régua de `Memory.inimigos_proximos`: vida máxima na escala 100, vida > 0.
+
+    `entidades_vivas()` devolve também o pet, os jogadores e os cadáveres. Até
+    27/09/2026 `contar` contava todos como mob -- com 4 contas APP no mesmo
+    ponto, 221 de 246 ERROR de "TAB sem resposta, HÁ mob" tinham o "mob" a 1
+    unidade: o companheiro. `resumo` não usa este filtro, de propósito.
+    """
+    return (entidade.get("max_hp") == ESCALA_DE_INIMIGO
+            and (entidade.get("hp") or 0) > 0)
 
 
 def contar(memoria, raio: int = RAIO) -> tuple[int, float | None]:
@@ -47,7 +60,8 @@ def contar(memoria, raio: int = RAIO) -> tuple[int, float | None]:
             return 0, None
         distancias = sorted(
             distancia_linear(e["pos"], eu)
-            for e in memoria.entidades_vivas() if e.get("pos") is not None
+            for e in memoria.entidades_vivas()
+            if e.get("pos") is not None and _e_mob_vivo(e)
         )
     except Exception:
         return 0, None

@@ -1471,6 +1471,11 @@ Cada item é o que **não pode ser violado**. O detalhe de cada área mora em
   **rearma a cada minuto** — medido: duas contas ficaram 96 e 212 minutos
   apertando TAB sem uma linha no log, porque o aviso saía uma vez por sessão e a
   linha "não trouxe mob vivo" era suprimida justamente quando o TAB emudecia.
+  **"Mob" é mob vivo inimigo** (vida máxima na escala 100, vida > 0 — a régua de
+  `inimigos_proximos`): até 27/09/2026 `vizinhanca.contar` contava também o pet,
+  os jogadores do time e os cadáveres, e com 4 contas no mesmo ponto 221 de 246
+  ERRORs acusavam o companheiro a 1 unidade. `vizinhanca.resumo` (o log da
+  morte) continua listando toda entidade.
 - **NADA RECUSA UM ALVO VIVO POR DISTÂNCIA** (HOTFIX de 06/09/2026, com conta
   morta). O TAB do jogo entrega o mob **mais próximo primeiro** e vai afastando
   a cada toque: recusar o primeiro empurra a seleção para fora, e o bot acaba

@@ -624,7 +624,7 @@ ligar código não testado.
 | `BAG_OPEN_VALUE` | `903` | [blazesbot/core/memory.py:724](blazesbot/core/memory.py#L724) | — | — |
 | `DIALOGO_ABERTO_VALOR` | `16775` | [blazesbot/core/memory.py:656](blazesbot/core/memory.py#L656) | — | — |
 | `DIALOGO_FECHADO_VALOR` | `16774` | [blazesbot/core/memory.py:657](blazesbot/core/memory.py#L657) | — | — |
-| `ESCALA_DE_INIMIGO` | `100` | [blazesbot/core/memory.py:733](blazesbot/core/memory.py#L733) | afericao_do_aliado.py | HP máximo padrão de inimigos do covil (Gun Witch, Cemetery Guard, etc.) |
+| `ESCALA_DE_INIMIGO` | `100` | [blazesbot/core/memory.py:733](blazesbot/core/memory.py#L733) | afericao_do_aliado.py, vizinhanca.py | HP máximo padrão de inimigos do covil (Gun Witch, Cemetery Guard, etc.) |
 | `ESPELHO_DELTA` | `928` | [blazesbot/core/memory.py:110](blazesbot/core/memory.py#L110) | — | O BLOCO ATRASADO EM +0x3A0 -- o passado do estado, nao uma segunda fonte |
 | `JANELA_DE_COMBATE` | `16` | [blazesbot/core/memory.py:71](blazesbot/core/memory.py#L71) | — | Quantos bytes ler de cada lado de `OFF_BATTLE` em `battle_window()`. Serve para |
 | `LIMITE_DE_ENTIDADES` | `512` | [blazesbot/core/memory.py:471](blazesbot/core/memory.py#L471) | target_hybrid.py | Quantos slots do array de entidades varrer. 512 cobre com folga o que o |
@@ -699,7 +699,7 @@ ligar código não testado.
 | `LIMIAR_DO_MARCADOR_DE_MORTE` | `0.85` | [blazesbot/core/vision/marcadores.py:78](blazesbot/core/vision/marcadores.py#L78) | __init__.py | Limiar do marcador de inimigo morto. Sprite pequeno (26x22) num quadro de UI, |
 | `LINHAS_ENTRE_HP_E_MP` | `7` | [blazesbot/core/vision/marcadores.py:40](blazesbot/core/vision/marcadores.py#L40) | __init__.py, barra.py | Distância da barra vermelha para a azul, em linhas, e altura da faixa. |
 | `DEFAULT_THRESHOLD` | `0.87` | [blazesbot/core/vision/templates.py:25](blazesbot/core/vision/templates.py#L25) | __init__.py | — |
-| `RAIO` | `40` | [blazesbot/core/vizinhanca.py:34](blazesbot/core/vizinhanca.py#L34) | — | Raio, em unidades de jogo, do que conta como "em volta". |
+| `RAIO` | `40` | [blazesbot/core/vizinhanca.py:35](blazesbot/core/vizinhanca.py#L35) | — | Raio, em unidades de jogo, do que conta como "em volta". |
 | `SEGUNDOS_PARA_CHEGAR` | `5.0` | [blazesbot/core/volta_ao_ponto.py:44](blazesbot/core/volta_ao_ponto.py#L44) | cura.py, executor.py | Teto da caminhada de volta ao ponto. |
 | `TOLERANCIA` | `1` | [blazesbot/core/volta_ao_ponto.py:32](blazesbot/core/volta_ao_ponto.py#L32) | executor.py | Quanto o personagem pode estar fora do ponto e ainda contar como "chegou". |
 | `MAP_DISTANCE_THRESHOLD` | `50` | [blazesbot/core/zones.py:222](blazesbot/core/zones.py#L222) | navegacao.py | Distância em unidades de coordenada a partir da qual vale usar o mapa-múndi |
