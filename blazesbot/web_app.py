@@ -263,8 +263,15 @@ class _App:
             self._status("", f"Não foi possível salvar a configuração: {exc}")
 
     def _sincronizar(self) -> list[str]:
-        """Põe o bot em execução de acordo com as contas ativas agora."""
-        if not (self.manager and self.manager.running()):
+        """Põe o bot em execução de acordo com as contas ativas agora.
+
+        A guarda é a INTENÇÃO (`quer_rodar`), não `running()`: `running()` exige
+        conta habilitada, então desmarcar a ÚLTIMA ativa zerava a condição antes
+        da sincronização e o supervisor dela seguia rodando, invisível (até
+        27/09/2026). Gerenciador que nunca iniciou não sincroniza: subiria
+        conta sem ninguém ter apertado Iniciar.
+        """
+        if not (self.manager and self.manager.quer_rodar):
             return []
         try:
             return self.manager.sync_accounts()
@@ -631,6 +638,8 @@ class _App:
         if login and login in self._contagem_por_conta:
             del self._contagem_por_conta[login]
         self._aplicar()
+        # Conta removida com o bot rodando: o supervisor dela para aqui.
+        self._sincronizar()
 
     def alternar(self, uid: str, ativa: bool) -> list[str]:
         c = self._conta(uid)

@@ -3109,13 +3109,22 @@ class BotManager:
     def paused(self) -> bool:
         return self.pause_event.is_set()
 
+    @property
+    def quer_rodar(self) -> bool:
+        """A intenção do usuário: Iniciar aceito e ainda sem Parar.
+
+        Sem olhar se há conta habilitada -- é a pergunta de quem SINCRONIZA:
+        desmarcar a última conta tem de parar o supervisor dela (web_app).
+        """
+        return self._ativo
+
     def running(self) -> bool:
         # "Rodando" = o usuário clicou em Iniciar (intenção) e ainda há conta
         # habilitada. Não depende de thread viva: uma conta no meio do login,
         # relogin ou esperando memória (oline) NÃO deve piscar o estado para
         # "Parado" — antes isto era `any(s.is_alive() ...)`, frágil a erro no
         # meio do login. Só desativa ao parar (stop()) ou sem conta ativa.
-        return self._ativo and bool(self.config.enabled_accounts())
+        return self.quer_rodar and bool(self.config.enabled_accounts())
 
     def join(self, timeout: float | None = None) -> None:
         for supervisor in self.supervisors:
