@@ -46,3 +46,6 @@ multi-agentes/
 .claude/memory.db
 build/
 entrega/
+
+# Scripts de inicializacao locais
+*.bat
