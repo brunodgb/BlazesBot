@@ -1,5 +1,6 @@
 import { defineConfig } from "vite";
 import tailwindcss from "@tailwindcss/vite";
+import vue from "@vitejs/plugin-vue";
 
 // Frontend web do BlazesBot (pywebview + WebView2).
 // root: 'web' → o Vite procura o index.html lá dentro.
@@ -9,7 +10,7 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineConfig({
   root: "web",
   base: "./",
-  plugins: [tailwindcss()],
+  plugins: [vue(), tailwindcss()],
   build: {
     outDir: "../dist",
     emptyOutDir: true,
